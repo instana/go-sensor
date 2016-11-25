@@ -1,0 +1,148 @@
+package instana
+
+import (
+	"os"
+	"runtime"
+	"time"
+)
+
+const (
+	SNAPSHOT_PERIOD = 600
+)
+
+type SnapshotS struct {
+	Name     string `json:"name"`
+	Root     string `json:"goroot"`
+	MaxProcs int    `json:"maxprocs"`
+	Compiler string `json:"compiler"`
+	NumCpu   int    `json:"cpu"`
+}
+
+type MemoryS struct {
+	Alloc         uint64  `json:"alloc"`
+	TotalAlloc    uint64  `json:"total_alloc"`
+	Sys           uint64  `json:"sys"`
+	Lookups       uint64  `json:"lookups"`
+	Mallocs       uint64  `json:"mallocs"`
+	Frees         uint64  `json:"frees"`
+	HeapAlloc     uint64  `json:"heap_alloc"`
+	HeapSys       uint64  `json:"heap_sys"`
+	HeapIdle      uint64  `json:"heap_idle"`
+	HeapInuse     uint64  `json:"heap_in_use"`
+	HeapReleased  uint64  `json:"heap_released"`
+	HeapObjects   uint64  `json:"heap_objects"`
+	PauseTotalNs  uint64  `json:"pause_total_ns"`
+	PauseNs       uint64  `json:"pause_ns"`
+	NumGC         uint32  `json:"num_gc"`
+	GCCPUFraction float64 `json:"gc_cpu_fraction"`
+}
+
+type MetricsS struct {
+	CgoCall   int64    `json:"cgo_call"`
+	Goroutine int      `json:"goroutine"`
+	Memory    *MemoryS `json:"memory"`
+}
+
+type EntityData struct {
+	Pid      int        `json:"pid"`
+	Snapshot *SnapshotS `json:"snapshot,omitempty"`
+	Metrics  *MetricsS  `json:"metrics"`
+}
+
+type meterI interface {
+	init()
+	colectMemoryMetrics() *MemoryS
+	collectMetrics() *MetricsS
+	collectSnapshot() *SnapshotS
+}
+
+type meterS struct {
+	sensor            *sensorS
+	numGC             uint32
+	ticker            *time.Ticker
+	snapshotCountdown int
+}
+
+func (r *meterS) init() {
+	r.ticker = time.NewTicker(1 * time.Second)
+	go func() {
+		r.snapshotCountdown = 1
+		for range r.ticker.C {
+			if r.sensor.agent.canSend() {
+				r.snapshotCountdown--
+				var s *SnapshotS
+				if r.snapshotCountdown == 0 {
+					r.snapshotCountdown = SNAPSHOT_PERIOD
+					s = r.collectSnapshot()
+					log.debug("collected snapshot")
+				} else {
+					s = nil
+				}
+
+				d := &EntityData{
+					Pid:      os.Getpid(),
+					Snapshot: s,
+					Metrics:  r.collectMetrics()}
+
+				go r.sensor.agent.request(r.sensor.agent.makeUrl(AGENT_DATA_URL), "POST", d)
+			}
+		}
+	}()
+}
+
+func (r *meterS) collectMemoryMetrics() *MemoryS {
+	var memStats runtime.MemStats
+	runtime.ReadMemStats(&memStats)
+	ret := &MemoryS{
+		Alloc:         memStats.Alloc,
+		TotalAlloc:    memStats.TotalAlloc,
+		Sys:           memStats.Sys,
+		Lookups:       memStats.Lookups,
+		Mallocs:       memStats.Mallocs,
+		Frees:         memStats.Frees,
+		HeapAlloc:     memStats.HeapAlloc,
+		HeapSys:       memStats.HeapSys,
+		HeapIdle:      memStats.HeapIdle,
+		HeapInuse:     memStats.HeapInuse,
+		HeapReleased:  memStats.HeapReleased,
+		HeapObjects:   memStats.HeapObjects,
+		PauseTotalNs:  memStats.PauseTotalNs,
+		NumGC:         memStats.NumGC,
+		GCCPUFraction: memStats.GCCPUFraction}
+
+	if r.numGC < memStats.NumGC {
+		ret.PauseNs = memStats.PauseNs[(memStats.NumGC+255)%256]
+		r.numGC = memStats.NumGC
+	} else {
+		ret.PauseNs = 0
+	}
+
+	return ret
+}
+
+func (r *meterS) collectMetrics() *MetricsS {
+	return &MetricsS{
+		CgoCall:   runtime.NumCgoCall(),
+		Goroutine: runtime.NumGoroutine(),
+		Memory:    r.collectMemoryMetrics()}
+}
+
+func (r *meterS) collectSnapshot() *SnapshotS {
+	return &SnapshotS{
+		Name:     r.sensor.serviceName,
+		Root:     runtime.GOROOT(),
+		MaxProcs: runtime.GOMAXPROCS(0),
+		Compiler: runtime.Compiler,
+		NumCpu:   runtime.NumCPU()}
+}
+
+func (r *sensorS) initMeter() *meterS {
+
+	log.debug("initializing meter")
+
+	ret := new(meterS)
+	ret.sensor = r
+	ret.init()
+
+	return ret
+}
