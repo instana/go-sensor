@@ -54,9 +54,9 @@ func getDataLogField(rawSpan basictracer.RawSpan) *Data {
 	d := getSpanLogField(rawSpan, "data")
 	if d != nil {
 		return getSpanLogField(rawSpan, "data").(*Data)
-	} else {
-		return nil
 	}
+
+	return nil
 }
 
 func (r *InstanaSpanRecorder) RecordSpan(rawSpan basictracer.RawSpan) {

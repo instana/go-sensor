@@ -49,13 +49,6 @@ type EntityData struct {
 	Metrics  *MetricsS  `json:"metrics"`
 }
 
-type meterI interface {
-	init()
-	colectMemoryMetrics() *MemoryS
-	collectMetrics() *MetricsS
-	collectSnapshot() *SnapshotS
-}
-
 type meterS struct {
 	sensor            *sensorS
 	numGC             uint32

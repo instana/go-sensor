@@ -18,18 +18,6 @@ const (
 	RETRY_PERIOD = 30 * 1000
 )
 
-type fsmI interface {
-	init()
-	scheduleRetry(e *f.Event, cb func(e *f.Event))
-	lookupAgentHost(e *f.Event)
-	getDefaultGateway() string
-	checkHost(host string, cb func(b bool, host string))
-	lookupSuccess(host string)
-	announceSensor(e *f.Event)
-	testAgent(e *f.Event)
-	reset()
-}
-
 type fsmS struct {
 	agent *agentS
 	fsm   *f.FSM

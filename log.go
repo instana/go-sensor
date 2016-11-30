@@ -11,14 +11,6 @@ const (
 	DEBUG = 3
 )
 
-type logI interface {
-	makeV(prefix string, v ...interface{}) []interface{}
-	debug(v ...interface{})
-	info(v ...interface{})
-	warn(v ...interface{})
-	error(v ...interface{})
-}
-
 type logS struct {
 	sensor *sensorS
 }

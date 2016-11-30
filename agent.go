@@ -35,22 +35,6 @@ type FromS struct {
 	HostId string `json:"h"`
 }
 
-type agentI interface {
-	makeUrl(prefix string) string
-	makeHostUrl(host string, prefix string) string
-	makeFullUrl(host string, port int, prefix string) string
-	head(url string) (string, error)
-	request(url string, method string, data interface{}) (string, error)
-	requestResponse(url string, method string, data interface{}, ret interface{}) (string, error)
-	requestHeader(url string, method string, header string) (string, error)
-	fullRequestResponse(url string, method string, data interface{}, body interface{}, header string) (string, error)
-	reset()
-	setFrom(from *FromS)
-	setHost(host string)
-	initFsm() *fsmS
-	canSend() bool
-}
-
 type agentS struct {
 	sensor *sensorS
 	fsm    *fsmS

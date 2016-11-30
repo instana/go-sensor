@@ -5,16 +5,6 @@ import (
 	"path/filepath"
 )
 
-type sensorI interface {
-	init(options *Options)
-	setOptions(options *Options)
-	getOptions() *Options
-	configureServiceName()
-	initMeter() *meterS
-	initAgent() *agentS
-	initLog()
-}
-
 type sensorS struct {
 	meter       *meterS
 	agent       *agentS
