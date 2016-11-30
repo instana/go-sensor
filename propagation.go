@@ -20,7 +20,7 @@ const (
 	FIELD_B     = "x-instana-b-"
 )
 
-func (p *textMapPropagator) inject(spanContext ot.SpanContext, opaqueCarrier interface{}) error {
+func (r *textMapPropagator) inject(spanContext ot.SpanContext, opaqueCarrier interface{}) error {
 	sc, ok := spanContext.(basictracer.SpanContext)
 	if !ok {
 		return ot.ErrInvalidSpanContext
@@ -42,7 +42,7 @@ func (p *textMapPropagator) inject(spanContext ot.SpanContext, opaqueCarrier int
 	return nil
 }
 
-func (p *textMapPropagator) extract(opaqueCarrier interface{}) (ot.SpanContext, error) {
+func (r *textMapPropagator) extract(opaqueCarrier interface{}) (ot.SpanContext, error) {
 	carrier, ok := opaqueCarrier.(ot.TextMapReader)
 	if !ok {
 		return nil, ot.ErrInvalidCarrier
@@ -77,6 +77,14 @@ func (p *textMapPropagator) extract(opaqueCarrier interface{}) (ot.SpanContext, 
 		return nil
 	})
 
+	return r.finishExtract(err, fieldCount, traceID, spanID, baggage)
+}
+
+func (r *textMapPropagator) finishExtract(err error,
+	fieldCount int,
+	traceID uint64,
+	spanID uint64,
+	baggage map[string]string) (ot.SpanContext, error) {
 	if err != nil {
 		return nil, err
 	}
