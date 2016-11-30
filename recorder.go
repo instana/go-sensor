@@ -8,7 +8,6 @@ import (
 )
 
 type InstanaSpanRecorder struct {
-	sensor *sensorS
 }
 
 type InstanaSpan struct {
@@ -23,10 +22,7 @@ type InstanaSpan struct {
 }
 
 func NewRecorder() *InstanaSpanRecorder {
-	ret := new(InstanaSpanRecorder)
-	ret.sensor = sensor
-
-	return ret
+	return new(InstanaSpanRecorder)
 }
 
 func getSpanLogField(rawSpan basictracer.RawSpan, field string) interface{} {
@@ -86,7 +82,7 @@ func (r *InstanaSpanRecorder) RecordSpan(rawSpan basictracer.RawSpan) {
 	}
 
 	if data.Service == "" {
-		data.Service = r.sensor.serviceName
+		data.Service = sensor.serviceName
 	}
 
 	var parentId *uint64
@@ -96,7 +92,7 @@ func (r *InstanaSpanRecorder) RecordSpan(rawSpan basictracer.RawSpan) {
 		parentId = &rawSpan.ParentSpanID
 	}
 
-	if r.sensor.agent.canSend() {
+	if sensor.agent.canSend() {
 		span := &InstanaSpan{
 			TraceId:   rawSpan.Context.TraceID,
 			ParentId:  parentId,
@@ -104,9 +100,9 @@ func (r *InstanaSpanRecorder) RecordSpan(rawSpan basictracer.RawSpan) {
 			Timestamp: uint64(rawSpan.Start.UnixNano()) / uint64(time.Millisecond),
 			Duration:  uint64(rawSpan.Duration) / uint64(time.Millisecond),
 			Name:      tp,
-			From:      r.sensor.agent.from,
+			From:      sensor.agent.from,
 			Data:      &data}
 
-		go r.sensor.agent.request(r.sensor.agent.makeUrl(AGENT_TRACES_URL), "POST", []interface{}{span})
+		go sensor.agent.request(sensor.agent.makeUrl(AGENT_TRACES_URL), "POST", []interface{}{span})
 	}
 }
