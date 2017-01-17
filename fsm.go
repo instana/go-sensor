@@ -79,7 +79,7 @@ func (r *fsmS) lookupAgentHost(e *f.Event) {
 }
 
 func (r *fsmS) getDefaultGateway() string {
-	out, _ := exec.Command("bash", "-c", "/sbin/ip route | awk '/default/ { print $3 }' | tr -d '\n'").Output()
+	out, _ := exec.Command("/bin/sh", "-c", "/sbin/ip route | awk '/default/' | cut -d ' ' -f 3 | tr -d '\n'").Output()
 
 	log.debug("checking default gateway", string(out[:]))
 
