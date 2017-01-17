@@ -98,32 +98,48 @@ func (r *agentS) fullRequestResponse(url string, method string, data interface{}
 	var err error
 	var resp *http.Response
 	var req *http.Request
-	j, err = json.Marshal(data)
+	if data != nil {
+		j, err = json.Marshal(data)
+	}
+
 	if err == nil {
-		req, err = http.NewRequest(method, url, bytes.NewBuffer(j))
-		req.Header.Set("Content-Type", "application/json")
-		client := &http.Client{Timeout: 5 * time.Second}
-		resp, err = client.Do(req)
+		if j != nil {
+			req, err = http.NewRequest(method, url, bytes.NewBuffer(j))
+		} else {
+			req, err = http.NewRequest(method, url, nil)
+		}
+
 		if err == nil {
-			if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-				err = errors.New(resp.Status)
-				log.error(err)
-				if r.canSend() {
-					r.reset()
+			req.Header.Set("Content-Type", "application/json")
+			client := &http.Client{Timeout: 5 * time.Second}
+			resp, err = client.Do(req)
+			if err == nil {
+				if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+					err = errors.New(resp.Status)
+					log.error(err)
+					if r.canSend() {
+						r.reset()
+					}
+				} else {
+					defer resp.Body.Close()
+
+					log.debug("agent response:", url, resp.Status)
+
+					if body != nil {
+						var b []byte
+						b, err = ioutil.ReadAll(resp.Body)
+						json.Unmarshal(b, body)
+					}
+
+					if header != "" {
+						ret = resp.Header.Get(header)
+					}
 				}
 			} else {
-				defer resp.Body.Close()
+				log.error(err)
 
-				log.debug("agent response:", url, resp.Status)
-
-				if body != nil {
-					var b []byte
-					b, err = ioutil.ReadAll(resp.Body)
-					json.Unmarshal(b, body)
-				}
-
-				if header != "" {
-					ret = resp.Header.Get(header)
+				if resp == nil {
+					r.reset()
 				}
 			}
 		} else {

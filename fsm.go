@@ -56,7 +56,7 @@ func (r *fsmS) lookupAgentHost(e *f.Event) {
 		} else {
 			gateway := r.getDefaultGateway()
 			if gateway != "" {
-				go r.checkHost(r.getDefaultGateway(), func(b bool, host string) {
+				go r.checkHost(gateway, func(b bool, host string) {
 					if b {
 						r.lookupSuccess(host)
 					} else {
@@ -79,11 +79,11 @@ func (r *fsmS) lookupAgentHost(e *f.Event) {
 }
 
 func (r *fsmS) getDefaultGateway() string {
-	out, _ := exec.Command("/sbin/ip route | awk '/default/ { print $3 }'").Output()
+	out, _ := exec.Command("bash", "-c", "/sbin/ip route | awk '/default/ { print $3 }' | tr -d '\n'").Output()
 
-	log.debug("checking default gateway", string(out))
+	log.debug("checking default gateway", string(out[:]))
 
-	return string(out)
+	return string(out[:])
 }
 
 func (r *fsmS) checkHost(host string, cb func(b bool, host string)) {
