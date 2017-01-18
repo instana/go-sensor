@@ -1,8 +1,8 @@
 package instana
 
 import (
-	"os"
 	"runtime"
+	"strconv"
 	"time"
 )
 
@@ -72,8 +72,9 @@ func (r *meterS) init() {
 					s = nil
 				}
 
+				pid, _ := strconv.Atoi(r.sensor.agent.from.Pid)
 				d := &EntityData{
-					Pid:      os.Getpid(),
+					Pid:      pid,
 					Snapshot: s,
 					Metrics:  r.collectMetrics()}
 
