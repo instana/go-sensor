@@ -7,13 +7,13 @@ import (
 	"github.com/opentracing/basictracer-go"
 )
 
-type InstanaSpanRecorder struct {
+type SpanRecorder struct {
 }
 
-type InstanaSpan struct {
-	TraceId   uint64      `json:"t"`
-	ParentId  *uint64     `json:"p,omitempty"`
-	SpanId    uint64      `json:"s"`
+type Span struct {
+	TraceID   uint64      `json:"t"`
+	ParentID  *uint64     `json:"p,omitempty"`
+	SpanID    uint64      `json:"s"`
 	Timestamp uint64      `json:"ts"`
 	Duration  uint64      `json:"d"`
 	Name      string      `json:"n"`
@@ -21,8 +21,8 @@ type InstanaSpan struct {
 	Data      interface{} `json:"data"`
 }
 
-func NewRecorder() *InstanaSpanRecorder {
-	return new(InstanaSpanRecorder)
+func NewRecorder() *SpanRecorder {
+	return new(SpanRecorder)
 }
 
 func getSpanLogField(rawSpan basictracer.RawSpan, field string) interface{} {
@@ -55,7 +55,7 @@ func getDataLogField(rawSpan basictracer.RawSpan) *Data {
 	return nil
 }
 
-func (r *InstanaSpanRecorder) RecordSpan(rawSpan basictracer.RawSpan) {
+func (r *SpanRecorder) RecordSpan(rawSpan basictracer.RawSpan) {
 	data := getDataLogField(rawSpan)
 	tp := getStringSpanLogField(rawSpan, "type")
 	if data == nil {
@@ -64,7 +64,7 @@ func (r *InstanaSpanRecorder) RecordSpan(rawSpan basictracer.RawSpan) {
 			h = "localhost"
 		}
 
-		data = &Data{Rpc: &RpcData{
+		data = &Data{RPC: &RPCData{
 			Host: h,
 			Call: rawSpan.Operation}}
 		tp = RPC
@@ -85,24 +85,24 @@ func (r *InstanaSpanRecorder) RecordSpan(rawSpan basictracer.RawSpan) {
 		data.Service = sensor.serviceName
 	}
 
-	var parentId *uint64
+	var parentID *uint64
 	if rawSpan.ParentSpanID == 0 {
-		parentId = nil
+		parentID = nil
 	} else {
-		parentId = &rawSpan.ParentSpanID
+		parentID = &rawSpan.ParentSpanID
 	}
 
 	if sensor.agent.canSend() {
-		span := &InstanaSpan{
-			TraceId:   rawSpan.Context.TraceID,
-			ParentId:  parentId,
-			SpanId:    rawSpan.Context.SpanID,
+		span := &Span{
+			TraceID:   rawSpan.Context.TraceID,
+			ParentID:  parentID,
+			SpanID:    rawSpan.Context.SpanID,
 			Timestamp: uint64(rawSpan.Start.UnixNano()) / uint64(time.Millisecond),
 			Duration:  uint64(rawSpan.Duration) / uint64(time.Millisecond),
 			Name:      tp,
 			From:      sensor.agent.from,
 			Data:      &data}
 
-		go sensor.agent.request(sensor.agent.makeUrl(AGENT_TRACES_URL), "POST", []interface{}{span})
+		go sensor.agent.request(sensor.agent.makeURL(AgentTracesURL), "POST", []interface{}{span})
 	}
 }

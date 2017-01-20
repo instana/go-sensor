@@ -10,12 +10,12 @@ import (
 )
 
 const (
-	E_INIT     = "init"
-	E_LOOKUP   = "lookup"
-	E_ANNOUNCE = "announce"
-	E_TEST     = "test"
+	EInit     = "init"
+	ELookup   = "lookup"
+	EAnnounce = "announce"
+	ETest     = "test"
 
-	RETRY_PERIOD = 30 * 1000
+	RetryPeriod = 30 * 1000
 )
 
 type fsmS struct {
@@ -31,10 +31,10 @@ func (r *fsmS) init() {
 	r.fsm = f.NewFSM(
 		"none",
 		f.Events{
-			{Name: E_INIT, Src: []string{"none", "unannounced", "announced", "ready"}, Dst: "init"},
-			{Name: E_LOOKUP, Src: []string{"init"}, Dst: "unannounced"},
-			{Name: E_ANNOUNCE, Src: []string{"unannounced"}, Dst: "announced"},
-			{Name: E_TEST, Src: []string{"announced"}, Dst: "ready"}},
+			{Name: EInit, Src: []string{"none", "unannounced", "announced", "ready"}, Dst: "init"},
+			{Name: ELookup, Src: []string{"init"}, Dst: "unannounced"},
+			{Name: EAnnounce, Src: []string{"unannounced"}, Dst: "announced"},
+			{Name: ETest, Src: []string{"announced"}, Dst: "ready"}},
 		f.Callbacks{
 			"init":              r.lookupAgentHost,
 			"enter_unannounced": r.announceSensor,
@@ -42,7 +42,7 @@ func (r *fsmS) init() {
 }
 
 func (r *fsmS) scheduleRetry(e *f.Event, cb func(e *f.Event)) {
-	r.timer = time.NewTimer(RETRY_PERIOD * time.Millisecond)
+	r.timer = time.NewTimer(RetryPeriod * time.Millisecond)
 	go func() {
 		<-r.timer.C
 		cb(e)
@@ -74,7 +74,7 @@ func (r *fsmS) lookupAgentHost(e *f.Event) {
 	if r.agent.sensor.options.AgentHost != "" {
 		go r.checkHost(r.agent.sensor.options.AgentHost, cb)
 	} else {
-		go r.checkHost(AGENT_DEFAULT_HOST, cb)
+		go r.checkHost(AgentDefaultHost, cb)
 	}
 }
 
@@ -89,23 +89,23 @@ func (r *fsmS) getDefaultGateway() string {
 func (r *fsmS) checkHost(host string, cb func(b bool, host string)) {
 	log.debug("checking host", host)
 
-	header, err := r.agent.requestHeader(r.agent.makeHostUrl(host, "/"), "GET", "Server")
+	header, err := r.agent.requestHeader(r.agent.makeHostURL(host, "/"), "GET", "Server")
 
-	cb(err == nil && header == AGENT_HEADER, host)
+	cb(err == nil && header == AgentHeader, host)
 }
 
 func (r *fsmS) lookupSuccess(host string) {
 	log.debug("agent lookup success", host)
 
 	r.agent.setHost(host)
-	r.fsm.Event(E_LOOKUP)
+	r.fsm.Event(ELookup)
 }
 
 func (r *fsmS) announceSensor(e *f.Event) {
 	cb := func(b bool, from *FromS) {
 		if b {
 			r.agent.setFrom(from)
-			r.fsm.Event(E_ANNOUNCE)
+			r.fsm.Event(EAnnounce)
 		} else {
 			log.error("Cannot announce sensor. Scheduling retry.")
 			r.scheduleRetry(e, r.announceSensor)
@@ -116,23 +116,23 @@ func (r *fsmS) announceSensor(e *f.Event) {
 
 	go func(cb func(b bool, from *FromS)) {
 		d := &Discovery{
-			Pid:  os.Getpid(),
+			PID:  os.Getpid(),
 			Name: os.Args[0],
 			Args: os.Args[1:]}
 
 		ret := &agentResponse{}
-		_, err := r.agent.requestResponse(r.agent.makeUrl(AGENT_DISCOVERY_URL), "PUT", d, ret)
+		_, err := r.agent.requestResponse(r.agent.makeURL(AgentDiscoveryURL), "PUT", d, ret)
 		cb(err == nil,
 			&FromS{
-				Pid:    strconv.Itoa(int(ret.Pid)),
-				HostId: ret.HostId})
+				PID:    strconv.Itoa(int(ret.Pid)),
+				HostID: ret.HostID})
 	}(cb)
 }
 
 func (r *fsmS) testAgent(e *f.Event) {
 	cb := func(b bool) {
 		if b {
-			r.fsm.Event(E_TEST)
+			r.fsm.Event(ETest)
 		} else {
 			log.error("Agent is not yet ready. Scheduling retry.")
 			r.scheduleRetry(e, r.testAgent)
@@ -142,13 +142,13 @@ func (r *fsmS) testAgent(e *f.Event) {
 	log.debug("testing communication with the agent")
 
 	go func(cb func(b bool)) {
-		_, err := r.agent.head(r.agent.makeUrl(AGENT_DATA_URL))
+		_, err := r.agent.head(r.agent.makeURL(AgentDataURL))
 		cb(err == nil)
 	}(cb)
 }
 
 func (r *fsmS) reset() {
-	r.fsm.Event(E_INIT)
+	r.fsm.Event(EInit)
 }
 
 func (r *agentS) initFsm() *fsmS {

@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	SERVICE = "golang-rpc"
+	Service = "golang-rpc"
 )
 
 func rpc(ctx context.Context) {
@@ -27,8 +27,8 @@ func rpc(ctx context.Context) {
 
 func main() {
 	ot.InitGlobalTracer(instana.NewTracerWithOptions(&instana.Options{
-		Service:  SERVICE,
-		LogLevel: instana.DEBUG}))
+		Service:  Service,
+		LogLevel: instana.Debug}))
 
 	go forever()
 	select {}
