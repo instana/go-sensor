@@ -13,9 +13,9 @@ import (
 )
 
 const (
-	SERVICE = "golang-http"
-	ENTRY   = "http://localhost:9060/golang/entry"
-	EXIT    = "http://localhost:9060/golang/exit"
+	Service = "golang-http"
+	Entry   = "http://localhost:9060/golang/entry"
+	Exit    = "http://localhost:9060/golang/exit"
 )
 
 func request(ctx context.Context, url string, op string) (*http.Client, *http.Request) {
@@ -27,21 +27,21 @@ func request(ctx context.Context, url string, op string) (*http.Client, *http.Re
 }
 
 func requestEntry(ctx context.Context) {
-	client, req := request(ctx, ENTRY, "entry")
+	client, req := request(ctx, Entry, "entry")
 	client.Do(req)
 }
 
 //TODO: handle erroneous requests
 func requestExit(span ot.Span) {
-	client, req := request(context.Background(), EXIT, "exit")
+	client, req := request(context.Background(), Exit, "exit")
 	ot.GlobalTracer().Inject(span.Context(), ot.HTTPHeaders, ot.HTTPHeadersCarrier(req.Header))
 	resp, _ := client.Do(req)
 	span.LogFields(
-		golog.String("type", instana.HTTP_CLIENT),
+		golog.String("type", instana.HTTPClient),
 		golog.Object("data", &instana.Data{
-			Http: &instana.HttpData{
+			HTTP: &instana.HTTPData{
 				Host:   req.Host,
-				Url:    EXIT,
+				URL:    Exit,
 				Status: resp.StatusCode,
 				Method: req.Method}}))
 }
@@ -51,11 +51,11 @@ func server() {
 		wireContext, _ := ot.GlobalTracer().Extract(ot.HTTPHeaders, ot.HTTPHeadersCarrier(req.Header))
 		parentSpan := ot.GlobalTracer().StartSpan("server", ext.RPCServerOption(wireContext))
 		parentSpan.LogFields(
-			golog.String("type", instana.HTTP_SERVER),
+			golog.String("type", instana.HTTPServer),
 			golog.Object("data", &instana.Data{
-				Http: &instana.HttpData{
+				HTTP: &instana.HTTPData{
 					Host:   req.Host,
-					Url:    req.URL.Path,
+					URL:    req.URL.Path,
 					Status: 200,
 					Method: req.Method}}))
 
@@ -81,8 +81,8 @@ func server() {
 
 func main() {
 	ot.InitGlobalTracer(instana.NewTracerWithOptions(&instana.Options{
-		Service:  SERVICE,
-		LogLevel: instana.DEBUG}))
+		Service:  Service,
+		LogLevel: instana.Debug}))
 
 	go server()
 

@@ -10,27 +10,27 @@ import (
 )
 
 const (
-	SERVICE = "golang-simple"
+	Service = "golang-simple"
 )
 
 func simple(ctx context.Context) {
 	parentSpan, ctx := ot.StartSpanFromContext(ctx, "parent")
 	parentSpan.LogFields(
-		log.String("type", instana.HTTP_SERVER),
+		log.String("type", instana.HTTPServer),
 		log.Object("data", &instana.Data{
-			Http: &instana.HttpData{
+			HTTP: &instana.HTTPData{
 				Host:   "localhost",
-				Url:    "/golang/simple/one",
+				URL:    "/golang/simple/one",
 				Status: 200,
 				Method: "GET"}}))
 
 	childSpan := ot.StartSpan("child", ot.ChildOf(parentSpan.Context()))
 	childSpan.LogFields(
-		log.String("type", instana.HTTP_CLIENT),
+		log.String("type", instana.HTTPClient),
 		log.Object("data", &instana.Data{
-			Http: &instana.HttpData{
+			HTTP: &instana.HTTPData{
 				Host:   "localhost",
-				Url:    "/golang/simple/two",
+				URL:    "/golang/simple/two",
 				Status: 204,
 				Method: "POST"}}))
 	childSpan.SetBaggageItem("someBaggage", "someValue")
@@ -46,8 +46,8 @@ func simple(ctx context.Context) {
 
 func main() {
 	ot.InitGlobalTracer(instana.NewTracerWithOptions(&instana.Options{
-		Service:  SERVICE,
-		LogLevel: instana.DEBUG}))
+		Service:  Service,
+		LogLevel: instana.Debug}))
 
 	go forever()
 	select {}

@@ -13,11 +13,11 @@ type textMapPropagator struct {
 }
 
 const (
-	FIELD_COUNT = 2
-	FIELD_T     = "x-instana-t"
-	FIELD_S     = "x-instana-s"
-	FIELD_L     = "x-instana-l"
-	FIELD_B     = "x-instana-b-"
+	FieldCount = 2
+	FieldT     = "x-instana-t"
+	FieldS     = "x-instana-s"
+	FieldL     = "x-instana-l"
+	FieldB     = "x-instana-b-"
 )
 
 func (r *textMapPropagator) inject(spanContext ot.SpanContext, opaqueCarrier interface{}) error {
@@ -31,12 +31,12 @@ func (r *textMapPropagator) inject(spanContext ot.SpanContext, opaqueCarrier int
 		return ot.ErrInvalidCarrier
 	}
 
-	carrier.Set(FIELD_T, strconv.FormatUint(sc.TraceID, 16))
-	carrier.Set(FIELD_S, strconv.FormatUint(sc.SpanID, 16))
-	carrier.Set(FIELD_L, strconv.Itoa(1))
+	carrier.Set(FieldT, strconv.FormatUint(sc.TraceID, 16))
+	carrier.Set(FieldS, strconv.FormatUint(sc.SpanID, 16))
+	carrier.Set(FieldL, strconv.Itoa(1))
 
 	for k, v := range sc.Baggage {
-		carrier.Set(FIELD_B+k, v)
+		carrier.Set(FieldB+k, v)
 	}
 
 	return nil
@@ -54,13 +54,13 @@ func (r *textMapPropagator) extract(opaqueCarrier interface{}) (ot.SpanContext, 
 	baggage := make(map[string]string)
 	err = carrier.ForeachKey(func(k, v string) error {
 		switch strings.ToLower(k) {
-		case FIELD_T:
+		case FieldT:
 			fieldCount++
 			traceID, err = strconv.ParseUint(v, 16, 64)
 			if err != nil {
 				return ot.ErrSpanContextCorrupted
 			}
-		case FIELD_S:
+		case FieldS:
 			fieldCount++
 			spanID, err = strconv.ParseUint(v, 16, 64)
 			if err != nil {
@@ -69,8 +69,8 @@ func (r *textMapPropagator) extract(opaqueCarrier interface{}) (ot.SpanContext, 
 		default:
 			lk := strings.ToLower(k)
 
-			if strings.HasPrefix(lk, FIELD_B) {
-				baggage[strings.TrimPrefix(lk, FIELD_B)] = v
+			if strings.HasPrefix(lk, FieldB) {
+				baggage[strings.TrimPrefix(lk, FieldB)] = v
 			}
 		}
 
@@ -89,7 +89,7 @@ func (r *textMapPropagator) finishExtract(err error,
 		return nil, err
 	}
 
-	if fieldCount < FIELD_COUNT {
+	if fieldCount < FieldCount {
 		if fieldCount == 0 {
 			return nil, ot.ErrSpanContextNotFound
 		}

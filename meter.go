@@ -7,7 +7,7 @@ import (
 )
 
 const (
-	SNAPSHOT_PERIOD = 600
+	SnapshotPeriod = 600
 )
 
 type SnapshotS struct {
@@ -15,7 +15,7 @@ type SnapshotS struct {
 	Root     string `json:"goroot"`
 	MaxProcs int    `json:"maxprocs"`
 	Compiler string `json:"compiler"`
-	NumCpu   int    `json:"cpu"`
+	NumCPU   int    `json:"cpu"`
 }
 
 type MemoryS struct {
@@ -44,7 +44,7 @@ type MetricsS struct {
 }
 
 type EntityData struct {
-	Pid      int        `json:"pid"`
+	PID      int        `json:"pid"`
 	Snapshot *SnapshotS `json:"snapshot,omitempty"`
 	Metrics  *MetricsS  `json:"metrics"`
 }
@@ -65,20 +65,20 @@ func (r *meterS) init() {
 				r.snapshotCountdown--
 				var s *SnapshotS
 				if r.snapshotCountdown == 0 {
-					r.snapshotCountdown = SNAPSHOT_PERIOD
+					r.snapshotCountdown = SnapshotPeriod
 					s = r.collectSnapshot()
 					log.debug("collected snapshot")
 				} else {
 					s = nil
 				}
 
-				pid, _ := strconv.Atoi(r.sensor.agent.from.Pid)
+				pid, _ := strconv.Atoi(r.sensor.agent.from.PID)
 				d := &EntityData{
-					Pid:      pid,
+					PID:      pid,
 					Snapshot: s,
 					Metrics:  r.collectMetrics()}
 
-				go r.sensor.agent.request(r.sensor.agent.makeUrl(AGENT_DATA_URL), "POST", d)
+				go r.sensor.agent.request(r.sensor.agent.makeURL(AgentDataURL), "POST", d)
 			}
 		}
 	}()
@@ -127,7 +127,7 @@ func (r *meterS) collectSnapshot() *SnapshotS {
 		Root:     runtime.GOROOT(),
 		MaxProcs: runtime.GOMAXPROCS(0),
 		Compiler: runtime.Compiler,
-		NumCpu:   runtime.NumCPU()}
+		NumCPU:   runtime.NumCPU()}
 }
 
 func (r *sensorS) initMeter() *meterS {

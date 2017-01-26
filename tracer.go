@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	MAX_LOGS_PER_SPAN = 2
+	MaxLogsPerSpan = 2
 )
 
 type tracerS struct {
@@ -90,7 +90,7 @@ func (r *tracerS) startSpanInternal(span *spanS, operationName string, startTime
 	return span
 }
 
-func shouldSample(traceId uint64) bool {
+func shouldSample(traceID uint64) bool {
 	return false
 }
 
@@ -107,7 +107,7 @@ func NewTracerWithEverything(options *Options, recorder bt.SpanRecorder) ot.Trac
 	ret := &tracerS{options: bt.Options{
 		Recorder:       recorder,
 		ShouldSample:   shouldSample,
-		MaxLogsPerSpan: MAX_LOGS_PER_SPAN}}
+		MaxLogsPerSpan: MaxLogsPerSpan}}
 	ret.textPropagator = &textMapPropagator{ret}
 
 	return ret

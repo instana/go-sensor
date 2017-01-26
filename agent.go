@@ -11,28 +11,28 @@ import (
 )
 
 const (
-	AGENT_DISCOVERY_URL = "/com.instana.plugin.golang.discovery"
-	AGENT_TRACES_URL    = "/com.instana.plugin.golang/traces."
-	AGENT_DATA_URL      = "/com.instana.plugin.golang."
-	AGENT_DEFAULT_HOST  = "localhost"
-	AGENT_DEFAULT_PORT  = 42699
-	AGENT_HEADER        = "Instana Agent"
+	AgentDiscoveryURL = "/com.instana.plugin.golang.discovery"
+	AgentTracesURL    = "/com.instana.plugin.golang/traces."
+	AgentDataURL      = "/com.instana.plugin.golang."
+	AgentDefaultHost  = "localhost"
+	AgentDefaultPort  = 42699
+	AgentHeader       = "Instana Agent"
 )
 
 type agentResponse struct {
 	Pid    uint32 `json:"pid"`
-	HostId string `json:"agentUuid"`
+	HostID string `json:"agentUuid"`
 }
 
 type Discovery struct {
-	Pid  int      `json:"pid"`
+	PID  int      `json:"pid"`
 	Name string   `json:"name"`
 	Args []string `json:"args"`
 }
 
 type FromS struct {
-	Pid    string `json:"e"`
-	HostId string `json:"h"`
+	PID    string `json:"e"`
+	HostID string `json:"h"`
 }
 
 type agentS struct {
@@ -46,22 +46,22 @@ func (r *agentS) init() {
 	r.fsm = r.initFsm()
 }
 
-func (r *agentS) makeUrl(prefix string) string {
-	return r.makeHostUrl(r.host, prefix)
+func (r *agentS) makeURL(prefix string) string {
+	return r.makeHostURL(r.host, prefix)
 }
 
-func (r *agentS) makeHostUrl(host string, prefix string) string {
+func (r *agentS) makeHostURL(host string, prefix string) string {
 	var port int
 	if r.sensor.options.AgentPort == 0 {
-		port = AGENT_DEFAULT_PORT
+		port = AgentDefaultPort
 	} else {
 		port = r.sensor.options.AgentPort
 	}
 
-	return r.makeFullUrl(host, port, prefix)
+	return r.makeFullURL(host, port, prefix)
 }
 
-func (r *agentS) makeFullUrl(host string, port int, prefix string) string {
+func (r *agentS) makeFullURL(host string, port int, prefix string) string {
 	var buffer bytes.Buffer
 
 	buffer.WriteString("http://")
@@ -69,8 +69,8 @@ func (r *agentS) makeFullUrl(host string, port int, prefix string) string {
 	buffer.WriteString(":")
 	buffer.WriteString(strconv.Itoa(port))
 	buffer.WriteString(prefix)
-	if r.from.Pid != "" {
-		buffer.WriteString(r.from.Pid)
+	if r.from.PID != "" {
+		buffer.WriteString(r.from.PID)
 	}
 
 	return buffer.String()

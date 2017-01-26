@@ -4,7 +4,7 @@ const (
 	RPC = "g.rpc"
 )
 
-type RpcData struct {
+type RPCData struct {
 	Host string `json:"host"`
 	Call string `json:"call"`
 }
