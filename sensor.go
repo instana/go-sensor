@@ -47,8 +47,7 @@ func (r *sensorS) configureServiceName() {
 
 func InitSensor(options *Options) {
 	sensor = new(sensorS)
-	sensor.initLog()
 	sensor.init(options)
 
-	log.debug("initialized sensor")
+	Logger.Println("initialized sensor")
 }
