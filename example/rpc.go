@@ -27,8 +27,8 @@ func rpc(ctx context.Context) {
 
 func main() {
 	ot.InitGlobalTracer(instana.NewTracerWithOptions(&instana.Options{
-		Service:  Service,
-		LogLevel: instana.Debug}))
+		Service: Service,
+	}))
 
 	go forever()
 	select {}
