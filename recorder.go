@@ -83,6 +83,18 @@ func getHostName(rawSpan basictracer.RawSpan) string {
 	return h
 }
 
+func getServiceName(rawSpan basictracer.RawSpan) string {
+	s := getStringTag(rawSpan, string(ext.Component))
+	if s == "" {
+		s := getStringTag(rawSpan, string(ext.PeerService))
+		if s == "" {
+			s = sensor.serviceName
+		}
+	}
+
+	return s
+}
+
 func getHttpType(rawSpan basictracer.RawSpan) string {
 	kind := getStringTag(rawSpan, string(ext.SpanKind))
 	if kind == string(ext.SpanKindRPCServerEnum) {
@@ -125,10 +137,7 @@ func (r *InstanaSpanRecorder) RecordSpan(rawSpan basictracer.RawSpan) {
 		data.Baggage = baggage
 	}
 
-	data.Service = getStringTag(rawSpan, string(ext.Component))
-	if data.Service == "" {
-		data.Service = sensor.serviceName
-	}
+	data.Service = getServiceName(rawSpan)
 
 	var parentId *uint64
 	if rawSpan.ParentSpanID == 0 {
