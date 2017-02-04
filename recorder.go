@@ -74,6 +74,21 @@ func getHTTPType(rawSpan basictracer.RawSpan) string {
 	return HTTPServer
 }
 
+func collectLogs(rawSpan basictracer.RawSpan) map[uint64]map[string]interface{} {
+	logs := make(map[uint64]map[string]interface{})
+	for _, l := range rawSpan.Logs {
+		if _, ok := logs[uint64(l.Timestamp.UnixNano())/uint64(time.Millisecond)]; !ok {
+			logs[uint64(l.Timestamp.UnixNano())/uint64(time.Millisecond)] = make(map[string]interface{})
+		}
+
+		for _, f := range l.Fields {
+			logs[uint64(l.Timestamp.UnixNano())/uint64(time.Millisecond)][f.Key()] = f.Value()
+		}
+	}
+
+	return logs
+}
+
 func (r *SpanRecorder) RecordSpan(rawSpan basictracer.RawSpan) {
 	var data = &Data{}
 	var tp string
@@ -94,7 +109,7 @@ func (r *SpanRecorder) RecordSpan(rawSpan basictracer.RawSpan) {
 	}
 
 	data.Custom = &CustomData{Tags: rawSpan.Tags,
-		Logs: rawSpan.Logs}
+		Logs: collectLogs(rawSpan)}
 
 	baggage := make(map[string]string)
 	rawSpan.Context.ForeachBaggageItem(func(k string, v string) bool {
