@@ -6,6 +6,7 @@ import (
 	"github.com/instana/golang-sensor"
 	ot "github.com/opentracing/opentracing-go"
 	ext "github.com/opentracing/opentracing-go/ext"
+	"github.com/opentracing/opentracing-go/log"
 	"golang.org/x/net/context"
 )
 
@@ -21,6 +22,8 @@ func simple(ctx context.Context) {
 	parentSpan.SetTag(string(ext.HTTPUrl), "/golang/simple/one")
 	parentSpan.SetTag(string(ext.HTTPMethod), "GET")
 	parentSpan.SetTag(string(ext.HTTPStatusCode), 200)
+	parentSpan.LogFields(
+		log.String("foo", "bar"))
 
 	childSpan := ot.StartSpan("child", ot.ChildOf(parentSpan.Context()))
 	childSpan.SetTag(string(ext.SpanKind), string(ext.SpanKindRPCClientEnum))

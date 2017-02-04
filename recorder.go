@@ -93,6 +93,9 @@ func (r *SpanRecorder) RecordSpan(rawSpan basictracer.RawSpan) {
 			Call: rawSpan.Operation}}
 	}
 
+	data.Custom = &CustomData{Tags: rawSpan.Tags,
+		Logs: rawSpan.Logs}
+
 	baggage := make(map[string]string)
 	rawSpan.Context.ForeachBaggageItem(func(k string, v string) bool {
 		baggage[k] = v
@@ -113,17 +116,17 @@ func (r *SpanRecorder) RecordSpan(rawSpan basictracer.RawSpan) {
 		parentID = &rawSpan.ParentSpanID
 	}
 
-	if sensor.agent.canSend() {
-		span := &Span{
-			TraceID:   rawSpan.Context.TraceID,
-			ParentID:  parentID,
-			SpanID:    rawSpan.Context.SpanID,
-			Timestamp: uint64(rawSpan.Start.UnixNano()) / uint64(time.Millisecond),
-			Duration:  uint64(rawSpan.Duration) / uint64(time.Millisecond),
-			Name:      tp,
-			From:      sensor.agent.from,
-			Data:      &data}
+	//if sensor.agent.canSend() {
+	span := &Span{
+		TraceID:   rawSpan.Context.TraceID,
+		ParentID:  parentID,
+		SpanID:    rawSpan.Context.SpanID,
+		Timestamp: uint64(rawSpan.Start.UnixNano()) / uint64(time.Millisecond),
+		Duration:  uint64(rawSpan.Duration) / uint64(time.Millisecond),
+		Name:      tp,
+		From:      sensor.agent.from,
+		Data:      &data}
 
-		go sensor.agent.request(sensor.agent.makeURL(AgentTracesURL), "POST", []interface{}{span})
-	}
+	go sensor.agent.request(sensor.agent.makeURL(AgentTracesURL), "POST", []interface{}{span})
+	//}
 }

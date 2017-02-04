@@ -102,6 +102,8 @@ func (r *agentS) fullRequestResponse(url string, method string, data interface{}
 		j, err = json.Marshal(data)
 	}
 
+	log.debug(string(j))
+
 	if err == nil {
 		if j != nil {
 			req, err = http.NewRequest(method, url, bytes.NewBuffer(j))
