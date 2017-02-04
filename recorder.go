@@ -69,19 +69,41 @@ func getStringTag(rawSpan basictracer.RawSpan, tag string) string {
 	return d.(string)
 }
 
+func getHostName(rawSpan basictracer.RawSpan) string {
+	hostTag := getStringTag(rawSpan, string(ext.PeerHostname))
+	if hostTag != "" {
+		return hostTag
+	}
+
+	h, err := os.Hostname()
+	if err != nil {
+		h = "localhost"
+	}
+
+	return h
+}
+
 func (r *InstanaSpanRecorder) RecordSpan(rawSpan basictracer.RawSpan) {
 	data := getDataLogField(rawSpan)
 	tp := getStringSpanLogField(rawSpan, "type")
 	if data == nil {
-		h, err := os.Hostname()
-		if err != nil {
-			h = "localhost"
-		}
+		h := getHostName(rawSpan)
+		status := getTag(rawSpan, string(ext.HTTPStatusCode))
+		if status != nil {
+			tp = HTTP_CLIENT
+			data = &Data{Http: &HttpData{
+				Host:   h,
+				Url:    getStringTag(rawSpan, string(ext.HTTPUrl)),
+				Method: getStringTag(rawSpan, string(ext.HTTPMethod)),
+				Status: status.(int)}}
 
-		data = &Data{Rpc: &RpcData{
-			Host: h,
-			Call: rawSpan.Operation}}
-		tp = RPC
+			log.debug(data.Http)
+		} else {
+			tp = RPC
+			data = &Data{Rpc: &RpcData{
+				Host: h,
+				Call: rawSpan.Operation}}
+		}
 	}
 
 	baggage := make(map[string]string)
