@@ -93,6 +93,7 @@ func getHttpType(rawSpan basictracer.RawSpan) string {
 }
 
 func (r *InstanaSpanRecorder) RecordSpan(rawSpan basictracer.RawSpan) {
+	//TODO: remove log field misuse after merge
 	data := getDataLogField(rawSpan)
 	tp := getStringSpanLogField(rawSpan, "type")
 	if data == nil {
