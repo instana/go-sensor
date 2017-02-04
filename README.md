@@ -13,7 +13,7 @@ in your main function. The init function takes an `Options` object with the foll
 
 * **Service** - global service name that will be used to identify the program in the Instana backend
 * **AgentHost**, **AgentPort** - default to localhost:42699, set the coordinates of the Instana proxy agent
-* **LogLevel** - one of ERROR, WARN, INFO or DEBUG
+* **LogLevel** - one of Error, Warn, Info or Debug
 
 Once initialised, the sensor will try to connect to the given Instana agent and in case of connection success will send metrics and snapshot information through the agent to the backend.
 

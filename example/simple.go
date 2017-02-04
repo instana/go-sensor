@@ -10,12 +10,12 @@ import (
 )
 
 const (
-	SERVICE = "golang-simple"
+	Service = "golang-simple"
 )
 
 func simple(ctx context.Context) {
 	parentSpan, ctx := ot.StartSpanFromContext(ctx, "parent")
-	parentSpan.SetTag(string(ext.Component), SERVICE)
+	parentSpan.SetTag(string(ext.Component), Service)
 	parentSpan.SetTag(string(ext.SpanKind), string(ext.SpanKindRPCServerEnum))
 	parentSpan.SetTag(string(ext.PeerHostname), "localhost")
 	parentSpan.SetTag(string(ext.HTTPUrl), "/golang/simple/one")
@@ -41,8 +41,8 @@ func simple(ctx context.Context) {
 
 func main() {
 	ot.InitGlobalTracer(instana.NewTracerWithOptions(&instana.Options{
-		Service:  SERVICE,
-		LogLevel: instana.DEBUG}))
+		Service:  Service,
+		LogLevel: instana.Debug}))
 
 	go forever()
 	select {}

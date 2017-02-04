@@ -1,13 +1,13 @@
 package instana
 
 const (
-	HTTP_CLIENT = "g.hc"
-	HTTP_SERVER = "g.http"
+	HTTPClient = "g.hc"
+	HTTPServer = "g.http"
 )
 
-type HttpData struct {
+type HTTPData struct {
 	Host   string `json:"host"`
-	Url    string `json:"url"`
+	URL    string `json:"url"`
 	Status int    `json:"status"`
 	Method string `json:"method"`
 }
