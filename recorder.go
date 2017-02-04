@@ -83,6 +83,15 @@ func getHostName(rawSpan basictracer.RawSpan) string {
 	return h
 }
 
+func getHttpType(rawSpan basictracer.RawSpan) string {
+	kind := getStringTag(rawSpan, string(ext.SpanKind))
+	if kind == string(ext.SpanKindRPCServerEnum) {
+		return HTTP_SERVER
+	}
+
+	return HTTP_CLIENT
+}
+
 func (r *InstanaSpanRecorder) RecordSpan(rawSpan basictracer.RawSpan) {
 	data := getDataLogField(rawSpan)
 	tp := getStringSpanLogField(rawSpan, "type")
@@ -90,14 +99,12 @@ func (r *InstanaSpanRecorder) RecordSpan(rawSpan basictracer.RawSpan) {
 		h := getHostName(rawSpan)
 		status := getTag(rawSpan, string(ext.HTTPStatusCode))
 		if status != nil {
-			tp = HTTP_CLIENT
+			tp = getHttpType(rawSpan)
 			data = &Data{Http: &HttpData{
 				Host:   h,
 				Url:    getStringTag(rawSpan, string(ext.HTTPUrl)),
 				Method: getStringTag(rawSpan, string(ext.HTTPMethod)),
 				Status: status.(int)}}
-
-			log.debug(data.Http)
 		} else {
 			tp = RPC
 			data = &Data{Rpc: &RpcData{
