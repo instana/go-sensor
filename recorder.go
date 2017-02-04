@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/opentracing/basictracer-go"
+	ext "github.com/opentracing/opentracing-go/ext"
 )
 
 type InstanaSpanRecorder struct {
@@ -55,6 +56,19 @@ func getDataLogField(rawSpan basictracer.RawSpan) *Data {
 	return nil
 }
 
+func getTag(rawSpan basictracer.RawSpan, tag string) interface{} {
+	return rawSpan.Tags[tag]
+}
+
+func getStringTag(rawSpan basictracer.RawSpan, tag string) string {
+	d := getTag(rawSpan, tag)
+	if d == nil {
+		return ""
+	}
+
+	return d.(string)
+}
+
 func (r *InstanaSpanRecorder) RecordSpan(rawSpan basictracer.RawSpan) {
 	data := getDataLogField(rawSpan)
 	tp := getStringSpanLogField(rawSpan, "type")
@@ -81,6 +95,7 @@ func (r *InstanaSpanRecorder) RecordSpan(rawSpan basictracer.RawSpan) {
 		data.Baggage = baggage
 	}
 
+	data.Service = getStringTag(rawSpan, string(ext.Component))
 	if data.Service == "" {
 		data.Service = sensor.serviceName
 	}

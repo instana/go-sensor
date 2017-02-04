@@ -25,6 +25,7 @@ func simple(ctx context.Context) {
 				Method: "GET"}}))
 
 	childSpan := ot.StartSpan("child", ot.ChildOf(parentSpan.Context()))
+	childSpan.SetTag("component", "bar")
 	childSpan.LogFields(
 		log.String("type", instana.HTTP_CLIENT),
 		log.Object("data", &instana.Data{
