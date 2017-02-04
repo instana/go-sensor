@@ -26,36 +26,6 @@ func NewRecorder() *InstanaSpanRecorder {
 	return new(InstanaSpanRecorder)
 }
 
-func getSpanLogField(rawSpan basictracer.RawSpan, field string) interface{} {
-	for _, log := range rawSpan.Logs {
-		for _, f := range log.Fields {
-			if f.Key() == field {
-				return f.Value()
-			}
-		}
-	}
-
-	return nil
-}
-
-func getStringSpanLogField(rawSpan basictracer.RawSpan, field string) string {
-	d := getSpanLogField(rawSpan, field)
-	if d == nil {
-		return ""
-	}
-
-	return d.(string)
-}
-
-func getDataLogField(rawSpan basictracer.RawSpan) *Data {
-	d := getSpanLogField(rawSpan, "data")
-	if d != nil {
-		return getSpanLogField(rawSpan, "data").(*Data)
-	}
-
-	return nil
-}
-
 func getTag(rawSpan basictracer.RawSpan, tag string) interface{} {
 	return rawSpan.Tags[tag]
 }
@@ -105,25 +75,22 @@ func getHTTPType(rawSpan basictracer.RawSpan) string {
 }
 
 func (r *InstanaSpanRecorder) RecordSpan(rawSpan basictracer.RawSpan) {
-	//TODO: remove log field misuse after merge
-	data := getDataLogField(rawSpan)
-	tp := getStringSpanLogField(rawSpan, "type")
-	if data == nil {
-		h := getHostName(rawSpan)
-		status := getTag(rawSpan, string(ext.HTTPStatusCode))
-		if status != nil {
-			tp = getHTTPType(rawSpan)
-			data = &Data{Http: &HttpData{
-				Host:   h,
-				Url:    getStringTag(rawSpan, string(ext.HTTPUrl)),
-				Method: getStringTag(rawSpan, string(ext.HTTPMethod)),
-				Status: status.(int)}}
-		} else {
-			tp = RPC
-			data = &Data{Rpc: &RpcData{
-				Host: h,
-				Call: rawSpan.Operation}}
-		}
+	var data = &Data{}
+	var tp string
+	h := getHostName(rawSpan)
+	status := getTag(rawSpan, string(ext.HTTPStatusCode))
+	if status != nil {
+		tp = getHTTPType(rawSpan)
+		data = &Data{Http: &HttpData{
+			Host:   h,
+			Url:    getStringTag(rawSpan, string(ext.HTTPUrl)),
+			Method: getStringTag(rawSpan, string(ext.HTTPMethod)),
+			Status: status.(int)}}
+	} else {
+		tp = RPC
+		data = &Data{Rpc: &RpcData{
+			Host: h,
+			Call: rawSpan.Operation}}
 	}
 
 	baggage := make(map[string]string)
