@@ -8,7 +8,7 @@ The Instana Go sensor consists of two parts:
 To use sensor only without tracing ability, import the `instana` package and run
 
 	instana.InitSensor(opt)
-	
+
 in your main function. The init function takes an `Options` object with the following optional fields:
 
 * **Service** - global service name that will be used to identify the program in the Instana backend
@@ -19,10 +19,10 @@ Once initialised, the sensor will try to connect to the given Instana agent and 
 
 In case you want to use the OpenTracing tracer, it will automatically initialise the sensor and thus also activate the metrics stream. To activate the global tracer, run for example
 
-	ot.InitGlobalTracer(instana.NewTracerWithOptions(&instana.Options{
-		Service:  SERVICE,
-		LogLevel: instana.DEBUG}))
-		
+	ot.InitGlobalTracer(instana.NewTracerWithOptions(
+	    &instana.Options{ Service:  SERVICE }
+	))
+
 in your main functions. The tracer takes same options that the sensor takes for initialisation, described above.
 
 The tracer is able to protocol and piggyback OpenTracing baggage, tags and logs. Only text mapping is implemented yet, binary is not supported. Also, the tracer tries to map the OpenTracing spans to the Instana model according to the following strategy:
@@ -39,3 +39,5 @@ Following examples are included in the `examples` folder:
 * **simple** - demoes generally how to use the tracer
 * **http** - demoes how http server and client should be instrumented
 * **rpc** - demoes the fallback to RPC
+
+In case you'd like to debug or you need to troubleshoot, you can set `instana.Logger` and capture the output.
