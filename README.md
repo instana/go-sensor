@@ -19,18 +19,14 @@ Once initialised, the sensor will try to connect to the given Instana agent and 
 
 In case you want to use the OpenTracing tracer, it will automatically initialise the sensor and thus also activate the metrics stream. To activate the global tracer, run for example
 
-	ot.InitGlobalTracer(instana.NewTracerWithOptions(
-	    &instana.Options{ Service:  SERVICE }
-	))
+
+ot.InitGlobalTracer(instana.NewTracerWithOptions(
+    &instana.Options{ Service:  SERVICE }
+))
 
 in your main functions. The tracer takes same options that the sensor takes for initialisation, described above.
 
-The tracer is able to protocol and piggyback OpenTracing baggage, tags and logs. Only text mapping is implemented yet, binary is not supported. Also, the tracer tries to map the OpenTracing spans to the Instana model according to the following strategy:
-
-* in order to use the fully qualified Instana exit/entry/error tracing, two Logs need to be provided:
-	* **type** - can be either HTTPServer, HTTPClient or RPC
-	* **data** - corresponding data structure, either `HTTPData` or `RCPData`
-* in case the type is not provided, the created span defaults to `RPC` and data is automatically collected the best effort way
+The tracer is able to protocol and piggyback OpenTracing baggage, tags and logs. Only text mapping is implemented yet, binary is not supported. Also, the tracer tries to map the OpenTracing spans to the Instana model based on OpenTracing recommended tags. See `simple` example for details on how recommended tags are used.
 
 The Instana tracer will remap OpenTracing HTTP headers into Instana Headers, so parallel use with some other OpenTracing model is not possible. The instana tracer is based on the OpenTracing Go basictracer with necessary modifications to map to the Instana tracing model. Also, sampling isn't implemented yet and will be focus of future work.
 
