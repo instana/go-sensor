@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/opentracing/basictracer-go"
+	ext "github.com/opentracing/opentracing-go/ext"
 )
 
 type SpanRecorder struct {
@@ -25,20 +26,12 @@ func NewRecorder() *SpanRecorder {
 	return new(SpanRecorder)
 }
 
-func getSpanLogField(rawSpan basictracer.RawSpan, field string) interface{} {
-	for _, log := range rawSpan.Logs {
-		for _, f := range log.Fields {
-			if f.Key() == field {
-				return f.Value()
-			}
-		}
-	}
-
-	return nil
+func getTag(rawSpan basictracer.RawSpan, tag string) interface{} {
+	return rawSpan.Tags[tag]
 }
 
-func getStringSpanLogField(rawSpan basictracer.RawSpan, field string) string {
-	d := getSpanLogField(rawSpan, field)
+func getStringTag(rawSpan basictracer.RawSpan, tag string) string {
+	d := getTag(rawSpan, tag)
 	if d == nil {
 		return ""
 	}
@@ -46,28 +39,58 @@ func getStringSpanLogField(rawSpan basictracer.RawSpan, field string) string {
 	return d.(string)
 }
 
-func getDataLogField(rawSpan basictracer.RawSpan) *Data {
-	d := getSpanLogField(rawSpan, "data")
-	if d != nil {
-		return getSpanLogField(rawSpan, "data").(*Data)
+func getHostName(rawSpan basictracer.RawSpan) string {
+	hostTag := getStringTag(rawSpan, string(ext.PeerHostname))
+	if hostTag != "" {
+		return hostTag
 	}
 
-	return nil
+	h, err := os.Hostname()
+	if err != nil {
+		h = "localhost"
+	}
+
+	return h
+}
+
+func getServiceName(rawSpan basictracer.RawSpan) string {
+	s := getStringTag(rawSpan, string(ext.Component))
+	if s == "" {
+		s = getStringTag(rawSpan, string(ext.PeerService))
+		if s == "" {
+			return sensor.serviceName
+		}
+	}
+
+	return s
+}
+
+func getHTTPType(rawSpan basictracer.RawSpan) string {
+	kind := getStringTag(rawSpan, string(ext.SpanKind))
+	if kind == string(ext.SpanKindRPCServerEnum) {
+		return HTTPClient
+	}
+
+	return HTTPServer
 }
 
 func (r *SpanRecorder) RecordSpan(rawSpan basictracer.RawSpan) {
-	data := getDataLogField(rawSpan)
-	tp := getStringSpanLogField(rawSpan, "type")
-	if data == nil {
-		h, err := os.Hostname()
-		if err != nil {
-			h = "localhost"
-		}
-
+	var data = &Data{}
+	var tp string
+	h := getHostName(rawSpan)
+	status := getTag(rawSpan, string(ext.HTTPStatusCode))
+	if status != nil {
+		tp = getHTTPType(rawSpan)
+		data = &Data{HTTP: &HTTPData{
+			Host:   h,
+			URL:    getStringTag(rawSpan, string(ext.HTTPUrl)),
+			Method: getStringTag(rawSpan, string(ext.HTTPMethod)),
+			Status: status.(int)}}
+	} else {
+		tp = RPC
 		data = &Data{RPC: &RPCData{
 			Host: h,
 			Call: rawSpan.Operation}}
-		tp = RPC
 	}
 
 	baggage := make(map[string]string)
@@ -81,9 +104,7 @@ func (r *SpanRecorder) RecordSpan(rawSpan basictracer.RawSpan) {
 		data.Baggage = baggage
 	}
 
-	if data.Service == "" {
-		data.Service = sensor.serviceName
-	}
+	data.Service = getServiceName(rawSpan)
 
 	var parentID *uint64
 	if rawSpan.ParentSpanID == 0 {

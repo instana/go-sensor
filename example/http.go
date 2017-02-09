@@ -8,7 +8,6 @@ import (
 	"github.com/instana/golang-sensor"
 	ot "github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
-	golog "github.com/opentracing/opentracing-go/log"
 	"golang.org/x/net/context"
 )
 
@@ -36,28 +35,22 @@ func requestExit(span ot.Span) {
 	client, req := request(context.Background(), Exit, "exit")
 	ot.GlobalTracer().Inject(span.Context(), ot.HTTPHeaders, ot.HTTPHeadersCarrier(req.Header))
 	resp, _ := client.Do(req)
-	span.LogFields(
-		golog.String("type", instana.HTTPClient),
-		golog.Object("data", &instana.Data{
-			HTTP: &instana.HTTPData{
-				Host:   req.Host,
-				URL:    Exit,
-				Status: resp.StatusCode,
-				Method: req.Method}}))
+	span.SetTag(string(ext.SpanKind), string(ext.SpanKindRPCClientEnum))
+	span.SetTag(string(ext.PeerHostname), req.Host)
+	span.SetTag(string(ext.HTTPUrl), Exit)
+	span.SetTag(string(ext.HTTPMethod), req.Method)
+	span.SetTag(string(ext.HTTPStatusCode), resp.StatusCode)
 }
 
 func server() {
 	http.HandleFunc("/golang/entry", func(w http.ResponseWriter, req *http.Request) {
 		wireContext, _ := ot.GlobalTracer().Extract(ot.HTTPHeaders, ot.HTTPHeadersCarrier(req.Header))
 		parentSpan := ot.GlobalTracer().StartSpan("server", ext.RPCServerOption(wireContext))
-		parentSpan.LogFields(
-			golog.String("type", instana.HTTPServer),
-			golog.Object("data", &instana.Data{
-				HTTP: &instana.HTTPData{
-					Host:   req.Host,
-					URL:    req.URL.Path,
-					Status: 200,
-					Method: req.Method}}))
+		parentSpan.SetTag(string(ext.SpanKind), string(ext.SpanKindRPCServerEnum))
+		parentSpan.SetTag(string(ext.PeerHostname), req.Host)
+		parentSpan.SetTag(string(ext.HTTPUrl), req.URL.Path)
+		parentSpan.SetTag(string(ext.HTTPMethod), req.Method)
+		parentSpan.SetTag(string(ext.HTTPStatusCode), 200)
 
 		childSpan := ot.StartSpan("client", ot.ChildOf(parentSpan.Context()))
 

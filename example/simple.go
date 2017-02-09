@@ -5,7 +5,7 @@ import (
 
 	"github.com/instana/golang-sensor"
 	ot "github.com/opentracing/opentracing-go"
-	"github.com/opentracing/opentracing-go/log"
+	ext "github.com/opentracing/opentracing-go/ext"
 	"golang.org/x/net/context"
 )
 
@@ -15,24 +15,19 @@ const (
 
 func simple(ctx context.Context) {
 	parentSpan, ctx := ot.StartSpanFromContext(ctx, "parent")
-	parentSpan.LogFields(
-		log.String("type", instana.HTTPServer),
-		log.Object("data", &instana.Data{
-			HTTP: &instana.HTTPData{
-				Host:   "localhost",
-				URL:    "/golang/simple/one",
-				Status: 200,
-				Method: "GET"}}))
+	parentSpan.SetTag(string(ext.Component), Service)
+	parentSpan.SetTag(string(ext.SpanKind), string(ext.SpanKindRPCServerEnum))
+	parentSpan.SetTag(string(ext.PeerHostname), "localhost")
+	parentSpan.SetTag(string(ext.HTTPUrl), "/golang/simple/one")
+	parentSpan.SetTag(string(ext.HTTPMethod), "GET")
+	parentSpan.SetTag(string(ext.HTTPStatusCode), 200)
 
 	childSpan := ot.StartSpan("child", ot.ChildOf(parentSpan.Context()))
-	childSpan.LogFields(
-		log.String("type", instana.HTTPClient),
-		log.Object("data", &instana.Data{
-			HTTP: &instana.HTTPData{
-				Host:   "localhost",
-				URL:    "/golang/simple/two",
-				Status: 204,
-				Method: "POST"}}))
+	childSpan.SetTag(string(ext.SpanKind), string(ext.SpanKindRPCClientEnum))
+	childSpan.SetTag(string(ext.PeerHostname), "localhost")
+	childSpan.SetTag(string(ext.HTTPUrl), "/golang/simple/two")
+	childSpan.SetTag(string(ext.HTTPMethod), "POST")
+	childSpan.SetTag(string(ext.HTTPStatusCode), 204)
 	childSpan.SetBaggageItem("someBaggage", "someValue")
 
 	time.Sleep(450 * time.Millisecond)
