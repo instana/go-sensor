@@ -116,14 +116,14 @@ func (r *agentS) fullRequestResponse(url string, method string, data interface{}
 			if err == nil {
 				if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 					err = errors.New(resp.Status)
-					log.error(err)
+					Logger.Println(err)
 					if r.canSend() {
 						r.reset()
 					}
 				} else {
 					defer resp.Body.Close()
 
-					log.debug("agent response:", url, resp.Status)
+					Logger.Printf("agent response with status:%s from url: %s", resp.Status, url)
 
 					if body != nil {
 						var b []byte
@@ -136,21 +136,21 @@ func (r *agentS) fullRequestResponse(url string, method string, data interface{}
 					}
 				}
 			} else {
-				log.error(err)
+				Logger.Println(err)
 
 				if resp == nil {
 					r.reset()
 				}
 			}
 		} else {
-			log.error(err)
+			Logger.Println(err)
 
 			if resp == nil {
 				r.reset()
 			}
 		}
 	} else {
-		log.error(err)
+		Logger.Println(err)
 	}
 
 	return ret, err
@@ -171,7 +171,7 @@ func (r *agentS) setHost(host string) {
 
 func (r *sensorS) initAgent() *agentS {
 
-	log.debug("initializing agent")
+	Logger.Println("initializing agent")
 
 	ret := new(agentS)
 	ret.sensor = r

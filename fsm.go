@@ -26,7 +26,7 @@ type fsmS struct {
 
 func (r *fsmS) init() {
 
-	log.debug("initializing fsm")
+	Logger.Println("initializing fsm")
 
 	r.fsm = f.NewFSM(
 		"none",
@@ -60,12 +60,12 @@ func (r *fsmS) lookupAgentHost(e *f.Event) {
 					if b {
 						r.lookupSuccess(host)
 					} else {
-						log.error("Cannot connect to the agent through localhost or default gateway. Scheduling retry.")
+						Logger.Println("Cannot connect to the agent through localhost or default gateway. Scheduling retry.")
 						r.scheduleRetry(e, r.lookupAgentHost)
 					}
 				})
 			} else {
-				log.error("Default gateway not available. Scheduling retry")
+				Logger.Println("Default gateway not available. Scheduling retry")
 				r.scheduleRetry(e, r.lookupAgentHost)
 			}
 		}
@@ -81,13 +81,13 @@ func (r *fsmS) lookupAgentHost(e *f.Event) {
 func (r *fsmS) getDefaultGateway() string {
 	out, _ := exec.Command("/bin/sh", "-c", "/sbin/ip route | awk '/default/' | cut -d ' ' -f 3 | tr -d '\n'").Output()
 
-	log.debug("checking default gateway", string(out[:]))
+	Logger.Println("checking default gateway", string(out))
 
 	return string(out[:])
 }
 
 func (r *fsmS) checkHost(host string, cb func(b bool, host string)) {
-	log.debug("checking host", host)
+	Logger.Println("checking host", host)
 
 	header, err := r.agent.requestHeader(r.agent.makeHostURL(host, "/"), "GET", "Server")
 
@@ -95,7 +95,7 @@ func (r *fsmS) checkHost(host string, cb func(b bool, host string)) {
 }
 
 func (r *fsmS) lookupSuccess(host string) {
-	log.debug("agent lookup success", host)
+	Logger.Println("agent lookup success", host)
 
 	r.agent.setHost(host)
 	r.fsm.Event(ELookup)
@@ -107,12 +107,12 @@ func (r *fsmS) announceSensor(e *f.Event) {
 			r.agent.setFrom(from)
 			r.fsm.Event(EAnnounce)
 		} else {
-			log.error("Cannot announce sensor. Scheduling retry.")
+			Logger.Println("Cannot announce sensor. Scheduling retry.")
 			r.scheduleRetry(e, r.announceSensor)
 		}
 	}
 
-	log.debug("announcing sensor to the agent")
+	Logger.Println("announcing sensor to the agent")
 
 	go func(cb func(b bool, from *FromS)) {
 		d := &Discovery{
@@ -134,12 +134,12 @@ func (r *fsmS) testAgent(e *f.Event) {
 		if b {
 			r.fsm.Event(ETest)
 		} else {
-			log.error("Agent is not yet ready. Scheduling retry.")
+			Logger.Println("Agent is not yet ready. Scheduling retry.")
 			r.scheduleRetry(e, r.testAgent)
 		}
 	}
 
-	log.debug("testing communication with the agent")
+	Logger.Println("testing communication with the agent")
 
 	go func(cb func(b bool)) {
 		_, err := r.agent.head(r.agent.makeURL(AgentDataURL))
