@@ -103,7 +103,6 @@ func (r *fsmS) announceSensor(e *f.Event) {
 
 		log.error("Cannot announce sensor. Scheduling retry.")
 		r.scheduleRetry(e, r.announceSensor)
-
 	}
 
 	log.debug("announcing sensor to the agent")
