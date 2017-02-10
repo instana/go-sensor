@@ -2,10 +2,10 @@ package instana
 
 import (
 	"os"
-	"os/exec"
 	"strconv"
 	"time"
 
+	"github.com/instana/golang-sensor/gateway"
 	f "github.com/looplab/fsm"
 )
 
@@ -55,13 +55,13 @@ func (r *fsmS) lookupAgentHost(e *f.Event) {
 			r.lookupSuccess(host)
 			return
 		}
-		gateway := r.getDefaultGateway()
-		if gateway == "" {
-			log.error("Default gateway not available. Scheduling retry")
+		gw, err := gateway.GetDefault()
+		if nil != err {
+			log.error("Default gateway not available. Scheduling retry", err)
 			r.scheduleRetry(e, r.lookupAgentHost)
 			return
 		}
-		go r.checkHost(gateway, func(b bool, host string) {
+		go r.checkHost(gw, func(b bool, host string) {
 			if b {
 				r.lookupSuccess(host)
 				return
@@ -76,14 +76,6 @@ func (r *fsmS) lookupAgentHost(e *f.Event) {
 	} else {
 		go r.checkHost(AgentDefaultHost, cb)
 	}
-}
-
-func (r *fsmS) getDefaultGateway() string {
-	out, _ := exec.Command("/bin/sh", "-c", "/sbin/ip route | awk '/default/' | cut -d ' ' -f 3 | tr -d '\n'").Output()
-
-	log.debug("checking default gateway", string(out[:]))
-
-	return string(out[:])
 }
 
 func (r *fsmS) checkHost(host string, cb func(b bool, host string)) {
