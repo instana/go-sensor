@@ -21,7 +21,6 @@ const (
 type fsmS struct {
 	agent *agentS
 	fsm   *f.FSM
-	timer *time.Timer
 }
 
 func (r *fsmS) init() {
@@ -42,9 +41,10 @@ func (r *fsmS) init() {
 }
 
 func (r *fsmS) scheduleRetry(e *f.Event, cb func(e *f.Event)) {
-	r.timer = time.NewTimer(RETRY_PERIOD * time.Millisecond)
+	timer := time.NewTimer(RETRY_PERIOD * time.Millisecond)
 	go func() {
-		<-r.timer.C
+		defer timer.Stop()
+		<-timer.C
 		cb(e)
 	}()
 }
