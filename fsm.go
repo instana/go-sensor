@@ -41,7 +41,7 @@ func (r *fsmS) init() {
 }
 
 func (r *fsmS) scheduleRetry(e *f.Event, cb func(e *f.Event)) {
-	timer := time.NewTimer(RETRY_PERIOD * time.Millisecond)
+	timer := time.NewTimer(RetryPeriod * time.Millisecond)
 	go func() {
 		defer timer.Stop()
 		<-timer.C
