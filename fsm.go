@@ -53,22 +53,22 @@ func (r *fsmS) lookupAgentHost(e *f.Event) {
 	cb := func(b bool, host string) {
 		if b {
 			r.lookupSuccess(host)
-		} else {
-			gateway := r.getDefaultGateway()
-			if gateway != "" {
-				go r.checkHost(gateway, func(b bool, host string) {
-					if b {
-						r.lookupSuccess(host)
-					} else {
-						log.error("Cannot connect to the agent through localhost or default gateway. Scheduling retry.")
-						r.scheduleRetry(e, r.lookupAgentHost)
-					}
-				})
-			} else {
-				log.error("Default gateway not available. Scheduling retry")
-				r.scheduleRetry(e, r.lookupAgentHost)
-			}
+			return
 		}
+		gateway := r.getDefaultGateway()
+		if gateway == "" {
+			log.error("Default gateway not available. Scheduling retry")
+			r.scheduleRetry(e, r.lookupAgentHost)
+			return
+		}
+		go r.checkHost(gateway, func(b bool, host string) {
+			if b {
+				r.lookupSuccess(host)
+				return
+			}
+			log.error("Cannot connect to the agent through localhost or default gateway. Scheduling retry.")
+			r.scheduleRetry(e, r.lookupAgentHost)
+		})
 	}
 
 	if r.agent.sensor.options.AgentHost != "" {
@@ -106,10 +106,12 @@ func (r *fsmS) announceSensor(e *f.Event) {
 		if b {
 			r.agent.setFrom(from)
 			r.fsm.Event(EAnnounce)
-		} else {
-			log.error("Cannot announce sensor. Scheduling retry.")
-			r.scheduleRetry(e, r.announceSensor)
+			return
 		}
+
+		log.error("Cannot announce sensor. Scheduling retry.")
+		r.scheduleRetry(e, r.announceSensor)
+
 	}
 
 	log.debug("announcing sensor to the agent")
@@ -133,10 +135,9 @@ func (r *fsmS) testAgent(e *f.Event) {
 	cb := func(b bool) {
 		if b {
 			r.fsm.Event(ETest)
-		} else {
-			log.error("Agent is not yet ready. Scheduling retry.")
-			r.scheduleRetry(e, r.testAgent)
 		}
+		log.error("Agent is not yet ready. Scheduling retry.")
+		r.scheduleRetry(e, r.testAgent)
 	}
 
 	log.debug("testing communication with the agent")
