@@ -142,6 +142,14 @@ func (r *SpanRecorder) RecordSpan(rawSpan basictracer.RawSpan) {
 			From:      sensor.agent.from,
 			Data:      &data}
 
-		go sensor.agent.request(sensor.agent.makeURL(AgentTracesURL), "POST", []interface{}{span})
+		go r.send(sensor, span)
+	}
+}
+
+func (r *SpanRecorder) send(sensor *sensorS, span *Span) {
+	_, err := sensor.agent.request(sensor.agent.makeURL(AgentTracesURL), "POST", []interface{}{span})
+
+	if err != nil {
+		sensor.agent.reset()
 	}
 }

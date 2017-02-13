@@ -15,13 +15,15 @@ const (
 	EAnnounce = "announce"
 	ETest     = "test"
 
-	RetryPeriod = 30 * 1000
+	RetryPeriod    = 30 * 1000
+	MaximumRetries = 2
 )
 
 type fsmS struct {
-	agent *agentS
-	fsm   *f.FSM
-	timer *time.Timer
+	agent   *agentS
+	fsm     *f.FSM
+	timer   *time.Timer
+	retries int
 }
 
 func (r *fsmS) init() {
@@ -39,6 +41,9 @@ func (r *fsmS) init() {
 			"init":              r.lookupAgentHost,
 			"enter_unannounced": r.announceSensor,
 			"enter_announced":   r.testAgent})
+
+	r.retries = MaximumRetries
+	r.fsm.Event(EInit)
 }
 
 func (r *fsmS) scheduleRetry(e *f.Event, cb func(e *f.Event)) {
@@ -98,6 +103,7 @@ func (r *fsmS) lookupSuccess(host string) {
 	log.debug("agent lookup success", host)
 
 	r.agent.setHost(host)
+	r.retries = MaximumRetries
 	r.fsm.Event(ELookup)
 }
 
@@ -105,10 +111,16 @@ func (r *fsmS) announceSensor(e *f.Event) {
 	cb := func(b bool, from *FromS) {
 		if b {
 			r.agent.setFrom(from)
+			r.retries = MaximumRetries
 			r.fsm.Event(EAnnounce)
 		} else {
 			log.error("Cannot announce sensor. Scheduling retry.")
-			r.scheduleRetry(e, r.announceSensor)
+			r.retries--
+			if r.retries > 0 {
+				r.scheduleRetry(e, r.announceSensor)
+			} else {
+				r.fsm.Event(EInit)
+			}
 		}
 	}
 
@@ -132,10 +144,16 @@ func (r *fsmS) announceSensor(e *f.Event) {
 func (r *fsmS) testAgent(e *f.Event) {
 	cb := func(b bool) {
 		if b {
+			r.retries = MaximumRetries
 			r.fsm.Event(ETest)
 		} else {
 			log.error("Agent is not yet ready. Scheduling retry.")
-			r.scheduleRetry(e, r.testAgent)
+			r.retries--
+			if r.retries > 0 {
+				r.scheduleRetry(e, r.testAgent)
+			} else {
+				r.fsm.Event(EInit)
+			}
 		}
 	}
 
@@ -148,6 +166,7 @@ func (r *fsmS) testAgent(e *f.Event) {
 }
 
 func (r *fsmS) reset() {
+	r.retries = MaximumRetries
 	r.fsm.Event(EInit)
 }
 

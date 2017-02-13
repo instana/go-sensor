@@ -48,6 +48,7 @@ func main() {
 		LogLevel: instana.Debug}))
 
 	go forever()
+	go forever()
 	select {}
 }
 

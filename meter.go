@@ -78,10 +78,18 @@ func (r *meterS) init() {
 					Snapshot: s,
 					Metrics:  r.collectMetrics()}
 
-				go r.sensor.agent.request(r.sensor.agent.makeURL(AgentDataURL), "POST", d)
+				go r.send(d)
 			}
 		}
 	}()
+}
+
+func (r *meterS) send(d *EntityData) {
+	_, err := r.sensor.agent.request(r.sensor.agent.makeURL(AgentDataURL), "POST", d)
+
+	if err != nil {
+		r.sensor.agent.reset()
+	}
 }
 
 func (r *meterS) collectMemoryMetrics() *MemoryS {
