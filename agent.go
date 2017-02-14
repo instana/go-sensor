@@ -44,6 +44,7 @@ type agentS struct {
 
 func (r *agentS) init() {
 	r.fsm = r.initFsm()
+	r.setFrom(&FromS{})
 }
 
 func (r *agentS) makeURL(prefix string) string {
@@ -69,7 +70,7 @@ func (r *agentS) makeFullURL(host string, port int, prefix string) string {
 	buffer.WriteString(":")
 	buffer.WriteString(strconv.Itoa(port))
 	buffer.WriteString(prefix)
-	if r.from.PID != "" {
+	if prefix[len(prefix)-1:] == "." && r.from.PID != "" {
 		buffer.WriteString(r.from.PID)
 	}
 
@@ -116,10 +117,6 @@ func (r *agentS) fullRequestResponse(url string, method string, data interface{}
 			if err == nil {
 				if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 					err = errors.New(resp.Status)
-					log.error(err)
-					if r.canSend() {
-						r.reset()
-					}
 				} else {
 					defer resp.Body.Close()
 
@@ -135,30 +132,15 @@ func (r *agentS) fullRequestResponse(url string, method string, data interface{}
 						ret = resp.Header.Get(header)
 					}
 				}
-			} else {
-				log.error(err)
-
-				if resp == nil {
-					r.reset()
-				}
-			}
-		} else {
-			log.error(err)
-
-			if resp == nil {
-				r.reset()
 			}
 		}
-	} else {
+	}
+
+	if err != nil {
 		log.error(err)
 	}
 
 	return ret, err
-}
-
-func (r *agentS) reset() {
-	r.setFrom(&FromS{})
-	r.fsm.reset()
 }
 
 func (r *agentS) setFrom(from *FromS) {
@@ -169,6 +151,10 @@ func (r *agentS) setHost(host string) {
 	r.host = host
 }
 
+func (r *agentS) reset() {
+	r.fsm.reset()
+}
+
 func (r *sensorS) initAgent() *agentS {
 
 	log.debug("initializing agent")
@@ -176,7 +162,6 @@ func (r *sensorS) initAgent() *agentS {
 	ret := new(agentS)
 	ret.sensor = r
 	ret.init()
-	ret.reset()
 
 	return ret
 }
