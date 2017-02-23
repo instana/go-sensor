@@ -1,4 +1,5 @@
 # Instana Go Sensor
+golang-sensor requires Go version 1.7 or greater.
 
 The Instana Go sensor consists of two parts:
 
