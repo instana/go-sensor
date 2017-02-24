@@ -2,6 +2,7 @@ package instana
 
 import (
 	"os"
+	"sync"
 	"time"
 
 	"github.com/opentracing/basictracer-go"
@@ -9,6 +10,8 @@ import (
 )
 
 type SpanRecorder struct {
+	sync.RWMutex
+	spans []Span
 }
 
 type Span struct {
@@ -23,7 +26,10 @@ type Span struct {
 }
 
 func NewRecorder() *SpanRecorder {
-	return new(SpanRecorder)
+	r := new(SpanRecorder)
+	r.init()
+
+	return r
 }
 
 func getTag(rawSpan basictracer.RawSpan, tag string) interface{} {
@@ -89,6 +95,24 @@ func collectLogs(rawSpan basictracer.RawSpan) map[uint64]map[string]interface{} 
 	return logs
 }
 
+func (r *SpanRecorder) init() {
+	r.reset()
+	ticker := time.NewTicker(1 * time.Second)
+	go func() {
+		for range ticker.C {
+			log.debug("Sending spans to agent", len(r.spans))
+
+			r.send()
+		}
+	}()
+}
+
+func (r *SpanRecorder) reset() {
+	r.Lock()
+	defer r.Unlock()
+	r.spans = make([]Span, 0, sensor.options.MaxBufferedSpans)
+}
+
 func (r *SpanRecorder) RecordSpan(rawSpan basictracer.RawSpan) {
 	var data = &Data{}
 	var tp string
@@ -131,25 +155,40 @@ func (r *SpanRecorder) RecordSpan(rawSpan basictracer.RawSpan) {
 		parentID = &rawSpan.ParentSpanID
 	}
 
-	if sensor.agent.canSend() {
-		span := &Span{
-			TraceID:   rawSpan.Context.TraceID,
-			ParentID:  parentID,
-			SpanID:    rawSpan.Context.SpanID,
-			Timestamp: uint64(rawSpan.Start.UnixNano()) / uint64(time.Millisecond),
-			Duration:  uint64(rawSpan.Duration) / uint64(time.Millisecond),
-			Name:      tp,
-			From:      sensor.agent.from,
-			Data:      &data}
+	r.Lock()
+	defer r.Unlock()
 
-		go r.send(sensor, span)
+	if len(r.spans) == sensor.options.MaxBufferedSpans {
+		r.spans = r.spans[1:]
+	}
+
+	r.spans = append(r.spans, Span{
+		TraceID:   rawSpan.Context.TraceID,
+		ParentID:  parentID,
+		SpanID:    rawSpan.Context.SpanID,
+		Timestamp: uint64(rawSpan.Start.UnixNano()) / uint64(time.Millisecond),
+		Duration:  uint64(rawSpan.Duration) / uint64(time.Millisecond),
+		Name:      tp,
+		From:      sensor.agent.from,
+		Data:      &data})
+
+	if len(r.spans) == sensor.options.ForceTransmissionStartingAt {
+		log.debug("Forcing spans to agent", len(r.spans))
+
+		r.send()
 	}
 }
 
-func (r *SpanRecorder) send(sensor *sensorS, span *Span) {
-	_, err := sensor.agent.request(sensor.agent.makeURL(AgentTracesURL), "POST", []interface{}{span})
+func (r *SpanRecorder) send() {
+	if sensor.agent.canSend() {
+		go func() {
+			_, err := sensor.agent.request(sensor.agent.makeURL(AgentTracesURL), "POST", r.spans)
 
-	if err != nil {
-		sensor.agent.reset()
+			r.reset()
+
+			if err != nil {
+				sensor.agent.reset()
+			}
+		}()
 	}
 }

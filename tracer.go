@@ -99,11 +99,12 @@ func NewTracer() ot.Tracer {
 }
 
 func NewTracerWithOptions(options *Options) ot.Tracer {
+	InitSensor(options)
+
 	return NewTracerWithEverything(options, NewRecorder())
 }
 
 func NewTracerWithEverything(options *Options, recorder bt.SpanRecorder) ot.Tracer {
-	InitSensor(options)
 	ret := &tracerS{options: bt.Options{
 		Recorder:       recorder,
 		ShouldSample:   shouldSample,
