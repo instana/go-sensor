@@ -30,6 +30,20 @@ func getTag(rawSpan basictracer.RawSpan, tag string) interface{} {
 	return rawSpan.Tags[tag]
 }
 
+func getIntTag(rawSpan basictracer.RawSpan, tag string) int {
+	d := rawSpan.Tags[tag]
+	if d == nil {
+		return -1
+	}
+
+	r, ok := d.(int)
+	if !ok {
+		return -1
+	}
+
+	return r
+}
+
 func getStringTag(rawSpan basictracer.RawSpan, tag string) string {
 	d := getTag(rawSpan, tag)
 	if d == nil {
@@ -93,15 +107,17 @@ func (r *SpanRecorder) RecordSpan(rawSpan basictracer.RawSpan) {
 	var data = &Data{}
 	var tp string
 	h := getHostName(rawSpan)
-	status := getTag(rawSpan, string(ext.HTTPStatusCode))
-	if status != nil {
+	status := getIntTag(rawSpan, string(ext.HTTPStatusCode))
+	if status >= 0 {
 		tp = getHTTPType(rawSpan)
 		data = &Data{HTTP: &HTTPData{
 			Host:   h,
 			URL:    getStringTag(rawSpan, string(ext.HTTPUrl)),
 			Method: getStringTag(rawSpan, string(ext.HTTPMethod)),
-			Status: status.(int)}}
+			Status: status}}
 	} else {
+		log.debug("No HTTP status code provided or invalid status code, opting out to RPC")
+
 		tp = RPC
 		data = &Data{RPC: &RPCData{
 			Host: h,

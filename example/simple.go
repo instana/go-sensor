@@ -21,7 +21,7 @@ func simple(ctx context.Context) {
 	parentSpan.SetTag(string(ext.PeerHostname), "localhost")
 	parentSpan.SetTag(string(ext.HTTPUrl), "/golang/simple/one")
 	parentSpan.SetTag(string(ext.HTTPMethod), "GET")
-	parentSpan.SetTag(string(ext.HTTPStatusCode), 200)
+	parentSpan.SetTag(string(ext.HTTPStatusCode), uint16(200))
 	parentSpan.LogFields(
 		log.String("foo", "bar"))
 
