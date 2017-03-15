@@ -1,6 +1,8 @@
 package instana
 
 import (
+	"fmt"
+	"net"
 	"os"
 	"os/exec"
 	"strconv"
@@ -127,10 +129,33 @@ func (r *fsmS) announceSensor(e *f.Event) {
 	log.debug("announcing sensor to the agent")
 
 	go func(cb func(b bool, from *FromS)) {
+
 		d := &Discovery{
 			PID:  os.Getpid(),
 			Name: os.Args[0],
 			Args: os.Args[1:]}
+
+		var socket net.Conn
+		if _, err := os.Stat("/proc"); err == nil {
+			socket, err := net.Dial("tcp", r.agent.host+":42699")
+			if err != nil {
+				log.error(err)
+			}
+
+			tcpConn := socket.(*net.TCPConn)
+			f, err := tcpConn.File()
+
+			if err != nil {
+				log.error(err)
+			} else {
+				d.Fd = fmt.Sprintf("%v", f.Fd())
+
+				link := fmt.Sprintf("/proc/%d/fd/%d", os.Getpid(), f.Fd())
+				if _, err := os.Stat(link); err == nil {
+					d.Inode, _ = os.Readlink(link)
+				}
+			}
+		}
 
 		ret := &agentResponse{}
 		_, err := r.agent.requestResponse(r.agent.makeURL(AgentDiscoveryURL), "PUT", d, ret)
@@ -138,6 +163,10 @@ func (r *fsmS) announceSensor(e *f.Event) {
 			&FromS{
 				PID:    strconv.Itoa(int(ret.Pid)),
 				HostID: ret.HostID})
+
+		if socket != nil {
+			socket.Close()
+		}
 	}(cb)
 }
 
