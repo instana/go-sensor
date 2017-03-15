@@ -82,10 +82,10 @@ func getServiceName(rawSpan basictracer.RawSpan) string {
 func getHTTPType(rawSpan basictracer.RawSpan) string {
 	kind := getStringTag(rawSpan, string(ext.SpanKind))
 	if kind == string(ext.SpanKindRPCServerEnum) {
-		return HTTPClient
+		return HTTPServer
 	}
 
-	return HTTPServer
+	return HTTPClient
 }
 
 func collectLogs(rawSpan basictracer.RawSpan) map[uint64]map[string]interface{} {
