@@ -130,10 +130,9 @@ func (r *fsmS) announceSensor(e *f.Event) {
 
 	go func(cb func(b bool, from *FromS)) {
 
-		d := &Discovery{
-			PID:  os.Getpid(),
-			Name: os.Args[0],
-			Args: os.Args[1:]}
+		d := &Discovery{PID: os.Getpid()}
+
+		d.Name, d.Args = getCommandLine()
 
 		var socket net.Conn
 		if _, err := os.Stat("/proc"); err == nil {
