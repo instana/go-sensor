@@ -129,29 +129,32 @@ func (r *fsmS) announceSensor(e *f.Event) {
 	log.debug("announcing sensor to the agent")
 
 	go func(cb func(b bool, from *FromS)) {
+		defer func() {
+			if r := recover(); r != nil {
+				log.debug("Announce recovered:", r)
+			}
+		}()
 
 		d := &Discovery{PID: os.Getpid()}
-
 		d.Name, d.Args = getCommandLine()
 
-		var socket net.Conn
 		if _, err := os.Stat("/proc"); err == nil {
-			socket, err := net.Dial("tcp", r.agent.host+":42699")
-			if err != nil {
-				log.error(err)
-			}
+			if addr, err := net.ResolveTCPAddr("tcp", r.agent.host+":42699"); err == nil {
+				if tcpConn, err := net.DialTCP("tcp", nil, addr); err == nil {
+					defer tcpConn.Close()
 
-			tcpConn := socket.(*net.TCPConn)
-			f, err := tcpConn.File()
+					f, err := tcpConn.File()
 
-			if err != nil {
-				log.error(err)
-			} else {
-				d.Fd = fmt.Sprintf("%v", f.Fd())
+					if err != nil {
+						log.error(err)
+					} else {
+						d.Fd = fmt.Sprintf("%v", f.Fd())
 
-				link := fmt.Sprintf("/proc/%d/fd/%d", os.Getpid(), f.Fd())
-				if _, err := os.Stat(link); err == nil {
-					d.Inode, _ = os.Readlink(link)
+						link := fmt.Sprintf("/proc/%d/fd/%d", os.Getpid(), f.Fd())
+						if _, err := os.Stat(link); err == nil {
+							d.Inode, _ = os.Readlink(link)
+						}
+					}
 				}
 			}
 		}
@@ -162,10 +165,6 @@ func (r *fsmS) announceSensor(e *f.Event) {
 			&FromS{
 				PID:    strconv.Itoa(int(ret.Pid)),
 				HostID: ret.HostID})
-
-		if socket != nil {
-			socket.Close()
-		}
 	}(cb)
 }
 
