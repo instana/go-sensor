@@ -4,3 +4,8 @@ go:
   - 1.6.4
   - 1.7.5
   - 1.8
+
+before_script:
+  # Remove the examples directory - we don't need it
+  # and test would otherwise try to descend into it (and fail)
+  - rm -rf examples
