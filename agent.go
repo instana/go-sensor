@@ -25,9 +25,11 @@ type agentResponse struct {
 }
 
 type Discovery struct {
-	PID  int      `json:"pid"`
-	Name string   `json:"name"`
-	Args []string `json:"args"`
+	PID   int      `json:"pid"`
+	Name  string   `json:"name"`
+	Args  []string `json:"args"`
+	Fd    string   `json:"fd"`
+	Inode string   `json:"inode"`
 }
 
 type FromS struct {

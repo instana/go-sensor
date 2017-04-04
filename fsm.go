@@ -1,6 +1,8 @@
 package instana
 
 import (
+	"fmt"
+	"net"
 	"os"
 	"os/exec"
 	"strconv"
@@ -127,10 +129,35 @@ func (r *fsmS) announceSensor(e *f.Event) {
 	log.debug("announcing sensor to the agent")
 
 	go func(cb func(b bool, from *FromS)) {
-		d := &Discovery{
-			PID:  os.Getpid(),
-			Name: os.Args[0],
-			Args: os.Args[1:]}
+		defer func() {
+			if r := recover(); r != nil {
+				log.debug("Announce recovered:", r)
+			}
+		}()
+
+		d := &Discovery{PID: os.Getpid()}
+		d.Name, d.Args = getCommandLine()
+
+		if _, err := os.Stat("/proc"); err == nil {
+			if addr, err := net.ResolveTCPAddr("tcp", r.agent.host+":42699"); err == nil {
+				if tcpConn, err := net.DialTCP("tcp", nil, addr); err == nil {
+					defer tcpConn.Close()
+
+					f, err := tcpConn.File()
+
+					if err != nil {
+						log.error(err)
+					} else {
+						d.Fd = fmt.Sprintf("%v", f.Fd())
+
+						link := fmt.Sprintf("/proc/%d/fd/%d", os.Getpid(), f.Fd())
+						if _, err := os.Stat(link); err == nil {
+							d.Inode, _ = os.Readlink(link)
+						}
+					}
+				}
+			}
+		}
 
 		ret := &agentResponse{}
 		_, err := r.agent.requestResponse(r.agent.makeURL(AgentDiscoveryURL), "PUT", d, ret)

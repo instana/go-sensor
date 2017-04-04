@@ -1,3 +1,5 @@
+![golang banner 2017-03-15](https://cloud.githubusercontent.com/assets/395132/23948351/f360d228-0982-11e7-9b17-6a6146207ded.png)
+
 # Instana Go Sensor
 golang-sensor requires Go version 1.7 or greater.
 

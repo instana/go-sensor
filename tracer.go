@@ -8,6 +8,7 @@ import (
 )
 
 const (
+	// MaxLogsPerSpan The maximum number of logs allowed on a span.
 	MaxLogsPerSpan = 2
 )
 
@@ -94,16 +95,19 @@ func shouldSample(traceID uint64) bool {
 	return false
 }
 
+// NewTracer Get a new Tracer with the default options applied.
 func NewTracer() ot.Tracer {
 	return NewTracerWithOptions(&Options{})
 }
 
+// NewTracerWithOptions Get a new Tracer with the specified options.
 func NewTracerWithOptions(options *Options) ot.Tracer {
 	InitSensor(options)
 
 	return NewTracerWithEverything(options, NewRecorder())
 }
 
+// NewTracerWithEverything Get a new Tracer with the works.
 func NewTracerWithEverything(options *Options, recorder bt.SpanRecorder) ot.Tracer {
 	ret := &tracerS{options: bt.Options{
 		Recorder:       recorder,
