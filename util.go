@@ -22,9 +22,9 @@ func randomID() uint64 {
 }
 
 func getCommandLine() (string, []string) {
-	var cmdline_path string = "/proc/" + strconv.Itoa(os.Getpid()) + "/cmdline"
+	var cmdlinePath string = "/proc/" + strconv.Itoa(os.Getpid()) + "/cmdline"
 
-	cmdline, err := ioutil.ReadFile(cmdline_path)
+	cmdline, err := ioutil.ReadFile(cmdlinePath)
 
 	if err != nil {
 		log.debug("No /proc.  Returning OS reported cmdline")
