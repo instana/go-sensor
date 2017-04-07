@@ -5,6 +5,11 @@ import (
 	"path/filepath"
 )
 
+const (
+	MaxBufferedSpans            = 1000
+	ForceTransmissionStartingAt = 500
+)
+
 type sensorS struct {
 	meter       *meterS
 	agent       *agentS
@@ -28,6 +33,14 @@ func (r *sensorS) setOptions(options *Options) {
 	r.options = options
 	if r.options == nil {
 		r.options = &Options{}
+	}
+
+	if r.options.MaxBufferedSpans == 0 {
+		r.options.MaxBufferedSpans = MaxBufferedSpans
+	}
+
+	if r.options.ForceTransmissionStartingAt == 0 {
+		r.options.ForceTransmissionStartingAt = ForceTransmissionStartingAt
 	}
 }
 
