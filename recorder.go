@@ -138,18 +138,19 @@ func (r *SpanRecorder) RecordSpan(rawSpan basictracer.RawSpan) {
 			Host:   h,
 			URL:    getStringTag(rawSpan, string(ext.HTTPUrl)),
 			Method: getStringTag(rawSpan, string(ext.HTTPMethod)),
-			Status: status}}
+			Status: status},
+			SDK: &SDKData{Name: tp}}
 	} else {
 		log.debug("No HTTP status code provided or invalid status code, opting out to RPC")
 
 		tp = RPC
 		data = &Data{RPC: &RPCData{
 			Host: h,
-			Call: rawSpan.Operation}}
+			Call: rawSpan.Operation},
+			SDK: &SDKData{Name: tp}}
 	}
 
-	data.Custom = &CustomData{Tags: rawSpan.Tags,
-		Logs: collectLogs(rawSpan)}
+	data.Custom = &CustomData{Tags: rawSpan.Tags, Logs: collectLogs(rawSpan)}
 
 	baggage := make(map[string]string)
 	rawSpan.Context.ForeachBaggageItem(func(k string, v string) bool {
@@ -184,7 +185,7 @@ func (r *SpanRecorder) RecordSpan(rawSpan basictracer.RawSpan) {
 		SpanID:    rawSpan.Context.SpanID,
 		Timestamp: uint64(rawSpan.Start.UnixNano()) / uint64(time.Millisecond),
 		Duration:  uint64(rawSpan.Duration) / uint64(time.Millisecond),
-		Name:      tp,
+		Name:      "sdk",
 		From:      sensor.agent.from,
 		Data:      &data})
 
