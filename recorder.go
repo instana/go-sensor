@@ -106,13 +106,14 @@ func getServiceName(rawSpan basictracer.RawSpan) string {
 
 func getSpanKind(rawSpan basictracer.RawSpan) string {
 	kind := getStringTag(rawSpan, string(ext.SpanKind))
-	if kind == string(ext.SpanKindRPCServerEnum) || kind == "consumer" {
+
+	switch kind {
+	case string(ext.SpanKindRPCServerEnum), "consumer", "entry":
 		return "entry"
-	} else if kind == string(ext.SpanKindRPCClientEnum) || kind == "producer" {
+	case string(ext.SpanKindRPCClientEnum), "producer", "exit":
 		return "exit"
-	} else {
-		return ""
 	}
+	return ""
 }
 
 func collectLogs(rawSpan basictracer.RawSpan) map[uint64]map[string]interface{} {
