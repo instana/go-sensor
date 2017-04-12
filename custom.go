@@ -5,6 +5,7 @@ import (
 )
 
 type CustomData struct {
-	Tags ot.Tags                           `json:"tags,omitempty"`
-	Logs map[uint64]map[string]interface{} `json:"logs,omitempty"`
+	Tags    ot.Tags                           `json:"tags,omitempty"`
+	Logs    map[uint64]map[string]interface{} `json:"logs,omitempty"`
+	Baggage map[string]string                 `json:"baggage,omitempty"`
 }
