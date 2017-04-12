@@ -27,11 +27,17 @@ type Span struct {
 }
 
 // NewRecorder Establish a new span recorder
-func NewRecorder(testMode bool) *SpanRecorder {
+func NewRecorder() *SpanRecorder {
 	r := new(SpanRecorder)
-	r.testMode = testMode
 	r.init()
+	return r
+}
 
+// NewTestRecorder Establish a new span recorder used for testing
+func NewTestRecorder() *SpanRecorder {
+	r := new(SpanRecorder)
+	r.testMode = true
+	r.init()
 	return r
 }
 

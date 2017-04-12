@@ -8,12 +8,10 @@ import (
 )
 
 func TestGetServiceName(t *testing.T) {
-	opts := Options{
-		TestMode: true,
-		LogLevel: Debug}
+	opts := Options{LogLevel: Debug}
 
 	InitSensor(&opts)
-	recorder := NewRecorder(opts.TestMode)
+	recorder := NewTestRecorder()
 	tracer := NewTracerWithEverything(&opts, recorder)
 
 	sp := tracer.StartSpan("http-client")
@@ -30,12 +28,10 @@ func TestGetServiceName(t *testing.T) {
 }
 
 func TestSpanKind(t *testing.T) {
-	opts := Options{
-		TestMode: true,
-		LogLevel: Debug}
+	opts := Options{LogLevel: Debug}
 
 	InitSensor(&opts)
-	recorder := NewRecorder(opts.TestMode)
+	recorder := NewTestRecorder()
 	tracer := NewTracerWithEverything(&opts, recorder)
 
 	sp := tracer.StartSpan("http-client")

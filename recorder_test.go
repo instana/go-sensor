@@ -11,17 +11,15 @@ import (
 )
 
 func TestRecorderSDKReporting(t *testing.T) {
-	opts := instana.Options{
-		TestMode: true,
-		LogLevel: instana.Debug}
+	opts := instana.Options{LogLevel: instana.Debug}
 
-	recorder := instana.NewRecorder(opts.TestMode)
+	recorder := instana.NewTestRecorder()
 	tracer := instana.NewTracerWithEverything(&opts, recorder)
 
 	sp := tracer.StartSpan("http-client")
 	sp.SetTag(string(ext.SpanKind), "exit")
 	sp.SetTag("http.status", 200)
-	sp.SetTag("http.url", "https://www.instana.com/product/#technologies")
+	sp.SetTag("http.url", "https://www.instana.com/product/")
 	sp.SetTag(string(ext.HTTPMethod), "GET")
 
 	sp.Finish()
