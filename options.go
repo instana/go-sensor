@@ -7,5 +7,4 @@ type Options struct {
 	MaxBufferedSpans            int
 	ForceTransmissionStartingAt int
 	LogLevel                    int
-	TestMode                    bool
 }
