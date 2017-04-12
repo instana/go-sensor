@@ -1,6 +1,6 @@
 package instana
 
 type Data struct {
-	Service string   `json:"service"`
-	SDK     *SDKData `json:"sdk,omitempty"`
+	Service string   `json:"service,omitempty"`
+	SDK     *SDKData `json:"sdk"`
 }
