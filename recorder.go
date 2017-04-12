@@ -94,9 +94,9 @@ func getHostName(rawSpan basictracer.RawSpan) string {
 func getServiceName(rawSpan basictracer.RawSpan) string {
 	// ServiceName can be determined from multiple sources and has
 	// the following priority (preferred first):
-	//   1. Added to the span via the OT component tag
-	//   2. If span has http.url, then return ""
-	//   2. Specified in the tracer instantiation
+	//   1. If added to the span via the OT component tag
+	//   2. If added to the span via the OT http.url tag
+	//   3. Specified in the tracer instantiation via Service option
 	component := getStringTag(rawSpan, string(ext.Component))
 
 	if len(component) == 0 {
