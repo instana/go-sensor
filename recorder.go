@@ -1,6 +1,7 @@
 package instana
 
 import (
+	"fmt"
 	"os"
 	"sync"
 	"time"
@@ -51,7 +52,11 @@ func (r *SpanRecorder) GetSpans() []Span {
 }
 
 func getTag(rawSpan basictracer.RawSpan, tag string) interface{} {
-	return rawSpan.Tags[tag]
+	var x, ok = rawSpan.Tags[tag]
+	if !ok {
+		x = ""
+	}
+	return x
 }
 
 func getIntTag(rawSpan basictracer.RawSpan, tag string) int {
@@ -69,12 +74,11 @@ func getIntTag(rawSpan basictracer.RawSpan, tag string) int {
 }
 
 func getStringTag(rawSpan basictracer.RawSpan, tag string) string {
-	d := getTag(rawSpan, tag)
+	d := rawSpan.Tags[tag]
 	if d == nil {
 		return ""
 	}
-
-	return d.(string)
+	return fmt.Sprint(d)
 }
 
 func getHostName(rawSpan basictracer.RawSpan) string {
