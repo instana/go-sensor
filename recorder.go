@@ -99,13 +99,14 @@ func getServiceName(rawSpan basictracer.RawSpan) string {
 	//   3. Specified in the tracer instantiation via Service option
 	component := getStringTag(rawSpan, string(ext.Component))
 
-	if len(component) == 0 {
+	if len(component) > 0 {
+		return component
+	} else if len(component) == 0 {
 		httpURL := getStringTag(rawSpan, string(ext.HTTPUrl))
 
 		if len(httpURL) > 0 {
 			return httpURL
 		}
-		return component
 	}
 	return sensor.serviceName
 }
