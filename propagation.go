@@ -26,17 +26,47 @@ func (r *textMapPropagator) inject(spanContext ot.SpanContext, opaqueCarrier int
 		return ot.ErrInvalidSpanContext
 	}
 
+	roCarrier, ok := opaqueCarrier.(ot.TextMapReader)
+	if !ok {
+		return ot.ErrInvalidCarrier
+	}
+
+	// Handle pre-existing case-sensitive keys
+	var (
+		exstFieldT = FieldT
+		exstFieldS = FieldS
+		exstFieldL = FieldL
+		exstFieldB = FieldB
+	)
+
+	roCarrier.ForeachKey(func(k, v string) error {
+		switch strings.ToLower(k) {
+		case FieldT:
+			exstFieldT = k
+		case FieldS:
+			exstFieldS = k
+		case FieldL:
+			exstFieldL = k
+		default:
+			if strings.HasPrefix(strings.ToLower(k), FieldB) {
+				exstFieldB = string([]rune(k)[0:len(FieldB)])
+			}
+		}
+
+		return nil
+	})
+
 	carrier, ok := opaqueCarrier.(ot.TextMapWriter)
 	if !ok {
 		return ot.ErrInvalidCarrier
 	}
 
-	carrier.Set(FieldT, strconv.FormatUint(sc.TraceID, 16))
-	carrier.Set(FieldS, strconv.FormatUint(sc.SpanID, 16))
-	carrier.Set(FieldL, strconv.Itoa(1))
+	carrier.Set(exstFieldT, strconv.FormatUint(sc.TraceID, 16))
+	carrier.Set(exstFieldS, strconv.FormatUint(sc.SpanID, 16))
+	carrier.Set(exstFieldL, strconv.Itoa(1))
 
 	for k, v := range sc.Baggage {
-		carrier.Set(FieldB+k, v)
+		carrier.Set(exstFieldB+k, v)
 	}
 
 	return nil
