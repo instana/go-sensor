@@ -10,6 +10,7 @@ import (
 	"github.com/instana/golang-sensor"
 	bt "github.com/opentracing/basictracer-go"
 	opentracing "github.com/opentracing/opentracing-go"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestSpanPropagator(t *testing.T) {
@@ -72,4 +73,64 @@ func TestSpanPropagator(t *testing.T) {
 			t.Fatalf("%d: wanted %+v, got %+v", i, spew.Sdump(exp), spew.Sdump(sp))
 		}
 	}
+}
+
+func TestCaseSensitiveHeaderPropagation(t *testing.T) {
+	var (
+		op                 = "test"
+		spanParentIdBase64 = uint64(4884)
+		spanParentIdString = "1314"
+	)
+
+	recorder := bt.NewInMemoryRecorder()
+	tracer := instana.NewTracerWithEverything(&instana.Options{}, recorder)
+
+	// Simulate an existing root span
+	metadata := make(map[string]string)
+	metadata["X-Instana-T"] = spanParentIdString
+	metadata["X-Instana-S"] = spanParentIdString
+	metadata["X-Instana-L"] = "1"
+	metadata["X-Instana-B-Foo"] = "bar"
+
+	tmc1 := opentracing.TextMapCarrier(metadata)
+	tmc2 := opentracing.TextMapCarrier(make(map[string]string))
+
+	for k, v := range tmc1 {
+		tmc2[k] = v
+	}
+
+	tests := []struct {
+		typ, carrier interface{}
+	}{
+		{opentracing.HTTPHeaders, tmc1},
+		{opentracing.TextMap, tmc2},
+	}
+
+	for i, test := range tests {
+		// Extract the existing context
+		injectedContext, err := tracer.Extract(test.typ, test.carrier)
+		if err != nil {
+			t.Fatalf("%d: %v", i, err)
+		}
+		// Start a new child span and overwrite the baggage key
+		child := tracer.StartSpan(
+			op,
+			opentracing.ChildOf(injectedContext))
+		child.SetBaggageItem("foo", "baz")
+
+		// Inject the context into the metadata
+		if err := tracer.Inject(child.Context(), test.typ, test.carrier); err != nil {
+			t.Fatalf("%d: %v", i, err)
+		}
+
+		child.Finish()
+		assert.Equal(t, child.BaggageItem("foo"), "baz")
+
+	}
+
+	for _, s := range recorder.GetSpans() {
+		assert.Equal(t, spanParentIdBase64, s.ParentSpanID)
+		assert.NotEqual(t, spanParentIdBase64, s.Context.SpanID)
+	}
+
 }
