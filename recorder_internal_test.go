@@ -180,3 +180,20 @@ func TestGetStringTag(t *testing.T) {
 	tag = getStringTag(rawSpan, "float")
 	assert.EqualValues(t, "2.3420493", tag, "geStringTag should return string for non-string tag values")
 }
+
+func TestGetHostName(t *testing.T) {
+	opts := Options{LogLevel: Debug}
+
+	InitSensor(&opts)
+	recorder := NewTestRecorder()
+	tracer := NewTracerWithEverything(&opts, recorder)
+
+	sp := tracer.StartSpan("http-client")
+	sp.SetTag("int", 1)
+	sp.SetTag("float", 2.3420493)
+	sp.SetTag("two", "twotwo")
+	sp.Finish()
+	rawSpan := sp.(*spanS).raw
+	hostname := getHostName(rawSpan)
+	assert.True(t, len(hostname) > 0, "must return a valid string value")
+}
