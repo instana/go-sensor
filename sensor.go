@@ -61,9 +61,12 @@ func (r *sensorS) configureServiceName() {
 // InitSensor Intializes the sensor (without tracing) to begin collecting
 // and reporting metrics.
 func InitSensor(options *Options) {
-	sensor = new(sensorS)
-	sensor.initLog()
-	sensor.init(options)
-
-	log.debug("initialized sensor")
+	if sensor == nil {
+		sensor = new(sensorS)
+		sensor.initLog()
+		sensor.init(options)
+		log.debug("initialized sensor")
+	} else {
+		log.debug("not initializing already init'd sensor")
+	}
 }
