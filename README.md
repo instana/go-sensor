@@ -22,7 +22,7 @@ Once initialised, the sensor will try to connect to the given Instana agent and 
 
 In case you want to use the OpenTracing tracer, it will automatically initialise the sensor and thus also activate the metrics stream. To activate the global tracer, run for example
 
-	ot.InitGlobalTracer(instana.NewTracerWithOptions(&instana.Options{
+	ot.InitGlobalTracer(instana.NewTracerWithOptions(&instana.TracerOptions{
 		Service:  SERVICE,
 		LogLevel: instana.DEBUG}))
 

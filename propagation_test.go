@@ -8,15 +8,15 @@ import (
 
 	"github.com/davecgh/go-spew/spew"
 	"github.com/instana/golang-sensor"
-	bt "github.com/opentracing/basictracer-go"
 	opentracing "github.com/opentracing/opentracing-go"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestSpanPropagator(t *testing.T) {
 	const op = "test"
-	recorder := bt.NewInMemoryRecorder()
-	tracer := instana.NewTracerWithEverything(&instana.Options{}, recorder)
+	opts := instana.Options{LogLevel: instana.Debug}
+	recorder := instana.NewTestRecorder()
+	tracer := instana.NewTracerWithEverything(&opts, recorder)
 
 	sp := tracer.StartSpan(op)
 	sp.SetBaggageItem("foo", "bar")
@@ -54,18 +54,19 @@ func TestSpanPropagator(t *testing.T) {
 
 	// The last span is the original one.
 	exp, spans := spans[len(spans)-1], spans[:len(spans)-1]
-	exp.Duration = time.Duration(123)
-	exp.Start = time.Time{}.Add(1)
+	exp.Duration = uint64(time.Duration(123))
+	exp.Raw.Start = time.Time{}.Add(1)
+
 	for i, sp := range spans {
-		if a, e := sp.ParentSpanID, exp.Context.SpanID; a != e {
+		if a, e := sp.Raw.ParentSpanID, exp.Raw.Context.SpanID; a != e {
 			t.Fatalf("%d: ParentSpanID %d does not match expectation %d", i, a, e)
 		} else {
 			// Prepare for comparison.
-			sp.Context.SpanID, sp.ParentSpanID = exp.Context.SpanID, 0
-			sp.Duration, sp.Start = exp.Duration, exp.Start
+			sp.Raw.Context.SpanID, sp.Raw.ParentSpanID = exp.Raw.Context.SpanID, 0
+			sp.Duration, sp.Raw.Start = exp.Duration, exp.Raw.Start
 		}
 
-		if a, e := sp.Context.TraceID, exp.Context.TraceID; a != e {
+		if a, e := sp.Raw.Context.TraceID, exp.Raw.Context.TraceID; a != e {
 			t.Fatalf("%d: TraceID changed from %d to %d", i, e, a)
 		}
 
@@ -82,8 +83,9 @@ func TestCaseSensitiveHeaderPropagation(t *testing.T) {
 		spanParentIdString = "1314"
 	)
 
-	recorder := bt.NewInMemoryRecorder()
-	tracer := instana.NewTracerWithEverything(&instana.Options{}, recorder)
+	opts := instana.Options{LogLevel: instana.Debug}
+	recorder := instana.NewTestRecorder()
+	tracer := instana.NewTracerWithEverything(&opts, recorder)
 
 	// Simulate an existing root span
 	metadata := make(map[string]string)
@@ -129,8 +131,8 @@ func TestCaseSensitiveHeaderPropagation(t *testing.T) {
 	}
 
 	for _, s := range recorder.GetSpans() {
-		assert.Equal(t, spanParentIdBase64, s.ParentSpanID)
-		assert.NotEqual(t, spanParentIdBase64, s.Context.SpanID)
+		assert.Equal(t, spanParentIdBase64, s.Raw.ParentSpanID)
+		assert.NotEqual(t, spanParentIdBase64, s.Raw.Context.SpanID)
 	}
 
 }

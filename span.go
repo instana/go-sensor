@@ -4,7 +4,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/opentracing/basictracer-go"
 	ot "github.com/opentracing/opentracing-go"
 	otlog "github.com/opentracing/opentracing-go/log"
 )
@@ -12,7 +11,7 @@ import (
 type spanS struct {
 	tracer *tracerS
 	sync.Mutex
-	raw basictracer.RawSpan
+	raw RawSpan
 }
 
 func (r *spanS) BaggageItem(key string) string {
@@ -60,7 +59,8 @@ func (r *spanS) FinishWithOptions(opts ot.FinishOptions) {
 	}
 
 	r.raw.Duration = duration
-	r.tracer.options.Recorder.RecordSpan(r.raw)
+	// FIXME
+	//r.tracer.options.Recorder.RecordSpan(r.raw)
 }
 
 func (r *spanS) appendLog(lr ot.LogRecord) {

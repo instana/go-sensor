@@ -3,7 +3,6 @@ package instana
 import (
 	"time"
 
-	bt "github.com/opentracing/basictracer-go"
 	ot "github.com/opentracing/opentracing-go"
 )
 
@@ -13,7 +12,7 @@ const (
 )
 
 type tracerS struct {
-	options        bt.Options
+	options        TracerOptions
 	textPropagator *textMapPropagator
 }
 
@@ -56,7 +55,7 @@ Loop:
 	for _, ref := range opts.References {
 		switch ref.Type {
 		case ot.ChildOfRef, ot.FollowsFromRef:
-			refCtx := ref.ReferencedContext.(bt.SpanContext)
+			refCtx := ref.ReferencedContext.(SpanContext)
 			span.raw.Context.TraceID = refCtx.TraceID
 			span.raw.Context.SpanID = randomID()
 			span.raw.Context.Sampled = refCtx.Sampled
@@ -108,10 +107,10 @@ func NewTracerWithOptions(options *Options) ot.Tracer {
 }
 
 // NewTracerWithEverything Get a new Tracer with the works.
-func NewTracerWithEverything(options *Options, recorder bt.SpanRecorder) ot.Tracer {
+func NewTracerWithEverything(options *Options, recorder SpanRecorder) ot.Tracer {
 	InitSensor(options)
-	ret := &tracerS{options: bt.Options{
-		Recorder:       recorder,
+	ret := &tracerS{options: TracerOptions{
+		Recorder:       &recorder,
 		ShouldSample:   shouldSample,
 		MaxLogsPerSpan: MaxLogsPerSpan}}
 	ret.textPropagator = &textMapPropagator{ret}

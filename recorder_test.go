@@ -12,7 +12,6 @@ import (
 
 func TestRecorderSDKReporting(t *testing.T) {
 	opts := instana.Options{LogLevel: instana.Debug}
-
 	recorder := instana.NewTestRecorder()
 	tracer := instana.NewTracerWithEverything(&opts, recorder)
 

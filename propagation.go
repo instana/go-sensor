@@ -4,7 +4,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/opentracing/basictracer-go"
 	ot "github.com/opentracing/opentracing-go"
 )
 
@@ -21,7 +20,7 @@ const (
 )
 
 func (r *textMapPropagator) inject(spanContext ot.SpanContext, opaqueCarrier interface{}) error {
-	sc, ok := spanContext.(basictracer.SpanContext)
+	sc, ok := spanContext.(SpanContext)
 	if !ok {
 		return ot.ErrInvalidSpanContext
 	}
@@ -127,7 +126,7 @@ func (r *textMapPropagator) finishExtract(err error,
 		return nil, ot.ErrSpanContextCorrupted
 	}
 
-	return basictracer.SpanContext{
+	return SpanContext{
 		TraceID: traceID,
 		SpanID:  spanID,
 		Sampled: false, //TODO: add configurable sampling strategy

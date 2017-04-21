@@ -40,3 +40,8 @@ func getCommandLine() (string, []string) {
 	log.debug("cmdline says:", parts[0], parts[1:])
 	return parts[0], parts[1:]
 }
+
+func abs(x int64) int64 {
+	y := x >> 63
+	return (x + y) ^ y
+}
