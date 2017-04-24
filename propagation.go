@@ -60,8 +60,8 @@ func (r *textMapPropagator) inject(spanContext ot.SpanContext, opaqueCarrier int
 		return ot.ErrInvalidCarrier
 	}
 
-	carrier.Set(exstFieldT, strconv.FormatUint(sc.TraceID, 16))
-	carrier.Set(exstFieldS, strconv.FormatUint(sc.SpanID, 16))
+	carrier.Set(exstFieldT, strconv.FormatInt(sc.TraceID, 16))
+	carrier.Set(exstFieldS, strconv.FormatInt(sc.SpanID, 16))
 	carrier.Set(exstFieldL, strconv.Itoa(1))
 
 	for k, v := range sc.Baggage {
@@ -78,20 +78,20 @@ func (r *textMapPropagator) extract(opaqueCarrier interface{}) (ot.SpanContext, 
 	}
 
 	fieldCount := 0
-	var traceID, spanID uint64
+	var traceID, spanID int64
 	var err error
 	baggage := make(map[string]string)
 	err = carrier.ForeachKey(func(k, v string) error {
 		switch strings.ToLower(k) {
 		case FieldT:
 			fieldCount++
-			traceID, err = strconv.ParseUint(v, 16, 64)
+			traceID, err = strconv.ParseInt(v, 16, 64)
 			if err != nil {
 				return ot.ErrSpanContextCorrupted
 			}
 		case FieldS:
 			fieldCount++
-			spanID, err = strconv.ParseUint(v, 16, 64)
+			spanID, err = strconv.ParseInt(v, 16, 64)
 			if err != nil {
 				return ot.ErrSpanContextCorrupted
 			}
@@ -111,8 +111,8 @@ func (r *textMapPropagator) extract(opaqueCarrier interface{}) (ot.SpanContext, 
 
 func (r *textMapPropagator) finishExtract(err error,
 	fieldCount int,
-	traceID uint64,
-	spanID uint64,
+	traceID int64,
+	spanID int64,
 	baggage map[string]string) (ot.SpanContext, error) {
 	if err != nil {
 		return nil, err

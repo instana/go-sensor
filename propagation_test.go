@@ -79,7 +79,7 @@ func TestSpanPropagator(t *testing.T) {
 func TestCaseSensitiveHeaderPropagation(t *testing.T) {
 	var (
 		op                 = "test"
-		spanParentIdBase64 = uint64(4884)
+		spanParentIdBase64 = int64(4884)
 		spanParentIdString = "1314"
 	)
 

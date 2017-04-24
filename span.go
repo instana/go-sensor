@@ -59,8 +59,7 @@ func (r *spanS) FinishWithOptions(opts ot.FinishOptions) {
 	}
 
 	r.raw.Duration = duration
-	// FIXME
-	//r.tracer.options.Recorder.RecordSpan(r.raw)
+	r.tracer.options.Recorder.RecordSpan(r.raw)
 }
 
 func (r *spanS) appendLog(lr ot.LogRecord) {

@@ -14,7 +14,7 @@ type RawSpan struct {
 
 	// The SpanID of this SpanContext's first intra-trace reference (i.e.,
 	// "parent"), or 0 if there is no parent.
-	ParentSpanID uint64
+	ParentSpanID int64
 
 	// The name of the "operation" this span is an instance of. (Called a "span
 	// name" in some implementations)

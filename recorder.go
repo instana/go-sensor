@@ -26,9 +26,9 @@ type InstanaRecorder struct {
 }
 
 type Span struct {
-	TraceID   uint64      `json:"t"`
-	ParentID  *uint64     `json:"p,omitempty"`
-	SpanID    uint64      `json:"s"`
+	TraceID   int64       `json:"t"`
+	ParentID  *int64      `json:"p,omitempty"`
+	SpanID    int64       `json:"s"`
 	Timestamp uint64      `json:"ts"`
 	Duration  uint64      `json:"d"`
 	Name      string      `json:"n"`
@@ -106,7 +106,7 @@ func (r *InstanaRecorder) RecordSpan(rawSpan RawSpan) {
 
 	data.Service = getServiceName(rawSpan)
 
-	var parentID *uint64
+	var parentID *int64
 	if rawSpan.ParentSpanID == 0 {
 		parentID = nil
 	} else {

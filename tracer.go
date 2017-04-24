@@ -90,7 +90,7 @@ func (r *tracerS) startSpanInternal(span *spanS, operationName string, startTime
 	return span
 }
 
-func shouldSample(traceID uint64) bool {
+func shouldSample(traceID int64) bool {
 	return false
 }
 
@@ -110,7 +110,7 @@ func NewTracerWithOptions(options *Options) ot.Tracer {
 func NewTracerWithEverything(options *Options, recorder SpanRecorder) ot.Tracer {
 	InitSensor(options)
 	ret := &tracerS{options: TracerOptions{
-		Recorder:       &recorder,
+		Recorder:       recorder,
 		ShouldSample:   shouldSample,
 		MaxLogsPerSpan: MaxLogsPerSpan}}
 	ret.textPropagator = &textMapPropagator{ret}
