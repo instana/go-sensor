@@ -166,6 +166,12 @@ func (r *SpanRecorder) reset() {
 }
 
 func (r *SpanRecorder) RecordSpan(rawSpan basictracer.RawSpan) {
+	// If we're not announced and not in test mode then just
+	// return
+	if !r.testMode && !sensor.agent.canSend() {
+		return
+	}
+
 	var data = &Data{}
 	kind := getSpanKind(rawSpan)
 
