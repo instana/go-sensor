@@ -145,15 +145,15 @@ func collectLogs(rawSpan basictracer.RawSpan) map[uint64]map[string]interface{} 
 func (r *SpanRecorder) init() {
 	r.reset()
 
-	if r.testMode {
-		log.debug("Recorder in test mode.  Not reporting spans to the backend.")
-	} else {
+	if !r.testMode {
 		ticker := time.NewTicker(1 * time.Second)
 		go func() {
 			for range ticker.C {
-				log.debug("Sending spans to agent", len(r.spans))
-
-				r.send()
+				// Only attempt to send spans if we're announced.
+				if sensor.agent.canSend() {
+					log.debug("Sending spans to agent", len(r.spans))
+					r.send()
+				}
 			}
 		}()
 	}
