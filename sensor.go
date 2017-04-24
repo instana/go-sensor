@@ -66,7 +66,5 @@ func InitSensor(options *Options) {
 		sensor.initLog()
 		sensor.init(options)
 		log.debug("initialized sensor")
-	} else {
-		log.debug("not initializing already init'd sensor")
 	}
 }
