@@ -34,6 +34,7 @@ The Instana tracer will remap OpenTracing HTTP headers into Instana Headers, so 
 
 Following examples are included in the `examples` folder:
 
-* **simple** - demoes generally how to use the tracer
-* **http** - demoes how http server and client should be instrumented
-* **rpc** - demoes the fallback to RPC
+* **ot-simple/simple.go** - demoes generally how to use the tracer
+* **webserver/http.go** - demoes how http server and client should be instrumented
+* **rpc/rpc.go** - demoes the fallback to RPC
+* **event/event.go** - demoes the event API
