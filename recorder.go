@@ -145,18 +145,21 @@ func collectLogs(rawSpan basictracer.RawSpan) map[uint64]map[string]interface{} 
 func (r *SpanRecorder) init() {
 	r.reset()
 
-	if !r.testMode {
-		ticker := time.NewTicker(1 * time.Second)
-		go func() {
-			for range ticker.C {
-				// Only attempt to send spans if we're announced.
-				if sensor.agent.canSend() {
-					log.debug("Sending spans to agent", len(r.spans))
-					r.send()
-				}
-			}
-		}()
+	if r.testMode {
+		return
 	}
+
+	ticker := time.NewTicker(1 * time.Second)
+	go func() {
+		for range ticker.C {
+			// Only attempt to send spans if we're announced and if the buffer is not empty
+			if sensor.agent.canSend() && len(r.spans) > 0 {
+				log.debug("Sending spans to agent", len(r.spans))
+				r.send()
+			}
+		}
+	}()
+
 }
 
 func (r *SpanRecorder) reset() {
@@ -217,7 +220,11 @@ func (r *SpanRecorder) RecordSpan(rawSpan basictracer.RawSpan) {
 		From:      sensor.agent.from,
 		Data:      &data})
 
-	if !r.testMode && (len(r.spans) == sensor.options.ForceTransmissionStartingAt) {
+	if r.testMode || !sensor.agent.canSend() {
+		return
+	}
+
+	if len(r.spans) >= sensor.options.ForceTransmissionStartingAt {
 		log.debug("Forcing spans to agent", len(r.spans))
 
 		r.send()
@@ -225,15 +232,13 @@ func (r *SpanRecorder) RecordSpan(rawSpan basictracer.RawSpan) {
 }
 
 func (r *SpanRecorder) send() {
-	if sensor.agent.canSend() && !r.testMode {
-		go func() {
-			_, err := sensor.agent.request(sensor.agent.makeURL(AgentTracesURL), "POST", r.spans)
+	go func() {
+		_, err := sensor.agent.request(sensor.agent.makeURL(AgentTracesURL), "POST", r.spans)
 
-			r.reset()
+		r.reset()
 
-			if err != nil {
-				sensor.agent.reset()
-			}
-		}()
-	}
+		if err != nil {
+			sensor.agent.reset()
+		}
+	}()
 }
