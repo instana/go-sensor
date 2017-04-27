@@ -78,8 +78,8 @@ func TestSpanPropagator(t *testing.T) {
 func TestCaseSensitiveHeaderPropagation(t *testing.T) {
 	var (
 		op                 = "test"
-		spanParentIdBase64 = uint64(4884)
-		spanParentIdString = "1314"
+		spanParentIDBase64 = uint64(4884)
+		spanParentIDString = "1314"
 	)
 
 	recorder := bt.NewInMemoryRecorder()
@@ -87,8 +87,8 @@ func TestCaseSensitiveHeaderPropagation(t *testing.T) {
 
 	// Simulate an existing root span
 	metadata := make(map[string]string)
-	metadata["X-Instana-T"] = spanParentIdString
-	metadata["X-Instana-S"] = spanParentIdString
+	metadata["X-Instana-T"] = spanParentIDString
+	metadata["X-Instana-S"] = spanParentIDString
 	metadata["X-Instana-L"] = "1"
 	metadata["X-Instana-B-Foo"] = "bar"
 
@@ -129,8 +129,8 @@ func TestCaseSensitiveHeaderPropagation(t *testing.T) {
 	}
 
 	for _, s := range recorder.GetSpans() {
-		assert.Equal(t, spanParentIdBase64, s.ParentSpanID)
-		assert.NotEqual(t, spanParentIdBase64, s.Context.SpanID)
+		assert.Equal(t, spanParentIDBase64, s.ParentSpanID)
+		assert.NotEqual(t, spanParentIDBase64, s.Context.SpanID)
 	}
 
 }
