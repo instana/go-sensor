@@ -1,8 +1,6 @@
 package instana
 
 import (
-	"bytes"
-	"encoding/json"
 	"fmt"
 	"os"
 	"sync"
@@ -65,17 +63,20 @@ func (r *InstanaRecorder) init() {
 	r.Reset()
 
 	if r.testMode {
-		log.debug("Recorder in test mode.  Not reporting spans to the backend.")
-	} else {
-		ticker := time.NewTicker(1 * time.Second)
-		go func() {
-			for range ticker.C {
-				log.debug("Sending spans to agent", len(r.spans))
+		return
+	}
 
+	ticker := time.NewTicker(1 * time.Second)
+	go func() {
+		for range ticker.C {
+			// Only attempt to send spans if we're announced and if the buffer is not empty
+			if sensor.agent.canSend() && len(r.spans) > 0 {
+				log.debug("Sending spans to agent", len(r.spans))
 				r.send()
 			}
-		}()
-	}
+		}
+	}()
+
 }
 
 func (r *InstanaRecorder) Reset() {
@@ -85,6 +86,12 @@ func (r *InstanaRecorder) Reset() {
 }
 
 func (r *InstanaRecorder) RecordSpan(rawSpan RawSpan) {
+	// If we're not announced and not in test mode then just
+	// return
+	if !r.testMode && !sensor.agent.canSend() {
+		return
+	}
+
 	var data = &Data{}
 	kind := getSpanKind(rawSpan)
 
@@ -131,7 +138,11 @@ func (r *InstanaRecorder) RecordSpan(rawSpan RawSpan) {
 		Data:      &data,
 		Raw:       rawSpan})
 
-	if !r.testMode && (len(r.spans) == sensor.options.ForceTransmissionStartingAt) {
+	if r.testMode || !sensor.agent.canSend() {
+		return
+	}
+
+	if len(r.spans) >= sensor.options.ForceTransmissionStartingAt {
 		log.debug("Forcing spans to agent", len(r.spans))
 
 		r.send()
@@ -139,21 +150,17 @@ func (r *InstanaRecorder) RecordSpan(rawSpan RawSpan) {
 }
 
 func (r *InstanaRecorder) send() {
-	if sensor.agent.canSend() && !r.testMode {
-		go func() {
-			j, _ := json.MarshalIndent(r.spans, "", "  ")
-			log.debug("spans:", bytes.NewBuffer(j))
+	go func() {
+		_, err := sensor.agent.request(sensor.agent.makeURL(AgentTracesURL), "POST", r.spans)
 
-			_, err := sensor.agent.request(sensor.agent.makeURL(AgentTracesURL), "POST", r.spans)
+		r.Reset()
 
-			r.Reset()
-
-			if err != nil {
-				sensor.agent.reset()
-			}
-		}()
-	}
+		if err != nil {
+			sensor.agent.reset()
+		}
+	}()
 }
+
 func getTag(rawSpan RawSpan, tag string) interface{} {
 	var x, ok = rawSpan.Tags[tag]
 	if !ok {

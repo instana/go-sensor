@@ -117,10 +117,11 @@ func (r *agentS) fullRequestResponse(url string, method string, data interface{}
 			client := &http.Client{Timeout: 5 * time.Second}
 			resp, err = client.Do(req)
 			if err == nil {
+				defer resp.Body.Close()
+
 				if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 					err = errors.New(resp.Status)
 				} else {
-					defer resp.Body.Close()
 
 					log.debug("agent response:", url, resp.Status)
 
