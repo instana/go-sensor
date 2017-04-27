@@ -12,7 +12,9 @@ The Instana Go sensor consists of two parts:
 
 To use sensor only without tracing ability, import the `instana` package and run
 
-	instana.InitSensor(opt)
+```Go
+instana.InitSensor(opt)
+```
 
 in your main function. The init function takes an `Options` object with the following optional fields:
 
@@ -26,9 +28,11 @@ Once initialised, the sensor will try to connect to the given Instana agent and 
 
 In case you want to use the OpenTracing tracer, it will automatically initialise the sensor and thus also activate the metrics stream. To activate the global tracer, run for example
 
-	ot.InitGlobalTracer(instana.NewTracerWithOptions(&instana.Options{
-		Service:  SERVICE,
-		LogLevel: instana.DEBUG}))
+```Go
+ot.InitGlobalTracer(instana.NewTracerWithOptions(&instana.Options{
+	Service:  SERVICE,
+	LogLevel: instana.DEBUG}))
+```
 
 in your main functions. The tracer takes same options that the sensor takes for initialisation, described above.
 
