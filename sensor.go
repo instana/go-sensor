@@ -6,8 +6,8 @@ import (
 )
 
 const (
-	MaxBufferedSpans            = 1000
-	ForceTransmissionStartingAt = 500
+	maxBufferedSpans            = 1000
+	forceTransmissionStartingAt = 500
 )
 
 type sensorS struct {
@@ -35,12 +35,12 @@ func (r *sensorS) setOptions(options *Options) {
 		r.options = &Options{}
 	}
 
-	if r.options.MaxBufferedSpans == 0 {
-		r.options.MaxBufferedSpans = MaxBufferedSpans
+	if r.options.maxBufferedSpans == 0 {
+		r.options.maxBufferedSpans = maxBufferedSpans
 	}
 
-	if r.options.ForceTransmissionStartingAt == 0 {
-		r.options.ForceTransmissionStartingAt = ForceTransmissionStartingAt
+	if r.options.forceTransmissionStartingAt == 0 {
+		r.options.forceTransmissionStartingAt = forceTransmissionStartingAt
 	}
 }
 

@@ -13,6 +13,8 @@ type SpanRecorder interface {
 	RecordSpan(span *spanS)
 }
 
+// Recorder accepts spans, processes and queues them
+// for delivery to the backend.
 type Recorder struct {
 	sync.RWMutex
 	spans    []jsonSpan
@@ -62,12 +64,14 @@ func (r *Recorder) init() {
 	}()
 }
 
+// Reset Drops all queued spans to sent to the backend
 func (r *Recorder) Reset() {
 	r.Lock()
 	defer r.Unlock()
-	r.spans = make([]jsonSpan, 0, sensor.options.MaxBufferedSpans)
+	r.spans = make([]jsonSpan, 0, sensor.options.maxBufferedSpans)
 }
 
+// RecordSpan accepts spans to be recorded and sent to the backend
 func (r *Recorder) RecordSpan(span *spanS) {
 	// If we're not announced and not in test mode then just
 	// return
@@ -106,7 +110,7 @@ func (r *Recorder) RecordSpan(span *spanS) {
 	r.Lock()
 	defer r.Unlock()
 
-	if len(r.spans) == sensor.options.MaxBufferedSpans {
+	if len(r.spans) == sensor.options.maxBufferedSpans {
 		r.spans = r.spans[1:]
 	}
 
@@ -124,7 +128,7 @@ func (r *Recorder) RecordSpan(span *spanS) {
 		return
 	}
 
-	if len(r.spans) >= sensor.options.ForceTransmissionStartingAt {
+	if len(r.spans) >= sensor.options.forceTransmissionStartingAt {
 		log.debug("Forcing spans to agent", len(r.spans))
 
 		r.send()
@@ -133,7 +137,7 @@ func (r *Recorder) RecordSpan(span *spanS) {
 
 func (r *Recorder) send() {
 	go func() {
-		_, err := sensor.agent.request(sensor.agent.makeURL(AgentTracesURL), "POST", r.spans)
+		_, err := sensor.agent.request(sensor.agent.makeURL(agentTracesURL), "POST", r.spans)
 
 		r.Reset()
 

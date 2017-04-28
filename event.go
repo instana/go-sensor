@@ -43,5 +43,5 @@ func sendEvent(event *EventData) {
 	log.debug(event)
 
 	//we do fire & forget here, because the whole pid dance isn't necessary to send events
-	go sensor.agent.request(sensor.agent.makeURL(AgentEventURL), "POST", event)
+	go sensor.agent.request(sensor.agent.makeURL(agentEventURL), "POST", event)
 }

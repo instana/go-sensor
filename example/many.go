@@ -45,7 +45,7 @@ func simple(ctx context.Context) {
 func main() {
 	ot.InitGlobalTracer(instana.NewTracerWithOptions(&instana.Options{
 		Service:                     Service,
-		ForceTransmissionStartingAt: 10000,
+		forceTransmissionStartingAt: 10000,
 		LogLevel:                    instana.Debug}))
 
 	go forever()

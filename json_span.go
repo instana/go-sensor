@@ -11,7 +11,7 @@ type jsonSpan struct {
 	Timestamp uint64    `json:"ts"`
 	Duration  uint64    `json:"d"`
 	Name      string    `json:"n"`
-	From      *FromS    `json:"f"`
+	From      *fromS    `json:"f"`
 	Data      *jsonData `json:"data"`
 }
 
