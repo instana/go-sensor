@@ -56,14 +56,14 @@ Loop:
 		switch ref.Type {
 		case ot.ChildOfRef, ot.FollowsFromRef:
 			refCtx := ref.ReferencedContext.(SpanContext)
-			span.raw.Context.TraceID = refCtx.TraceID
-			span.raw.Context.SpanID = randomID()
-			span.raw.Context.Sampled = refCtx.Sampled
-			span.raw.ParentSpanID = refCtx.SpanID
+			span.context.TraceID = refCtx.TraceID
+			span.context.SpanID = randomID()
+			span.context.Sampled = refCtx.Sampled
+			span.ParentSpanID = refCtx.SpanID
 			if l := len(refCtx.Baggage); l > 0 {
-				span.raw.Context.Baggage = make(map[string]string, l)
+				span.context.Baggage = make(map[string]string, l)
 				for k, v := range refCtx.Baggage {
-					span.raw.Context.Baggage[k] = v
+					span.context.Baggage[k] = v
 				}
 			}
 
@@ -71,10 +71,10 @@ Loop:
 		}
 	}
 
-	if span.raw.Context.TraceID == 0 {
-		span.raw.Context.SpanID = randomID()
-		span.raw.Context.TraceID = span.raw.Context.SpanID
-		span.raw.Context.Sampled = r.options.ShouldSample(span.raw.Context.TraceID)
+	if span.context.TraceID == 0 {
+		span.context.SpanID = randomID()
+		span.context.TraceID = span.context.SpanID
+		span.context.Sampled = r.options.ShouldSample(span.context.TraceID)
 	}
 
 	return r.startSpanInternal(span, operationName, startTime, tags)
@@ -82,10 +82,10 @@ Loop:
 
 func (r *tracerS) startSpanInternal(span *spanS, operationName string, startTime time.Time, tags ot.Tags) ot.Span {
 	span.tracer = r
-	span.raw.Operation = operationName
-	span.raw.Start = startTime
-	span.raw.Duration = -1
-	span.raw.Tags = tags
+	span.Operation = operationName
+	span.Start = startTime
+	span.Duration = -1
+	span.Tags = tags
 
 	return span
 }

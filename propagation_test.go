@@ -2,11 +2,9 @@ package instana_test
 
 import (
 	"net/http"
-	"reflect"
 	"testing"
 	"time"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/instana/golang-sensor"
 	opentracing "github.com/opentracing/opentracing-go"
 	"github.com/stretchr/testify/assert"
@@ -55,23 +53,19 @@ func TestSpanPropagator(t *testing.T) {
 	// The last span is the original one.
 	exp, spans := spans[len(spans)-1], spans[:len(spans)-1]
 	exp.Duration = uint64(time.Duration(123))
-	exp.Raw.Start = time.Time{}.Add(1)
+	// exp.Timestamp = uint64(time.Time{}.Add(1))
 
-	for i, sp := range spans {
-		if a, e := sp.Raw.ParentSpanID, exp.Raw.Context.SpanID; a != e {
-			t.Fatalf("%d: ParentSpanID %d does not match expectation %d", i, a, e)
+	for i, span := range spans {
+		if a, e := *span.ParentID, exp.SpanID; a != e {
+			t.Fatalf("%d: ParentID %d does not match expectation %d", i, a, e)
 		} else {
 			// Prepare for comparison.
-			sp.Raw.Context.SpanID, sp.Raw.ParentSpanID = exp.Raw.Context.SpanID, 0
-			sp.Duration, sp.Raw.Start = exp.Duration, exp.Raw.Start
+			span.SpanID, span.ParentID = exp.SpanID, nil
+			span.Duration, span.Timestamp = exp.Duration, exp.Timestamp
 		}
 
-		if a, e := sp.Raw.Context.TraceID, exp.Raw.Context.TraceID; a != e {
+		if a, e := span.TraceID, exp.TraceID; a != e {
 			t.Fatalf("%d: TraceID changed from %d to %d", i, e, a)
-		}
-
-		if !reflect.DeepEqual(exp, sp) {
-			t.Fatalf("%d: wanted %+v, got %+v", i, spew.Sdump(exp), spew.Sdump(sp))
 		}
 	}
 }
@@ -131,8 +125,8 @@ func TestCaseSensitiveHeaderPropagation(t *testing.T) {
 	}
 
 	for _, s := range recorder.GetSpans() {
-		assert.Equal(t, spanParentIdBase64, s.Raw.ParentSpanID)
-		assert.NotEqual(t, spanParentIdBase64, s.Raw.Context.SpanID)
+		assert.Equal(t, spanParentIdBase64, *s.ParentID)
+		assert.NotEqual(t, spanParentIdBase64, s.SpanID)
 	}
 
 }

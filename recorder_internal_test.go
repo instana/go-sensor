@@ -21,8 +21,7 @@ func TestGetServiceNameByTracer(t *testing.T) {
 
 	sp.Finish()
 
-	rawSpan := sp.(*spanS).raw
-	serviceName := getServiceName(rawSpan)
+	serviceName := sp.(*spanS).getServiceName()
 	assert.EqualValues(t, "tracer-named-service", serviceName, "Wrong Service Name")
 }
 
@@ -33,16 +32,15 @@ func TestGetServiceNameByHTTP(t *testing.T) {
 	recorder := NewTestRecorder()
 	tracer := NewTracerWithEverything(&opts, recorder)
 
-	sp := tracer.StartSpan("http-client")
-	sp.SetTag(string(ext.SpanKind), "exit")
-	sp.SetTag("http.status", 200)
-	sp.SetTag("http.url", "https://www.instana.com/product/")
-	sp.SetTag(string(ext.HTTPMethod), "GET")
+	span := tracer.StartSpan("http-client")
+	span.SetTag(string(ext.SpanKind), "exit")
+	span.SetTag("http.status", 200)
+	span.SetTag("http.url", "https://www.instana.com/product/")
+	span.SetTag(string(ext.HTTPMethod), "GET")
 
-	sp.Finish()
+	span.Finish()
 
-	rawSpan := sp.(*spanS).raw
-	serviceName := getServiceName(rawSpan)
+	serviceName := span.(*spanS).getServiceName()
 	assert.EqualValues(t, "https://www.instana.com/product/", serviceName, "Wrong Service Name")
 }
 
@@ -53,16 +51,15 @@ func TestGetServiceNameByComponent(t *testing.T) {
 	recorder := NewTestRecorder()
 	tracer := NewTracerWithEverything(&opts, recorder)
 
-	sp := tracer.StartSpan("http-client")
-	sp.SetTag(string(ext.SpanKind), "exit")
-	sp.SetTag("http.status", 200)
-	sp.SetTag("component", "component-named-service")
-	sp.SetTag(string(ext.HTTPMethod), "GET")
+	span := tracer.StartSpan("http-client")
+	span.SetTag(string(ext.SpanKind), "exit")
+	span.SetTag("http.status", 200)
+	span.SetTag("component", "component-named-service")
+	span.SetTag(string(ext.HTTPMethod), "GET")
 
-	sp.Finish()
+	span.Finish()
 
-	rawSpan := sp.(*spanS).raw
-	serviceName := getServiceName(rawSpan)
+	serviceName := span.(*spanS).getServiceName()
 	assert.EqualValues(t, "component-named-service", serviceName, "Wrong Service Name")
 }
 
@@ -74,35 +71,31 @@ func TestSpanKind(t *testing.T) {
 	tracer := NewTracerWithEverything(&opts, recorder)
 
 	// Exit
-	sp := tracer.StartSpan("http-client")
-	sp.SetTag(string(ext.SpanKind), "exit")
-	sp.Finish()
-	rawSpan := sp.(*spanS).raw
-	kind := getSpanKind(rawSpan)
+	span := tracer.StartSpan("http-client")
+	span.SetTag(string(ext.SpanKind), "exit")
+	span.Finish()
+	kind := span.(*spanS).getSpanKind()
 	assert.EqualValues(t, "exit", kind, "Wrong span kind")
 
 	// Entry
-	sp = tracer.StartSpan("http-client")
-	sp.SetTag(string(ext.SpanKind), "entry")
-	sp.Finish()
-	rawSpan = sp.(*spanS).raw
-	kind = getSpanKind(rawSpan)
+	span = tracer.StartSpan("http-client")
+	span.SetTag(string(ext.SpanKind), "entry")
+	span.Finish()
+	kind = span.(*spanS).getSpanKind()
 	assert.EqualValues(t, "entry", kind, "Wrong span kind")
 
 	// Consumer
-	sp = tracer.StartSpan("http-client")
-	sp.SetTag(string(ext.SpanKind), "consumer")
-	sp.Finish()
-	rawSpan = sp.(*spanS).raw
-	kind = getSpanKind(rawSpan)
+	span = tracer.StartSpan("http-client")
+	span.SetTag(string(ext.SpanKind), "consumer")
+	span.Finish()
+	kind = span.(*spanS).getSpanKind()
 	assert.EqualValues(t, "entry", kind, "Wrong span kind")
 
 	// Producer
-	sp = tracer.StartSpan("http-client")
-	sp.SetTag(string(ext.SpanKind), "producer")
-	sp.Finish()
-	rawSpan = sp.(*spanS).raw
-	kind = getSpanKind(rawSpan)
+	span = tracer.StartSpan("http-client")
+	span.SetTag(string(ext.SpanKind), "producer")
+	span.Finish()
+	kind = span.(*spanS).getSpanKind()
 	assert.EqualValues(t, "exit", kind, "Wrong span kind")
 }
 
@@ -114,17 +107,15 @@ func TestGetTag(t *testing.T) {
 	tracer := NewTracerWithEverything(&opts, recorder)
 
 	// Exit
-	sp := tracer.StartSpan("http-client")
-	sp.SetTag("foo", "bar")
-	sp.Finish()
-	rawSpan := sp.(*spanS).raw
-	tag := getTag(rawSpan, "foo")
+	span := tracer.StartSpan("http-client")
+	span.SetTag("foo", "bar")
+	span.Finish()
+	tag := span.(*spanS).getTag("foo")
 	assert.EqualValues(t, "bar", tag, "getTag unexpected return value")
 
-	sp = tracer.StartSpan("http-client")
-	sp.Finish()
-	rawSpan = sp.(*spanS).raw
-	tag = getTag(rawSpan, "magic")
+	span = tracer.StartSpan("http-client")
+	span.Finish()
+	tag = span.(*spanS).getTag("magic")
 	assert.EqualValues(t, "", tag, "getTag should return empty string for non-existent tags")
 }
 
@@ -135,20 +126,19 @@ func TestGetIntTag(t *testing.T) {
 	recorder := NewTestRecorder()
 	tracer := NewTracerWithEverything(&opts, recorder)
 
-	sp := tracer.StartSpan("http-client")
-	sp.SetTag("one", 1)
-	sp.SetTag("two", "twotwo")
-	sp.Finish()
-	rawSpan := sp.(*spanS).raw
-	tag := getIntTag(rawSpan, "one")
+	span := tracer.StartSpan("http-client")
+	span.SetTag("one", 1)
+	span.SetTag("two", "twotwo")
+	span.Finish()
+	tag := span.(*spanS).getIntTag("one")
 	assert.EqualValues(t, 1, tag, "geIntTag unexpected return value")
 
 	// Non-existent
-	tag = getIntTag(rawSpan, "thirtythree")
+	tag = span.(*spanS).getIntTag("thirtythree")
 	assert.EqualValues(t, -1, tag, "geIntTag should return -1 for non-existent tags")
 
 	// Non-Int value (it's a string)
-	tag = getIntTag(rawSpan, "two")
+	tag = span.(*spanS).getIntTag("two")
 	assert.EqualValues(t, -1, tag, "geIntTag should return -1 for non-int tags")
 }
 
@@ -159,25 +149,24 @@ func TestGetStringTag(t *testing.T) {
 	recorder := NewTestRecorder()
 	tracer := NewTracerWithEverything(&opts, recorder)
 
-	sp := tracer.StartSpan("http-client")
-	sp.SetTag("int", 1)
-	sp.SetTag("float", 2.3420493)
-	sp.SetTag("two", "twotwo")
-	sp.Finish()
-	rawSpan := sp.(*spanS).raw
-	tag := getStringTag(rawSpan, "two")
+	span := tracer.StartSpan("http-client")
+	span.SetTag("int", 1)
+	span.SetTag("float", 2.3420493)
+	span.SetTag("two", "twotwo")
+	span.Finish()
+	tag := span.(*spanS).getStringTag("two")
 	assert.EqualValues(t, "twotwo", tag, "geStringTag unexpected return value")
 
 	// Non-existent
-	tag = getStringTag(rawSpan, "thirtythree")
+	tag = span.(*spanS).getStringTag("thirtythree")
 	assert.EqualValues(t, "", tag, "getStringTag should return empty string for non-existent tags")
 
 	// Non-string value (it's an int)
-	tag = getStringTag(rawSpan, "int")
+	tag = span.(*spanS).getStringTag("int")
 	assert.EqualValues(t, "1", tag, "geStringTag should return string for non-string tag values")
 
 	// Non-string value (it's an float)
-	tag = getStringTag(rawSpan, "float")
+	tag = span.(*spanS).getStringTag("float")
 	assert.EqualValues(t, "2.3420493", tag, "geStringTag should return string for non-string tag values")
 }
 
@@ -188,12 +177,11 @@ func TestGetHostName(t *testing.T) {
 	recorder := NewTestRecorder()
 	tracer := NewTracerWithEverything(&opts, recorder)
 
-	sp := tracer.StartSpan("http-client")
-	sp.SetTag("int", 1)
-	sp.SetTag("float", 2.3420493)
-	sp.SetTag("two", "twotwo")
-	sp.Finish()
-	rawSpan := sp.(*spanS).raw
-	hostname := getHostName(rawSpan)
+	span := tracer.StartSpan("http-client")
+	span.SetTag("int", 1)
+	span.SetTag("float", 2.3420493)
+	span.SetTag("two", "twotwo")
+	span.Finish()
+	hostname := span.(*spanS).getHostName()
 	assert.True(t, len(hostname) > 0, "must return a valid string value")
 }
