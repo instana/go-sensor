@@ -73,8 +73,8 @@ func TestSpanPropagator(t *testing.T) {
 func TestCaseSensitiveHeaderPropagation(t *testing.T) {
 	var (
 		op                 = "test"
-		spanParentIdBase64 = int64(4884)
-		spanParentIdString = "1314"
+		spanParentIDBase64 = int64(4884)
+		spanParentIDString = "1314"
 	)
 
 	opts := instana.Options{LogLevel: instana.Debug}
@@ -83,8 +83,8 @@ func TestCaseSensitiveHeaderPropagation(t *testing.T) {
 
 	// Simulate an existing root span
 	metadata := make(map[string]string)
-	metadata["X-Instana-T"] = spanParentIdString
-	metadata["X-Instana-S"] = spanParentIdString
+	metadata["X-Instana-T"] = spanParentIDString
+	metadata["X-Instana-S"] = spanParentIDString
 	metadata["X-Instana-L"] = "1"
 	metadata["X-Instana-B-Foo"] = "bar"
 
@@ -125,8 +125,8 @@ func TestCaseSensitiveHeaderPropagation(t *testing.T) {
 	}
 
 	for _, s := range recorder.GetSpans() {
-		assert.Equal(t, spanParentIdBase64, *s.ParentID)
-		assert.NotEqual(t, spanParentIdBase64, s.SpanID)
+		assert.Equal(t, spanParentIDBase64, *s.ParentID)
+		assert.NotEqual(t, spanParentIDBase64, s.SpanID)
 	}
 
 }

@@ -14,6 +14,7 @@ const (
 	AgentDiscoveryURL = "/com.instana.plugin.golang.discovery"
 	AgentTracesURL    = "/com.instana.plugin.golang/traces."
 	AgentDataURL      = "/com.instana.plugin.golang."
+	AgentEventURL     = "/com.instana.plugin.generic.event"
 	AgentDefaultHost  = "localhost"
 	AgentDefaultPort  = 42699
 	AgentHeader       = "Instana Agent"
