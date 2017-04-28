@@ -54,5 +54,5 @@ Following examples are included in the `examples` folder:
 
 * **ot-simple/simple.go** - Demonstrates basic usage of the tracer
 * **webserver/http.go** - Demonstrates how http server and client should be instrumented
-* **rpc/rpc.go** - Demonstrates the fallback to RPC
+* **rpc/rpc.go** - Demonstrates a basic RPC service
 * **event/event.go** - Demonstrates the event API
