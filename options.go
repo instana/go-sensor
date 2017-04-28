@@ -6,7 +6,7 @@ type Options struct {
 	Service                     string
 	AgentHost                   string
 	AgentPort                   int
-	maxBufferedSpans            int
-	forceTransmissionStartingAt int
+	MaxBufferedSpans            int
+	ForceTransmissionStartingAt int
 	LogLevel                    int
 }

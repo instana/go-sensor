@@ -68,7 +68,7 @@ func (r *Recorder) init() {
 func (r *Recorder) Reset() {
 	r.Lock()
 	defer r.Unlock()
-	r.spans = make([]jsonSpan, 0, sensor.options.maxBufferedSpans)
+	r.spans = make([]jsonSpan, 0, sensor.options.MaxBufferedSpans)
 }
 
 // RecordSpan accepts spans to be recorded and sent to the backend
@@ -110,7 +110,7 @@ func (r *Recorder) RecordSpan(span *spanS) {
 	r.Lock()
 	defer r.Unlock()
 
-	if len(r.spans) == sensor.options.maxBufferedSpans {
+	if len(r.spans) == sensor.options.MaxBufferedSpans {
 		r.spans = r.spans[1:]
 	}
 
@@ -128,7 +128,7 @@ func (r *Recorder) RecordSpan(span *spanS) {
 		return
 	}
 
-	if len(r.spans) >= sensor.options.forceTransmissionStartingAt {
+	if len(r.spans) >= sensor.options.ForceTransmissionStartingAt {
 		log.debug("Forcing spans to agent", len(r.spans))
 
 		r.send()
