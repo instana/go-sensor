@@ -75,13 +75,13 @@ func (r *Recorder) RecordSpan(span *spanS) {
 		return
 	}
 
-	var data = &Data{}
+	var data = &jsonData{}
 	kind := span.getSpanKind()
 
-	data.SDK = &SDKData{
+	data.SDK = &jsonSDKData{
 		Name:   span.Operation,
 		Type:   kind,
-		Custom: &CustomData{Tags: span.Tags, Logs: span.collectLogs()}}
+		Custom: &jsonCustomData{Tags: span.Tags, Logs: span.collectLogs()}}
 
 	baggage := make(map[string]string)
 	span.context.ForeachBaggageItem(func(k string, v string) bool {
