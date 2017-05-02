@@ -1,25 +1,34 @@
 package instana
 
 import (
+	"fmt"
+	"os"
 	"sync"
 	"time"
 
-	"github.com/opentracing/basictracer-go"
 	ot "github.com/opentracing/opentracing-go"
+	"github.com/opentracing/opentracing-go/ext"
 	otlog "github.com/opentracing/opentracing-go/log"
 )
 
 type spanS struct {
 	tracer *tracerS
 	sync.Mutex
-	raw basictracer.RawSpan
+
+	context      SpanContext
+	ParentSpanID int64
+	Operation    string
+	Start        time.Time
+	Duration     time.Duration
+	Tags         ot.Tags
+	Logs         []ot.LogRecord
 }
 
 func (r *spanS) BaggageItem(key string) string {
 	r.Lock()
 	defer r.Unlock()
 
-	return r.raw.Context.Baggage[key]
+	return r.context.Baggage[key]
 }
 
 func (r *spanS) SetBaggageItem(key, val string) ot.Span {
@@ -29,13 +38,13 @@ func (r *spanS) SetBaggageItem(key, val string) ot.Span {
 
 	r.Lock()
 	defer r.Unlock()
-	r.raw.Context = r.raw.Context.WithBaggageItem(key, val)
+	r.context = r.context.WithBaggageItem(key, val)
 
 	return r
 }
 
 func (r *spanS) Context() ot.SpanContext {
-	return r.raw.Context
+	return r.context
 }
 
 func (r *spanS) Finish() {
@@ -48,7 +57,7 @@ func (r *spanS) FinishWithOptions(opts ot.FinishOptions) {
 		finishTime = time.Now()
 	}
 
-	duration := finishTime.Sub(r.raw.Start)
+	duration := finishTime.Sub(r.Start)
 	r.Lock()
 	defer r.Unlock()
 	for _, lr := range opts.LogRecords {
@@ -59,14 +68,14 @@ func (r *spanS) FinishWithOptions(opts ot.FinishOptions) {
 		r.appendLog(ld.ToLogRecord())
 	}
 
-	r.raw.Duration = duration
-	r.tracer.options.Recorder.RecordSpan(r.raw)
+	r.Duration = duration
+	r.tracer.options.Recorder.RecordSpan(r)
 }
 
 func (r *spanS) appendLog(lr ot.LogRecord) {
 	maxLogs := r.tracer.options.MaxLogsPerSpan
-	if maxLogs == 0 || len(r.raw.Logs) < maxLogs {
-		r.raw.Logs = append(r.raw.Logs, lr)
+	if maxLogs == 0 || len(r.Logs) < maxLogs {
+		r.Logs = append(r.Logs, lr)
 	}
 }
 
@@ -85,7 +94,7 @@ func (r *spanS) Log(ld ot.LogData) {
 }
 
 func (r *spanS) trim() bool {
-	return !r.raw.Context.Sampled && r.tracer.options.TrimUnsampledSpans
+	return !r.context.Sampled && r.tracer.options.TrimUnsampledSpans
 }
 
 func (r *spanS) LogEvent(event string) {
@@ -131,7 +140,7 @@ func (r *spanS) LogKV(keyValues ...interface{}) {
 func (r *spanS) SetOperationName(operationName string) ot.Span {
 	r.Lock()
 	defer r.Unlock()
-	r.raw.Operation = operationName
+	r.Operation = operationName
 
 	return r
 }
@@ -143,15 +152,103 @@ func (r *spanS) SetTag(key string, value interface{}) ot.Span {
 		return r
 	}
 
-	if r.raw.Tags == nil {
-		r.raw.Tags = ot.Tags{}
+	if r.Tags == nil {
+		r.Tags = ot.Tags{}
 	}
 
-	r.raw.Tags[key] = value
+	r.Tags[key] = value
 
 	return r
 }
 
 func (r *spanS) Tracer() ot.Tracer {
 	return r.tracer
+}
+
+func (r *spanS) getTag(tag string) interface{} {
+	var x, ok = r.Tags[tag]
+	if !ok {
+		x = ""
+	}
+	return x
+}
+
+func (r *spanS) getIntTag(tag string) int {
+	d := r.Tags[tag]
+	if d == nil {
+		return -1
+	}
+
+	x, ok := d.(int)
+	if !ok {
+		return -1
+	}
+
+	return x
+}
+
+func (r *spanS) getStringTag(tag string) string {
+	d := r.Tags[tag]
+	if d == nil {
+		return ""
+	}
+	return fmt.Sprint(d)
+}
+
+func (r *spanS) getHostName() string {
+	hostTag := r.getStringTag(string(ext.PeerHostname))
+	if hostTag != "" {
+		return hostTag
+	}
+
+	h, err := os.Hostname()
+	if err != nil {
+		h = "localhost"
+	}
+	return h
+}
+
+func (r *spanS) getServiceName() string {
+	// ServiceName can be determined from multiple sources and has
+	// the following priority (preferred first):
+	//   1. If added to the span via the OT component tag
+	//   2. If added to the span via the OT http.url tag
+	//   3. Specified in the tracer instantiation via Service option
+	component := r.getStringTag(string(ext.Component))
+	if len(component) > 0 {
+		return component
+	}
+
+	httpURL := r.getStringTag(string(ext.HTTPUrl))
+	if len(httpURL) > 0 {
+		return httpURL
+	}
+	return sensor.serviceName
+}
+
+func (r *spanS) getSpanKind() string {
+	kind := r.getStringTag(string(ext.SpanKind))
+
+	switch kind {
+	case string(ext.SpanKindRPCServerEnum), "consumer", "entry":
+		return "entry"
+	case string(ext.SpanKindRPCClientEnum), "producer", "exit":
+		return "exit"
+	}
+	return ""
+}
+
+func (r *spanS) collectLogs() map[uint64]map[string]interface{} {
+	logs := make(map[uint64]map[string]interface{})
+	for _, l := range r.Logs {
+		if _, ok := logs[uint64(l.Timestamp.UnixNano())/uint64(time.Millisecond)]; !ok {
+			logs[uint64(l.Timestamp.UnixNano())/uint64(time.Millisecond)] = make(map[string]interface{})
+		}
+
+		for _, f := range l.Fields {
+			logs[uint64(l.Timestamp.UnixNano())/uint64(time.Millisecond)][f.Key()] = f.Value()
+		}
+	}
+
+	return logs
 }

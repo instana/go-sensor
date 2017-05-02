@@ -12,13 +12,13 @@ import (
 )
 
 const (
-	EInit     = "init"
-	ELookup   = "lookup"
-	EAnnounce = "announce"
-	ETest     = "test"
+	eInit     = "init"
+	eLookup   = "lookup"
+	eAnnounce = "announce"
+	eTest     = "test"
 
-	RetryPeriod    = 30 * 1000
-	MaximumRetries = 2
+	retryPeriod    = 30 * 1000
+	maximumRetries = 2
 )
 
 type fsmS struct {
@@ -35,21 +35,21 @@ func (r *fsmS) init() {
 	r.fsm = f.NewFSM(
 		"none",
 		f.Events{
-			{Name: EInit, Src: []string{"none", "unannounced", "announced", "ready"}, Dst: "init"},
-			{Name: ELookup, Src: []string{"init"}, Dst: "unannounced"},
-			{Name: EAnnounce, Src: []string{"unannounced"}, Dst: "announced"},
-			{Name: ETest, Src: []string{"announced"}, Dst: "ready"}},
+			{Name: eInit, Src: []string{"none", "unannounced", "announced", "ready"}, Dst: "init"},
+			{Name: eLookup, Src: []string{"init"}, Dst: "unannounced"},
+			{Name: eAnnounce, Src: []string{"unannounced"}, Dst: "announced"},
+			{Name: eTest, Src: []string{"announced"}, Dst: "ready"}},
 		f.Callbacks{
 			"init":              r.lookupAgentHost,
 			"enter_unannounced": r.announceSensor,
 			"enter_announced":   r.testAgent})
 
-	r.retries = MaximumRetries
-	r.fsm.Event(EInit)
+	r.retries = maximumRetries
+	r.fsm.Event(eInit)
 }
 
 func (r *fsmS) scheduleRetry(e *f.Event, cb func(e *f.Event)) {
-	r.timer = time.NewTimer(RetryPeriod * time.Millisecond)
+	r.timer = time.NewTimer(retryPeriod * time.Millisecond)
 	go func() {
 		<-r.timer.C
 		cb(e)
@@ -81,7 +81,7 @@ func (r *fsmS) lookupAgentHost(e *f.Event) {
 	if r.agent.sensor.options.AgentHost != "" {
 		go r.checkHost(r.agent.sensor.options.AgentHost, cb)
 	} else {
-		go r.checkHost(AgentDefaultHost, cb)
+		go r.checkHost(agentDefaultHost, cb)
 	}
 }
 
@@ -98,44 +98,44 @@ func (r *fsmS) checkHost(host string, cb func(b bool, host string)) {
 
 	header, err := r.agent.requestHeader(r.agent.makeHostURL(host, "/"), "GET", "Server")
 
-	cb(err == nil && header == AgentHeader, host)
+	cb(err == nil && header == agentHeader, host)
 }
 
 func (r *fsmS) lookupSuccess(host string) {
 	log.debug("agent lookup success", host)
 
 	r.agent.setHost(host)
-	r.retries = MaximumRetries
-	r.fsm.Event(ELookup)
+	r.retries = maximumRetries
+	r.fsm.Event(eLookup)
 }
 
 func (r *fsmS) announceSensor(e *f.Event) {
-	cb := func(b bool, from *FromS) {
+	cb := func(b bool, from *fromS) {
 		if b {
 			r.agent.setFrom(from)
-			r.retries = MaximumRetries
-			r.fsm.Event(EAnnounce)
+			r.retries = maximumRetries
+			r.fsm.Event(eAnnounce)
 		} else {
 			log.error("Cannot announce sensor. Scheduling retry.")
 			r.retries--
 			if r.retries > 0 {
 				r.scheduleRetry(e, r.announceSensor)
 			} else {
-				r.fsm.Event(EInit)
+				r.fsm.Event(eInit)
 			}
 		}
 	}
 
 	log.debug("announcing sensor to the agent")
 
-	go func(cb func(b bool, from *FromS)) {
+	go func(cb func(b bool, from *fromS)) {
 		defer func() {
 			if r := recover(); r != nil {
 				log.debug("Announce recovered:", r)
 			}
 		}()
 
-		d := &Discovery{PID: os.Getpid()}
+		d := &discoveryS{PID: os.Getpid()}
 		d.Name, d.Args = getCommandLine()
 
 		if _, err := os.Stat("/proc"); err == nil {
@@ -160,9 +160,9 @@ func (r *fsmS) announceSensor(e *f.Event) {
 		}
 
 		ret := &agentResponse{}
-		_, err := r.agent.requestResponse(r.agent.makeURL(AgentDiscoveryURL), "PUT", d, ret)
+		_, err := r.agent.requestResponse(r.agent.makeURL(agentDiscoveryURL), "PUT", d, ret)
 		cb(err == nil,
-			&FromS{
+			&fromS{
 				PID:    strconv.Itoa(int(ret.Pid)),
 				HostID: ret.HostID})
 	}(cb)
@@ -171,15 +171,15 @@ func (r *fsmS) announceSensor(e *f.Event) {
 func (r *fsmS) testAgent(e *f.Event) {
 	cb := func(b bool) {
 		if b {
-			r.retries = MaximumRetries
-			r.fsm.Event(ETest)
+			r.retries = maximumRetries
+			r.fsm.Event(eTest)
 		} else {
 			log.error("Agent is not yet ready. Scheduling retry.")
 			r.retries--
 			if r.retries > 0 {
 				r.scheduleRetry(e, r.testAgent)
 			} else {
-				r.fsm.Event(EInit)
+				r.fsm.Event(eInit)
 			}
 		}
 	}
@@ -187,14 +187,14 @@ func (r *fsmS) testAgent(e *f.Event) {
 	log.debug("testing communication with the agent")
 
 	go func(cb func(b bool)) {
-		_, err := r.agent.head(r.agent.makeURL(AgentDataURL))
+		_, err := r.agent.head(r.agent.makeURL(agentDataURL))
 		cb(err == nil)
 	}(cb)
 }
 
 func (r *fsmS) reset() {
-	r.retries = MaximumRetries
-	r.fsm.Event(EInit)
+	r.retries = maximumRetries
+	r.fsm.Event(eInit)
 }
 
 func (r *agentS) initFsm() *fsmS {

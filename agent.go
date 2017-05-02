@@ -11,13 +11,13 @@ import (
 )
 
 const (
-	AgentDiscoveryURL = "/com.instana.plugin.golang.discovery"
-	AgentTracesURL    = "/com.instana.plugin.golang/traces."
-	AgentDataURL      = "/com.instana.plugin.golang."
-	AgentEventURL     = "/com.instana.plugin.generic.event"
-	AgentDefaultHost  = "localhost"
-	AgentDefaultPort  = 42699
-	AgentHeader       = "Instana Agent"
+	agentDiscoveryURL = "/com.instana.plugin.golang.discovery"
+	agentTracesURL    = "/com.instana.plugin.golang/traces."
+	agentDataURL      = "/com.instana.plugin.golang."
+	agentEventURL     = "/com.instana.plugin.generic.event"
+	agentDefaultHost  = "localhost"
+	agentDefaultPort  = 42699
+	agentHeader       = "Instana Agent"
 )
 
 type agentResponse struct {
@@ -25,7 +25,7 @@ type agentResponse struct {
 	HostID string `json:"agentUuid"`
 }
 
-type Discovery struct {
+type discoveryS struct {
 	PID   int      `json:"pid"`
 	Name  string   `json:"name"`
 	Args  []string `json:"args"`
@@ -33,7 +33,7 @@ type Discovery struct {
 	Inode string   `json:"inode"`
 }
 
-type FromS struct {
+type fromS struct {
 	PID    string `json:"e"`
 	HostID string `json:"h"`
 }
@@ -41,13 +41,13 @@ type FromS struct {
 type agentS struct {
 	sensor *sensorS
 	fsm    *fsmS
-	from   *FromS
+	from   *fromS
 	host   string
 }
 
 func (r *agentS) init() {
 	r.fsm = r.initFsm()
-	r.setFrom(&FromS{})
+	r.setFrom(&fromS{})
 }
 
 func (r *agentS) makeURL(prefix string) string {
@@ -57,7 +57,7 @@ func (r *agentS) makeURL(prefix string) string {
 func (r *agentS) makeHostURL(host string, prefix string) string {
 	var port int
 	if r.sensor.options.AgentPort == 0 {
-		port = AgentDefaultPort
+		port = agentDefaultPort
 	} else {
 		port = r.sensor.options.AgentPort
 	}
@@ -147,7 +147,7 @@ func (r *agentS) fullRequestResponse(url string, method string, data interface{}
 	return ret, err
 }
 
-func (r *agentS) setFrom(from *FromS) {
+func (r *agentS) setFrom(from *fromS) {
 	r.from = from
 }
 

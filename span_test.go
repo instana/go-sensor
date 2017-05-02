@@ -7,32 +7,34 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/instana/golang-sensor"
-	bt "github.com/opentracing/basictracer-go"
 	ot "github.com/opentracing/opentracing-go"
 )
 
 func TestBasicSpan(t *testing.T) {
 	const op = "test"
-	recorder := bt.NewInMemoryRecorder()
-	tracer := instana.NewTracerWithEverything(&instana.Options{}, recorder)
+	opts := instana.Options{LogLevel: instana.Debug}
+	recorder := instana.NewTestRecorder()
+	tracer := instana.NewTracerWithEverything(&opts, recorder)
 
 	sp := tracer.StartSpan(op)
 	sp.Finish()
 
 	spans := recorder.GetSpans()
-	assert.Equal(t, len(spans), 1)
+	assert.Equal(t, 1, len(spans))
 	span := spans[0]
 
-	assert.NotNil(t, span.Context, "Context is nil!")
-	assert.NotNil(t, span.Duration, "Duration is nil!")
-	assert.NotNil(t, span.Operation, "Operation is nil!")
-	assert.Equal(t, span.ParentSpanID, uint64(0), "ParentSpan shouldn't have a value")
-	assert.NotNil(t, span.Start, "Start is nil!")
-	assert.Nil(t, span.Tags, "Tags is nil!")
+	assert.NotZero(t, span.SpanID, "Missing span ID for this span")
+	assert.NotZero(t, span.TraceID, "Missing trace ID for this span")
+	assert.NotZero(t, span.Timestamp, "Missing timestamp for this span")
+	assert.NotNil(t, span.Duration, "Duration is nil")
+	assert.Equal(t, "sdk", span.Name, "Missing sdk span name")
+	assert.Equal(t, "test", span.Data.SDK.Name, "Missing span name")
+	assert.Nil(t, span.Data.SDK.Custom.Tags, "Tags has an unexpected value")
+	assert.Nil(t, span.Data.SDK.Custom.Baggage, "Baggage has an unexpected value")
 }
 
 func TestSpanHeritage(t *testing.T) {
-	recorder := bt.NewInMemoryRecorder()
+	recorder := instana.NewTestRecorder()
 	tracer := instana.NewTracerWithEverything(&instana.Options{}, recorder)
 
 	parentSpan := tracer.StartSpan("parent")
@@ -49,27 +51,28 @@ func TestSpanHeritage(t *testing.T) {
 	cSpan := spans[0]
 	pSpan := spans[1]
 
-	assert.Equal(t, "child", cSpan.Operation, "Child span name doesn't compute")
-	assert.Equal(t, "parent", pSpan.Operation, "Parent span name doesn't compute")
+	assert.Equal(t, "child", cSpan.Data.SDK.Name, "Child span name doesn't compute")
+	assert.Equal(t, "parent", pSpan.Data.SDK.Name, "Parent span name doesn't compute")
 
 	// Parent should not have a parent
-	assert.Equal(t, pSpan.ParentSpanID, uint64(0), "ParentSpanID shouldn't have a value")
+	assert.Nil(t, pSpan.ParentID, "ParentID shouldn't have a value")
 
 	// Child must have parent ID set as parent
-	assert.Equal(t, pSpan.Context.SpanID, cSpan.ParentSpanID, "parentID doesn't match")
+	assert.Equal(t, pSpan.SpanID, *cSpan.ParentID, "parentID doesn't match")
 
 	// Must be root span
-	assert.Equal(t, pSpan.Context.TraceID, pSpan.Context.SpanID, "not a root span")
+	assert.Equal(t, pSpan.TraceID, pSpan.SpanID, "not a root span")
 
 	// Trace ID must be consistent across spans
-	assert.Equal(t, cSpan.Context.TraceID, pSpan.Context.TraceID, "trace IDs don't match")
+	assert.Equal(t, cSpan.TraceID, pSpan.TraceID, "trace IDs don't match")
 
 }
 
 func TestSpanBaggage(t *testing.T) {
 	const op = "test"
-	recorder := bt.NewInMemoryRecorder()
-	tracer := instana.NewTracerWithEverything(&instana.Options{}, recorder)
+	opts := instana.Options{LogLevel: instana.Debug}
+	recorder := instana.NewTestRecorder()
+	tracer := instana.NewTracerWithEverything(&opts, recorder)
 
 	sp := tracer.StartSpan(op)
 	sp.SetBaggageItem("foo", "bar")
@@ -79,13 +82,14 @@ func TestSpanBaggage(t *testing.T) {
 	assert.Equal(t, len(spans), 1)
 	span := spans[0]
 
-	assert.NotNil(t, span.Context.Baggage, "Missing Baggage")
+	assert.NotNil(t, span.Data.SDK.Custom.Baggage, "Missing Baggage")
 }
 
 func TestSpanTags(t *testing.T) {
 	const op = "test"
-	recorder := bt.NewInMemoryRecorder()
-	tracer := instana.NewTracerWithEverything(&instana.Options{}, recorder)
+	opts := instana.Options{LogLevel: instana.Debug}
+	recorder := instana.NewTestRecorder()
+	tracer := instana.NewTracerWithEverything(&opts, recorder)
 
 	sp := tracer.StartSpan(op)
 	sp.SetTag("foo", "bar")
@@ -95,5 +99,5 @@ func TestSpanTags(t *testing.T) {
 	assert.Equal(t, len(spans), 1)
 	span := spans[0]
 
-	assert.NotNil(t, span.Tags, "Missing Tags")
+	assert.NotNil(t, span.Data.SDK.Custom.Tags, "Missing Tags")
 }

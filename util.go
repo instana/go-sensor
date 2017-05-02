@@ -15,10 +15,10 @@ var (
 	seededIDLock sync.Mutex
 )
 
-func randomID() uint64 {
+func randomID() int64 {
 	seededIDLock.Lock()
 	defer seededIDLock.Unlock()
-	return uint64(seededIDGen.Int63())
+	return int64(seededIDGen.Int63())
 }
 
 func getCommandLine() (string, []string) {
@@ -39,4 +39,9 @@ func getCommandLine() (string, []string) {
 	})
 	log.debug("cmdline says:", parts[0], parts[1:])
 	return parts[0], parts[1:]
+}
+
+func abs(x int64) int64 {
+	y := x >> 63
+	return (x + y) ^ y
 }

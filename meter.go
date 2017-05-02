@@ -85,7 +85,7 @@ func (r *meterS) init() {
 }
 
 func (r *meterS) send(d *EntityData) {
-	_, err := r.sensor.agent.request(r.sensor.agent.makeURL(AgentDataURL), "POST", d)
+	_, err := r.sensor.agent.request(r.sensor.agent.makeURL(agentDataURL), "POST", d)
 
 	if err != nil {
 		r.sensor.agent.reset()

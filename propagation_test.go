@@ -2,21 +2,19 @@ package instana_test
 
 import (
 	"net/http"
-	"reflect"
 	"testing"
 	"time"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/instana/golang-sensor"
-	bt "github.com/opentracing/basictracer-go"
 	opentracing "github.com/opentracing/opentracing-go"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestSpanPropagator(t *testing.T) {
 	const op = "test"
-	recorder := bt.NewInMemoryRecorder()
-	tracer := instana.NewTracerWithEverything(&instana.Options{}, recorder)
+	opts := instana.Options{LogLevel: instana.Debug}
+	recorder := instana.NewTestRecorder()
+	tracer := instana.NewTracerWithEverything(&opts, recorder)
 
 	sp := tracer.StartSpan(op)
 	sp.SetBaggageItem("foo", "bar")
@@ -54,23 +52,20 @@ func TestSpanPropagator(t *testing.T) {
 
 	// The last span is the original one.
 	exp, spans := spans[len(spans)-1], spans[:len(spans)-1]
-	exp.Duration = time.Duration(123)
-	exp.Start = time.Time{}.Add(1)
-	for i, sp := range spans {
-		if a, e := sp.ParentSpanID, exp.Context.SpanID; a != e {
-			t.Fatalf("%d: ParentSpanID %d does not match expectation %d", i, a, e)
+	exp.Duration = uint64(time.Duration(123))
+	// exp.Timestamp = uint64(time.Time{}.Add(1))
+
+	for i, span := range spans {
+		if a, e := *span.ParentID, exp.SpanID; a != e {
+			t.Fatalf("%d: ParentID %d does not match expectation %d", i, a, e)
 		} else {
 			// Prepare for comparison.
-			sp.Context.SpanID, sp.ParentSpanID = exp.Context.SpanID, 0
-			sp.Duration, sp.Start = exp.Duration, exp.Start
+			span.SpanID, span.ParentID = exp.SpanID, nil
+			span.Duration, span.Timestamp = exp.Duration, exp.Timestamp
 		}
 
-		if a, e := sp.Context.TraceID, exp.Context.TraceID; a != e {
+		if a, e := span.TraceID, exp.TraceID; a != e {
 			t.Fatalf("%d: TraceID changed from %d to %d", i, e, a)
-		}
-
-		if !reflect.DeepEqual(exp, sp) {
-			t.Fatalf("%d: wanted %+v, got %+v", i, spew.Sdump(exp), spew.Sdump(sp))
 		}
 	}
 }
@@ -78,12 +73,13 @@ func TestSpanPropagator(t *testing.T) {
 func TestCaseSensitiveHeaderPropagation(t *testing.T) {
 	var (
 		op                 = "test"
-		spanParentIDBase64 = uint64(4884)
+		spanParentIDBase64 = int64(4884)
 		spanParentIDString = "1314"
 	)
 
-	recorder := bt.NewInMemoryRecorder()
-	tracer := instana.NewTracerWithEverything(&instana.Options{}, recorder)
+	opts := instana.Options{LogLevel: instana.Debug}
+	recorder := instana.NewTestRecorder()
+	tracer := instana.NewTracerWithEverything(&opts, recorder)
 
 	// Simulate an existing root span
 	metadata := make(map[string]string)
@@ -129,8 +125,8 @@ func TestCaseSensitiveHeaderPropagation(t *testing.T) {
 	}
 
 	for _, s := range recorder.GetSpans() {
-		assert.Equal(t, spanParentIDBase64, s.ParentSpanID)
-		assert.NotEqual(t, spanParentIDBase64, s.Context.SpanID)
+		assert.Equal(t, spanParentIDBase64, *s.ParentID)
+		assert.NotEqual(t, spanParentIDBase64, s.SpanID)
 	}
 
 }
