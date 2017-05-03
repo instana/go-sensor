@@ -11,12 +11,17 @@ type textMapPropagator struct {
 	tracer *tracerS
 }
 
+// Instana header constants
 const (
+	// FieldT Trace ID header
+	FieldT = "x-instana-t"
+	// FieldS Span ID header
+	FieldS = "x-instana-s"
+	// FieldL Level header
+	FieldL = "x-instana-l"
+	// FieldB OT Baggage header
+	FieldB     = "x-instana-b-"
 	fieldCount = 2
-	fieldT     = "x-instana-t"
-	fieldS     = "x-instana-s"
-	fieldL     = "x-instana-l"
-	fieldB     = "x-instana-b-"
 )
 
 func (r *textMapPropagator) inject(spanContext ot.SpanContext, opaqueCarrier interface{}) error {
@@ -32,23 +37,23 @@ func (r *textMapPropagator) inject(spanContext ot.SpanContext, opaqueCarrier int
 
 	// Handle pre-existing case-sensitive keys
 	var (
-		exstfieldT = fieldT
-		exstfieldS = fieldS
-		exstfieldL = fieldL
-		exstfieldB = fieldB
+		exstfieldT = FieldT
+		exstfieldS = FieldS
+		exstfieldL = FieldL
+		exstfieldB = FieldB
 	)
 
 	roCarrier.ForeachKey(func(k, v string) error {
 		switch strings.ToLower(k) {
-		case fieldT:
+		case FieldT:
 			exstfieldT = k
-		case fieldS:
+		case FieldS:
 			exstfieldS = k
-		case fieldL:
+		case FieldL:
 			exstfieldL = k
 		default:
-			if strings.HasPrefix(strings.ToLower(k), fieldB) {
-				exstfieldB = string([]rune(k)[0:len(fieldB)])
+			if strings.HasPrefix(strings.ToLower(k), FieldB) {
+				exstfieldB = string([]rune(k)[0:len(FieldB)])
 			}
 		}
 
@@ -83,13 +88,13 @@ func (r *textMapPropagator) extract(opaqueCarrier interface{}) (ot.SpanContext, 
 	baggage := make(map[string]string)
 	err = carrier.ForeachKey(func(k, v string) error {
 		switch strings.ToLower(k) {
-		case fieldT:
+		case FieldT:
 			fieldCount++
 			traceID, err = strconv.ParseInt(v, 16, 64)
 			if err != nil {
 				return ot.ErrSpanContextCorrupted
 			}
-		case fieldS:
+		case FieldS:
 			fieldCount++
 			spanID, err = strconv.ParseInt(v, 16, 64)
 			if err != nil {
@@ -98,8 +103,8 @@ func (r *textMapPropagator) extract(opaqueCarrier interface{}) (ot.SpanContext, 
 		default:
 			lk := strings.ToLower(k)
 
-			if strings.HasPrefix(lk, fieldB) {
-				baggage[strings.TrimPrefix(lk, fieldB)] = v
+			if strings.HasPrefix(lk, FieldB) {
+				baggage[strings.TrimPrefix(lk, FieldB)] = v
 			}
 		}
 
