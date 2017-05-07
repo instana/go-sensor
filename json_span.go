@@ -12,6 +12,7 @@ type jsonSpan struct {
 	Duration  uint64    `json:"d"`
 	Name      string    `json:"n"`
 	From      *fromS    `json:"f"`
+	Ec        int       `json:"ec,omitempty"`
 	Data      *jsonData `json:"data"`
 }
 

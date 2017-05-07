@@ -22,6 +22,7 @@ type spanS struct {
 	Duration     time.Duration
 	Tags         ot.Tags
 	Logs         []ot.LogRecord
+	Ec           int
 }
 
 func (r *spanS) BaggageItem(key string) string {
@@ -109,6 +110,14 @@ func (r *spanS) LogEventWithPayload(event string, payload interface{}) {
 }
 
 func (r *spanS) LogFields(fields ...otlog.Field) {
+
+	for _, v := range fields {
+		// If this tag indicates an error, increase the error count
+		if v.Key() == "error" {
+			r.Ec++
+		}
+	}
+
 	lr := ot.LogRecord{
 		Fields: fields,
 	}
@@ -154,6 +163,11 @@ func (r *spanS) SetTag(key string, value interface{}) ot.Span {
 
 	if r.Tags == nil {
 		r.Tags = ot.Tags{}
+	}
+
+	// If this tag indicates an error, increase the error count
+	if key == "error" {
+		r.Ec++
 	}
 
 	r.Tags[key] = value
