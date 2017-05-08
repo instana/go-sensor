@@ -122,6 +122,7 @@ func (r *Recorder) RecordSpan(span *spanS) {
 		Duration:  uint64(span.Duration) / uint64(time.Millisecond),
 		Name:      "sdk",
 		Ec:        span.Ec,
+		Lang:      "go",
 		From:      sensor.agent.from,
 		Data:      data})
 

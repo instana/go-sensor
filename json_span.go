@@ -13,6 +13,7 @@ type jsonSpan struct {
 	Name      string    `json:"n"`
 	From      *fromS    `json:"f"`
 	Ec        int       `json:"ec,omitempty"`
+	Lang      string    `json:"ta,omitempty"`
 	Data      *jsonData `json:"data"`
 }
 

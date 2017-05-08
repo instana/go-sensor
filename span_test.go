@@ -35,6 +35,7 @@ func TestBasicSpan(t *testing.T) {
 	assert.Equal(t, "test", span.Data.SDK.Name, "Missing span name")
 	assert.Nil(t, span.Data.SDK.Custom.Tags, "Tags has an unexpected value")
 	assert.Nil(t, span.Data.SDK.Custom.Baggage, "Baggage has an unexpected value")
+	assert.Equal(t, "go", span.Lang, "Missing or wrong ta/lang")
 }
 
 func TestSpanHeritage(t *testing.T) {
