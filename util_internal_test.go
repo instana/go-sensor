@@ -72,6 +72,14 @@ func TestIDConversion(t *testing.T) {
 	assert.Equal(t, int64(16), id, "Header2ID should stll work with leading zeros")
 	id, _ = Header2ID("10")
 	assert.Equal(t, int64(16), id, "Header2ID should convert <16 char strings")
+
+	count := 10000
+	for index := 0; index < count; index++ {
+		generatedID := randomID()
+		header, _ := ID2Header(generatedID)
+		id, _ := Header2ID(header)
+		assert.Equal(t, generatedID, id, "Original ID does not match converted back ID")
+	}
 }
 
 func TestBogusValues(t *testing.T) {
