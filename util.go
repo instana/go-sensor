@@ -43,7 +43,7 @@ func ID2Header(id int64) (string, error) {
 	} else {
 		log.debug(err)
 	}
-	return "", errors.New("Context corrupted; could not convert value.")
+	return "", errors.New("context corrupted; could not convert value")
 }
 
 // Header2ID converts an header context value into an Instana ID.  More
@@ -70,7 +70,7 @@ func Header2ID(header string) (int64, error) {
 	} else {
 		log.debug(err)
 	}
-	return int64(0), errors.New("Context corrupted; could not convert value.")
+	return int64(0), errors.New("context corrupted; could not convert value")
 }
 
 func getCommandLine() (string, []string) {
