@@ -43,7 +43,7 @@ func SendServiceEvent(service string, title string, text string, sev severity, d
 		Plugin:   ServicePlugin,
 		ID:       service,
 		Host:     ServiceHost,
-		Duration: int(duration * time.Millisecond),
+		Duration: int(duration / time.Millisecond),
 	})
 }
 
@@ -51,7 +51,7 @@ func SendHostEvent(title string, text string, sev severity, duration time.Durati
 	sendEvent(&EventData{
 		Title:    title,
 		Text:     text,
-		Duration: int(duration * time.Millisecond),
+		Duration: int(duration / time.Millisecond),
 		Severity: int(sev),
 	})
 }
