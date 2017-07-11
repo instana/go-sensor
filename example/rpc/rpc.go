@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	Service = "golang-rpc"
+	Service = "microservice-rpc"
 )
 
 func rpc(ctx context.Context) {

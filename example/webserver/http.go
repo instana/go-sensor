@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	Service = "golang-http"
+	Service = "go-microservice-14c"
 	Entry   = "http://localhost:9060/golang/entry"
 	Exit    = "http://localhost:9060/golang/exit"
 )

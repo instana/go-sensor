@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	Service = "golang-simple"
+	Service = "simple-microservice"
 )
 
 func simple(ctx context.Context) {

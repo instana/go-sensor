@@ -7,7 +7,7 @@ import (
 )
 
 const (
-	service = "golang-event"
+	service = "go-microservice-event"
 )
 
 func main() {
@@ -21,7 +21,7 @@ func main() {
 
 func forever() {
 	for {
-		instana.SendDefaultServiceEvent("Event from the Golang sample", "{field: data}", -1, 5000*time.Millisecond)
+		instana.SendDefaultServiceEvent("Event from the Go sensor sample", "{field: data}", -1, 5000*time.Millisecond)
 		time.Sleep(5000 * time.Millisecond)
 	}
 }
