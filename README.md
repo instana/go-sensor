@@ -8,6 +8,8 @@ The Instana Go sensor consists of two parts:
 * metrics sensor
 * [OpenTracing](http://opentracing.io) tracer
 
+[![Build Status](https://travis-ci.org/instana/golang-sensor.svg?branch=master)](https://travis-ci.org/instana/golang-sensor)
+
 ## Sensor
 
 To use sensor only without tracing ability, import the `instana` package and run
