@@ -1,8 +1,6 @@
 package instana
 
-import (
-	"time"
-)
+import "time"
 
 type EventData struct {
 	Title string `json:"title"`
@@ -13,7 +11,7 @@ type EventData struct {
 	Severity int    `json:"severity"`
 	Plugin   string `json:"plugin,omitempty"`
 	ID       string `json:"id,omitempty"`
-	Host     string `json:"host,omitempty"`
+	Host     string `json:"host"`
 }
 
 type severity int
@@ -30,11 +28,12 @@ const (
 	ServiceHost   = ""
 )
 
-//SendDefaultServiceEvent sends a default event which already contains the service and host
+// SendDefaultServiceEvent sends a default event which already contains the service and host
 func SendDefaultServiceEvent(title string, text string, sev severity, duration time.Duration) {
 	SendServiceEvent(sensor.serviceName, title, text, sev, duration)
 }
 
+// SendServiceEvent send an event on a specific service
 func SendServiceEvent(service string, title string, text string, sev severity, duration time.Duration) {
 	sendEvent(&EventData{
 		Title:    title,
@@ -47,6 +46,7 @@ func SendServiceEvent(service string, title string, text string, sev severity, d
 	})
 }
 
+// SendHostEvent send an event on the current host
 func SendHostEvent(title string, text string, sev severity, duration time.Duration) {
 	sendEvent(&EventData{
 		Title:    title,
