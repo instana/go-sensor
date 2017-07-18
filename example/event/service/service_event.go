@@ -25,6 +25,6 @@ func forever() {
 		instana.SendServiceEvent("games",
 			"Games High Latency", "Games - High latency from East Asia POP.",
 			instana.SeverityCritical, 1*time.Second)
-		time.Sleep(30000 * time.Millisecond)
+		time.Sleep(30 * time.Second)
 	}
 }
