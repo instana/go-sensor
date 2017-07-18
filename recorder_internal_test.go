@@ -10,6 +10,8 @@ import (
 func TestGetServiceNameByTracer(t *testing.T) {
 	opts := Options{LogLevel: Debug, Service: "tracer-named-service"}
 
+	// nilify any previously instantiated sensor
+	sensor = nil
 	InitSensor(&opts)
 	recorder := NewTestRecorder()
 	tracer := NewTracerWithEverything(&opts, recorder)

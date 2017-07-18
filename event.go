@@ -4,6 +4,7 @@ import (
 	"time"
 )
 
+// EventData is the construct serialized for the host agent
 type EventData struct {
 	Title string `json:"title"`
 	Text  string `json:"text"`
@@ -13,7 +14,7 @@ type EventData struct {
 	Severity int    `json:"severity"`
 	Plugin   string `json:"plugin,omitempty"`
 	ID       string `json:"id,omitempty"`
-	Host     string `json:"host,omitempty"`
+	Host     string `json:"host"`
 }
 
 type severity int
@@ -30,11 +31,18 @@ const (
 	ServiceHost   = ""
 )
 
-//SendDefaultServiceEvent sends a default event which already contains the service and host
+// SendDefaultServiceEvent sends a default event which already contains the service and host
 func SendDefaultServiceEvent(title string, text string, sev severity, duration time.Duration) {
-	SendServiceEvent(sensor.serviceName, title, text, sev, duration)
+	if sensor == nil {
+		// Since no sensor was initialized, there is no default service (as
+		// configured on the sensor) so we send blank.
+		SendServiceEvent("", title, text, sev, duration)
+	} else {
+		SendServiceEvent(sensor.serviceName, title, text, sev, duration)
+	}
 }
 
+// SendServiceEvent send an event on a specific service
 func SendServiceEvent(service string, title string, text string, sev severity, duration time.Duration) {
 	sendEvent(&EventData{
 		Title:    title,
@@ -47,6 +55,7 @@ func SendServiceEvent(service string, title string, text string, sev severity, d
 	})
 }
 
+// SendHostEvent send an event on the current host
 func SendHostEvent(title string, text string, sev severity, duration time.Duration) {
 	sendEvent(&EventData{
 		Title:    title,
@@ -57,9 +66,12 @@ func SendHostEvent(title string, text string, sev severity, duration time.Durati
 }
 
 func sendEvent(event *EventData) {
-
-	log.debug(event)
-
+	if sensor == nil {
+		// If the sensor hasn't initialized we do so here so that we properly
+		// discover where the host agent may be as it varies between a
+		// normal host, docker, kubernetes etc..
+		InitSensor(&Options{})
+	}
 	//we do fire & forget here, because the whole pid dance isn't necessary to send events
 	go sensor.agent.request(sensor.agent.makeURL(agentEventURL), "POST", event)
 }
