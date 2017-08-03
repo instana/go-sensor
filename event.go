@@ -26,6 +26,7 @@ const (
 	SeverityCritical severity = 10
 )
 
+// Defaults for the Event API
 const (
 	ServicePlugin = "com.instana.forge.connection.http.logical.LogicalWebApp"
 	ServiceHost   = ""

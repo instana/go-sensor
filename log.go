@@ -4,6 +4,7 @@ import (
 	l "log"
 )
 
+// Valid log levels
 const (
 	Error = 0
 	Warn  = 1
