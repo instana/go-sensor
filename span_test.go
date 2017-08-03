@@ -186,6 +186,7 @@ func TestOTLogError(t *testing.T) {
 	logData := firstSpan.Data.SDK.Custom.Logs
 	tagData := firstSpan.Data.SDK.Custom.Tags
 	assert.Equal(t, 1, len(tagData), "Unexpected log count")
+	assert.Equal(t, true, firstSpan.Error, "Span should be marked at errored")
 	assert.Equal(t, 1, firstSpan.Ec, "Error count should be 1")
 
 	for _, v := range logData {
@@ -211,10 +212,12 @@ func TestSpanErrorLogKV(t *testing.T) {
 	assert.Equal(t, len(spans), 1)
 	firstSpan := spans[0]
 
+	assert.Equal(t, 1, firstSpan.Ec, "Error count should be 1")
+	assert.Equal(t, true, firstSpan.Error, "Span should be marked at errored")
+
 	logData := firstSpan.Data.SDK.Custom.Logs
 	assert.NotNil(t, logData, "Missing logged fields")
 	assert.Equal(t, 1, len(logData), "Unexpected log count")
-	assert.Equal(t, 1, firstSpan.Ec, "Error count should be 1")
 
 	for _, v := range logData {
 		for sk, sv := range v {
@@ -243,5 +246,6 @@ func TestSpanErrorLogFields(t *testing.T) {
 
 	logData := firstSpan.Data.SDK.Custom.Logs
 	assert.Equal(t, 1, len(logData), "Unexpected tag count")
+	assert.Equal(t, true, firstSpan.Error, "Span should be marked at errored")
 	assert.Equal(t, 2, firstSpan.Ec, "Error count should be 2")
 }

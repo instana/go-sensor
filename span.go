@@ -22,6 +22,7 @@ type spanS struct {
 	Duration     time.Duration
 	Tags         ot.Tags
 	Logs         []ot.LogRecord
+	Error        bool
 	Ec           int
 }
 
@@ -114,6 +115,7 @@ func (r *spanS) LogFields(fields ...otlog.Field) {
 	for _, v := range fields {
 		// If this tag indicates an error, increase the error count
 		if v.Key() == "error" {
+			r.Error = true
 			r.Ec++
 		}
 	}
@@ -167,6 +169,7 @@ func (r *spanS) SetTag(key string, value interface{}) ot.Span {
 
 	// If this tag indicates an error, increase the error count
 	if key == "error" {
+		r.Error = true
 		r.Ec++
 	}
 
