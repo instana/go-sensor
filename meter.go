@@ -7,9 +7,11 @@ import (
 )
 
 const (
+	// SnapshotPeriod is the amount of time in seconds between snapshot reports.
 	SnapshotPeriod = 600
 )
 
+// SnapshotS struct to hold snapshot data.
 type SnapshotS struct {
 	Name     string `json:"name"`
 	Root     string `json:"goroot"`
@@ -18,6 +20,7 @@ type SnapshotS struct {
 	NumCPU   int    `json:"cpu"`
 }
 
+// MemoryS struct to hold snapshot data.
 type MemoryS struct {
 	Alloc         uint64  `json:"alloc"`
 	TotalAlloc    uint64  `json:"total_alloc"`
@@ -37,12 +40,14 @@ type MemoryS struct {
 	GCCPUFraction float64 `json:"gc_cpu_fraction"`
 }
 
+// MetricsS struct to hold snapshot data.
 type MetricsS struct {
 	CgoCall   int64    `json:"cgo_call"`
 	Goroutine int      `json:"goroutine"`
 	Memory    *MemoryS `json:"memory"`
 }
 
+// EntityData struct to hold snapshot data.
 type EntityData struct {
 	PID      int        `json:"pid"`
 	Snapshot *SnapshotS `json:"snapshot,omitempty"`
