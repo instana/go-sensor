@@ -55,11 +55,13 @@ func (r *Recorder) init() {
 	ticker := time.NewTicker(1 * time.Second)
 	go func() {
 		for range ticker.C {
+			r.RLock()
 			// Only attempt to send spans if we're announced and if the buffer is not empty
 			if sensor.agent.canSend() && len(r.spans) > 0 {
 				log.debug("Sending spans to agent", len(r.spans))
 				r.send()
 			}
+			r.RUnlock()
 		}
 	}()
 }
@@ -140,7 +142,9 @@ func (r *Recorder) RecordSpan(span *spanS) {
 
 func (r *Recorder) send() {
 	go func() {
+		r.Lock()
 		_, err := sensor.agent.request(sensor.agent.makeURL(agentTracesURL), "POST", r.spans)
+		r.Unlock()
 
 		r.Reset()
 
