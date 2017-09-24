@@ -68,7 +68,14 @@ func (r *Recorder) init() {
 func (r *Recorder) Reset() {
 	r.Lock()
 	defer r.Unlock()
-	r.spans = make([]jsonSpan, 0, sensor.options.MaxBufferedSpans)
+
+	var mbs int
+	if sensor != nil {
+		mbs = sensor.options.MaxBufferedSpans
+	} else {
+		mbs = DefaultMaxBufferedSpans
+	}
+	r.spans = make([]jsonSpan, 0, mbs)
 }
 
 // RecordSpan accepts spans to be recorded and sent to the backend
