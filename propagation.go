@@ -1,6 +1,7 @@
 package instana
 
 import (
+	"net/http"
 	"strconv"
 	"strings"
 
@@ -56,7 +57,6 @@ func (r *textMapPropagator) inject(spanContext ot.SpanContext, opaqueCarrier int
 				exstfieldB = string([]rune(k)[0:len(FieldB)])
 			}
 		}
-
 		return nil
 	})
 
@@ -65,13 +65,31 @@ func (r *textMapPropagator) inject(spanContext ot.SpanContext, opaqueCarrier int
 		return ot.ErrInvalidCarrier
 	}
 
-	if instanaID, err := ID2Header(sc.TraceID); err == nil {
-		carrier.Set(exstfieldT, instanaID)
+	hhcarrier, ok := opaqueCarrier.(ot.HTTPHeadersCarrier)
+	if ok {
+		// If http.Headers has pre-existing keys, calling Set() like we do
+		// below will just append to those existing values and break context
+		// propagation.  So defend against that case, we delete any pre-existing
+		// keys entirely first.
+		y := http.Header(hhcarrier)
+		y.Del(exstfieldT)
+		y.Del(exstfieldS)
+		y.Del(exstfieldL)
+
+		for key := range y {
+			if strings.HasPrefix(strings.ToLower(key), FieldB) {
+				y.Del(key)
+			}
+		}
+	}
+
+	if instanaTID, err := ID2Header(sc.TraceID); err == nil {
+		carrier.Set(exstfieldT, instanaTID)
 	} else {
 		log.debug(err)
 	}
-	if instanaID, err := ID2Header(sc.SpanID); err == nil {
-		carrier.Set(exstfieldS, instanaID)
+	if instanaSID, err := ID2Header(sc.SpanID); err == nil {
+		carrier.Set(exstfieldS, instanaSID)
 	} else {
 		log.debug(err)
 	}
@@ -80,7 +98,6 @@ func (r *textMapPropagator) inject(spanContext ot.SpanContext, opaqueCarrier int
 	for k, v := range sc.Baggage {
 		carrier.Set(exstfieldB+k, v)
 	}
-
 	return nil
 }
 
@@ -131,7 +148,7 @@ func (r *textMapPropagator) finishExtract(err error,
 		return nil, err
 	}
 
-	if fieldCount < fieldCount {
+	if fieldCount < 2 {
 		if fieldCount == 0 {
 			return nil, ot.ErrSpanContextNotFound
 		}
@@ -142,7 +159,7 @@ func (r *textMapPropagator) finishExtract(err error,
 	return SpanContext{
 		TraceID: traceID,
 		SpanID:  spanID,
-		Sampled: false, //TODO: add configurable sampling strategy
+		Sampled: false,
 		Baggage: baggage,
 	}, nil
 }
