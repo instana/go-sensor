@@ -107,7 +107,7 @@ func (r *Recorder) RecordSpan(span *spanS) {
 		data.SDK.Custom.Baggage = baggage
 	}
 
-	data.Service = span.getServiceName()
+	data.Service = sensor.serviceName
 
 	var parentID *int64
 	if span.ParentSpanID == 0 {
