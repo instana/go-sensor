@@ -225,24 +225,6 @@ func (r *spanS) getHostName() string {
 	return h
 }
 
-func (r *spanS) getServiceName() string {
-	// ServiceName can be determined from multiple sources and has
-	// the following priority (preferred first):
-	//   1. If added to the span via the OT component tag
-	//   2. If added to the span via the OT http.url tag
-	//   3. Specified in the tracer instantiation via Service option
-	component := r.getStringTag(string(ext.Component))
-	if len(component) > 0 {
-		return component
-	}
-
-	httpURL := r.getStringTag(string(ext.HTTPUrl))
-	if len(httpURL) > 0 {
-		return httpURL
-	}
-	return sensor.serviceName
-}
-
 func (r *spanS) getSpanKind() string {
 	kind := r.getStringTag(string(ext.SpanKind))
 

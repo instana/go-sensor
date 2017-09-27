@@ -7,64 +7,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestGetServiceNameByTracer(t *testing.T) {
-	opts := Options{LogLevel: Debug, Service: "tracer-named-service"}
-
-	// nilify any previously instantiated sensor
-	sensor = nil
-	InitSensor(&opts)
-	recorder := NewTestRecorder()
-	tracer := NewTracerWithEverything(&opts, recorder)
-
-	sp := tracer.StartSpan("http-client")
-	sp.SetTag(string(ext.SpanKind), "exit")
-	sp.SetTag("http.status", 200)
-	sp.SetTag(string(ext.HTTPMethod), "GET")
-
-	sp.Finish()
-
-	serviceName := sp.(*spanS).getServiceName()
-	assert.EqualValues(t, "tracer-named-service", serviceName, "Wrong Service Name")
-}
-
-func TestGetServiceNameByHTTP(t *testing.T) {
-	opts := Options{LogLevel: Debug}
-
-	InitSensor(&opts)
-	recorder := NewTestRecorder()
-	tracer := NewTracerWithEverything(&opts, recorder)
-
-	span := tracer.StartSpan("http-client")
-	span.SetTag(string(ext.SpanKind), "exit")
-	span.SetTag("http.status", 200)
-	span.SetTag("http.url", "https://www.instana.com/product/")
-	span.SetTag(string(ext.HTTPMethod), "GET")
-
-	span.Finish()
-
-	serviceName := span.(*spanS).getServiceName()
-	assert.EqualValues(t, "https://www.instana.com/product/", serviceName, "Wrong Service Name")
-}
-
-func TestGetServiceNameByComponent(t *testing.T) {
-	opts := Options{LogLevel: Debug}
-
-	InitSensor(&opts)
-	recorder := NewTestRecorder()
-	tracer := NewTracerWithEverything(&opts, recorder)
-
-	span := tracer.StartSpan("http-client")
-	span.SetTag(string(ext.SpanKind), "exit")
-	span.SetTag("http.status", 200)
-	span.SetTag("component", "component-named-service")
-	span.SetTag(string(ext.HTTPMethod), "GET")
-
-	span.Finish()
-
-	serviceName := span.(*spanS).getServiceName()
-	assert.EqualValues(t, "component-named-service", serviceName, "Wrong Service Name")
-}
-
 func TestSpanKind(t *testing.T) {
 	opts := Options{LogLevel: Debug}
 
