@@ -14,6 +14,7 @@ const (
 // SnapshotS struct to hold snapshot data.
 type SnapshotS struct {
 	Name     string `json:"name"`
+	Version  string `json:"version"`
 	Root     string `json:"goroot"`
 	MaxProcs int    `json:"maxprocs"`
 	Compiler string `json:"compiler"`
@@ -137,6 +138,7 @@ func (r *meterS) collectMetrics() *MetricsS {
 func (r *meterS) collectSnapshot() *SnapshotS {
 	return &SnapshotS{
 		Name:     r.sensor.serviceName,
+		Version:  runtime.Version(),
 		Root:     runtime.GOROOT(),
 		MaxProcs: runtime.GOMAXPROCS(0),
 		Compiler: runtime.Compiler,
