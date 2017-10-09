@@ -141,7 +141,7 @@ func (r *agentS) fullRequestResponse(url string, method string, data interface{}
 	}
 
 	if err != nil {
-		log.error(err)
+		log.info(err, url)
 	}
 
 	return ret, err
