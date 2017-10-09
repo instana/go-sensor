@@ -63,6 +63,12 @@ func (r *sensorS) configureServiceName() {
 func InitSensor(options *Options) {
 	if sensor == nil {
 		sensor = new(sensorS)
+		// If this environment variable is set, then override log level
+		_, ok := os.LookupEnv("INSTANA_DEV")
+		if ok {
+			options.LogLevel = Debug
+		}
+
 		sensor.initLog()
 		sensor.init(options)
 		log.debug("initialized sensor")
