@@ -62,6 +62,8 @@ func server() {
 
 		time.Sleep(550 * time.Millisecond)
 
+		ot.GlobalTracer().Inject(parentSpan.Context(), ot.HTTPHeaders, ot.HTTPHeadersCarrier(w.Header()))
+
 		parentSpan.Finish()
 	})
 
@@ -75,7 +77,7 @@ func server() {
 func main() {
 	ot.InitGlobalTracer(instana.NewTracerWithOptions(&instana.Options{
 		Service:  Service,
-		LogLevel: instana.Debug}))
+		LogLevel: instana.Info}))
 
 	go server()
 
