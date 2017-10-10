@@ -30,6 +30,7 @@ type fsmS struct {
 
 func (r *fsmS) init() {
 
+	log.warn("Stan is on the scene.  Starting Instana instrumentation.")
 	log.debug("initializing fsm")
 
 	r.fsm = f.NewFSM(
@@ -112,6 +113,7 @@ func (r *fsmS) lookupSuccess(host string) {
 func (r *fsmS) announceSensor(e *f.Event) {
 	cb := func(b bool, from *fromS) {
 		if b {
+			log.info("Host agent available. We're in business. Announced pid:", from.PID)
 			r.agent.setFrom(from)
 			r.retries = maximumRetries
 			r.fsm.Event(eAnnounce)
@@ -174,7 +176,7 @@ func (r *fsmS) testAgent(e *f.Event) {
 			r.retries = maximumRetries
 			r.fsm.Event(eTest)
 		} else {
-			log.error("Agent is not yet ready. Scheduling retry.")
+			log.debug("Agent is not yet ready. Scheduling retry.")
 			r.retries--
 			if r.retries > 0 {
 				r.scheduleRetry(e, r.testAgent)
