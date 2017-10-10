@@ -20,12 +20,8 @@ func TestRecorderBasics(t *testing.T) {
 	span.SetTag(string(ext.HTTPMethod), "GET")
 	span.Finish()
 
-	// Validate GetSpans
-	spans := recorder.GetSpans()
+	// Validate GetQueuedSpans returns queued spans and clears the queue
+	spans := recorder.GetQueuedSpans()
 	assert.Equal(t, 1, len(spans))
-
-	// Validate Reset & GetSpans Result
-	recorder.Reset()
-	spans = recorder.GetSpans()
-	assert.Equal(t, 0, len(spans))
+	assert.Equal(t, 0, recorder.QueuedSpansCount())
 }

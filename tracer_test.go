@@ -31,7 +31,6 @@ func TestTracerBasics(t *testing.T) {
 	sp.SetBaggageItem("foo", "bar")
 	sp.Finish()
 
-	spans := recorder.GetSpans()
+	spans := recorder.GetQueuedSpans()
 	assert.Equal(t, len(spans), 1)
-	recorder.Reset()
 }

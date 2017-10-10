@@ -23,7 +23,7 @@ func TestBasicSpan(t *testing.T) {
 	sp := tracer.StartSpan(op)
 	sp.Finish()
 
-	spans := recorder.GetSpans()
+	spans := recorder.GetQueuedSpans()
 	assert.Equal(t, 1, len(spans))
 	span := spans[0]
 
@@ -51,7 +51,7 @@ func TestSpanHeritage(t *testing.T) {
 	time.Sleep(2 * time.Millisecond)
 	parentSpan.Finish()
 
-	spans := recorder.GetSpans()
+	spans := recorder.GetQueuedSpans()
 	assert.Equal(t, len(spans), 2)
 	cSpan := spans[0]
 	pSpan := spans[1]
@@ -83,7 +83,7 @@ func TestSpanBaggage(t *testing.T) {
 	sp.SetBaggageItem("foo", "bar")
 	sp.Finish()
 
-	spans := recorder.GetSpans()
+	spans := recorder.GetQueuedSpans()
 	assert.Equal(t, len(spans), 1)
 	span := spans[0]
 
@@ -100,7 +100,7 @@ func TestSpanTags(t *testing.T) {
 	sp.SetTag("foo", "bar")
 	sp.Finish()
 
-	spans := recorder.GetSpans()
+	spans := recorder.GetQueuedSpans()
 	assert.Equal(t, len(spans), 1)
 	span := spans[0]
 
@@ -120,7 +120,7 @@ func TestSpanLogFields(t *testing.T) {
 		log.Int("waited.millis", 1500))
 	span.Finish()
 
-	spans := recorder.GetSpans()
+	spans := recorder.GetQueuedSpans()
 	assert.Equal(t, len(spans), 1)
 	firstSpan := spans[0]
 
@@ -151,7 +151,7 @@ func TestSpanLogKVs(t *testing.T) {
 		"waited.millis", 1500)
 	span.Finish()
 
-	spans := recorder.GetSpans()
+	spans := recorder.GetQueuedSpans()
 	assert.Equal(t, len(spans), 1)
 	firstSpan := spans[0]
 
@@ -179,7 +179,7 @@ func TestOTLogError(t *testing.T) {
 	ext.Error.Set(span, true)
 	span.Finish()
 
-	spans := recorder.GetSpans()
+	spans := recorder.GetQueuedSpans()
 	assert.Equal(t, len(spans), 1)
 	firstSpan := spans[0]
 
@@ -208,7 +208,7 @@ func TestSpanErrorLogKV(t *testing.T) {
 	span.LogKV("error", "simulated error")
 	span.Finish()
 
-	spans := recorder.GetSpans()
+	spans := recorder.GetQueuedSpans()
 	assert.Equal(t, len(spans), 1)
 	firstSpan := spans[0]
 
@@ -240,7 +240,7 @@ func TestSpanErrorLogFields(t *testing.T) {
 	span.LogFields(log.Error(err), log.String("function", "TestspanErrorLogFields"))
 	span.Finish()
 
-	spans := recorder.GetSpans()
+	spans := recorder.GetQueuedSpans()
 	assert.Equal(t, len(spans), 1)
 	firstSpan := spans[0]
 

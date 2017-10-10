@@ -141,7 +141,12 @@ func (r *agentS) fullRequestResponse(url string, method string, data interface{}
 	}
 
 	if err != nil {
-		log.info(err, url)
+		// Ignore errors while in announced stated (before ready) as
+		// this is the time where the entity is registering in the Instana
+		// backend and it will return 404 until it's done.
+		if !r.sensor.agent.fsm.fsm.Is("announced") {
+			log.info(err, url)
+		}
 	}
 
 	return ret, err
