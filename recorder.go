@@ -36,17 +36,8 @@ func NewTestRecorder() *Recorder {
 	return r
 }
 
-// GetSpans returns a copy of the array of spans accumulated so far.
-func (r *Recorder) GetSpans() []jsonSpan {
-	r.RLock()
-	defer r.RUnlock()
-	spans := make([]jsonSpan, len(r.spans))
-	copy(spans, r.spans)
-	return spans
-}
-
 func (r *Recorder) init() {
-	r.Reset()
+	r.clearQueuedSpans()
 
 	if r.testMode {
 		return
@@ -55,32 +46,15 @@ func (r *Recorder) init() {
 	ticker := time.NewTicker(1 * time.Second)
 	go func() {
 		for range ticker.C {
-			r.RLock()
-			// Only attempt to send spans if we're announced and if the buffer is not empty
-			if sensor.agent.canSend() && len(r.spans) > 0 {
-				log.debug("Sending spans to agent", len(r.spans))
+			if sensor.agent.canSend() {
 				r.send()
 			}
-			r.RUnlock()
 		}
 	}()
 }
 
-// Reset Drops all queued spans to sent to the backend
-func (r *Recorder) Reset() {
-	r.Lock()
-	defer r.Unlock()
-
-	var mbs int
-	if sensor != nil {
-		mbs = sensor.options.MaxBufferedSpans
-	} else {
-		mbs = DefaultMaxBufferedSpans
-	}
-	r.spans = make([]jsonSpan, 0, mbs)
-}
-
-// RecordSpan accepts spans to be recorded and sent to the backend
+// RecordSpan accepts spans to be recorded and and added to the span queue
+// for eventual reporting to the host agent.
 func (r *Recorder) RecordSpan(span *spanS) {
 	// If we're not announced and not in test mode then just
 	// return
@@ -141,22 +115,53 @@ func (r *Recorder) RecordSpan(span *spanS) {
 	}
 
 	if len(r.spans) >= sensor.options.ForceTransmissionStartingAt {
-		log.debug("Forcing spans to agent", len(r.spans))
-
+		log.debug("Forcing spans to agent.  Count:", len(r.spans))
 		r.send()
 	}
 }
 
-func (r *Recorder) send() {
-	go func() {
-		r.Lock()
-		_, err := sensor.agent.request(sensor.agent.makeURL(agentTracesURL), "POST", r.spans)
-		r.Unlock()
+// GetQueuedSpans returns a copy of the queued spans and clears the queue.
+func (r *Recorder) GetQueuedSpans() []jsonSpan {
+	r.Lock()
+	defer r.Unlock()
 
-		r.Reset()
+	// Copy queued spans
+	queuedSpans := make([]jsonSpan, len(r.spans))
+	copy(queuedSpans, r.spans)
 
-		if err != nil {
-			sensor.agent.reset()
+	// and clear out the source
+	r.clearQueuedSpans()
+	return queuedSpans
+}
+
+// clearQueuedSpans brings the span queue to empty/0/nada
+//   This function doesn't take the Lock so make sure to have
+//   the write lock before calling.
+//   This is meant to be called from GetQueuedSpans which handles
+//   locking.
+func (r *Recorder) clearQueuedSpans() {
+	var mbs int
+
+	if len(r.spans) > 0 {
+		if sensor != nil {
+			mbs = sensor.options.MaxBufferedSpans
+		} else {
+			mbs = DefaultMaxBufferedSpans
 		}
-	}()
+		r.spans = make([]jsonSpan, 0, mbs)
+	}
+}
+
+// Retrieve the queued spans and post them to the host agent asynchronously.
+func (r *Recorder) send() {
+	spansToSend := r.GetQueuedSpans()
+	if len(spansToSend) > 0 {
+		go func() {
+			_, err := sensor.agent.request(sensor.agent.makeURL(agentTracesURL), "POST", spansToSend)
+			if err != nil {
+				log.debug("Posting traces failed in send(): ", err)
+				sensor.agent.reset()
+			}
+		}()
+	}
 }
