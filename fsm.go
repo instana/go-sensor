@@ -113,10 +113,10 @@ func (r *fsmS) lookupSuccess(host string) {
 func (r *fsmS) announceSensor(e *f.Event) {
 	cb := func(b bool, from *fromS) {
 		if b {
+			log.info("Host agent available. We're in business. Announced pid:", from.PID)
 			r.agent.setFrom(from)
 			r.retries = maximumRetries
 			r.fsm.Event(eAnnounce)
-			log.info("Host agent available. We're in business. Announced pid:", from.PID)
 		} else {
 			log.error("Cannot announce sensor. Scheduling retry.")
 			r.retries--
