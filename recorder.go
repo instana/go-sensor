@@ -120,6 +120,14 @@ func (r *Recorder) RecordSpan(span *spanS) {
 	}
 }
 
+// QueuedSpansCount returns the number of queued spans
+//   Used only in tests currently.
+func (r *Recorder) QueuedSpansCount() int {
+	r.RLock()
+	defer r.RUnlock()
+	return len(r.spans)
+}
+
 // GetQueuedSpans returns a copy of the queued spans and clears the queue.
 func (r *Recorder) GetQueuedSpans() []jsonSpan {
 	r.Lock()
