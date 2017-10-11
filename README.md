@@ -9,6 +9,7 @@ The Instana Go sensor consists of two parts:
 * [OpenTracing](http://opentracing.io) tracer
 
 [![Build Status](https://travis-ci.org/instana/golang-sensor.svg?branch=master)](https://travis-ci.org/instana/golang-sensor)
+[![OpenTracing Badge](https://img.shields.io/badge/OpenTracing-enabled-blue.svg)](http://opentracing.io)
 
 ## Sensor
 
