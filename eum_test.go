@@ -13,7 +13,7 @@ const eumExpectedResult string = `<script>
   m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
   })(window,document,'script','//eum.instana.io/eum.min.js','ineum');
 
-  ineum('apiKey', 'myApikey');
+  ineum('apiKey', 'myApiKey');
   ineum('traceId', 'myTraceId');
   ineum('meta', 'key1', 'value1');
   ineum('meta', 'key2', 'value2');
@@ -22,9 +22,10 @@ const eumExpectedResult string = `<script>
 
 func TestEum(t *testing.T) {
 
-	var m map[string]string
+	m := make(map[string]string, 2)
 	m["key1"] = "value1"
 	m["key2"] = "value2"
+
 	var result string = instana.EumSnippet("myApiKey", "myTraceId", m)
 	assert.Equal(t, result, eumExpectedResult, "They should be equal")
 }
