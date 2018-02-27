@@ -116,7 +116,7 @@ func (r *Recorder) RecordSpan(span *spanS) {
 
 	if len(r.spans) >= sensor.options.ForceTransmissionStartingAt {
 		log.debug("Forcing spans to agent.  Count:", len(r.spans))
-		r.send()
+		go r.send()
 	}
 }
 
