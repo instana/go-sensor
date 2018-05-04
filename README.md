@@ -45,7 +45,7 @@ The Instana tracer will remap OpenTracing HTTP headers into Instana Headers, so 
 
 ## Events API
 
-The sensor, be it instantiated explicitly or implicitly through the tracer, provides a simple wrapper API to send events to Instana as described in https://instana.atlassian.net/wiki/display/DOCS/Event+SDK+REST+Web+Service
+The sensor, be it instantiated explicitly or implicitly through the tracer, provides a simple wrapper API to send events to Instana as described in [its documentation](https://docs.instana.io/quick_start/api/#event-sdk-rest-web-service).
 
 To learn more, see the [Events API](https://github.com/instana/golang-sensor/blob/master/EventAPI.md) document in this repository.
 
