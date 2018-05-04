@@ -43,9 +43,11 @@ type agentS struct {
 	fsm    *fsmS
 	from   *fromS
 	host   string
+	client *http.Client
 }
 
 func (r *agentS) init() {
+	r.client = &http.Client{Timeout: 5 * time.Second}
 	r.fsm = r.initFsm()
 	r.setFrom(&fromS{})
 }
@@ -115,8 +117,7 @@ func (r *agentS) fullRequestResponse(url string, method string, data interface{}
 
 		if err == nil {
 			req.Header.Set("Content-Type", "application/json")
-			client := &http.Client{Timeout: 5 * time.Second}
-			resp, err = client.Do(req)
+			resp, err = r.client.Do(req)
 			if err == nil {
 				defer resp.Body.Close()
 
