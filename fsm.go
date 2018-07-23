@@ -139,7 +139,6 @@ func (r *fsmS) announceSensor(e *f.Event) {
 			}
 		}()
 
-		log.debug("os.Getpid says: ", os.Getpid())
 		pid := 0
 		schedFile := fmt.Sprintf("/proc/%d/sched", os.Getpid())
 		if _, err := os.Stat(schedFile); err == nil {
@@ -150,20 +149,17 @@ func (r *fsmS) announceSensor(e *f.Event) {
 				fscanner.Scan()
 				primaLinea := fscanner.Text()
 
-				r, _ := regexp.Compile("\\((\\d+),")
-				i, err := strconv.Atoi(r.FindString(primaLinea))
+				r := regexp.MustCompile("\\((\\d+),")
+				match := r.FindStringSubmatch(primaLinea)
+				i, err := strconv.Atoi(match[1])
 				if err == nil {
 					pid = i
-					log.debug("sched file says: ", pid)
 				}
 			}
 		}
 
 		if pid == 0 {
-			log.debug("Taking os.Getpid()")
 			pid = os.Getpid()
-		} else {
-			log.debug("sched file is the shiz")
 		}
 
 		d := &discoveryS{PID: pid}
