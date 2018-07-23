@@ -1,10 +1,12 @@
 package instana
 
 import (
+	"bufio"
 	"fmt"
 	"net"
 	"os"
 	"os/exec"
+	"regexp"
 	"strconv"
 	"time"
 
@@ -137,7 +139,34 @@ func (r *fsmS) announceSensor(e *f.Event) {
 			}
 		}()
 
-		d := &discoveryS{PID: os.Getpid()}
+		log.debug("os.Getpid says: ", os.Getpid())
+		pid := 0
+		schedFile := fmt.Sprintf("/proc/%d/sched", os.Getpid())
+		if _, err := os.Stat(schedFile); err == nil {
+			sf, err := os.Open(schedFile)
+			defer sf.Close()
+			if err == nil {
+				fscanner := bufio.NewScanner(sf)
+				fscanner.Scan()
+				primaLinea := fscanner.Text()
+
+				r, _ := regexp.Compile("\\((\\d+),")
+				i, err := strconv.Atoi(r.FindString(primaLinea))
+				if err == nil {
+					pid = i
+					log.debug("sched file says: ", pid)
+				}
+			}
+		}
+
+		if pid == 0 {
+			log.debug("Taking os.Getpid()")
+			pid = os.Getpid()
+		} else {
+			log.debug("sched file is the shiz")
+		}
+
+		d := &discoveryS{PID: pid}
 		d.Name, d.Args = getCommandLine()
 
 		if _, err := os.Stat("/proc"); err == nil {
