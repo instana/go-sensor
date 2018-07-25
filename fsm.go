@@ -80,11 +80,16 @@ func (r *fsmS) lookupAgentHost(e *f.Event) {
 			}
 		}
 	}
-
-	if r.agent.sensor.options.AgentHost != "" {
-		go r.checkHost(r.agent.sensor.options.AgentHost, cb)
-	} else {
-		go r.checkHost(agentDefaultHost, cb)
+	hostNames := []string{
+		r.agent.sensor.options.AgentHost,
+		os.Getenv("INSTANA_AGENT_HOST"),
+		agentDefaultHost,
+	}
+	for _, name := range hostNames {
+		if name != "" {
+			go r.checkHost(name, cb)
+			return
+		}
 	}
 }
 
