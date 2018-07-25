@@ -6,6 +6,7 @@ import (
 	"errors"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"strconv"
 	"time"
 )
@@ -57,13 +58,18 @@ func (r *agentS) makeURL(prefix string) string {
 }
 
 func (r *agentS) makeHostURL(host string, prefix string) string {
-	var port int
-	if r.sensor.options.AgentPort == 0 {
-		port = agentDefaultPort
-	} else {
-		port = r.sensor.options.AgentPort
+	envPort := os.Getenv("INSTANA_AGENT_PORT")
+	port := agentDefaultPort
+	if r.sensor.options.AgentPort > 0 {
+		return r.makeFullURL(host, r.sensor.options.AgentPort, prefix)
 	}
-
+	if envPort == "" {
+		return r.makeFullURL(host, port, prefix)
+	}
+	port, err := strconv.Atoi(envPort)
+	if err != nil {
+		return r.makeFullURL(host, agentDefaultPort, prefix)
+	}
 	return r.makeFullURL(host, port, prefix)
 }
 
