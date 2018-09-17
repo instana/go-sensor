@@ -71,7 +71,9 @@ func (r *spanS) FinishWithOptions(opts ot.FinishOptions) {
 	}
 
 	r.Duration = duration
-	r.tracer.options.Recorder.RecordSpan(r)
+
+	rawSpan := RawSpan{s: r}
+	r.tracer.options.Recorder.RecordSpan(rawSpan)
 }
 
 func (r *spanS) appendLog(lr ot.LogRecord) {

@@ -5,12 +5,16 @@ import (
 	"time"
 )
 
+type RawSpan struct {
+	s *spanS
+}
+
 // A SpanRecorder handles all of the `RawSpan` data generated via an
 // associated `Tracer` (see `NewStandardTracer`) instance. It also names
 // the containing process and provides access to a straightforward tag map.
 type SpanRecorder interface {
 	// Implementations must determine whether and where to store `span`.
-	RecordSpan(span *spanS)
+	RecordSpan(span RawSpan)
 }
 
 // Recorder accepts spans, processes and queues them
@@ -55,7 +59,7 @@ func (r *Recorder) init() {
 
 // RecordSpan accepts spans to be recorded and and added to the span queue
 // for eventual reporting to the host agent.
-func (r *Recorder) RecordSpan(span *spanS) {
+func (r *Recorder) RecordSpan(span RawSpan) {
 	// If we're not announced and not in test mode then just
 	// return
 	if !r.testMode && !sensor.agent.canSend() {
@@ -63,15 +67,15 @@ func (r *Recorder) RecordSpan(span *spanS) {
 	}
 
 	var data = &jsonData{}
-	kind := span.getSpanKind()
+	kind := span.s.getSpanKind()
 
 	data.SDK = &jsonSDKData{
-		Name:   span.Operation,
+		Name:   span.s.Operation,
 		Type:   kind,
-		Custom: &jsonCustomData{Tags: span.Tags, Logs: span.collectLogs()}}
+		Custom: &jsonCustomData{Tags: span.s.Tags, Logs: span.s.collectLogs()}}
 
 	baggage := make(map[string]string)
-	span.context.ForeachBaggageItem(func(k string, v string) bool {
+	span.s.context.ForeachBaggageItem(func(k string, v string) bool {
 		baggage[k] = v
 
 		return true
@@ -84,10 +88,10 @@ func (r *Recorder) RecordSpan(span *spanS) {
 	data.Service = sensor.serviceName
 
 	var parentID *int64
-	if span.ParentSpanID == 0 {
+	if span.s.ParentSpanID == 0 {
 		parentID = nil
 	} else {
-		parentID = &span.ParentSpanID
+		parentID = &span.s.ParentSpanID
 	}
 
 	r.Lock()
@@ -98,14 +102,14 @@ func (r *Recorder) RecordSpan(span *spanS) {
 	}
 
 	r.spans = append(r.spans, jsonSpan{
-		TraceID:   span.context.TraceID,
+		TraceID:   span.s.context.TraceID,
 		ParentID:  parentID,
-		SpanID:    span.context.SpanID,
-		Timestamp: uint64(span.Start.UnixNano()) / uint64(time.Millisecond),
-		Duration:  uint64(span.Duration) / uint64(time.Millisecond),
+		SpanID:    span.s.context.SpanID,
+		Timestamp: uint64(span.s.Start.UnixNano()) / uint64(time.Millisecond),
+		Duration:  uint64(span.s.Duration) / uint64(time.Millisecond),
 		Name:      "sdk",
-		Error:     span.Error,
-		Ec:        span.Ec,
+		Error:     span.s.Error,
+		Ec:        span.s.Ec,
 		Lang:      "go",
 		From:      sensor.agent.from,
 		Data:      data})
