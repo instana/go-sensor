@@ -18,28 +18,28 @@ func TestSpanKind(t *testing.T) {
 	span := tracer.StartSpan("http-client")
 	span.SetTag(string(ext.SpanKind), "exit")
 	span.Finish()
-	kind := span.(*spanS).getSpanKind()
+	kind := span.(*spanS).getSpanKindTag()
 	assert.EqualValues(t, "exit", kind, "Wrong span kind")
 
 	// Entry
 	span = tracer.StartSpan("http-client")
 	span.SetTag(string(ext.SpanKind), "entry")
 	span.Finish()
-	kind = span.(*spanS).getSpanKind()
+	kind = span.(*spanS).getSpanKindTag()
 	assert.EqualValues(t, "entry", kind, "Wrong span kind")
 
 	// Consumer
 	span = tracer.StartSpan("http-client")
 	span.SetTag(string(ext.SpanKind), "consumer")
 	span.Finish()
-	kind = span.(*spanS).getSpanKind()
+	kind = span.(*spanS).getSpanKindTag()
 	assert.EqualValues(t, "entry", kind, "Wrong span kind")
 
 	// Producer
 	span = tracer.StartSpan("http-client")
 	span.SetTag(string(ext.SpanKind), "producer")
 	span.Finish()
-	kind = span.(*spanS).getSpanKind()
+	kind = span.(*spanS).getSpanKindTag()
 	assert.EqualValues(t, "exit", kind, "Wrong span kind")
 }
 

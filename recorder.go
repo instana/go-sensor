@@ -63,11 +63,11 @@ func (r *Recorder) RecordSpan(span *spanS) {
 	}
 
 	var data = &jsonData{}
-	kind := span.getSpanKind()
+	kindTag := span.getSpanKindTag()
 
 	data.SDK = &jsonSDKData{
 		Name:   span.Operation,
-		Type:   kind,
+		Type:   kindTag,
 		Custom: &jsonCustomData{Tags: span.Tags, Logs: span.collectLogs()}}
 
 	baggage := make(map[string]string)
@@ -108,6 +108,7 @@ func (r *Recorder) RecordSpan(span *spanS) {
 		Ec:        span.Ec,
 		Lang:      "go",
 		From:      sensor.agent.from,
+		Kind:      span.getSpanKindInt(),
 		Data:      data})
 
 	if r.testMode || !sensor.agent.canSend() {
