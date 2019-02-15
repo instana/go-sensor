@@ -225,7 +225,7 @@ func (r *spanS) getHostName() string {
 	return h
 }
 
-func (r *spanS) getSpanKind() string {
+func (r *spanS) getSpanKindTag() string {
 	kind := r.getStringTag(string(ext.SpanKind))
 
 	switch kind {
@@ -234,7 +234,19 @@ func (r *spanS) getSpanKind() string {
 	case string(ext.SpanKindRPCClientEnum), "producer", "exit":
 		return "exit"
 	}
-	return ""
+	return "intermediate"
+}
+
+func (r *spanS) getSpanKindInt() int {
+	kind := r.getStringTag(string(ext.SpanKind))
+
+	switch kind {
+	case string(ext.SpanKindRPCServerEnum), "consumer", "entry":
+		return 1
+	case string(ext.SpanKindRPCClientEnum), "producer", "exit":
+		return 2
+	}
+	return 3
 }
 
 func (r *spanS) collectLogs() map[uint64]map[string]interface{} {

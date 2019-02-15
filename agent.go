@@ -121,6 +121,9 @@ func (r *agentS) fullRequestResponse(url string, method string, data interface{}
 			req, err = http.NewRequest(method, url, nil)
 		}
 
+		// Uncomment this to dump json payloads
+		// log.debug(bytes.NewBuffer(j))
+
 		if err == nil {
 			req.Header.Set("Content-Type", "application/json")
 			resp, err = r.client.Do(req)
@@ -130,9 +133,6 @@ func (r *agentS) fullRequestResponse(url string, method string, data interface{}
 				if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 					err = errors.New(resp.Status)
 				} else {
-
-					log.debug("agent response:", url, resp.Status)
-
 					if body != nil {
 						var b []byte
 						b, err = ioutil.ReadAll(resp.Body)
