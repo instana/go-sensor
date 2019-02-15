@@ -234,7 +234,7 @@ func (r *spanS) getSpanKind() string {
 	case string(ext.SpanKindRPCClientEnum), "producer", "exit":
 		return "exit"
 	}
-	return ""
+	return "intermediate"
 }
 
 func (r *spanS) collectLogs() map[uint64]map[string]interface{} {
