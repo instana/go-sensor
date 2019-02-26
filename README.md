@@ -11,6 +11,59 @@ The Instana Go sensor consists of two parts:
 [![Build Status](https://travis-ci.org/instana/golang-sensor.svg?branch=master)](https://travis-ci.org/instana/golang-sensor)
 [![OpenTracing Badge](https://img.shields.io/badge/OpenTracing-enabled-blue.svg)](http://opentracing.io)
 
+## Common Operations 
+
+The Instana Go sensor offers a set of quick features to support tracing of the most common operations like handling HTTP requests and executing HTTP requests.  
+
+To create an instance of the Instana sensor just request a new instance using the _instana.NewSensor_ factory method and providing the name of the application. It is recommended to use a single Instana only. The sensor implementation is fully thread-safe and can be shared by multiple threads.
+
+```
+var sensor = instana.NewSensor("my-service")
+```
+
+A full example can be found under the examples folder in _example/webserver/instana/http.go_.
+
+### HTTP Server Handlers
+
+With support to wrap a _http.HandlerFunc_, Instana quickly adds the possibility to trace requests and collect child spans, executed in the context of the request span.
+
+Minimal changes are required for Instana to be able to capture the necessary information. By simply wrapping the currently existing _http.HandlerFunc_ Instana collects and injects necessary information automatically.
+
+That said, a simple handler function like the following will simple be wrapped and registered like normal. 
+```
+func myHandler(w http.ResponseWriter, req *http.Request) {
+  time.Sleep(450 * time.Millisecond)
+}
+
+func main() {
+  http.HandleFunc(
+      "/path/to/handler", 
+      sensor.TracingHandler("myHandler", myHandler)
+  ),
+}
+```  
+
+### Executing HTTP Requests
+
+Requesting data or information from other, often external systems, is commonly implemented through HTTP requests. To make sure traces contain all spans, especially over all the different systems, certain span information have to be injected into the HTTP request headers before sending it out. Instana's Go sensor provides support to automate this process as much as possible.
+
+To have Instana inject information into the request headers, create the _http.Request_ as normal and wrap it with the Instana sensor function as in the following example. 
+
+```
+req, err := http.NewRequest("GET", url, nil)
+client := &http.Client{}
+resp, err := sensor.TracingHttpRequest(
+    "myExternalCall", 
+    parentRequest, 
+    req, 
+    client
+)
+```
+
+The provided _parentRequest_ is the incoming request from the request handler (see above) and provides the necessary tracing and span information to create a child span and inject it into the request.
+
+The request is, after injection, executing using the provided _http.Client_ instance. Like the normal _client.Do_ operation, the call will return a _http.Response_ instance or an error proving information of the failure reason.
+
 ## Sensor
 
 To use sensor only without tracing ability, import the `instana` package and run

@@ -17,6 +17,8 @@ type Sensor struct {
 	tracer ot.Tracer
 }
 
+// Creates a new Instana sensor instance which can be used to
+// inject tracing information into requests.
 func NewSensor(serviceName string) *Sensor {
 	return &Sensor{
 		NewTracerWithOptions(
@@ -27,6 +29,8 @@ func NewSensor(serviceName string) *Sensor {
 	}
 }
 
+// Wraps an existing http.HandlerFunc into a named instance to support capturing tracing
+// information and response data.
 func (s *Sensor) TracingHandler(name string, handler http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		// Extract values if available
@@ -79,6 +83,8 @@ func (s *Sensor) TracingHandler(name string, handler http.HandlerFunc) http.Hand
 	}
 }
 
+// Wraps an existing http.Request instance into a named instance to inject tracing and span
+// header information into the actual HTTP wire transfer.
 func (s *Sensor) TracingHttpRequest(name string, parent, req *http.Request, client http.Client) (res *http.Response, err error) {
 	var span ot.Span
 	if parentSpan, ok := parent.Context().Value("parentSpan").(ot.Span); ok {
@@ -111,6 +117,8 @@ func (s *Sensor) TracingHttpRequest(name string, parent, req *http.Request, clie
 	return
 }
 
+// Executes the given SpanSensitiveFunc and executes it under the scope of a child span, which is#
+// injected as an argument when calling the function.
 func (s *Sensor) WithTracingSpan(name string, w http.ResponseWriter, req *http.Request, f SpanSensitiveFunc) {
 	wireContext, _ := s.tracer.Extract(ot.HTTPHeaders, ot.HTTPHeadersCarrier(req.Header))
 	parentSpan := req.Context().Value("parentSpan")
@@ -160,6 +168,8 @@ func (s *Sensor) WithTracingSpan(name string, w http.ResponseWriter, req *http.R
 	f(span)
 }
 
+// Executes the given ContextSensitiveFunc and executes it under the scope of a newly created context.Context,
+// that provides access to the parent span as 'parentSpan'.
 func (s *Sensor) WithTracingContext(name string, w http.ResponseWriter, req *http.Request, f ContextSensitiveFunc) {
 	s.WithTracingSpan(name, w, req, func(span ot.Span) {
 		ctx := context.WithValue(req.Context(), "parentSpan", span)
