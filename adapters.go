@@ -29,6 +29,14 @@ func NewSensor(serviceName string) *Sensor {
 	}
 }
 
+// It is similar to TracingHandler in regards, that it wraps an existing http.HandlerFunc
+// into a named instance to support capturing tracing information and data. It, however,
+// provides a neater way to register the handler with existing frameworks by returning
+// not only the wrapper, but also the URL-pattern to react on.
+func (s *Sensor) TraceHandler(name, pattern string, handler http.HandlerFunc) (string, http.HandlerFunc) {
+	return pattern, s.TracingHandler(name, handler)
+}
+
 // Wraps an existing http.HandlerFunc into a named instance to support capturing tracing
 // information and response data.
 func (s *Sensor) TracingHandler(name string, handler http.HandlerFunc) http.HandlerFunc {

@@ -29,17 +29,27 @@ With support to wrap a _http.HandlerFunc_, Instana quickly adds the possibility 
 
 Minimal changes are required for Instana to be able to capture the necessary information. By simply wrapping the currently existing _http.HandlerFunc_ Instana collects and injects necessary information automatically.
 
-That said, a simple handler function like the following will simple be wrapped and registered like normal. 
+That said, a simple handler function like the following will simple be wrapped and registered like normal.
+
+For your own preference registering the handler and wrapping it can be two separate steps or a single one. The following example code shows both versions, starting with two steps. 
 ```
 func myHandler(w http.ResponseWriter, req *http.Request) {
   time.Sleep(450 * time.Millisecond)
 }
 
+// Doing registration and wrapping in two separate steps
 func main() {
   http.HandleFunc(
       "/path/to/handler", 
-      sensor.TracingHandler("myHandler", myHandler)
-  ),
+      sensor.TracingHandler("myHandler", myHandler),
+  )
+}
+
+// Doing registration and wrapping in a single step
+func main() {
+  http.HandleFunc(
+      sensor.TraceHandler("myHandler", "/path/to/handler", myHandler),
+  )
 }
 ```  
 

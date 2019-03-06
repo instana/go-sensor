@@ -33,14 +33,18 @@ func requestExit(parent *http.Request) (*http.Response, error) {
 }
 
 func server() {
-	http.HandleFunc("/golang/entry",
-		sensor.TracingHandler("/golang/entry", func(writer http.ResponseWriter, req *http.Request) {
-			requestExit(req)
-		}),
+	// Wrap and register in one shot
+	http.HandleFunc(
+		sensor.TraceHandler("entry-handler", "/golang/entry",
+			func(writer http.ResponseWriter, req *http.Request) {
+				requestExit(req)
+			},
+		),
 	)
 
+	// Wrap and register in two separate steps, depending on your preference
 	http.HandleFunc("/golang/exit",
-		sensor.TracingHandler("/golang/exit", func(w http.ResponseWriter, req *http.Request) {
+		sensor.TracingHandler("exit-handler", func(w http.ResponseWriter, req *http.Request) {
 			time.Sleep(450 * time.Millisecond)
 		}),
 	)
