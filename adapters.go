@@ -41,53 +41,23 @@ func (s *Sensor) TraceHandler(name, pattern string, handler http.HandlerFunc) (s
 // information and response data.
 func (s *Sensor) TracingHandler(name string, handler http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
-		// Extract values if available
-		wireContext, _ := s.tracer.Extract(ot.HTTPHeaders, ot.HTTPHeadersCarrier(req.Header))
-
-		// Create tracing span
-		span := s.tracer.StartSpan(name, ext.RPCServerOption(wireContext))
-		span.SetTag(string(ext.SpanKind), string(ext.SpanKindRPCServerEnum))
-		span.SetTag(string(ext.PeerHostname), req.Host)
-		span.SetTag(string(ext.HTTPUrl), req.URL.Path)
-		span.SetTag(string(ext.HTTPMethod), req.Method)
-		span.SetTag(string(ext.HTTPStatusCode), 200)
-
-		// Defer error handling
-		defer func() {
-			s.tracer.Inject(span.Context(), ot.HTTPHeaders, ot.HTTPHeadersCarrier(w.Header()))
-
-			// Defer finishing the span
-			defer span.Finish()
-
-			// Add possible error messages to the span
-			if err := recover(); err != nil {
-				if e, ok := err.(error); ok {
-					span.LogFields(otlog.Error(e))
-				} else {
-					span.LogFields(otlog.Object("error", err))
-				}
-				panic(err)
+		s.WithTracingContext(name, w, req, func(span ot.Span, ctx context.Context) {
+			// Capture response code for span
+			hooks := httpsnoop.Hooks{
+				WriteHeader: func(next httpsnoop.WriteHeaderFunc) httpsnoop.WriteHeaderFunc {
+					return func(code int) {
+						next(code)
+						span.SetTag(string(ext.HTTPStatusCode), code)
+					}
+				},
 			}
-		}()
 
-		// Add parentSpan to request context for later retrieval
-		req = req.WithContext(context.WithValue(req.Context(), "parentSpan", span))
+			// Add hooks to response writer
+			wrappedWriter := httpsnoop.Wrap(w, hooks)
 
-		// Capture response code for span
-		hooks := httpsnoop.Hooks{
-			WriteHeader: func(next httpsnoop.WriteHeaderFunc) httpsnoop.WriteHeaderFunc {
-				return func(code int) {
-					next(code)
-					span.SetTag(string(ext.HTTPStatusCode), code)
-				}
-			},
-		}
-
-		// Add hooks to response writer
-		wrappedWriter := httpsnoop.Wrap(w, hooks)
-
-		// Serve original handler
-		handler.ServeHTTP(wrappedWriter, req)
+			// Serve original handler
+			handler.ServeHTTP(wrappedWriter, req.WithContext(ctx))
+		})
 	}
 }
 
@@ -131,13 +101,14 @@ func (s *Sensor) WithTracingSpan(name string, w http.ResponseWriter, req *http.R
 	wireContext, _ := s.tracer.Extract(ot.HTTPHeaders, ot.HTTPHeadersCarrier(req.Header))
 	parentSpan := req.Context().Value("parentSpan")
 
+	if name == "" {
+		pc, _, _, _ := runtime.Caller(1)
+		f := runtime.FuncForPC(pc)
+		name = f.Name()
+	}
+
 	var span ot.Span
 	if ps, ok := parentSpan.(ot.Span); ok {
-		if name == "" {
-			pc, _, _, _ := runtime.Caller(1)
-			f := runtime.FuncForPC(pc)
-			name = f.Name()
-		}
 		span = s.tracer.StartSpan(
 			name,
 			ext.RPCServerOption(wireContext),
