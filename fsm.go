@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net"
 	"os"
-	"os/exec"
 	"regexp"
 	"strconv"
 	"time"
@@ -64,7 +63,7 @@ func (r *fsmS) lookupAgentHost(e *f.Event) {
 		if b {
 			r.lookupSuccess(host)
 		} else {
-			gateway := r.getDefaultGateway()
+			gateway := getDefaultGateway("/proc/net/route")
 			if gateway != "" {
 				go r.checkHost(gateway, func(b bool, host string) {
 					if b {
@@ -91,14 +90,6 @@ func (r *fsmS) lookupAgentHost(e *f.Event) {
 			return
 		}
 	}
-}
-
-func (r *fsmS) getDefaultGateway() string {
-	out, _ := exec.Command("/bin/sh", "-c", "/sbin/ip route | awk '/default/' | cut -d ' ' -f 3 | tr -d '\n'").Output()
-
-	log.debug("checking default gateway", string(out[:]))
-
-	return string(out[:])
 }
 
 func (r *fsmS) checkHost(host string, cb func(b bool, host string)) {

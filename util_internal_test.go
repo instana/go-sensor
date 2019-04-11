@@ -1,6 +1,9 @@
 package instana
 
 import (
+	"errors"
+	"io/ioutil"
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -89,4 +92,85 @@ func TestBogusValues(t *testing.T) {
 	id, err := Header2ID("this shouldnt work")
 	assert.Equal(t, int64(0), id, "Bad input should return 0")
 	assert.NotNil(t, err, "An error should be returned")
+}
+
+func TestHexGatewayToAddr(t *testing.T) {
+	tests := []struct {
+		in          string
+		expected    string
+		expectedErr error
+	}{
+		{
+			in:          "0101FEA9",
+			expected:    "169.254.1.1",
+			expectedErr: nil,
+		},
+		{
+			in:          "0101FEAC",
+			expected:    "172.254.1.1",
+			expectedErr: nil,
+		},
+		{
+			in:          "0101FEA",
+			expected:    "",
+			expectedErr: errors.New("invalid gateway length"),
+		},
+	}
+
+	for _, test := range tests {
+		gatewayHex := []rune(test.in)
+		gateway, err := hexGatewayToAddr(gatewayHex)
+		assert.Equal(t, test.expectedErr, err)
+		assert.Equal(t, test.expected, gateway)
+	}
+}
+
+func TestGetDefaultGateway(t *testing.T) {
+
+	tests := []struct {
+		in       string
+		expected string
+	}{
+		{
+			in: `Iface	Destination	Gateway 	Flags	RefCnt	Use	Metric	Mask		MTU	Window	IRTT
+
+eth0	00000000	0101FEA9	0003	0	0	0	00000000	0	0	0
+
+eth0	0101FEA9	00000000	0005	0	0	0	FFFFFFFF	0	0	0
+
+`,
+			expected: "169.254.1.1",
+		},
+		{
+			in: `Iface	Destination	Gateway 	Flags	RefCnt	Use	Metric	Mask		MTU	Window	IRTT
+										 
+eth0	000011AC	00000000	0001	0	0	0	0000FFFF	0	0	0
+
+eth0	00000000	010011AC	0003	0	0	0	00000000	0	0	0
+                                                                               
+`,
+			expected: "172.17.0.1",
+		},
+	}
+
+	for _, test := range tests {
+		func() {
+			tmpFile, err := ioutil.TempFile("", "getdefaultgateway")
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			defer os.Remove(tmpFile.Name())
+
+			_, err = tmpFile.WriteString(test.in)
+
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			gateway := getDefaultGateway(tmpFile.Name())
+
+			assert.Equal(t, test.expected, gateway)
+		}()
+	}
 }
