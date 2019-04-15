@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/instana/golang-sensor"
+	"github.com/instana/go-sensor"
 	opentracing "github.com/opentracing/opentracing-go"
 	"github.com/stretchr/testify/assert"
 )

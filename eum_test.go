@@ -3,7 +3,7 @@ package instana_test
 import (
 	"testing"
 
-	"github.com/instana/golang-sensor"
+	"github.com/instana/go-sensor"
 	"github.com/stretchr/testify/assert"
 )
 

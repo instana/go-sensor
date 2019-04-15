@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/instana/golang-sensor"
+	"github.com/instana/go-sensor"
 	"net/http"
 	"time"
 )

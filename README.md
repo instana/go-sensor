@@ -1,19 +1,19 @@
 ![golang banner 2017-07-11](https://disznc.s3.amazonaws.com/Instana-Go-2017-07-11-at-16.01.45.png)
 
 # Instana Go Sensor
-golang-sensor requires Go version 1.7 or greater.
+go-sensor requires Go version 1.7 or greater.
 
 The Instana Go sensor consists of two parts:
 
 * metrics sensor
 * [OpenTracing](http://opentracing.io) tracer
 
-[![Build Status](https://travis-ci.org/instana/golang-sensor.svg?branch=master)](https://travis-ci.org/instana/golang-sensor)
+[![Build Status](https://travis-ci.org/instana/go-sensor.svg?branch=master)](https://travis-ci.org/instana/go-sensor)
 [![OpenTracing Badge](https://img.shields.io/badge/OpenTracing-enabled-blue.svg)](http://opentracing.io)
 
-## Common Operations 
+## Common Operations
 
-The Instana Go sensor offers a set of quick features to support tracing of the most common operations like handling HTTP requests and executing HTTP requests.  
+The Instana Go sensor offers a set of quick features to support tracing of the most common operations like handling HTTP requests and executing HTTP requests.
 
 To create an instance of the Instana sensor just request a new instance using the _instana.NewSensor_ factory method and providing the name of the application. It is recommended to use a single Instana only. The sensor implementation is fully thread-safe and can be shared by multiple threads.
 
@@ -31,7 +31,7 @@ Minimal changes are required for Instana to be able to capture the necessary inf
 
 That said, a simple handler function like the following will simple be wrapped and registered like normal.
 
-For your own preference registering the handler and wrapping it can be two separate steps or a single one. The following example code shows both versions, starting with two steps. 
+For your own preference registering the handler and wrapping it can be two separate steps or a single one. The following example code shows both versions, starting with two steps.
 ```
 func myHandler(w http.ResponseWriter, req *http.Request) {
   time.Sleep(450 * time.Millisecond)
@@ -40,7 +40,7 @@ func myHandler(w http.ResponseWriter, req *http.Request) {
 // Doing registration and wrapping in two separate steps
 func main() {
   http.HandleFunc(
-      "/path/to/handler", 
+      "/path/to/handler",
       sensor.TracingHandler("myHandler", myHandler),
   )
 }
@@ -63,9 +63,9 @@ To have Instana inject information into the request headers, create the _http.Re
 req, err := http.NewRequest("GET", url, nil)
 client := &http.Client{}
 resp, err := sensor.TracingHttpRequest(
-    "myExternalCall", 
-    parentRequest, 
-    req, 
+    "myExternalCall",
+    parentRequest,
+    req,
     client
 )
 ```
@@ -110,7 +110,7 @@ The Instana tracer will remap OpenTracing HTTP headers into Instana Headers, so 
 
 The sensor, be it instantiated explicitly or implicitly through the tracer, provides a simple wrapper API to send events to Instana as described in [its documentation](https://docs.instana.io/quick_start/api/#event-sdk-rest-web-service).
 
-To learn more, see the [Events API](https://github.com/instana/golang-sensor/blob/master/EventAPI.md) document in this repository.
+To learn more, see the [Events API](https://github.com/instana/go-sensor/blob/master/EventAPI.md) document in this repository.
 
 ## Examples
 

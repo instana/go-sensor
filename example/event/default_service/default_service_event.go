@@ -3,7 +3,7 @@ package main
 import (
 	"time"
 
-	"github.com/instana/golang-sensor"
+	"github.com/instana/go-sensor"
 )
 
 const (
