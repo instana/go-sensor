@@ -1,9 +1,11 @@
 package instana
 
 import (
+	"bufio"
 	"bytes"
 	"encoding/binary"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"math/rand"
 	"os"
@@ -96,4 +98,67 @@ func getCommandLine() (string, []string) {
 func abs(x int64) int64 {
 	y := x >> 63
 	return (x + y) ^ y
+}
+
+func getDefaultGateway(routeTableFile string) string {
+	routeTable, err := os.Open(routeTableFile)
+
+	if err != nil {
+		log.error(err)
+		return ""
+	}
+
+	defer routeTable.Close()
+
+	s := bufio.NewScanner(routeTable)
+
+	for s.Scan() {
+		entry := strings.Split(s.Text(), "\t")
+		if len(entry) < 3 {
+			continue
+		}
+		destination := entry[1]
+		if destination == "00000000" {
+			gatewayHex := []rune(entry[2])
+			gateway, err := hexGatewayToAddr(gatewayHex)
+
+			if err != nil {
+				log.error(err)
+				return ""
+			}
+
+			return gateway
+		}
+	}
+
+	if err := s.Err(); err != nil {
+		log.error(err)
+	}
+
+	return ""
+}
+
+// hexGatewayToAddr converts the hex representation of the gateway address to string.
+func hexGatewayToAddr(gateway []rune) (string, error) {
+	// gateway address is encoded in reverse order in hex
+	if len(gateway) != 8 {
+		return "", errors.New("invalid gateway length")
+	}
+
+	var octets [4]uint8
+	for i, hexOctet := range [4]string{
+		string(gateway[6:8]), // first octet of IP Address
+		string(gateway[4:6]), // second octet
+		string(gateway[2:4]), // third octet
+		string(gateway[0:2]), // last octet
+	} {
+		octet, err := strconv.ParseUint(hexOctet, 16, 8)
+		if err != nil {
+			return "", err
+		}
+
+		octets[i] = uint8(octet)
+	}
+
+	return fmt.Sprintf("%v.%v.%v.%v", octets[0], octets[1], octets[2], octets[3]), nil
 }
