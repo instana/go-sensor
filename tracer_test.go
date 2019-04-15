@@ -5,7 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/instana/golang-sensor"
+	"github.com/instana/go-sensor"
 	//opentracing "github.com/opentracing/opentracing-go"
 )
 
