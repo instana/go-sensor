@@ -1,9 +1,10 @@
 package main
 
 import (
-	"github.com/instana/go-sensor"
 	"net/http"
 	"time"
+
+	instana "github.com/instana/go-sensor"
 )
 
 const (

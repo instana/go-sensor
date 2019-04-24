@@ -4,7 +4,7 @@ import (
 	"math/rand"
 	"time"
 
-	"github.com/instana/go-sensor"
+	instana "github.com/instana/go-sensor"
 	ot "github.com/opentracing/opentracing-go"
 	ext "github.com/opentracing/opentracing-go/ext"
 	"github.com/opentracing/opentracing-go/log"

@@ -6,12 +6,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
-
-	"github.com/instana/go-sensor"
+	instana "github.com/instana/go-sensor"
 	ot "github.com/opentracing/opentracing-go"
 	ext "github.com/opentracing/opentracing-go/ext"
 	"github.com/opentracing/opentracing-go/log"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestBasicSpan(t *testing.T) {
