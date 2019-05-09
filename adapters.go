@@ -87,11 +87,7 @@ func (s *Sensor) TracingHttpRequest(name string, parent, req *http.Request, clie
 	span.SetTag(string(ext.HTTPStatusCode), res.StatusCode)
 
 	if err != nil {
-		if e, ok := err.(error); ok {
-			span.LogFields(otlog.Error(e))
-		} else {
-			span.LogFields(otlog.Object("error", err))
-		}
+		span.LogFields(otlog.Error(err))
 	}
 	return
 }
