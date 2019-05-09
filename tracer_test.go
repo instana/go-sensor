@@ -3,9 +3,8 @@ package instana_test
 import (
 	"testing"
 
+	instana "github.com/instana/go-sensor"
 	"github.com/stretchr/testify/assert"
-
-	"github.com/instana/go-sensor"
 	//opentracing "github.com/opentracing/opentracing-go"
 )
 
