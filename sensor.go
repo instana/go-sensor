@@ -64,7 +64,7 @@ func InitSensor(options *Options) {
 	if sensor == nil {
 		sensor = new(sensorS)
 		// If this environment variable is set, then override log level
-		_, ok := os.LookupEnv("INSTANA_DEV")
+		_, ok := os.LookupEnv("INSTANA_DEBUG")
 		if ok {
 			options.LogLevel = Debug
 		}
