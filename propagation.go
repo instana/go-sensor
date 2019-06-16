@@ -18,6 +18,8 @@ const (
 	FieldT = "x-instana-t"
 	// FieldS Span ID header
 	FieldS = "x-instana-s"
+	// FieldParentSpanID Parent Span ID header
+	FieldParentSpanID = "x-instana-parentspanid"
 	// FieldL Level header
 	FieldL = "x-instana-l"
 	// FieldB OT Baggage header
@@ -38,10 +40,11 @@ func (r *textMapPropagator) inject(spanContext ot.SpanContext, opaqueCarrier int
 
 	// Handle pre-existing case-sensitive keys
 	var (
-		exstfieldT = FieldT
-		exstfieldS = FieldS
-		exstfieldL = FieldL
-		exstfieldB = FieldB
+		exstfieldT            = FieldT
+		exstfieldS            = FieldS
+		exstfieldParentSpanID = FieldParentSpanID
+		exstfieldL            = FieldL
+		exstfieldB            = FieldB
 	)
 
 	roCarrier.ForeachKey(func(k, v string) error {
@@ -50,6 +53,8 @@ func (r *textMapPropagator) inject(spanContext ot.SpanContext, opaqueCarrier int
 			exstfieldT = k
 		case FieldS:
 			exstfieldS = k
+		case exstfieldParentSpanID:
+			exstfieldParentSpanID = k
 		case FieldL:
 			exstfieldL = k
 		default:
@@ -74,6 +79,7 @@ func (r *textMapPropagator) inject(spanContext ot.SpanContext, opaqueCarrier int
 		y := http.Header(hhcarrier)
 		y.Del(exstfieldT)
 		y.Del(exstfieldS)
+		y.Del(exstfieldParentSpanID)
 		y.Del(exstfieldL)
 
 		for key := range y {
@@ -93,6 +99,15 @@ func (r *textMapPropagator) inject(spanContext ot.SpanContext, opaqueCarrier int
 	} else {
 		log.debug(err)
 	}
+
+	if sc.ParentSpanID != 0 {
+		if instanaParentSpanID, err := ID2Header(sc.ParentSpanID); err == nil {
+			carrier.Set(exstfieldParentSpanID, instanaParentSpanID)
+		} else {
+			log.debug(err)
+		}
+	}
+
 	carrier.Set(exstfieldL, strconv.Itoa(1))
 
 	for k, v := range sc.Baggage {
@@ -108,7 +123,7 @@ func (r *textMapPropagator) extract(opaqueCarrier interface{}) (ot.SpanContext, 
 	}
 
 	fieldCount := 0
-	var traceID, spanID int64
+	var traceID, spanID, parentSpanID int64
 	var err error
 	baggage := make(map[string]string)
 	err = carrier.ForeachKey(func(k, v string) error {
@@ -125,6 +140,12 @@ func (r *textMapPropagator) extract(opaqueCarrier interface{}) (ot.SpanContext, 
 			if err != nil {
 				return ot.ErrSpanContextCorrupted
 			}
+		case FieldParentSpanID:
+			fieldCount++
+			parentSpanID, err = Header2ID(v)
+			if err != nil {
+				return ot.ErrSpanContextCorrupted
+			}
 		default:
 			lk := strings.ToLower(k)
 
@@ -136,30 +157,19 @@ func (r *textMapPropagator) extract(opaqueCarrier interface{}) (ot.SpanContext, 
 		return nil
 	})
 
-	return r.finishExtract(err, fieldCount, traceID, spanID, baggage)
-}
-
-func (r *textMapPropagator) finishExtract(err error,
-	fieldCount int,
-	traceID int64,
-	spanID int64,
-	baggage map[string]string) (ot.SpanContext, error) {
-	if err != nil {
+	if fieldCount == 0 {
+		return nil, ot.ErrSpanContextNotFound
+	} else if fieldCount < 2 {
+		return nil, ot.ErrSpanContextCorrupted
+	} else if err != nil {
 		return nil, err
 	}
 
-	if fieldCount < 2 {
-		if fieldCount == 0 {
-			return nil, ot.ErrSpanContextNotFound
-		}
-
-		return nil, ot.ErrSpanContextCorrupted
-	}
-
 	return SpanContext{
-		TraceID: traceID,
-		SpanID:  spanID,
-		Sampled: false,
-		Baggage: baggage,
+		TraceID:      traceID,
+		SpanID:       spanID,
+		ParentSpanID: parentSpanID,
+		Sampled:      false,
+		Baggage:      baggage,
 	}, nil
 }

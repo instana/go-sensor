@@ -132,7 +132,7 @@ func TestCaseSensitiveHeaderPropagation(t *testing.T) {
 
 }
 
-func TestSingleHeaderPropagation(t *testing.T) {
+func TestHeaderPropagation(t *testing.T) {
 	var (
 		op                 = "test"
 		spanParentIDBase64 = int64(4884)
@@ -147,6 +147,7 @@ func TestSingleHeaderPropagation(t *testing.T) {
 	metadata := make(http.Header)
 	metadata.Set("X-Instana-T", spanParentIDString)
 	metadata.Set("X-Instana-S", spanParentIDString)
+	metadata.Set("X-Instana-Parentspanid", spanParentIDString)
 	metadata.Set("X-Instana-L", "1")
 	metadata.Set("X-Instana-B-Foo", "bar")
 	tmc1 := opentracing.HTTPHeadersCarrier(metadata)
@@ -163,6 +164,9 @@ func TestSingleHeaderPropagation(t *testing.T) {
 		if err != nil {
 			t.Fatalf("%d: %v", i, err)
 		}
+
+		assert.Equal(t, spanParentIDString, fmt.Sprintf("%x", injectedContext.(instana.SpanContext).ParentSpanID))
+
 		// Start a new child span and overwrite the baggage key
 		child := tracer.StartSpan(
 			op,
@@ -178,6 +182,8 @@ func TestSingleHeaderPropagation(t *testing.T) {
 		s := recorder.GetQueuedSpans()[0]
 		assert.Equal(t, child.BaggageItem("foo"), "baz")
 		assert.Equal(t, []string{fmt.Sprintf("%x", s.SpanID)}, http.Header(test.carrier.(opentracing.HTTPHeadersCarrier))["X-Instana-S"])
+		assert.Equal(t, spanParentIDBase64, *s.ParentID)
+		assert.Equal(t, []string{fmt.Sprintf("%x", *s.ParentID)}, http.Header(test.carrier.(opentracing.HTTPHeadersCarrier))["X-Instana-Parentspanid"])
 	}
 
 	for _, s := range recorder.GetQueuedSpans() {

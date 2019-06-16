@@ -60,6 +60,7 @@ Loop:
 			span.context.SpanID = randomID()
 			span.context.Sampled = refCtx.Sampled
 			span.ParentSpanID = refCtx.SpanID
+			span.context.ParentSpanID = refCtx.SpanID
 			if l := len(refCtx.Baggage); l > 0 {
 				span.context.Baggage = make(map[string]string, l)
 				for k, v := range refCtx.Baggage {
