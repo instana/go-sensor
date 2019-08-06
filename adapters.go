@@ -38,6 +38,11 @@ func (s *Sensor) TraceHandler(name, pattern string, handler http.HandlerFunc) (s
 	return pattern, s.TracingHandler(name, handler)
 }
 
+// give me the Tracer
+func (s *Sensor) Tracer() ot.Tracer {
+	return s.tracer
+}
+
 // Wraps an existing http.HandlerFunc into a named instance to support capturing tracing
 // information and response data.
 func (s *Sensor) TracingHandler(name string, handler http.HandlerFunc) http.HandlerFunc {
