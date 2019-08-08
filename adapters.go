@@ -13,13 +13,14 @@ import (
 
 type SpanSensitiveFunc func(span ot.Span)
 type ContextSensitiveFunc func(span ot.Span, ctx context.Context)
+type TracerSensitiveFunc func(tracer ot.Tracer)
 
 type Sensor struct {
 	tracer ot.Tracer
 }
 
-// Creates a new Instana sensor instance which can be used to
-// inject tracing information into requests.
+// Creates a new Instana sensor instance, which can be used to
+// inject tracing information into requests or calls.
 func NewSensor(serviceName string) *Sensor {
 	return &Sensor{
 		NewTracerWithOptions(
@@ -27,6 +28,14 @@ func NewSensor(serviceName string) *Sensor {
 				Service: serviceName,
 			},
 		),
+	}
+}
+
+// Created a new Instana sensor instance with the given set of options,
+// which can be used to inject tracing information into requests or calls.
+func NewSensorWithOptions(options *Options) *Sensor {
+	return &Sensor{
+		NewTracerWithOptions(options),
 	}
 }
 
@@ -149,6 +158,13 @@ func (s *Sensor) WithTracingSpan(name string, w http.ResponseWriter, req *http.R
 func (s *Sensor) WithTracingContext(name string, w http.ResponseWriter, req *http.Request, f ContextSensitiveFunc) {
 	s.WithTracingSpan(name, w, req, func(span ot.Span) {
 		ctx := context.WithValue(req.Context(), "parentSpan", span)
+		ctx = context.WithValue(ctx, "sensor", sensor)
 		f(span, ctx)
 	})
+}
+
+// Provides access to the internally created OT Tracer instance to, for example, initialize framework tracing
+// like GRPC OpenTracing or others.
+func (s *Sensor) WithTracer(f TracerSensitiveFunc) {
+	f(s.tracer)
 }
