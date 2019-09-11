@@ -28,7 +28,7 @@ func TestEum(t *testing.T) {
 
 	var result = instana.EumSnippet("myApiKey", "myTraceId", m)
 
-	assert.Contains(t, result, "ineum('apiKey', 'myApiKey');")
+	assert.Contains(t, result, "ineum('key', 'myApiKey');")
 	assert.Contains(t, result, "ineum('traceId', 'myTraceId');")
 	assert.Contains(t, result, "ineum('meta', 'key1', 'value1');")
 	assert.Contains(t, result, "ineum('meta', 'key2', 'value2');")
