@@ -17,7 +17,7 @@ The Instana Go sensor offers a set of quick features to support tracing of the m
 
 To create an instance of the Instana sensor just request a new instance using the _instana.NewSensor_ factory method and providing the name of the application. It is recommended to use a single Instana only. The sensor implementation is fully thread-safe and can be shared by multiple threads.
 
-```
+```go
 var sensor = instana.NewSensor("my-service")
 ```
 
@@ -32,10 +32,12 @@ Minimal changes are required for Instana to be able to capture the necessary inf
 That said, a simple handler function like the following will simple be wrapped and registered like normal.
 
 For your own preference registering the handler and wrapping it can be two separate steps or a single one. The following example code shows both versions, starting with two steps.
-```
-func myHandler(w http.ResponseWriter, req *http.Request) {
-  time.Sleep(450 * time.Millisecond)
-}
+```go
+import (
+	"net/http"
+  instana "github.com/instana/go-sensor"
+  ot "github.com/opentracing/opentracing-go"
+)
 
 // Doing registration and wrapping in two separate steps
 func main() {
@@ -51,7 +53,16 @@ func main() {
       sensor.TraceHandler("myHandler", "/path/to/handler", myHandler),
   )
 }
-```  
+
+// Accessing the parent request inside a handler
+func myHandler(w http.ResponseWriter, req. *http.Request) {
+  ctx := req.Context()
+  parentSpan := ctx.Value("parentSpan").(ot.Span) // use this TracingHttpRequest
+  tracer := parent.Tracer()
+  spanCtx := parent.Context().(instana.SpanContext)
+  traceID := spanCtx.TraceID // use this with EumSnippet
+}
+```
 
 ### Executing HTTP Requests
 
@@ -59,18 +70,18 @@ Requesting data or information from other, often external systems, is commonly i
 
 To have Instana inject information into the request headers, create the _http.Request_ as normal and wrap it with the Instana sensor function as in the following example. 
 
-```
+```go
 req, err := http.NewRequest("GET", url, nil)
 client := &http.Client{}
 resp, err := sensor.TracingHttpRequest(
     "myExternalCall",
-    parentRequest,
+    parentSpan,
     req,
     client
 )
 ```
 
-The provided _parentRequest_ is the incoming request from the request handler (see above) and provides the necessary tracing and span information to create a child span and inject it into the request.
+The provided _parentSpan_ is the incoming request from the request handler (see above) and provides the necessary tracing and span information to create a child span and inject it into the request.
 
 The request is, after injection, executing using the provided _http.Client_ instance. Like the normal _client.Do_ operation, the call will return a _http.Response_ instance or an error proving information of the failure reason.
 
