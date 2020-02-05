@@ -22,8 +22,7 @@ func simple(ctx context.Context) {
 	parentSpan.SetTag(string(ext.HTTPUrl), "/golang/many/one")
 	parentSpan.SetTag(string(ext.HTTPMethod), "GET")
 	parentSpan.SetTag(string(ext.HTTPStatusCode), 200)
-	parentSpan.LogFields(
-		log.String("foo", "bar"))
+	parentSpan.LogFields(log.String("foo", "bar"))
 
 	childSpan := ot.StartSpan("child", ot.ChildOf(parentSpan.Context()))
 	childSpan.SetTag(string(ext.SpanKind), string(ext.SpanKindRPCClientEnum))
@@ -46,7 +45,8 @@ func main() {
 	ot.InitGlobalTracer(instana.NewTracerWithOptions(&instana.Options{
 		Service:                     Service,
 		ForceTransmissionStartingAt: 10000,
-		LogLevel:                    instana.Debug}))
+		LogLevel:                    instana.Debug,
+	}))
 
 	go forever()
 	go forever()
