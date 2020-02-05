@@ -35,32 +35,33 @@ For your own preference registering the handler and wrapping it can be two separ
 ```go
 import (
 	"net/http"
-  instana "github.com/instana/go-sensor"
-  ot "github.com/opentracing/opentracing-go"
+
+	instana "github.com/instana/go-sensor"
+	ot "github.com/opentracing/opentracing-go"
 )
 
 // Doing registration and wrapping in two separate steps
 func main() {
-  http.HandleFunc(
-      "/path/to/handler",
-      sensor.TracingHandler("myHandler", myHandler),
-  )
+	http.HandleFunc(
+		"/path/to/handler",
+		sensor.TracingHandler("myHandler", myHandler),
+	)
 }
 
 // Doing registration and wrapping in a single step
 func main() {
-  http.HandleFunc(
-      sensor.TraceHandler("myHandler", "/path/to/handler", myHandler),
-  )
+	http.HandleFunc(
+		sensor.TraceHandler("myHandler", "/path/to/handler", myHandler),
+	)
 }
 
 // Accessing the parent request inside a handler
-func myHandler(w http.ResponseWriter, req. *http.Request) {
-  ctx := req.Context()
-  parentSpan := ctx.Value("parentSpan").(ot.Span) // use this TracingHttpRequest
-  tracer := parent.Tracer()
-  spanCtx := parent.Context().(instana.SpanContext)
-  traceID := spanCtx.TraceID // use this with EumSnippet
+func myHandler(w http.ResponseWriter, req *http.Request) {
+	ctx := req.Context()
+	parentSpan := ctx.Value("parentSpan").(ot.Span) // use this TracingHttpRequest
+	tracer := parent.Tracer()
+	spanCtx := parent.Context().(instana.SpanContext)
+	traceID := spanCtx.TraceID // use this with EumSnippet
 }
 ```
 
@@ -74,10 +75,10 @@ To have Instana inject information into the request headers, create the _http.Re
 req, err := http.NewRequest("GET", url, nil)
 client := &http.Client{}
 resp, err := sensor.TracingHttpRequest(
-    "myExternalCall",
-    parentSpan,
-    req,
-    client
+	"myExternalCall",
+	parentSpan,
+	req,
+	client,
 )
 ```
 
@@ -108,7 +109,8 @@ In case you want to use the OpenTracing tracer, it will automatically initialize
 ```Go
 ot.InitGlobalTracer(instana.NewTracerWithOptions(&instana.Options{
 	Service:  SERVICE,
-	LogLevel: instana.DEBUG}))
+	LogLevel: instana.DEBUG,
+}))
 ```
 
 in your main function. The tracer takes the same options that the sensor takes for initialization, described above.
