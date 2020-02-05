@@ -127,9 +127,9 @@ To learn more, see the [Events API](https://github.com/instana/go-sensor/blob/ma
 
 ## Examples
 
-Following examples are included in the `examples` folder:
+Following examples are included in the `example` folder:
 
-* **ot-simple/simple.go** - Demonstrates basic usage of the tracer
-* **webserver/http.go** - Demonstrates how http server and client should be instrumented
-* **rpc/rpc.go** - Demonstrates a basic RPC service
-* **event/** - Demonstrates usage of the event API
+* [ot-simple/simple.go](./example/ot-simple/simple.go) - Demonstrates basic usage of the tracer
+* [webserver/http.go](./example/webserver/http.go) - Demonstrates how http server and client should be instrumented
+* [rpc/rpc.go](./example/rpc/rpc.go) - Demonstrates a basic RPC service
+* [event/](./example/event/) - Demonstrates usage of the event API
