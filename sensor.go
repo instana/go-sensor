@@ -50,6 +50,10 @@ func (r *sensorS) configureServiceName() {
 	}
 
 	if r.serviceName == "" {
+		r.serviceName = os.Getenv("INSTANA_SERVICE_NAME")
+	}
+
+	if r.serviceName == "" {
 		r.serviceName = filepath.Base(os.Args[0])
 	}
 }
