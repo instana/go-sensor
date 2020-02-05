@@ -44,10 +44,6 @@ func (r *sensorS) setOptions(options *Options) {
 	}
 }
 
-func (r *sensorS) getOptions() *Options {
-	return r.options
-}
-
 func (r *sensorS) configureServiceName() {
 	if r.options != nil {
 		r.serviceName = r.options.Service
