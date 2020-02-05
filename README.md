@@ -133,3 +133,6 @@ Following examples are included in the `example` folder:
 * [webserver/http.go](./example/webserver/http.go) - Demonstrates how http server and client should be instrumented
 * [rpc/rpc.go](./example/rpc/rpc.go) - Demonstrates a basic RPC service
 * [event/](./example/event/) - Demonstrates usage of the Events API
+* [database/elasticsearch.go](./example/database/elasticsearch.go) - Demonstrates how to instrument a database client (Elasticsearch in this case)
+* [httpclient/multi_request.go](./example/httpclient/multi_request.go) - Demonstrates the instrumentation of an HTTP client
+* [many.go](./example/many.go) - Demonstrates how to create nested spans within the same execution context
