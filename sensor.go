@@ -45,12 +45,13 @@ func (r *sensorS) setOptions(options *Options) {
 }
 
 func (r *sensorS) configureServiceName() {
-	if r.options != nil {
-		r.serviceName = r.options.Service
+	if name, ok := os.LookupEnv("INSTANA_SERVICE_NAME"); ok {
+		r.serviceName = name
+		return
 	}
 
-	if r.serviceName == "" {
-		r.serviceName = os.Getenv("INSTANA_SERVICE_NAME")
+	if r.options != nil {
+		r.serviceName = r.options.Service
 	}
 
 	if r.serviceName == "" {
