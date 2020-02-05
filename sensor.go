@@ -20,7 +20,7 @@ type sensorS struct {
 var sensor *sensorS
 
 func (r *sensorS) init(options *Options) {
-	//sensor can be initialized explicit or implicit through OpenTracing global init
+	// sensor can be initialized explicitly or implicitly through OpenTracing global init
 	if r.meter == nil {
 		r.setOptions(options)
 		r.configureServiceName()
@@ -58,7 +58,7 @@ func (r *sensorS) configureServiceName() {
 	}
 }
 
-// InitSensor Intializes the sensor (without tracing) to begin collecting
+// InitSensor intializes the sensor (without tracing) to begin collecting
 // and reporting metrics.
 func InitSensor(options *Options) {
 	if sensor == nil {
