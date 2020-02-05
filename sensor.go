@@ -61,16 +61,19 @@ func (r *sensorS) configureServiceName() {
 // InitSensor intializes the sensor (without tracing) to begin collecting
 // and reporting metrics.
 func InitSensor(options *Options) {
-	if sensor == nil {
-		sensor = new(sensorS)
-		// If this environment variable is set, then override log level
-		_, ok := os.LookupEnv("INSTANA_DEBUG")
-		if ok {
-			options.LogLevel = Debug
-		}
-
-		sensor.initLog()
-		sensor.init(options)
-		log.debug("initialized sensor")
+	if sensor != nil {
+		return
 	}
+
+	sensor = &sensorS{}
+
+	// If this environment variable is set, then override log level
+	_, ok := os.LookupEnv("INSTANA_DEBUG")
+	if ok {
+		options.LogLevel = Debug
+	}
+
+	sensor.initLog()
+	sensor.init(options)
+	log.debug("initialized sensor")
 }
