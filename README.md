@@ -9,6 +9,7 @@ The Instana Go sensor consists of two parts:
 * [OpenTracing](http://opentracing.io) tracer
 
 [![Build Status](https://travis-ci.org/instana/go-sensor.svg?branch=master)](https://travis-ci.org/instana/go-sensor)
+[![GoDoc](https://img.shields.io/static/v1?label=godoc&message=reference&color=blue)](https://pkg.go.dev/github.com/instana/go-sensor)
 [![OpenTracing Badge](https://img.shields.io/badge/OpenTracing-enabled-blue.svg)](http://opentracing.io)
 
 ## Common Operations
