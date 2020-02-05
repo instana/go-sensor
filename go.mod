@@ -1,5 +1,7 @@
 module github.com/instana/go-sensor
 
+go 1.7
+
 require (
 	github.com/felixge/httpsnoop v1.0.0
 	github.com/gogo/protobuf v1.2.1 // indirect
