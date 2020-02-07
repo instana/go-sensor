@@ -20,7 +20,7 @@ type sensorS struct {
 var sensor *sensorS
 
 func (r *sensorS) init(options *Options) {
-	//sensor can be initialized explicit or implicit through OpenTracing global init
+	// sensor can be initialized explicitly or implicitly through OpenTracing global init
 	if r.meter == nil {
 		r.setOptions(options)
 		r.configureServiceName()
@@ -44,11 +44,12 @@ func (r *sensorS) setOptions(options *Options) {
 	}
 }
 
-func (r *sensorS) getOptions() *Options {
-	return r.options
-}
-
 func (r *sensorS) configureServiceName() {
+	if name, ok := os.LookupEnv("INSTANA_SERVICE_NAME"); ok {
+		r.serviceName = name
+		return
+	}
+
 	if r.options != nil {
 		r.serviceName = r.options.Service
 	}
@@ -58,19 +59,22 @@ func (r *sensorS) configureServiceName() {
 	}
 }
 
-// InitSensor Intializes the sensor (without tracing) to begin collecting
+// InitSensor intializes the sensor (without tracing) to begin collecting
 // and reporting metrics.
 func InitSensor(options *Options) {
-	if sensor == nil {
-		sensor = new(sensorS)
-		// If this environment variable is set, then override log level
-		_, ok := os.LookupEnv("INSTANA_DEBUG")
-		if ok {
-			options.LogLevel = Debug
-		}
-
-		sensor.initLog()
-		sensor.init(options)
-		log.debug("initialized sensor")
+	if sensor != nil {
+		return
 	}
+
+	sensor = &sensorS{}
+
+	// If this environment variable is set, then override log level
+	_, ok := os.LookupEnv("INSTANA_DEBUG")
+	if ok {
+		options.LogLevel = Debug
+	}
+
+	sensor.initLog()
+	sensor.init(options)
+	log.debug("initialized sensor")
 }
