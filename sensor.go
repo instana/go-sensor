@@ -1,6 +1,8 @@
 package instana
 
 import (
+	"errors"
+	"github.com/instana/go-sensor/autoprofile"
 	"os"
 	"path/filepath"
 )
@@ -76,5 +78,37 @@ func InitSensor(options *Options) {
 
 	sensor.initLog()
 	sensor.init(options)
+
+	// enable auto-profiling
+	if options.EnableAutoProfile {
+		profiler := autoprofile.NewAutoProfiler()
+		profiler.SetLogLevel(options.LogLevel)
+		profiler.IncludeSensorFrames = true
+		if options.MaxBufferedProfiles > 0 {
+			profiler.MaxBufferedProfiles = options.MaxBufferedProfiles
+		}
+
+		profiler.GetExternalPID = func() string {
+			return sensor.agent.from.PID
+		}
+
+		profiler.SendProfiles = func(profiles interface{}) error {
+			if sensor.agent.canSend() {
+				log.debug("sending profiles to agent")
+				_, err := sensor.agent.request(sensor.agent.makeURL(agentProfilesURL), "POST", profiles)
+				if err != nil {
+					sensor.agent.reset()
+					log.error(err)
+				}
+
+				return err
+			} else {
+				return errors.New("sender not ready")
+			}
+		}
+
+		profiler.Enable()
+	}
+
 	log.debug("initialized sensor")
 }

@@ -101,6 +101,7 @@ in your main function. The init function takes an `Options` object with the foll
 * **Service** - global service name that will be used to identify the program in the Instana backend
 * **AgentHost**, **AgentPort** - default to `localhost:42699`, set the coordinates of the Instana proxy agent
 * **LogLevel** - one of `Error`, `Warn`, `Info` or `Debug`
+* **EnableAutoProfile** - enables automatic continuous process profiling when `true`
 
 Once initialized, the sensor will try to connect to the given Instana agent and in case of connection success will send metrics and snapshot information through the agent to the backend.
 
@@ -126,6 +127,12 @@ The Instana tracer will remap OpenTracing HTTP headers into Instana Headers, so 
 The sensor, be it instantiated explicitly or implicitly through the tracer, provides a simple wrapper API to send events to Instana as described in [its documentation](https://docs.instana.io/quick_start/api/#event-sdk-rest-web-service).
 
 To learn more, see the [Events API](https://github.com/instana/go-sensor/blob/master/EventAPI.md) document in this repository.
+
+## AutoProfile™ 
+
+AutoProfile™ generates and reports process profiles to Instana. Unlike development-time and on-demand profilers, where a user must manually initiate profiling, AutoProfile™ automatically schedules and continuously performs profiling appropriate for critical production environments.
+
+For more information, see our [Instana AutoProfile™](https://docs.instana.io/ecosystem/jvm/instana-autoprofile/) docs.
 
 ## Examples
 
