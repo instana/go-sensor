@@ -4,7 +4,10 @@ const (
 	defaultMaxBufferedProfiles = 100
 )
 
-var profiler = newAutoProfiler()
+var (
+	profiler      = newAutoProfiler()
+	samplerActive = &flag{}
+)
 
 // Enable enables the auto profiling (disabled by default)
 func Enable() {
@@ -63,14 +66,11 @@ type autoProfiler struct {
 	allocationSamplerScheduler *SamplerScheduler
 	blockSamplerScheduler      *SamplerScheduler
 
-	enabled       bool
-	samplerActive *flag
+	enabled bool
 }
 
 func newAutoProfiler() *autoProfiler {
-	ap := &autoProfiler{
-		samplerActive: &flag{},
-	}
+	ap := &autoProfiler{}
 
 	ap.profileRecorder = newRecorder()
 

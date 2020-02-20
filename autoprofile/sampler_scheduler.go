@@ -120,7 +120,7 @@ func (ss *SamplerScheduler) startProfiling() bool {
 		return false
 	}
 
-	if !ss.profiler.samplerActive.SetIfUnset() {
+	if !samplerActive.SetIfUnset() {
 		return false
 	}
 
@@ -128,14 +128,14 @@ func (ss *SamplerScheduler) startProfiling() bool {
 
 	err := ss.sampler.startSampler()
 	if err != nil {
-		ss.profiler.samplerActive.Unset()
+		samplerActive.Unset()
 		log.error(err)
 		return false
 	}
 	ss.samplerStart = time.Now().UnixNano()
 	ss.samplerTimeout = newTimer(time.Duration(ss.config.maxSpanDuration)*time.Second, 0, func() {
 		ss.stopSampler()
-		ss.profiler.samplerActive.Unset()
+		samplerActive.Unset()
 	})
 
 	return true
