@@ -1,7 +1,6 @@
 package autoprofile
 
 import (
-	"bufio"
 	"bytes"
 	"errors"
 	"runtime/pprof"
@@ -110,28 +109,23 @@ func (as *AllocationSampler) createAllocationCallGraph(p *profile.Profile) (*Cal
 }
 
 func (as *AllocationSampler) readHeapProfile() (*profile.Profile, error) {
-	var buf bytes.Buffer
-	w := bufio.NewWriter(&buf)
+	buf := bytes.NewBuffer(nil)
+	if err := pprof.WriteHeapProfile(buf); err != nil {
+		return nil, err
+	}
 
-	err := pprof.WriteHeapProfile(w)
+	p, err := profile.Parse(buf)
 	if err != nil {
 		return nil, err
 	}
 
-	w.Flush()
-	r := bufio.NewReader(&buf)
-
-	if p, perr := profile.Parse(r); perr == nil {
-		if serr := symbolizeProfile(p); serr != nil {
-			return nil, serr
-		}
-
-		if verr := p.CheckValid(); verr != nil {
-			return nil, verr
-		}
-
-		return p, nil
-	} else {
-		return nil, perr
+	if err := symbolizeProfile(p); err != nil {
+		return nil, err
 	}
+
+	if err := p.CheckValid(); err != nil {
+		return nil, err
+	}
+
+	return p, nil
 }
