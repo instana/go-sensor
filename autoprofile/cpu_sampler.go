@@ -10,15 +10,15 @@ import (
 	"github.com/instana/go-sensor/autoprofile/pprof/profile"
 )
 
-type CPUSampler struct {
+type cpuSampler struct {
 	top        *CallSite
 	profWriter *bufio.Writer
 	profBuffer *bytes.Buffer
 	startNano  int64
 }
 
-func newCPUSampler() *CPUSampler {
-	cs := &CPUSampler{
+func newCPUSampler() *cpuSampler {
+	cs := &cpuSampler{
 		top:        nil,
 		profWriter: nil,
 		profBuffer: nil,
@@ -28,11 +28,11 @@ func newCPUSampler() *CPUSampler {
 	return cs
 }
 
-func (cs *CPUSampler) resetSampler() {
+func (cs *cpuSampler) resetSampler() {
 	cs.top = newCallSite("", "", 0)
 }
 
-func (cs *CPUSampler) startSampler() error {
+func (cs *cpuSampler) startSampler() error {
 	err := cs.startCPUSampler()
 	if err != nil {
 		return err
@@ -41,7 +41,7 @@ func (cs *CPUSampler) startSampler() error {
 	return nil
 }
 
-func (cs *CPUSampler) stopSampler() error {
+func (cs *cpuSampler) stopSampler() error {
 	p, err := cs.stopCPUSampler()
 	if err != nil {
 		return err
@@ -57,7 +57,7 @@ func (cs *CPUSampler) stopSampler() error {
 	return nil
 }
 
-func (cs *CPUSampler) buildProfile(duration int64, timespan int64) (*Profile, error) {
+func (cs *cpuSampler) buildProfile(duration int64, timespan int64) (*Profile, error) {
 	roots := make([]*CallSite, 0)
 	for _, child := range cs.top.children {
 		roots = append(roots, child)
@@ -66,7 +66,7 @@ func (cs *CPUSampler) buildProfile(duration int64, timespan int64) (*Profile, er
 	return p, nil
 }
 
-func (cs *CPUSampler) updateCPUProfile(p *profile.Profile) error {
+func (cs *cpuSampler) updateCPUProfile(p *profile.Profile) error {
 	samplesIndex := -1
 	cpuIndex := -1
 	for i, s := range p.SampleType {
@@ -108,7 +108,7 @@ func (cs *CPUSampler) updateCPUProfile(p *profile.Profile) error {
 	return nil
 }
 
-func (cs *CPUSampler) startCPUSampler() error {
+func (cs *cpuSampler) startCPUSampler() error {
 	cs.profBuffer = &bytes.Buffer{}
 	cs.profWriter = bufio.NewWriter(cs.profBuffer)
 	cs.startNano = time.Now().UnixNano()
@@ -121,7 +121,7 @@ func (cs *CPUSampler) startCPUSampler() error {
 	return nil
 }
 
-func (cs *CPUSampler) stopCPUSampler() (*profile.Profile, error) {
+func (cs *cpuSampler) stopCPUSampler() (*profile.Profile, error) {
 	pprof.StopCPUProfile()
 
 	cs.profWriter.Flush()

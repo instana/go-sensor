@@ -11,32 +11,32 @@ import (
 	profile "github.com/instana/go-sensor/autoprofile/pprof/profile"
 )
 
-type BlockValues struct {
+type blockValues struct {
 	delay       float64
 	contentions int64
 }
 
-type BlockSampler struct {
+type blockSampler struct {
 	top            *CallSite
-	prevValues     map[string]*BlockValues
+	prevValues     map[string]*blockValues
 	partialProfile *pprof.Profile
 }
 
-func newBlockSampler() *BlockSampler {
-	bs := &BlockSampler{
+func newBlockSampler() *blockSampler {
+	bs := &blockSampler{
 		top:            nil,
-		prevValues:     make(map[string]*BlockValues),
+		prevValues:     make(map[string]*blockValues),
 		partialProfile: nil,
 	}
 
 	return bs
 }
 
-func (bs *BlockSampler) resetSampler() {
+func (bs *blockSampler) resetSampler() {
 	bs.top = newCallSite("", "", 0)
 }
 
-func (bs *BlockSampler) startSampler() error {
+func (bs *blockSampler) startSampler() error {
 	err := bs.startBlockSampler()
 	if err != nil {
 		return err
@@ -45,7 +45,7 @@ func (bs *BlockSampler) startSampler() error {
 	return nil
 }
 
-func (bs *BlockSampler) stopSampler() error {
+func (bs *blockSampler) stopSampler() error {
 	p, err := bs.stopBlockSampler()
 	if err != nil {
 		return err
@@ -61,7 +61,7 @@ func (bs *BlockSampler) stopSampler() error {
 	return nil
 }
 
-func (bs *BlockSampler) buildProfile(duration int64, timespan int64) (*Profile, error) {
+func (bs *blockSampler) buildProfile(duration int64, timespan int64) (*Profile, error) {
 	roots := make([]*CallSite, 0)
 	for _, child := range bs.top.children {
 		roots = append(roots, child)
@@ -70,7 +70,7 @@ func (bs *BlockSampler) buildProfile(duration int64, timespan int64) (*Profile, 
 	return p, nil
 }
 
-func (bs *BlockSampler) updateBlockProfile(p *profile.Profile) error {
+func (bs *blockSampler) updateBlockProfile(p *profile.Profile) error {
 	contentionIndex := -1
 	delayIndex := -1
 	for i, s := range p.SampleType {
@@ -129,7 +129,7 @@ func generateValueKey(s *profile.Sample) string {
 	return key
 }
 
-func (bs *BlockSampler) getValueChange(key string, delay float64, contentions int64) (float64, int64) {
+func (bs *blockSampler) getValueChange(key string, delay float64, contentions int64) (float64, int64) {
 	if pv, exists := bs.prevValues[key]; exists {
 		delayChange := delay - pv.delay
 		contentionsChange := contentions - pv.contentions
@@ -139,7 +139,7 @@ func (bs *BlockSampler) getValueChange(key string, delay float64, contentions in
 
 		return delayChange, contentionsChange
 	} else {
-		bs.prevValues[key] = &BlockValues{
+		bs.prevValues[key] = &blockValues{
 			delay:       delay,
 			contentions: contentions,
 		}
@@ -148,7 +148,7 @@ func (bs *BlockSampler) getValueChange(key string, delay float64, contentions in
 	}
 }
 
-func (bs *BlockSampler) startBlockSampler() error {
+func (bs *blockSampler) startBlockSampler() error {
 	bs.partialProfile = pprof.Lookup("block")
 	if bs.partialProfile == nil {
 		return errors.New("No block profile found")
@@ -159,7 +159,7 @@ func (bs *BlockSampler) startBlockSampler() error {
 	return nil
 }
 
-func (bs *BlockSampler) stopBlockSampler() (*profile.Profile, error) {
+func (bs *blockSampler) stopBlockSampler() (*profile.Profile, error) {
 	runtime.SetBlockProfileRate(0)
 
 	var buf bytes.Buffer

@@ -8,25 +8,24 @@ import (
 	profile "github.com/instana/go-sensor/autoprofile/pprof/profile"
 )
 
-type AllocationSampler struct {
+type allocationSampler struct{}
+
+func newAllocationSampler() *allocationSampler {
+	return &allocationSampler{}
 }
 
-func newAllocationSampler() *AllocationSampler {
-	return &AllocationSampler{}
+func (as *allocationSampler) resetSampler() {
 }
 
-func (as *AllocationSampler) resetSampler() {
-}
-
-func (as *AllocationSampler) startSampler() error {
+func (as *allocationSampler) startSampler() error {
 	return nil
 }
 
-func (as *AllocationSampler) stopSampler() error {
+func (as *allocationSampler) stopSampler() error {
 	return nil
 }
 
-func (as *AllocationSampler) buildProfile(duration int64, timespan int64) (*Profile, error) {
+func (as *allocationSampler) buildProfile(duration int64, timespan int64) (*Profile, error) {
 	hp, err := as.readHeapProfile()
 	if err != nil {
 		return nil, err
@@ -49,7 +48,7 @@ func (as *AllocationSampler) buildProfile(duration int64, timespan int64) (*Prof
 	return newProfile(CategoryMemory, TypeMemoryAllocation, UnitByte, roots, duration, timespan), nil
 }
 
-func (as *AllocationSampler) createAllocationCallGraph(p *profile.Profile) (*CallSite, error) {
+func (as *allocationSampler) createAllocationCallGraph(p *profile.Profile) (*CallSite, error) {
 	// find "inuse_space" type index
 	inuseSpaceTypeIndex := -1
 	for i, s := range p.SampleType {
@@ -104,7 +103,7 @@ func (as *AllocationSampler) createAllocationCallGraph(p *profile.Profile) (*Cal
 	return top, nil
 }
 
-func (as *AllocationSampler) readHeapProfile() (*profile.Profile, error) {
+func (as *allocationSampler) readHeapProfile() (*profile.Profile, error) {
 	buf := bytes.NewBuffer(nil)
 	if err := pprof.WriteHeapProfile(buf); err != nil {
 		return nil, err
