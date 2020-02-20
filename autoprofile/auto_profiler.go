@@ -61,7 +61,7 @@ func SetOptions(opts Options) {
 }
 
 type autoProfiler struct {
-	profileRecorder            *ProfileRecorder
+	profileRecorder            *recorder
 	cpuSamplerScheduler        *SamplerScheduler
 	allocationSamplerScheduler *SamplerScheduler
 	blockSamplerScheduler      *SamplerScheduler
@@ -80,7 +80,7 @@ func newAutoProfiler() *autoProfiler {
 		samplerActive: &flag{},
 	}
 
-	ap.profileRecorder = newProfileRecorder()
+	ap.profileRecorder = newRecorder()
 
 	cpuSampler := newCPUSampler(ap)
 	cpuSamplerConfig := &SamplerConfig{

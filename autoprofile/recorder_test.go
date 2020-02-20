@@ -9,10 +9,10 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestProfileRecorder_Flush(t *testing.T) {
+func TestRecorder_Flush(t *testing.T) {
 	profilesChan := make(chan interface{})
 
-	rec := newProfileRecorder()
+	rec := newRecorder()
 	rec.SendProfiles = func(profiles interface{}) error {
 		profilesChan <- profiles
 		return nil
@@ -41,8 +41,8 @@ func TestProfileRecorder_Flush(t *testing.T) {
 	}
 }
 
-func TestProfileRecorder_Flush_Fail(t *testing.T) {
-	rec := newProfileRecorder()
+func TestRecorder_Flush_Fail(t *testing.T) {
+	rec := newRecorder()
 	rec.SendProfiles = func(profiles interface{}) error {
 		return errors.New("some error")
 	}

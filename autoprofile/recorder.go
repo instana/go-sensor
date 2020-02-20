@@ -17,7 +17,7 @@ func noopSendProfiles(interface{}) error {
 	return nil
 }
 
-type ProfileRecorder struct {
+type recorder struct {
 	FlushInterval       int64
 	MaxBufferedProfiles int
 	SendProfiles        SendProfilesFunc
@@ -32,8 +32,8 @@ type ProfileRecorder struct {
 	backoffSeconds     int64
 }
 
-func newProfileRecorder() *ProfileRecorder {
-	mq := &ProfileRecorder{
+func newRecorder() *recorder {
+	mq := &recorder{
 		FlushInterval:       5,
 		MaxBufferedProfiles: defaultMaxBufferedProfiles,
 		SendProfiles:        noopSendProfiles,
@@ -51,7 +51,7 @@ func newProfileRecorder() *ProfileRecorder {
 	return mq
 }
 
-func (pr *ProfileRecorder) start() {
+func (pr *recorder) start() {
 	if !pr.started.SetIfUnset() {
 		return
 	}
@@ -61,7 +61,7 @@ func (pr *ProfileRecorder) start() {
 	})
 }
 
-func (pr *ProfileRecorder) stop() {
+func (pr *recorder) stop() {
 	if !pr.started.UnsetIfSet() {
 		return
 	}
@@ -71,14 +71,14 @@ func (pr *ProfileRecorder) stop() {
 	}
 }
 
-func (pr *ProfileRecorder) size() int {
+func (pr *recorder) size() int {
 	pr.queueLock.Lock()
 	defer pr.queueLock.Unlock()
 
 	return len(pr.queue)
 }
 
-func (pr *ProfileRecorder) record(record map[string]interface{}) {
+func (pr *recorder) record(record map[string]interface{}) {
 	if pr.MaxBufferedProfiles < 1 {
 		return
 	}
@@ -93,7 +93,7 @@ func (pr *ProfileRecorder) record(record map[string]interface{}) {
 	log.debug("Added record to the queue", record)
 }
 
-func (pr *ProfileRecorder) flush() {
+func (pr *recorder) flush() {
 	if pr.size() == 0 {
 		return
 	}
