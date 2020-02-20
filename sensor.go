@@ -2,9 +2,10 @@ package instana
 
 import (
 	"errors"
-	"github.com/instana/go-sensor/autoprofile"
 	"os"
 	"path/filepath"
+
+	"github.com/instana/go-sensor/autoprofile"
 )
 
 const (
@@ -107,7 +108,7 @@ func InitSensor(options *Options) {
 			}
 		}
 
-		profiler.Enable()
+		autoprofile.Enable()
 	}
 
 	log.debug("initialized sensor")

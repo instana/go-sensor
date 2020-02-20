@@ -18,8 +18,18 @@ var (
 	randSource = rand.New(rand.NewSource(time.Now().UnixNano()))
 	randLock   = &sync.Mutex{}
 
-	profiler *autoProfiler
+	profiler = newAutoProfiler()
 )
+
+// Enable enables the auto profiling (disabled by default)
+func Enable() {
+	profiler.Enable()
+}
+
+// Disable disables the auto profiling (default)
+func Disable() {
+	profiler.Disable()
+}
 
 type autoProfiler struct {
 	profileRecorder            *ProfileRecorder
