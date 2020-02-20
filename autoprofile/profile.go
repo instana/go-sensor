@@ -10,25 +10,27 @@ import (
 	"time"
 )
 
-const RuntimeGolang string = "golang"
+const (
+	runtimeGolang string = "golang"
 
-const CategoryCPU string = "cpu"
-const CategoryMemory string = "memory"
-const CategoryTime string = "time"
+	categoryCPU    string = "cpu"
+	categoryMemory string = "memory"
+	categoryTime   string = "time"
 
-const TypeCPUUsage string = "cpu-usage"
-const TypeMemoryAllocation string = "memory-allocations"
-const TypeBlockingCalls string = "blocking-calls"
+	typeCPUUsage         string = "cpu-usage"
+	typeMemoryAllocation string = "memory-allocations"
+	typeBlockingCalls    string = "blocking-calls"
 
-const UnitSample string = "sample"
-const UnitMillisecond string = "millisecond"
-const UnitMicrosecond string = "microsecond"
-const UnitNanosecond string = "nanosecond"
-const UnitByte string = "byte"
-const UnitKilobyte string = "kilobyte"
-const UnitPercent string = "percent"
+	unitSample      string = "sample"
+	unitMillisecond string = "millisecond"
+	unitMicrosecond string = "microsecond"
+	unitNanosecond  string = "nanosecond"
+	unitByte        string = "byte"
+	unitKilobyte    string = "kilobyte"
+	unitPercent     string = "percent"
+)
 
-type CallSite struct {
+type callSite struct {
 	methodName  string
 	fileName    string
 	fileLine    int64
@@ -36,18 +38,18 @@ type CallSite struct {
 	measurement float64
 	numSamples  int64
 	counter     int64
-	children    map[string]*CallSite
+	children    map[string]*callSite
 	updateLock  *sync.RWMutex
 }
 
-func newCallSite(methodName string, fileName string, fileLine int64) *CallSite {
-	cn := &CallSite{
+func newCallSite(methodName string, fileName string, fileLine int64) *callSite {
+	cn := &callSite{
 		methodName:  methodName,
 		fileName:    fileName,
 		fileLine:    fileLine,
 		measurement: 0,
 		numSamples:  0,
-		children:    make(map[string]*CallSite),
+		children:    make(map[string]*callSite),
 		updateLock:  &sync.RWMutex{},
 	}
 
@@ -65,7 +67,7 @@ func createKey(methodName string, fileName string, fileLine int64) string {
 	return b.String()
 }
 
-func (cs *CallSite) findChild(methodName string, fileName string, fileLine int64) *CallSite {
+func (cs *callSite) findChild(methodName string, fileName string, fileLine int64) *callSite {
 	cs.updateLock.RLock()
 	defer cs.updateLock.RUnlock()
 
@@ -76,21 +78,21 @@ func (cs *CallSite) findChild(methodName string, fileName string, fileLine int64
 	return nil
 }
 
-func (cs *CallSite) addChild(child *CallSite) {
+func (cs *callSite) addChild(child *callSite) {
 	cs.updateLock.Lock()
 	defer cs.updateLock.Unlock()
 
 	cs.children[createKey(child.methodName, child.fileName, child.fileLine)] = child
 }
 
-func (cs *CallSite) removeChild(child *CallSite) {
+func (cs *callSite) removeChild(child *callSite) {
 	cs.updateLock.Lock()
 	defer cs.updateLock.Unlock()
 
 	delete(cs.children, createKey(child.methodName, child.fileName, child.fileLine))
 }
 
-func (cs *CallSite) findOrAddChild(methodName string, fileName string, fileLine int64) *CallSite {
+func (cs *callSite) findOrAddChild(methodName string, fileName string, fileLine int64) *callSite {
 	child := cs.findChild(methodName, fileName, fileLine)
 	if child == nil {
 		child = newCallSite(methodName, fileName, fileLine)
@@ -100,11 +102,11 @@ func (cs *CallSite) findOrAddChild(methodName string, fileName string, fileLine 
 	return child
 }
 
-func (cs *CallSite) filter(fromLevel int, min float64, max float64) {
+func (cs *callSite) filter(fromLevel int, min float64, max float64) {
 	cs.filterLevel(1, fromLevel, min, max)
 }
 
-func (cs *CallSite) filterLevel(currentLevel int, fromLevel int, min float64, max float64) {
+func (cs *callSite) filterLevel(currentLevel int, fromLevel int, min float64, max float64) {
 	for key, child := range cs.children {
 		if currentLevel >= fromLevel && (child.measurement < min || child.measurement > max) {
 			delete(cs.children, key)
@@ -114,7 +116,7 @@ func (cs *CallSite) filterLevel(currentLevel int, fromLevel int, min float64, ma
 	}
 }
 
-func (cs *CallSite) depth() int {
+func (cs *callSite) depth() int {
 	max := 0
 	for _, child := range cs.children {
 		cd := child.depth()
@@ -126,12 +128,12 @@ func (cs *CallSite) depth() int {
 	return max + 1
 }
 
-func (cs *CallSite) increment(value float64, numSamples int64) {
+func (cs *callSite) increment(value float64, numSamples int64) {
 	cs.measurement += value
 	cs.numSamples += numSamples
 }
 
-func (cs *CallSite) toMap() map[string]interface{} {
+func (cs *callSite) toMap() map[string]interface{} {
 	childrenMap := make([]interface{}, 0)
 	for _, child := range cs.children {
 		childrenMap = append(childrenMap, child.toMap())
@@ -149,7 +151,7 @@ func (cs *CallSite) toMap() map[string]interface{} {
 	return callSiteMap
 }
 
-func (cs *CallSite) printLevel(level int) string {
+func (cs *callSite) printLevel(level int) string {
 	str := ""
 
 	for i := 0; i < level; i++ {
@@ -171,17 +173,17 @@ type Profile struct {
 	category  string
 	typ       string
 	unit      string
-	roots     []*CallSite
+	roots     []*callSite
 	duration  int64
 	timespan  int64
 	timestamp int64
 }
 
-func newProfile(category string, typ string, unit string, roots []*CallSite, duration int64, timespan int64) *Profile {
+func newProfile(category string, typ string, unit string, roots []*callSite, duration int64, timespan int64) *Profile {
 	p := &Profile{
 		processID: strconv.Itoa(os.Getpid()),
 		id:        generateUUID(),
-		runtime:   RuntimeGolang,
+		runtime:   runtimeGolang,
 		category:  category,
 		typ:       typ,
 		unit:      unit,

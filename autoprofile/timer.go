@@ -2,9 +2,9 @@ package autoprofile
 
 import "time"
 
-// Timer periodically executes provided job after a delay until it's stopped. Any panic
+// timer periodically executes provided job after a delay until it's stopped. Any panic
 // occurred inside the job is recovered and logged
-type Timer struct {
+type timer struct {
 	delayTimer         *time.Timer
 	delayTimerDone     chan bool
 	intervalTicker     *time.Ticker
@@ -12,8 +12,8 @@ type Timer struct {
 	stopped            bool
 }
 
-func newTimer(delay time.Duration, interval time.Duration, job func()) *Timer {
-	t := &Timer{
+func newTimer(delay time.Duration, interval time.Duration, job func()) *timer {
+	t := &timer{
 		stopped: false,
 	}
 
@@ -53,7 +53,7 @@ func newTimer(delay time.Duration, interval time.Duration, job func()) *Timer {
 }
 
 // Stop stops the job execution
-func (t *Timer) Stop() {
+func (t *timer) Stop() {
 	if t.stopped {
 		return
 	}

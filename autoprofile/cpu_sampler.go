@@ -11,7 +11,7 @@ import (
 )
 
 type cpuSampler struct {
-	top        *CallSite
+	top        *callSite
 	profWriter *bufio.Writer
 	profBuffer *bytes.Buffer
 	startNano  int64
@@ -58,11 +58,11 @@ func (cs *cpuSampler) stopSampler() error {
 }
 
 func (cs *cpuSampler) buildProfile(duration int64, timespan int64) (*Profile, error) {
-	roots := make([]*CallSite, 0)
+	roots := make([]*callSite, 0)
 	for _, child := range cs.top.children {
 		roots = append(roots, child)
 	}
-	p := newProfile(CategoryCPU, TypeCPUUsage, UnitMillisecond, roots, duration, timespan)
+	p := newProfile(categoryCPU, typeCPUUsage, unitMillisecond, roots, duration, timespan)
 	return p, nil
 }
 

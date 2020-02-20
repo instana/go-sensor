@@ -8,7 +8,7 @@ var (
 	samplerActive = &flag{}
 
 	profileRecorder     = newRecorder()
-	cpuSamplerScheduler = newSamplerScheduler(profileRecorder, newCPUSampler(), &SamplerConfig{
+	cpuSamplerScheduler = newSamplerScheduler(profileRecorder, newCPUSampler(), samplerConfig{
 		logPrefix:          "CPU sampler:",
 		maxProfileDuration: 20,
 		maxSpanDuration:    2,
@@ -16,12 +16,12 @@ var (
 		samplingInterval:   8,
 		reportInterval:     120,
 	})
-	allocationSamplerScheduler = newSamplerScheduler(profileRecorder, newAllocationSampler(), &SamplerConfig{
+	allocationSamplerScheduler = newSamplerScheduler(profileRecorder, newAllocationSampler(), samplerConfig{
 		logPrefix:      "Allocation sampler:",
 		reportOnly:     true,
 		reportInterval: 120,
 	})
-	blockSamplerScheduler = newSamplerScheduler(profileRecorder, newBlockSampler(), &SamplerConfig{
+	blockSamplerScheduler = newSamplerScheduler(profileRecorder, newBlockSampler(), samplerConfig{
 		logPrefix:          "Block sampler:",
 		maxProfileDuration: 20,
 		maxSpanDuration:    4,

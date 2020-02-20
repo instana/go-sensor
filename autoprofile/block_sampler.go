@@ -17,7 +17,7 @@ type blockValues struct {
 }
 
 type blockSampler struct {
-	top            *CallSite
+	top            *callSite
 	prevValues     map[string]*blockValues
 	partialProfile *pprof.Profile
 }
@@ -62,11 +62,11 @@ func (bs *blockSampler) stopSampler() error {
 }
 
 func (bs *blockSampler) buildProfile(duration int64, timespan int64) (*Profile, error) {
-	roots := make([]*CallSite, 0)
+	roots := make([]*callSite, 0)
 	for _, child := range bs.top.children {
 		roots = append(roots, child)
 	}
-	p := newProfile(CategoryTime, TypeBlockingCalls, UnitMillisecond, roots, duration, timespan)
+	p := newProfile(categoryTime, typeBlockingCalls, unitMillisecond, roots, duration, timespan)
 	return p, nil
 }
 

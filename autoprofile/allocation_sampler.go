@@ -40,15 +40,15 @@ func (as *allocationSampler) buildProfile(duration int64, timespan int64) (*Prof
 		return nil, err
 	}
 
-	roots := make([]*CallSite, 0)
+	roots := make([]*callSite, 0)
 	for _, child := range top.children {
 		roots = append(roots, child)
 	}
 
-	return newProfile(CategoryMemory, TypeMemoryAllocation, UnitByte, roots, duration, timespan), nil
+	return newProfile(categoryMemory, typeMemoryAllocation, unitByte, roots, duration, timespan), nil
 }
 
-func (as *allocationSampler) createAllocationCallGraph(p *profile.Profile) (*CallSite, error) {
+func (as *allocationSampler) createAllocationCallGraph(p *profile.Profile) (*callSite, error) {
 	// find "inuse_space" type index
 	inuseSpaceTypeIndex := -1
 	for i, s := range p.SampleType {

@@ -24,7 +24,7 @@ type recorder struct {
 
 	started *flag
 
-	flushTimer *Timer
+	flushTimer *timer
 
 	queue              []interface{}
 	queueLock          *sync.Mutex

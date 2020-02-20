@@ -15,7 +15,7 @@ func getLocalPID() string {
 	return strconv.Itoa(os.Getpid())
 }
 
-type SamplerConfig struct {
+type samplerConfig struct {
 	logPrefix          string
 	reportOnly         bool
 	maxProfileDuration int64
@@ -25,33 +25,33 @@ type SamplerConfig struct {
 	reportInterval     int64
 }
 
-type Sampler interface {
+type sampler interface {
 	resetSampler()
 	startSampler() error
 	stopSampler() error
 	buildProfile(duration int64, timespan int64) (*Profile, error)
 }
 
-type SamplerScheduler struct {
+type samplerScheduler struct {
 	profileRecorder  *recorder
 	active           *flag
 	started          *flag
-	sampler          Sampler
-	config           *SamplerConfig
-	samplerTimer     *Timer
-	reportTimer      *Timer
+	sampler          sampler
+	config           samplerConfig
+	samplerTimer     *timer
+	reportTimer      *timer
 	profileLock      *sync.Mutex
 	profileStart     int64
 	samplingDuration int64
 	samplerStart     int64
-	samplerTimeout   *Timer
+	samplerTimeout   *timer
 }
 
-func newSamplerScheduler(profileRecorder *recorder, sampler Sampler, config *SamplerConfig) *SamplerScheduler {
-	pr := &SamplerScheduler{
+func newSamplerScheduler(profileRecorder *recorder, samp sampler, config samplerConfig) *samplerScheduler {
+	pr := &samplerScheduler{
 		profileRecorder:  profileRecorder,
 		started:          &flag{},
-		sampler:          sampler,
+		sampler:          samp,
 		config:           config,
 		samplerTimer:     nil,
 		reportTimer:      nil,
@@ -65,7 +65,7 @@ func newSamplerScheduler(profileRecorder *recorder, sampler Sampler, config *Sam
 	return pr
 }
 
-func (ss *SamplerScheduler) start() {
+func (ss *samplerScheduler) start() {
 	if !ss.started.SetIfUnset() {
 		return
 	}
@@ -87,7 +87,7 @@ func (ss *SamplerScheduler) start() {
 	})
 }
 
-func (ss *SamplerScheduler) stop() {
+func (ss *samplerScheduler) stop() {
 	if !ss.started.UnsetIfSet() {
 		return
 	}
@@ -101,13 +101,13 @@ func (ss *SamplerScheduler) stop() {
 	}
 }
 
-func (ss *SamplerScheduler) reset() {
+func (ss *samplerScheduler) reset() {
 	ss.sampler.resetSampler()
 	ss.profileStart = time.Now().Unix()
 	ss.samplingDuration = 0
 }
 
-func (ss *SamplerScheduler) startProfiling() bool {
+func (ss *samplerScheduler) startProfiling() bool {
 	if !ss.started.IsSet() {
 		return false
 	}
@@ -141,7 +141,7 @@ func (ss *SamplerScheduler) startProfiling() bool {
 	return true
 }
 
-func (ss *SamplerScheduler) stopSampler() {
+func (ss *samplerScheduler) stopSampler() {
 	ss.profileLock.Lock()
 	defer ss.profileLock.Unlock()
 
@@ -159,7 +159,7 @@ func (ss *SamplerScheduler) stopSampler() {
 	ss.samplingDuration += time.Now().UnixNano() - ss.samplerStart
 }
 
-func (ss *SamplerScheduler) report() {
+func (ss *samplerScheduler) report() {
 	if !ss.started.IsSet() {
 		return
 	}
