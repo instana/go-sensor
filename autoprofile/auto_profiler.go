@@ -11,6 +11,10 @@ import (
 	"time"
 )
 
+const (
+	defaultMaxBufferedProfiles = 100
+)
+
 var (
 	sensorPath = filepath.Join("github.com", "instana", "go-sensor")
 	nextID     int64
@@ -39,6 +43,29 @@ func SetGetExternalPIDFunc(fn func() string) {
 // SetSendProfilesFunc configures the profiler to use provided function to write collected profiles
 func SetSendProfilesFunc(fn func(interface{}) error) {
 	profiler.SendProfiles = fn
+}
+
+// Options contains profiler configuration
+type Options struct {
+	IncludeSensorFrames bool
+	MaxBufferedProfiles int
+}
+
+// DefaultOptions returns profiler defaults
+func DefaultOptions() Options {
+	return Options{
+		MaxBufferedProfiles: defaultMaxBufferedProfiles,
+	}
+}
+
+// SetOptions configures the profiler with provided settings
+func SetOptions(opts Options) {
+	if opts.MaxBufferedProfiles < 1 {
+		opts.MaxBufferedProfiles = defaultMaxBufferedProfiles
+	}
+
+	profiler.MaxBufferedProfiles = opts.MaxBufferedProfiles
+	profiler.IncludeSensorFrames = opts.IncludeSensorFrames
 }
 
 type autoProfiler struct {

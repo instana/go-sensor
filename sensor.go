@@ -84,10 +84,11 @@ func InitSensor(options *Options) {
 	if options.EnableAutoProfile {
 		profiler := autoprofile.Profiler()
 		profiler.SetLogLevel(options.LogLevel)
-		profiler.IncludeSensorFrames = true
-		if options.MaxBufferedProfiles > 0 {
-			profiler.MaxBufferedProfiles = options.MaxBufferedProfiles
-		}
+
+		autoprofile.SetOptions(autoprofile.Options{
+			IncludeSensorFrames: true,
+			MaxBufferedProfiles: options.MaxBufferedProfiles,
+		})
 
 		autoprofile.SetGetExternalPIDFunc(func() string {
 			return sensor.agent.from.PID
