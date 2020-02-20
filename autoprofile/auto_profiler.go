@@ -36,7 +36,7 @@ type AutoProfiler struct {
 	GetExternalPID func() string
 }
 
-func GetProfiler() *AutoProfiler {
+func Profiler() *AutoProfiler {
 	if profiler == nil {
 		profiler = newAutoProfiler()
 	}

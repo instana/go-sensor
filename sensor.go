@@ -81,7 +81,7 @@ func InitSensor(options *Options) {
 
 	// enable auto-profiling
 	if options.EnableAutoProfile {
-		profiler := autoprofile.GetProfiler()
+		profiler := autoprofile.Profiler()
 		profiler.SetLogLevel(options.LogLevel)
 		profiler.IncludeSensorFrames = true
 		if options.MaxBufferedProfiles > 0 {
