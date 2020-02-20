@@ -13,6 +13,11 @@ const (
 
 var log *LogWrapper = &LogWrapper{Debug}
 
+// SetLogLevel configures the min log level for autoprofile logger
+func SetLogLevel(level int) {
+	log.logLevel = level
+}
+
 type LogWrapper struct {
 	logLevel int
 }

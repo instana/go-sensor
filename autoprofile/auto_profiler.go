@@ -133,10 +133,6 @@ func newAutoProfiler() *autoProfiler {
 	return ap
 }
 
-func (ap *autoProfiler) SetLogLevel(level int) {
-	log.logLevel = level
-}
-
 func (ap *autoProfiler) Enable() {
 	if ap.enabled {
 		return
