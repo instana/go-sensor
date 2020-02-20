@@ -9,7 +9,7 @@ import (
 )
 
 func TestCreateCPUProfile(t *testing.T) {
-	profiler := NewAutoProfiler()
+	profiler := newAutoProfiler()
 	profiler.IncludeSensorFrames = true
 
 	done := make(chan bool)

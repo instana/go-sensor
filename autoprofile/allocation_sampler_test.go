@@ -10,7 +10,7 @@ import (
 var objs []string
 
 func TestCreateAllocationCallGraph(t *testing.T) {
-	profiler := NewAutoProfiler()
+	profiler := newAutoProfiler()
 	profiler.IncludeSensorFrames = true
 
 	objs = make([]string, 0)

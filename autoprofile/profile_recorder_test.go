@@ -8,7 +8,7 @@ import (
 func TestFlush(t *testing.T) {
 	profilesChan := make(chan interface{})
 
-	profiler := NewAutoProfiler()
+	profiler := newAutoProfiler()
 	profiler.IncludeSensorFrames = true
 	profiler.SendProfiles = func(profiles interface{}) error {
 		profilesChan <- profiles
@@ -39,7 +39,7 @@ func TestFlush(t *testing.T) {
 }
 
 func TestFlushFail(t *testing.T) {
-	profiler := NewAutoProfiler()
+	profiler := newAutoProfiler()
 	profiler.IncludeSensorFrames = true
 	profiler.SendProfiles = func(profiles interface{}) error {
 		return errors.New("some error")

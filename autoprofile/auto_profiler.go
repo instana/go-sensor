@@ -17,6 +17,8 @@ var nextID int64
 var randSource *rand.Rand = rand.New(rand.NewSource(time.Now().UnixNano()))
 var randLock *sync.Mutex = &sync.Mutex{}
 
+var profiler *AutoProfiler = nil
+
 type AutoProfiler struct {
 	profileRecorder            *ProfileRecorder
 	cpuSamplerScheduler        *SamplerScheduler
@@ -34,7 +36,14 @@ type AutoProfiler struct {
 	GetExternalPID func() string
 }
 
-func NewAutoProfiler() *AutoProfiler {
+func GetProfiler() *AutoProfiler {
+	if profiler == nil {
+		profiler = newAutoProfiler()
+	}
+	return profiler
+}
+
+func newAutoProfiler() *AutoProfiler {
 	ap := &AutoProfiler{
 		profileRecorder:            nil,
 		cpuSamplerScheduler:        nil,
