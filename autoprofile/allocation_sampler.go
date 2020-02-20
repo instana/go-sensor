@@ -37,20 +37,22 @@ func (as *AllocationSampler) buildProfile(duration int64, timespan int64) (*Prof
 	if err != nil {
 		return nil, err
 	}
+
 	if hp == nil {
 		return nil, errors.New("no profile returned")
 	}
 
-	if top, aerr := as.createAllocationCallGraph(hp); err != nil {
-		return nil, aerr
-	} else {
-		roots := make([]*CallSite, 0)
-		for _, child := range top.children {
-			roots = append(roots, child)
-		}
-		p := newProfile(CategoryMemory, TypeMemoryAllocation, UnitByte, roots, duration, timespan)
-		return p, nil
+	top, err := as.createAllocationCallGraph(hp)
+	if err != nil {
+		return nil, err
 	}
+
+	roots := make([]*CallSite, 0)
+	for _, child := range top.children {
+		roots = append(roots, child)
+	}
+
+	return newProfile(CategoryMemory, TypeMemoryAllocation, UnitByte, roots, duration, timespan), nil
 }
 
 func (as *AllocationSampler) createAllocationCallGraph(p *profile.Profile) (*CallSite, error) {
