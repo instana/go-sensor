@@ -9,13 +9,10 @@ import (
 )
 
 type AllocationSampler struct {
-	profiler *autoProfiler
 }
 
-func newAllocationSampler(profiler *autoProfiler) *AllocationSampler {
-	return &AllocationSampler{
-		profiler: profiler,
-	}
+func newAllocationSampler() *AllocationSampler {
+	return &AllocationSampler{}
 }
 
 func (as *AllocationSampler) resetSampler() {
@@ -79,7 +76,7 @@ func (as *AllocationSampler) createAllocationCallGraph(p *profile.Profile) (*Cal
 	top := newCallSite("", "", 0)
 
 	for _, s := range p.Sample {
-		if !as.profiler.IncludeSensorFrames && isSensorStack(s) {
+		if shouldSkipStack(s) {
 			continue
 		}
 
@@ -94,7 +91,7 @@ func (as *AllocationSampler) createAllocationCallGraph(p *profile.Profile) (*Cal
 			l := s.Location[i]
 			funcName, fileName, fileLine := readFuncInfo(l)
 
-			if (!as.profiler.IncludeSensorFrames && isSensorFrame(fileName)) || funcName == "runtime.goexit" {
+			if shouldSkipFrame(fileName, funcName) {
 				continue
 			}
 

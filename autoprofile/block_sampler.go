@@ -17,15 +17,13 @@ type BlockValues struct {
 }
 
 type BlockSampler struct {
-	profiler       *autoProfiler
 	top            *CallSite
 	prevValues     map[string]*BlockValues
 	partialProfile *pprof.Profile
 }
 
-func newBlockSampler(profiler *autoProfiler) *BlockSampler {
+func newBlockSampler() *BlockSampler {
 	bs := &BlockSampler{
-		profiler:       profiler,
 		top:            nil,
 		prevValues:     make(map[string]*BlockValues),
 		partialProfile: nil,
@@ -88,7 +86,7 @@ func (bs *BlockSampler) updateBlockProfile(p *profile.Profile) error {
 	}
 
 	for _, s := range p.Sample {
-		if !bs.profiler.IncludeSensorFrames && isSensorStack(s) {
+		if shouldSkipStack(s) {
 			continue
 		}
 
@@ -110,7 +108,7 @@ func (bs *BlockSampler) updateBlockProfile(p *profile.Profile) error {
 			l := s.Location[i]
 			funcName, fileName, fileLine := readFuncInfo(l)
 
-			if (!bs.profiler.IncludeSensorFrames && isSensorFrame(fileName)) || funcName == "runtime.goexit" {
+			if shouldSkipFrame(fileName, funcName) {
 				continue
 			}
 

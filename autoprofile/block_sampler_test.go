@@ -10,8 +10,9 @@ import (
 )
 
 func TestCreateBlockProfile(t *testing.T) {
-	profiler := newAutoProfiler()
-	profiler.IncludeSensorFrames = true
+	opts := DefaultOptions()
+	opts.IncludeSensorFrames = true
+	SetOptions(opts)
 
 	ready := make(chan struct{})
 	go func() {
@@ -27,7 +28,7 @@ func TestCreateBlockProfile(t *testing.T) {
 		<-wait
 	}()
 
-	blockSampler := newBlockSampler(profiler)
+	blockSampler := newBlockSampler()
 
 	blockSampler.resetSampler()
 	blockSampler.startSampler()

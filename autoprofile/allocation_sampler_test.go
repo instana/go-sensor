@@ -12,8 +12,9 @@ import (
 var objs []string
 
 func TestCreateAllocationCallGraph(t *testing.T) {
-	profiler := newAutoProfiler()
-	profiler.IncludeSensorFrames = true
+	opts := DefaultOptions()
+	opts.IncludeSensorFrames = true
+	SetOptions(opts)
 
 	objs = make([]string, 1000000)
 	defer func() { objs = nil }()
@@ -21,7 +22,7 @@ func TestCreateAllocationCallGraph(t *testing.T) {
 	runtime.GC()
 	runtime.GC()
 
-	samp := newAllocationSampler(profiler)
+	samp := newAllocationSampler()
 
 	p, err := samp.readHeapProfile()
 	require.NoError(t, err)

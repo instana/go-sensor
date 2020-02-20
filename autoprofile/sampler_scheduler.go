@@ -2,9 +2,18 @@ package autoprofile
 
 import (
 	"math/rand"
+	"os"
+	"strconv"
 	"sync"
 	"time"
 )
+
+var getPID = getLocalPID
+
+func getLocalPID() string {
+	log.warn("using the local process pid as a default")
+	return strconv.Itoa(os.Getpid())
+}
 
 type SamplerConfig struct {
 	logPrefix          string
@@ -174,7 +183,7 @@ func (ss *SamplerScheduler) report() {
 		if len(profile.roots) == 0 {
 			log.debug(ss.config.logPrefix, "not recording empty profile")
 		} else {
-			externalPID := ss.profiler.GetExternalPID()
+			externalPID := getPID()
 			if externalPID != "" {
 				profile.processID = externalPID
 				log.debug("using external PID", externalPID)

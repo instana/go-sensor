@@ -5,23 +5,20 @@ import (
 	"bytes"
 	"errors"
 	"runtime/pprof"
-	"strings"
 	"time"
 
 	"github.com/instana/go-sensor/autoprofile/pprof/profile"
 )
 
 type CPUSampler struct {
-	profiler   *autoProfiler
 	top        *CallSite
 	profWriter *bufio.Writer
 	profBuffer *bytes.Buffer
 	startNano  int64
 }
 
-func newCPUSampler(profiler *autoProfiler) *CPUSampler {
+func newCPUSampler() *CPUSampler {
 	cs := &CPUSampler{
-		profiler:   profiler,
 		top:        nil,
 		profWriter: nil,
 		profBuffer: nil,
@@ -86,7 +83,7 @@ func (cs *CPUSampler) updateCPUProfile(p *profile.Profile) error {
 
 	// build call graph
 	for _, s := range p.Sample {
-		if !cs.profiler.IncludeSensorFrames && isSensorStack(s) {
+		if shouldSkipStack(s) {
 			continue
 		}
 
@@ -98,7 +95,7 @@ func (cs *CPUSampler) updateCPUProfile(p *profile.Profile) error {
 			l := s.Location[i]
 			funcName, fileName, fileLine := readFuncInfo(l)
 
-			if (!cs.profiler.IncludeSensorFrames && isSensorFrame(fileName)) || funcName == "runtime.goexit" {
+			if shouldSkipFrame(fileName, funcName) {
 				continue
 			}
 
@@ -156,28 +153,6 @@ func (cs *CPUSampler) stopCPUSampler() (*profile.Profile, error) {
 
 		return nil, perr
 	}
-}
-
-func isSensorStack(sample *profile.Sample) bool {
-	return stackContains(sample, "", sensorPath)
-}
-
-func isSensorFrame(fileNameTest string) bool {
-	return strings.Contains(fileNameTest, sensorPath)
-}
-
-func stackContains(sample *profile.Sample, funcNameTest string, fileNameTest string) bool {
-	for i := len(sample.Location) - 1; i >= 0; i-- {
-		l := sample.Location[i]
-		funcName, fileName, _ := readFuncInfo(l)
-
-		if (funcNameTest == "" || strings.Contains(funcName, funcNameTest)) &&
-			(fileNameTest == "" || strings.Contains(fileName, fileNameTest)) {
-			return true
-		}
-	}
-
-	return false
 }
 
 func readFuncInfo(l *profile.Location) (funcName string, fileName string, fileLine int64) {

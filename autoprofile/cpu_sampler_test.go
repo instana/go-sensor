@@ -11,8 +11,9 @@ import (
 )
 
 func TestCreateCPUProfile(t *testing.T) {
-	profiler := newAutoProfiler()
-	profiler.IncludeSensorFrames = true
+	opts := DefaultOptions()
+	opts.IncludeSensorFrames = true
+	SetOptions(opts)
 
 	go func() {
 		done := time.After(1 * time.Second)
@@ -31,7 +32,7 @@ func TestCreateCPUProfile(t *testing.T) {
 		}
 	}()
 
-	cpuSampler := newCPUSampler(profiler)
+	cpuSampler := newCPUSampler()
 
 	cpuSampler.resetSampler()
 	cpuSampler.startSampler()

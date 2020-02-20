@@ -1,17 +1,10 @@
 package autoprofile
 
-import (
-	"path/filepath"
-)
-
 const (
 	defaultMaxBufferedProfiles = 100
 )
 
-var (
-	sensorPath = filepath.Join("github.com", "instana", "go-sensor")
-	profiler   = newAutoProfiler()
-)
+var profiler = newAutoProfiler()
 
 // Enable enables the auto profiling (disabled by default)
 func Enable() {
@@ -25,7 +18,11 @@ func Disable() {
 
 // SetGetExternalPIDFunc configures the profiler to use provided function to retrieve the current PID
 func SetGetExternalPIDFunc(fn func() string) {
-	profiler.GetExternalPID = fn
+	if fn == nil {
+		fn = getLocalPID
+	}
+
+	getPID = fn
 }
 
 // SetSendProfilesFunc configures the profiler to use provided function to write collected profiles
@@ -57,7 +54,7 @@ func SetOptions(opts Options) {
 	}
 
 	profiler.profileRecorder.MaxBufferedProfiles = opts.MaxBufferedProfiles
-	profiler.IncludeSensorFrames = opts.IncludeSensorFrames
+	includeSensorFrames = opts.IncludeSensorFrames
 }
 
 type autoProfiler struct {
@@ -68,11 +65,6 @@ type autoProfiler struct {
 
 	enabled       bool
 	samplerActive *flag
-
-	// Options
-	IncludeSensorFrames bool
-
-	GetExternalPID func() string
 }
 
 func newAutoProfiler() *autoProfiler {
@@ -82,7 +74,7 @@ func newAutoProfiler() *autoProfiler {
 
 	ap.profileRecorder = newRecorder()
 
-	cpuSampler := newCPUSampler(ap)
+	cpuSampler := newCPUSampler()
 	cpuSamplerConfig := &SamplerConfig{
 		logPrefix:          "CPU sampler:",
 		maxProfileDuration: 20,
@@ -93,7 +85,7 @@ func newAutoProfiler() *autoProfiler {
 	}
 	ap.cpuSamplerScheduler = newSamplerScheduler(ap, cpuSampler, cpuSamplerConfig)
 
-	allocationSampler := newAllocationSampler(ap)
+	allocationSampler := newAllocationSampler()
 	allocationSamplerConfig := &SamplerConfig{
 		logPrefix:      "Allocation sampler:",
 		reportOnly:     true,
@@ -101,7 +93,7 @@ func newAutoProfiler() *autoProfiler {
 	}
 	ap.allocationSamplerScheduler = newSamplerScheduler(ap, allocationSampler, allocationSamplerConfig)
 
-	blockSampler := newBlockSampler(ap)
+	blockSampler := newBlockSampler()
 	blockSamplerConfig := &SamplerConfig{
 		logPrefix:          "Block sampler:",
 		maxProfileDuration: 20,
