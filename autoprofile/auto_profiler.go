@@ -31,6 +31,16 @@ func Disable() {
 	profiler.Disable()
 }
 
+// SetGetExternalPIDFunc configures the profiler to use provided function to retrieve the current PID
+func SetGetExternalPIDFunc(fn func() string) {
+	profiler.GetExternalPID = fn
+}
+
+// SetSendProfilesFunc configures the profiler to use provided function to write collected profiles
+func SetSendProfilesFunc(fn func(interface{}) error) {
+	profiler.SendProfiles = fn
+}
+
 type autoProfiler struct {
 	profileRecorder            *ProfileRecorder
 	cpuSamplerScheduler        *SamplerScheduler
