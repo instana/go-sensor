@@ -32,7 +32,7 @@ func TestRecorder_Flush(t *testing.T) {
 
 	select {
 	case profiles := <-profilesChan:
-		assert.Empty(t, profiler.profileRecorder.queue)
+		assert.Empty(t, rec.queue)
 
 		require.IsType(t, profiles, []interface{}{})
 		assert.Len(t, profiles.([]interface{}), 2)
