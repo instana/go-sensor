@@ -83,7 +83,7 @@ func newAutoProfiler() *autoProfiler {
 		samplingInterval:   8,
 		reportInterval:     120,
 	}
-	ap.cpuSamplerScheduler = newSamplerScheduler(ap, cpuSampler, cpuSamplerConfig)
+	ap.cpuSamplerScheduler = newSamplerScheduler(ap.profileRecorder, cpuSampler, cpuSamplerConfig)
 
 	allocationSampler := newAllocationSampler()
 	allocationSamplerConfig := &SamplerConfig{
@@ -91,7 +91,7 @@ func newAutoProfiler() *autoProfiler {
 		reportOnly:     true,
 		reportInterval: 120,
 	}
-	ap.allocationSamplerScheduler = newSamplerScheduler(ap, allocationSampler, allocationSamplerConfig)
+	ap.allocationSamplerScheduler = newSamplerScheduler(ap.profileRecorder, allocationSampler, allocationSamplerConfig)
 
 	blockSampler := newBlockSampler()
 	blockSamplerConfig := &SamplerConfig{
@@ -102,7 +102,7 @@ func newAutoProfiler() *autoProfiler {
 		samplingInterval:   16,
 		reportInterval:     120,
 	}
-	ap.blockSamplerScheduler = newSamplerScheduler(ap, blockSampler, blockSamplerConfig)
+	ap.blockSamplerScheduler = newSamplerScheduler(ap.profileRecorder, blockSampler, blockSamplerConfig)
 
 	return ap
 }

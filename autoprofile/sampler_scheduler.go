@@ -33,7 +33,7 @@ type Sampler interface {
 }
 
 type SamplerScheduler struct {
-	profiler         *autoProfiler
+	profileRecorder  *recorder
 	active           *flag
 	started          *flag
 	sampler          Sampler
@@ -47,9 +47,9 @@ type SamplerScheduler struct {
 	samplerTimeout   *Timer
 }
 
-func newSamplerScheduler(profiler *autoProfiler, sampler Sampler, config *SamplerConfig) *SamplerScheduler {
+func newSamplerScheduler(profileRecorder *recorder, sampler Sampler, config *SamplerConfig) *SamplerScheduler {
 	pr := &SamplerScheduler{
-		profiler:         profiler,
+		profileRecorder:  profileRecorder,
 		started:          &flag{},
 		sampler:          sampler,
 		config:           config,
@@ -191,7 +191,7 @@ func (ss *SamplerScheduler) report() {
 				log.info("external PID from agent is not available, using own PID")
 			}
 
-			ss.profiler.profileRecorder.record(profile.toMap())
+			ss.profileRecorder.record(profile.toMap())
 			log.debug(ss.config.logPrefix, "recorded profile")
 		}
 	}
