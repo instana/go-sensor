@@ -1,12 +1,7 @@
 package autoprofile
 
 import (
-	"crypto/sha1"
-	"encoding/hex"
-	"math/rand"
 	"path/filepath"
-	"strconv"
-	"sync"
 	"sync/atomic"
 	"time"
 )
@@ -17,12 +12,7 @@ const (
 
 var (
 	sensorPath = filepath.Join("github.com", "instana", "go-sensor")
-	nextID     int64
-
-	randSource = rand.New(rand.NewSource(time.Now().UnixNano()))
-	randLock   = &sync.Mutex{}
-
-	profiler = newAutoProfiler()
+	profiler   = newAutoProfiler()
 )
 
 // Enable enables the auto profiling (disabled by default)
@@ -156,30 +146,6 @@ func recoverAndLog() {
 	if err := recover(); err != nil {
 		log.error("recovered from panic in agent:", err)
 	}
-}
-
-func generateUUID() string {
-	n := atomic.AddInt64(&nextID, 1)
-
-	uuid := strconv.FormatInt(time.Now().Unix(), 10) +
-		strconv.FormatInt(random(1000000000), 10) +
-		strconv.FormatInt(n, 10)
-
-	return sha1String(uuid)
-}
-
-func random(max int64) int64 {
-	randLock.Lock()
-	defer randLock.Unlock()
-
-	return randSource.Int63n(max)
-}
-
-func sha1String(s string) string {
-	sha1 := sha1.New()
-	sha1.Write([]byte(s))
-
-	return hex.EncodeToString(sha1.Sum(nil))
 }
 
 type Timer struct {
