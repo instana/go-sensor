@@ -9,7 +9,7 @@ type ProfileRecorder struct {
 	FlushInterval int64
 
 	profiler *autoProfiler
-	started  *Flag
+	started  *flag
 
 	flushTimer *Timer
 
@@ -24,7 +24,7 @@ func newProfileRecorder(profiler *autoProfiler) *ProfileRecorder {
 		FlushInterval: 5,
 
 		profiler: profiler,
-		started:  &Flag{},
+		started:  &flag{},
 
 		flushTimer: nil,
 

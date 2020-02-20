@@ -25,7 +25,8 @@ type Sampler interface {
 
 type SamplerScheduler struct {
 	profiler         *autoProfiler
-	started          *Flag
+	active           *flag
+	started          *flag
 	sampler          Sampler
 	config           *SamplerConfig
 	samplerTimer     *Timer
@@ -40,7 +41,7 @@ type SamplerScheduler struct {
 func newSamplerScheduler(profiler *autoProfiler, sampler Sampler, config *SamplerConfig) *SamplerScheduler {
 	pr := &SamplerScheduler{
 		profiler:         profiler,
-		started:          &Flag{},
+		started:          &flag{},
 		sampler:          sampler,
 		config:           config,
 		samplerTimer:     nil,

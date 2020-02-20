@@ -2,7 +2,6 @@ package autoprofile
 
 import (
 	"path/filepath"
-	"sync/atomic"
 )
 
 const (
@@ -64,7 +63,7 @@ type autoProfiler struct {
 	blockSamplerScheduler      *SamplerScheduler
 
 	enabled       bool
-	samplerActive *Flag
+	samplerActive *flag
 
 	// Options
 	IncludeSensorFrames bool
@@ -76,7 +75,7 @@ type autoProfiler struct {
 
 func newAutoProfiler() *autoProfiler {
 	ap := &autoProfiler{
-		samplerActive:       &Flag{},
+		samplerActive:       &flag{},
 		MaxBufferedProfiles: 100,
 	}
 
@@ -139,28 +138,4 @@ func (ap *autoProfiler) Disable() {
 	ap.blockSamplerScheduler.stop()
 
 	log.debug("profiler disabled")
-}
-
-type Flag struct {
-	value int32
-}
-
-func (f *Flag) SetIfUnset() bool {
-	return atomic.CompareAndSwapInt32(&f.value, 0, 1)
-}
-
-func (f *Flag) UnsetIfSet() bool {
-	return atomic.CompareAndSwapInt32(&f.value, 1, 0)
-}
-
-func (f *Flag) Set() {
-	atomic.StoreInt32(&f.value, 1)
-}
-
-func (f *Flag) Unset() {
-	atomic.StoreInt32(&f.value, 0)
-}
-
-func (f *Flag) IsSet() bool {
-	return atomic.LoadInt32(&f.value) == 1
 }
