@@ -13,11 +13,9 @@ type AllocationSampler struct {
 }
 
 func newAllocationSampler(profiler *AutoProfiler) *AllocationSampler {
-	as := &AllocationSampler{
+	return &AllocationSampler{
 		profiler: profiler,
 	}
-
-	return as
 }
 
 func (as *AllocationSampler) resetSampler() {
@@ -64,7 +62,7 @@ func (as *AllocationSampler) createAllocationCallGraph(p *profile.Profile) (*Cal
 		}
 	}
 
-	// find "inuse_space" type index
+	// find "inuse_objects" type index
 	inuseObjectsTypeIndex := -1
 	for i, s := range p.SampleType {
 		if s.Type == "inuse_objects" {
@@ -74,7 +72,7 @@ func (as *AllocationSampler) createAllocationCallGraph(p *profile.Profile) (*Cal
 	}
 
 	if inuseSpaceTypeIndex == -1 || inuseObjectsTypeIndex == -1 {
-		return nil, errors.New("Unrecognized profile data")
+		return nil, errors.New("unrecognized profile data")
 	}
 
 	// build call graph
@@ -86,12 +84,12 @@ func (as *AllocationSampler) createAllocationCallGraph(p *profile.Profile) (*Cal
 		}
 
 		value := s.Value[inuseSpaceTypeIndex]
-		count := s.Value[inuseObjectsTypeIndex]
 		if value == 0 {
 			continue
 		}
 
-		curren := top
+		count := s.Value[inuseObjectsTypeIndex]
+		current := top
 		for i := len(s.Location) - 1; i >= 0; i-- {
 			l := s.Location[i]
 			funcName, fileName, fileLine := readFuncInfo(l)
@@ -100,9 +98,10 @@ func (as *AllocationSampler) createAllocationCallGraph(p *profile.Profile) (*Cal
 				continue
 			}
 
-			curren = curren.findOrAddChild(funcName, fileName, fileLine)
+			current = current.findOrAddChild(funcName, fileName, fileLine)
 		}
-		curren.increment(float64(value), int64(count))
+
+		current.increment(float64(value), int64(count))
 	}
 
 	return top, nil

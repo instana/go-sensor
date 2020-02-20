@@ -3,9 +3,13 @@ package autoprofile
 import (
 	"errors"
 	"testing"
+	"time"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
-func TestFlush(t *testing.T) {
+func TestProfileRecorder_Flush(t *testing.T) {
 	profilesChan := make(chan interface{})
 
 	profiler := newAutoProfiler()
@@ -27,18 +31,18 @@ func TestFlush(t *testing.T) {
 
 	go profiler.profileRecorder.flush()
 
-	profiles := <-profilesChan
+	select {
+	case profiles := <-profilesChan:
+		assert.Empty(t, profiler.profileRecorder.queue)
 
-	if len(profiler.profileRecorder.queue) > 0 {
-		t.Errorf("Queue should be empty, but have %v profiles", len(profiler.profileRecorder.queue))
-	}
-
-	if len(profiles.([]interface{})) < 2 {
-		t.Errorf("Received %v profiles", len(profiles.([]interface{})))
+		require.IsType(t, profiles, []interface{}{})
+		assert.Len(t, profiles.([]interface{}), 2)
+	case <-time.After(2 * time.Second):
+		t.Errorf("(*autoprofile.ProfileRecorder).flush() did not return within 2 seconds")
 	}
 }
 
-func TestFlushFail(t *testing.T) {
+func TestProfileRecorder_Flush_Fail(t *testing.T) {
 	profiler := newAutoProfiler()
 	profiler.IncludeSensorFrames = true
 	profiler.SendProfiles = func(profiles interface{}) error {
@@ -53,11 +57,9 @@ func TestFlushFail(t *testing.T) {
 	profile = map[string]interface{}{
 		"a": 2,
 	}
-	profiler.profileRecorder.record(profile)
 
+	profiler.profileRecorder.record(profile)
 	profiler.profileRecorder.flush()
 
-	if len(profiler.profileRecorder.queue) < 2 {
-		t.Errorf("Queue contains %v profiles", len(profiler.profileRecorder.queue))
-	}
+	assert.Len(t, profiler.profileRecorder.queue, 2)
 }

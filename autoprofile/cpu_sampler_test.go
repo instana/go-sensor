@@ -3,43 +3,44 @@ package autoprofile
 import (
 	"fmt"
 	"strconv"
-	"strings"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestCreateCPUProfile(t *testing.T) {
 	profiler := newAutoProfiler()
 	profiler.IncludeSensorFrames = true
 
-	done := make(chan bool)
-
 	go func() {
-		// cpu
-		//start := time.Now().UnixNano()
-		for i := 0; i < 10000000; i++ {
-			str := "str" + strconv.Itoa(i)
-			str = str + "a"
-		}
-		//took := time.Now().UnixNano() - start
-		//fmt.Printf("TOOK: %v\n", took)
+		done := time.After(1 * time.Second)
 
-		done <- true
+		var i int
+		for {
+			i++
+
+			select {
+			case <-done:
+				return
+			default:
+				str := "str" + strconv.Itoa(i)
+				str = str + "a"
+			}
+		}
 	}()
 
 	cpuSampler := newCPUSampler(profiler)
+
 	cpuSampler.resetSampler()
 	cpuSampler.startSampler()
 
 	time.Sleep(500 * time.Millisecond)
 	cpuSampler.stopSampler()
-	profile, _ := cpuSampler.buildProfile(500*1e6, 120)
 
-	//fmt.Printf("CALL GRAPH: %v\n", profile.toIndentedJson())
+	profile, err := cpuSampler.buildProfile(500*1e6, 120)
+	require.NoError(t, err)
 
-	if !strings.Contains(fmt.Sprintf("%v", profile.toMap()), "TestCreateCPUProfile") {
-		t.Error("The test function is not found in the profile")
-	}
-
-	<-done
+	assert.Contains(t, fmt.Sprintf("%v", profile.toMap()), "TestCreateCPUProfile")
 }

@@ -2,54 +2,44 @@ package autoprofile
 
 import (
 	"fmt"
-	"net/http"
-	"strings"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestCreateBlockProfile(t *testing.T) {
 	profiler := newAutoProfiler()
 	profiler.IncludeSensorFrames = true
 
-	done := make(chan bool)
-
+	ready := make(chan struct{})
 	go func() {
-		time.Sleep(200 * time.Millisecond)
+		wait := make(chan struct{})
 
-		wait := make(chan bool)
-
+		<-ready
 		go func() {
 			time.Sleep(150 * time.Millisecond)
 
-			wait <- true
+			wait <- struct{}{}
 		}()
 
 		<-wait
-
-		done <- true
 	}()
 
 	blockSampler := newBlockSampler(profiler)
+
 	blockSampler.resetSampler()
 	blockSampler.startSampler()
+
+	ready <- struct{}{}
+
 	time.Sleep(500 * time.Millisecond)
+
 	blockSampler.stopSampler()
-	profile, _ := blockSampler.buildProfile(500*1e6, 120)
-	//fmt.Printf("CALL GRAPH: %v\n", profile.toIndentedJson())
 
-	if !strings.Contains(fmt.Sprintf("%v", profile.toMap()), "TestCreateBlockProfile") {
-		t.Error("The test function is not found in the profile")
-	}
+	profile, err := blockSampler.buildProfile(500*1e6, 120)
+	require.NoError(t, err)
 
-	<-done
-}
-
-func waitForServer(url string) {
-	for {
-		if _, err := http.Get(url); err == nil {
-			time.Sleep(100 * time.Millisecond)
-			break
-		}
-	}
+	assert.Contains(t, fmt.Sprintf("%v", profile.toMap()), "TestCreateBlockProfile")
 }
