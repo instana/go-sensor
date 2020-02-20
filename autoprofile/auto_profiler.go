@@ -29,8 +29,12 @@ func SetGetExternalPIDFunc(fn func() string) {
 }
 
 // SetSendProfilesFunc configures the profiler to use provided function to write collected profiles
-func SetSendProfilesFunc(fn func(interface{}) error) {
-	profiler.SendProfiles = fn
+func SetSendProfilesFunc(fn SendProfilesFunc) {
+	if fn == nil {
+		fn = noopSendProfiles
+	}
+
+	profiler.profileRecorder.SendProfiles = fn
 }
 
 // Options contains profiler configuration
@@ -52,7 +56,7 @@ func SetOptions(opts Options) {
 		opts.MaxBufferedProfiles = defaultMaxBufferedProfiles
 	}
 
-	profiler.MaxBufferedProfiles = opts.MaxBufferedProfiles
+	profiler.profileRecorder.MaxBufferedProfiles = opts.MaxBufferedProfiles
 	profiler.IncludeSensorFrames = opts.IncludeSensorFrames
 }
 
@@ -67,19 +71,16 @@ type autoProfiler struct {
 
 	// Options
 	IncludeSensorFrames bool
-	MaxBufferedProfiles int
 
-	SendProfiles   func(profiles interface{}) error
 	GetExternalPID func() string
 }
 
 func newAutoProfiler() *autoProfiler {
 	ap := &autoProfiler{
-		samplerActive:       &flag{},
-		MaxBufferedProfiles: 100,
+		samplerActive: &flag{},
 	}
 
-	ap.profileRecorder = newProfileRecorder(ap)
+	ap.profileRecorder = newProfileRecorder()
 
 	cpuSampler := newCPUSampler(ap)
 	cpuSamplerConfig := &SamplerConfig{

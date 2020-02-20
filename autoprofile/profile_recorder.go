@@ -5,11 +5,24 @@ import (
 	"time"
 )
 
-type ProfileRecorder struct {
-	FlushInterval int64
+// SendProfilesFunc is a callback to emit collected profiles from recorder
+type SendProfilesFunc func(interface{}) error
 
-	profiler *autoProfiler
-	started  *flag
+func noopSendProfiles(interface{}) error {
+	log.warn(
+		"autoprofile.SendProfiles callback is not set, ",
+		"make sure that you have it configured using autoprofile.SetSendProfilesFunc() in your code",
+	)
+
+	return nil
+}
+
+type ProfileRecorder struct {
+	FlushInterval       int64
+	MaxBufferedProfiles int
+	SendProfiles        SendProfilesFunc
+
+	started *flag
 
 	flushTimer *Timer
 
@@ -19,12 +32,13 @@ type ProfileRecorder struct {
 	backoffSeconds     int64
 }
 
-func newProfileRecorder(profiler *autoProfiler) *ProfileRecorder {
+func newProfileRecorder() *ProfileRecorder {
 	mq := &ProfileRecorder{
-		FlushInterval: 5,
+		FlushInterval:       5,
+		MaxBufferedProfiles: defaultMaxBufferedProfiles,
+		SendProfiles:        noopSendProfiles,
 
-		profiler: profiler,
-		started:  &flag{},
+		started: &flag{},
 
 		flushTimer: nil,
 
@@ -65,9 +79,13 @@ func (pr *ProfileRecorder) size() int {
 }
 
 func (pr *ProfileRecorder) record(record map[string]interface{}) {
+	if pr.MaxBufferedProfiles < 1 {
+		return
+	}
+
 	pr.queueLock.Lock()
 	pr.queue = append(pr.queue, record)
-	if len(pr.queue) > pr.profiler.MaxBufferedProfiles {
+	if len(pr.queue) > pr.MaxBufferedProfiles {
 		pr.queue = pr.queue[1:len(pr.queue)]
 	}
 	pr.queueLock.Unlock()
@@ -94,7 +112,7 @@ func (pr *ProfileRecorder) flush() {
 
 	pr.lastFlushTimestamp = now
 
-	if err := pr.profiler.SendProfiles(outgoing); err == nil {
+	if err := pr.SendProfiles(outgoing); err == nil {
 		// reset backoff
 		pr.backoffSeconds = 0
 	} else {

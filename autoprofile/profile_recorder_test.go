@@ -12,9 +12,8 @@ import (
 func TestProfileRecorder_Flush(t *testing.T) {
 	profilesChan := make(chan interface{})
 
-	profiler := newAutoProfiler()
-	profiler.IncludeSensorFrames = true
-	profiler.SendProfiles = func(profiles interface{}) error {
+	rec := newProfileRecorder()
+	rec.SendProfiles = func(profiles interface{}) error {
 		profilesChan <- profiles
 		return nil
 	}
@@ -22,14 +21,14 @@ func TestProfileRecorder_Flush(t *testing.T) {
 	profile := map[string]interface{}{
 		"a": 1,
 	}
-	profiler.profileRecorder.record(profile)
+	rec.record(profile)
 
 	profile = map[string]interface{}{
 		"a": 2,
 	}
-	profiler.profileRecorder.record(profile)
+	rec.record(profile)
 
-	go profiler.profileRecorder.flush()
+	go rec.flush()
 
 	select {
 	case profiles := <-profilesChan:
@@ -43,23 +42,22 @@ func TestProfileRecorder_Flush(t *testing.T) {
 }
 
 func TestProfileRecorder_Flush_Fail(t *testing.T) {
-	profiler := newAutoProfiler()
-	profiler.IncludeSensorFrames = true
-	profiler.SendProfiles = func(profiles interface{}) error {
+	rec := newProfileRecorder()
+	rec.SendProfiles = func(profiles interface{}) error {
 		return errors.New("some error")
 	}
 
 	profile := map[string]interface{}{
 		"a": 1,
 	}
-	profiler.profileRecorder.record(profile)
+	rec.record(profile)
 
 	profile = map[string]interface{}{
 		"a": 2,
 	}
 
-	profiler.profileRecorder.record(profile)
-	profiler.profileRecorder.flush()
+	rec.record(profile)
+	rec.flush()
 
-	assert.Len(t, profiler.profileRecorder.queue, 2)
+	assert.Len(t, rec.queue, 2)
 }
