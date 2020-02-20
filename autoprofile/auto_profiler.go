@@ -85,13 +85,6 @@ type autoProfiler struct {
 	GetExternalPID func() string
 }
 
-func Profiler() *autoProfiler {
-	if profiler == nil {
-		profiler = newAutoProfiler()
-	}
-	return profiler
-}
-
 func newAutoProfiler() *autoProfiler {
 	ap := &autoProfiler{
 		samplerActive:       &Flag{},
