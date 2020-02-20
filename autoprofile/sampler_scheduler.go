@@ -66,13 +66,13 @@ func (ss *SamplerScheduler) start() {
 	ss.reset()
 
 	if !ss.config.reportOnly {
-		ss.samplerTimer = createTimer(0, time.Duration(ss.config.samplingInterval)*time.Second, func() {
+		ss.samplerTimer = newTimer(0, time.Duration(ss.config.samplingInterval)*time.Second, func() {
 			time.Sleep(time.Duration(rand.Int63n(ss.config.samplingInterval-ss.config.maxSpanDuration)) * time.Second)
 			ss.startProfiling()
 		})
 	}
 
-	ss.reportTimer = createTimer(0, time.Duration(ss.config.reportInterval)*time.Second, func() {
+	ss.reportTimer = newTimer(0, time.Duration(ss.config.reportInterval)*time.Second, func() {
 		ss.report()
 	})
 }
@@ -123,7 +123,7 @@ func (ss *SamplerScheduler) startProfiling() bool {
 		return false
 	}
 	ss.samplerStart = time.Now().UnixNano()
-	ss.samplerTimeout = createTimer(time.Duration(ss.config.maxSpanDuration)*time.Second, 0, func() {
+	ss.samplerTimeout = newTimer(time.Duration(ss.config.maxSpanDuration)*time.Second, 0, func() {
 		ss.stopSampler()
 		ss.profiler.samplerActive.Unset()
 	})

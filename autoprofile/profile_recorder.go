@@ -42,7 +42,7 @@ func (pr *ProfileRecorder) start() {
 		return
 	}
 
-	pr.flushTimer = createTimer(0, time.Duration(pr.FlushInterval)*time.Second, func() {
+	pr.flushTimer = newTimer(0, time.Duration(pr.FlushInterval)*time.Second, func() {
 		pr.flush()
 	})
 }

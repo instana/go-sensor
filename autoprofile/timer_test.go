@@ -9,7 +9,7 @@ import (
 
 func TestTimer_Restart(t *testing.T) {
 	var fired int
-	timer := createTimer(0, 10*time.Millisecond, func() {
+	timer := newTimer(0, 10*time.Millisecond, func() {
 		fired++
 	})
 
@@ -24,7 +24,7 @@ func TestTimer_Restart(t *testing.T) {
 
 func TestTimer_Sleep(t *testing.T) {
 	var fired int
-	timer := createTimer(10*time.Millisecond, 0, func() {
+	timer := newTimer(10*time.Millisecond, 0, func() {
 		fired++
 	})
 
@@ -36,7 +36,7 @@ func TestTimer_Sleep(t *testing.T) {
 
 func TestTimer_Sleep_Stopped(t *testing.T) {
 	var fired int
-	timer := createTimer(10*time.Millisecond, 0, func() {
+	timer := newTimer(10*time.Millisecond, 0, func() {
 		fired++
 	})
 
