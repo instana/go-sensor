@@ -8,7 +8,7 @@ import (
 type ProfileRecorder struct {
 	FlushInterval int64
 
-	profiler *AutoProfiler
+	profiler *autoProfiler
 	started  *Flag
 
 	flushTimer *Timer
@@ -19,7 +19,7 @@ type ProfileRecorder struct {
 	backoffSeconds     int64
 }
 
-func newProfileRecorder(profiler *AutoProfiler) *ProfileRecorder {
+func newProfileRecorder(profiler *autoProfiler) *ProfileRecorder {
 	mq := &ProfileRecorder{
 		FlushInterval: 5,
 

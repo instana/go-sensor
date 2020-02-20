@@ -9,10 +9,10 @@ import (
 )
 
 type AllocationSampler struct {
-	profiler *AutoProfiler
+	profiler *autoProfiler
 }
 
-func newAllocationSampler(profiler *AutoProfiler) *AllocationSampler {
+func newAllocationSampler(profiler *autoProfiler) *AllocationSampler {
 	return &AllocationSampler{
 		profiler: profiler,
 	}

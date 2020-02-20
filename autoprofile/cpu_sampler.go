@@ -12,14 +12,14 @@ import (
 )
 
 type CPUSampler struct {
-	profiler   *AutoProfiler
+	profiler   *autoProfiler
 	top        *CallSite
 	profWriter *bufio.Writer
 	profBuffer *bytes.Buffer
 	startNano  int64
 }
 
-func newCPUSampler(profiler *AutoProfiler) *CPUSampler {
+func newCPUSampler(profiler *autoProfiler) *CPUSampler {
 	cs := &CPUSampler{
 		profiler:   profiler,
 		top:        nil,

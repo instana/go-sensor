@@ -17,13 +17,13 @@ type BlockValues struct {
 }
 
 type BlockSampler struct {
-	profiler       *AutoProfiler
+	profiler       *autoProfiler
 	top            *CallSite
 	prevValues     map[string]*BlockValues
 	partialProfile *pprof.Profile
 }
 
-func newBlockSampler(profiler *AutoProfiler) *BlockSampler {
+func newBlockSampler(profiler *autoProfiler) *BlockSampler {
 	bs := &BlockSampler{
 		profiler:       profiler,
 		top:            nil,

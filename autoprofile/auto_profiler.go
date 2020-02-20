@@ -11,15 +11,17 @@ import (
 	"time"
 )
 
-var sensorPath = filepath.Join("github.com", "instana", "go-sensor")
-var nextID int64
+var (
+	sensorPath = filepath.Join("github.com", "instana", "go-sensor")
+	nextID     int64
 
-var randSource *rand.Rand = rand.New(rand.NewSource(time.Now().UnixNano()))
-var randLock *sync.Mutex = &sync.Mutex{}
+	randSource = rand.New(rand.NewSource(time.Now().UnixNano()))
+	randLock   = &sync.Mutex{}
 
-var profiler *AutoProfiler = nil
+	profiler *autoProfiler
+)
 
-type AutoProfiler struct {
+type autoProfiler struct {
 	profileRecorder            *ProfileRecorder
 	cpuSamplerScheduler        *SamplerScheduler
 	allocationSamplerScheduler *SamplerScheduler
@@ -36,28 +38,17 @@ type AutoProfiler struct {
 	GetExternalPID func() string
 }
 
-func Profiler() *AutoProfiler {
+func Profiler() *autoProfiler {
 	if profiler == nil {
 		profiler = newAutoProfiler()
 	}
 	return profiler
 }
 
-func newAutoProfiler() *AutoProfiler {
-	ap := &AutoProfiler{
-		profileRecorder:            nil,
-		cpuSamplerScheduler:        nil,
-		allocationSamplerScheduler: nil,
-		blockSamplerScheduler:      nil,
-
-		enabled:       false,
-		samplerActive: &Flag{},
-
-		IncludeSensorFrames: false,
+func newAutoProfiler() *autoProfiler {
+	ap := &autoProfiler{
+		samplerActive:       &Flag{},
 		MaxBufferedProfiles: 100,
-
-		SendProfiles:   nil,
-		GetExternalPID: nil,
 	}
 
 	ap.profileRecorder = newProfileRecorder(ap)
@@ -95,30 +86,34 @@ func newAutoProfiler() *AutoProfiler {
 	return ap
 }
 
-func (ap *AutoProfiler) SetLogLevel(level int) {
+func (ap *autoProfiler) SetLogLevel(level int) {
 	log.logLevel = level
 }
 
-func (ap *AutoProfiler) Enable() {
-	if !ap.enabled {
-		ap.profileRecorder.start()
-		ap.cpuSamplerScheduler.start()
-		ap.allocationSamplerScheduler.start()
-		ap.blockSamplerScheduler.start()
-
-		log.debug("profiler enabled")
+func (ap *autoProfiler) Enable() {
+	if ap.enabled {
+		return
 	}
+
+	ap.profileRecorder.start()
+	ap.cpuSamplerScheduler.start()
+	ap.allocationSamplerScheduler.start()
+	ap.blockSamplerScheduler.start()
+
+	log.debug("profiler enabled")
 }
 
-func (ap *AutoProfiler) Disable() {
-	if ap.enabled {
-		ap.profileRecorder.stop()
-		ap.cpuSamplerScheduler.stop()
-		ap.allocationSamplerScheduler.stop()
-		ap.blockSamplerScheduler.stop()
-
-		log.debug("profiler disabled")
+func (ap *autoProfiler) Disable() {
+	if !ap.enabled {
+		return
 	}
+
+	ap.profileRecorder.stop()
+	ap.cpuSamplerScheduler.stop()
+	ap.allocationSamplerScheduler.stop()
+	ap.blockSamplerScheduler.stop()
+
+	log.debug("profiler disabled")
 }
 
 func recoverAndLog() {
@@ -130,10 +125,9 @@ func recoverAndLog() {
 func generateUUID() string {
 	n := atomic.AddInt64(&nextID, 1)
 
-	uuid :=
-		strconv.FormatInt(time.Now().Unix(), 10) +
-			strconv.FormatInt(random(1000000000), 10) +
-			strconv.FormatInt(n, 10)
+	uuid := strconv.FormatInt(time.Now().Unix(), 10) +
+		strconv.FormatInt(random(1000000000), 10) +
+		strconv.FormatInt(n, 10)
 
 	return sha1String(uuid)
 }
