@@ -8,7 +8,12 @@ go:
   - 1.11.13
   - 1.12.6
   - 1.13.7
+  - 1.14
   - tip
+
+jobs:
+  allow_failures:
+  - go: 1.7.5 # fails since github.com/looplab/fsm@master has dropped 1.7 support
 
 notifications:
   slack:
