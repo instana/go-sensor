@@ -22,10 +22,8 @@ type Recorder struct {
 	MaxBufferedProfiles int
 	SendProfiles        SendProfilesFunc
 
-	started *flag
-
-	flushTimer *Timer
-
+	started            Flag
+	flushTimer         *Timer
 	queue              []interface{}
 	queueLock          *sync.Mutex
 	lastFlushTimestamp int64
@@ -38,14 +36,8 @@ func NewRecorder() *Recorder {
 		MaxBufferedProfiles: defaultMaxBufferedProfiles,
 		SendProfiles:        noopSendProfiles,
 
-		started: &flag{},
-
-		flushTimer: nil,
-
-		queue:              make([]interface{}, 0),
-		queueLock:          &sync.Mutex{},
-		lastFlushTimestamp: 0,
-		backoffSeconds:     0,
+		queue:     make([]interface{}, 0),
+		queueLock: &sync.Mutex{},
 	}
 
 	return mq

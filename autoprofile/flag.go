@@ -2,26 +2,26 @@ package autoprofile
 
 import "sync/atomic"
 
-type flag struct {
+type Flag struct {
 	value int32
 }
 
-func (f *flag) SetIfUnset() bool {
+func (f *Flag) SetIfUnset() bool {
 	return atomic.CompareAndSwapInt32(&f.value, 0, 1)
 }
 
-func (f *flag) UnsetIfSet() bool {
+func (f *Flag) UnsetIfSet() bool {
 	return atomic.CompareAndSwapInt32(&f.value, 1, 0)
 }
 
-func (f *flag) Set() {
+func (f *Flag) Set() {
 	atomic.StoreInt32(&f.value, 1)
 }
 
-func (f *flag) Unset() {
+func (f *Flag) Unset() {
 	atomic.StoreInt32(&f.value, 0)
 }
 
-func (f *flag) IsSet() bool {
+func (f *Flag) IsSet() bool {
 	return atomic.LoadInt32(&f.value) == 1
 }

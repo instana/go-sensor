@@ -5,7 +5,7 @@ const (
 )
 
 var (
-	samplerActive = &flag{}
+	samplerActive Flag
 
 	profileRecorder     = NewRecorder()
 	cpuSamplerScheduler = NewSamplerScheduler(profileRecorder, NewCPUSampler(), SamplerConfig{

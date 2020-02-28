@@ -34,10 +34,10 @@ type Sampler interface {
 
 type SamplerScheduler struct {
 	profileRecorder  *Recorder
-	active           *flag
-	started          *flag
 	sampler          Sampler
 	config           SamplerConfig
+	active           Flag
+	started          Flag
 	samplerTimer     *Timer
 	reportTimer      *Timer
 	profileLock      *sync.Mutex
@@ -50,7 +50,6 @@ type SamplerScheduler struct {
 func NewSamplerScheduler(profileRecorder *Recorder, samp Sampler, config SamplerConfig) *SamplerScheduler {
 	pr := &SamplerScheduler{
 		profileRecorder: profileRecorder,
-		started:         &flag{},
 		sampler:         samp,
 		config:          config,
 		profileLock:     &sync.Mutex{},
