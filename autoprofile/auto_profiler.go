@@ -1,16 +1,13 @@
 package autoprofile
 
-import "github.com/instana/go-sensor/autoprofile/internal/logger"
-
-const (
-	defaultMaxBufferedProfiles = 100
+import (
+	"github.com/instana/go-sensor/autoprofile/internal"
+	"github.com/instana/go-sensor/autoprofile/internal/logger"
 )
 
 var (
-	samplerActive Flag
-
-	profileRecorder     = NewRecorder()
-	cpuSamplerScheduler = NewSamplerScheduler(profileRecorder, NewCPUSampler(), SamplerConfig{
+	profileRecorder     = internal.NewRecorder()
+	cpuSamplerScheduler = internal.NewSamplerScheduler(profileRecorder, internal.NewCPUSampler(), internal.SamplerConfig{
 		LogPrefix:          "CPU sampler:",
 		MaxProfileDuration: 20,
 		MaxSpanDuration:    2,
@@ -18,12 +15,12 @@ var (
 		SamplingInterval:   8,
 		ReportInterval:     120,
 	})
-	allocationSamplerScheduler = NewSamplerScheduler(profileRecorder, NewAllocationSampler(), SamplerConfig{
+	allocationSamplerScheduler = internal.NewSamplerScheduler(profileRecorder, internal.NewAllocationSampler(), internal.SamplerConfig{
 		LogPrefix:      "Allocation sampler:",
 		ReportOnly:     true,
 		ReportInterval: 120,
 	})
-	blockSamplerScheduler = NewSamplerScheduler(profileRecorder, NewBlockSampler(), SamplerConfig{
+	blockSamplerScheduler = internal.NewSamplerScheduler(profileRecorder, internal.NewBlockSampler(), internal.SamplerConfig{
 		LogPrefix:          "Block sampler:",
 		MaxProfileDuration: 20,
 		MaxSpanDuration:    4,
@@ -71,16 +68,16 @@ func Disable() {
 // SetGetExternalPIDFunc configures the profiler to use provided function to retrieve the current PID
 func SetGetExternalPIDFunc(fn func() string) {
 	if fn == nil {
-		fn = GetLocalPID
+		fn = internal.GetLocalPID
 	}
 
-	getPID = fn
+	internal.GetPID = fn
 }
 
 // SetSendProfilesFunc configures the profiler to use provided function to write collected profiles
-func SetSendProfilesFunc(fn SendProfilesFunc) {
+func SetSendProfilesFunc(fn internal.SendProfilesFunc) {
 	if fn == nil {
-		fn = noopSendProfiles
+		fn = internal.NoopSendProfiles
 	}
 
 	profileRecorder.SendProfiles = fn
@@ -95,16 +92,16 @@ type Options struct {
 // DefaultOptions returns profiler defaults
 func DefaultOptions() Options {
 	return Options{
-		MaxBufferedProfiles: defaultMaxBufferedProfiles,
+		MaxBufferedProfiles: internal.DefaultMaxBufferedProfiles,
 	}
 }
 
 // SetOptions configures the profiler with provided settings
 func SetOptions(opts Options) {
 	if opts.MaxBufferedProfiles < 1 {
-		opts.MaxBufferedProfiles = defaultMaxBufferedProfiles
+		opts.MaxBufferedProfiles = internal.DefaultMaxBufferedProfiles
 	}
 
 	profileRecorder.MaxBufferedProfiles = opts.MaxBufferedProfiles
-	includeSensorFrames = opts.IncludeSensorFrames
+	internal.IncludeSensorFrames = opts.IncludeSensorFrames
 }

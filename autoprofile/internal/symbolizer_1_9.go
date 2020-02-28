@@ -1,9 +1,9 @@
 // +build !go1.10
 
-package autoprofile
+package internal
 
 import (
-	"github.com/instana/go-sensor/autoprofile/pprof/profile"
+	"github.com/instana/go-sensor/autoprofile/internal/pprof/profile"
 	"runtime"
 )
 

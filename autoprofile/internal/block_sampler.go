@@ -1,4 +1,4 @@
-package autoprofile
+package internal
 
 import (
 	"bufio"
@@ -8,7 +8,7 @@ import (
 	"runtime"
 	"runtime/pprof"
 
-	profile "github.com/instana/go-sensor/autoprofile/pprof/profile"
+	profile "github.com/instana/go-sensor/autoprofile/internal/pprof/profile"
 )
 
 type blockValues struct {

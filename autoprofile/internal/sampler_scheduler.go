@@ -1,4 +1,4 @@
-package autoprofile
+package internal
 
 import (
 	"math/rand"
@@ -10,7 +10,10 @@ import (
 	"github.com/instana/go-sensor/autoprofile/internal/logger"
 )
 
-var getPID = GetLocalPID
+var (
+	GetPID        = GetLocalPID
+	samplerActive Flag
+)
 
 func GetLocalPID() string {
 	logger.Warn("using the local process pid as a default")
@@ -129,7 +132,7 @@ func (ss *SamplerScheduler) Report() {
 			return
 		}
 
-		externalPID := getPID()
+		externalPID := GetPID()
 		if externalPID != "" {
 			profile.ProcessID = externalPID
 			logger.Debug("using external PID", externalPID)

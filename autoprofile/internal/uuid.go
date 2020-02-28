@@ -1,4 +1,4 @@
-package autoprofile
+package internal
 
 import (
 	"crypto/sha1"

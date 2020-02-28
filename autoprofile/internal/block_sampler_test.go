@@ -1,21 +1,17 @@
-package autoprofile_test
+package internal_test
 
 import (
 	"fmt"
 	"testing"
 	"time"
 
-	"github.com/instana/go-sensor/autoprofile"
+	"github.com/instana/go-sensor/autoprofile/internal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestCreateBlockProfile(t *testing.T) {
-	opts := autoprofile.DefaultOptions()
-	opts.IncludeSensorFrames = true
-	autoprofile.SetOptions(opts)
-
-	blockSampler := autoprofile.NewBlockSampler()
+	blockSampler := internal.NewBlockSampler()
 
 	blockSampler.Reset()
 	blockSampler.Start()

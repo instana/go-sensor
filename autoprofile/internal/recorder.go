@@ -1,4 +1,4 @@
-package autoprofile
+package internal
 
 import (
 	"sync"
@@ -7,10 +7,15 @@ import (
 	"github.com/instana/go-sensor/autoprofile/internal/logger"
 )
 
+const (
+	DefaultMaxBufferedProfiles = 100
+)
+
 // SendProfilesFunc is a callback to emit collected profiles from recorder
 type SendProfilesFunc func(interface{}) error
 
-func noopSendProfiles(interface{}) error {
+// NoopSendProfiles is the default function to be called by Recorded to send collected profiles
+func NoopSendProfiles(interface{}) error {
 	logger.Warn(
 		"autoprofile.SendProfiles callback is not set, ",
 		"make sure that you have it configured using autoprofile.SetSendProfilesFunc() in your code",
@@ -35,8 +40,8 @@ type Recorder struct {
 func NewRecorder() *Recorder {
 	mq := &Recorder{
 		FlushInterval:       5,
-		MaxBufferedProfiles: defaultMaxBufferedProfiles,
-		SendProfiles:        noopSendProfiles,
+		SendProfiles:        NoopSendProfiles,
+		MaxBufferedProfiles: DefaultMaxBufferedProfiles,
 
 		queue:     make([]interface{}, 0),
 		queueLock: &sync.Mutex{},

@@ -1,23 +1,23 @@
-package autoprofile
+package internal
 
 import (
 	"path/filepath"
 	"strings"
 
-	profile "github.com/instana/go-sensor/autoprofile/pprof/profile"
+	profile "github.com/instana/go-sensor/autoprofile/internal/pprof/profile"
 )
 
 var (
+	IncludeSensorFrames = true
 	sensorPath          = filepath.Join("github.com", "instana", "go-sensor")
-	includeSensorFrames = true
 )
 
 func shouldSkipStack(sample *profile.Sample) bool {
-	return !includeSensorFrames && isSensorStack(sample)
+	return !IncludeSensorFrames && isSensorStack(sample)
 }
 
 func shouldSkipFrame(fileName, funcName string) bool {
-	return (!includeSensorFrames && isSensorFrame(fileName)) || funcName == "runtime.goexit"
+	return (!IncludeSensorFrames && isSensorFrame(fileName)) || funcName == "runtime.goexit"
 }
 
 func isSensorStack(sample *profile.Sample) bool {

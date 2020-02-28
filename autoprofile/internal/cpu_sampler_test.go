@@ -1,21 +1,17 @@
-package autoprofile_test
+package internal_test
 
 import (
 	"fmt"
 	"testing"
 	"time"
 
-	"github.com/instana/go-sensor/autoprofile"
+	"github.com/instana/go-sensor/autoprofile/internal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestCreateCPUProfile(t *testing.T) {
-	opts := autoprofile.DefaultOptions()
-	opts.IncludeSensorFrames = true
-	autoprofile.SetOptions(opts)
-
-	cpuSampler := autoprofile.NewCPUSampler()
+	cpuSampler := internal.NewCPUSampler()
 
 	cpuSampler.Reset()
 	cpuSampler.Start()

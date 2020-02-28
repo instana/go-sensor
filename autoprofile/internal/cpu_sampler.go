@@ -1,4 +1,4 @@
-package autoprofile
+package internal
 
 import (
 	"bufio"
@@ -7,7 +7,7 @@ import (
 	"runtime/pprof"
 	"time"
 
-	"github.com/instana/go-sensor/autoprofile/pprof/profile"
+	"github.com/instana/go-sensor/autoprofile/internal/pprof/profile"
 )
 
 type CPUSampler struct {

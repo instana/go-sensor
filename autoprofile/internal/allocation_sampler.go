@@ -1,11 +1,11 @@
-package autoprofile
+package internal
 
 import (
 	"bytes"
 	"errors"
 	"runtime/pprof"
 
-	profile "github.com/instana/go-sensor/autoprofile/pprof/profile"
+	profile "github.com/instana/go-sensor/autoprofile/internal/pprof/profile"
 )
 
 type AllocationSampler struct{}
