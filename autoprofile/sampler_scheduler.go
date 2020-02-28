@@ -6,12 +6,14 @@ import (
 	"strconv"
 	"sync"
 	"time"
+
+	"github.com/instana/go-sensor/autoprofile/internal/logger"
 )
 
 var getPID = GetLocalPID
 
 func GetLocalPID() string {
-	log.warn("using the local process pid as a default")
+	logger.Warn("using the local process pid as a default")
 	return strconv.Itoa(os.Getpid())
 }
 
@@ -114,15 +116,15 @@ func (ss *SamplerScheduler) Report() {
 		return
 	}
 
-	log.debug(ss.config.LogPrefix, "recording profile")
+	logger.Debug(ss.config.LogPrefix, "recording profile")
 
 	profile, err := ss.sampler.Profile(ss.samplingDuration, profileTimespan)
 	if err != nil {
-		log.error(err)
+		logger.Error(err)
 		return
 	} else {
 		if len(profile.Roots) == 0 {
-			log.debug(ss.config.LogPrefix, "not recording empty profile")
+			logger.Debug(ss.config.LogPrefix, "not recording empty profile")
 			ss.Reset()
 			return
 		}
@@ -130,13 +132,13 @@ func (ss *SamplerScheduler) Report() {
 		externalPID := getPID()
 		if externalPID != "" {
 			profile.ProcessID = externalPID
-			log.debug("using external PID", externalPID)
+			logger.Debug("using external PID", externalPID)
 		} else {
-			log.info("external PID from agent is not available, using own PID")
+			logger.Info("external PID from agent is not available, using own PID")
 		}
 
 		ss.profileRecorder.Record(profile.ToMap())
-		log.debug(ss.config.LogPrefix, "recorded profile")
+		logger.Debug(ss.config.LogPrefix, "recorded profile")
 	}
 
 	ss.Reset()
@@ -151,7 +153,7 @@ func (ss *SamplerScheduler) startProfiling() bool {
 	defer ss.profileLock.Unlock()
 
 	if ss.samplingDuration > ss.config.MaxProfileDuration*1e9 {
-		log.debug(ss.config.LogPrefix, "max sampling duration reached")
+		logger.Debug(ss.config.LogPrefix, "max sampling duration reached")
 		return false
 	}
 
@@ -159,12 +161,12 @@ func (ss *SamplerScheduler) startProfiling() bool {
 		return false
 	}
 
-	log.debug(ss.config.LogPrefix, "starting")
+	logger.Debug(ss.config.LogPrefix, "starting")
 
 	err := ss.sampler.Start()
 	if err != nil {
 		samplerActive.Unset()
-		log.error(err)
+		logger.Error(err)
 		return false
 	}
 	ss.samplerStart = time.Now().UnixNano()
@@ -186,10 +188,10 @@ func (ss *SamplerScheduler) stopSampler() {
 
 	err := ss.sampler.Stop()
 	if err != nil {
-		log.error(err)
+		logger.Error(err)
 		return
 	}
-	log.debug(ss.config.LogPrefix, "stopped")
+	logger.Debug(ss.config.LogPrefix, "stopped")
 
 	ss.samplingDuration += time.Now().UnixNano() - ss.samplerStart
 }

@@ -3,13 +3,15 @@ package autoprofile
 import (
 	"sync"
 	"time"
+
+	"github.com/instana/go-sensor/autoprofile/internal/logger"
 )
 
 // SendProfilesFunc is a callback to emit collected profiles from recorder
 type SendProfilesFunc func(interface{}) error
 
 func noopSendProfiles(interface{}) error {
-	log.warn(
+	logger.Warn(
 		"autoprofile.SendProfiles callback is not set, ",
 		"make sure that you have it configured using autoprofile.SetSendProfilesFunc() in your code",
 	)
@@ -82,7 +84,7 @@ func (pr *Recorder) Record(record map[string]interface{}) {
 	}
 	pr.queueLock.Unlock()
 
-	log.debug("Added record to the queue", record)
+	logger.Debug("Added record to the queue", record)
 }
 
 func (pr *Recorder) Flush() {
@@ -114,13 +116,13 @@ func (pr *Recorder) Flush() {
 		pr.queueLock.Unlock()
 
 		// increase backoff up to 1 minute
-		log.error("Failed sending profiles, backing off next sending")
+		logger.Error("Failed sending profiles, backing off next sending")
 		if pr.backoffSeconds == 0 {
 			pr.backoffSeconds = 10
 		} else if pr.backoffSeconds*2 < 60 {
 			pr.backoffSeconds *= 2
 		}
 
-		log.error(err)
+		logger.Error(err)
 	}
 }

@@ -1,6 +1,10 @@
 package autoprofile
 
-import "time"
+import (
+	"time"
+
+	"github.com/instana/go-sensor/autoprofile/internal/logger"
+)
 
 // Timer periodically executes provided job after a delay until it's stopped. Any panic
 // occurred inside the job is recovered and logged
@@ -71,6 +75,6 @@ func (t *Timer) Stop() {
 
 func recoverAndLog() {
 	if err := recover(); err != nil {
-		log.error("recovered from panic in agent:", err)
+		logger.Error("recovered from panic in agent:", err)
 	}
 }

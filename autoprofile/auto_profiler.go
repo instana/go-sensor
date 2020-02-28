@@ -1,5 +1,7 @@
 package autoprofile
 
+import "github.com/instana/go-sensor/autoprofile/internal/logger"
+
 const (
 	defaultMaxBufferedProfiles = 100
 )
@@ -33,6 +35,11 @@ var (
 	enabled bool
 )
 
+// SetLogLevel sets the min log level for autoprofiler
+func SetLogLevel(level int) {
+	logger.SetLogLevel(logger.Level(level))
+}
+
 // Enable enables the auto profiling (disabled by default)
 func Enable() {
 	if enabled {
@@ -44,7 +51,7 @@ func Enable() {
 	allocationSamplerScheduler.Start()
 	blockSamplerScheduler.Start()
 
-	log.debug("profiler enabled")
+	logger.Debug("profiler enabled")
 }
 
 // Disable disables the auto profiling (default)
@@ -58,7 +65,7 @@ func Disable() {
 	allocationSamplerScheduler.Stop()
 	blockSamplerScheduler.Stop()
 
-	log.debug("profiler disabled")
+	logger.Debug("profiler disabled")
 }
 
 // SetGetExternalPIDFunc configures the profiler to use provided function to retrieve the current PID
