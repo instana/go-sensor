@@ -16,7 +16,7 @@ var (
 	nextID     int64
 )
 
-func generateUUID() string {
+func GenerateUUID() string {
 	n := atomic.AddInt64(&nextID, 1)
 
 	uuid := strconv.FormatInt(time.Now().Unix(), 10) +

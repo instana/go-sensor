@@ -10,15 +10,15 @@ import (
 	"github.com/instana/go-sensor/autoprofile/pprof/profile"
 )
 
-type cpuSampler struct {
-	top        *callSite
+type CPUSampler struct {
+	top        *CallSite
 	profWriter *bufio.Writer
 	profBuffer *bytes.Buffer
 	startNano  int64
 }
 
-func newCPUSampler() *cpuSampler {
-	cs := &cpuSampler{
+func NewCPUSampler() *CPUSampler {
+	cs := &CPUSampler{
 		top:        nil,
 		profWriter: nil,
 		profBuffer: nil,
@@ -28,11 +28,11 @@ func newCPUSampler() *cpuSampler {
 	return cs
 }
 
-func (cs *cpuSampler) resetSampler() {
-	cs.top = newCallSite("", "", 0)
+func (cs *CPUSampler) Reset() {
+	cs.top = NewCallSite("", "", 0)
 }
 
-func (cs *cpuSampler) startSampler() error {
+func (cs *CPUSampler) Start() error {
 	err := cs.startCPUSampler()
 	if err != nil {
 		return err
@@ -41,7 +41,7 @@ func (cs *cpuSampler) startSampler() error {
 	return nil
 }
 
-func (cs *cpuSampler) stopSampler() error {
+func (cs *CPUSampler) Stop() error {
 	p, err := cs.stopCPUSampler()
 	if err != nil {
 		return err
@@ -57,16 +57,16 @@ func (cs *cpuSampler) stopSampler() error {
 	return nil
 }
 
-func (cs *cpuSampler) buildProfile(duration int64, timespan int64) (*Profile, error) {
-	roots := make([]*callSite, 0)
+func (cs *CPUSampler) Profile(duration int64, timespan int64) (*Profile, error) {
+	roots := make([]*CallSite, 0)
 	for _, child := range cs.top.children {
 		roots = append(roots, child)
 	}
-	p := newProfile(categoryCPU, typeCPUUsage, unitMillisecond, roots, duration, timespan)
+	p := NewProfile(categoryCPU, typeCPUUsage, unitMillisecond, roots, duration, timespan)
 	return p, nil
 }
 
-func (cs *cpuSampler) updateCPUProfile(p *profile.Profile) error {
+func (cs *CPUSampler) updateCPUProfile(p *profile.Profile) error {
 	samplesIndex := -1
 	cpuIndex := -1
 	for i, s := range p.SampleType {
@@ -99,16 +99,16 @@ func (cs *cpuSampler) updateCPUProfile(p *profile.Profile) error {
 				continue
 			}
 
-			current = current.findOrAddChild(funcName, fileName, fileLine)
+			current = current.FindOrAddChild(funcName, fileName, fileLine)
 		}
 
-		current.increment(stackDuration, stackSamples)
+		current.Increment(stackDuration, stackSamples)
 	}
 
 	return nil
 }
 
-func (cs *cpuSampler) startCPUSampler() error {
+func (cs *CPUSampler) startCPUSampler() error {
 	cs.profBuffer = &bytes.Buffer{}
 	cs.profWriter = bufio.NewWriter(cs.profBuffer)
 	cs.startNano = time.Now().UnixNano()
@@ -121,7 +121,7 @@ func (cs *cpuSampler) startCPUSampler() error {
 	return nil
 }
 
-func (cs *cpuSampler) stopCPUSampler() (*profile.Profile, error) {
+func (cs *CPUSampler) stopCPUSampler() (*profile.Profile, error) {
 	pprof.StopCPUProfile()
 
 	cs.profWriter.Flush()

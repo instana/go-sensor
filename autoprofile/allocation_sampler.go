@@ -8,24 +8,24 @@ import (
 	profile "github.com/instana/go-sensor/autoprofile/pprof/profile"
 )
 
-type allocationSampler struct{}
+type AllocationSampler struct{}
 
-func newAllocationSampler() *allocationSampler {
-	return &allocationSampler{}
+func NewAllocationSampler() *AllocationSampler {
+	return &AllocationSampler{}
 }
 
-func (as *allocationSampler) resetSampler() {
+func (as *AllocationSampler) Reset() {
 }
 
-func (as *allocationSampler) startSampler() error {
+func (as *AllocationSampler) Start() error {
 	return nil
 }
 
-func (as *allocationSampler) stopSampler() error {
+func (as *AllocationSampler) Stop() error {
 	return nil
 }
 
-func (as *allocationSampler) buildProfile(duration int64, timespan int64) (*Profile, error) {
+func (as *AllocationSampler) Profile(duration int64, timespan int64) (*Profile, error) {
 	hp, err := as.readHeapProfile()
 	if err != nil {
 		return nil, err
@@ -40,15 +40,15 @@ func (as *allocationSampler) buildProfile(duration int64, timespan int64) (*Prof
 		return nil, err
 	}
 
-	roots := make([]*callSite, 0)
+	roots := make([]*CallSite, 0)
 	for _, child := range top.children {
 		roots = append(roots, child)
 	}
 
-	return newProfile(categoryMemory, typeMemoryAllocation, unitByte, roots, duration, timespan), nil
+	return NewProfile(categoryMemory, typeMemoryAllocation, unitByte, roots, duration, timespan), nil
 }
 
-func (as *allocationSampler) createAllocationCallGraph(p *profile.Profile) (*callSite, error) {
+func (as *AllocationSampler) createAllocationCallGraph(p *profile.Profile) (*CallSite, error) {
 	// find "inuse_space" type index
 	inuseSpaceTypeIndex := -1
 	for i, s := range p.SampleType {
@@ -72,7 +72,7 @@ func (as *allocationSampler) createAllocationCallGraph(p *profile.Profile) (*cal
 	}
 
 	// build call graph
-	top := newCallSite("", "", 0)
+	top := NewCallSite("", "", 0)
 
 	for _, s := range p.Sample {
 		if shouldSkipStack(s) {
@@ -94,16 +94,16 @@ func (as *allocationSampler) createAllocationCallGraph(p *profile.Profile) (*cal
 				continue
 			}
 
-			current = current.findOrAddChild(funcName, fileName, fileLine)
+			current = current.FindOrAddChild(funcName, fileName, fileLine)
 		}
 
-		current.increment(float64(value), int64(count))
+		current.Increment(float64(value), int64(count))
 	}
 
 	return top, nil
 }
 
-func (as *allocationSampler) readHeapProfile() (*profile.Profile, error) {
+func (as *AllocationSampler) readHeapProfile() (*profile.Profile, error) {
 	buf := bytes.NewBuffer(nil)
 	if err := pprof.WriteHeapProfile(buf); err != nil {
 		return nil, err

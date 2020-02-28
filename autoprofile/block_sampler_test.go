@@ -1,46 +1,38 @@
-package autoprofile
+package autoprofile_test
 
 import (
 	"fmt"
 	"testing"
 	"time"
 
+	"github.com/instana/go-sensor/autoprofile"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestCreateBlockProfile(t *testing.T) {
-	opts := DefaultOptions()
+	opts := autoprofile.DefaultOptions()
 	opts.IncludeSensorFrames = true
-	SetOptions(opts)
+	autoprofile.SetOptions(opts)
 
-	ready := make(chan struct{})
-	go func() {
-		wait := make(chan struct{})
+	blockSampler := autoprofile.NewBlockSampler()
 
-		<-ready
-		go func() {
-			time.Sleep(150 * time.Millisecond)
+	blockSampler.Reset()
+	blockSampler.Start()
 
-			wait <- struct{}{}
-		}()
+	simulateBlocking(150 * time.Millisecond)
 
-		<-wait
-	}()
+	blockSampler.Stop()
 
-	blockSampler := newBlockSampler()
-
-	blockSampler.resetSampler()
-	blockSampler.startSampler()
-
-	ready <- struct{}{}
-
-	time.Sleep(500 * time.Millisecond)
-
-	blockSampler.stopSampler()
-
-	profile, err := blockSampler.buildProfile(500*1e6, 120)
+	profile, err := blockSampler.Profile(500*1e6, 120)
 	require.NoError(t, err)
 
-	assert.Contains(t, fmt.Sprintf("%v", profile.toMap()), "TestCreateBlockProfile")
+	assert.Contains(t, fmt.Sprintf("%v", profile.ToMap()), "simulateBlocking")
+}
+
+func simulateBlocking(d time.Duration) {
+	wait := make(chan struct{})
+
+	time.AfterFunc(d, func() { wait <- struct{}{} })
+	<-wait
 }

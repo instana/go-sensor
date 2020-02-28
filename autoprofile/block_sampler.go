@@ -16,14 +16,14 @@ type blockValues struct {
 	contentions int64
 }
 
-type blockSampler struct {
-	top            *callSite
+type BlockSampler struct {
+	top            *CallSite
 	prevValues     map[string]*blockValues
 	partialProfile *pprof.Profile
 }
 
-func newBlockSampler() *blockSampler {
-	bs := &blockSampler{
+func NewBlockSampler() *BlockSampler {
+	bs := &BlockSampler{
 		top:            nil,
 		prevValues:     make(map[string]*blockValues),
 		partialProfile: nil,
@@ -32,11 +32,11 @@ func newBlockSampler() *blockSampler {
 	return bs
 }
 
-func (bs *blockSampler) resetSampler() {
-	bs.top = newCallSite("", "", 0)
+func (bs *BlockSampler) Reset() {
+	bs.top = NewCallSite("", "", 0)
 }
 
-func (bs *blockSampler) startSampler() error {
+func (bs *BlockSampler) Start() error {
 	err := bs.startBlockSampler()
 	if err != nil {
 		return err
@@ -45,7 +45,7 @@ func (bs *blockSampler) startSampler() error {
 	return nil
 }
 
-func (bs *blockSampler) stopSampler() error {
+func (bs *BlockSampler) Stop() error {
 	p, err := bs.stopBlockSampler()
 	if err != nil {
 		return err
@@ -54,23 +54,23 @@ func (bs *blockSampler) stopSampler() error {
 		return errors.New("no profile returned")
 	}
 
-	if uerr := bs.updateBlockProfile(p); uerr != nil {
-		return uerr
+	if err := bs.updateBlockProfile(p); err != nil {
+		return err
 	}
 
 	return nil
 }
 
-func (bs *blockSampler) buildProfile(duration int64, timespan int64) (*Profile, error) {
-	roots := make([]*callSite, 0)
+func (bs *BlockSampler) Profile(duration, timespan int64) (*Profile, error) {
+	roots := make([]*CallSite, 0)
 	for _, child := range bs.top.children {
 		roots = append(roots, child)
 	}
-	p := newProfile(categoryTime, typeBlockingCalls, unitMillisecond, roots, duration, timespan)
+	p := NewProfile(categoryTime, typeBlockingCalls, unitMillisecond, roots, duration, timespan)
 	return p, nil
 }
 
-func (bs *blockSampler) updateBlockProfile(p *profile.Profile) error {
+func (bs *BlockSampler) updateBlockProfile(p *profile.Profile) error {
 	contentionIndex := -1
 	delayIndex := -1
 	for i, s := range p.SampleType {
@@ -112,9 +112,9 @@ func (bs *blockSampler) updateBlockProfile(p *profile.Profile) error {
 				continue
 			}
 
-			current = current.findOrAddChild(funcName, fileName, fileLine)
+			current = current.FindOrAddChild(funcName, fileName, fileLine)
 		}
-		current.increment(delay, contentions)
+		current.Increment(delay, contentions)
 	}
 
 	return nil
@@ -129,7 +129,7 @@ func generateValueKey(s *profile.Sample) string {
 	return key
 }
 
-func (bs *blockSampler) getValueChange(key string, delay float64, contentions int64) (float64, int64) {
+func (bs *BlockSampler) getValueChange(key string, delay float64, contentions int64) (float64, int64) {
 	if pv, exists := bs.prevValues[key]; exists {
 		delayChange := delay - pv.delay
 		contentionsChange := contentions - pv.contentions
@@ -148,7 +148,7 @@ func (bs *blockSampler) getValueChange(key string, delay float64, contentions in
 	}
 }
 
-func (bs *blockSampler) startBlockSampler() error {
+func (bs *BlockSampler) startBlockSampler() error {
 	bs.partialProfile = pprof.Lookup("block")
 	if bs.partialProfile == nil {
 		return errors.New("No block profile found")
@@ -159,31 +159,31 @@ func (bs *blockSampler) startBlockSampler() error {
 	return nil
 }
 
-func (bs *blockSampler) stopBlockSampler() (*profile.Profile, error) {
+func (bs *BlockSampler) stopBlockSampler() (*profile.Profile, error) {
 	runtime.SetBlockProfileRate(0)
 
 	var buf bytes.Buffer
-	w := bufio.NewWriter(&buf)
 
-	err := bs.partialProfile.WriteTo(w, 0)
-	if err != nil {
+	w := bufio.NewWriter(&buf)
+	if err := bs.partialProfile.WriteTo(w, 0); err != nil {
 		return nil, err
 	}
 
 	w.Flush()
+
 	r := bufio.NewReader(&buf)
-
-	if p, perr := profile.Parse(r); perr == nil {
-		if serr := symbolizeProfile(p); serr != nil {
-			return nil, serr
-		}
-
-		if verr := p.CheckValid(); verr != nil {
-			return nil, verr
-		}
-
-		return p, nil
-	} else {
-		return nil, perr
+	p, err := profile.Parse(r)
+	if err != nil {
+		return nil, err
 	}
+
+	if err := symbolizeProfile(p); err != nil {
+		return nil, err
+	}
+
+	if err := p.CheckValid(); err != nil {
+		return nil, err
+	}
+
+	return p, nil
 }

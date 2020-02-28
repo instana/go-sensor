@@ -1,47 +1,43 @@
-package autoprofile
+package autoprofile_test
 
 import (
 	"fmt"
-	"strconv"
 	"testing"
 	"time"
 
+	"github.com/instana/go-sensor/autoprofile"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestCreateCPUProfile(t *testing.T) {
-	opts := DefaultOptions()
+	opts := autoprofile.DefaultOptions()
 	opts.IncludeSensorFrames = true
-	SetOptions(opts)
+	autoprofile.SetOptions(opts)
 
-	go func() {
-		done := time.After(1 * time.Second)
+	cpuSampler := autoprofile.NewCPUSampler()
 
-		var i int
-		for {
-			i++
+	cpuSampler.Reset()
+	cpuSampler.Start()
 
-			select {
-			case <-done:
-				return
-			default:
-				str := "str" + strconv.Itoa(i)
-				str = str + "a"
-			}
-		}
-	}()
+	simulateCPULoad(1 * time.Second)
 
-	cpuSampler := newCPUSampler()
+	cpuSampler.Stop()
 
-	cpuSampler.resetSampler()
-	cpuSampler.startSampler()
-
-	time.Sleep(500 * time.Millisecond)
-	cpuSampler.stopSampler()
-
-	profile, err := cpuSampler.buildProfile(500*1e6, 120)
+	profile, err := cpuSampler.Profile(500*1e6, 120)
 	require.NoError(t, err)
 
-	assert.Contains(t, fmt.Sprintf("%v", profile.toMap()), "TestCreateCPUProfile")
+	assert.Contains(t, fmt.Sprintf("%v", profile.ToMap()), "simulateCPULoad")
+}
+
+func simulateCPULoad(d time.Duration) {
+	done := time.After(d)
+
+	for {
+		select {
+		case <-done:
+			return
+		default:
+		}
+	}
 }

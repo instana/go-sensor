@@ -7,27 +7,27 @@ const (
 var (
 	samplerActive = &flag{}
 
-	profileRecorder     = newRecorder()
-	cpuSamplerScheduler = newSamplerScheduler(profileRecorder, newCPUSampler(), samplerConfig{
-		logPrefix:          "CPU sampler:",
-		maxProfileDuration: 20,
-		maxSpanDuration:    2,
-		maxSpanCount:       30,
-		samplingInterval:   8,
-		reportInterval:     120,
+	profileRecorder     = NewRecorder()
+	cpuSamplerScheduler = NewSamplerScheduler(profileRecorder, NewCPUSampler(), SamplerConfig{
+		LogPrefix:          "CPU sampler:",
+		MaxProfileDuration: 20,
+		MaxSpanDuration:    2,
+		MaxSpanCount:       30,
+		SamplingInterval:   8,
+		ReportInterval:     120,
 	})
-	allocationSamplerScheduler = newSamplerScheduler(profileRecorder, newAllocationSampler(), samplerConfig{
-		logPrefix:      "Allocation sampler:",
-		reportOnly:     true,
-		reportInterval: 120,
+	allocationSamplerScheduler = NewSamplerScheduler(profileRecorder, NewAllocationSampler(), SamplerConfig{
+		LogPrefix:      "Allocation sampler:",
+		ReportOnly:     true,
+		ReportInterval: 120,
 	})
-	blockSamplerScheduler = newSamplerScheduler(profileRecorder, newBlockSampler(), samplerConfig{
-		logPrefix:          "Block sampler:",
-		maxProfileDuration: 20,
-		maxSpanDuration:    4,
-		maxSpanCount:       30,
-		samplingInterval:   16,
-		reportInterval:     120,
+	blockSamplerScheduler = NewSamplerScheduler(profileRecorder, NewBlockSampler(), SamplerConfig{
+		LogPrefix:          "Block sampler:",
+		MaxProfileDuration: 20,
+		MaxSpanDuration:    4,
+		MaxSpanCount:       30,
+		SamplingInterval:   16,
+		ReportInterval:     120,
 	})
 
 	enabled bool
@@ -39,10 +39,10 @@ func Enable() {
 		return
 	}
 
-	profileRecorder.start()
-	cpuSamplerScheduler.start()
-	allocationSamplerScheduler.start()
-	blockSamplerScheduler.start()
+	profileRecorder.Start()
+	cpuSamplerScheduler.Start()
+	allocationSamplerScheduler.Start()
+	blockSamplerScheduler.Start()
 
 	log.debug("profiler enabled")
 }
@@ -53,10 +53,10 @@ func Disable() {
 		return
 	}
 
-	profileRecorder.stop()
-	cpuSamplerScheduler.stop()
-	allocationSamplerScheduler.stop()
-	blockSamplerScheduler.stop()
+	profileRecorder.Stop()
+	cpuSamplerScheduler.Stop()
+	allocationSamplerScheduler.Stop()
+	blockSamplerScheduler.Stop()
 
 	log.debug("profiler disabled")
 }
@@ -64,7 +64,7 @@ func Disable() {
 // SetGetExternalPIDFunc configures the profiler to use provided function to retrieve the current PID
 func SetGetExternalPIDFunc(fn func() string) {
 	if fn == nil {
-		fn = getLocalPID
+		fn = GetLocalPID
 	}
 
 	getPID = fn
