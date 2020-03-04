@@ -66,7 +66,7 @@ func (bs *BlockSampler) Profile(duration, timespan int64) (*Profile, error) {
 	for _, child := range bs.top.children {
 		roots = append(roots, child)
 	}
-	p := NewProfile(categoryTime, typeBlockingCalls, unitMillisecond, roots, duration, timespan)
+	p := NewProfile(CategoryTime, TypeBlockingCalls, UnitMillisecond, roots, duration, timespan)
 	return p, nil
 }
 

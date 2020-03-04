@@ -45,7 +45,7 @@ func (as *AllocationSampler) Profile(duration int64, timespan int64) (*Profile, 
 		roots = append(roots, child)
 	}
 
-	return NewProfile(categoryMemory, typeMemoryAllocation, unitByte, roots, duration, timespan), nil
+	return NewProfile(CategoryMemory, TypeMemoryAllocation, UnitByte, roots, duration, timespan), nil
 }
 
 func (as *AllocationSampler) createAllocationCallGraph(p *profile.Profile) (*CallSite, error) {
