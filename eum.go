@@ -10,6 +10,10 @@ import (
 const eumTemplate string = "eum.js"
 
 // EumSnippet generates javascript code to initialize JavaScript agent
+//
+// Deprecated: this snippet is outdated and this method will be removed in
+// the next major version. To learn about the way to install Instana EUM snippet
+// please refer to https://docs.instana.io/products/website_monitoring/#installation
 func EumSnippet(apiKey string, traceID string, meta map[string]string) string {
 
 	if len(apiKey) == 0 || len(traceID) == 0 {
