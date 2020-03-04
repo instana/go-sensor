@@ -9,7 +9,7 @@ import (
 
 var (
 	IncludeProfilerFrames = false
-	autoprofilePath       = filepath.Join("instana", "go-sensor", "autoprofile")
+	autoprofilePath       = filepath.Join("github.com", "instana", "go-sensor", "autoprofile")
 )
 
 func shouldSkipStack(sample *profile.Sample) bool {
