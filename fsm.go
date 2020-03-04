@@ -29,6 +29,8 @@ type fsmS struct {
 	retries int
 }
 
+var procSchedPIDRegex = regexp.MustCompile(`\((\d+),`)
+
 func (r *fsmS) init() {
 
 	log.warn("Stan is on the scene.  Starting Instana instrumentation.")
@@ -145,8 +147,7 @@ func (r *fsmS) announceSensor(e *f.Event) {
 				fscanner.Scan()
 				primaLinea := fscanner.Text()
 
-				r := regexp.MustCompile("\\((\\d+),")
-				match := r.FindStringSubmatch(primaLinea)
+				match := procSchedPIDRegex.FindStringSubmatch(primaLinea)
 				i, err := strconv.Atoi(match[1])
 				if err == nil {
 					pid = i
