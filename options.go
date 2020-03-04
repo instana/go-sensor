@@ -9,4 +9,7 @@ type Options struct {
 	MaxBufferedSpans            int
 	ForceTransmissionStartingAt int
 	LogLevel                    int
+	EnableAutoProfile           bool
+	MaxBufferedProfiles         int
+	IncludeProfilerFrames       bool
 }
