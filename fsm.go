@@ -141,7 +141,8 @@ func (r *fsmS) announceSensor(e *f.Event) {
 		schedFile := fmt.Sprintf("/proc/%d/sched", os.Getpid())
 		if _, err := os.Stat(schedFile); err == nil {
 			sf, err := os.Open(schedFile)
-			defer sf.Close()
+			defer sf.Close() //nolint:staticcheck
+
 			if err == nil {
 				fscanner := bufio.NewScanner(sf)
 				fscanner.Scan()

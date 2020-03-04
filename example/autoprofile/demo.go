@@ -18,8 +18,7 @@ func useCPU(duration int, usage int) {
 	for j := 0; j < duration; j++ {
 		go func() {
 			for i := 0; i < usage*80000; i++ {
-				str := "str" + strconv.Itoa(i)
-				str = str + "a"
+				_ = strconv.Itoa(i)
 			}
 		}()
 
@@ -31,12 +30,9 @@ func simulateCPUUsage() {
 	// sumulate CPU usage anomaly - every 45 minutes
 	cpuAnomalyTicker := time.NewTicker(45 * time.Minute)
 	go func() {
-		for {
-			select {
-			case <-cpuAnomalyTicker.C:
-				// for 60 seconds produce generate 50% CPU usage
-				useCPU(60, 50)
-			}
+		for range cpuAnomalyTicker.C {
+			// for 60 seconds produce generate 50% CPU usage
+			useCPU(60, 50)
 		}
 	}()
 
@@ -62,11 +58,8 @@ func simulateMemoryLeak() {
 	// simulate memory leak - constantly
 	constantTicker := time.NewTicker(2 * 3600 * time.Second)
 	go func() {
-		for {
-			select {
-			case <-constantTicker.C:
-				leakMemory(2*3600, 1000)
-			}
+		for range constantTicker.C {
+			leakMemory(2*3600, 1000)
 		}
 	}()
 
@@ -119,13 +112,10 @@ func simulateNetworkWait() {
 	}()
 
 	requestTicker := time.NewTicker(500 * time.Millisecond)
-	for {
-		select {
-		case <-requestTicker.C:
-			res, err := http.Get("http://localhost:5002/test")
-			if err == nil {
-				res.Body.Close()
-			}
+	for range requestTicker.C {
+		res, err := http.Get("http://localhost:5002/test")
+		if err == nil {
+			res.Body.Close()
 		}
 	}
 }
@@ -158,7 +148,7 @@ func simulateLockWait() {
 
 		go func() {
 			lock.RLock()
-			lock.RUnlock()
+			defer lock.RUnlock()
 
 			done <- true
 		}()

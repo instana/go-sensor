@@ -34,7 +34,7 @@ func simulateCPULoad(d time.Duration) {
 		select {
 		case <-done:
 			return
-		default:
+		default: //nolint:staticcheck
 		}
 	}
 }
