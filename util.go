@@ -95,11 +95,6 @@ func getCommandLine() (string, []string) {
 	return parts[0], parts[1:]
 }
 
-func abs(x int64) int64 {
-	y := x >> 63
-	return (x + y) ^ y
-}
-
 func getDefaultGateway(routeTableFile string) string {
 	routeTable, err := os.Open(routeTableFile)
 

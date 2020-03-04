@@ -21,8 +21,7 @@ const (
 	// FieldL Level header
 	FieldL = "x-instana-l"
 	// FieldB OT Baggage header
-	FieldB     = "x-instana-b-"
-	fieldCount = 2
+	FieldB = "x-instana-b-"
 )
 
 func (r *textMapPropagator) inject(spanContext ot.SpanContext, opaqueCarrier interface{}) error {

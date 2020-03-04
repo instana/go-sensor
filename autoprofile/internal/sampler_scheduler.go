@@ -41,7 +41,6 @@ type SamplerScheduler struct {
 	profileRecorder  *Recorder
 	sampler          Sampler
 	config           SamplerConfig
-	active           Flag
 	started          Flag
 	samplerTimer     *Timer
 	reportTimer      *Timer
