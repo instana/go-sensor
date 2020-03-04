@@ -12,6 +12,7 @@ import (
 
 func TestCreateCPUProfile(t *testing.T) {
 	cpuSampler := internal.NewCPUSampler()
+	internal.IncludeProfilerFrames = true
 
 	cpuSampler.Reset()
 	cpuSampler.Start()

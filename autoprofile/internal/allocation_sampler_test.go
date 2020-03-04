@@ -20,6 +20,7 @@ func TestCreateAllocationCallGraph(t *testing.T) {
 	runtime.GC()
 
 	samp := internal.NewAllocationSampler()
+	internal.IncludeProfilerFrames = true
 
 	p, err := samp.Profile(500*1e6, 120)
 	require.NoError(t, err)

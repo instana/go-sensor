@@ -85,8 +85,8 @@ func SetSendProfilesFunc(fn internal.SendProfilesFunc) {
 
 // Options contains profiler configuration
 type Options struct {
-	IncludeSensorFrames bool
-	MaxBufferedProfiles int
+	IncludeProfilerFrames bool
+	MaxBufferedProfiles   int
 }
 
 // DefaultOptions returns profiler defaults
@@ -103,5 +103,5 @@ func SetOptions(opts Options) {
 	}
 
 	profileRecorder.MaxBufferedProfiles = opts.MaxBufferedProfiles
-	internal.IncludeSensorFrames = opts.IncludeSensorFrames
+	internal.IncludeProfilerFrames = opts.IncludeProfilerFrames
 }

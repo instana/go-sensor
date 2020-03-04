@@ -95,10 +95,6 @@ func (cs *CPUSampler) updateCPUProfile(p *profile.Profile) error {
 			l := s.Location[i]
 			funcName, fileName, fileLine := readFuncInfo(l)
 
-			if shouldSkipFrame(fileName, funcName) {
-				continue
-			}
-
 			current = current.FindOrAddChild(funcName, fileName, fileLine)
 		}
 

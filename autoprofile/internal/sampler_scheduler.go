@@ -174,7 +174,7 @@ func (ss *SamplerScheduler) startProfiling() bool {
 	}
 	ss.samplerStart = time.Now().UnixNano()
 	ss.samplerTimeout = NewTimer(time.Duration(ss.config.MaxSpanDuration)*time.Second, 0, func() {
-		ss.Stop()
+		ss.stopSampler()
 		samplerActive.Unset()
 	})
 

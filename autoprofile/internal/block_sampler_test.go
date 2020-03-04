@@ -12,6 +12,7 @@ import (
 
 func TestCreateBlockProfile(t *testing.T) {
 	blockSampler := internal.NewBlockSampler()
+	internal.IncludeProfilerFrames = true
 
 	blockSampler.Reset()
 	blockSampler.Start()

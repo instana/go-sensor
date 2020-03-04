@@ -11,4 +11,5 @@ type Options struct {
 	LogLevel                    int
 	EnableAutoProfile           bool
 	MaxBufferedProfiles         int
+	IncludeProfilerFrames       bool
 }
