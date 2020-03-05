@@ -62,7 +62,7 @@ func (cs *CPUSampler) Profile(duration int64, timespan int64) (*Profile, error) 
 	for _, child := range cs.top.children {
 		roots = append(roots, child)
 	}
-	p := NewProfile(categoryCPU, typeCPUUsage, unitMillisecond, roots, duration, timespan)
+	p := NewProfile(CategoryCPU, TypeCPUUsage, UnitMillisecond, roots, duration, timespan)
 	return p, nil
 }
 

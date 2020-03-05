@@ -15,7 +15,7 @@ const (
 )
 
 func simple(ctx context.Context) {
-	parentSpan, ctx := ot.StartSpanFromContext(ctx, "parent")
+	parentSpan, _ := ot.StartSpanFromContext(ctx, "parent")
 	parentSpan.SetTag(string(ext.Component), Service)
 	parentSpan.SetTag(string(ext.SpanKind), string(ext.SpanKindRPCServerEnum))
 	parentSpan.SetTag(string(ext.PeerHostname), "localhost")

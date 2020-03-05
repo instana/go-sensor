@@ -1,0 +1,18 @@
+run:
+  skip-dirs:
+    - autoprofile/internal/pprof # vendored code
+    - example # clean up first
+linters:
+  disable-all: true
+  enable:
+    - deadcode
+    - gosimple
+    - govet
+    - ineffassign
+    - staticcheck
+    - structcheck
+    - typecheck
+    - unused
+    - varcheck
+    # enable once the error handling in fsm.go is improved
+    #- errcheck

@@ -86,18 +86,10 @@ func getCommandLine() (string, []string) {
 	}
 
 	parts := strings.FieldsFunc(string(cmdline), func(c rune) bool {
-		if c == '\u0000' {
-			return true
-		}
-		return false
+		return c == '\u0000'
 	})
 	log.debug("cmdline says:", parts[0], parts[1:])
 	return parts[0], parts[1:]
-}
-
-func abs(x int64) int64 {
-	y := x >> 63
-	return (x + y) ^ y
 }
 
 func getDefaultGateway(routeTableFile string) string {

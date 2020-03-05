@@ -9,23 +9,23 @@ import (
 )
 
 const (
-	runtimeGolang string = "golang"
+	RuntimeGolang = "golang"
 
-	categoryCPU    string = "cpu"
-	categoryMemory string = "memory"
-	categoryTime   string = "time"
+	CategoryCPU    = "cpu"
+	CategoryMemory = "memory"
+	CategoryTime   = "time"
 
-	typeCPUUsage         string = "cpu-usage"
-	typeMemoryAllocation string = "memory-allocations"
-	typeBlockingCalls    string = "blocking-calls"
+	TypeCPUUsage         = "cpu-usage"
+	TypeMemoryAllocation = "memory-allocations"
+	TypeBlockingCalls    = "blocking-calls"
 
-	unitSample      string = "sample"
-	unitMillisecond string = "millisecond"
-	unitMicrosecond string = "microsecond"
-	unitNanosecond  string = "nanosecond"
-	unitByte        string = "byte"
-	unitKilobyte    string = "kilobyte"
-	unitPercent     string = "percent"
+	UnitSample      = "sample"
+	UnitMillisecond = "millisecond"
+	UnitMicrosecond = "microsecond"
+	UnitNanosecond  = "nanosecond"
+	UnitByte        = "byte"
+	UnitKilobyte    = "kilobyte"
+	UnitPercent     = "percent"
 )
 
 type CallSite struct {
@@ -56,7 +56,7 @@ func NewProfile(category string, typ string, unit string, roots []*CallSite, dur
 	p := &Profile{
 		ProcessID: strconv.Itoa(os.Getpid()),
 		ID:        GenerateUUID(),
-		Runtime:   runtimeGolang,
+		Runtime:   RuntimeGolang,
 		Category:  category,
 		Type:      typ,
 		Unit:      unit,

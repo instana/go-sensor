@@ -13,7 +13,7 @@ const (
 )
 
 func rpc(ctx context.Context) {
-	parentSpan, ctx := ot.StartSpanFromContext(ctx, "parentService.myCoolMethod")
+	parentSpan, _ := ot.StartSpanFromContext(ctx, "parentService.myCoolMethod")
 	childSpan := ot.StartSpan("childService.anotherCoolMethod", ot.ChildOf(parentSpan.Context()))
 
 	time.Sleep(450 * time.Millisecond)

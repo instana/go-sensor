@@ -3,12 +3,17 @@ package instana
 import (
 	"bytes"
 	"io/ioutil"
+	"sort"
 	"strings"
 )
 
 const eumTemplate string = "eum.js"
 
 // EumSnippet generates javascript code to initialize JavaScript agent
+//
+// Deprecated: this snippet is outdated and this method will be removed in
+// the next major version. To learn about the way to install Instana EUM snippet
+// please refer to https://docs.instana.io/products/website_monitoring/#installation
 func EumSnippet(apiKey string, traceID string, meta map[string]string) string {
 
 	if len(apiKey) == 0 || len(traceID) == 0 {
@@ -16,19 +21,22 @@ func EumSnippet(apiKey string, traceID string, meta map[string]string) string {
 	}
 
 	b, err := ioutil.ReadFile(eumTemplate)
-
 	if err != nil {
 		return ""
 	}
 
-	var snippet = string(b)
-	var metaBuffer bytes.Buffer
-
-	snippet = strings.Replace(snippet, "$apiKey", apiKey, -1)
+	snippet := strings.Replace(string(b), "$apiKey", apiKey, -1)
 	snippet = strings.Replace(snippet, "$traceId", traceID, -1)
 
-	for key, value := range meta {
-		metaBuffer.WriteString("  ineum('meta', '" + key + "', '" + value + "');\n")
+	var keys []string
+	for k := range meta {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+
+	var metaBuffer bytes.Buffer
+	for _, k := range keys {
+		metaBuffer.WriteString("ineum('meta','" + k + "','" + meta[k] + "');")
 	}
 
 	snippet = strings.Replace(snippet, "$meta", metaBuffer.String(), -1)
