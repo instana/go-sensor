@@ -1,6 +1,6 @@
 module github.com/instana/go-sensor
 
-go 1.7
+go 1.8
 
 require (
 	github.com/felixge/httpsnoop v1.0.0
