@@ -12,10 +12,6 @@ import (
 )
 
 type spanS struct {
-	tracer *tracerS
-	sync.Mutex
-
-	context      SpanContext
 	ParentSpanID int64
 	Operation    string
 	Start        time.Time
@@ -24,11 +20,16 @@ type spanS struct {
 	Logs         []ot.LogRecord
 	Error        bool
 	Ec           int
+
+	tracer *tracerS
+	mu     sync.Mutex
+
+	context   SpanContext
 }
 
 func (r *spanS) BaggageItem(key string) string {
-	r.Lock()
-	defer r.Unlock()
+	r.mu.Lock()
+	defer r.mu.Unlock()
 
 	return r.context.Baggage[key]
 }
@@ -38,8 +39,8 @@ func (r *spanS) SetBaggageItem(key, val string) ot.Span {
 		return r
 	}
 
-	r.Lock()
-	defer r.Unlock()
+	r.mu.Lock()
+	defer r.mu.Unlock()
 	r.context = r.context.WithBaggageItem(key, val)
 
 	return r
@@ -60,8 +61,10 @@ func (r *spanS) FinishWithOptions(opts ot.FinishOptions) {
 	}
 
 	duration := finishTime.Sub(r.Start)
-	r.Lock()
-	defer r.Unlock()
+
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
 	for _, lr := range opts.LogRecords {
 		r.appendLog(lr)
 	}
@@ -82,8 +85,9 @@ func (r *spanS) appendLog(lr ot.LogRecord) {
 }
 
 func (r *spanS) Log(ld ot.LogData) {
-	r.Lock()
-	defer r.Unlock()
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
 	if r.trim() || r.tracer.options.DropAllLogs {
 		return
 	}
@@ -124,8 +128,8 @@ func (r *spanS) LogFields(fields ...otlog.Field) {
 		Fields: fields,
 	}
 
-	r.Lock()
-	defer r.Unlock()
+	r.mu.Lock()
+	defer r.mu.Unlock()
 	if r.trim() || r.tracer.options.DropAllLogs {
 		return
 	}
@@ -149,16 +153,18 @@ func (r *spanS) LogKV(keyValues ...interface{}) {
 }
 
 func (r *spanS) SetOperationName(operationName string) ot.Span {
-	r.Lock()
-	defer r.Unlock()
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
 	r.Operation = operationName
 
 	return r
 }
 
 func (r *spanS) SetTag(key string, value interface{}) ot.Span {
-	r.Lock()
-	defer r.Unlock()
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
 	if r.trim() {
 		return r
 	}
