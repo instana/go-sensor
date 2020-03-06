@@ -1,7 +1,6 @@
 package instana_test
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -10,6 +9,7 @@ import (
 
 	instana "github.com/instana/go-sensor"
 	ot "github.com/opentracing/opentracing-go"
+	"github.com/opentracing/opentracing-go/ext"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -48,7 +48,7 @@ func TestSensor_TracingHandler_Write(t *testing.T) {
 		"http.method":      "GET",
 		"http.url":         "/test",
 		"peer.hostname":    "example.com",
-		"span.kind":        "server",
+		"span.kind":        ext.SpanKindRPCServerEnum,
 	}, span.Data.SDK.Custom.Tags)
 }
 
@@ -83,7 +83,7 @@ func TestSensor_TracingHandler_WriteHeaders(t *testing.T) {
 		"http.status_code": 501,
 		"http.url":         "/test",
 		"peer.hostname":    "example.com",
-		"span.kind":        "server",
+		"span.kind":        ext.SpanKindRPCServerEnum,
 	}, span.Data.SDK.Custom.Tags)
 }
 
@@ -125,7 +125,7 @@ func TestTracingHttpRequest(t *testing.T) {
 		"http.status_code": 404,
 		"http.url":         ts.URL + "/path?q=s",
 		"peer.hostname":    tsURL.Host,
-		"span.kind":        "client",
+		"span.kind":        ext.SpanKindRPCClientEnum,
 	}, span.Data.SDK.Custom.Tags)
 }
 
@@ -158,7 +158,7 @@ func TestWithTracingSpan(t *testing.T) {
 		"http.method":   "GET",
 		"http.url":      "/test",
 		"peer.hostname": "example.com",
-		"span.kind":     "server",
+		"span.kind":     ext.SpanKindRPCServerEnum,
 		"custom-tag":    "value",
 	}, span.Data.SDK.Custom.Tags)
 }
@@ -194,7 +194,7 @@ func TestWithTracingSpan_PanicHandling(t *testing.T) {
 		"http.method":   "GET",
 		"http.url":      "/test",
 		"peer.hostname": "example.com",
-		"span.kind":     "server",
+		"span.kind":     ext.SpanKindRPCServerEnum,
 	}, span.Data.SDK.Custom.Tags)
 
 	var logRecords []map[string]interface{}
@@ -211,9 +211,10 @@ func TestWithTracingSpan_WithActiveParentSpan(t *testing.T) {
 
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest("GET", "/test", nil)
-	parentSpan := tracer.StartSpan("parent-span")
 
-	ctx := context.WithValue(req.Context(), "parentSpan", parentSpan)
+	parentSpan := tracer.StartSpan("parent-span")
+	ctx := instana.ContextWithSpan(req.Context(), parentSpan)
+
 	s.WithTracingSpan("test-span", rec, req.WithContext(ctx), func(sp ot.Span) {})
 	parentSpan.Finish()
 
