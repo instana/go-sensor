@@ -20,13 +20,16 @@ type Sensor struct {
 // Creates a new Instana sensor instance which can be used to
 // inject tracing information into requests.
 func NewSensor(serviceName string) *Sensor {
-	return &Sensor{
-		NewTracerWithOptions(
-			&Options{
-				Service: serviceName,
-			},
-		),
-	}
+	return NewSensorWithTracer(NewTracerWithOptions(
+		&Options{
+			Service: serviceName,
+		},
+	))
+}
+
+// NewSensorWithTracer returns a new instana.Sensor that uses provided tracer to report spans
+func NewSensorWithTracer(tracer ot.Tracer) *Sensor {
+	return &Sensor{tracer: tracer}
 }
 
 // It is similar to TracingHandler in regards, that it wraps an existing http.HandlerFunc
