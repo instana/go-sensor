@@ -153,3 +153,11 @@ func (rec *statusCodeRecorder) WriteHeader(status int) {
 	rec.Status = status
 	rec.ResponseWriter.WriteHeader(status)
 }
+
+func (rec *statusCodeRecorder) Write(b []byte) (int, error) {
+	if rec.Status == 0 {
+		rec.Status = http.StatusOK
+	}
+
+	return rec.ResponseWriter.Write(b)
+}
