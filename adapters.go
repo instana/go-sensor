@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"runtime"
 
-	"github.com/felixge/httpsnoop"
 	ot "github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
 	otlog "github.com/opentracing/opentracing-go/log"
@@ -43,21 +42,12 @@ func (s *Sensor) TraceHandler(name, pattern string, handler http.HandlerFunc) (s
 func (s *Sensor) TracingHandler(name string, handler http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		s.WithTracingContext(name, w, req, func(span ot.Span, ctx context.Context) {
-			// Capture response code for span
-			hooks := httpsnoop.Hooks{
-				WriteHeader: func(next httpsnoop.WriteHeaderFunc) httpsnoop.WriteHeaderFunc {
-					return func(code int) {
-						next(code)
-						span.SetTag(string(ext.HTTPStatusCode), code)
-					}
-				},
+			wrapped := &statusCodeRecorder{ResponseWriter: w}
+			handler.ServeHTTP(wrapped, req.WithContext(ctx))
+
+			if wrapped.Status > 0 {
+				span.SetTag(string(ext.HTTPStatusCode), wrapped.Status)
 			}
-
-			// Add hooks to response writer
-			wrappedWriter := httpsnoop.Wrap(w, hooks)
-
-			// Serve original handler
-			handler.ServeHTTP(wrappedWriter, req.WithContext(ctx))
 		})
 	}
 }
@@ -151,4 +141,15 @@ func (s *Sensor) WithTracingContext(name string, w http.ResponseWriter, req *htt
 		ctx := context.WithValue(req.Context(), "parentSpan", span)
 		f(span, ctx)
 	})
+}
+
+// wrapper over http.ResponseWriter to spy the returned status code
+type statusCodeRecorder struct {
+	http.ResponseWriter
+	Status int
+}
+
+func (rec *statusCodeRecorder) WriteHeader(status int) {
+	rec.Status = status
+	rec.ResponseWriter.WriteHeader(status)
 }
