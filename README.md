@@ -16,13 +16,35 @@ The Instana Go sensor consists of two parts:
 
 The Instana Go sensor offers a set of quick features to support tracing of the most common operations like handling HTTP requests and executing HTTP requests.
 
-To create an instance of the Instana sensor just request a new instance using the `instana.NewSensor` factory method and providing the name of the application. It is recommended to use a single Instana only. The sensor implementation is fully thread-safe and can be shared by multiple threads.
+To create an instance of the Instana sensor just request a new instance using the `instana.NewSensor` factory method and providing the name of the application. It is recommended to use a single instance only. The sensor implementation is fully thread-safe and can be shared by multiple threads.
 
 ```go
 var sensor = instana.NewSensor("my-service")
 ```
 
 A full example can be found under the examples folder in [example/webserver/instana/http.go](./example/webserver/instana/http.go).
+
+### Trace Context Propagation
+
+Instana Go sensor provides an API to propagate the trace context throughout the call chain:
+
+```go
+func MyFunc(ctx context.Context) {
+	var spanOpts []ot.StartSpanOption
+
+	// retrieve parent span from context and reference it in the new one
+	if parent, ok := instana.SpanFromContext(); ok {
+	    spanOpts = append(spanOpts, ot.ChildOf(parent.Context()))
+	}
+
+	// start a new span
+	span := tracer.StartSpan("my-func", spanOpts...)
+	defer span.Finish()
+
+	// and use it as a new parent inside the context
+	SubCall(instana.ContextWithSpan(ctx, span))
+}
+```
 
 ### HTTP Server Handlers
 
@@ -60,7 +82,8 @@ func main() {
 // Accessing the parent request inside a handler
 func myHandler(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
-	parentSpan := ctx.Value("parentSpan").(ot.Span) // use this TracingHttpRequest
+	parent, _ := instana.SpanFromContext(ctx))
+    
 	tracer := parent.Tracer()
 	spanCtx := parent.Context().(instana.SpanContext)
 	traceID := spanCtx.TraceID // use this with EumSnippet
