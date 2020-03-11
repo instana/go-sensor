@@ -2,7 +2,6 @@ package instagrpc_test
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"io"
 	"net"
@@ -117,7 +116,7 @@ func TestUnaryServerInterceptor_WithClientTraceID(t *testing.T) {
 }
 
 func TestUnaryServerInterceptor_ErrorHandling(t *testing.T) {
-	serverError := errors.New("something went wrong")
+	serverErr := status.Error(codes.Internal, "something went wrong")
 
 	recorder := instana.NewTestRecorder()
 	sensor := instana.NewSensorWithTracer(
@@ -125,7 +124,7 @@ func TestUnaryServerInterceptor_ErrorHandling(t *testing.T) {
 	)
 
 	addr, teardown, err := startTestServer(
-		&testServer{Error: serverError},
+		&testServer{Error: serverErr},
 		grpc.UnaryInterceptor(instagrpc.UnaryServerInterceptor(sensor)),
 	)
 	require.NoError(t, err)
@@ -150,12 +149,15 @@ func TestUnaryServerInterceptor_ErrorHandling(t *testing.T) {
 	assert.Equal(t, "entry", span.Data.SDK.Type)
 
 	require.NotNil(t, span.Data.SDK.Custom)
+	assert.Equal(t, serverErr.Error(), span.Data.SDK.Custom.Tags["rpc.error"])
 
 	var logRecords []map[string]interface{}
 	for _, v := range span.Data.SDK.Custom.Logs {
 		logRecords = append(logRecords, v)
 	}
-	assert.Contains(t, logRecords, map[string]interface{}{"error": serverError})
+
+	require.Len(t, logRecords, 1)
+	assert.Equal(t, serverErr, logRecords[0]["error"])
 }
 
 func TestUnaryServerInterceptor_PanicHandling(t *testing.T) {
@@ -190,12 +192,15 @@ func TestUnaryServerInterceptor_PanicHandling(t *testing.T) {
 	assert.Equal(t, "entry", span.Data.SDK.Type)
 
 	require.NotNil(t, span.Data.SDK.Custom)
+	assert.Equal(t, "something went wrong", span.Data.SDK.Custom.Tags["rpc.error"])
 
 	var logRecords []map[string]interface{}
 	for _, v := range span.Data.SDK.Custom.Logs {
 		logRecords = append(logRecords, v)
 	}
-	assert.Contains(t, logRecords, map[string]interface{}{"error": "something went wrong"})
+
+	require.Len(t, logRecords, 1)
+	assert.Equal(t, "something went wrong", logRecords[0]["error"])
 }
 
 func TestStreamServerInterceptor(t *testing.T) {
@@ -302,7 +307,7 @@ func TestStreamServerInterceptor_WithClientTraceID(t *testing.T) {
 }
 
 func TestStreamServerInterceptor_ErrorHandling(t *testing.T) {
-	serverError := status.Error(codes.Unknown, "something went wrong")
+	serverErr := status.Error(codes.Internal, "something went wrong")
 
 	recorder := instana.NewTestRecorder()
 	sensor := instana.NewSensorWithTracer(
@@ -310,7 +315,7 @@ func TestStreamServerInterceptor_ErrorHandling(t *testing.T) {
 	)
 
 	addr, teardown, err := startTestServer(
-		&testServer{Error: serverError},
+		&testServer{Error: serverErr},
 		grpc.StreamInterceptor(instagrpc.StreamServerInterceptor(sensor)),
 	)
 	require.NoError(t, err)
@@ -341,12 +346,15 @@ func TestStreamServerInterceptor_ErrorHandling(t *testing.T) {
 	assert.Equal(t, "entry", span.Data.SDK.Type)
 
 	require.NotNil(t, span.Data.SDK.Custom)
+	assert.Equal(t, serverErr.Error(), span.Data.SDK.Custom.Tags["rpc.error"])
 
 	var logRecords []map[string]interface{}
 	for _, v := range span.Data.SDK.Custom.Logs {
 		logRecords = append(logRecords, v)
 	}
-	assert.Contains(t, logRecords, map[string]interface{}{"error": serverError})
+
+	require.Len(t, logRecords, 1)
+	assert.Equal(t, serverErr, logRecords[0]["error"])
 }
 
 func TestStreamServerInterceptor_PanicHandling(t *testing.T) {
@@ -388,22 +396,15 @@ func TestStreamServerInterceptor_PanicHandling(t *testing.T) {
 	assert.Equal(t, "entry", span.Data.SDK.Type)
 
 	require.NotNil(t, span.Data.SDK.Custom)
+	assert.Equal(t, "something went wrong", span.Data.SDK.Custom.Tags["rpc.error"])
 
 	var logRecords []map[string]interface{}
 	for _, v := range span.Data.SDK.Custom.Logs {
 		logRecords = append(logRecords, v)
 	}
-	assert.Contains(t, logRecords, map[string]interface{}{"error": "something went wrong"})
-}
 
-func newTestServiceClient(addr string, timeout time.Duration) (grpctest.TestServiceClient, error) {
-	ctx, _ := context.WithTimeout(context.Background(), timeout)
-	conn, err := grpc.DialContext(ctx, addr, grpc.WithInsecure(), grpc.WithBlock())
-	if err != nil {
-		return nil, fmt.Errorf("failed to establish connection with test server: %s", err)
-	}
-
-	return grpctest.NewTestServiceClient(conn), nil
+	require.Len(t, logRecords, 1)
+	assert.Equal(t, "something went wrong", logRecords[0]["error"])
 }
 
 func startTestServer(ts grpctest.TestServiceServer, opts ...grpc.ServerOption) (string, func(), error) {
@@ -509,4 +510,28 @@ func (ts *panickingTestServer) EmptyCall(ctx context.Context, req *grpctest.Empt
 
 func (ts *panickingTestServer) FullDuplexCall(s grpctest.TestService_FullDuplexCallServer) error {
 	panic("something went wrong")
+}
+
+type metadataCapturer struct {
+	MD metadata.MD
+}
+
+func (s *metadataCapturer) UnaryServerInterceptor() grpc.UnaryServerInterceptor {
+	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
+		if md, ok := metadata.FromIncomingContext(ctx); ok {
+			s.MD = md
+		}
+
+		return handler(ctx, req)
+	}
+}
+
+func (s *metadataCapturer) StreamServerInterceptor() grpc.StreamServerInterceptor {
+	return func(srv interface{}, ss grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
+		if md, ok := metadata.FromIncomingContext(ss.Context()); ok {
+			s.MD = md
+		}
+
+		return handler(srv, ss)
+	}
 }

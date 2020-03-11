@@ -24,10 +24,13 @@ func UnaryServerInterceptor(sensor *instana.Sensor) grpc.UnaryServerInterceptor 
 		defer func() {
 			if err := recover(); err != nil {
 				if e, ok := err.(error); ok {
+					sp.SetTag("rpc.error", e.Error())
 					sp.LogFields(otlog.Error(e))
 				} else {
+					sp.SetTag("rpc.error", err)
 					sp.LogFields(otlog.Object("error", err))
 				}
+
 				// re-throw
 				panic(err)
 			}
@@ -35,6 +38,7 @@ func UnaryServerInterceptor(sensor *instana.Sensor) grpc.UnaryServerInterceptor 
 
 		m, err := handler(instana.ContextWithSpan(ctx, sp), req)
 		if err != nil {
+			sp.SetTag("rpc.error", err.Error())
 			sp.LogFields(otlog.Error(err))
 		}
 
@@ -54,17 +58,22 @@ func StreamServerInterceptor(sensor *instana.Sensor) grpc.StreamServerIntercepto
 		defer func() {
 			if err := recover(); err != nil {
 				if e, ok := err.(error); ok {
+					sp.SetTag("rpc.error", e)
 					sp.LogFields(otlog.Error(e))
 				} else {
+					sp.SetTag("rpc.error", err)
 					sp.LogFields(otlog.Object("error", err))
 				}
+
 				// re-throw
 				panic(err)
 			}
 		}()
 
 		if err := handler(srv, &wrappedServerStream{ss, sp}); err != nil {
+			sp.SetTag("rpc.error", err.Error())
 			sp.LogFields(otlog.Error(err))
+
 			return err
 		}
 
