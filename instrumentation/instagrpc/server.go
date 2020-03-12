@@ -1,3 +1,5 @@
+// +build go1.9
+
 package instagrpc
 
 import (
@@ -11,9 +13,16 @@ import (
 	"google.golang.org/grpc/metadata"
 )
 
-// UnaryServerInterceptor returns a tracing interceptor to be used in grpc.NewServer() call.
-// This interceptor is responsible for extracting the trace context from incoming requests
-// and ensures trace continuation by injecting a child span into the handler context
+// UnaryServerInterceptor returns a tracing interceptor to be used in grpc.NewServer() calls.
+// This interceptor is responsible for extracting the Instana OpenTracing headers from incoming requests
+// and staring a new span that can later be accessed inside the handler:
+//
+// 	if parent, ok := instana.SpanFromContext(ctx); ok {
+// 		sp := parent.Tracer().StartSpan("child-span")
+// 		defer sp.Finish()
+// 	}
+//
+// If the handler returns an error or panics, the error message is then attached to the span logs.
 func UnaryServerInterceptor(sensor *instana.Sensor) grpc.UnaryServerInterceptor {
 	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
 		sp := startServerSpan(ctx, info.FullMethod, "unary", sensor.Tracer())
@@ -37,9 +46,16 @@ func UnaryServerInterceptor(sensor *instana.Sensor) grpc.UnaryServerInterceptor 
 	}
 }
 
-// StreamServerInterceptor returns a tracing interceptor to be used in grpc.NewServer() call.
-// This interceptor is responsible for extracting the trace context from incoming streams
-// and ensures trace continuation by injecting a child span into the handler stream context
+// StreamServerInterceptor returns a tracing interceptor to be used in grpc.NewServer() calls.
+// This interceptor is responsible for extracting the Instana OpenTracing headers from incoming streaming
+// requests and starting a new span that can later be accessed inside the handler:
+//
+// 	if parent, ok := instana.SpanFromContext(srv.Context()); ok {
+// 		sp := parent.Tracer().StartSpan("child-span")
+// 		defer sp.Finish()
+// 	}
+//
+// If the handler returns an error or panics, the error message is then attached to the span logs.
 func StreamServerInterceptor(sensor *instana.Sensor) grpc.StreamServerInterceptor {
 	return func(srv interface{}, ss grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
 		sp := startServerSpan(ss.Context(), info.FullMethod, "stream", sensor.Tracer())

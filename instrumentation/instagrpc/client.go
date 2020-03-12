@@ -1,3 +1,5 @@
+// +build go1.9
+
 package instagrpc
 
 import (
@@ -13,8 +15,10 @@ import (
 	"google.golang.org/grpc/metadata"
 )
 
-// UnaryClientInterceptor returns a tracing interceptor to be used in grpc.NewClient() call.
-// It is responsible for injecting the trace context into outgoing requests
+// UnaryClientInterceptor returns a tracing interceptor to be used in grpc.Dial() calls.
+// It injects Instana OpenTracing headers into outgoing unary requests to ensure trace propagation
+// throughout the call.
+// If the server call results with an error, its message will be attached to the span logs.
 func UnaryClientInterceptor(sensor *instana.Sensor) grpc.UnaryClientInterceptor {
 	return func(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, callOpts ...grpc.CallOption) error {
 		sp := startClientSpan(ctx, cc.Target(), method, "unary", sensor.Tracer())
@@ -30,8 +34,10 @@ func UnaryClientInterceptor(sensor *instana.Sensor) grpc.UnaryClientInterceptor 
 	}
 }
 
-// StreamClientInterceptor returns a tracing interceptor to be used in grpc.NewClient() call.
-// It is responsible for injecting the trace context into outgoing requests
+// StreamClientInterceptor returns a tracing interceptor to be used in grpc.Dial() calls.
+// It injects Instana OpenTracing headers into outgoing stream requests to ensure trace propagation
+// throughout the call. The span is finished as soon as server closes the stream or returns an error.
+// Any error occurred during the request is attached to the span logs.
 func StreamClientInterceptor(sensor *instana.Sensor) grpc.StreamClientInterceptor {
 	return func(ctx context.Context, desc *grpc.StreamDesc, cc *grpc.ClientConn, method string, streamer grpc.Streamer, opts ...grpc.CallOption) (grpc.ClientStream, error) {
 
