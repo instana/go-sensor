@@ -111,6 +111,10 @@ The provided `parentSpan` is the incoming request from the request handler (see 
 
 The request is, after injection, executing using the provided `http.Client` instance. Like the normal `(*http.Client).Do()` operation, the call will return a `http.Response` instance or an error proving information of the failure reason.
 
+### GRPC servers and clients
+
+[`github.com/instana/go-sensor/instrumentation/instagrpc`](./instrumentation/instagrpc) provides both unary and stream interceptors to instrument GRPC servers and clients that use `google.golang.org/grpc`.
+
 ## Sensor
 
 To use sensor only without tracing ability, import the `instana` package and run
