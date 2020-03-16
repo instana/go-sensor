@@ -32,6 +32,11 @@ func NewSensorWithTracer(tracer ot.Tracer) *Sensor {
 	return &Sensor{tracer: tracer}
 }
 
+// Tracer returns the tracer instance for this sensor
+func (s *Sensor) Tracer() ot.Tracer {
+	return s.tracer
+}
+
 // TraceHandler is similar to TracingHandler in regards, that it wraps an existing http.HandlerFunc
 // into a named instance to support capturing tracing information and data. The returned values are
 // compatible with handler registration methods, e.g. http.Handle()
