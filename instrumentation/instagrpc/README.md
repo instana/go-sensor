@@ -3,6 +3,8 @@ Instana instrumentation for go-grpc library
 
 This module contains instrumentation code for GRPC servers and clients that use `google.golang.org/grpc` library.
 
+[![GoDoc](https://img.shields.io/static/v1?label=godoc&message=reference&color=blue)][godoc]
+
 Installation
 ------------
 
@@ -15,8 +17,7 @@ $ go get github.com/instana/go-sensor/instrumentation/instagrpc
 Usage
 -----
 
-For detailed usage example see [the godoc](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instagrpc?tab=doc) or
-[`example_test.go`](./example_test.go).
+For detailed usage example see [the documentation][godoc] or [`example_test.go`](./example_test.go).
 
 This instrumentation requires an `opentracing.Tracer` to initialize spans and handle the trace context propagation.
 You can create a new instance of Instana tracer using `instana.NewTracer()`.
@@ -64,3 +65,5 @@ conn, err := grpc.Dial(
 ```
 
 If the context contains an active span stored using `instana.ContextWithSpan()`, the tracer of this span will be used instead.
+
+[godoc]: https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instagrpc
