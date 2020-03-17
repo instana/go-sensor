@@ -7,7 +7,6 @@ import (
 	instana "github.com/instana/go-sensor"
 	ot "github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
-	otlog "github.com/opentracing/opentracing-go/log"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
 )
@@ -23,14 +22,7 @@ func UnaryServerInterceptor(sensor *instana.Sensor) grpc.UnaryServerInterceptor 
 		// log request in case handler panics
 		defer func() {
 			if err := recover(); err != nil {
-				if e, ok := err.(error); ok {
-					sp.SetTag("rpc.error", e.Error())
-					sp.LogFields(otlog.Error(e))
-				} else {
-					sp.SetTag("rpc.error", err)
-					sp.LogFields(otlog.Object("error", err))
-				}
-
+				addRPCError(sp, err)
 				// re-throw
 				panic(err)
 			}
@@ -38,8 +30,7 @@ func UnaryServerInterceptor(sensor *instana.Sensor) grpc.UnaryServerInterceptor 
 
 		m, err := handler(instana.ContextWithSpan(ctx, sp), req)
 		if err != nil {
-			sp.SetTag("rpc.error", err.Error())
-			sp.LogFields(otlog.Error(err))
+			addRPCError(sp, err)
 		}
 
 		return m, err
@@ -57,22 +48,14 @@ func StreamServerInterceptor(sensor *instana.Sensor) grpc.StreamServerIntercepto
 		// log request in case handler panics
 		defer func() {
 			if err := recover(); err != nil {
-				if e, ok := err.(error); ok {
-					sp.SetTag("rpc.error", e)
-					sp.LogFields(otlog.Error(e))
-				} else {
-					sp.SetTag("rpc.error", err)
-					sp.LogFields(otlog.Object("error", err))
-				}
-
+				addRPCError(sp, err)
 				// re-throw
 				panic(err)
 			}
 		}()
 
 		if err := handler(srv, &wrappedServerStream{ss, sp}); err != nil {
-			sp.SetTag("rpc.error", err.Error())
-			sp.LogFields(otlog.Error(err))
+			addRPCError(sp, err)
 
 			return err
 		}

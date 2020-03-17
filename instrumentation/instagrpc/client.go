@@ -9,7 +9,6 @@ import (
 	instana "github.com/instana/go-sensor"
 	ot "github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
-	otlog "github.com/opentracing/opentracing-go/log"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
 )
@@ -22,8 +21,7 @@ func UnaryClientInterceptor(sensor *instana.Sensor) grpc.UnaryClientInterceptor 
 		defer sp.Finish()
 
 		if err := invoker(outgoingTracingContext(ctx, sp), method, req, reply, cc, callOpts...); err != nil {
-			sp.SetTag("rpc.error", err.Error())
-			sp.LogFields(otlog.Error(err))
+			addRPCError(sp, err)
 
 			return err
 		}
@@ -40,8 +38,7 @@ func StreamClientInterceptor(sensor *instana.Sensor) grpc.StreamClientIntercepto
 		sp := startClientSpan(ctx, cc.Target(), method, "stream", sensor.Tracer())
 		stream, err := streamer(outgoingTracingContext(ctx, sp), desc, cc, method, opts...)
 		if err != nil {
-			sp.SetTag("rpc.error", err.Error())
-			sp.LogFields(otlog.Error(err))
+			addRPCError(sp, err)
 			sp.Finish()
 
 			return nil, err
@@ -113,8 +110,7 @@ func (cs wrappedClientStream) RecvMsg(m interface{}) error {
 	err := cs.ClientStream.RecvMsg(m)
 	if err != nil {
 		if err != io.EOF {
-			cs.Span.SetTag("rpc.error", err.Error())
-			cs.Span.LogFields(otlog.Error(err))
+			addRPCError(cs.Span, err)
 		}
 	}
 
