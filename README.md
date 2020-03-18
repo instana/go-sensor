@@ -121,18 +121,11 @@ import (
 	ot "github.com/opentracing/opentracing-go"
 )
 
-// Doing registration and wrapping in two separate steps
+// Doing registration and wrapping
 func main() {
 	http.HandleFunc(
 		"/path/to/handler",
-		sensor.TracingHandler("myHandler", myHandler),
-	)
-}
-
-// Doing registration and wrapping in a single step
-func main() {
-	http.HandleFunc(
-		sensor.TraceHandler("myHandler", "/path/to/handler", myHandler),
+		sensor.TracingHandlerFunc("myHandler", myHandler),
 	)
 }
 
