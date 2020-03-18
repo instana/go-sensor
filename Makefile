@@ -1,4 +1,5 @@
-MODULES = $(shell find . -name go.mod -exec dirname {} \;)
+
+MODULES = $(filter-out $(EXCLUDE_DIRS), $(shell find . -name go.mod -exec dirname {} \;))
 LINTER ?= $(shell go env GOPATH)/bin/golangci-lint
 
 ifdef RUN_LINTER
