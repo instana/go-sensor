@@ -54,23 +54,18 @@ func (s *Sensor) SetLogger(l LeveledLogger) {
 // TraceHandler is similar to TracingHandler in regards, that it wraps an existing http.HandlerFunc
 // into a named instance to support capturing tracing information and data. The returned values are
 // compatible with handler registration methods, e.g. http.Handle()
+//
+// Deprecated: please use instana.TracingHandlerFunc() instead
 func (s *Sensor) TraceHandler(name, pattern string, handler http.HandlerFunc) (string, http.HandlerFunc) {
 	return pattern, s.TracingHandler(name, handler)
 }
 
 // TracingHandler wraps an existing http.HandlerFunc into a named instance to support capturing tracing
 // information and response data
+//
+// Deprecated: please use instana.TracingHandlerFunc() instead
 func (s *Sensor) TracingHandler(name string, handler http.HandlerFunc) http.HandlerFunc {
-	return func(w http.ResponseWriter, req *http.Request) {
-		s.WithTracingContext(name, w, req, func(span ot.Span, ctx context.Context) {
-			wrapped := &statusCodeRecorder{ResponseWriter: w}
-			handler.ServeHTTP(wrapped, req.WithContext(ctx))
-
-			if wrapped.Status > 0 {
-				span.SetTag(string(ext.HTTPStatusCode), wrapped.Status)
-			}
-		})
-	}
+	return TracingHandlerFunc(s, name, handler)
 }
 
 // TracingHttpRequest wraps an existing http.Request instance into a named instance to inject tracing and span
@@ -173,23 +168,4 @@ func (s *Sensor) WithTracingContext(name string, w http.ResponseWriter, req *htt
 	s.WithTracingSpan(name, w, req, func(span ot.Span) {
 		f(span, ContextWithSpan(req.Context(), span))
 	})
-}
-
-// wrapper over http.ResponseWriter to spy the returned status code
-type statusCodeRecorder struct {
-	http.ResponseWriter
-	Status int
-}
-
-func (rec *statusCodeRecorder) WriteHeader(status int) {
-	rec.Status = status
-	rec.ResponseWriter.WriteHeader(status)
-}
-
-func (rec *statusCodeRecorder) Write(b []byte) (int, error) {
-	if rec.Status == 0 {
-		rec.Status = http.StatusOK
-	}
-
-	return rec.ResponseWriter.Write(b)
 }
