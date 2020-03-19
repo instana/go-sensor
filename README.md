@@ -144,22 +144,19 @@ func myHandler(w http.ResponseWriter, req *http.Request) {
 
 Requesting data or information from other, often external systems, is commonly implemented through HTTP requests. To make sure traces contain all spans, especially over all the different systems, certain span information have to be injected into the HTTP request headers before sending it out. Instana's Go sensor provides support to automate this process as much as possible.
 
-To have Instana inject information into the request headers, create the `http.Request` as normal and wrap it with the Instana sensor function as in the following example. 
+To have Instana inject information into the request headers, create the `http.Client`, wrap its `Transport` with `instana.RoundTripper()` and use it as in the following example. 
 
 ```go
 req, err := http.NewRequest("GET", url, nil)
-client := &http.Client{}
-resp, err := sensor.TracingHttpRequest(
-	"myExternalCall",
-	parentSpan,
-	req,
-	client,
-)
+client := &http.Client{
+	Transport: instana.RoundTripper(sensor, nil),
+}
+
+ctx := instana.ContextWithSpan(context.Background(), parentSpan)
+resp, err := client.Do(req.WithContext(ctx))
 ```
 
 The provided `parentSpan` is the incoming request from the request handler (see above) and provides the necessary tracing and span information to create a child span and inject it into the request.
-
-The request is, after injection, executing using the provided `http.Client` instance. Like the normal `(*http.Client).Do()` operation, the call will return a `http.Response` instance or an error proving information of the failure reason.
 
 ### GRPC servers and clients
 

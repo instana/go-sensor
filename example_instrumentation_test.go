@@ -17,3 +17,20 @@ func ExampleTracingHandlerFunc() {
 		// handler code
 	}))
 }
+
+// This example demonstrates how to instrument an HTTP client with Instana
+func ExampleRoundTripper() {
+	// Here we initialize a new instance of instana.Sensor, however it is STRONGLY recommended
+	// to use a single instance throughout your application
+	sensor := instana.NewSensor("my-http-client")
+
+	// http.DefaultTransport is used as a default RoundTripper, however you can provide
+	// your own implementation
+	client := &http.Client{
+		Transport: instana.RoundTripper(sensor, nil),
+	}
+
+	// Execute request as usual
+	req, _ := http.NewRequest("GET", "https://www.instana.com", nil)
+	client.Do(req)
+}
