@@ -24,8 +24,8 @@ type TestServiceServer struct {
 
 // UnaryCall responds with a static greeting from server
 func (s TestServiceServer) UnaryCall(ctx context.Context, req *grpctest.SimpleRequest) (*grpctest.SimpleResponse, error) {
-	// Extract the parent span and use its tracer to initialize any child  spans to trace the calls
-	// inside the hander, e.g. database queries, 3rd-aprty API requests, etc.
+	// Extract the parent span and use its tracer to initialize any child spans to trace the calls
+	// inside the handler, e.g. database queries, 3rd-party API requests, etc.
 	if parent, ok := instana.SpanFromContext(ctx); ok {
 		sp := parent.Tracer().StartSpan("unary-call")
 		defer sp.Finish()
@@ -51,8 +51,8 @@ func setupServer() (net.Addr, error) {
 		return nil, fmt.Errorf("failed to start listener: %s", err)
 	}
 
-	// To instrument server calls add instagrpc.UnaryServerInterceptor(tracer) and
-	// instagrpc.StreamServerInterceptor(tracer) to the list of server options when
+	// To instrument server calls add instagrpc.UnaryServerInterceptor(sensor) and
+	// instagrpc.StreamServerInterceptor(sensor) to the list of server options when
 	// initializing the server
 	srv := grpc.NewServer(
 		grpc.UnaryInterceptor(instagrpc.UnaryServerInterceptor(sensor)),
@@ -78,8 +78,8 @@ func Example() {
 	// Initialize client tracer
 	sensor := instana.NewSensor("grpc-client")
 
-	// To instrument client calls add instagrpc.UnaryClientInterceptor(tracer) and
-	// instagrpc.StringClientInterceptor(tracer) to the DialOption list while dialing
+	// To instrument client calls add instagrpc.UnaryClientInterceptor(sensor) and
+	// instagrpc.StringClientInterceptor(sensor) to the DialOption list while dialing
 	// the GRPC server.
 	conn, err := grpc.Dial(
 		serverAddr.String(),

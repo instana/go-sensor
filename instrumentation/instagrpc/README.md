@@ -52,7 +52,7 @@ func (s MyServer) SampleCall(ctx context.Context, req *MyRequest) (*MyResponse, 
 ### Instrumenting a client
 
 Similar to the server instrumentation, to instrument a GRPC client add `instagrpc.UnaryClientInterceptor()` and
-`instagrpc.StreamClientInterceptor()` into the list of dial options passed to the `grpc.Dial()` call. The interceptor
+`instagrpc.StreamClientInterceptor()` to the list of dial options passed to the `grpc.Dial()` call. The interceptor
 will inject the trace context into each outgoing request made with this connection:
 
 ```go
