@@ -24,9 +24,10 @@ You can create a new instance of Instana tracer using `instana.NewTracer()`.
 
 ### Instrumenting a server
 
-To instrument your GRPC server instance include `instagrpc.UnaryServerInterceptor()` and `instagrpc.StreamServerInterceptor()`
-into the list of server options passed to `grpc.NewServer()`. These interceptors will use the provided `instana.Sensor` to
-handle the OpenTracing headers, start a new span for each incoming request and inject it into the handler:
+To instrument your GRPC server instance include [`instagrpc.UnaryServerInterceptor()`][UnaryServerInterceptor] and
+[`instagrpc.StreamServerInterceptor()`][StreamServerInterceptor] into the list of server options passed to `grpc.NewServer()`.
+These interceptors will use the provided [`instana.Sensor`][Sensor] to handle the OpenTracing headers, start a new span for each incoming
+request and inject it into the handler:
 
 ```go
 // initialize a new tracer instance
@@ -40,7 +41,7 @@ srv := grpc.NewServer(
 )
 ```
 
-The parent span can be than retrieved inside the handler using `instana.ContextFromSpan()`:
+The parent span can be than retrieved inside the handler using [`instana.SpanFromContext()`][SpanFromContext]:
 
 ```go
 func (s MyServer) SampleCall(ctx context.Context, req *MyRequest) (*MyResponse, error) {
@@ -51,8 +52,8 @@ func (s MyServer) SampleCall(ctx context.Context, req *MyRequest) (*MyResponse, 
 
 ### Instrumenting a client
 
-Similar to the server instrumentation, to instrument a GRPC client add `instagrpc.UnaryClientInterceptor()` and
-`instagrpc.StreamClientInterceptor()` to the list of dial options passed to the `grpc.Dial()` call. The interceptor
+Similar to the server instrumentation, to instrument a GRPC client add [`instagrpc.UnaryClientInterceptor()`][UnaryClientInterceptor] and
+[`instagrpc.StreamClientInterceptor()`][StreamClientInterceptor] to the list of dial options passed to the `grpc.Dial()` call. The interceptor
 will inject the trace context into each outgoing request made with this connection:
 
 ```go
@@ -64,6 +65,13 @@ conn, err := grpc.Dial(
 )
 ```
 
-If the context contains an active span stored using `instana.ContextWithSpan()`, the tracer of this span will be used instead.
+If the context contains an active span stored using [`instana.ContextWithSpan()`][ContextWithSpan], the tracer of this span will be used instead.
 
 [godoc]: https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instagrpc
+[StreamClientInterceptor]: https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instagrpc?tab=doc#StreamClientInterceptor
+[StreamServerInterceptor]: https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instagrpc?tab=doc#StreamServerInterceptor
+[UnaryClientInterceptor]: https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instagrpc?tab=doc#UnaryClientInterceptor
+[UnaryServerInterceptor]: https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instagrpc?tab=doc#UnaryServerInterceptor
+[Sensor]: https://pkg.go.dev/github.com/instana/go-sensor/?tab=doc#Sensor
+[SpanFromContext]: https://pkg.go.dev/github.com/instana/go-sensor/?tab=doc#SpanFromContext
+[ContextWithSpan]: https://pkg.go.dev/github.com/instana/go-sensor/?tab=doc#ContextWithSpan
