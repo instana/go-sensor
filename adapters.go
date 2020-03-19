@@ -70,37 +70,11 @@ func (s *Sensor) TracingHandler(name string, handler http.HandlerFunc) http.Hand
 
 // TracingHttpRequest wraps an existing http.Request instance into a named instance to inject tracing and span
 // header information into the actual HTTP wire transfer
+//
+// Deprecated: please use instana.RoundTripper() instead
 func (s *Sensor) TracingHttpRequest(name string, parent, req *http.Request, client http.Client) (*http.Response, error) {
-	opts := []ot.StartSpanOption{
-		ext.SpanKindRPCClient,
-		ot.Tags{
-			string(ext.PeerHostname): req.Host,
-			string(ext.HTTPUrl):      req.URL.String(),
-			string(ext.HTTPMethod):   req.Method,
-		},
-	}
-
-	if parentSpan, ok := SpanFromContext(parent.Context()); ok {
-		opts = append(opts, ot.ChildOf(parentSpan.Context()))
-	}
-
-	span := s.tracer.StartSpan("client", opts...)
-	defer span.Finish()
-
-	headersCarrier := ot.HTTPHeadersCarrier(req.Header)
-	if err := s.tracer.Inject(span.Context(), ot.HTTPHeaders, headersCarrier); err != nil {
-		return nil, err
-	}
-
-	res, err := client.Do(req.WithContext(context.Background()))
-	if err != nil {
-		span.LogFields(otlog.Error(err))
-		return res, err
-	}
-
-	span.SetTag(string(ext.HTTPStatusCode), res.StatusCode)
-
-	return res, nil
+	client.Transport = RoundTripper(s, client.Transport)
+	return client.Do(req.WithContext(context.Background()))
 }
 
 // WithTracingSpan takes the given SpanSensitiveFunc and executes it under the scope of a child span, which is
