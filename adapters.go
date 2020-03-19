@@ -80,6 +80,8 @@ func (s *Sensor) TracingHttpRequest(name string, parent, req *http.Request, clie
 // WithTracingSpan takes the given SpanSensitiveFunc and executes it under the scope of a child span, which is
 // injected as an argument when calling the function. It uses the name of the caller as a span operation name
 // unless a non-empty value is provided
+//
+// Deprecated: please use instana.TracingHandlerFunc() to instrument an HTTP handler
 func (s *Sensor) WithTracingSpan(operationName string, w http.ResponseWriter, req *http.Request, f SpanSensitiveFunc) {
 	if operationName == "" {
 		pc, _, _, _ := runtime.Caller(1)
@@ -138,6 +140,8 @@ func (s *Sensor) WithTracingSpan(operationName string, w http.ResponseWriter, re
 
 // Executes the given ContextSensitiveFunc and executes it under the scope of a newly created context.Context,
 // that provides access to the parent span as 'parentSpan'.
+//
+// Deprecated: please use instana.TracingHandlerFunc() to instrument an HTTP handler
 func (s *Sensor) WithTracingContext(name string, w http.ResponseWriter, req *http.Request, f ContextSensitiveFunc) {
 	s.WithTracingSpan(name, w, req, func(span ot.Span) {
 		f(span, ContextWithSpan(req.Context(), span))
