@@ -2,9 +2,12 @@ package instana
 
 import (
 	"context"
+	"log"
 	"net/http"
+	"os"
 	"runtime"
 
+	"github.com/instana/go-sensor/logger"
 	ot "github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
 	otlog "github.com/opentracing/opentracing-go/log"
@@ -13,9 +16,21 @@ import (
 type SpanSensitiveFunc func(span ot.Span)
 type ContextSensitiveFunc func(span ot.Span, ctx context.Context)
 
+// LeveledLogger is an interface of a generic logger that support different message levels.
+// By default instana.Sensor uses logger.Logger with log.Logger as an output, however this
+// interface is also compatible with such popular loggers as github.com/sirupsen/logrus.Logger
+// and go.uber.org/zap.SugaredLogger
+type LeveledLogger interface {
+	Debug(v ...interface{})
+	Info(v ...interface{})
+	Warn(v ...interface{})
+	Error(v ...interface{})
+}
+
 // Sensor is used to inject tracing information into requests
 type Sensor struct {
 	tracer ot.Tracer
+	logger LeveledLogger
 }
 
 // NewSensor creates a new instana.Sensor
@@ -29,12 +44,25 @@ func NewSensor(serviceName string) *Sensor {
 
 // NewSensorWithTracer returns a new instana.Sensor that uses provided tracer to report spans
 func NewSensorWithTracer(tracer ot.Tracer) *Sensor {
-	return &Sensor{tracer: tracer}
+	return &Sensor{
+		tracer: tracer,
+		logger: logger.New(log.New(os.Stderr, "", log.LstdFlags)),
+	}
 }
 
 // Tracer returns the tracer instance for this sensor
 func (s *Sensor) Tracer() ot.Tracer {
 	return s.tracer
+}
+
+// Logger returns the logger instance for this sensor
+func (s *Sensor) Logger() LeveledLogger {
+	return s.logger
+}
+
+// SetLogger sets the logger for this sensor
+func (s *Sensor) SetLogger(l LeveledLogger) {
+	s.logger = l
 }
 
 // TraceHandler is similar to TracingHandler in regards, that it wraps an existing http.HandlerFunc
