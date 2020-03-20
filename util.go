@@ -26,6 +26,53 @@ func randomID() int64 {
 	return int64(seededIDGen.Int63())
 }
 
+// FormatID converts an Instana ID to a value that can be used in
+// context propagation (such as HTTP headers). More specifically,
+// this converts a signed 64 bit integer into an unsigned hex string.
+func FormatID(id int64) string {
+	// FIXME: We're assuming LittleEndian here
+
+	// Write out _signed_ 64bit integer to byte buffer
+	buf := bytes.NewBuffer(nil)
+	// binary.Write() does not return an error for basic data types, neither does (*bytes.Buffer).Write()
+	binary.Write(buf, binary.LittleEndian, id)
+
+	// Read bytes back into _unsigned_ 64 bit integer
+	var unsigned uint64
+	// it's safe to ignore the error here, since the value in buffer is controlled by us
+	binary.Read(buf, binary.LittleEndian, &unsigned)
+
+	// Convert uint64 to hex string equivalent and return that
+	return strconv.FormatUint(unsigned, 16)
+}
+
+// Header2ID converts an header context value into an Instana ID.  More
+// specifically, this converts an unsigned 64 bit hex value into a signed
+// 64bit integer.
+func ParseID(header string) (int64, error) {
+	// FIXME: We're assuming LittleEndian here
+
+	// Parse unsigned 64 bit hex string into unsigned 64 bit base 10 integer
+	unsignedID, err := strconv.ParseUint(header, 16, 64)
+	if err != nil {
+		return 0, fmt.Errorf("context corrupted; could not convert value: %s", err)
+	}
+
+	// Write out _unsigned_ 64bit integer to byte buffer
+	buf := bytes.NewBuffer(nil)
+	if err := binary.Write(buf, binary.LittleEndian, unsignedID); err != nil {
+		return 0, fmt.Errorf("context corrupted; could not convert value: %s", err)
+	}
+
+	// Read bytes back into _signed_ 64 bit integer
+	var signedID int64
+	if err := binary.Read(buf, binary.LittleEndian, &signedID); err != nil {
+		return 0, fmt.Errorf("context corrupted; could not convert value: %s", err)
+	}
+
+	return signedID, nil
+}
+
 // ID2Header converts an Instana ID to a value that can be used in
 // context propagation (such as HTTP headers).  More specifically,
 // this converts a signed 64 bit integer into an unsigned hex string.
