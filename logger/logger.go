@@ -5,12 +5,15 @@ import (
 	"sync"
 )
 
-// Valid log levels to be used with (*logger.Logger).SetLevel()
 const (
+	// Valid log levels to be used with (*logger.Logger).SetLevel()
 	ErrorLevel Level = iota
 	WarnLevel
 	InfoLevel
 	DebugLevel
+
+	// Default log prefix
+	DefaultPrefix = "instana: "
 )
 
 // Level defines the minimum logging level for logger.Log
@@ -42,8 +45,9 @@ type Printer interface {
 type Logger struct {
 	p Printer
 
-	mu  sync.Mutex
-	lvl Level
+	mu     sync.Mutex
+	lvl    Level
+	prefix string
 }
 
 // New initializes a new instance of Logger that uses provided printer as a backend to
@@ -58,7 +62,8 @@ type Logger struct {
 // The default logging level for a new logger instance is logger.ErrorLevel
 func New(printer Printer) *Logger {
 	return &Logger{
-		p: printer,
+		p:      printer,
+		prefix: DefaultPrefix,
 	}
 }
 
@@ -68,6 +73,14 @@ func (l *Logger) SetLevel(level Level) {
 	defer l.mu.Unlock()
 
 	l.lvl = level
+}
+
+// SetPrefix sets the label that will be used as a prefix for each log line
+func (l *Logger) SetPrefix(prefix string) {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+
+	l.prefix = prefix
 }
 
 // Debug appends a debug message to the log
@@ -107,5 +120,5 @@ func (l *Logger) Error(v ...interface{}) {
 }
 
 func (l *Logger) print(lvl Level, v []interface{}) {
-	l.p.Print(lvl.String(), ": ", fmt.Sprint(v...))
+	l.p.Print(l.prefix, lvl.String(), ": ", fmt.Sprint(v...))
 }
