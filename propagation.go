@@ -106,59 +106,49 @@ func (r *textMapPropagator) extract(opaqueCarrier interface{}) (ot.SpanContext, 
 		return nil, ot.ErrInvalidCarrier
 	}
 
-	fieldCount := 0
-	var traceID, spanID int64
-	var err error
-	baggage := make(map[string]string)
-	err = carrier.ForeachKey(func(k, v string) error {
+	spanContext := SpanContext{
+		Baggage: make(map[string]string),
+	}
+
+	var fieldCount int
+	err := carrier.ForeachKey(func(k, v string) error {
 		switch strings.ToLower(k) {
 		case FieldT:
 			fieldCount++
-			traceID, err = Header2ID(v)
+
+			traceID, err := Header2ID(v)
 			if err != nil {
 				return ot.ErrSpanContextCorrupted
 			}
+
+			spanContext.TraceID = traceID
 		case FieldS:
 			fieldCount++
-			spanID, err = Header2ID(v)
+
+			spanID, err := Header2ID(v)
 			if err != nil {
 				return ot.ErrSpanContextCorrupted
 			}
+
+			spanContext.SpanID = spanID
 		default:
 			lk := strings.ToLower(k)
-
 			if strings.HasPrefix(lk, FieldB) {
-				baggage[strings.TrimPrefix(lk, FieldB)] = v
+				spanContext.Baggage[strings.TrimPrefix(lk, FieldB)] = v
 			}
 		}
 
 		return nil
 	})
-
-	return r.finishExtract(err, fieldCount, traceID, spanID, baggage)
-}
-
-func (r *textMapPropagator) finishExtract(err error,
-	fieldCount int,
-	traceID int64,
-	spanID int64,
-	baggage map[string]string) (ot.SpanContext, error) {
 	if err != nil {
 		return nil, err
 	}
 
-	if fieldCount < 2 {
-		if fieldCount == 0 {
-			return nil, ot.ErrSpanContextNotFound
-		}
-
+	if fieldCount == 0 {
+		return nil, ot.ErrSpanContextNotFound
+	} else if fieldCount < 2 {
 		return nil, ot.ErrSpanContextCorrupted
 	}
 
-	return SpanContext{
-		TraceID: traceID,
-		SpanID:  spanID,
-		Sampled: false,
-		Baggage: baggage,
-	}, nil
+	return spanContext, nil
 }
