@@ -17,35 +17,36 @@ const (
 )
 
 func TestGeneratedIDRange(t *testing.T) {
-	var count = 10000
-	for index := 0; index < count; index++ {
+	for index := 0; index < 10000; index++ {
 		id := randomID()
-		assert.True(t, id <= MaxInt64, "Generated ID is out of bounds (+)")
-		assert.True(t, id >= MinInt64, "Generated ID is out of bounds (-)")
+		assert.LessOrEqual(t, id, MaxInt64)
+		assert.GreaterOrEqual(t, id, MinInt64)
 	}
 }
 
-func TestIDConversionBackForth(t *testing.T) {
-	maxID := int64(MaxInt64)
-	minID := int64(MinInt64)
+func TestParseID(t *testing.T) {
 	maxHex := "7fffffffffffffff"
-	minHex := "8000000000000000"
-
-	// Place holders
-	var header string
-	var id int64
 
 	// maxID (int64) -> header -> int64
-	header, _ = ID2Header(maxID)
-	id, _ = Header2ID(header)
-	assert.Equal(t, maxHex, header, "ID2Header incorrect result.")
-	assert.Equal(t, maxID, id, "Convert back into original is wrong")
+	header := FormatID(MaxInt64)
+	assert.Equal(t, maxHex, header)
+
+	id, err := ParseID(header)
+	require.NoError(t, err)
+	assert.Equal(t, MaxInt64, id)
+}
+
+func TestFormatID(t *testing.T) {
+	minID := int64(MinInt64)
+	minHex := "8000000000000000"
 
 	// minHex (unsigned 64bit hex string) -> signed 64bit int -> unsigned 64bit hex string
-	id, _ = Header2ID(minHex)
-	header, _ = ID2Header(id)
-	assert.Equal(t, minID, id, "Header2ID incorrect result")
-	assert.Equal(t, minHex, header, "Convert back into original is wrong")
+	id, err := ParseID(minHex)
+	require.NoError(t, err)
+	assert.Equal(t, minID, id)
+
+	header := FormatID(id)
+	assert.Equal(t, minHex, header)
 }
 
 func TestIDConversion(t *testing.T) {
@@ -53,35 +54,50 @@ func TestIDConversion(t *testing.T) {
 	var header string
 	var id int64
 
-	header, _ = ID2Header(-7815363404733516491)
-	assert.Equal(t, "938a406416457535", header, "ID2Header incorrect result.")
-	id, _ = Header2ID("938a406416457535")
-	assert.Equal(t, int64(-7815363404733516491), id, "Header2ID incorrect result")
+	header = FormatID(-7815363404733516491)
+	assert.Equal(t, "938a406416457535", header, "FormatID incorrect result.")
 
-	header, _ = ID2Header(307170163380978816)
-	assert.Equal(t, "44349a2d9ec0480", header, "ID2Header incorrect result.")
-	id, _ = Header2ID("44349a2d9ec0480") // Without a leading zero
-	assert.Equal(t, int64(307170163380978816), id, "Header2ID incorrect result")
-	id, _ = Header2ID("044349a2d9ec0480") // Try with a leading zero
-	assert.Equal(t, int64(307170163380978816), id, "Header2ID incorrect result")
+	id, err := ParseID("938a406416457535")
+	require.NoError(t, err)
+	assert.Equal(t, int64(-7815363404733516491), id, "ParseID incorrect result")
 
-	header, _ = ID2Header(2920004540187184976)
-	assert.Equal(t, "2885f0a890628f50", header, "ID2Header incorrect result.")
-	id, _ = Header2ID("2885f0a890628f50")
-	assert.Equal(t, int64(2920004540187184976), id, "Header2ID incorrect result")
+	header = FormatID(307170163380978816)
+	assert.Equal(t, "44349a2d9ec0480", header, "FormatID incorrect result.")
 
-	header, _ = ID2Header(16)
-	assert.Equal(t, "10", header, "ID2Header should drop leading zeros")
-	id, _ = Header2ID("0000000000000010")
-	assert.Equal(t, int64(16), id, "Header2ID should stll work with leading zeros")
-	id, _ = Header2ID("10")
-	assert.Equal(t, int64(16), id, "Header2ID should convert <16 char strings")
+	id, err = ParseID("44349a2d9ec0480") // Without a leading zero
+	require.NoError(t, err)
+	assert.Equal(t, int64(307170163380978816), id, "ParseID incorrect result")
+
+	id, err = ParseID("044349a2d9ec0480") // Try with a leading zero
+	require.NoError(t, err)
+	assert.Equal(t, int64(307170163380978816), id, "ParseID incorrect result")
+
+	header = FormatID(2920004540187184976)
+	assert.Equal(t, "2885f0a890628f50", header, "FormatID incorrect result.")
+
+	id, err = ParseID("2885f0a890628f50")
+	require.NoError(t, err)
+	assert.Equal(t, int64(2920004540187184976), id, "ParseID incorrect result")
+
+	header = FormatID(16)
+	assert.Equal(t, "10", header, "FormatID should drop leading zeros")
+
+	id, err = ParseID("0000000000000010")
+	require.NoError(t, err)
+	assert.Equal(t, int64(16), id, "ParseID should stll work with leading zeros")
+
+	id, err = ParseID("10")
+	require.NoError(t, err)
+	assert.Equal(t, int64(16), id, "ParseID should convert <16 char strings")
 
 	count := 10000
 	for index := 0; index < count; index++ {
 		generatedID := randomID()
-		header, _ := ID2Header(generatedID)
-		id, _ := Header2ID(header)
+
+		header := FormatID(generatedID)
+
+		id, err := ParseID(header)
+		require.NoError(t, err)
 		assert.Equal(t, generatedID, id, "Original ID does not match converted back ID")
 	}
 }
@@ -89,8 +105,8 @@ func TestIDConversion(t *testing.T) {
 func TestBogusValues(t *testing.T) {
 	var id int64
 
-	// Header2ID with random strings should return 0
-	id, err := Header2ID("this shouldnt work")
+	// ParseID with random strings should return 0
+	id, err := ParseID("this shouldnt work")
 	assert.Equal(t, int64(0), id, "Bad input should return 0")
 	assert.NotNil(t, err, "An error should be returned")
 }

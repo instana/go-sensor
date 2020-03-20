@@ -73,53 +73,20 @@ func ParseID(header string) (int64, error) {
 	return signedID, nil
 }
 
-// ID2Header converts an Instana ID to a value that can be used in
-// context propagation (such as HTTP headers).  More specifically,
-// this converts a signed 64 bit integer into an unsigned hex string.
+// ID2Header calls instana.FormatID() and returns its result and a nil error.
+// This is kept here for backward compatibility with go-sensor@v1.x
+//
+// Deprecated: please use instana.FormatID() instead
 func ID2Header(id int64) (string, error) {
-	// FIXME: We're assuming LittleEndian here
-
-	// Write out _signed_ 64bit integer to byte buffer
-	buf := bytes.NewBuffer(nil)
-	if err := binary.Write(buf, binary.LittleEndian, id); err != nil {
-		return "", fmt.Errorf("context corrupted; could not convert value: %s", err)
-	}
-
-	// Read bytes back into _unsigned_ 64 bit integer
-	var unsigned uint64
-	if err := binary.Read(buf, binary.LittleEndian, &unsigned); err != nil {
-		return "", fmt.Errorf("context corrupted; could not convert value: %s", err)
-	}
-
-	// Convert uint64 to hex string equivalent and return that
-	return strconv.FormatUint(unsigned, 16), nil
+	return FormatID(id), nil
 }
 
-// Header2ID converts an header context value into an Instana ID.  More
-// specifically, this converts an unsigned 64 bit hex value into a signed
-// 64bit integer.
+// Header2ID calls instana.ParseID() and returns its result.
+// This is kept here for backward compatibility with go-sensor@v1.x
+//
+// Deprecated: please use instana.ParseID() instead
 func Header2ID(header string) (int64, error) {
-	// FIXME: We're assuming LittleEndian here
-
-	// Parse unsigned 64 bit hex string into unsigned 64 bit base 10 integer
-	unsignedID, err := strconv.ParseUint(header, 16, 64)
-	if err != nil {
-		return 0, fmt.Errorf("context corrupted; could not convert value: %s", err)
-	}
-
-	// Write out _unsigned_ 64bit integer to byte buffer
-	buf := bytes.NewBuffer(nil)
-	if err := binary.Write(buf, binary.LittleEndian, unsignedID); err != nil {
-		return 0, fmt.Errorf("context corrupted; could not convert value: %s", err)
-	}
-
-	// Read bytes back into _signed_ 64 bit integer
-	var signedID int64
-	if err := binary.Read(buf, binary.LittleEndian, &signedID); err != nil {
-		return 0, fmt.Errorf("context corrupted; could not convert value: %s", err)
-	}
-
-	return signedID, nil
+	return ParseID(header)
 }
 
 func getProcCommandLine() (string, []string, bool) {
