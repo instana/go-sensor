@@ -147,11 +147,11 @@ func (s *Sensor) WithTracingSpan(operationName string, w http.ResponseWriter, re
 	case nil:
 		opts = append(opts, ext.RPCServerOption(wireContext))
 	case ot.ErrSpanContextNotFound:
-		instanaLog.debug("no span context provided with %s %s", req.Method, req.URL.Path)
+		s.Logger().Debug("no span context provided with ", req.Method, " ", req.URL.Path)
 	case ot.ErrUnsupportedFormat:
-		instanaLog.info("unsupported span context format provided with %s %s", req.Method, req.URL.Path)
+		s.Logger().Info("unsupported span context format provided with ", req.Method, " ", req.URL.Path)
 	default:
-		instanaLog.warn("failed to extract span context from the request:", err)
+		s.Logger().Warn("failed to extract span context from the request:", err)
 	}
 
 	if ps, ok := SpanFromContext(req.Context()); ok {
