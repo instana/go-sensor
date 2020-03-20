@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 // Trace IDs (and Span IDs) are based on Java Signed Long datatype
@@ -128,8 +129,9 @@ func TestHexGatewayToAddr(t *testing.T) {
 func TestGetDefaultGateway(t *testing.T) {
 
 	tests := []struct {
-		in       string
-		expected string
+		in          string
+		expected    string
+		expectError bool
 	}{
 		{
 			in: `Iface	Destination	Gateway 	Flags	RefCnt	Use	Metric	Mask		MTU	Window	IRTT
@@ -168,8 +170,8 @@ eth0	00000000	010011AC	0003	0	0	0	00000000	0	0	0
 				t.Fatal(err)
 			}
 
-			gateway := getDefaultGateway(tmpFile.Name())
-
+			gateway, err := getDefaultGateway(tmpFile.Name())
+			require.NoError(t, err)
 			assert.Equal(t, test.expected, gateway)
 		}()
 	}

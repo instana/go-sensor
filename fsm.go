@@ -61,40 +61,55 @@ func (r *fsmS) scheduleRetry(e *f.Event, cb func(e *f.Event)) {
 }
 
 func (r *fsmS) lookupAgentHost(e *f.Event) {
-	cb := func(b bool, host string) {
-		if b {
+	cb := func(found bool, host string) {
+		if found {
 			r.lookupSuccess(host)
-		} else {
-			gateway := getDefaultGateway("/proc/net/route")
-			if gateway != "" {
-				go r.checkHost(gateway, func(b bool, host string) {
-					if b {
-						r.lookupSuccess(host)
-					} else {
-						instanaLog.error("Cannot connect to the agent through localhost or default gateway. Scheduling retry.")
-						r.scheduleRetry(e, r.lookupAgentHost)
-					}
-				})
-			} else {
-				instanaLog.error("Default gateway not available. Scheduling retry")
-				r.scheduleRetry(e, r.lookupAgentHost)
-			}
+			return
 		}
+
+		gateway, err := getDefaultGateway("/proc/net/route")
+		if err != nil {
+			instanaLog.error("failed to fetch the default gateway, scheduling retry: ", err)
+			r.scheduleRetry(e, r.lookupAgentHost)
+
+			return
+		}
+
+		if gateway == "" {
+			instanaLog.error("default gateway not available, scheduling retry")
+			r.scheduleRetry(e, r.lookupAgentHost)
+
+			return
+		}
+
+		go r.checkHost(gateway, func(found bool, host string) {
+			if found {
+				r.lookupSuccess(host)
+				return
+			}
+
+			instanaLog.error("cannot connect to the agent through localhost or default gateway, scheduling retry")
+			r.scheduleRetry(e, r.lookupAgentHost)
+		})
+
 	}
+
 	hostNames := []string{
 		r.agent.sensor.options.AgentHost,
 		os.Getenv("INSTANA_AGENT_HOST"),
 		agentDefaultHost,
 	}
 	for _, name := range hostNames {
-		if name != "" {
-			go r.checkHost(name, cb)
-			return
+		if name == "" {
+			continue
 		}
+
+		go r.checkHost(name, cb)
+		break
 	}
 }
 
-func (r *fsmS) checkHost(host string, cb func(b bool, host string)) {
+func (r *fsmS) checkHost(host string, cb func(found bool, host string)) {
 	instanaLog.debug("checking host", host)
 
 	header, err := r.agent.requestHeader(r.agent.makeHostURL(host, "/"), "GET", "Server")
@@ -160,8 +175,17 @@ func (r *fsmS) announceSensor(e *f.Event) {
 			pid = os.Getpid()
 		}
 
-		d := &discoveryS{PID: pid}
-		d.Name, d.Args = getCommandLine()
+		d := &discoveryS{
+			PID:  pid,
+			Name: os.Args[0],
+			Args: os.Args[1:],
+		}
+		if name, args, ok := getProcCommandLine(); ok {
+			instanaLog.debug("got cmdline from /proc: ", name, args)
+			d.Name, d.Args = name, args
+		} else {
+			instanaLog.debug("no /proc, using OS reported cmdline")
+		}
 
 		if _, err := os.Stat("/proc"); err == nil {
 			if addr, err := net.ResolveTCPAddr("tcp", r.agent.host+":42699"); err == nil {
