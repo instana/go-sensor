@@ -233,12 +233,8 @@ func TestWithTracingSpan_WithWireContext(t *testing.T) {
 
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest("GET", "/test", nil)
-
-	traceID, err := instana.ID2Header(1234567890)
-	require.NoError(t, err)
-
-	parentSpanID, err := instana.ID2Header(1)
-	require.NoError(t, err)
+	traceID := instana.FormatID(1234567890)
+	parentSpanID := instana.FormatID(1)
 
 	req.Header.Set(instana.FieldT, traceID)
 	req.Header.Set(instana.FieldS, parentSpanID)
