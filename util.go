@@ -41,9 +41,9 @@ func ID2Header(id int64) (string, error) {
 			// Convert uint64 to hex string equivalent and return that
 			return strconv.FormatUint(unsigned, 16), nil
 		}
-		log.debug(err)
+		instanaLog.debug(err)
 	} else {
-		log.debug(err)
+		instanaLog.debug(err)
 	}
 	return "", errors.New("context corrupted; could not convert value")
 }
@@ -65,12 +65,12 @@ func Header2ID(header string) (int64, error) {
 				// The success case
 				return signedID, nil
 			}
-			log.debug(err)
+			instanaLog.debug(err)
 		} else {
-			log.debug(err)
+			instanaLog.debug(err)
 		}
 	} else {
-		log.debug(err)
+		instanaLog.debug(err)
 	}
 	return int64(0), errors.New("context corrupted; could not convert value")
 }
@@ -81,14 +81,14 @@ func getCommandLine() (string, []string) {
 	cmdline, err := ioutil.ReadFile(cmdlinePath)
 
 	if err != nil {
-		log.debug("No /proc.  Returning OS reported cmdline")
+		instanaLog.debug("No /proc.  Returning OS reported cmdline")
 		return os.Args[0], os.Args[1:]
 	}
 
 	parts := strings.FieldsFunc(string(cmdline), func(c rune) bool {
 		return c == '\u0000'
 	})
-	log.debug("cmdline says:", parts[0], parts[1:])
+	instanaLog.debug("cmdline says:", parts[0], parts[1:])
 	return parts[0], parts[1:]
 }
 
@@ -96,7 +96,7 @@ func getDefaultGateway(routeTableFile string) string {
 	routeTable, err := os.Open(routeTableFile)
 
 	if err != nil {
-		log.error(err)
+		instanaLog.error(err)
 		return ""
 	}
 
@@ -115,7 +115,7 @@ func getDefaultGateway(routeTableFile string) string {
 			gateway, err := hexGatewayToAddr(gatewayHex)
 
 			if err != nil {
-				log.error(err)
+				instanaLog.error(err)
 				return ""
 			}
 
@@ -124,7 +124,7 @@ func getDefaultGateway(routeTableFile string) string {
 	}
 
 	if err := s.Err(); err != nil {
-		log.error(err)
+		instanaLog.error(err)
 	}
 
 	return ""

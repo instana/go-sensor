@@ -85,12 +85,12 @@ func (r *textMapPropagator) inject(spanContext ot.SpanContext, opaqueCarrier int
 	if instanaTID, err := ID2Header(sc.TraceID); err == nil {
 		carrier.Set(exstfieldT, instanaTID)
 	} else {
-		log.debug(err)
+		instanaLog.debug(err)
 	}
 	if instanaSID, err := ID2Header(sc.SpanID); err == nil {
 		carrier.Set(exstfieldS, instanaSID)
 	} else {
-		log.debug(err)
+		instanaLog.debug(err)
 	}
 	carrier.Set(exstfieldL, strconv.Itoa(1))
 

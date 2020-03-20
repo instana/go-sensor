@@ -116,7 +116,7 @@ func (r *Recorder) RecordSpan(span *spanS) {
 	}
 
 	if len(r.spans) >= sensor.options.ForceTransmissionStartingAt {
-		log.debug("Forcing spans to agent.  Count:", len(r.spans))
+		instanaLog.debug("Forcing spans to agent.  Count:", len(r.spans))
 		go r.send()
 	}
 }
@@ -168,7 +168,7 @@ func (r *Recorder) send() {
 		go func() {
 			_, err := sensor.agent.request(sensor.agent.makeURL(agentTracesURL), "POST", spansToSend)
 			if err != nil {
-				log.debug("Posting traces failed in send(): ", err)
+				instanaLog.debug("Posting traces failed in send(): ", err)
 				sensor.agent.reset()
 			}
 		}()

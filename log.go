@@ -1,7 +1,7 @@
 package instana
 
 import (
-	l "log"
+	"log"
 )
 
 // Valid log levels
@@ -16,7 +16,7 @@ type logS struct {
 	sensor *sensorS
 }
 
-var log *logS
+var instanaLog *logS
 
 func (r *logS) makeV(prefix string, v ...interface{}) []interface{} {
 	return append([]interface{}{prefix}, v...)
@@ -24,29 +24,29 @@ func (r *logS) makeV(prefix string, v ...interface{}) []interface{} {
 
 func (r *logS) debug(v ...interface{}) {
 	if r.sensor.options.LogLevel >= Debug {
-		l.Println(r.makeV("DEBUG: instana:", v...)...)
+		log.Println(r.makeV("DEBUG: instana:", v...)...)
 	}
 }
 
 func (r *logS) info(v ...interface{}) {
 	if r.sensor.options.LogLevel >= Info {
-		l.Println(r.makeV("INFO: instana:", v...)...)
+		log.Println(r.makeV("INFO: instana:", v...)...)
 	}
 }
 
 func (r *logS) warn(v ...interface{}) {
 	if r.sensor.options.LogLevel >= Warn {
-		l.Println(r.makeV("WARN: instana:", v...)...)
+		log.Println(r.makeV("WARN: instana:", v...)...)
 	}
 }
 
 func (r *logS) error(v ...interface{}) {
 	if r.sensor.options.LogLevel >= Error {
-		l.Println(r.makeV("ERROR: instana:", v...)...)
+		log.Println(r.makeV("ERROR: instana:", v...)...)
 	}
 }
 
 func (r *sensorS) initLog() {
-	log = new(logS)
-	log.sensor = r
+	instanaLog = new(logS)
+	instanaLog.sensor = r
 }

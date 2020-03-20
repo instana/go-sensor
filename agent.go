@@ -153,7 +153,7 @@ func (r *agentS) fullRequestResponse(url string, method string, data interface{}
 		// this is the time where the entity is registering in the Instana
 		// backend and it will return 404 until it's done.
 		if !r.sensor.agent.fsm.fsm.Is("announced") {
-			log.info(err, url)
+			instanaLog.info(err, url)
 		}
 	}
 
@@ -174,7 +174,7 @@ func (r *agentS) reset() {
 
 func (r *sensorS) initAgent() *agentS {
 
-	log.debug("initializing agent")
+	instanaLog.debug("initializing agent")
 
 	ret := new(agentS)
 	ret.sensor = r

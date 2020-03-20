@@ -97,12 +97,12 @@ func InitSensor(options *Options) {
 				return errors.New("sender not ready")
 			}
 
-			log.debug("sending profiles to agent")
+			instanaLog.debug("sending profiles to agent")
 
 			_, err := sensor.agent.request(sensor.agent.makeURL(agentProfilesURL), "POST", profiles)
 			if err != nil {
 				sensor.agent.reset()
-				log.error(err)
+				instanaLog.error(err)
 			}
 
 			return err
@@ -111,5 +111,5 @@ func InitSensor(options *Options) {
 		autoprofile.Enable()
 	}
 
-	log.debug("initialized sensor")
+	instanaLog.debug("initialized sensor")
 }

@@ -33,8 +33,8 @@ var procSchedPIDRegex = regexp.MustCompile(`\((\d+),`)
 
 func (r *fsmS) init() {
 
-	log.warn("Stan is on the scene.  Starting Instana instrumentation.")
-	log.debug("initializing fsm")
+	instanaLog.warn("Stan is on the scene.  Starting Instana instrumentation.")
+	instanaLog.debug("initializing fsm")
 
 	r.fsm = f.NewFSM(
 		"none",
@@ -71,12 +71,12 @@ func (r *fsmS) lookupAgentHost(e *f.Event) {
 					if b {
 						r.lookupSuccess(host)
 					} else {
-						log.error("Cannot connect to the agent through localhost or default gateway. Scheduling retry.")
+						instanaLog.error("Cannot connect to the agent through localhost or default gateway. Scheduling retry.")
 						r.scheduleRetry(e, r.lookupAgentHost)
 					}
 				})
 			} else {
-				log.error("Default gateway not available. Scheduling retry")
+				instanaLog.error("Default gateway not available. Scheduling retry")
 				r.scheduleRetry(e, r.lookupAgentHost)
 			}
 		}
@@ -95,7 +95,7 @@ func (r *fsmS) lookupAgentHost(e *f.Event) {
 }
 
 func (r *fsmS) checkHost(host string, cb func(b bool, host string)) {
-	log.debug("checking host", host)
+	instanaLog.debug("checking host", host)
 
 	header, err := r.agent.requestHeader(r.agent.makeHostURL(host, "/"), "GET", "Server")
 
@@ -103,7 +103,7 @@ func (r *fsmS) checkHost(host string, cb func(b bool, host string)) {
 }
 
 func (r *fsmS) lookupSuccess(host string) {
-	log.debug("agent lookup success", host)
+	instanaLog.debug("agent lookup success", host)
 
 	r.agent.setHost(host)
 	r.retries = maximumRetries
@@ -113,12 +113,12 @@ func (r *fsmS) lookupSuccess(host string) {
 func (r *fsmS) announceSensor(e *f.Event) {
 	cb := func(b bool, from *fromS) {
 		if b {
-			log.info("Host agent available. We're in business. Announced pid:", from.PID)
+			instanaLog.info("Host agent available. We're in business. Announced pid:", from.PID)
 			r.agent.setFrom(from)
 			r.retries = maximumRetries
 			r.fsm.Event(eAnnounce)
 		} else {
-			log.error("Cannot announce sensor. Scheduling retry.")
+			instanaLog.error("Cannot announce sensor. Scheduling retry.")
 			r.retries--
 			if r.retries > 0 {
 				r.scheduleRetry(e, r.announceSensor)
@@ -128,12 +128,12 @@ func (r *fsmS) announceSensor(e *f.Event) {
 		}
 	}
 
-	log.debug("announcing sensor to the agent")
+	instanaLog.debug("announcing sensor to the agent")
 
 	go func(cb func(b bool, from *fromS)) {
 		defer func() {
 			if r := recover(); r != nil {
-				log.debug("Announce recovered:", r)
+				instanaLog.debug("Announce recovered:", r)
 			}
 		}()
 
@@ -171,7 +171,7 @@ func (r *fsmS) announceSensor(e *f.Event) {
 					f, err := tcpConn.File()
 
 					if err != nil {
-						log.error(err)
+						instanaLog.error(err)
 					} else {
 						d.Fd = fmt.Sprintf("%v", f.Fd())
 
@@ -199,7 +199,7 @@ func (r *fsmS) testAgent(e *f.Event) {
 			r.retries = maximumRetries
 			r.fsm.Event(eTest)
 		} else {
-			log.debug("Agent is not yet ready. Scheduling retry.")
+			instanaLog.debug("Agent is not yet ready. Scheduling retry.")
 			r.retries--
 			if r.retries > 0 {
 				r.scheduleRetry(e, r.testAgent)
@@ -209,7 +209,7 @@ func (r *fsmS) testAgent(e *f.Event) {
 		}
 	}
 
-	log.debug("testing communication with the agent")
+	instanaLog.debug("testing communication with the agent")
 
 	go func(cb func(b bool)) {
 		_, err := r.agent.head(r.agent.makeURL(agentDataURL))

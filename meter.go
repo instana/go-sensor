@@ -73,7 +73,7 @@ func (r *meterS) init() {
 				if r.snapshotCountdown == 0 {
 					r.snapshotCountdown = SnapshotPeriod
 					s = r.collectSnapshot()
-					log.debug("collected snapshot")
+					instanaLog.debug("collected snapshot")
 				} else {
 					s = nil
 				}
@@ -147,7 +147,7 @@ func (r *meterS) collectSnapshot() *SnapshotS {
 
 func (r *sensorS) initMeter() *meterS {
 
-	log.debug("initializing meter")
+	instanaLog.debug("initializing meter")
 
 	ret := new(meterS)
 	ret.sensor = r
