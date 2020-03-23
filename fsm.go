@@ -32,9 +32,8 @@ type fsmS struct {
 var procSchedPIDRegex = regexp.MustCompile(`\((\d+),`)
 
 func (r *fsmS) init() {
-
-	instanaLog.warn("Stan is on the scene.  Starting Instana instrumentation.")
-	instanaLog.debug("initializing fsm")
+	r.agent.sensor.logger.Warn("Stan is on the scene.  Starting Instana instrumentation.")
+	r.agent.sensor.logger.Debug("initializing fsm")
 
 	r.fsm = f.NewFSM(
 		"none",
@@ -69,14 +68,14 @@ func (r *fsmS) lookupAgentHost(e *f.Event) {
 
 		gateway, err := getDefaultGateway("/proc/net/route")
 		if err != nil {
-			instanaLog.error("failed to fetch the default gateway, scheduling retry: ", err)
+			r.agent.sensor.logger.Error("failed to fetch the default gateway, scheduling retry: ", err)
 			r.scheduleRetry(e, r.lookupAgentHost)
 
 			return
 		}
 
 		if gateway == "" {
-			instanaLog.error("default gateway not available, scheduling retry")
+			r.agent.sensor.logger.Error("default gateway not available, scheduling retry")
 			r.scheduleRetry(e, r.lookupAgentHost)
 
 			return
@@ -88,7 +87,7 @@ func (r *fsmS) lookupAgentHost(e *f.Event) {
 				return
 			}
 
-			instanaLog.error("cannot connect to the agent through localhost or default gateway, scheduling retry")
+			r.agent.sensor.logger.Error("cannot connect to the agent through localhost or default gateway, scheduling retry")
 			r.scheduleRetry(e, r.lookupAgentHost)
 		})
 
@@ -110,7 +109,7 @@ func (r *fsmS) lookupAgentHost(e *f.Event) {
 }
 
 func (r *fsmS) checkHost(host string, cb func(found bool, host string)) {
-	instanaLog.debug("checking host", host)
+	r.agent.sensor.logger.Debug("checking host", host)
 
 	header, err := r.agent.requestHeader(r.agent.makeHostURL(host, "/"), "GET", "Server")
 
@@ -118,7 +117,7 @@ func (r *fsmS) checkHost(host string, cb func(found bool, host string)) {
 }
 
 func (r *fsmS) lookupSuccess(host string) {
-	instanaLog.debug("agent lookup success", host)
+	r.agent.sensor.logger.Debug("agent lookup success", host)
 
 	r.agent.setHost(host)
 	r.retries = maximumRetries
@@ -128,12 +127,12 @@ func (r *fsmS) lookupSuccess(host string) {
 func (r *fsmS) announceSensor(e *f.Event) {
 	cb := func(b bool, from *fromS) {
 		if b {
-			instanaLog.info("Host agent available. We're in business. Announced pid:", from.PID)
+			r.agent.sensor.logger.Info("Host agent available. We're in business. Announced pid:", from.PID)
 			r.agent.setFrom(from)
 			r.retries = maximumRetries
 			r.fsm.Event(eAnnounce)
 		} else {
-			instanaLog.error("Cannot announce sensor. Scheduling retry.")
+			r.agent.sensor.logger.Error("Cannot announce sensor. Scheduling retry.")
 			r.retries--
 			if r.retries > 0 {
 				r.scheduleRetry(e, r.announceSensor)
@@ -143,12 +142,12 @@ func (r *fsmS) announceSensor(e *f.Event) {
 		}
 	}
 
-	instanaLog.debug("announcing sensor to the agent")
+	r.agent.sensor.logger.Debug("announcing sensor to the agent")
 
 	go func(cb func(b bool, from *fromS)) {
 		defer func() {
-			if r := recover(); r != nil {
-				instanaLog.debug("Announce recovered:", r)
+			if err := recover(); err != nil {
+				r.agent.sensor.logger.Debug("Announce recovered:", err)
 			}
 		}()
 
@@ -181,10 +180,10 @@ func (r *fsmS) announceSensor(e *f.Event) {
 			Args: os.Args[1:],
 		}
 		if name, args, ok := getProcCommandLine(); ok {
-			instanaLog.debug("got cmdline from /proc: ", name, args)
+			r.agent.sensor.logger.Debug("got cmdline from /proc: ", name, args)
 			d.Name, d.Args = name, args
 		} else {
-			instanaLog.debug("no /proc, using OS reported cmdline")
+			r.agent.sensor.logger.Debug("no /proc, using OS reported cmdline")
 		}
 
 		if _, err := os.Stat("/proc"); err == nil {
@@ -195,7 +194,7 @@ func (r *fsmS) announceSensor(e *f.Event) {
 					f, err := tcpConn.File()
 
 					if err != nil {
-						instanaLog.error(err)
+						r.agent.sensor.logger.Error(err)
 					} else {
 						d.Fd = fmt.Sprintf("%v", f.Fd())
 
@@ -223,7 +222,7 @@ func (r *fsmS) testAgent(e *f.Event) {
 			r.retries = maximumRetries
 			r.fsm.Event(eTest)
 		} else {
-			instanaLog.debug("Agent is not yet ready. Scheduling retry.")
+			r.agent.sensor.logger.Debug("Agent is not yet ready. Scheduling retry.")
 			r.retries--
 			if r.retries > 0 {
 				r.scheduleRetry(e, r.testAgent)
@@ -233,7 +232,7 @@ func (r *fsmS) testAgent(e *f.Event) {
 		}
 	}
 
-	instanaLog.debug("testing communication with the agent")
+	r.agent.sensor.logger.Debug("testing communication with the agent")
 
 	go func(cb func(b bool)) {
 		_, err := r.agent.head(r.agent.makeURL(agentDataURL))
@@ -244,14 +243,6 @@ func (r *fsmS) testAgent(e *f.Event) {
 func (r *fsmS) reset() {
 	r.retries = maximumRetries
 	r.fsm.Event(eInit)
-}
-
-func (r *agentS) initFsm() *fsmS {
-	ret := new(fsmS)
-	ret.agent = r
-	ret.init()
-
-	return ret
 }
 
 func (r *agentS) canSend() bool {

@@ -30,11 +30,29 @@ func (r *sensorS) init(options *Options) {
 		return
 	}
 
+	r.logger = defaultLogger
 	r.setOptions(options)
 	r.configureServiceName()
 	r.agent = r.initAgent()
 	r.meter = r.initMeter()
-	r.logger = defaultLogger
+}
+
+func (r *sensorS) initAgent() *agentS {
+	r.logger.Debug("initializing agent")
+
+	ret := &agentS{sensor: r}
+	ret.init()
+
+	return ret
+}
+
+func (r *sensorS) initMeter() *meterS {
+	r.logger.Debug("initializing meter")
+
+	ret := &meterS{sensor: r}
+	ret.init()
+
+	return ret
 }
 
 func (r *sensorS) setOptions(options *Options) {
@@ -107,12 +125,12 @@ func InitSensor(options *Options) {
 				return errors.New("sender not ready")
 			}
 
-			instanaLog.debug("sending profiles to agent")
+			sensor.logger.Debug("sending profiles to agent")
 
 			_, err := sensor.agent.request(sensor.agent.makeURL(agentProfilesURL), "POST", profiles)
 			if err != nil {
 				sensor.agent.reset()
-				instanaLog.error(err)
+				sensor.logger.Error(err)
 			}
 
 			return err
@@ -121,5 +139,5 @@ func InitSensor(options *Options) {
 		autoprofile.Enable()
 	}
 
-	instanaLog.debug("initialized sensor")
+	sensor.logger.Debug("initialized sensor")
 }
