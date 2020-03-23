@@ -24,6 +24,63 @@ var sensor = instana.NewSensor("my-service")
 
 A full example can be found under the examples folder in [example/webserver/instana/http.go](./example/webserver/instana/http.go).
 
+### Log Output
+
+The Go sensor uses a leveled logger to log internal errors and diagnostic information. The default `logger.Logger` uses `log.Logger`
+configured with `log.Lstdflags` as a backend and writes messages to `os.Stderr`. By default this logger only prints out the `ERROR` level
+messages unless the environment variable `INSTANA_DEBUG` is set.
+
+To change the min log level in runtime it is recommended to configure and inject an instance of `instana.LeveledLogger` instead of using
+the deprecated `instana.SetLogLevel()` method:
+
+```go
+l := logger.New(log.New(os.Stderr, "", os.Lstdflags))
+instana.SetLogger(l)
+
+// ...
+
+l.SetLevel(logger.WarnLevel)
+```
+
+The `logger.LeveledLogger` interface is implemented by such popular logging libraries as [`github.com/sirupsen/logrus`](https://github.com/sirupsen/logrus) and [`go.uber.org/zap`](https://go.uber.org/zap), so they can be used as a replacement.
+
+**Note**: the value of `INSTANA_DEBUG` environment variable does not affect custom loggers. You'd need to explicitly check whether it's set
+and enable the debug logging while onfiguring your logger:
+
+```go
+import (
+	instana "github.com/instana/go-sensor"
+	"github.com/sirupsen/logrus"
+)
+
+func main() {	
+	// initialize Instana sensor
+	instana.InitSensor(&instana.Options{Service: SERVICE})
+
+	// initialize and configure the logger
+	logger := logrus.New()
+	logger.Level = logrus.InfoLevel
+
+	// check if INSTANA_DEBUG is set and set the log level to DEBUG if needed
+	if _, ok := os.LookupEnv("INSTANA_DEBUG"); ok {
+		logger.Level = logrus.DebugLevel
+	}
+
+	// use logrus to log the Instana Go sensor messages
+	instana.SetLogger(logger)
+
+	// ...
+}
+```
+
+The Go sensor [AutoProfile™](#autoprofile) by default uses the same logger as the sensor itself, however it can be configured to
+use its own, for example to write messages with different tags/prefix or use a different logging level. The following snippet
+demonstrates how to configure the custom logger for autoprofiler:
+
+```
+autoprofile.SetLogger(autoprofileLogger)
+```
+
 ### Trace Context Propagation
 
 Instana Go sensor provides an API to propagate the trace context throughout the call chain:
