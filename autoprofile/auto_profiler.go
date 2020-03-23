@@ -47,6 +47,11 @@ func SetLogLevel(level int) {
 	}
 }
 
+// SetLogger sets the leveled logger to use to output the diagnostic messages and errors
+func SetLogger(l logger.LeveledLogger) {
+	logger.SetLogger(l)
+}
+
 // Enable enables the auto profiling (disabled by default)
 func Enable() {
 	if enabled {

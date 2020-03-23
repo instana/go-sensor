@@ -38,6 +38,11 @@ func SetLogLevel(level instalogger.Level) {
 	l.SetLevel(level)
 }
 
+// SetLogger sets the leveled logger to use to output the diagnostic messages and errors
+func SetLogger(l LeveledLogger) {
+	defaultLogger = l
+}
+
 // Debug writes log message with defaultLogger.Debug level
 func Debug(v ...interface{}) {
 	defaultLogger.Debug(v...)
