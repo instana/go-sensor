@@ -16,6 +16,7 @@ const (
 type sensorS struct {
 	meter       *meterS
 	agent       *agentS
+	logger      LeveledLogger
 	options     *Options
 	serviceName string
 }
@@ -24,12 +25,15 @@ var sensor *sensorS
 
 func (r *sensorS) init(options *Options) {
 	// sensor can be initialized explicitly or implicitly through OpenTracing global init
-	if r.meter == nil {
-		r.setOptions(options)
-		r.configureServiceName()
-		r.agent = r.initAgent()
-		r.meter = r.initMeter()
+	if r.meter != nil {
+		return
 	}
+
+	r.setOptions(options)
+	r.configureServiceName()
+	r.agent = r.initAgent()
+	r.meter = r.initMeter()
+	r.logger = defaultLogger
 }
 
 func (r *sensorS) setOptions(options *Options) {
