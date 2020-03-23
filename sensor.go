@@ -105,7 +105,6 @@ func InitSensor(options *Options) {
 		options.LogLevel = Debug
 	}
 
-	sensor.initLog()
 	sensor.init(options)
 
 	// enable auto-profiling
