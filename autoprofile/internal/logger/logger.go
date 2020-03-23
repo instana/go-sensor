@@ -1,6 +1,8 @@
 package logger
 
-import l "log"
+import (
+	instalogger "github.com/instana/go-sensor/logger"
+)
 
 // Level is the log level
 type Level uint8
@@ -13,61 +15,45 @@ const (
 	DebugLevel
 )
 
-var defaultLogger *logWrapper = &logWrapper{DebugLevel}
+var defaultLogger LeveledLogger = instalogger.New(nil)
+
+// LeveledLogger is an interface of a generic logger that support different message levels.
+// By default instana.Sensor uses logger.Logger with log.Logger as an output, however this
+// interface is also compatible with such popular loggers as github.com/sirupsen/logrus.Logger
+// and go.uber.org/zap.SugaredLogger
+type LeveledLogger interface {
+	Debug(v ...interface{})
+	Info(v ...interface{})
+	Warn(v ...interface{})
+	Error(v ...interface{})
+}
 
 // SetLogLevel configures the min log level for autoprofile defaultLogger
-func SetLogLevel(level Level) {
-	defaultLogger.logLevel = level
+func SetLogLevel(level instalogger.Level) {
+	l, ok := defaultLogger.(*instalogger.Logger)
+	if !ok {
+		return
+	}
+
+	l.SetLevel(level)
 }
 
 // Debug writes log message with defaultLogger.Debug level
 func Debug(v ...interface{}) {
-	defaultLogger.debug(v...)
+	defaultLogger.Debug(v...)
 }
 
 // Info writes log message with defaultLogger.Info level
 func Info(v ...interface{}) {
-	defaultLogger.info(v...)
+	defaultLogger.Info(v...)
 }
 
 // Warn writes log message with defaultLogger.Warn level
 func Warn(v ...interface{}) {
-	defaultLogger.warn(v...)
+	defaultLogger.Warn(v...)
 }
 
 // Error writes log message with defaultLogger.Error level
 func Error(v ...interface{}) {
-	defaultLogger.error(v...)
-}
-
-type logWrapper struct {
-	logLevel Level
-}
-
-func (lw *logWrapper) makeV(prefix string, v ...interface{}) []interface{} {
-	return append([]interface{}{prefix}, v...)
-}
-
-func (lw *logWrapper) debug(v ...interface{}) {
-	if lw.logLevel >= DebugLevel {
-		l.Println(lw.makeV("DEBUG: instana:", v...)...)
-	}
-}
-
-func (lw *logWrapper) info(v ...interface{}) {
-	if lw.logLevel >= InfoLevel {
-		l.Println(lw.makeV("INFO: instana:", v...)...)
-	}
-}
-
-func (lw *logWrapper) warn(v ...interface{}) {
-	if lw.logLevel >= WarnLevel {
-		l.Println(lw.makeV("WARN: instana:", v...)...)
-	}
-}
-
-func (lw *logWrapper) error(v ...interface{}) {
-	if lw.logLevel >= ErrorLevel {
-		l.Println(lw.makeV("ERROR: instana:", v...)...)
-	}
+	defaultLogger.Error(v...)
 }

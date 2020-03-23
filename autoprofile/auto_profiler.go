@@ -3,6 +3,7 @@ package autoprofile
 import (
 	"github.com/instana/go-sensor/autoprofile/internal"
 	"github.com/instana/go-sensor/autoprofile/internal/logger"
+	instalogger "github.com/instana/go-sensor/logger"
 )
 
 var (
@@ -34,7 +35,16 @@ var (
 
 // SetLogLevel sets the min log level for autoprofiler
 func SetLogLevel(level int) {
-	logger.SetLogLevel(logger.Level(level))
+	switch logger.Level(level) {
+	case logger.ErrorLevel:
+		logger.SetLogLevel(instalogger.ErrorLevel)
+	case logger.WarnLevel:
+		logger.SetLogLevel(instalogger.WarnLevel)
+	case logger.InfoLevel:
+		logger.SetLogLevel(instalogger.InfoLevel)
+	default:
+		logger.SetLogLevel(instalogger.DebugLevel)
+	}
 }
 
 // Enable enables the auto profiling (disabled by default)
