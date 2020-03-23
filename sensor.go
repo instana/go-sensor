@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 
 	"github.com/instana/go-sensor/autoprofile"
+	"github.com/instana/go-sensor/logger"
 )
 
 const (
@@ -48,6 +49,11 @@ func (r *sensorS) setOptions(options *Options) {
 
 	if r.options.ForceTransmissionStartingAt == 0 {
 		r.options.ForceTransmissionStartingAt = DefaultForceSpanSendAt
+	}
+
+	// handle the legacy (instana.Options).LogLevel value if we use logger.Logger to log
+	if l, ok := r.logger.(*logger.Logger); ok {
+		setLogLevel(l, r.options.LogLevel)
 	}
 }
 
