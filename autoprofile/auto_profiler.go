@@ -34,6 +34,8 @@ var (
 )
 
 // SetLogLevel sets the min log level for autoprofiler
+//
+// Deprecated: use autoprofile.SetLogger() to set the logger and configure the min log level directly
 func SetLogLevel(level int) {
 	switch logger.Level(level) {
 	case logger.ErrorLevel:
