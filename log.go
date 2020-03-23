@@ -2,6 +2,9 @@ package instana
 
 import (
 	"log"
+	"os"
+
+	"github.com/instana/go-sensor/logger"
 )
 
 // Valid log levels
@@ -16,7 +19,10 @@ type logS struct {
 	sensor *sensorS
 }
 
-var instanaLog *logS
+var (
+	instanaLog    *logS
+	defaultLogger = logger.New(log.New(os.Stderr, "", log.LstdFlags))
+)
 
 func (r *logS) makeV(prefix string, v ...interface{}) []interface{} {
 	return append([]interface{}{prefix}, v...)

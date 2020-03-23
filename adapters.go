@@ -2,12 +2,9 @@ package instana
 
 import (
 	"context"
-	"log"
 	"net/http"
-	"os"
 	"runtime"
 
-	"github.com/instana/go-sensor/logger"
 	ot "github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
 	otlog "github.com/opentracing/opentracing-go/log"
@@ -46,7 +43,7 @@ func NewSensor(serviceName string) *Sensor {
 func NewSensorWithTracer(tracer ot.Tracer) *Sensor {
 	return &Sensor{
 		tracer: tracer,
-		logger: logger.New(log.New(os.Stderr, "", log.LstdFlags)),
+		logger: defaultLogger,
 	}
 }
 
