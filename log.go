@@ -15,7 +15,30 @@ const (
 	Debug = 3
 )
 
-var defaultLogger = logger.New(log.New(os.Stderr, "", log.LstdFlags))
+// LeveledLogger is an interface of a generic logger that support different message levels.
+// By default instana.Sensor uses logger.Logger with log.Logger as an output, however this
+// interface is also compatible with such popular loggers as github.com/sirupsen/logrus.Logger
+// and go.uber.org/zap.SugaredLogger
+type LeveledLogger interface {
+	Debug(v ...interface{})
+	Info(v ...interface{})
+	Warn(v ...interface{})
+	Error(v ...interface{})
+}
+
+var defaultLogger LeveledLogger = logger.New(log.New(os.Stderr, "", log.LstdFlags))
+
+// SetLogger configures the default logger to be used by Instana go-sensor. Note that changing the logger
+// will not affect already initialized instana.Sensor instances. To make them use the new logger please call
+// (*instana.Sensor).SetLogger() explicitly.
+func SetLogger(l LeveledLogger) {
+	defaultLogger = l
+
+	// if the sensor has already been initialized, we need to update its logger too
+	if sensor != nil {
+		sensor.setLogger(l)
+	}
+}
 
 // setLogLevel translates legacy Instana log levels into logger.Logger levels.
 // Any level that is greater than instana.Debug is interpreted as logger.DebugLevel.

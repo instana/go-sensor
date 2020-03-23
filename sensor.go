@@ -30,7 +30,10 @@ func (r *sensorS) init(options *Options) {
 		return
 	}
 
-	r.logger = defaultLogger
+	if r.logger == nil {
+		r.setLogger(defaultLogger)
+	}
+
 	r.setOptions(options)
 	r.configureServiceName()
 	r.agent = r.initAgent()
@@ -73,6 +76,10 @@ func (r *sensorS) setOptions(options *Options) {
 	if l, ok := r.logger.(*logger.Logger); ok {
 		setLogLevel(l, r.options.LogLevel)
 	}
+}
+
+func (r *sensorS) setLogger(l LeveledLogger) {
+	r.logger = l
 }
 
 func (r *sensorS) configureServiceName() {
