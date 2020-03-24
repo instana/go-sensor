@@ -2,6 +2,8 @@ package logger
 
 import (
 	"fmt"
+	"log"
+	"os"
 	"sync"
 )
 
@@ -59,8 +61,17 @@ type Logger struct {
 // 	logger.Debug("this is a debug message") // won't be printed
 // 	logger.Error("this is an  message") // ... while this one will
 //
-// The default logging level for a new logger instance is logger.ErrorLevel
+// In case  there is no printer provided, logger.Logger will use a new instance of log.Logger
+// initialized with log.Lstdflags that writes to os.Stderr:
+//
+// 	log.New(os.Stderr, "", log.Lstdflags)
+//
+// The default logging level for a new logger instance is logger.ErrorLevel.
 func New(printer Printer) *Logger {
+	if printer == nil {
+		printer = log.New(os.Stderr, "", log.LstdFlags)
+	}
+
 	return &Logger{
 		p:      printer,
 		prefix: DefaultPrefix,

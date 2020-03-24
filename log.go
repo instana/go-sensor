@@ -1,9 +1,6 @@
 package instana
 
 import (
-	"log"
-	"os"
-
 	"github.com/instana/go-sensor/logger"
 )
 
@@ -26,7 +23,7 @@ type LeveledLogger interface {
 	Error(v ...interface{})
 }
 
-var defaultLogger LeveledLogger = logger.New(log.New(os.Stderr, "", log.LstdFlags))
+var defaultLogger LeveledLogger = logger.New(nil)
 
 // SetLogger configures the default logger to be used by Instana go-sensor. Note that changing the logger
 // will not affect already initialized instana.Sensor instances. To make them use the new logger please call
