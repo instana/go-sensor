@@ -1,6 +1,7 @@
 package logger_test
 
 import (
+	"os"
 	"testing"
 
 	"github.com/instana/go-sensor/logger"
@@ -53,6 +54,16 @@ func TestLogger_SetLevel(t *testing.T) {
 
 	for lvl, expected := range examples {
 		t.Run(lvl.String(), func(t *testing.T) {
+			originalEnvVal, restoreOriginalVal := os.LookupEnv("INSTANA_DEBUG")
+			os.Unsetenv("INSTANA_DEBUG")
+
+			// restore original value
+			if restoreOriginalVal {
+				defer func() {
+					os.Setenv("INSTANA_DEBUG", originalEnvVal)
+				}()
+			}
+
 			p := &printer{}
 
 			l := logger.New(p)
@@ -64,6 +75,37 @@ func TestLogger_SetLevel(t *testing.T) {
 			l.Error("error", "level")
 
 			assert.Equal(t, expected, p.Records)
+		})
+	}
+}
+
+func TestLogger_SetLevel_INSTANA_DEBUG(t *testing.T) {
+	levels := []logger.Level{
+		logger.DebugLevel,
+		logger.InfoLevel,
+		logger.WarnLevel,
+		logger.ErrorLevel,
+	}
+	for _, lvl := range levels {
+		t.Run(lvl.String(), func(t *testing.T) {
+			originalEnvVal, restoreOriginalVal := os.LookupEnv("INSTANA_DEBUG")
+			os.Setenv("INSTANA_DEBUG", "yes")
+
+			// restore original value
+			defer func() {
+				os.Unsetenv("INSTANA_DEBUG")
+				if !restoreOriginalVal {
+					os.Setenv("INSTANA_DEBUG", originalEnvVal)
+				}
+			}()
+
+			p := &printer{}
+
+			l := logger.New(p)
+			l.SetLevel(lvl)
+
+			l.Debug("debug", "level")
+			assert.Contains(t, p.Records, []interface{}{"instana: ", "DEBUG", ": ", "debuglevel"})
 		})
 	}
 }

@@ -72,14 +72,30 @@ func New(printer Printer) *Logger {
 		printer = log.New(os.Stderr, "", log.LstdFlags)
 	}
 
-	return &Logger{
+	l := &Logger{
 		p:      printer,
 		prefix: DefaultPrefix,
 	}
+	l.SetLevel(ErrorLevel)
+
+	return l
 }
 
-// SetLevel changes the log level for this logger instance
+// SetLevel changes the log level for this logger instance. In case there is an INSTANA_DEBUG env variable set,
+// the provided log level will be overridden with DebugLevel.
 func (l *Logger) SetLevel(level Level) {
+	if _, ok := os.LookupEnv("INSTANA_DEBUG"); ok {
+		if level != DebugLevel {
+			defer l.Info(
+				"INSTANA_DEBUG env variable is set, the log level has been set to ",
+				DebugLevel,
+				" instead of requested ",
+				level,
+			)
+		}
+		level = DebugLevel
+	}
+
 	l.mu.Lock()
 	defer l.mu.Unlock()
 
