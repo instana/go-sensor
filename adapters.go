@@ -54,63 +54,34 @@ func (s *Sensor) SetLogger(l LeveledLogger) {
 // TraceHandler is similar to TracingHandler in regards, that it wraps an existing http.HandlerFunc
 // into a named instance to support capturing tracing information and data. The returned values are
 // compatible with handler registration methods, e.g. http.Handle()
+//
+// Deprecated: please use instana.TracingHandlerFunc() instead
 func (s *Sensor) TraceHandler(name, pattern string, handler http.HandlerFunc) (string, http.HandlerFunc) {
 	return pattern, s.TracingHandler(name, handler)
 }
 
 // TracingHandler wraps an existing http.HandlerFunc into a named instance to support capturing tracing
 // information and response data
+//
+// Deprecated: please use instana.TracingHandlerFunc() instead
 func (s *Sensor) TracingHandler(name string, handler http.HandlerFunc) http.HandlerFunc {
-	return func(w http.ResponseWriter, req *http.Request) {
-		s.WithTracingContext(name, w, req, func(span ot.Span, ctx context.Context) {
-			wrapped := &statusCodeRecorder{ResponseWriter: w}
-			handler.ServeHTTP(wrapped, req.WithContext(ctx))
-
-			if wrapped.Status > 0 {
-				span.SetTag(string(ext.HTTPStatusCode), wrapped.Status)
-			}
-		})
-	}
+	return TracingHandlerFunc(s, name, handler)
 }
 
 // TracingHttpRequest wraps an existing http.Request instance into a named instance to inject tracing and span
 // header information into the actual HTTP wire transfer
+//
+// Deprecated: please use instana.RoundTripper() instead
 func (s *Sensor) TracingHttpRequest(name string, parent, req *http.Request, client http.Client) (*http.Response, error) {
-	opts := []ot.StartSpanOption{
-		ext.SpanKindRPCClient,
-		ot.Tags{
-			string(ext.PeerHostname): req.Host,
-			string(ext.HTTPUrl):      req.URL.String(),
-			string(ext.HTTPMethod):   req.Method,
-		},
-	}
-
-	if parentSpan, ok := SpanFromContext(parent.Context()); ok {
-		opts = append(opts, ot.ChildOf(parentSpan.Context()))
-	}
-
-	span := s.tracer.StartSpan("client", opts...)
-	defer span.Finish()
-
-	headersCarrier := ot.HTTPHeadersCarrier(req.Header)
-	if err := s.tracer.Inject(span.Context(), ot.HTTPHeaders, headersCarrier); err != nil {
-		return nil, err
-	}
-
-	res, err := client.Do(req.WithContext(context.Background()))
-	if err != nil {
-		span.LogFields(otlog.Error(err))
-		return res, err
-	}
-
-	span.SetTag(string(ext.HTTPStatusCode), res.StatusCode)
-
-	return res, nil
+	client.Transport = RoundTripper(s, client.Transport)
+	return client.Do(req.WithContext(context.Background()))
 }
 
 // WithTracingSpan takes the given SpanSensitiveFunc and executes it under the scope of a child span, which is
 // injected as an argument when calling the function. It uses the name of the caller as a span operation name
 // unless a non-empty value is provided
+//
+// Deprecated: please use instana.TracingHandlerFunc() to instrument an HTTP handler
 func (s *Sensor) WithTracingSpan(operationName string, w http.ResponseWriter, req *http.Request, f SpanSensitiveFunc) {
 	if operationName == "" {
 		pc, _, _, _ := runtime.Caller(1)
@@ -169,27 +140,10 @@ func (s *Sensor) WithTracingSpan(operationName string, w http.ResponseWriter, re
 
 // Executes the given ContextSensitiveFunc and executes it under the scope of a newly created context.Context,
 // that provides access to the parent span as 'parentSpan'.
+//
+// Deprecated: please use instana.TracingHandlerFunc() to instrument an HTTP handler
 func (s *Sensor) WithTracingContext(name string, w http.ResponseWriter, req *http.Request, f ContextSensitiveFunc) {
 	s.WithTracingSpan(name, w, req, func(span ot.Span) {
 		f(span, ContextWithSpan(req.Context(), span))
 	})
-}
-
-// wrapper over http.ResponseWriter to spy the returned status code
-type statusCodeRecorder struct {
-	http.ResponseWriter
-	Status int
-}
-
-func (rec *statusCodeRecorder) WriteHeader(status int) {
-	rec.Status = status
-	rec.ResponseWriter.WriteHeader(status)
-}
-
-func (rec *statusCodeRecorder) Write(b []byte) (int, error) {
-	if rec.Status == 0 {
-		rec.Status = http.StatusOK
-	}
-
-	return rec.ResponseWriter.Write(b)
 }

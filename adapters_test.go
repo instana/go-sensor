@@ -116,7 +116,7 @@ func TestTracingHttpRequest(t *testing.T) {
 
 	require.NotNil(t, span.Data)
 	require.NotNil(t, span.Data.SDK)
-	assert.Equal(t, "client", span.Data.SDK.Name)
+	assert.Equal(t, "net/http.Client", span.Data.SDK.Name)
 	assert.Equal(t, "exit", span.Data.SDK.Type)
 
 	require.NotNil(t, span.Data.SDK.Custom)
