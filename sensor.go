@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 
 	"github.com/instana/go-sensor/autoprofile"
+	"github.com/instana/go-sensor/logger"
 )
 
 const (
@@ -16,6 +17,7 @@ const (
 type sensorS struct {
 	meter       *meterS
 	agent       *agentS
+	logger      LeveledLogger
 	options     *Options
 	serviceName string
 }
@@ -24,12 +26,36 @@ var sensor *sensorS
 
 func (r *sensorS) init(options *Options) {
 	// sensor can be initialized explicitly or implicitly through OpenTracing global init
-	if r.meter == nil {
-		r.setOptions(options)
-		r.configureServiceName()
-		r.agent = r.initAgent()
-		r.meter = r.initMeter()
+	if r.meter != nil {
+		return
 	}
+
+	if r.logger == nil {
+		r.setLogger(defaultLogger)
+	}
+
+	r.setOptions(options)
+	r.configureServiceName()
+	r.agent = r.initAgent()
+	r.meter = r.initMeter()
+}
+
+func (r *sensorS) initAgent() *agentS {
+	r.logger.Debug("initializing agent")
+
+	ret := &agentS{sensor: r}
+	ret.init()
+
+	return ret
+}
+
+func (r *sensorS) initMeter() *meterS {
+	r.logger.Debug("initializing meter")
+
+	ret := &meterS{sensor: r}
+	ret.init()
+
+	return ret
 }
 
 func (r *sensorS) setOptions(options *Options) {
@@ -45,6 +71,15 @@ func (r *sensorS) setOptions(options *Options) {
 	if r.options.ForceTransmissionStartingAt == 0 {
 		r.options.ForceTransmissionStartingAt = DefaultForceSpanSendAt
 	}
+
+	// handle the legacy (instana.Options).LogLevel value if we use logger.Logger to log
+	if l, ok := r.logger.(*logger.Logger); ok {
+		setLogLevel(l, r.options.LogLevel)
+	}
+}
+
+func (r *sensorS) setLogger(l LeveledLogger) {
+	r.logger = l
 }
 
 func (r *sensorS) configureServiceName() {
@@ -70,19 +105,11 @@ func InitSensor(options *Options) {
 	}
 
 	sensor = &sensorS{}
-
-	// If this environment variable is set, then override log level
-	_, ok := os.LookupEnv("INSTANA_DEBUG")
-	if ok {
-		options.LogLevel = Debug
-	}
-
-	sensor.initLog()
 	sensor.init(options)
 
 	// enable auto-profiling
 	if options.EnableAutoProfile {
-		autoprofile.SetLogLevel(options.LogLevel)
+		autoprofile.SetLogger(sensor.logger)
 		autoprofile.SetOptions(autoprofile.Options{
 			IncludeProfilerFrames: options.IncludeProfilerFrames,
 			MaxBufferedProfiles:   options.MaxBufferedProfiles,
@@ -97,12 +124,12 @@ func InitSensor(options *Options) {
 				return errors.New("sender not ready")
 			}
 
-			log.debug("sending profiles to agent")
+			sensor.logger.Debug("sending profiles to agent")
 
 			_, err := sensor.agent.request(sensor.agent.makeURL(agentProfilesURL), "POST", profiles)
 			if err != nil {
 				sensor.agent.reset()
-				log.error(err)
+				sensor.logger.Error(err)
 			}
 
 			return err
@@ -111,5 +138,5 @@ func InitSensor(options *Options) {
 		autoprofile.Enable()
 	}
 
-	log.debug("initialized sensor")
+	sensor.logger.Debug("initialized sensor")
 }

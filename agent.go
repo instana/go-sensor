@@ -54,6 +54,13 @@ func (r *agentS) init() {
 	r.setFrom(&fromS{})
 }
 
+func (r *agentS) initFsm() *fsmS {
+	ret := &fsmS{agent: r}
+	ret.init()
+
+	return ret
+}
+
 func (r *agentS) makeURL(prefix string) string {
 	return r.makeHostURL(r.host, prefix)
 }
@@ -153,7 +160,7 @@ func (r *agentS) fullRequestResponse(url string, method string, data interface{}
 		// this is the time where the entity is registering in the Instana
 		// backend and it will return 404 until it's done.
 		if !r.sensor.agent.fsm.fsm.Is("announced") {
-			log.info(err, url)
+			r.sensor.logger.Info(err, url)
 		}
 	}
 
@@ -170,15 +177,4 @@ func (r *agentS) setHost(host string) {
 
 func (r *agentS) reset() {
 	r.fsm.reset()
-}
-
-func (r *sensorS) initAgent() *agentS {
-
-	log.debug("initializing agent")
-
-	ret := new(agentS)
-	ret.sensor = r
-	ret.init()
-
-	return ret
 }

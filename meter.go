@@ -73,16 +73,15 @@ func (r *meterS) init() {
 				if r.snapshotCountdown == 0 {
 					r.snapshotCountdown = SnapshotPeriod
 					s = r.collectSnapshot()
-					log.debug("collected snapshot")
-				} else {
-					s = nil
+					r.sensor.logger.Debug("collected snapshot")
 				}
 
 				pid, _ := strconv.Atoi(r.sensor.agent.from.PID)
 				d := &EntityData{
 					PID:      pid,
 					Snapshot: s,
-					Metrics:  r.collectMetrics()}
+					Metrics:  r.collectMetrics(),
+				}
 
 				go r.send(d)
 			}
@@ -143,15 +142,4 @@ func (r *meterS) collectSnapshot() *SnapshotS {
 		MaxProcs: runtime.GOMAXPROCS(0),
 		Compiler: runtime.Compiler,
 		NumCPU:   runtime.NumCPU()}
-}
-
-func (r *sensorS) initMeter() *meterS {
-
-	log.debug("initializing meter")
-
-	ret := new(meterS)
-	ret.sensor = r
-	ret.init()
-
-	return ret
 }

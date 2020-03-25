@@ -16,6 +16,7 @@ type ContextSensitiveFunc func(span ot.Span, ctx context.Context)
 // Sensor is used to inject tracing information into requests
 type Sensor struct {
 	tracer ot.Tracer
+	logger LeveledLogger
 }
 
 // NewSensor creates a new instana.Sensor
@@ -29,12 +30,25 @@ func NewSensor(serviceName string) *Sensor {
 
 // NewSensorWithTracer returns a new instana.Sensor that uses provided tracer to report spans
 func NewSensorWithTracer(tracer ot.Tracer) *Sensor {
-	return &Sensor{tracer: tracer}
+	return &Sensor{
+		tracer: tracer,
+		logger: defaultLogger,
+	}
 }
 
 // Tracer returns the tracer instance for this sensor
 func (s *Sensor) Tracer() ot.Tracer {
 	return s.tracer
+}
+
+// Logger returns the logger instance for this sensor
+func (s *Sensor) Logger() LeveledLogger {
+	return s.logger
+}
+
+// SetLogger sets the logger for this sensor
+func (s *Sensor) SetLogger(l LeveledLogger) {
+	s.logger = l
 }
 
 // TraceHandler is similar to TracingHandler in regards, that it wraps an existing http.HandlerFunc
@@ -119,11 +133,11 @@ func (s *Sensor) WithTracingSpan(operationName string, w http.ResponseWriter, re
 	case nil:
 		opts = append(opts, ext.RPCServerOption(wireContext))
 	case ot.ErrSpanContextNotFound:
-		log.debug("no span context provided with %s %s", req.Method, req.URL.Path)
+		s.Logger().Debug("no span context provided with ", req.Method, " ", req.URL.Path)
 	case ot.ErrUnsupportedFormat:
-		log.info("unsupported span context format provided with %s %s", req.Method, req.URL.Path)
+		s.Logger().Info("unsupported span context format provided with ", req.Method, " ", req.URL.Path)
 	default:
-		log.warn("failed to extract span context from the request:", err)
+		s.Logger().Warn("failed to extract span context from the request:", err)
 	}
 
 	if ps, ok := SpanFromContext(req.Context()); ok {
