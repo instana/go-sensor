@@ -1,8 +1,6 @@
 package instana
 
 import (
-	"fmt"
-	"os"
 	"sync"
 	"time"
 
@@ -16,7 +14,7 @@ type SpanKind uint8
 
 // Valid span kinds
 const (
-	EntrySpanKind = iota + 1
+	EntrySpanKind SpanKind = iota + 1
 	ExitSpanKind
 	IntermediateSpanKind
 )
@@ -207,49 +205,6 @@ func (r *spanS) Tracer() ot.Tracer {
 	return r.tracer
 }
 
-func (r *spanS) getTag(tag string) interface{} {
-	var x, ok = r.Tags[tag]
-	if !ok {
-		x = ""
-	}
-	return x
-}
-
-func (r *spanS) getIntTag(tag string) int {
-	d := r.Tags[tag]
-	if d == nil {
-		return -1
-	}
-
-	x, ok := d.(int)
-	if !ok {
-		return -1
-	}
-
-	return x
-}
-
-func (r *spanS) getStringTag(tag string) string {
-	d := r.Tags[tag]
-	if d == nil {
-		return ""
-	}
-	return fmt.Sprint(d)
-}
-
-func (r *spanS) getHostName() string {
-	hostTag := r.getStringTag(string(ext.PeerHostname))
-	if hostTag != "" {
-		return hostTag
-	}
-
-	h, err := os.Hostname()
-	if err != nil {
-		h = "localhost"
-	}
-	return h
-}
-
 // Kind returns the kind of this span based on the value of ext.SpanKind tag
 func (r *spanS) Kind() SpanKind {
 	switch r.Tags[string(ext.SpanKind)] {
@@ -260,30 +215,6 @@ func (r *spanS) Kind() SpanKind {
 	default:
 		return IntermediateSpanKind
 	}
-}
-
-func (r *spanS) getSpanKindTag() string {
-	kind := r.getStringTag(string(ext.SpanKind))
-
-	switch kind {
-	case string(ext.SpanKindRPCServerEnum), "consumer", "entry":
-		return "entry"
-	case string(ext.SpanKindRPCClientEnum), "producer", "exit":
-		return "exit"
-	}
-	return "intermediate"
-}
-
-func (r *spanS) getSpanKindInt() int {
-	kind := r.getStringTag(string(ext.SpanKind))
-
-	switch kind {
-	case string(ext.SpanKindRPCServerEnum), "consumer", "entry":
-		return 1
-	case string(ext.SpanKindRPCClientEnum), "producer", "exit":
-		return 2
-	}
-	return 3
 }
 
 func (r *spanS) collectLogs() map[uint64]map[string]interface{} {
