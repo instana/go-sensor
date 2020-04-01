@@ -12,12 +12,12 @@ import (
 )
 
 type spanS struct {
-	Operation string
-	Start     time.Time
-	Duration  time.Duration
-	Tags      ot.Tags
-	Logs      []ot.LogRecord
-	Ec        int
+	Operation  string
+	Start      time.Time
+	Duration   time.Duration
+	Tags       ot.Tags
+	Logs       []ot.LogRecord
+	ErrorCount int
 
 	tracer *tracerS
 	mu     sync.Mutex
@@ -117,7 +117,7 @@ func (r *spanS) LogFields(fields ...otlog.Field) {
 	for _, v := range fields {
 		// If this tag indicates an error, increase the error count
 		if v.Key() == "error" {
-			r.Ec++
+			r.ErrorCount++
 		}
 	}
 
@@ -172,7 +172,7 @@ func (r *spanS) SetTag(key string, value interface{}) ot.Span {
 
 	// If this tag indicates an error, increase the error count
 	if key == "error" {
-		r.Ec++
+		r.ErrorCount++
 	}
 
 	r.Tags[key] = value
