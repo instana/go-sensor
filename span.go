@@ -11,6 +11,29 @@ import (
 	otlog "github.com/opentracing/opentracing-go/log"
 )
 
+// SpanKind represents values of field `k` in OpenTracing span representation
+type SpanKind uint8
+
+// Valid span kinds
+const (
+	EntrySpanKind = iota + 1
+	ExitSpanKind
+	IntermediateSpanKind
+)
+
+// String returns string representation of a span kind to be used as a `data.sdk.type`
+// JSON field value of an SDK span
+func (k SpanKind) String() string {
+	switch k {
+	case EntrySpanKind:
+		return "entry"
+	case ExitSpanKind:
+		return "exit"
+	default:
+		return "intermediate"
+	}
+}
+
 type spanS struct {
 	Operation  string
 	Start      time.Time
@@ -225,6 +248,18 @@ func (r *spanS) getHostName() string {
 		h = "localhost"
 	}
 	return h
+}
+
+// Kind returns the kind of this span based on the value of ext.SpanKind tag
+func (r *spanS) Kind() SpanKind {
+	switch r.Tags[string(ext.SpanKind)] {
+	case ext.SpanKindRPCServerEnum, string(ext.SpanKindRPCServerEnum), "consumer", "entry":
+		return EntrySpanKind
+	case ext.SpanKindRPCClientEnum, string(ext.SpanKindRPCClientEnum), "producer", "exit":
+		return ExitSpanKind
+	default:
+		return IntermediateSpanKind
+	}
 }
 
 func (r *spanS) getSpanKindTag() string {
