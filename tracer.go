@@ -50,7 +50,13 @@ func (r *tracerS) StartSpanWithOptions(operationName string, opts ot.StartSpanOp
 	}
 
 	tags := opts.Tags
-	span := &spanS{}
+	span := &spanS{
+		tracer:    r,
+		Operation: operationName,
+		Start:     startTime,
+		Duration:  -1,
+		Tags:      tags,
+	}
 Loop:
 	for _, ref := range opts.References {
 		switch ref.Type {
@@ -76,16 +82,6 @@ Loop:
 		span.context.TraceID = span.context.SpanID
 		span.context.Sampled = r.options.ShouldSample(span.context.TraceID)
 	}
-
-	return r.startSpanInternal(span, operationName, startTime, tags)
-}
-
-func (r *tracerS) startSpanInternal(span *spanS, operationName string, startTime time.Time, tags ot.Tags) ot.Span {
-	span.tracer = r
-	span.Operation = operationName
-	span.Start = startTime
-	span.Duration = -1
-	span.Tags = tags
 
 	return span
 }
