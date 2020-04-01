@@ -84,10 +84,10 @@ func (r *Recorder) RecordSpan(span *spanS) {
 	data.Service = sensor.serviceName
 
 	var parentID *int64
-	if span.ParentSpanID == 0 {
+	if span.context.ParentID == 0 {
 		parentID = nil
 	} else {
-		parentID = &span.ParentSpanID
+		parentID = &span.context.ParentID
 	}
 
 	r.Lock()

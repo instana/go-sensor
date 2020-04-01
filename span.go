@@ -12,19 +12,18 @@ import (
 )
 
 type spanS struct {
-	ParentSpanID int64
-	Operation    string
-	Start        time.Time
-	Duration     time.Duration
-	Tags         ot.Tags
-	Logs         []ot.LogRecord
-	Error        bool
-	Ec           int
+	Operation string
+	Start     time.Time
+	Duration  time.Duration
+	Tags      ot.Tags
+	Logs      []ot.LogRecord
+	Error     bool
+	Ec        int
 
 	tracer *tracerS
 	mu     sync.Mutex
 
-	context   SpanContext
+	context SpanContext
 }
 
 func (r *spanS) BaggageItem(key string) string {

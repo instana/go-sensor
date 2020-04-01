@@ -8,6 +8,9 @@ type SpanContext struct {
 	// A probabilistically unique identifier for a span.
 	SpanID int64
 
+	// An optional parent span ID, 0 if this is the root span context.
+	ParentID int64
+
 	// Whether the trace is sampled.
 	Sampled bool
 
@@ -40,9 +43,10 @@ func (c SpanContext) WithBaggageItem(key, val string) SpanContext {
 // Clone returns a deep copy of a SpanContext
 func (c SpanContext) Clone() SpanContext {
 	res := SpanContext{
-		TraceID: c.TraceID,
-		SpanID:  c.SpanID,
-		Sampled: c.Sampled,
+		TraceID:  c.TraceID,
+		SpanID:   c.SpanID,
+		ParentID: c.ParentID,
+		Sampled:  c.Sampled,
 	}
 
 	if c.Baggage != nil {
