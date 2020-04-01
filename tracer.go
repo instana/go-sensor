@@ -84,8 +84,6 @@ func NewTracer() ot.Tracer {
 
 // NewTracerWithOptions Get a new Tracer with the specified options.
 func NewTracerWithOptions(options *Options) ot.Tracer {
-	InitSensor(options)
-
 	return NewTracerWithEverything(options, NewRecorder())
 }
 
