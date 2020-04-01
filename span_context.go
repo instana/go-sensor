@@ -27,16 +27,30 @@ func (c SpanContext) ForeachBaggageItem(handler func(k, v string) bool) {
 // WithBaggageItem returns an entirely new SpanContext with the
 // given key:value baggage pair set.
 func (c SpanContext) WithBaggageItem(key, val string) SpanContext {
-	var newBaggage map[string]string
-	if c.Baggage == nil {
-		newBaggage = map[string]string{key: val}
-	} else {
-		newBaggage = make(map[string]string, len(c.Baggage)+1)
-		for k, v := range c.Baggage {
-			newBaggage[k] = v
-		}
-		newBaggage[key] = val
+	res := c.Clone()
+
+	if res.Baggage == nil {
+		res.Baggage = make(map[string]string, 1)
 	}
-	// Use positional parameters so the compiler will help catch new fields.
-	return SpanContext{c.TraceID, c.SpanID, c.Sampled, newBaggage}
+	res.Baggage[key] = val
+
+	return res
+}
+
+// Clone returns a deep copy of a SpanContext
+func (c SpanContext) Clone() SpanContext {
+	res := SpanContext{
+		TraceID: c.TraceID,
+		SpanID:  c.SpanID,
+		Sampled: c.Sampled,
+	}
+
+	if c.Baggage != nil {
+		res.Baggage = make(map[string]string, len(c.Baggage))
+		for k, v := range c.Baggage {
+			res.Baggage[k] = v
+		}
+	}
+
+	return res
 }
