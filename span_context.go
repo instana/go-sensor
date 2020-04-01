@@ -18,6 +18,24 @@ type SpanContext struct {
 	Baggage map[string]string // initialized on first use
 }
 
+// NewRootSpanContext initializes a new root span context issuing a new trace ID
+func NewRootSpanContext() SpanContext {
+	spanID := randomID()
+
+	return SpanContext{
+		TraceID: spanID,
+		SpanID:  spanID,
+	}
+}
+
+// NewSpanContext initializes a new child span context from its parent
+func NewSpanContext(parent SpanContext) SpanContext {
+	c := parent.Clone()
+	c.SpanID, c.ParentID = randomID(), parent.SpanID
+
+	return c
+}
+
 // ForeachBaggageItem belongs to the opentracing.SpanContext interface
 func (c SpanContext) ForeachBaggageItem(handler func(k, v string) bool) {
 	for k, v := range c.Baggage {
