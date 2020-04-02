@@ -62,7 +62,7 @@ func (r *Recorder) RecordSpan(span *spanS) {
 		return
 	}
 
-	data := NewSDKSpanData(span)
+	data := RegisteredSpanType(span.Operation).ExtractData(span)
 
 	r.Lock()
 	defer r.Unlock()
@@ -77,7 +77,7 @@ func (r *Recorder) RecordSpan(span *spanS) {
 		SpanID:    span.context.SpanID,
 		Timestamp: uint64(span.Start.UnixNano()) / uint64(time.Millisecond),
 		Duration:  uint64(span.Duration) / uint64(time.Millisecond),
-		Name:      "sdk",
+		Name:      string(data.Type()),
 		Error:     span.ErrorCount > 0,
 		Ec:        span.ErrorCount,
 		Lang:      "go",

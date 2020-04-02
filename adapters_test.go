@@ -37,7 +37,8 @@ func TestSensor_TracingHandler_Write(t *testing.T) {
 	assert.False(t, span.Error)
 	assert.Equal(t, 0, span.Ec)
 
-	data := span.Data
+	require.IsType(t, instana.SDKSpanData{}, span.Data)
+	data := span.Data.(instana.SDKSpanData)
 
 	assert.Equal(t, "test-handler", data.Tags.Name)
 	assert.Equal(t, "entry", data.Tags.Type)
@@ -73,7 +74,8 @@ func TestSensor_TracingHandler_WriteHeaders(t *testing.T) {
 	assert.False(t, span.Error)
 	assert.Equal(t, 0, span.Ec)
 
-	data := span.Data
+	require.IsType(t, instana.SDKSpanData{}, span.Data)
+	data := span.Data.(instana.SDKSpanData)
 
 	assert.Equal(t, "test-handler", data.Tags.Name)
 	assert.Equal(t, "entry", data.Tags.Type)
@@ -116,7 +118,8 @@ func TestTracingHttpRequest(t *testing.T) {
 	assert.False(t, span.Error)
 	assert.Equal(t, 0, span.Ec)
 
-	data := span.Data
+	require.IsType(t, instana.SDKSpanData{}, span.Data)
+	data := span.Data.(instana.SDKSpanData)
 
 	assert.Equal(t, "net/http.Client", data.Tags.Name)
 	assert.Equal(t, "exit", data.Tags.Type)
@@ -151,7 +154,8 @@ func TestWithTracingSpan(t *testing.T) {
 	assert.False(t, span.Error)
 	assert.Equal(t, 0, span.Ec)
 
-	data := span.Data
+	require.IsType(t, instana.SDKSpanData{}, span.Data)
+	data := span.Data.(instana.SDKSpanData)
 
 	assert.Equal(t, "test-span", data.Tags.Name)
 	assert.Equal(t, "entry", data.Tags.Type)
@@ -188,7 +192,8 @@ func TestWithTracingSpan_PanicHandling(t *testing.T) {
 	assert.True(t, span.Error)
 	assert.Equal(t, 1, span.Ec)
 
-	data := span.Data
+	require.IsType(t, instana.SDKSpanData{}, span.Data)
+	data := span.Data.(instana.SDKSpanData)
 
 	assert.Equal(t, "test-span", data.Tags.Name)
 	assert.Equal(t, "entry", data.Tags.Type)

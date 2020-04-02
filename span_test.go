@@ -31,8 +31,9 @@ func TestBasicSpan(t *testing.T) {
 	assert.Equal(t, uint64(2), span.Duration)
 	assert.Equal(t, "sdk", span.Name)
 
-	data := span.Data
-	assert.Equal(t, "go-sensor.test", span.Data.Service)
+	require.IsType(t, instana.SDKSpanData{}, span.Data)
+	data := span.Data.(instana.SDKSpanData)
+	assert.Equal(t, "go-sensor.test", data.Service)
 
 	assert.Equal(t, "test", data.Tags.Name)
 	assert.Nil(t, data.Tags.Custom["tags"])
@@ -68,10 +69,12 @@ func TestSpanHeritage(t *testing.T) {
 	// Trace ID must be consistent across spans
 	assert.Equal(t, cSpan.TraceID, pSpan.TraceID)
 
-	cData := cSpan.Data
+	require.IsType(t, cSpan.Data, instana.SDKSpanData{})
+	cData := cSpan.Data.(instana.SDKSpanData)
 	assert.Equal(t, "child", cData.Tags.Name)
 
-	pData := pSpan.Data
+	require.IsType(t, pSpan.Data, instana.SDKSpanData{})
+	pData := pSpan.Data.(instana.SDKSpanData)
 	assert.Equal(t, "parent", pData.Tags.Name)
 }
 
@@ -88,7 +91,8 @@ func TestSpanBaggage(t *testing.T) {
 	require.Len(t, spans, 1)
 	span := spans[0]
 
-	data := span.Data
+	require.IsType(t, instana.SDKSpanData{}, span.Data)
+	data := span.Data.(instana.SDKSpanData)
 
 	assert.Equal(t, map[string]string{"foo": "bar"}, data.Tags.Custom["baggage"])
 }
@@ -106,7 +110,8 @@ func TestSpanTags(t *testing.T) {
 	require.Len(t, spans, 1)
 	span := spans[0]
 
-	data := span.Data
+	require.IsType(t, instana.SDKSpanData{}, span.Data)
+	data := span.Data.(instana.SDKSpanData)
 
 	assert.Equal(t, ot.Tags{"foo": "bar"}, data.Tags.Custom["tags"])
 }
@@ -128,7 +133,8 @@ func TestSpanLogFields(t *testing.T) {
 	require.Len(t, spans, 1)
 	span := spans[0]
 
-	data := span.Data
+	require.IsType(t, instana.SDKSpanData{}, span.Data)
+	data := span.Data.(instana.SDKSpanData)
 
 	require.IsType(t, map[uint64]map[string]interface{}{}, data.Tags.Custom["logs"])
 	logRecords := data.Tags.Custom["logs"].(map[uint64]map[string]interface{})
@@ -160,7 +166,8 @@ func TestSpanLogKVs(t *testing.T) {
 	require.Len(t, spans, 1)
 	span := spans[0]
 
-	data := span.Data
+	require.IsType(t, instana.SDKSpanData{}, span.Data)
+	data := span.Data.(instana.SDKSpanData)
 
 	require.IsType(t, map[uint64]map[string]interface{}{}, data.Tags.Custom["logs"])
 	logRecords := data.Tags.Custom["logs"].(map[uint64]map[string]interface{})
@@ -190,7 +197,8 @@ func TestOTLogError(t *testing.T) {
 	assert.True(t, span.Error)
 	assert.Equal(t, 1, span.Ec)
 
-	data := span.Data
+	require.IsType(t, instana.SDKSpanData{}, span.Data)
+	data := span.Data.(instana.SDKSpanData)
 
 	assert.Equal(t, map[string]interface{}{
 		"tags": ot.Tags{"error": true},
@@ -212,7 +220,8 @@ func TestSpanErrorLogKV(t *testing.T) {
 	assert.Equal(t, 1, span.Ec)
 	assert.True(t, span.Error)
 
-	data := span.Data
+	require.IsType(t, instana.SDKSpanData{}, span.Data)
+	data := span.Data.(instana.SDKSpanData)
 
 	require.IsType(t, map[uint64]map[string]interface{}{}, data.Tags.Custom["logs"])
 	logRecords := data.Tags.Custom["logs"].(map[uint64]map[string]interface{})
@@ -241,7 +250,8 @@ func TestSpanErrorLogFields(t *testing.T) {
 	assert.True(t, span.Error)
 	assert.Equal(t, 2, span.Ec)
 
-	data := span.Data
+	require.IsType(t, instana.SDKSpanData{}, span.Data)
+	data := span.Data.(instana.SDKSpanData)
 
 	require.IsType(t, map[uint64]map[string]interface{}{}, data.Tags.Custom["logs"])
 	logRecords := data.Tags.Custom["logs"].(map[uint64]map[string]interface{})

@@ -31,18 +31,18 @@ func (st RegisteredSpanType) ExtractData(span *spanS) typedSpanData {
 
 // Span represents the OpenTracing span document to be sent to the agent
 type Span struct {
-	TraceID   int64       `json:"t"`
-	ParentID  int64       `json:"p,omitempty"`
-	SpanID    int64       `json:"s"`
-	Timestamp uint64      `json:"ts"`
-	Duration  uint64      `json:"d"`
-	Name      string      `json:"n"`
-	From      *fromS      `json:"f"`
-	Kind      int         `json:"k"`
-	Error     bool        `json:"error"`
-	Ec        int         `json:"ec,omitempty"`
-	Lang      string      `json:"ta,omitempty"`
-	Data      SDKSpanData `json:"data"`
+	TraceID   int64         `json:"t"`
+	ParentID  int64         `json:"p,omitempty"`
+	SpanID    int64         `json:"s"`
+	Timestamp uint64        `json:"ts"`
+	Duration  uint64        `json:"d"`
+	Name      string        `json:"n"`
+	From      *fromS        `json:"f"`
+	Kind      int           `json:"k"`
+	Error     bool          `json:"error"`
+	Ec        int           `json:"ec,omitempty"`
+	Lang      string        `json:"ta,omitempty"`
+	Data      typedSpanData `json:"data"`
 }
 
 // SpanData contains fields to be sent in the `data` section of an OT span document. These fields are

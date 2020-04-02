@@ -39,7 +39,8 @@ func TestTracingHandlerFunc_Write(t *testing.T) {
 	assert.False(t, span.Error)
 	assert.Equal(t, 0, span.Ec)
 
-	data := span.Data
+	require.IsType(t, instana.SDKSpanData{}, span.Data)
+	data := span.Data.(instana.SDKSpanData)
 
 	assert.Equal(t, "test-handler", data.Tags.Name)
 	assert.Equal(t, "entry", data.Tags.Type)
@@ -84,7 +85,8 @@ func TestTracingHandlerFunc_WriteHeaders(t *testing.T) {
 	assert.False(t, span.Error)
 	assert.Equal(t, 0, span.Ec)
 
-	data := span.Data
+	require.IsType(t, instana.SDKSpanData{}, span.Data)
+	data := span.Data.(instana.SDKSpanData)
 
 	assert.Equal(t, "test-handler", data.Tags.Name)
 	assert.Equal(t, "entry", data.Tags.Type)
@@ -120,7 +122,8 @@ func TestTracingHandlerFunc_PanicHandling(t *testing.T) {
 	assert.True(t, span.Error)
 	assert.Equal(t, 1, span.Ec)
 
-	data := span.Data
+	require.IsType(t, instana.SDKSpanData{}, span.Data)
+	data := span.Data.(instana.SDKSpanData)
 
 	assert.Equal(t, "test-handler", data.Tags.Name)
 	assert.Equal(t, "entry", data.Tags.Type)
@@ -170,7 +173,8 @@ func TestRoundTripper(t *testing.T) {
 	assert.False(t, span.Error)
 	assert.Equal(t, 0, span.Ec)
 
-	data := span.Data
+	require.IsType(t, instana.SDKSpanData{}, span.Data)
+	data := span.Data.(instana.SDKSpanData)
 
 	assert.Equal(t, "net/http.Client", data.Tags.Name)
 	assert.Equal(t, "exit", data.Tags.Type)
@@ -247,7 +251,8 @@ func TestRoundTripper_Error(t *testing.T) {
 	assert.True(t, span.Error)
 	assert.Equal(t, 1, span.Ec)
 
-	data := span.Data
+	require.IsType(t, instana.SDKSpanData{}, span.Data)
+	data := span.Data.(instana.SDKSpanData)
 
 	assert.Equal(t, "net/http.Client", data.Tags.Name)
 	assert.Equal(t, "exit", data.Tags.Type)
@@ -301,7 +306,8 @@ func TestRoundTripper_DefaultTransport(t *testing.T) {
 	assert.False(t, span.Error)
 	assert.Equal(t, 0, span.Ec)
 
-	data := span.Data
+	require.IsType(t, instana.SDKSpanData{}, span.Data)
+	data := span.Data.(instana.SDKSpanData)
 
 	assert.Equal(t, "net/http.Client", data.Tags.Name)
 	assert.Equal(t, "exit", data.Tags.Type)
