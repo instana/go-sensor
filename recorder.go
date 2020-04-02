@@ -62,33 +62,7 @@ func (r *Recorder) RecordSpan(span *spanS) {
 		return
 	}
 
-	var data = SDKSpanData{
-		SpanData: SpanData{Service: span.Service},
-		SDK: SDKSpanTags{
-			Name:   span.Operation,
-			Type:   span.Kind().String(),
-			Custom: map[string]interface{}{},
-		},
-	}
-
-	if len(span.Tags) != 0 {
-		data.SDK.Custom["tags"] = span.Tags
-	}
-
-	if logs := span.collectLogs(); len(logs) > 0 {
-		data.SDK.Custom["logs"] = logs
-	}
-
-	baggage := make(map[string]string)
-	span.context.ForeachBaggageItem(func(k string, v string) bool {
-		baggage[k] = v
-
-		return true
-	})
-
-	if len(baggage) > 0 {
-		data.SDK.Custom["baggage"] = baggage
-	}
+	data := NewSDKSpanData(span)
 
 	r.Lock()
 	defer r.Unlock()
