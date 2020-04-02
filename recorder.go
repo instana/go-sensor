@@ -63,7 +63,7 @@ func (r *Recorder) RecordSpan(span *spanS) {
 	}
 
 	var data = SDKSpanData{
-		SpanData: SpanData{Service: sensor.serviceName},
+		SpanData: SpanData{Service: span.Service},
 		SDK: SDKSpanTags{
 			Name:   span.Operation,
 			Type:   span.Kind().String(),
@@ -89,8 +89,6 @@ func (r *Recorder) RecordSpan(span *spanS) {
 	if len(baggage) > 0 {
 		data.SDK.Custom["baggage"] = baggage
 	}
-
-	data.Service = sensor.serviceName
 
 	r.Lock()
 	defer r.Unlock()

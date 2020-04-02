@@ -32,6 +32,7 @@ func TestBasicSpan(t *testing.T) {
 	assert.Equal(t, "sdk", span.Name)
 
 	data := span.Data
+	assert.Equal(t, "go-sensor.test", span.Data.Service)
 
 	assert.Equal(t, "test", data.Tags.Name)
 	assert.Nil(t, data.Tags.Custom["tags"])
