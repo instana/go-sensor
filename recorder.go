@@ -17,7 +17,7 @@ type SpanRecorder interface {
 // for delivery to the backend.
 type Recorder struct {
 	sync.RWMutex
-	spans    []jsonSpan
+	spans    []Span
 	testMode bool
 }
 
@@ -62,12 +62,21 @@ func (r *Recorder) RecordSpan(span *spanS) {
 		return
 	}
 
-	var data = &jsonData{
-		SDK: &jsonSDKData{
+	var data = SDKSpanData{
+		SpanData: SpanData{Service: sensor.serviceName},
+		SDK: SDKSpanTags{
 			Name:   span.Operation,
 			Type:   span.Kind().String(),
-			Custom: &jsonCustomData{Tags: span.Tags, Logs: span.collectLogs()},
+			Custom: map[string]interface{}{},
 		},
+	}
+
+	if len(span.Tags) != 0 {
+		data.SDK.Custom["tags"] = span.Tags
+	}
+
+	if logs := span.collectLogs(); len(logs) > 0 {
+		data.SDK.Custom["logs"] = logs
 	}
 
 	baggage := make(map[string]string)
@@ -78,17 +87,10 @@ func (r *Recorder) RecordSpan(span *spanS) {
 	})
 
 	if len(baggage) > 0 {
-		data.SDK.Custom.Baggage = baggage
+		data.SDK.Custom["baggage"] = baggage
 	}
 
 	data.Service = sensor.serviceName
-
-	var parentID *int64
-	if span.context.ParentID == 0 {
-		parentID = nil
-	} else {
-		parentID = &span.context.ParentID
-	}
 
 	r.Lock()
 	defer r.Unlock()
@@ -97,9 +99,9 @@ func (r *Recorder) RecordSpan(span *spanS) {
 		r.spans = r.spans[1:]
 	}
 
-	r.spans = append(r.spans, jsonSpan{
+	r.spans = append(r.spans, Span{
 		TraceID:   span.context.TraceID,
-		ParentID:  parentID,
+		ParentID:  span.context.ParentID,
 		SpanID:    span.context.SpanID,
 		Timestamp: uint64(span.Start.UnixNano()) / uint64(time.Millisecond),
 		Duration:  uint64(span.Duration) / uint64(time.Millisecond),
@@ -131,12 +133,12 @@ func (r *Recorder) QueuedSpansCount() int {
 }
 
 // GetQueuedSpans returns a copy of the queued spans and clears the queue.
-func (r *Recorder) GetQueuedSpans() []jsonSpan {
+func (r *Recorder) GetQueuedSpans() []Span {
 	r.Lock()
 	defer r.Unlock()
 
 	// Copy queued spans
-	queuedSpans := make([]jsonSpan, len(r.spans))
+	queuedSpans := make([]Span, len(r.spans))
 	copy(queuedSpans, r.spans)
 
 	// and clear out the source
@@ -158,7 +160,7 @@ func (r *Recorder) clearQueuedSpans() {
 		} else {
 			mbs = DefaultMaxBufferedSpans
 		}
-		r.spans = make([]jsonSpan, 0, mbs)
+		r.spans = make([]Span, 0, mbs)
 	}
 }
 

@@ -57,12 +57,8 @@ func TestSpanPropagator(t *testing.T) {
 	// exp.Timestamp = uint64(time.Time{}.Add(1))
 
 	for i, span := range spans {
-		if a, e := *span.ParentID, exp.SpanID; a != e {
+		if a, e := span.ParentID, exp.SpanID; a != e {
 			t.Fatalf("%d: ParentID %d does not match expectation %d", i, a, e)
-		} else {
-			// Prepare for comparison.
-			span.SpanID, span.ParentID = exp.SpanID, nil
-			span.Duration, span.Timestamp = exp.Duration, exp.Timestamp
 		}
 
 		if a, e := span.TraceID, exp.TraceID; a != e {
@@ -126,7 +122,7 @@ func TestCaseSensitiveHeaderPropagation(t *testing.T) {
 	}
 
 	for _, s := range recorder.GetQueuedSpans() {
-		assert.Equal(t, spanParentIDBase64, *s.ParentID)
+		assert.Equal(t, spanParentIDBase64, s.ParentID)
 		assert.NotEqual(t, spanParentIDBase64, s.SpanID)
 	}
 
@@ -181,7 +177,7 @@ func TestSingleHeaderPropagation(t *testing.T) {
 	}
 
 	for _, s := range recorder.GetQueuedSpans() {
-		assert.Equal(t, spanParentIDBase64, *s.ParentID)
+		assert.Equal(t, spanParentIDBase64, s.ParentID)
 		assert.NotEqual(t, spanParentIDBase64, s.SpanID)
 	}
 

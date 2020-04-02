@@ -37,19 +37,20 @@ func TestSensor_TracingHandler_Write(t *testing.T) {
 	assert.False(t, span.Error)
 	assert.Equal(t, 0, span.Ec)
 
-	require.NotNil(t, span.Data)
-	require.NotNil(t, span.Data.SDK)
-	assert.Equal(t, "test-handler", span.Data.SDK.Name)
-	assert.Equal(t, "entry", span.Data.SDK.Type)
+	data := span.Data
 
-	require.NotNil(t, span.Data.SDK.Custom)
-	assert.Equal(t, ot.Tags{
-		"http.status_code": http.StatusOK,
-		"http.method":      "GET",
-		"http.url":         "/test",
-		"peer.hostname":    "example.com",
-		"span.kind":        ext.SpanKindRPCServerEnum,
-	}, span.Data.SDK.Custom.Tags)
+	assert.Equal(t, "test-handler", data.Tags.Name)
+	assert.Equal(t, "entry", data.Tags.Type)
+
+	assert.Equal(t, map[string]interface{}{
+		"tags": ot.Tags{
+			"http.status_code": http.StatusOK,
+			"http.method":      "GET",
+			"http.url":         "/test",
+			"peer.hostname":    "example.com",
+			"span.kind":        ext.SpanKindRPCServerEnum,
+		},
+	}, data.Tags.Custom)
 }
 
 func TestSensor_TracingHandler_WriteHeaders(t *testing.T) {
@@ -72,19 +73,20 @@ func TestSensor_TracingHandler_WriteHeaders(t *testing.T) {
 	assert.False(t, span.Error)
 	assert.Equal(t, 0, span.Ec)
 
-	require.NotNil(t, span.Data)
-	require.NotNil(t, span.Data.SDK)
-	assert.Equal(t, "test-handler", span.Data.SDK.Name)
-	assert.Equal(t, "entry", span.Data.SDK.Type)
+	data := span.Data
 
-	require.NotNil(t, span.Data.SDK.Custom)
-	assert.Equal(t, ot.Tags{
-		"http.method":      "GET",
-		"http.status_code": 501,
-		"http.url":         "/test",
-		"peer.hostname":    "example.com",
-		"span.kind":        ext.SpanKindRPCServerEnum,
-	}, span.Data.SDK.Custom.Tags)
+	assert.Equal(t, "test-handler", data.Tags.Name)
+	assert.Equal(t, "entry", data.Tags.Type)
+
+	assert.Equal(t, map[string]interface{}{
+		"tags": ot.Tags{
+			"http.method":      "GET",
+			"http.status_code": 501,
+			"http.url":         "/test",
+			"peer.hostname":    "example.com",
+			"span.kind":        ext.SpanKindRPCServerEnum,
+		},
+	}, data.Tags.Custom)
 }
 
 func TestTracingHttpRequest(t *testing.T) {
@@ -114,19 +116,20 @@ func TestTracingHttpRequest(t *testing.T) {
 	assert.False(t, span.Error)
 	assert.Equal(t, 0, span.Ec)
 
-	require.NotNil(t, span.Data)
-	require.NotNil(t, span.Data.SDK)
-	assert.Equal(t, "net/http.Client", span.Data.SDK.Name)
-	assert.Equal(t, "exit", span.Data.SDK.Type)
+	data := span.Data
 
-	require.NotNil(t, span.Data.SDK.Custom)
-	assert.Equal(t, ot.Tags{
-		"http.method":      "GET",
-		"http.status_code": 404,
-		"http.url":         ts.URL + "/path?q=s",
-		"peer.hostname":    tsURL.Host,
-		"span.kind":        ext.SpanKindRPCClientEnum,
-	}, span.Data.SDK.Custom.Tags)
+	assert.Equal(t, "net/http.Client", data.Tags.Name)
+	assert.Equal(t, "exit", data.Tags.Type)
+
+	assert.Equal(t, map[string]interface{}{
+		"tags": ot.Tags{
+			"http.method":      "GET",
+			"http.status_code": 404,
+			"http.url":         ts.URL + "/path?q=s",
+			"peer.hostname":    tsURL.Host,
+			"span.kind":        ext.SpanKindRPCClientEnum,
+		},
+	}, data.Tags.Custom)
 }
 
 func TestWithTracingSpan(t *testing.T) {
@@ -144,23 +147,24 @@ func TestWithTracingSpan(t *testing.T) {
 	require.Len(t, spans, 1)
 
 	span := spans[0]
-	assert.Nil(t, span.ParentID)
+	assert.Empty(t, span.ParentID)
 	assert.False(t, span.Error)
 	assert.Equal(t, 0, span.Ec)
 
-	require.NotNil(t, span.Data)
-	require.NotNil(t, span.Data.SDK)
-	assert.Equal(t, "test-span", span.Data.SDK.Name)
-	assert.Equal(t, "entry", span.Data.SDK.Type)
+	data := span.Data
 
-	require.NotNil(t, span.Data.SDK.Custom)
-	assert.Equal(t, ot.Tags{
-		"http.method":   "GET",
-		"http.url":      "/test",
-		"peer.hostname": "example.com",
-		"span.kind":     ext.SpanKindRPCServerEnum,
-		"custom-tag":    "value",
-	}, span.Data.SDK.Custom.Tags)
+	assert.Equal(t, "test-span", data.Tags.Name)
+	assert.Equal(t, "entry", data.Tags.Type)
+
+	assert.Equal(t, map[string]interface{}{
+		"tags": ot.Tags{
+			"http.method":   "GET",
+			"http.url":      "/test",
+			"peer.hostname": "example.com",
+			"span.kind":     ext.SpanKindRPCServerEnum,
+			"custom-tag":    "value",
+		},
+	}, data.Tags.Custom)
 }
 
 func TestWithTracingSpan_PanicHandling(t *testing.T) {
@@ -180,28 +184,30 @@ func TestWithTracingSpan_PanicHandling(t *testing.T) {
 	require.Len(t, spans, 1)
 
 	span := spans[0]
-	assert.Nil(t, span.ParentID)
+	assert.Empty(t, span.ParentID)
 	assert.True(t, span.Error)
 	assert.Equal(t, 1, span.Ec)
 
-	require.NotNil(t, span.Data)
-	require.NotNil(t, span.Data.SDK)
-	assert.Equal(t, "test-span", span.Data.SDK.Name)
-	assert.Equal(t, "entry", span.Data.SDK.Type)
+	data := span.Data
 
-	require.NotNil(t, span.Data.SDK.Custom)
+	assert.Equal(t, "test-span", data.Tags.Name)
+	assert.Equal(t, "entry", data.Tags.Type)
+
+	assert.Len(t, data.Tags.Custom, 2)
 	assert.Equal(t, ot.Tags{
 		"http.method":   "GET",
 		"http.url":      "/test",
 		"peer.hostname": "example.com",
 		"span.kind":     ext.SpanKindRPCServerEnum,
-	}, span.Data.SDK.Custom.Tags)
+	}, data.Tags.Custom["tags"])
 
-	var logRecords []map[string]interface{}
-	for _, v := range span.Data.SDK.Custom.Logs {
-		logRecords = append(logRecords, v)
+	require.IsType(t, map[uint64]map[string]interface{}{}, data.Tags.Custom["logs"])
+	logRecords := data.Tags.Custom["logs"].(map[uint64]map[string]interface{})
+
+	assert.Len(t, logRecords, 1)
+	for _, v := range logRecords {
+		assert.Equal(t, map[string]interface{}{"error": "something went wrong"}, v)
 	}
-	assert.Contains(t, logRecords, map[string]interface{}{"error": "something went wrong"})
 }
 
 func TestWithTracingSpan_WithActiveParentSpan(t *testing.T) {
@@ -222,9 +228,7 @@ func TestWithTracingSpan_WithActiveParentSpan(t *testing.T) {
 	require.Len(t, spans, 2)
 
 	assert.Equal(t, spans[1].TraceID, spans[0].TraceID)
-
-	require.NotNil(t, spans[0].ParentID)
-	assert.Equal(t, spans[1].SpanID, *spans[0].ParentID)
+	assert.Equal(t, spans[1].SpanID, spans[0].ParentID)
 }
 
 func TestWithTracingSpan_WithWireContext(t *testing.T) {
@@ -245,9 +249,7 @@ func TestWithTracingSpan_WithWireContext(t *testing.T) {
 	require.Len(t, spans, 1)
 
 	assert.Equal(t, int64(1234567890), spans[0].TraceID)
-
-	require.NotNil(t, spans[0].ParentID)
-	assert.Equal(t, int64(1), *spans[0].ParentID)
+	assert.Equal(t, int64(1), spans[0].ParentID)
 }
 
 func TestWithTracingContext(t *testing.T) {}
