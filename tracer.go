@@ -49,43 +49,26 @@ func (r *tracerS) StartSpanWithOptions(operationName string, opts ot.StartSpanOp
 		startTime = time.Now()
 	}
 
-	tags := opts.Tags
-	span := &spanS{}
-Loop:
+	span := &spanS{
+		tracer:    r,
+		Operation: operationName,
+		Start:     startTime,
+		Duration:  -1,
+		Tags:      opts.Tags,
+	}
+
 	for _, ref := range opts.References {
 		switch ref.Type {
 		case ot.ChildOfRef, ot.FollowsFromRef:
-			refCtx := ref.ReferencedContext.(SpanContext)
-			span.context.TraceID = refCtx.TraceID
-			span.context.SpanID = randomID()
-			span.context.Sampled = refCtx.Sampled
-			span.ParentSpanID = refCtx.SpanID
-			if l := len(refCtx.Baggage); l > 0 {
-				span.context.Baggage = make(map[string]string, l)
-				for k, v := range refCtx.Baggage {
-					span.context.Baggage[k] = v
-				}
-			}
+			parentCtx := ref.ReferencedContext.(SpanContext)
+			span.context = NewSpanContext(parentCtx)
 
-			break Loop
+			return span
 		}
 	}
 
-	if span.context.TraceID == 0 {
-		span.context.SpanID = randomID()
-		span.context.TraceID = span.context.SpanID
-		span.context.Sampled = r.options.ShouldSample(span.context.TraceID)
-	}
-
-	return r.startSpanInternal(span, operationName, startTime, tags)
-}
-
-func (r *tracerS) startSpanInternal(span *spanS, operationName string, startTime time.Time, tags ot.Tags) ot.Span {
-	span.tracer = r
-	span.Operation = operationName
-	span.Start = startTime
-	span.Duration = -1
-	span.Tags = tags
+	span.context = NewRootSpanContext()
+	span.context.Sampled = r.options.ShouldSample(span.context.TraceID)
 
 	return span
 }
@@ -101,8 +84,6 @@ func NewTracer() ot.Tracer {
 
 // NewTracerWithOptions Get a new Tracer with the specified options.
 func NewTracerWithOptions(options *Options) ot.Tracer {
-	InitSensor(options)
-
 	return NewTracerWithEverything(options, NewRecorder())
 }
 

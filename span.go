@@ -1,8 +1,6 @@
 package instana
 
 import (
-	"fmt"
-	"os"
 	"sync"
 	"time"
 
@@ -11,20 +9,41 @@ import (
 	otlog "github.com/opentracing/opentracing-go/log"
 )
 
+// SpanKind represents values of field `k` in OpenTracing span representation
+type SpanKind uint8
+
+// Valid span kinds
+const (
+	EntrySpanKind SpanKind = iota + 1
+	ExitSpanKind
+	IntermediateSpanKind
+)
+
+// String returns string representation of a span kind to be used as a `data.sdk.type`
+// JSON field value of an SDK span
+func (k SpanKind) String() string {
+	switch k {
+	case EntrySpanKind:
+		return "entry"
+	case ExitSpanKind:
+		return "exit"
+	default:
+		return "intermediate"
+	}
+}
+
 type spanS struct {
-	ParentSpanID int64
-	Operation    string
-	Start        time.Time
-	Duration     time.Duration
-	Tags         ot.Tags
-	Logs         []ot.LogRecord
-	Error        bool
-	Ec           int
+	Operation  string
+	Start      time.Time
+	Duration   time.Duration
+	Tags       ot.Tags
+	Logs       []ot.LogRecord
+	ErrorCount int
 
 	tracer *tracerS
 	mu     sync.Mutex
 
-	context   SpanContext
+	context SpanContext
 }
 
 func (r *spanS) BaggageItem(key string) string {
@@ -119,8 +138,7 @@ func (r *spanS) LogFields(fields ...otlog.Field) {
 	for _, v := range fields {
 		// If this tag indicates an error, increase the error count
 		if v.Key() == "error" {
-			r.Error = true
-			r.Ec++
+			r.ErrorCount++
 		}
 	}
 
@@ -175,8 +193,7 @@ func (r *spanS) SetTag(key string, value interface{}) ot.Span {
 
 	// If this tag indicates an error, increase the error count
 	if key == "error" {
-		r.Error = true
-		r.Ec++
+		r.ErrorCount++
 	}
 
 	r.Tags[key] = value
@@ -188,71 +205,16 @@ func (r *spanS) Tracer() ot.Tracer {
 	return r.tracer
 }
 
-func (r *spanS) getTag(tag string) interface{} {
-	var x, ok = r.Tags[tag]
-	if !ok {
-		x = ""
+// Kind returns the kind of this span based on the value of ext.SpanKind tag
+func (r *spanS) Kind() SpanKind {
+	switch r.Tags[string(ext.SpanKind)] {
+	case ext.SpanKindRPCServerEnum, string(ext.SpanKindRPCServerEnum), "consumer", "entry":
+		return EntrySpanKind
+	case ext.SpanKindRPCClientEnum, string(ext.SpanKindRPCClientEnum), "producer", "exit":
+		return ExitSpanKind
+	default:
+		return IntermediateSpanKind
 	}
-	return x
-}
-
-func (r *spanS) getIntTag(tag string) int {
-	d := r.Tags[tag]
-	if d == nil {
-		return -1
-	}
-
-	x, ok := d.(int)
-	if !ok {
-		return -1
-	}
-
-	return x
-}
-
-func (r *spanS) getStringTag(tag string) string {
-	d := r.Tags[tag]
-	if d == nil {
-		return ""
-	}
-	return fmt.Sprint(d)
-}
-
-func (r *spanS) getHostName() string {
-	hostTag := r.getStringTag(string(ext.PeerHostname))
-	if hostTag != "" {
-		return hostTag
-	}
-
-	h, err := os.Hostname()
-	if err != nil {
-		h = "localhost"
-	}
-	return h
-}
-
-func (r *spanS) getSpanKindTag() string {
-	kind := r.getStringTag(string(ext.SpanKind))
-
-	switch kind {
-	case string(ext.SpanKindRPCServerEnum), "consumer", "entry":
-		return "entry"
-	case string(ext.SpanKindRPCClientEnum), "producer", "exit":
-		return "exit"
-	}
-	return "intermediate"
-}
-
-func (r *spanS) getSpanKindInt() int {
-	kind := r.getStringTag(string(ext.SpanKind))
-
-	switch kind {
-	case string(ext.SpanKindRPCServerEnum), "consumer", "entry":
-		return 1
-	case string(ext.SpanKindRPCClientEnum), "producer", "exit":
-		return 2
-	}
-	return 3
 }
 
 func (r *spanS) collectLogs() map[uint64]map[string]interface{} {

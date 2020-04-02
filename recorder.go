@@ -62,13 +62,13 @@ func (r *Recorder) RecordSpan(span *spanS) {
 		return
 	}
 
-	var data = &jsonData{}
-	kindTag := span.getSpanKindTag()
-
-	data.SDK = &jsonSDKData{
-		Name:   span.Operation,
-		Type:   kindTag,
-		Custom: &jsonCustomData{Tags: span.Tags, Logs: span.collectLogs()}}
+	var data = &jsonData{
+		SDK: &jsonSDKData{
+			Name:   span.Operation,
+			Type:   span.Kind().String(),
+			Custom: &jsonCustomData{Tags: span.Tags, Logs: span.collectLogs()},
+		},
+	}
 
 	baggage := make(map[string]string)
 	span.context.ForeachBaggageItem(func(k string, v string) bool {
@@ -84,10 +84,10 @@ func (r *Recorder) RecordSpan(span *spanS) {
 	data.Service = sensor.serviceName
 
 	var parentID *int64
-	if span.ParentSpanID == 0 {
+	if span.context.ParentID == 0 {
 		parentID = nil
 	} else {
-		parentID = &span.ParentSpanID
+		parentID = &span.context.ParentID
 	}
 
 	r.Lock()
@@ -104,12 +104,13 @@ func (r *Recorder) RecordSpan(span *spanS) {
 		Timestamp: uint64(span.Start.UnixNano()) / uint64(time.Millisecond),
 		Duration:  uint64(span.Duration) / uint64(time.Millisecond),
 		Name:      "sdk",
-		Error:     span.Error,
-		Ec:        span.Ec,
+		Error:     span.ErrorCount > 0,
+		Ec:        span.ErrorCount,
 		Lang:      "go",
 		From:      sensor.agent.from,
-		Kind:      span.getSpanKindInt(),
-		Data:      data})
+		Kind:      int(span.Kind()),
+		Data:      data,
+	})
 
 	if r.testMode || !sensor.agent.canSend() {
 		return
