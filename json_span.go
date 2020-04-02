@@ -1,5 +1,7 @@
 package instana
 
+import "github.com/opentracing/opentracing-go/ext"
+
 type typedSpanData interface {
 	Type() RegisteredSpanType
 }
@@ -15,7 +17,10 @@ const (
 	// SDK span, a generic span containing arbitrary data. Spans with operation name
 	// not listed in the subsequent list will be sent as an SDK spans forwarding all
 	// attached tags to the agent
-	SDKSpanType = RegisteredSpanType("sdk")
+	SDKSpanType        = RegisteredSpanType("sdk")
+	// HTTP server and client spans
+	HTTPServerSpanType = RegisteredSpanType("g.http")
+	HTTPClientSpanType = RegisteredSpanType("http")
 )
 
 // RegisteredSpanType represents the span type supported by Instana
@@ -24,6 +29,8 @@ type RegisteredSpanType string
 // ExtractData is a factory method to create the `data` section for a typed span
 func (st RegisteredSpanType) ExtractData(span *spanS) typedSpanData {
 	switch st {
+	case HTTPServerSpanType, HTTPClientSpanType:
+		return NewHTTPSpanData(span)
 	default:
 		return NewSDKSpanData(span)
 	}
@@ -109,4 +116,99 @@ func NewSDKSpanTags(span *spanS) SDKSpanTags {
 	}
 
 	return tags
+}
+
+// HTTPSpanData represents the `data` section of an HTTP span sent within an OT span document
+type HTTPSpanData struct {
+	SpanData
+	Tags HTTPSpanTags `json:"http"`
+}
+
+// NewHTTPSpanData initializes a new HTTP span data from tracer span
+func NewHTTPSpanData(span *spanS) HTTPSpanData {
+	data := HTTPSpanData{
+		SpanData: NewSpanData(span, RegisteredSpanType(span.Operation)),
+		Tags:     NewHTTPSpanTags(span),
+	}
+
+	return data
+}
+
+// HTTPSpanTags contains fields within the `data.http` section of an OT span document
+type HTTPSpanTags struct {
+	// Full request/response URL
+	URL string `json:"url,omitempty"`
+	// The HTTP status code returned with client/server response
+	Status int `json:"status,omitempty"`
+	// The HTTP method of the request
+	Method string `json:"method,omitempty"`
+	// Path is the path part of the request URL
+	Path string `json:"path,omitempty"`
+	// The name:port of the host to which the request had been sent
+	Host string `json:"host,omitempty"`
+	// The name of the protocol used for request ("http" or "https")
+	Protocol string `json:"protocol,omitempty"`
+	// The message describing an error occured during the request handling
+	Error string `json:"error,omitempty"`
+}
+
+// NewHTTPSpanTags extracts HTTP-specific span tags from a tracer span
+func NewHTTPSpanTags(span *spanS) HTTPSpanTags {
+	var tags HTTPSpanTags
+	for k, v := range span.Tags {
+		switch k {
+		case "http.url", string(ext.HTTPUrl):
+			readStringTag(&tags.URL, v)
+		case "http.status", "http.status_code":
+			readIntTag(&tags.Status, v)
+		case "http.method", string(ext.HTTPMethod):
+			readStringTag(&tags.Method, v)
+		case "http.path":
+			readStringTag(&tags.Path, v)
+		case "http.host":
+			readStringTag(&tags.Host, v)
+		case "http.protocol":
+			readStringTag(&tags.Protocol, v)
+		case "http.error":
+			readStringTag(&tags.Error, v)
+		}
+	}
+
+	return tags
+}
+
+// readStringTag populates the &dst with the tag value if it's of either string or []byte type
+func readStringTag(dst *string, tag interface{}) {
+	switch s := tag.(type) {
+	case string:
+		*dst = s
+	case []byte:
+		*dst = string(s)
+	}
+}
+
+// readIntTag populates the &dst with the tag value if it's of any kind of integer type
+func readIntTag(dst *int, tag interface{}) {
+	switch n := tag.(type) {
+	case int:
+		*dst = n
+	case int8:
+		*dst = int(n)
+	case int16:
+		*dst = int(n)
+	case int32:
+		*dst = int(n)
+	case int64:
+		*dst = int(n)
+	case uint:
+		*dst = int(n)
+	case uint8:
+		*dst = int(n)
+	case uint16:
+		*dst = int(n)
+	case uint32:
+		*dst = int(n)
+	case uint64:
+		*dst = int(n)
+	}
 }

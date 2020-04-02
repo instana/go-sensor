@@ -7,16 +7,38 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestRegisteredSpanType(t *testing.T) {
-	recorder := instana.NewTestRecorder()
-	tracer := instana.NewTracerWithEverything(&instana.Options{}, recorder)
+func TestRegisteredSpanType_ExtractData(t *testing.T) {
+	examples := map[string]struct {
+		Operation string
+		Expected  interface{}
+	}{
+		"net/http.Server": {
+			Operation: "g.http",
+			Expected:  instana.HTTPSpanData{},
+		},
+		"net/http.Client": {
+			Operation: "http",
+			Expected:  instana.HTTPSpanData{},
+		},
+		"sdk": {
+			Operation: "test",
+			Expected:  instana.SDKSpanData{},
+		},
+	}
 
-	sp := tracer.StartSpan("test")
-	sp.Finish()
+	for name, example := range examples {
+		t.Run(name, func(t *testing.T) {
+			recorder := instana.NewTestRecorder()
+			tracer := instana.NewTracerWithEverything(&instana.Options{}, recorder)
 
-	spans := recorder.GetQueuedSpans()
-	assert.Equal(t, 1, len(spans))
-	span := spans[0]
+			sp := tracer.StartSpan(example.Operation)
+			sp.Finish()
 
-	assert.IsType(t, instana.SDKSpanData{}, span.Data)
+			spans := recorder.GetQueuedSpans()
+			assert.Equal(t, 1, len(spans))
+			span := spans[0]
+
+			assert.IsType(t, example.Expected, span.Data)
+		})
+	}
 }
