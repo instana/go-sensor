@@ -84,14 +84,14 @@ func TestUnaryClientInterceptor(t *testing.T) {
 	traceIDHeader := mdRec.MD.Get(instana.FieldT)
 	require.Len(t, traceIDHeader, 1)
 
-	traceID, err := instana.Header2ID(traceIDHeader[0])
+	traceID, err := instana.ParseID(traceIDHeader[0])
 	require.NoError(t, err)
 	assert.Equal(t, span.TraceID, traceID)
 
 	spanIDHeader := mdRec.MD.Get(instana.FieldS)
 	require.Len(t, spanIDHeader, 1)
 
-	spanID, err := instana.Header2ID(spanIDHeader[0])
+	spanID, err := instana.ParseID(spanIDHeader[0])
 	require.NoError(t, err)
 	assert.Equal(t, span.SpanID, spanID)
 
@@ -227,14 +227,14 @@ func TestStreamClientInterceptor(t *testing.T) {
 	traceIDHeader := mdRec.MD.Get(instana.FieldT)
 	require.Len(t, traceIDHeader, 1)
 
-	traceID, err := instana.Header2ID(traceIDHeader[0])
+	traceID, err := instana.ParseID(traceIDHeader[0])
 	require.NoError(t, err)
 	assert.Equal(t, span.TraceID, traceID)
 
 	spanIDHeader := mdRec.MD.Get(instana.FieldS)
 	require.Len(t, spanIDHeader, 1)
 
-	spanID, err := instana.Header2ID(spanIDHeader[0])
+	spanID, err := instana.ParseID(spanIDHeader[0])
 	require.NoError(t, err)
 	assert.Equal(t, span.SpanID, spanID)
 

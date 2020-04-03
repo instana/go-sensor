@@ -25,7 +25,7 @@ import (
 // If the handler returns an error or panics, the error message is then attached to the span logs.
 func UnaryServerInterceptor(sensor *instana.Sensor) grpc.UnaryServerInterceptor {
 	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
-		sp := startServerSpan(ctx, info.FullMethod, "unary", sensor.Tracer())
+		sp := startServerSpan(ctx, info.FullMethod, "unary", sensor)
 		defer sp.Finish()
 
 		// log request in case handler panics
@@ -58,7 +58,7 @@ func UnaryServerInterceptor(sensor *instana.Sensor) grpc.UnaryServerInterceptor 
 // If the handler returns an error or panics, the error message is then attached to the span logs.
 func StreamServerInterceptor(sensor *instana.Sensor) grpc.StreamServerInterceptor {
 	return func(srv interface{}, ss grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
-		sp := startServerSpan(ss.Context(), info.FullMethod, "stream", sensor.Tracer())
+		sp := startServerSpan(ss.Context(), info.FullMethod, "stream", sensor)
 		defer sp.Finish()
 
 		// log request in case handler panics
@@ -80,7 +80,8 @@ func StreamServerInterceptor(sensor *instana.Sensor) grpc.StreamServerIntercepto
 	}
 }
 
-func startServerSpan(ctx context.Context, method, callType string, tracer ot.Tracer) ot.Span {
+func startServerSpan(ctx context.Context, method, callType string, sensor *instana.Sensor) ot.Span {
+	tracer := sensor.Tracer()
 	opts := []ot.StartSpanOption{
 		ext.SpanKindRPCServer,
 		ot.Tags{
@@ -92,9 +93,6 @@ func startServerSpan(ctx context.Context, method, callType string, tracer ot.Tra
 
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
-		// TODO: log this error using the sensor logger
-		// log.Println("WARN: failed to extract request metadata")
-
 		return tracer.StartSpan("rpc-server", opts...)
 	}
 
@@ -106,8 +104,15 @@ func startServerSpan(ctx context.Context, method, callType string, tracer ot.Tra
 		})
 	}
 
-	if spanContext := remoteSpanContext(md, tracer); spanContext != nil {
-		opts = append(opts, ext.RPCServerOption(spanContext))
+	switch wireContext, err := tracer.Extract(ot.HTTPHeaders, ot.HTTPHeadersCarrier(md)); err {
+	case nil:
+		opts = append(opts, ext.RPCServerOption(wireContext))
+	case ot.ErrSpanContextNotFound:
+		sensor.Logger().Debug("no tracing context found in request to ", method, ", starting a new trace")
+	case ot.ErrUnsupportedFormat:
+		sensor.Logger().Warn("unsupported grpc request context format for ", method)
+	default:
+		sensor.Logger().Error("failed to extract request context for ", method, ": ", err)
 	}
 
 	return tracer.StartSpan("rpc-server", opts...)
@@ -121,32 +126,11 @@ func extractServerAddr(md metadata.MD) (string, string) {
 
 	host, port, err := net.SplitHostPort(authority[0])
 	if err != nil {
-		// TODO: log this using the sensor logger
-		// log.Printf("INFO: failed to extract server host and port from request metadata: %s", err)
-
 		// take our best guess and use :authority as a host if the net.SplitHostPort() fails to parse
 		return authority[0], ""
 	}
 
 	return host, port
-}
-
-func remoteSpanContext(md metadata.MD, tracer ot.Tracer) ot.SpanContext {
-	switch wireContext, err := tracer.Extract(ot.HTTPHeaders, ot.HTTPHeadersCarrier(md)); err {
-	case nil:
-		return wireContext
-	case ot.ErrSpanContextNotFound:
-		// TODO: log this using the sensor logger
-		// the remote did not provide any OpenTracing headers, so we just start a new trace
-	case ot.ErrUnsupportedFormat:
-		// TODO: log this using the sensor logger
-		// log.Printf("WARN: unsupported grpc request context format")
-	default:
-		// TODO: log this using the sensor logger
-		// log.Printf("ERROR: failed to extract context")
-	}
-
-	return nil
 }
 
 type wrappedServerStream struct {

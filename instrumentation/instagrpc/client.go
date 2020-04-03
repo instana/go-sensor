@@ -21,7 +21,7 @@ import (
 // If the server call results with an error, its message will be attached to the span logs.
 func UnaryClientInterceptor(sensor *instana.Sensor) grpc.UnaryClientInterceptor {
 	return func(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, callOpts ...grpc.CallOption) error {
-		sp := startClientSpan(ctx, cc.Target(), method, "unary", sensor.Tracer())
+		sp := startClientSpan(ctx, cc.Target(), method, "unary", sensor)
 		defer sp.Finish()
 
 		if err := invoker(outgoingTracingContext(ctx, sp), method, req, reply, cc, callOpts...); err != nil {
@@ -41,7 +41,7 @@ func UnaryClientInterceptor(sensor *instana.Sensor) grpc.UnaryClientInterceptor 
 func StreamClientInterceptor(sensor *instana.Sensor) grpc.StreamClientInterceptor {
 	return func(ctx context.Context, desc *grpc.StreamDesc, cc *grpc.ClientConn, method string, streamer grpc.Streamer, opts ...grpc.CallOption) (grpc.ClientStream, error) {
 
-		sp := startClientSpan(ctx, cc.Target(), method, "stream", sensor.Tracer())
+		sp := startClientSpan(ctx, cc.Target(), method, "stream", sensor)
 		stream, err := streamer(outgoingTracingContext(ctx, sp), desc, cc, method, opts...)
 		if err != nil {
 			addRPCError(sp, err)
@@ -58,11 +58,10 @@ func StreamClientInterceptor(sensor *instana.Sensor) grpc.StreamClientIntercepto
 	}
 }
 
-func startClientSpan(ctx context.Context, target, method, callType string, tracer ot.Tracer) ot.Span {
+func startClientSpan(ctx context.Context, target, method, callType string, sensor *instana.Sensor) ot.Span {
 	host, port, err := net.SplitHostPort(target)
 	if err != nil {
-		// TODO: log this error using the sensor logger
-		// log.Printf("INFO: failed to extract server host and port from request metadata: %s", err)
+		sensor.Logger().Info("failed to extract server host and port from request metadata: %s", err)
 
 		// take our best guess and use :authority as a host if the net.SplitHostPort() fails to parse
 		host, port = target, ""
@@ -79,6 +78,7 @@ func startClientSpan(ctx context.Context, target, method, callType string, trace
 		},
 	}
 
+	tracer := sensor.Tracer()
 	if parentSpan, ok := instana.SpanFromContext(ctx); ok {
 		tracer = parentSpan.Tracer() // use the same tracer as the parent span does
 		opts = append(opts, ot.ChildOf(parentSpan.Context()))

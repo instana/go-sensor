@@ -84,15 +84,9 @@ func TestUnaryServerInterceptor_WithClientTraceID(t *testing.T) {
 	client, err := newTestServiceClient(addr, time.Second)
 	require.NoError(t, err)
 
-	traceID, err := instana.ID2Header(1234567890)
-	require.NoError(t, err)
-
-	parentSpanID, err := instana.ID2Header(1)
-	require.NoError(t, err)
-
 	md := metadata.New(map[string]string{
-		instana.FieldT:            traceID,
-		instana.FieldS:            parentSpanID,
+		instana.FieldT:            instana.FormatID(1234567890),
+		instana.FieldS:            instana.FormatID(1),
 		instana.FieldB + "custom": "banana",
 	})
 
@@ -273,15 +267,9 @@ func TestStreamServerInterceptor_WithClientTraceID(t *testing.T) {
 	client, err := newTestServiceClient(addr, time.Second)
 	require.NoError(t, err)
 
-	traceID, err := instana.ID2Header(1234567890)
-	require.NoError(t, err)
-
-	parentSpanID, err := instana.ID2Header(1)
-	require.NoError(t, err)
-
 	md := metadata.New(map[string]string{
-		instana.FieldT:            traceID,
-		instana.FieldS:            parentSpanID,
+		instana.FieldT:            instana.FormatID(1234567890),
+		instana.FieldS:            instana.FormatID(1),
 		instana.FieldB + "custom": "banana",
 	})
 
