@@ -10,8 +10,8 @@ github.com/golang/lint v0.0.0-20180702182130-06c8688daad7/go.mod h1:tluoj9z5200j
 github.com/golang/mock v1.1.1/go.mod h1:oTYuIxOrZwtPieC+H1uAHpcLFnEyAGVDL/k47Jfbm0A=
 github.com/golang/protobuf v1.2.0 h1:P3YflyNX/ehuJFLhxviNdFxQPkGK5cDcApsge1SqnvM=
 github.com/golang/protobuf v1.2.0/go.mod h1:6lQm79b+lXiMfvg/cZm0SGofjICqVBUtrP5yJMmIC1U=
-github.com/instana/go-sensor v1.8.0 h1:S7TSv5t5IwgCE5TmNosPtpp9nUHHWGB7FSf5DbJyQt0=
-github.com/instana/go-sensor v1.8.0/go.mod h1:lDfZvfAyo5DWJ2AvOHINRTUTG5TMdZNnwXXcFRtfZBE=
+github.com/instana/go-sensor v1.9.0 h1:Zg+wPuIuaBxmA1UYqmiKA5sU7A4+H7RnHeOU3ADuLmQ=
+github.com/instana/go-sensor v1.9.0/go.mod h1:lDfZvfAyo5DWJ2AvOHINRTUTG5TMdZNnwXXcFRtfZBE=
 github.com/kisielk/errcheck v1.1.0/go.mod h1:EZBBE59ingxPouuu3KfxchcWSUPOHkagtvWXihfKN4Q=
 github.com/kisielk/gotool v1.0.0/go.mod h1:XhKaO+MFFWcvkIS/tQcRk01m1F5IRFswLeQ+oQHNcck=
 github.com/looplab/fsm v0.1.0 h1:Qte7Zdn/5hBNbXzP7yxVU4OIFHWXBovyTT2LaBTyC20=

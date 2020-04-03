@@ -1,5 +1,3 @@
-// +build !go1.13
-
 package instagrpc_test
 
 import (
