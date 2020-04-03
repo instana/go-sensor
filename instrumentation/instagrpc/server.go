@@ -92,9 +92,6 @@ func startServerSpan(ctx context.Context, method, callType string, tracer ot.Tra
 
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
-		// TODO: log this error using the sensor logger
-		// log.Println("WARN: failed to extract request metadata")
-
 		return tracer.StartSpan("rpc-server", opts...)
 	}
 
@@ -106,8 +103,18 @@ func startServerSpan(ctx context.Context, method, callType string, tracer ot.Tra
 		})
 	}
 
-	if spanContext := remoteSpanContext(md, tracer); spanContext != nil {
-		opts = append(opts, ext.RPCServerOption(spanContext))
+	switch wireContext, err := tracer.Extract(ot.HTTPHeaders, ot.HTTPHeadersCarrier(md)); err {
+	case nil:
+		opts = append(opts, ext.RPCServerOption(wireContext))
+	case ot.ErrSpanContextNotFound:
+		// TODO: log this using the sensor logger
+		// the remote did not provide any OpenTracing headers, so we just start a new trace
+	case ot.ErrUnsupportedFormat:
+		// TODO: log this using the sensor logger
+		// log.Printf("WARN: unsupported grpc request context format")
+	default:
+		// TODO: log this using the sensor logger
+		// log.Printf("ERROR: failed to extract context")
 	}
 
 	return tracer.StartSpan("rpc-server", opts...)
@@ -121,32 +128,11 @@ func extractServerAddr(md metadata.MD) (string, string) {
 
 	host, port, err := net.SplitHostPort(authority[0])
 	if err != nil {
-		// TODO: log this using the sensor logger
-		// log.Printf("INFO: failed to extract server host and port from request metadata: %s", err)
-
 		// take our best guess and use :authority as a host if the net.SplitHostPort() fails to parse
 		return authority[0], ""
 	}
 
 	return host, port
-}
-
-func remoteSpanContext(md metadata.MD, tracer ot.Tracer) ot.SpanContext {
-	switch wireContext, err := tracer.Extract(ot.HTTPHeaders, ot.HTTPHeadersCarrier(md)); err {
-	case nil:
-		return wireContext
-	case ot.ErrSpanContextNotFound:
-		// TODO: log this using the sensor logger
-		// the remote did not provide any OpenTracing headers, so we just start a new trace
-	case ot.ErrUnsupportedFormat:
-		// TODO: log this using the sensor logger
-		// log.Printf("WARN: unsupported grpc request context format")
-	default:
-		// TODO: log this using the sensor logger
-		// log.Printf("ERROR: failed to extract context")
-	}
-
-	return nil
 }
 
 type wrappedServerStream struct {
