@@ -45,21 +45,20 @@ func TestUnaryServerInterceptor(t *testing.T) {
 	spans := recorder.GetQueuedSpans()
 	require.Len(t, spans, 1)
 
-	span := spans[0]
+	span, err := extractAgentSpan(spans[0])
+	require.NoError(t, err)
+
 	assert.False(t, span.Error)
 	assert.Equal(t, 0, span.Ec)
 
-	require.NotNil(t, span.Data)
-	require.NotNil(t, span.Data.SDK)
 	assert.Equal(t, "rpc-server", span.Data.SDK.Name)
 	assert.Equal(t, "entry", span.Data.SDK.Type)
 
 	host, port, err := net.SplitHostPort(addr)
 	require.NoError(t, err)
 
-	require.NotNil(t, span.Data.SDK.Custom)
 	assert.Equal(t, ot.Tags{
-		"span.kind":     ext.SpanKindRPCServerEnum,
+		"span.kind":     string(ext.SpanKindRPCServerEnum),
 		"rpc.host":      host,
 		"rpc.port":      port,
 		"rpc.flavor":    "grpc",
@@ -99,15 +98,11 @@ func TestUnaryServerInterceptor_WithClientTraceID(t *testing.T) {
 	spans := recorder.GetQueuedSpans()
 	require.Len(t, spans, 1)
 
-	span := spans[0]
+	span, err := extractAgentSpan(spans[0])
+	require.NoError(t, err)
+
 	assert.Equal(t, int64(1234567890), span.TraceID)
-
-	require.NotNil(t, span.ParentID)
-	assert.Equal(t, int64(1), *span.ParentID)
-
-	require.NotNil(t, span.Data)
-	require.NotNil(t, span.Data.SDK)
-	require.NotNil(t, span.Data.SDK.Custom)
+	assert.Equal(t, int64(1), span.ParentID)
 	assert.Equal(t, "banana", span.Data.SDK.Custom.Baggage["custom"])
 }
 
@@ -135,16 +130,15 @@ func TestUnaryServerInterceptor_ErrorHandling(t *testing.T) {
 	spans := recorder.GetQueuedSpans()
 	require.Len(t, spans, 1)
 
-	span := spans[0]
+	span, err := extractAgentSpan(spans[0])
+	require.NoError(t, err)
+
 	assert.True(t, span.Error)
 	assert.Equal(t, 1, span.Ec)
 
-	require.NotNil(t, span.Data)
-	require.NotNil(t, span.Data.SDK)
 	assert.Equal(t, "rpc-server", span.Data.SDK.Name)
 	assert.Equal(t, "entry", span.Data.SDK.Type)
 
-	require.NotNil(t, span.Data.SDK.Custom)
 	assert.Equal(t, serverErr.Error(), span.Data.SDK.Custom.Tags["rpc.error"])
 
 	var logRecords []map[string]interface{}
@@ -153,7 +147,10 @@ func TestUnaryServerInterceptor_ErrorHandling(t *testing.T) {
 	}
 
 	require.Len(t, logRecords, 1)
-	assert.Equal(t, serverErr, logRecords[0]["error"])
+	assert.Equal(t, map[string]interface{}{
+		"code":    float64(codes.Internal),
+		"message": "something went wrong",
+	}, logRecords[0]["error"])
 }
 
 func TestUnaryServerInterceptor_PanicHandling(t *testing.T) {
@@ -178,16 +175,15 @@ func TestUnaryServerInterceptor_PanicHandling(t *testing.T) {
 	spans := recorder.GetQueuedSpans()
 	require.Len(t, spans, 1)
 
-	span := spans[0]
+	span, err := extractAgentSpan(spans[0])
+	require.NoError(t, err)
+
 	assert.True(t, span.Error)
 	assert.Equal(t, 1, span.Ec)
 
-	require.NotNil(t, span.Data)
-	require.NotNil(t, span.Data.SDK)
 	assert.Equal(t, "rpc-server", span.Data.SDK.Name)
 	assert.Equal(t, "entry", span.Data.SDK.Type)
 
-	require.NotNil(t, span.Data.SDK.Custom)
 	assert.Equal(t, "something went wrong", span.Data.SDK.Custom.Tags["rpc.error"])
 
 	var logRecords []map[string]interface{}
@@ -228,21 +224,23 @@ func TestStreamServerInterceptor(t *testing.T) {
 
 	require.Eventually(t, func() bool { return recorder.QueuedSpansCount() == 1 }, 100*time.Millisecond, 50*time.Millisecond)
 
-	span := recorder.GetQueuedSpans()[0]
+	spans := recorder.GetQueuedSpans()
+	require.Len(t, spans, 1)
+
+	span, err := extractAgentSpan(spans[0])
+	require.NoError(t, err)
+
 	assert.False(t, span.Error)
 	assert.Equal(t, 0, span.Ec)
 
-	require.NotNil(t, span.Data)
-	require.NotNil(t, span.Data.SDK)
 	assert.Equal(t, "rpc-server", span.Data.SDK.Name)
 	assert.Equal(t, "entry", span.Data.SDK.Type)
 
 	host, port, err := net.SplitHostPort(addr)
 	require.NoError(t, err)
 
-	require.NotNil(t, span.Data.SDK.Custom)
 	assert.Equal(t, ot.Tags{
-		"span.kind":     ext.SpanKindRPCServerEnum,
+		"span.kind":     string(ext.SpanKindRPCServerEnum),
 		"rpc.host":      host,
 		"rpc.port":      port,
 		"rpc.flavor":    "grpc",
@@ -284,15 +282,14 @@ func TestStreamServerInterceptor_WithClientTraceID(t *testing.T) {
 
 	require.Eventually(t, func() bool { return recorder.QueuedSpansCount() == 1 }, 100*time.Millisecond, 50*time.Millisecond)
 
-	span := recorder.GetQueuedSpans()[0]
+	spans := recorder.GetQueuedSpans()
+	require.Len(t, spans, 1)
+
+	span, err := extractAgentSpan(spans[0])
+	require.NoError(t, err)
+
 	assert.Equal(t, int64(1234567890), span.TraceID)
-
-	require.NotNil(t, span.ParentID)
-	assert.Equal(t, int64(1), *span.ParentID)
-
-	require.NotNil(t, span.Data)
-	require.NotNil(t, span.Data.SDK)
-	require.NotNil(t, span.Data.SDK.Custom)
+	assert.Equal(t, int64(1), span.ParentID)
 	assert.Equal(t, "banana", span.Data.SDK.Custom.Baggage["custom"])
 }
 
@@ -326,16 +323,15 @@ func TestStreamServerInterceptor_ErrorHandling(t *testing.T) {
 	spans := recorder.GetQueuedSpans()
 	require.Len(t, spans, 1)
 
-	span := spans[0]
+	span, err := extractAgentSpan(spans[0])
+	require.NoError(t, err)
+
 	assert.True(t, span.Error)
 	assert.Equal(t, 1, span.Ec)
 
-	require.NotNil(t, span.Data)
-	require.NotNil(t, span.Data.SDK)
 	assert.Equal(t, "rpc-server", span.Data.SDK.Name)
 	assert.Equal(t, "entry", span.Data.SDK.Type)
 
-	require.NotNil(t, span.Data.SDK.Custom)
 	assert.Equal(t, serverErr.Error(), span.Data.SDK.Custom.Tags["rpc.error"])
 
 	var logRecords []map[string]interface{}
@@ -344,7 +340,10 @@ func TestStreamServerInterceptor_ErrorHandling(t *testing.T) {
 	}
 
 	require.Len(t, logRecords, 1)
-	assert.Equal(t, serverErr, logRecords[0]["error"])
+	assert.Equal(t, map[string]interface{}{
+		"code":    float64(codes.Internal),
+		"message": "something went wrong",
+	}, logRecords[0]["error"])
 }
 
 func TestStreamServerInterceptor_PanicHandling(t *testing.T) {
@@ -376,16 +375,15 @@ func TestStreamServerInterceptor_PanicHandling(t *testing.T) {
 	spans := recorder.GetQueuedSpans()
 	require.Len(t, spans, 1)
 
-	span := spans[0]
+	span, err := extractAgentSpan(spans[0])
+	require.NoError(t, err)
+
 	assert.True(t, span.Error)
 	assert.Equal(t, 1, span.Ec)
 
-	require.NotNil(t, span.Data)
-	require.NotNil(t, span.Data.SDK)
 	assert.Equal(t, "rpc-server", span.Data.SDK.Name)
 	assert.Equal(t, "entry", span.Data.SDK.Type)
 
-	require.NotNil(t, span.Data.SDK.Custom)
 	assert.Equal(t, "something went wrong", span.Data.SDK.Custom.Tags["rpc.error"])
 
 	var logRecords []map[string]interface{}

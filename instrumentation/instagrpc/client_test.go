@@ -56,21 +56,20 @@ func TestUnaryClientInterceptor(t *testing.T) {
 	spans := recorder.GetQueuedSpans()
 	require.Len(t, spans, 1)
 
-	span := spans[0]
+	span, err := extractAgentSpan(spans[0])
+	require.NoError(t, err)
+
 	assert.False(t, span.Error)
 	assert.Equal(t, 0, span.Ec)
 
-	require.NotNil(t, span.Data)
-	require.NotNil(t, span.Data.SDK)
 	assert.Equal(t, "rpc-client", span.Data.SDK.Name)
 	assert.Equal(t, "exit", span.Data.SDK.Type)
 
 	host, port, err := net.SplitHostPort(addr)
 	require.NoError(t, err)
 
-	require.NotNil(t, span.Data.SDK.Custom)
 	assert.Equal(t, ot.Tags{
-		"span.kind":     ext.SpanKindRPCClientEnum,
+		"span.kind":     string(ext.SpanKindRPCClientEnum),
 		"rpc.host":      host,
 		"rpc.port":      port,
 		"rpc.flavor":    "grpc",
@@ -123,16 +122,15 @@ func TestUnaryClientInterceptor_ErrorHandling(t *testing.T) {
 	spans := recorder.GetQueuedSpans()
 	require.Len(t, spans, 1)
 
-	span := spans[0]
+	span, err := extractAgentSpan(spans[0])
+	require.NoError(t, err)
+
 	assert.True(t, span.Error)
 	assert.Equal(t, 1, span.Ec)
 
-	require.NotNil(t, span.Data)
-	require.NotNil(t, span.Data.SDK)
 	assert.Equal(t, "rpc-client", span.Data.SDK.Name)
 	assert.Equal(t, "exit", span.Data.SDK.Type)
 
-	require.NotNil(t, span.Data.SDK.Custom)
 	assert.Equal(t, serverErr.Error(), span.Data.SDK.Custom.Tags["rpc.error"])
 
 	var logRecords []map[string]interface{}
@@ -141,7 +139,10 @@ func TestUnaryClientInterceptor_ErrorHandling(t *testing.T) {
 	}
 
 	require.Len(t, logRecords, 1)
-	assert.Equal(t, serverErr, logRecords[0]["error"])
+	assert.Equal(t, map[string]interface{}{
+		"code":    float64(codes.Internal),
+		"message": "something went wrong",
+	}, logRecords[0]["error"])
 }
 
 func TestStreamClientInterceptor(t *testing.T) {
@@ -199,21 +200,20 @@ func TestStreamClientInterceptor(t *testing.T) {
 	spans := recorder.GetQueuedSpans()
 	require.Len(t, spans, 1)
 
-	span := spans[0]
+	span, err := extractAgentSpan(spans[0])
+	require.NoError(t, err)
+
 	assert.False(t, span.Error)
 	assert.Equal(t, 0, span.Ec)
 
-	require.NotNil(t, span.Data)
-	require.NotNil(t, span.Data.SDK)
 	assert.Equal(t, "rpc-client", span.Data.SDK.Name)
 	assert.Equal(t, "exit", span.Data.SDK.Type)
 
 	host, port, err := net.SplitHostPort(addr)
 	require.NoError(t, err)
 
-	require.NotNil(t, span.Data.SDK.Custom)
 	assert.Equal(t, ot.Tags{
-		"span.kind":     ext.SpanKindRPCClientEnum,
+		"span.kind":     string(ext.SpanKindRPCClientEnum),
 		"rpc.host":      host,
 		"rpc.port":      port,
 		"rpc.flavor":    "grpc",
@@ -272,16 +272,15 @@ func TestStreamClientInterceptor_ErrorHandling(t *testing.T) {
 	spans := recorder.GetQueuedSpans()
 	require.Len(t, spans, 1)
 
-	span := spans[0]
+	span, err := extractAgentSpan(spans[0])
+	require.NoError(t, err)
+
 	assert.True(t, span.Error)
 	assert.Equal(t, 1, span.Ec)
 
-	require.NotNil(t, span.Data)
-	require.NotNil(t, span.Data.SDK)
 	assert.Equal(t, "rpc-client", span.Data.SDK.Name)
 	assert.Equal(t, "exit", span.Data.SDK.Type)
 
-	require.NotNil(t, span.Data.SDK.Custom)
 	assert.Equal(t, serverErr.Error(), span.Data.SDK.Custom.Tags["rpc.error"])
 
 	var logRecords []map[string]interface{}
@@ -290,7 +289,10 @@ func TestStreamClientInterceptor_ErrorHandling(t *testing.T) {
 	}
 
 	require.Len(t, logRecords, 1)
-	assert.Equal(t, serverErr, logRecords[0]["error"])
+	assert.Equal(t, map[string]interface{}{
+		"code":    float64(codes.Internal),
+		"message": "something went wrong",
+	}, logRecords[0]["error"])
 }
 
 func newTestServiceClient(addr string, timeout time.Duration, opts ...grpc.DialOption) (grpctest.TestServiceClient, error) {
