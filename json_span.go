@@ -17,10 +17,13 @@ const (
 	// SDK span, a generic span containing arbitrary data. Spans with operation name
 	// not listed in the subsequent list will be sent as an SDK spans forwarding all
 	// attached tags to the agent
-	SDKSpanType        = RegisteredSpanType("sdk")
+	SDKSpanType = RegisteredSpanType("sdk")
 	// HTTP server and client spans
 	HTTPServerSpanType = RegisteredSpanType("g.http")
 	HTTPClientSpanType = RegisteredSpanType("http")
+	// RPC server and client spans
+	RPCServerSpanType  = RegisteredSpanType("rpc-server")
+	RPCClientSpanType  = RegisteredSpanType("rpc-client")
 )
 
 // RegisteredSpanType represents the span type supported by Instana
@@ -31,6 +34,8 @@ func (st RegisteredSpanType) ExtractData(span *spanS) typedSpanData {
 	switch st {
 	case HTTPServerSpanType, HTTPClientSpanType:
 		return NewHTTPSpanData(span)
+	case RPCServerSpanType, RPCClientSpanType:
+		return NewRPCSpanData(span)
 	default:
 		return NewSDKSpanData(span)
 	}
@@ -170,6 +175,61 @@ func NewHTTPSpanTags(span *spanS) HTTPSpanTags {
 		case "http.protocol":
 			readStringTag(&tags.Protocol, v)
 		case "http.error":
+			readStringTag(&tags.Error, v)
+		}
+	}
+
+	return tags
+}
+
+// RPCSpanData represents the `data` section of an RPC span sent within an OT span document
+type RPCSpanData struct {
+	SpanData
+	Tags RPCSpanTags `json:"rpc"`
+}
+
+// NewRPCSpanData initializes a new RPC span data from tracer span
+func NewRPCSpanData(span *spanS) RPCSpanData {
+	data := RPCSpanData{
+		SpanData: NewSpanData(span, RegisteredSpanType(span.Operation)),
+		Tags:     NewRPCSpanTags(span),
+	}
+
+	return data
+}
+
+// RPCSpanTags contains fields within the `data.rpc` section of an OT span document
+type RPCSpanTags struct {
+	// The name of the remote host for an RPC call
+	Host string `json:"host,omitempty"`
+	// The port of the remote host for an RPC call
+	Port string `json:"port,omitempty"`
+	// The name of the remote method to invoke
+	Call string `json:"call,omitempty"`
+	// The type of an RPC call, e.g. either "unary" or "stream" for GRPC requests
+	CallType string `json:"call_type,omitempty"`
+	// The RPC flavor used for this call, e.g. "grpc" for GRPC requests
+	Flavor string `json:"flavor,omitempty"`
+	// The message describing an error occured during the request handling
+	Error string `json:"error,omitempty"`
+}
+
+// NewRPCSpanTags extracts RPC-specific span tags from a tracer span
+func NewRPCSpanTags(span *spanS) RPCSpanTags {
+	var tags RPCSpanTags
+	for k, v := range span.Tags {
+		switch k {
+		case "rpc.host":
+			readStringTag(&tags.Host, v)
+		case "rpc.port":
+			readStringTag(&tags.Port, v)
+		case "rpc.call":
+			readStringTag(&tags.Call, v)
+		case "rpc.call_type":
+			readStringTag(&tags.CallType, v)
+		case "rpc.flavor":
+			readStringTag(&tags.Flavor, v)
+		case "rpc.error":
 			readStringTag(&tags.Error, v)
 		}
 	}

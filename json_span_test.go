@@ -20,6 +20,10 @@ func TestRegisteredSpanType_ExtractData(t *testing.T) {
 			Operation: "http",
 			Expected:  instana.HTTPSpanData{},
 		},
+		"golang.google.org/gppc.Server": {
+			Operation: "rpc-server",
+			Expected:  instana.RPCSpanData{},
+		},
 		"sdk": {
 			Operation: "test",
 			Expected:  instana.SDKSpanData{},

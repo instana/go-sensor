@@ -1,4 +1,9 @@
-// +build go1.9,!go1.13
+// +build go1.13
+
+// In the upcoming v1.8.1 github.com/instana/go-sensor will start sending GRPC spans as registered spans
+// that sends RPC tags within the `data.rpc` section instead of `data.sdk`. This is an interim test suite
+// that assumes go-sensor@v1.8.0. It will be removed once v1.8.1 is released and the version in go.mod is
+// updated.
 
 package instagrpc_test
 
@@ -12,6 +17,8 @@ import (
 
 	instana "github.com/instana/go-sensor"
 	"github.com/instana/go-sensor/instrumentation/instagrpc"
+	ot "github.com/opentracing/opentracing-go"
+	"github.com/opentracing/opentracing-go/ext"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
@@ -57,21 +64,23 @@ func TestUnaryClientInterceptor(t *testing.T) {
 	span, err := extractAgentSpan(spans[0])
 	require.NoError(t, err)
 
-	assert.Equal(t, "rpc-client", span.Name)
-	assert.Equal(t, 2, span.Kind)
 	assert.False(t, span.Error)
 	assert.Equal(t, 0, span.Ec)
+
+	assert.Equal(t, "rpc-client", span.Data.SDK.Name)
+	assert.Equal(t, "exit", span.Data.SDK.Type)
 
 	host, port, err := net.SplitHostPort(addr)
 	require.NoError(t, err)
 
-	assert.Equal(t, agentRPCSpanData{
-		Host:     host,
-		Port:     port,
-		Flavor:   "grpc",
-		CallType: "unary",
-		Call:     "/grpc.testing.TestService/EmptyCall",
-	}, span.Data.RPC)
+	assert.Equal(t, ot.Tags{
+		"span.kind":     string(ext.SpanKindRPCClientEnum),
+		"rpc.host":      host,
+		"rpc.port":      port,
+		"rpc.flavor":    "grpc",
+		"rpc.call_type": "unary",
+		"rpc.call":      "/grpc.testing.TestService/EmptyCall",
+	}, span.Data.SDK.Custom.Tags)
 
 	// ensure that trace context has been propagated
 	require.NotNil(t, mdRec.MD)
@@ -121,12 +130,24 @@ func TestUnaryClientInterceptor_ErrorHandling(t *testing.T) {
 	span, err := extractAgentSpan(spans[0])
 	require.NoError(t, err)
 
-	assert.Equal(t, "rpc-client", span.Name)
-	assert.Equal(t, 2, span.Kind)
 	assert.True(t, span.Error)
 	assert.Equal(t, 1, span.Ec)
 
-	assert.Equal(t, serverErr.Error(), span.Data.RPC.Error)
+	assert.Equal(t, "rpc-client", span.Data.SDK.Name)
+	assert.Equal(t, "exit", span.Data.SDK.Type)
+
+	assert.Equal(t, serverErr.Error(), span.Data.SDK.Custom.Tags["rpc.error"])
+
+	var logRecords []map[string]interface{}
+	for _, v := range span.Data.SDK.Custom.Logs {
+		logRecords = append(logRecords, v)
+	}
+
+	require.Len(t, logRecords, 1)
+	assert.Equal(t, map[string]interface{}{
+		"code":    float64(codes.Internal),
+		"message": "something went wrong",
+	}, logRecords[0]["error"])
 }
 
 func TestStreamClientInterceptor(t *testing.T) {
@@ -187,21 +208,23 @@ func TestStreamClientInterceptor(t *testing.T) {
 	span, err := extractAgentSpan(spans[0])
 	require.NoError(t, err)
 
-	assert.Equal(t, "rpc-client", span.Name)
-	assert.Equal(t, 2, span.Kind)
 	assert.False(t, span.Error)
 	assert.Equal(t, 0, span.Ec)
+
+	assert.Equal(t, "rpc-client", span.Data.SDK.Name)
+	assert.Equal(t, "exit", span.Data.SDK.Type)
 
 	host, port, err := net.SplitHostPort(addr)
 	require.NoError(t, err)
 
-	assert.Equal(t, agentRPCSpanData{
-		Host:     host,
-		Port:     port,
-		Flavor:   "grpc",
-		CallType: "stream",
-		Call:     "/grpc.testing.TestService/FullDuplexCall",
-	}, span.Data.RPC)
+	assert.Equal(t, ot.Tags{
+		"span.kind":     string(ext.SpanKindRPCClientEnum),
+		"rpc.host":      host,
+		"rpc.port":      port,
+		"rpc.flavor":    "grpc",
+		"rpc.call_type": "stream",
+		"rpc.call":      "/grpc.testing.TestService/FullDuplexCall",
+	}, span.Data.SDK.Custom.Tags)
 
 	// ensure that trace context has been propagated
 	require.NotNil(t, mdRec.MD)
@@ -257,12 +280,24 @@ func TestStreamClientInterceptor_ErrorHandling(t *testing.T) {
 	span, err := extractAgentSpan(spans[0])
 	require.NoError(t, err)
 
-	assert.Equal(t, "rpc-client", span.Name)
-	assert.Equal(t, 2, span.Kind)
 	assert.True(t, span.Error)
 	assert.Equal(t, 1, span.Ec)
 
-	assert.Equal(t, serverErr.Error(), span.Data.RPC.Error)
+	assert.Equal(t, "rpc-client", span.Data.SDK.Name)
+	assert.Equal(t, "exit", span.Data.SDK.Type)
+
+	assert.Equal(t, serverErr.Error(), span.Data.SDK.Custom.Tags["rpc.error"])
+
+	var logRecords []map[string]interface{}
+	for _, v := range span.Data.SDK.Custom.Logs {
+		logRecords = append(logRecords, v)
+	}
+
+	require.Len(t, logRecords, 1)
+	assert.Equal(t, map[string]interface{}{
+		"code":    float64(codes.Internal),
+		"message": "something went wrong",
+	}, logRecords[0]["error"])
 }
 
 func newTestServiceClient(addr string, timeout time.Duration, opts ...grpc.DialOption) (grpctest.TestServiceClient, error) {
