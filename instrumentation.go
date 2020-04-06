@@ -21,9 +21,10 @@ func TracingHandlerFunc(sensor *Sensor, name string, handler http.HandlerFunc) h
 		opts := []ot.StartSpanOption{
 			ext.SpanKindRPCServer,
 			ot.Tags{
-				string(ext.PeerHostname): req.Host,
-				string(ext.HTTPUrl):      req.URL.Path,
-				string(ext.HTTPMethod):   req.Method,
+				"http.host":     req.Host,
+				"http.method":   req.Method,
+				"http.protocol": req.URL.Scheme,
+				"http.path":     req.URL.Path,
 			},
 		}
 
@@ -45,7 +46,7 @@ func TracingHandlerFunc(sensor *Sensor, name string, handler http.HandlerFunc) h
 			sensor.Logger().Warn("failed to extract span context from the request:", err)
 		}
 
-		span := tracer.StartSpan(name, opts...)
+		span := tracer.StartSpan("g.http", opts...)
 		defer span.Finish()
 
 		defer func() {
@@ -75,7 +76,7 @@ func TracingHandlerFunc(sensor *Sensor, name string, handler http.HandlerFunc) h
 		handler(wrapped, req.WithContext(ctx))
 
 		if wrapped.Status > 0 {
-			span.SetTag(string(ext.HTTPStatusCode), wrapped.Status)
+			span.SetTag("http.status", wrapped.Status)
 		}
 	}
 }
@@ -86,12 +87,15 @@ func RoundTripper(sensor *Sensor, original http.RoundTripper) http.RoundTripper 
 	return tracingRoundTripper(func(req *http.Request) (*http.Response, error) {
 		ctx := req.Context()
 
+		sanitizedURL := cloneURL(req.URL)
+		sanitizedURL.RawQuery = ""
+		sanitizedURL.User = nil
+
 		opts := []ot.StartSpanOption{
 			ext.SpanKindRPCClient,
 			ot.Tags{
-				string(ext.PeerHostname): req.Host,
-				string(ext.HTTPUrl):      req.URL.String(),
-				string(ext.HTTPMethod):   req.Method,
+				"http.url":    sanitizedURL.String(),
+				"http.method": req.Method,
 			},
 		}
 
@@ -102,7 +106,7 @@ func RoundTripper(sensor *Sensor, original http.RoundTripper) http.RoundTripper 
 			opts = append(opts, ot.ChildOf(ps.Context()))
 		}
 
-		span := tracer.StartSpan("net/http.Client", opts...)
+		span := tracer.StartSpan("http", opts...)
 		defer span.Finish()
 
 		// clone the request since the RoundTrip should not modify the original one

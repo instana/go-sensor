@@ -1,10 +1,7 @@
 package instana_test
 
 import (
-	"fmt"
-	"net/http"
 	"net/http/httptest"
-	"net/url"
 	"testing"
 
 	instana "github.com/instana/go-sensor"
@@ -13,124 +10,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
-
-func TestSensor_TracingHandler_Write(t *testing.T) {
-	recorder := instana.NewTestRecorder()
-	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{
-		Service: "go-sensor-test",
-	}, recorder))
-
-	h := s.TracingHandler("test-handler", func(w http.ResponseWriter, req *http.Request) {
-		fmt.Fprintln(w, "Ok")
-	})
-
-	rec := httptest.NewRecorder()
-	h.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/test?q=classified", nil))
-
-	assert.Equal(t, http.StatusOK, rec.Code)
-	assert.Equal(t, "Ok\n", rec.Body.String())
-
-	spans := recorder.GetQueuedSpans()
-	require.Len(t, spans, 1)
-
-	span := spans[0]
-	assert.Equal(t, 0, span.Ec)
-
-	require.IsType(t, instana.SDKSpanData{}, span.Data)
-	data := span.Data.(instana.SDKSpanData)
-
-	assert.Equal(t, "test-handler", data.Tags.Name)
-	assert.Equal(t, "entry", data.Tags.Type)
-
-	assert.Equal(t, map[string]interface{}{
-		"tags": ot.Tags{
-			"http.status_code": http.StatusOK,
-			"http.method":      "GET",
-			"http.url":         "/test",
-			"peer.hostname":    "example.com",
-			"span.kind":        ext.SpanKindRPCServerEnum,
-		},
-	}, data.Tags.Custom)
-}
-
-func TestSensor_TracingHandler_WriteHeaders(t *testing.T) {
-	recorder := instana.NewTestRecorder()
-	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{}, recorder))
-
-	h := s.TracingHandler("test-handler", func(w http.ResponseWriter, req *http.Request) {
-		w.WriteHeader(http.StatusNotImplemented)
-	})
-
-	rec := httptest.NewRecorder()
-	h.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/test?q=classified", nil))
-
-	assert.Equal(t, http.StatusNotImplemented, rec.Code)
-
-	spans := recorder.GetQueuedSpans()
-	require.Len(t, spans, 1)
-
-	span := spans[0]
-	assert.Equal(t, 0, span.Ec)
-
-	require.IsType(t, instana.SDKSpanData{}, span.Data)
-	data := span.Data.(instana.SDKSpanData)
-
-	assert.Equal(t, "test-handler", data.Tags.Name)
-	assert.Equal(t, "entry", data.Tags.Type)
-
-	assert.Equal(t, map[string]interface{}{
-		"tags": ot.Tags{
-			"http.method":      "GET",
-			"http.status_code": 501,
-			"http.url":         "/test",
-			"peer.hostname":    "example.com",
-			"span.kind":        ext.SpanKindRPCServerEnum,
-		},
-	}, data.Tags.Custom)
-}
-
-func TestTracingHttpRequest(t *testing.T) {
-	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		http.Error(w, "Not Found", http.StatusNotFound)
-	}))
-	defer ts.Close()
-
-	tsURL, err := url.Parse(ts.URL)
-	require.NoError(t, err)
-
-	recorder := instana.NewTestRecorder()
-	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{}, recorder))
-
-	req, err := http.NewRequest("GET", ts.URL+"/path?q=s", nil)
-	require.NoError(t, err)
-
-	resp, err := s.TracingHttpRequest("test-request", httptest.NewRequest("GET", "/parent", nil), req, http.Client{})
-	require.NoError(t, err)
-
-	assert.Equal(t, http.StatusNotFound, resp.StatusCode)
-
-	spans := recorder.GetQueuedSpans()
-	require.Len(t, spans, 1)
-
-	span := spans[0]
-	assert.Equal(t, 0, span.Ec)
-
-	require.IsType(t, instana.SDKSpanData{}, span.Data)
-	data := span.Data.(instana.SDKSpanData)
-
-	assert.Equal(t, "net/http.Client", data.Tags.Name)
-	assert.Equal(t, "exit", data.Tags.Type)
-
-	assert.Equal(t, map[string]interface{}{
-		"tags": ot.Tags{
-			"http.method":      "GET",
-			"http.status_code": 404,
-			"http.url":         ts.URL + "/path?q=s",
-			"peer.hostname":    tsURL.Host,
-			"span.kind":        ext.SpanKindRPCClientEnum,
-		},
-	}, data.Tags.Custom)
-}
 
 func TestWithTracingSpan(t *testing.T) {
 	recorder := instana.NewTestRecorder()

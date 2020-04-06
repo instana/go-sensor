@@ -6,12 +6,9 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
-	"strings"
 	"testing"
 
 	instana "github.com/instana/go-sensor"
-	ot "github.com/opentracing/opentracing-go"
-	"github.com/opentracing/opentracing-go/ext"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -37,22 +34,17 @@ func TestTracingHandlerFunc_Write(t *testing.T) {
 
 	span := spans[0]
 	assert.Equal(t, 0, span.Ec)
+	assert.Equal(t, 1, span.Kind)
 
-	require.IsType(t, instana.SDKSpanData{}, span.Data)
-	data := span.Data.(instana.SDKSpanData)
+	require.IsType(t, instana.HTTPSpanData{}, span.Data)
+	data := span.Data.(instana.HTTPSpanData)
 
-	assert.Equal(t, "test-handler", data.Tags.Name)
-	assert.Equal(t, "entry", data.Tags.Type)
-
-	assert.Equal(t, map[string]interface{}{
-		"tags": ot.Tags{
-			"http.status_code": http.StatusOK,
-			"http.method":      "GET",
-			"http.url":         "/test",
-			"peer.hostname":    "example.com",
-			"span.kind":        ext.SpanKindRPCServerEnum,
-		},
-	}, data.Tags.Custom)
+	assert.Equal(t, instana.HTTPSpanTags{
+		Host:   "example.com",
+		Status: http.StatusOK,
+		Method: "GET",
+		Path:   "/test",
+	}, data.Tags)
 
 	// check whether the trace context has been sent back to the client
 	traceID, err := instana.Header2ID(rec.Header().Get(instana.FieldT))
@@ -82,22 +74,17 @@ func TestTracingHandlerFunc_WriteHeaders(t *testing.T) {
 
 	span := spans[0]
 	assert.Equal(t, 0, span.Ec)
+	assert.Equal(t, 1, span.Kind)
 
-	require.IsType(t, instana.SDKSpanData{}, span.Data)
-	data := span.Data.(instana.SDKSpanData)
+	require.IsType(t, instana.HTTPSpanData{}, span.Data)
+	data := span.Data.(instana.HTTPSpanData)
 
-	assert.Equal(t, "test-handler", data.Tags.Name)
-	assert.Equal(t, "entry", data.Tags.Type)
-
-	assert.Equal(t, map[string]interface{}{
-		"tags": ot.Tags{
-			"http.method":      "GET",
-			"http.status_code": http.StatusNotImplemented,
-			"http.url":         "/test",
-			"peer.hostname":    "example.com",
-			"span.kind":        ext.SpanKindRPCServerEnum,
-		},
-	}, data.Tags.Custom)
+	assert.Equal(t, instana.HTTPSpanTags{
+		Status: http.StatusNotImplemented,
+		Method: "GET",
+		Host:   "example.com",
+		Path:   "/test",
+	}, data.Tags)
 }
 
 func TestTracingHandlerFunc_PanicHandling(t *testing.T) {
@@ -118,31 +105,18 @@ func TestTracingHandlerFunc_PanicHandling(t *testing.T) {
 
 	span := spans[0]
 	assert.Equal(t, 1, span.Ec)
+	assert.Equal(t, 1, span.Kind)
 
-	require.IsType(t, instana.SDKSpanData{}, span.Data)
-	data := span.Data.(instana.SDKSpanData)
+	require.IsType(t, instana.HTTPSpanData{}, span.Data)
+	data := span.Data.(instana.HTTPSpanData)
 
-	assert.Equal(t, "test-handler", data.Tags.Name)
-	assert.Equal(t, "entry", data.Tags.Type)
-
-	assert.Len(t, data.Tags.Custom, 2)
-	assert.Equal(t, ot.Tags{
-		"message":          "something went wrong",
-		"http.error":       "something went wrong",
-		"http.method":      "GET",
-		"http.status_code": http.StatusInternalServerError,
-		"http.url":         "/test",
-		"peer.hostname":    "example.com",
-		"span.kind":        ext.SpanKindRPCServerEnum,
-	}, data.Tags.Custom["tags"])
-
-	require.IsType(t, map[uint64]map[string]interface{}{}, data.Tags.Custom["logs"])
-	logRecords := data.Tags.Custom["logs"].(map[uint64]map[string]interface{})
-
-	assert.Len(t, logRecords, 1)
-	for _, v := range logRecords {
-		assert.Equal(t, map[string]interface{}{"error": "something went wrong"}, v)
-	}
+	assert.Equal(t, instana.HTTPSpanTags{
+		Status: http.StatusInternalServerError,
+		Method: "GET",
+		Host:   "example.com",
+		Path:   "/test",
+		Error:  "something went wrong",
+	}, data.Tags)
 }
 
 func TestRoundTripper(t *testing.T) {
@@ -159,7 +133,7 @@ func TestRoundTripper(t *testing.T) {
 		}, nil
 	}))
 
-	resp, err := rt.RoundTrip(httptest.NewRequest("GET", "http://example.com/hello", nil))
+	resp, err := rt.RoundTrip(httptest.NewRequest("GET", "http://user:password@example.com/hello", nil))
 	require.NoError(t, err)
 	assert.Equal(t, http.StatusNotImplemented, resp.StatusCode)
 
@@ -168,22 +142,16 @@ func TestRoundTripper(t *testing.T) {
 
 	span := spans[0]
 	assert.Equal(t, 0, span.Ec)
+	assert.Equal(t, 2, span.Kind)
 
-	require.IsType(t, instana.SDKSpanData{}, span.Data)
-	data := span.Data.(instana.SDKSpanData)
+	require.IsType(t, instana.HTTPSpanData{}, span.Data)
+	data := span.Data.(instana.HTTPSpanData)
 
-	assert.Equal(t, "net/http.Client", data.Tags.Name)
-	assert.Equal(t, "exit", data.Tags.Type)
-
-	assert.Equal(t, map[string]interface{}{
-		"tags": ot.Tags{
-			"http.method":      "GET",
-			"http.status_code": http.StatusNotImplemented,
-			"http.url":         "http://example.com/hello",
-			"peer.hostname":    "example.com",
-			"span.kind":        ext.SpanKindRPCClientEnum,
-		},
-	}, data.Tags.Custom)
+	assert.Equal(t, instana.HTTPSpanTags{
+		Status: http.StatusNotImplemented,
+		Method: "GET",
+		URL:    "http://example.com/hello",
+	}, data.Tags)
 }
 
 func TestRoundTripper_WithParentSpan(t *testing.T) {
@@ -245,30 +213,16 @@ func TestRoundTripper_Error(t *testing.T) {
 
 	span := spans[0]
 	assert.Equal(t, 1, span.Ec)
+	assert.Equal(t, 2, span.Kind)
 
-	require.IsType(t, instana.SDKSpanData{}, span.Data)
-	data := span.Data.(instana.SDKSpanData)
+	require.IsType(t, instana.HTTPSpanData{}, span.Data)
+	data := span.Data.(instana.HTTPSpanData)
 
-	assert.Equal(t, "net/http.Client", data.Tags.Name)
-	assert.Equal(t, "exit", data.Tags.Type)
-
-	assert.Len(t, data.Tags.Custom, 2)
-	assert.Equal(t, ot.Tags{
-		"message":       "something went wrong",
-		"http.error":    "something went wrong",
-		"http.method":   "GET",
-		"http.url":      "http://example.com/hello",
-		"peer.hostname": "example.com",
-		"span.kind":     ext.SpanKindRPCClientEnum,
-	}, data.Tags.Custom["tags"])
-
-	require.IsType(t, map[uint64]map[string]interface{}{}, data.Tags.Custom["logs"])
-	logRecords := data.Tags.Custom["logs"].(map[uint64]map[string]interface{})
-
-	assert.Len(t, logRecords, 1)
-	for _, v := range logRecords {
-		assert.Equal(t, map[string]interface{}{"error": serverErr}, v)
-	}
+	assert.Equal(t, instana.HTTPSpanTags{
+		Method: "GET",
+		URL:    "http://example.com/hello",
+		Error:  "something went wrong",
+	}, data.Tags)
 }
 
 func TestRoundTripper_DefaultTransport(t *testing.T) {
@@ -299,22 +253,16 @@ func TestRoundTripper_DefaultTransport(t *testing.T) {
 
 	span := spans[0]
 	assert.Equal(t, 0, span.Ec)
+	assert.Equal(t, 2, span.Kind)
 
-	require.IsType(t, instana.SDKSpanData{}, span.Data)
-	data := span.Data.(instana.SDKSpanData)
+	require.IsType(t, instana.HTTPSpanData{}, span.Data)
+	data := span.Data.(instana.HTTPSpanData)
 
-	assert.Equal(t, "net/http.Client", data.Tags.Name)
-	assert.Equal(t, "exit", data.Tags.Type)
-
-	assert.Equal(t, map[string]interface{}{
-		"tags": ot.Tags{
-			"http.method":      "GET",
-			"http.status_code": http.StatusOK,
-			"http.url":         ts.URL + "/hello",
-			"peer.hostname":    strings.TrimPrefix(ts.URL, "http://"),
-			"span.kind":        ext.SpanKindRPCClientEnum,
-		},
-	}, data.Tags.Custom)
+	assert.Equal(t, instana.HTTPSpanTags{
+		Status: http.StatusOK,
+		Method: "GET",
+		URL:    ts.URL + "/hello",
+	}, data.Tags)
 }
 
 type testRoundTripper func(*http.Request) (*http.Response, error)
