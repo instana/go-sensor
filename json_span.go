@@ -22,8 +22,10 @@ const (
 	HTTPServerSpanType = RegisteredSpanType("g.http")
 	HTTPClientSpanType = RegisteredSpanType("http")
 	// RPC server and client spans
-	RPCServerSpanType  = RegisteredSpanType("rpc-server")
-	RPCClientSpanType  = RegisteredSpanType("rpc-client")
+	RPCServerSpanType = RegisteredSpanType("rpc-server")
+	RPCClientSpanType = RegisteredSpanType("rpc-client")
+	// Kafka consumer/producer span
+	KafkaSpanType = RegisteredSpanType("kafka")
 )
 
 // RegisteredSpanType represents the span type supported by Instana
@@ -36,6 +38,8 @@ func (st RegisteredSpanType) ExtractData(span *spanS) typedSpanData {
 		return NewHTTPSpanData(span)
 	case RPCServerSpanType, RPCClientSpanType:
 		return NewRPCSpanData(span)
+	case KafkaSpanType:
+		return NewKafkaSpanData(span)
 	default:
 		return NewSDKSpanData(span)
 	}
@@ -229,6 +233,45 @@ func NewRPCSpanTags(span *spanS) RPCSpanTags {
 			readStringTag(&tags.Flavor, v)
 		case "rpc.error":
 			readStringTag(&tags.Error, v)
+		}
+	}
+
+	return tags
+}
+
+// KafkaSpanData represents the `data` section of an Kafka span sent within an OT span document
+type KafkaSpanData struct {
+	SpanData
+	Tags KafkaSpanTags `json:"kafka"`
+}
+
+// NewKafkaSpanData initializes a new Kafka span data from tracer span
+func NewKafkaSpanData(span *spanS) KafkaSpanData {
+	data := KafkaSpanData{
+		SpanData: NewSpanData(span, RegisteredSpanType(span.Operation)),
+		Tags:     NewKafkaSpanTags(span),
+	}
+
+	return data
+}
+
+// KafkaSpanTags contains fields within the `data.kafka` section of an OT span document
+type KafkaSpanTags struct {
+	// Kafka topic
+	Service string `json:"service"`
+	// The access mode:, either "send" for publisher or "consume" for consumer
+	Access string `json:"access"`
+}
+
+// NewKafkaSpanTags extracts Kafka-specific span tags from a tracer span
+func NewKafkaSpanTags(span *spanS) KafkaSpanTags {
+	var tags KafkaSpanTags
+	for k, v := range span.Tags {
+		switch k {
+		case "kafka.service":
+			readStringTag(&tags.Service, v)
+		case "kafka.access":
+			readStringTag(&tags.Access, v)
 		}
 	}
 

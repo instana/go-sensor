@@ -24,6 +24,10 @@ func TestRegisteredSpanType_ExtractData(t *testing.T) {
 			Operation: "rpc-server",
 			Expected:  instana.RPCSpanData{},
 		},
+		"github.com/Shopify/sarama": {
+			Operation: "kafka",
+			Expected:  instana.KafkaSpanData{},
+		},
 		"sdk": {
 			Operation: "test",
 			Expected:  instana.SDKSpanData{},
