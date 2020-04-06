@@ -34,7 +34,6 @@ func TestSensor_TracingHandler_Write(t *testing.T) {
 	require.Len(t, spans, 1)
 
 	span := spans[0]
-	assert.False(t, span.Error)
 	assert.Equal(t, 0, span.Ec)
 
 	require.IsType(t, instana.SDKSpanData{}, span.Data)
@@ -71,7 +70,6 @@ func TestSensor_TracingHandler_WriteHeaders(t *testing.T) {
 	require.Len(t, spans, 1)
 
 	span := spans[0]
-	assert.False(t, span.Error)
 	assert.Equal(t, 0, span.Ec)
 
 	require.IsType(t, instana.SDKSpanData{}, span.Data)
@@ -115,7 +113,6 @@ func TestTracingHttpRequest(t *testing.T) {
 	require.Len(t, spans, 1)
 
 	span := spans[0]
-	assert.False(t, span.Error)
 	assert.Equal(t, 0, span.Ec)
 
 	require.IsType(t, instana.SDKSpanData{}, span.Data)
@@ -151,7 +148,6 @@ func TestWithTracingSpan(t *testing.T) {
 
 	span := spans[0]
 	assert.Empty(t, span.ParentID)
-	assert.False(t, span.Error)
 	assert.Equal(t, 0, span.Ec)
 
 	require.IsType(t, instana.SDKSpanData{}, span.Data)
@@ -189,7 +185,6 @@ func TestWithTracingSpan_PanicHandling(t *testing.T) {
 
 	span := spans[0]
 	assert.Empty(t, span.ParentID)
-	assert.True(t, span.Error)
 	assert.Equal(t, 1, span.Ec)
 
 	require.IsType(t, instana.SDKSpanData{}, span.Data)

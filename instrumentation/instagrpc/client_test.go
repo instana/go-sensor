@@ -59,7 +59,6 @@ func TestUnaryClientInterceptor(t *testing.T) {
 
 	assert.Equal(t, "rpc-client", span.Name)
 	assert.Equal(t, 2, span.Kind)
-	assert.False(t, span.Error)
 	assert.Equal(t, 0, span.Ec)
 
 	host, port, err := net.SplitHostPort(addr)
@@ -123,7 +122,6 @@ func TestUnaryClientInterceptor_ErrorHandling(t *testing.T) {
 
 	assert.Equal(t, "rpc-client", span.Name)
 	assert.Equal(t, 2, span.Kind)
-	assert.True(t, span.Error)
 	assert.Equal(t, 1, span.Ec)
 
 	assert.Equal(t, serverErr.Error(), span.Data.RPC.Error)
@@ -189,7 +187,6 @@ func TestStreamClientInterceptor(t *testing.T) {
 
 	assert.Equal(t, "rpc-client", span.Name)
 	assert.Equal(t, 2, span.Kind)
-	assert.False(t, span.Error)
 	assert.Equal(t, 0, span.Ec)
 
 	host, port, err := net.SplitHostPort(addr)
@@ -259,7 +256,6 @@ func TestStreamClientInterceptor_ErrorHandling(t *testing.T) {
 
 	assert.Equal(t, "rpc-client", span.Name)
 	assert.Equal(t, 2, span.Kind)
-	assert.True(t, span.Error)
 	assert.Equal(t, 1, span.Ec)
 
 	assert.Equal(t, serverErr.Error(), span.Data.RPC.Error)

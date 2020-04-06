@@ -38,7 +38,6 @@ func TestBasicSpan(t *testing.T) {
 	assert.Equal(t, "test", data.Tags.Name)
 	assert.Nil(t, data.Tags.Custom["tags"])
 	assert.Nil(t, data.Tags.Custom["baggage"])
-	assert.Equal(t, "go", span.Lang)
 }
 
 func TestSpanHeritage(t *testing.T) {
@@ -194,7 +193,6 @@ func TestOTLogError(t *testing.T) {
 	require.Equal(t, len(spans), 1)
 
 	span := spans[0]
-	assert.True(t, span.Error)
 	assert.Equal(t, 1, span.Ec)
 
 	require.IsType(t, instana.SDKSpanData{}, span.Data)
@@ -215,10 +213,9 @@ func TestSpanErrorLogKV(t *testing.T) {
 
 	spans := recorder.GetQueuedSpans()
 	require.Len(t, spans, 1)
-	span := spans[0]
 
+	span := spans[0]
 	assert.Equal(t, 1, span.Ec)
-	assert.True(t, span.Error)
 
 	require.IsType(t, instana.SDKSpanData{}, span.Data)
 	data := span.Data.(instana.SDKSpanData)
@@ -247,7 +244,6 @@ func TestSpanErrorLogFields(t *testing.T) {
 	require.Len(t, spans, 1)
 
 	span := spans[0]
-	assert.True(t, span.Error)
 	assert.Equal(t, 2, span.Ec)
 
 	require.IsType(t, instana.SDKSpanData{}, span.Data)

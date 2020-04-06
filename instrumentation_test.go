@@ -36,7 +36,6 @@ func TestTracingHandlerFunc_Write(t *testing.T) {
 	require.Len(t, spans, 1)
 
 	span := spans[0]
-	assert.False(t, span.Error)
 	assert.Equal(t, 0, span.Ec)
 
 	require.IsType(t, instana.SDKSpanData{}, span.Data)
@@ -82,7 +81,6 @@ func TestTracingHandlerFunc_WriteHeaders(t *testing.T) {
 	require.Len(t, spans, 1)
 
 	span := spans[0]
-	assert.False(t, span.Error)
 	assert.Equal(t, 0, span.Ec)
 
 	require.IsType(t, instana.SDKSpanData{}, span.Data)
@@ -119,7 +117,6 @@ func TestTracingHandlerFunc_PanicHandling(t *testing.T) {
 	require.Len(t, spans, 1)
 
 	span := spans[0]
-	assert.True(t, span.Error)
 	assert.Equal(t, 1, span.Ec)
 
 	require.IsType(t, instana.SDKSpanData{}, span.Data)
@@ -170,7 +167,6 @@ func TestRoundTripper(t *testing.T) {
 	require.Len(t, spans, 1)
 
 	span := spans[0]
-	assert.False(t, span.Error)
 	assert.Equal(t, 0, span.Ec)
 
 	require.IsType(t, instana.SDKSpanData{}, span.Data)
@@ -248,7 +244,6 @@ func TestRoundTripper_Error(t *testing.T) {
 	require.Len(t, spans, 1)
 
 	span := spans[0]
-	assert.True(t, span.Error)
 	assert.Equal(t, 1, span.Ec)
 
 	require.IsType(t, instana.SDKSpanData{}, span.Data)
@@ -303,7 +298,6 @@ func TestRoundTripper_DefaultTransport(t *testing.T) {
 	require.Len(t, spans, 1)
 
 	span := spans[0]
-	assert.False(t, span.Error)
 	assert.Equal(t, 0, span.Ec)
 
 	require.IsType(t, instana.SDKSpanData{}, span.Data)

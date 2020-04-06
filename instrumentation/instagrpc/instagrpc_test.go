@@ -19,9 +19,7 @@ type agentSpan struct {
 		HostID string `json:"h"`
 	} `json:"f"`
 	Kind  int    `json:"k"`
-	Error bool   `json:"error"`
 	Ec    int    `json:"ec,omitempty"`
-	Lang  string `json:"ta,omitempty"`
 	Data  struct {
 		Service string           `json:"service"`
 		RPC     agentRPCSpanData `json:"rpc"`
