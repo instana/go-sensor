@@ -33,6 +33,7 @@ func (k SpanKind) String() string {
 }
 
 type spanS struct {
+	Service    string
 	Operation  string
 	Start      time.Time
 	Duration   time.Duration
