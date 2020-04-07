@@ -114,3 +114,19 @@ func (c ProducerMessageCarrier) indexOf(key []byte) (int, bool) {
 
 	return -1, false
 }
+
+func extractTraceSpanID(msg *sarama.ProducerMessage) (string, string, error) {
+	var traceID, spanID string
+	err := ProducerMessageCarrier{msg}.ForeachKey(func(k, v string) error {
+		switch k {
+		case instana.FieldT:
+			traceID = v
+		case instana.FieldS:
+			spanID = v
+		}
+
+		return nil
+	})
+
+	return traceID, spanID, err
+}

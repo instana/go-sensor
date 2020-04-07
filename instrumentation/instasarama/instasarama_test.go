@@ -16,6 +16,9 @@ type agentSpan struct {
 		PID    string `json:"e"`
 		HostID string `json:"h"`
 	} `json:"f"`
+	Batch struct {
+		Size int `json:"s"`
+	} `json:"b"`
 	Kind int `json:"k"`
 	Ec   int `json:"ec,omitempty"`
 	Data struct {
