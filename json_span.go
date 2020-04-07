@@ -4,6 +4,7 @@ import "github.com/opentracing/opentracing-go/ext"
 
 type typedSpanData interface {
 	Type() RegisteredSpanType
+	Kind() SpanKind
 }
 
 // Registered types supported by Instana. The span type is determined based on
