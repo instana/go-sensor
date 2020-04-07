@@ -1,9 +1,14 @@
 package instana
 
-import "github.com/opentracing/opentracing-go/ext"
+import (
+	"time"
+
+	"github.com/opentracing/opentracing-go/ext"
+)
 
 type typedSpanData interface {
 	Type() RegisteredSpanType
+	Kind() SpanKind
 }
 
 // Registered types supported by Instana. The span type is determined based on
@@ -45,6 +50,33 @@ func (st RegisteredSpanType) ExtractData(span *spanS) typedSpanData {
 	}
 }
 
+// SpanKind represents values of field `k` in OpenTracing span representation. It represents
+// the direction of the call associated with a span.
+type SpanKind uint8
+
+// Valid span kinds
+const (
+	// The kind of a span associated with an inbound call, this must be the first span in the trace.
+	EntrySpanKind SpanKind = iota + 1
+	// The kind of a span associated with an outbound call, e.g. an HTTP client request, posting to a message bus, etc.
+	ExitSpanKind
+	// The default kind for a span that is associated with a call within the same service.
+	IntermediateSpanKind
+)
+
+// String returns string representation of a span kind suitable for use as a value for `data.sdk.type`
+// tag of an SDK span. By default all spans are intermediate unless they are explicitly set to be "entry" or "exit"
+func (k SpanKind) String() string {
+	switch k {
+	case EntrySpanKind:
+		return "entry"
+	case ExitSpanKind:
+		return "exit"
+	default:
+		return "intermediate"
+	}
+}
+
 // Span represents the OpenTracing span document to be sent to the agent
 type Span struct {
 	TraceID   int64         `json:"t"`
@@ -64,6 +96,7 @@ type Span struct {
 type SpanData struct {
 	Service string `json:"service,omitempty"`
 	st      RegisteredSpanType
+	sk      interface{}
 }
 
 // NewSpanData initializes a new span data from tracer span
@@ -71,12 +104,30 @@ func NewSpanData(span *spanS, st RegisteredSpanType) SpanData {
 	return SpanData{
 		Service: span.Service,
 		st:      st,
+		sk:      span.Tags[string(ext.SpanKind)],
 	}
 }
 
 // Name returns the registered name for the span type suitable for use as the value of `n` field.
 func (d SpanData) Type() RegisteredSpanType {
 	return d.st
+}
+
+// Kind returns the kind of the span. It handles the github.com/opentracing/opentracing-go/ext.SpanKindEnum
+// values as well as generic "entry" and "exit"
+func (d SpanData) Kind() SpanKind {
+	switch d.sk {
+	case ext.SpanKindRPCServerEnum, string(ext.SpanKindRPCServerEnum),
+		ext.SpanKindConsumerEnum, string(ext.SpanKindConsumerEnum),
+		"entry":
+		return EntrySpanKind
+	case ext.SpanKindRPCClientEnum, string(ext.SpanKindRPCClientEnum),
+		ext.SpanKindProducerEnum, string(ext.SpanKindProducerEnum),
+		"exit":
+		return ExitSpanKind
+	default:
+		return IntermediateSpanKind
+	}
 }
 
 // SDKSpanData represents the `data` section of an SDK span sent within an OT span document
@@ -87,9 +138,10 @@ type SDKSpanData struct {
 
 // NewSDKSpanData initializes a new SDK span data from tracer span
 func NewSDKSpanData(span *spanS) SDKSpanData {
+	d := NewSpanData(span, SDKSpanType)
 	return SDKSpanData{
-		SpanData: NewSpanData(span, SDKSpanType),
-		Tags:     NewSDKSpanTags(span),
+		SpanData: d,
+		Tags:     NewSDKSpanTags(span, d.Kind().String()),
 	}
 }
 
@@ -103,10 +155,10 @@ type SDKSpanTags struct {
 }
 
 // NewSDKSpanTags extracts SDK span tags from a tracer span
-func NewSDKSpanTags(span *spanS) SDKSpanTags {
+func NewSDKSpanTags(span *spanS, spanType string) SDKSpanTags {
 	tags := SDKSpanTags{
 		Name:   span.Operation,
-		Type:   span.Kind().String(),
+		Type:   spanType,
 		Custom: map[string]interface{}{},
 	}
 
@@ -114,7 +166,7 @@ func NewSDKSpanTags(span *spanS) SDKSpanTags {
 		tags.Custom["tags"] = span.Tags
 	}
 
-	if logs := span.collectLogs(); len(logs) > 0 {
+	if logs := collectTracerSpanLogs(span); len(logs) > 0 {
 		tags.Custom["logs"] = logs
 	}
 
@@ -312,4 +364,19 @@ func readIntTag(dst *int, tag interface{}) {
 	case uint64:
 		*dst = int(n)
 	}
+}
+
+func collectTracerSpanLogs(span *spanS) map[uint64]map[string]interface{} {
+	logs := make(map[uint64]map[string]interface{})
+	for _, l := range span.Logs {
+		if _, ok := logs[uint64(l.Timestamp.UnixNano())/uint64(time.Millisecond)]; !ok {
+			logs[uint64(l.Timestamp.UnixNano())/uint64(time.Millisecond)] = make(map[string]interface{})
+		}
+
+		for _, f := range l.Fields {
+			logs[uint64(l.Timestamp.UnixNano())/uint64(time.Millisecond)][f.Key()] = f.Value()
+		}
+	}
+
+	return logs
 }

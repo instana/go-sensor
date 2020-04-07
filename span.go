@@ -5,32 +5,8 @@ import (
 	"time"
 
 	ot "github.com/opentracing/opentracing-go"
-	"github.com/opentracing/opentracing-go/ext"
 	otlog "github.com/opentracing/opentracing-go/log"
 )
-
-// SpanKind represents values of field `k` in OpenTracing span representation
-type SpanKind uint8
-
-// Valid span kinds
-const (
-	EntrySpanKind SpanKind = iota + 1
-	ExitSpanKind
-	IntermediateSpanKind
-)
-
-// String returns string representation of a span kind to be used as a `data.sdk.type`
-// JSON field value of an SDK span
-func (k SpanKind) String() string {
-	switch k {
-	case EntrySpanKind:
-		return "entry"
-	case ExitSpanKind:
-		return "exit"
-	default:
-		return "intermediate"
-	}
-}
 
 type spanS struct {
 	Service    string
@@ -204,31 +180,4 @@ func (r *spanS) SetTag(key string, value interface{}) ot.Span {
 
 func (r *spanS) Tracer() ot.Tracer {
 	return r.tracer
-}
-
-// Kind returns the kind of this span based on the value of ext.SpanKind tag
-func (r *spanS) Kind() SpanKind {
-	switch r.Tags[string(ext.SpanKind)] {
-	case ext.SpanKindRPCServerEnum, string(ext.SpanKindRPCServerEnum), "consumer", "entry":
-		return EntrySpanKind
-	case ext.SpanKindRPCClientEnum, string(ext.SpanKindRPCClientEnum), "producer", "exit":
-		return ExitSpanKind
-	default:
-		return IntermediateSpanKind
-	}
-}
-
-func (r *spanS) collectLogs() map[uint64]map[string]interface{} {
-	logs := make(map[uint64]map[string]interface{})
-	for _, l := range r.Logs {
-		if _, ok := logs[uint64(l.Timestamp.UnixNano())/uint64(time.Millisecond)]; !ok {
-			logs[uint64(l.Timestamp.UnixNano())/uint64(time.Millisecond)] = make(map[string]interface{})
-		}
-
-		for _, f := range l.Fields {
-			logs[uint64(l.Timestamp.UnixNano())/uint64(time.Millisecond)][f.Key()] = f.Value()
-		}
-	}
-
-	return logs
 }
