@@ -1,4 +1,4 @@
-// +build go1.9,!go1.13
+// +build go1.9
 
 package instagrpc_test
 
