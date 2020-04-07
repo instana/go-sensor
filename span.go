@@ -181,18 +181,3 @@ func (r *spanS) SetTag(key string, value interface{}) ot.Span {
 func (r *spanS) Tracer() ot.Tracer {
 	return r.tracer
 }
-
-func (r *spanS) collectLogs() map[uint64]map[string]interface{} {
-	logs := make(map[uint64]map[string]interface{})
-	for _, l := range r.Logs {
-		if _, ok := logs[uint64(l.Timestamp.UnixNano())/uint64(time.Millisecond)]; !ok {
-			logs[uint64(l.Timestamp.UnixNano())/uint64(time.Millisecond)] = make(map[string]interface{})
-		}
-
-		for _, f := range l.Fields {
-			logs[uint64(l.Timestamp.UnixNano())/uint64(time.Millisecond)][f.Key()] = f.Value()
-		}
-	}
-
-	return logs
-}

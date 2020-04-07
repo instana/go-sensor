@@ -1,6 +1,10 @@
 package instana
 
-import "github.com/opentracing/opentracing-go/ext"
+import (
+	"time"
+
+	"github.com/opentracing/opentracing-go/ext"
+)
 
 type typedSpanData interface {
 	Type() RegisteredSpanType
@@ -162,7 +166,7 @@ func NewSDKSpanTags(span *spanS, spanType string) SDKSpanTags {
 		tags.Custom["tags"] = span.Tags
 	}
 
-	if logs := span.collectLogs(); len(logs) > 0 {
+	if logs := collectTracerSpanLogs(span); len(logs) > 0 {
 		tags.Custom["logs"] = logs
 	}
 
@@ -360,4 +364,19 @@ func readIntTag(dst *int, tag interface{}) {
 	case uint64:
 		*dst = int(n)
 	}
+}
+
+func collectTracerSpanLogs(span *spanS) map[uint64]map[string]interface{} {
+	logs := make(map[uint64]map[string]interface{})
+	for _, l := range span.Logs {
+		if _, ok := logs[uint64(l.Timestamp.UnixNano())/uint64(time.Millisecond)]; !ok {
+			logs[uint64(l.Timestamp.UnixNano())/uint64(time.Millisecond)] = make(map[string]interface{})
+		}
+
+		for _, f := range l.Fields {
+			logs[uint64(l.Timestamp.UnixNano())/uint64(time.Millisecond)][f.Key()] = f.Value()
+		}
+	}
+
+	return logs
 }
