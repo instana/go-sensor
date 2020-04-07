@@ -45,6 +45,33 @@ func (st RegisteredSpanType) ExtractData(span *spanS) typedSpanData {
 	}
 }
 
+// SpanKind represents values of field `k` in OpenTracing span representation. It represents
+// the direction of the call associated with a span.
+type SpanKind uint8
+
+// Valid span kinds
+const (
+	// The kind of a span associated with an inbound call, this must be the first span in the trace.
+	EntrySpanKind SpanKind = iota + 1
+	// The kind of a span associated with an outbound call, e.g. an HTTP client request, posting to a message bus, etc.
+	ExitSpanKind
+	// The default kind for a span that is associated with a call within the same service.
+	IntermediateSpanKind
+)
+
+// String returns string representation of a span kind suitable for use as a value for `data.sdk.type`
+// tag of an SDK span. By default all spans are intermediate unless they are explicitly set to be "entry" or "exit"
+func (k SpanKind) String() string {
+	switch k {
+	case EntrySpanKind:
+		return "entry"
+	case ExitSpanKind:
+		return "exit"
+	default:
+		return "intermediate"
+	}
+}
+
 // Span represents the OpenTracing span document to be sent to the agent
 type Span struct {
 	TraceID   int64         `json:"t"`

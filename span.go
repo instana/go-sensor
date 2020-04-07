@@ -9,29 +9,6 @@ import (
 	otlog "github.com/opentracing/opentracing-go/log"
 )
 
-// SpanKind represents values of field `k` in OpenTracing span representation
-type SpanKind uint8
-
-// Valid span kinds
-const (
-	EntrySpanKind SpanKind = iota + 1
-	ExitSpanKind
-	IntermediateSpanKind
-)
-
-// String returns string representation of a span kind to be used as a `data.sdk.type`
-// JSON field value of an SDK span
-func (k SpanKind) String() string {
-	switch k {
-	case EntrySpanKind:
-		return "entry"
-	case ExitSpanKind:
-		return "exit"
-	default:
-		return "intermediate"
-	}
-}
-
 type spanS struct {
 	Service    string
 	Operation  string
