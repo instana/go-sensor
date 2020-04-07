@@ -5,7 +5,6 @@ import (
 	"time"
 
 	ot "github.com/opentracing/opentracing-go"
-	"github.com/opentracing/opentracing-go/ext"
 	otlog "github.com/opentracing/opentracing-go/log"
 )
 
@@ -181,18 +180,6 @@ func (r *spanS) SetTag(key string, value interface{}) ot.Span {
 
 func (r *spanS) Tracer() ot.Tracer {
 	return r.tracer
-}
-
-// Kind returns the kind of this span based on the value of ext.SpanKind tag
-func (r *spanS) Kind() SpanKind {
-	switch r.Tags[string(ext.SpanKind)] {
-	case ext.SpanKindRPCServerEnum, string(ext.SpanKindRPCServerEnum), "consumer", "entry":
-		return EntrySpanKind
-	case ext.SpanKindRPCClientEnum, string(ext.SpanKindRPCClientEnum), "producer", "exit":
-		return ExitSpanKind
-	default:
-		return IntermediateSpanKind
-	}
 }
 
 func (r *spanS) collectLogs() map[uint64]map[string]interface{} {

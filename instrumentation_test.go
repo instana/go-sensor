@@ -34,7 +34,7 @@ func TestTracingHandlerFunc_Write(t *testing.T) {
 
 	span := spans[0]
 	assert.Equal(t, 0, span.Ec)
-	assert.Equal(t, 1, span.Kind)
+	assert.EqualValues(t, instana.EntrySpanKind, span.Kind)
 
 	require.IsType(t, instana.HTTPSpanData{}, span.Data)
 	data := span.Data.(instana.HTTPSpanData)
@@ -74,7 +74,7 @@ func TestTracingHandlerFunc_WriteHeaders(t *testing.T) {
 
 	span := spans[0]
 	assert.Equal(t, 0, span.Ec)
-	assert.Equal(t, 1, span.Kind)
+	assert.EqualValues(t, instana.EntrySpanKind, span.Kind)
 
 	require.IsType(t, instana.HTTPSpanData{}, span.Data)
 	data := span.Data.(instana.HTTPSpanData)
@@ -105,7 +105,7 @@ func TestTracingHandlerFunc_PanicHandling(t *testing.T) {
 
 	span := spans[0]
 	assert.Equal(t, 1, span.Ec)
-	assert.Equal(t, 1, span.Kind)
+	assert.EqualValues(t, instana.EntrySpanKind, span.Kind)
 
 	require.IsType(t, instana.HTTPSpanData{}, span.Data)
 	data := span.Data.(instana.HTTPSpanData)
@@ -142,7 +142,7 @@ func TestRoundTripper(t *testing.T) {
 
 	span := spans[0]
 	assert.Equal(t, 0, span.Ec)
-	assert.Equal(t, 2, span.Kind)
+	assert.EqualValues(t, instana.ExitSpanKind, span.Kind)
 
 	require.IsType(t, instana.HTTPSpanData{}, span.Data)
 	data := span.Data.(instana.HTTPSpanData)
@@ -213,7 +213,7 @@ func TestRoundTripper_Error(t *testing.T) {
 
 	span := spans[0]
 	assert.Equal(t, 1, span.Ec)
-	assert.Equal(t, 2, span.Kind)
+	assert.EqualValues(t, instana.ExitSpanKind, span.Kind)
 
 	require.IsType(t, instana.HTTPSpanData{}, span.Data)
 	data := span.Data.(instana.HTTPSpanData)
@@ -253,7 +253,7 @@ func TestRoundTripper_DefaultTransport(t *testing.T) {
 
 	span := spans[0]
 	assert.Equal(t, 0, span.Ec)
-	assert.Equal(t, 2, span.Kind)
+	assert.EqualValues(t, instana.ExitSpanKind, span.Kind)
 
 	require.IsType(t, instana.HTTPSpanData{}, span.Data)
 	data := span.Data.(instana.HTTPSpanData)

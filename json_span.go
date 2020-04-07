@@ -134,9 +134,10 @@ type SDKSpanData struct {
 
 // NewSDKSpanData initializes a new SDK span data from tracer span
 func NewSDKSpanData(span *spanS) SDKSpanData {
+	d := NewSpanData(span, SDKSpanType)
 	return SDKSpanData{
-		SpanData: NewSpanData(span, SDKSpanType),
-		Tags:     NewSDKSpanTags(span),
+		SpanData: d,
+		Tags:     NewSDKSpanTags(span, d.Kind().String()),
 	}
 }
 
@@ -150,10 +151,10 @@ type SDKSpanTags struct {
 }
 
 // NewSDKSpanTags extracts SDK span tags from a tracer span
-func NewSDKSpanTags(span *spanS) SDKSpanTags {
+func NewSDKSpanTags(span *spanS, spanType string) SDKSpanTags {
 	tags := SDKSpanTags{
 		Name:   span.Operation,
-		Type:   span.Kind().String(),
+		Type:   spanType,
 		Custom: map[string]interface{}{},
 	}
 

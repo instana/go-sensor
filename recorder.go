@@ -80,7 +80,7 @@ func (r *Recorder) RecordSpan(span *spanS) {
 		Name:      string(data.Type()),
 		Ec:        span.ErrorCount,
 		From:      sensor.agent.from,
-		Kind:      int(span.Kind()),
+		Kind:      int(data.Kind()),
 		Data:      data,
 	})
 

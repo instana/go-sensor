@@ -47,7 +47,7 @@ func TestUnaryServerInterceptor(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Equal(t, "rpc-server", span.Name)
-	assert.Equal(t, 1, span.Kind)
+	assert.EqualValues(t, instana.EntrySpanKind, span.Kind)
 	assert.Equal(t, 0, span.Ec)
 
 	host, port, err := net.SplitHostPort(addr)
@@ -127,7 +127,7 @@ func TestUnaryServerInterceptor_ErrorHandling(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Equal(t, "rpc-server", span.Name)
-	assert.Equal(t, 1, span.Kind)
+	assert.EqualValues(t, instana.EntrySpanKind, span.Kind)
 	assert.Equal(t, 1, span.Ec)
 
 	assert.Equal(t, serverErr.Error(), span.Data.RPC.Error)
@@ -159,7 +159,7 @@ func TestUnaryServerInterceptor_PanicHandling(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Equal(t, "rpc-server", span.Name)
-	assert.Equal(t, 1, span.Kind)
+	assert.EqualValues(t, instana.EntrySpanKind, span.Kind)
 	assert.Equal(t, 1, span.Ec)
 
 	assert.Equal(t, "something went wrong", span.Data.RPC.Error)
@@ -201,7 +201,7 @@ func TestStreamServerInterceptor(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Equal(t, "rpc-server", span.Name)
-	assert.Equal(t, 1, span.Kind)
+	assert.EqualValues(t, instana.EntrySpanKind, span.Kind)
 	assert.Equal(t, 0, span.Ec)
 
 	host, port, err := net.SplitHostPort(addr)
@@ -292,7 +292,7 @@ func TestStreamServerInterceptor_ErrorHandling(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Equal(t, "rpc-server", span.Name)
-	assert.Equal(t, 1, span.Kind)
+	assert.EqualValues(t, instana.EntrySpanKind, span.Kind)
 	assert.Equal(t, 1, span.Ec)
 
 	assert.Equal(t, serverErr.Error(), span.Data.RPC.Error)
@@ -331,7 +331,7 @@ func TestStreamServerInterceptor_PanicHandling(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Equal(t, "rpc-server", span.Name)
-	assert.Equal(t, 1, span.Kind)
+	assert.EqualValues(t, instana.EntrySpanKind, span.Kind)
 	assert.Equal(t, 1, span.Ec)
 
 	assert.Equal(t, "something went wrong", span.Data.RPC.Error)
