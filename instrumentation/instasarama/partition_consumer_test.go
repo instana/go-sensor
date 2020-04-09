@@ -17,8 +17,23 @@ func TestPartitionConsumer_Messages(t *testing.T) {
 	sensor := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{}, recorder))
 
 	messages := []*sarama.ConsumerMessage{
-		{Topic: "test-topic-1"},
-		{Topic: "test-topic-2"},
+		{
+			Topic: "instrumented-producer",
+			Headers: []*sarama.RecordHeader{
+				{
+					Key: []byte("x_instana_c"),
+					Value: []byte{
+						// trace id
+						0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+						0x00, 0x00, 0x00, 0x00, 0x0a, 0xbc, 0xde, 0x12,
+						// span id
+						0x00, 0x00, 0x00, 0x00, 0xde, 0xad, 0xbe, 0xef,
+					},
+				},
+				{Key: []byte("x_instana_l"), Value: []byte{0x01}},
+			},
+		},
+		{Topic: "not-instrumented-producer"},
 	}
 
 	pc := &testPartitionConsumer{
@@ -49,8 +64,53 @@ CONSUMER_LOOP:
 
 	_, open := <-wrapped.Messages()
 	assert.False(t, open)
+	require.Len(t, collected, len(messages))
 
-	assert.Equal(t, messages, collected)
+	spans := recorder.GetQueuedSpans()
+	require.Len(t, spans, len(collected))
+
+	t.Run("message with trace context", func(t *testing.T) {
+		msg := collected[0]
+		assert.Equal(t, "instrumented-producer", msg.Topic)
+
+		span, err := extractAgentSpan(spans[0])
+		require.NoError(t, err)
+
+		assert.EqualValues(t, 0x0abcde12, span.TraceID)
+		assert.EqualValues(t, 0xdeadbeef, span.ParentID)
+
+		assert.Contains(t, msg.Headers, &sarama.RecordHeader{
+			Key:   []byte("x_instana_c"),
+			Value: instasarama.PackTraceContextHeader(instana.FormatID(span.TraceID), instana.FormatID(span.SpanID)),
+		})
+		assert.Contains(t, msg.Headers, &sarama.RecordHeader{
+			Key:   []byte("x_instana_l"),
+			Value: []byte{0x01},
+		})
+	})
+
+	t.Run("message without trace context", func(t *testing.T) {
+		msg := collected[1]
+		assert.Equal(t, "not-instrumented-producer", msg.Topic)
+
+		span, err := extractAgentSpan(spans[1])
+		require.NoError(t, err)
+
+		assert.NotEmpty(t, span.TraceID)
+		assert.Empty(t, span.ParentID)
+		assert.EqualValues(t, span.TraceID, span.SpanID)
+
+		assert.ElementsMatch(t, msg.Headers, []*sarama.RecordHeader{
+			{
+				Key:   []byte("X_INSTANA_C"),
+				Value: instasarama.PackTraceContextHeader(instana.FormatID(span.TraceID), instana.FormatID(span.SpanID)),
+			},
+			{
+				Key:   []byte("X_INSTANA_L"),
+				Value: []byte{0x01},
+			},
+		})
+	})
 }
 
 func TestPartitionConsumer_AsyncClose(t *testing.T) {
