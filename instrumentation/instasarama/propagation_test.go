@@ -11,6 +11,39 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestProducerMessageWithSpan(t *testing.T) {
+	recorder := instana.NewTestRecorder()
+	tracer := instana.NewTracerWithEverything(&instana.Options{}, recorder)
+
+	sp := tracer.StartSpan("test-span")
+	pm := instasarama.ProducerMessageWithSpan(&sarama.ProducerMessage{
+		Topic: "test-topic",
+		Key:   sarama.StringEncoder("key1"),
+		Value: sarama.StringEncoder("value1"),
+		Headers: []sarama.RecordHeader{
+			{Key: []byte("headerKey1"), Value: []byte("headerValue1")},
+		},
+	}, sp)
+	sp.Finish()
+
+	spans := recorder.GetQueuedSpans()
+	require.Len(t, spans, 1)
+
+	expected := []sarama.RecordHeader{
+		{Key: []byte("headerKey1"), Value: []byte("headerValue1")},
+		{Key: []byte(instasarama.FieldL), Value: []byte{0x01}},
+		{
+			Key: []byte(instasarama.FieldC),
+			Value: instasarama.PackTraceContextHeader(
+				instana.FormatID(spans[0].TraceID),
+				instana.FormatID(spans[0].SpanID),
+			),
+		},
+	}
+
+	assert.ElementsMatch(t, expected, pm.Headers)
+}
+
 func TestProducerMessageCarrier_Set_FieldT(t *testing.T) {
 	var msg sarama.ProducerMessage
 	c := instasarama.ProducerMessageCarrier{&msg}
@@ -383,6 +416,75 @@ func TestProducerMessageCarrier_ForeachKey_Error(t *testing.T) {
 	assert.Error(t, c.ForeachKey(func(k, v string) error {
 		return errors.New("something went wrong")
 	}))
+}
+
+func TestSpanContextFromConsumerMessage(t *testing.T) {
+	sensor := instana.NewSensorWithTracer(
+		instana.NewTracerWithEverything(&instana.Options{}, instana.NewTestRecorder()),
+	)
+
+	msg := &sarama.ConsumerMessage{
+		Headers: []*sarama.RecordHeader{
+			{
+				Key: []byte("x_instana_c"),
+				Value: []byte{
+					// trace id
+					0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+					0x00, 0x00, 0x00, 0x00, 0xab, 0xcd, 0xef, 0x12,
+					// span id
+					0x00, 0x00, 0x00, 0x00, 0xde, 0xad, 0xbe, 0xef,
+				},
+			},
+			{Key: []byte("x_instana_l"), Value: []byte{0x01}},
+		},
+	}
+
+	spanContext, ok := instasarama.SpanContextFromConsumerMessage(msg, sensor)
+	require.True(t, ok)
+	assert.Equal(t, instana.SpanContext{
+		TraceID: 0xabcdef12,
+		SpanID:  0xdeadbeef,
+		Baggage: make(map[string]string),
+	}, spanContext)
+}
+
+func TestSpanContextFromConsumerMessage_NoContext(t *testing.T) {
+	examples := map[string][]*sarama.RecordHeader{
+		"no tracing headers": {
+			{Key: []byte("key1"), Value: []byte("value1")},
+			nil,
+		},
+		"malformed tracing headers": {
+			{Key: []byte("x_instana_c"), Value: []byte("malformed")},
+			{Key: []byte("x_instana_l"), Value: []byte{0x00}},
+		},
+		"incomplete trace headers": {
+			{
+				Key: []byte("x_instana_c"),
+				Value: []byte{
+					// trace id
+					0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+					0x00, 0x00, 0x00, 0x00, 0xab, 0xcd, 0xef, 0x12,
+					// empty span id
+					0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+				},
+			},
+			{Key: []byte("x_instana_l"), Value: []byte{0x01}},
+		},
+	}
+
+	for name, headers := range examples {
+		t.Run(name, func(t *testing.T) {
+			sensor := instana.NewSensorWithTracer(
+				instana.NewTracerWithEverything(&instana.Options{}, instana.NewTestRecorder()),
+			)
+
+			msg := &sarama.ConsumerMessage{Headers: headers}
+
+			_, ok := instasarama.SpanContextFromConsumerMessage(msg, sensor)
+			assert.False(t, ok)
+		})
+	}
 }
 
 func TestConsumerMessageCarrier_Set_FieldT(t *testing.T) {

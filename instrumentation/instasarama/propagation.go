@@ -7,6 +7,7 @@ import (
 
 	"github.com/Shopify/sarama"
 	instana "github.com/instana/go-sensor"
+	ot "github.com/opentracing/opentracing-go"
 )
 
 const (
@@ -20,6 +21,13 @@ var (
 	fieldCKey = []byte(FieldC)
 	fieldLKey = []byte(FieldL)
 )
+
+// ProducerMessageWithSpan injects the tracing context into producer message headers to propagate
+// them through the Kafka requests made with instasarama producers.
+func ProducerMessageWithSpan(pm *sarama.ProducerMessage, sp ot.Span) *sarama.ProducerMessage {
+	sp.Tracer().Inject(sp.Context(), ot.TextMap, ProducerMessageCarrier{Message: pm})
+	return pm
+}
 
 // ProducerMessageCarrier is a trace context carrier that propagates Instana OpenTracing
 // headers throughout Kafka producer messages
@@ -113,6 +121,16 @@ func (c ProducerMessageCarrier) indexOf(key []byte) (int, bool) {
 	}
 
 	return -1, false
+}
+
+// SpanContextFromConsumerMessage extracts the tracing context from consumer message
+func SpanContextFromConsumerMessage(cm *sarama.ConsumerMessage, sensor *instana.Sensor) (ot.SpanContext, bool) {
+	spanContext, err := sensor.Tracer().Extract(ot.TextMap, ConsumerMessageCarrier{Message: cm})
+	if err != nil {
+		return nil, false
+	}
+
+	return spanContext, true
 }
 
 // ConsumerMessageCarrier is a trace context carrier that extracts Instana OpenTracing
