@@ -30,7 +30,7 @@ func NewSyncProducer(sp sarama.SyncProducer, sensor *instana.Sensor) *SyncProduc
 // context into the message headers before sending it to the underlying producer.
 // The call will not be traced if there the message does not contain trace context.
 func (p *SyncProducer) SendMessage(msg *sarama.ProducerMessage) (int32, int64, error) {
-	sp := p.startSpan(msg)
+	sp := startProducerSpan(p.sensor, msg)
 	if sp != nil {
 		defer sp.Finish()
 
@@ -85,7 +85,7 @@ func (p *SyncProducer) SendMessages(msgs []*sarama.ProducerMessage) error {
 
 	var sp ot.Span
 	if producerMessagesFromSameContext(msgs) {
-		sp = p.startSpan(msgs[0])
+		sp = startProducerSpan(p.sensor, msgs[0])
 	}
 
 	if sp != nil {
@@ -125,10 +125,10 @@ func (p *SyncProducer) SendMessages(msgs []*sarama.ProducerMessage) error {
 
 // startSpan picks up the existing trace context provided in the message and returns a new child
 // span. It returns nil if there is no valid context provided in the message
-func (p *SyncProducer) startSpan(msg *sarama.ProducerMessage) ot.Span {
-	switch sc, err := p.sensor.Tracer().Extract(ot.TextMap, ProducerMessageCarrier{msg}); err {
+func startProducerSpan(sensor *instana.Sensor, msg *sarama.ProducerMessage) ot.Span {
+	switch sc, err := sensor.Tracer().Extract(ot.TextMap, ProducerMessageCarrier{msg}); err {
 	case nil:
-		return p.sensor.Tracer().StartSpan(
+		return sensor.Tracer().StartSpan(
 			"kafka",
 			ext.SpanKindProducer,
 			ot.ChildOf(sc),
@@ -138,11 +138,11 @@ func (p *SyncProducer) startSpan(msg *sarama.ProducerMessage) ot.Span {
 			},
 		)
 	case ot.ErrSpanContextNotFound:
-		p.sensor.Logger().Debug("no span context provided in message to %q, skipping the call", msg.Topic)
+		sensor.Logger().Debug("no span context provided in message to ", msg.Topic, ", skipping the call", msg.Topic)
 	case ot.ErrUnsupportedFormat:
-		p.sensor.Logger().Info("unsupported span context format provided in message to %q, skipping the call", msg.Topic)
+		sensor.Logger().Info("unsupported span context format provided in message to ", msg.Topic, ", skipping the call")
 	default:
-		p.sensor.Logger().Warn("failed to extract span context from producer message headers: ", err)
+		sensor.Logger().Warn("failed to extract span context from producer message headers: ", err)
 	}
 
 	return nil

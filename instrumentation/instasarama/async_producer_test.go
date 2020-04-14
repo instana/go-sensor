@@ -16,6 +16,219 @@ func TestAsyncProducer_Input(t *testing.T) {
 	recorder := instana.NewTestRecorder()
 	sensor := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{}, recorder))
 
+	parent := sensor.Tracer().StartSpan("test-span")
+	msg := instasarama.ProducerMessageWithSpan(&sarama.ProducerMessage{Topic: "test-topic"}, parent)
+
+	ap := newTestAsyncProducer(nil)
+	defer ap.Teardown()
+
+	wrapped := instasarama.NewAsyncProducer(ap, sarama.NewConfig(), sensor)
+	wrapped.Input() <- msg
+
+	var published *sarama.ProducerMessage
+	select {
+	case published = <-ap.input:
+		break
+	case <-time.After(1 * time.Second):
+		t.Fatalf("publishing via async producer timed out after 1s")
+	}
+
+	parent.Finish()
+
+	spans := recorder.GetQueuedSpans()
+	require.Len(t, spans, 2)
+
+	pSpan, err := extractAgentSpan(spans[1])
+	require.NoError(t, err)
+
+	cSpan, err := extractAgentSpan(spans[0])
+	require.NoError(t, err)
+
+	assert.Equal(t, 0, cSpan.Ec)
+	assert.EqualValues(t, instana.ExitSpanKind, cSpan.Kind)
+
+	assert.Equal(t, agentKafkaSpanData{
+		Service: "test-topic",
+		Access:  "send",
+	}, cSpan.Data.Kafka)
+
+	assert.Contains(t, published.Headers, sarama.RecordHeader{
+		Key:   []byte("X_INSTANA_C"),
+		Value: instasarama.PackTraceContextHeader(instana.FormatID(cSpan.TraceID), instana.FormatID(cSpan.SpanID)),
+	})
+	assert.Contains(t, published.Headers, sarama.RecordHeader{
+		Key:   []byte("X_INSTANA_L"),
+		Value: instasarama.PackTraceLevelHeader("1"),
+	})
+
+	assert.Equal(t, pSpan.TraceID, cSpan.TraceID)
+	assert.Equal(t, pSpan.SpanID, cSpan.ParentID)
+	assert.NotEqual(t, pSpan.SpanID, cSpan.SpanID)
+}
+
+func TestAsyncProducer_Input_WithAwaitResult_Success(t *testing.T) {
+	recorder := instana.NewTestRecorder()
+	sensor := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{}, recorder))
+
+	parent := sensor.Tracer().StartSpan("test-span")
+	msg := instasarama.ProducerMessageWithSpan(&sarama.ProducerMessage{Topic: "test-topic"}, parent)
+
+	ap := newTestAsyncProducer(nil)
+	defer ap.Teardown()
+
+	conf := sarama.NewConfig()
+	conf.Producer.Return.Successes = true
+	conf.Producer.Return.Errors = true
+
+	wrapped := instasarama.NewAsyncProducer(ap, conf, sensor)
+	wrapped.Input() <- msg
+
+	var published *sarama.ProducerMessage
+	select {
+	case published = <-ap.input:
+		break
+	case <-time.After(1 * time.Second):
+		t.Fatalf("publishing via async producer timed out after 1s")
+	}
+
+	parent.Finish()
+
+	spans := recorder.GetQueuedSpans()
+	require.Len(t, spans, 1)
+
+	pSpan, err := extractAgentSpan(spans[0])
+	require.NoError(t, err)
+
+	// send error for another message
+	ap.errors <- &sarama.ProducerError{
+		Msg: &sarama.ProducerMessage{Topic: "another-topic"},
+		Err: errors.New("something went wrong"),
+	}
+	<-wrapped.Errors()
+	require.Empty(t, recorder.GetQueuedSpans())
+
+	// send success for another message
+	ap.successes <- &sarama.ProducerMessage{Topic: "another-topic"}
+	<-wrapped.Successes()
+	require.Empty(t, recorder.GetQueuedSpans())
+
+	// send expected success
+	ap.successes <- msg
+	<-wrapped.Successes()
+
+	spans = recorder.GetQueuedSpans()
+	require.Len(t, spans, 1)
+
+	cSpan, err := extractAgentSpan(spans[0])
+	require.NoError(t, err)
+
+	assert.Equal(t, 0, cSpan.Ec)
+	assert.EqualValues(t, instana.ExitSpanKind, cSpan.Kind)
+
+	assert.Equal(t, agentKafkaSpanData{
+		Service: "test-topic",
+		Access:  "send",
+	}, cSpan.Data.Kafka)
+
+	assert.Contains(t, published.Headers, sarama.RecordHeader{
+		Key:   []byte("X_INSTANA_C"),
+		Value: instasarama.PackTraceContextHeader(instana.FormatID(cSpan.TraceID), instana.FormatID(cSpan.SpanID)),
+	})
+	assert.Contains(t, published.Headers, sarama.RecordHeader{
+		Key:   []byte("X_INSTANA_L"),
+		Value: instasarama.PackTraceLevelHeader("1"),
+	})
+
+	assert.Equal(t, pSpan.TraceID, cSpan.TraceID)
+	assert.Equal(t, pSpan.SpanID, cSpan.ParentID)
+	assert.NotEqual(t, pSpan.SpanID, cSpan.SpanID)
+}
+
+func TestAsyncProducer_Input_WithAwaitResult_Error(t *testing.T) {
+	recorder := instana.NewTestRecorder()
+	sensor := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{}, recorder))
+
+	parent := sensor.Tracer().StartSpan("test-span")
+	msg := instasarama.ProducerMessageWithSpan(&sarama.ProducerMessage{Topic: "test-topic"}, parent)
+
+	ap := newTestAsyncProducer(nil)
+	defer ap.Teardown()
+
+	conf := sarama.NewConfig()
+	conf.Producer.Return.Successes = true
+	conf.Producer.Return.Errors = true
+
+	wrapped := instasarama.NewAsyncProducer(ap, conf, sensor)
+	wrapped.Input() <- msg
+
+	var published *sarama.ProducerMessage
+	select {
+	case published = <-ap.input:
+		break
+	case <-time.After(1 * time.Second):
+		t.Fatalf("publishing via async producer timed out after 1s")
+	}
+
+	parent.Finish()
+
+	spans := recorder.GetQueuedSpans()
+	require.Len(t, spans, 1)
+
+	pSpan, err := extractAgentSpan(spans[0])
+	require.NoError(t, err)
+
+	// send error for another message
+	ap.errors <- &sarama.ProducerError{
+		Msg: &sarama.ProducerMessage{Topic: "another-topic"},
+		Err: errors.New("something went wrong"),
+	}
+	<-wrapped.Errors()
+	require.Empty(t, recorder.GetQueuedSpans())
+
+	// send success for another message
+	ap.successes <- &sarama.ProducerMessage{Topic: "another-topic"}
+	<-wrapped.Successes()
+	require.Empty(t, recorder.GetQueuedSpans())
+
+	// send expected error
+	ap.errors <- &sarama.ProducerError{
+		Msg: msg,
+		Err: errors.New("something went wrong"),
+	}
+	<-wrapped.Errors()
+
+	spans = recorder.GetQueuedSpans()
+	require.Len(t, spans, 1)
+
+	cSpan, err := extractAgentSpan(spans[0])
+	require.NoError(t, err)
+
+	assert.Equal(t, 1, cSpan.Ec)
+	assert.EqualValues(t, instana.ExitSpanKind, cSpan.Kind)
+
+	assert.Equal(t, agentKafkaSpanData{
+		Service: "test-topic",
+		Access:  "send",
+	}, cSpan.Data.Kafka)
+
+	assert.Contains(t, published.Headers, sarama.RecordHeader{
+		Key:   []byte("X_INSTANA_C"),
+		Value: instasarama.PackTraceContextHeader(instana.FormatID(cSpan.TraceID), instana.FormatID(cSpan.SpanID)),
+	})
+	assert.Contains(t, published.Headers, sarama.RecordHeader{
+		Key:   []byte("X_INSTANA_L"),
+		Value: instasarama.PackTraceLevelHeader("1"),
+	})
+
+	assert.Equal(t, pSpan.TraceID, cSpan.TraceID)
+	assert.Equal(t, pSpan.SpanID, cSpan.ParentID)
+	assert.NotEqual(t, pSpan.SpanID, cSpan.SpanID)
+}
+
+func TestAsyncProducer_Input_NoTraceContext(t *testing.T) {
+	recorder := instana.NewTestRecorder()
+	sensor := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{}, recorder))
+
 	msg := &sarama.ProducerMessage{
 		Topic: "topic-1",
 	}
@@ -32,6 +245,8 @@ func TestAsyncProducer_Input(t *testing.T) {
 	case <-time.After(1 * time.Second):
 		t.Fatalf("publishing via async producer timed out after 1s")
 	}
+
+	assert.Empty(t, recorder.GetQueuedSpans())
 }
 
 func TestAsyncProducer_Successes(t *testing.T) {
