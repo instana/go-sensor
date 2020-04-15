@@ -86,6 +86,7 @@ type Span struct {
 	Duration  uint64        `json:"d"`
 	Name      string        `json:"n"`
 	From      *fromS        `json:"f"`
+	Batch     *batchInfo    `json:"b,omitempty"`
 	Kind      int           `json:"k"`
 	Ec        int           `json:"ec,omitempty"`
 	Data      typedSpanData `json:"data"`
@@ -106,6 +107,10 @@ func newSpan(span *spanS, from *fromS) Span {
 		Kind:      int(data.Kind()),
 		Data:      data,
 	}
+}
+
+type batchInfo struct {
+	Size int `json:"s"`
 }
 
 // SpanData contains fields to be sent in the `data` section of an OT span document. These fields are
