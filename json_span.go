@@ -94,8 +94,7 @@ type Span struct {
 
 func newSpan(span *spanS, from *fromS) Span {
 	data := RegisteredSpanType(span.Operation).ExtractData(span)
-
-	return Span{
+	sp := Span{
 		TraceID:   span.context.TraceID,
 		ParentID:  span.context.ParentID,
 		SpanID:    span.context.SpanID,
@@ -107,6 +106,15 @@ func newSpan(span *spanS, from *fromS) Span {
 		Kind:      int(data.Kind()),
 		Data:      data,
 	}
+
+	if bs, ok := span.Tags[batchSizeTag].(int); ok {
+		if bs > 1 {
+			sp.Batch = &batchInfo{Size: bs}
+		}
+		delete(span.Tags, batchSizeTag)
+	}
+
+	return sp
 }
 
 type batchInfo struct {
