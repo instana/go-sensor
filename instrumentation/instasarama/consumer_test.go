@@ -42,7 +42,7 @@ func TestConsumer_ConsumePartition(t *testing.T) {
 		},
 	}
 
-	wrapped := instasarama.NewConsumer(c, sensor)
+	wrapped := instasarama.WrapConsumer(c, sensor)
 	pc, err := wrapped.ConsumePartition("topic-1", 1, 2)
 	require.NoError(t, err)
 
@@ -72,7 +72,7 @@ func TestConsumer_ConsumePartition_Error(t *testing.T) {
 		},
 	}
 
-	wrapped := instasarama.NewConsumer(c, sensor)
+	wrapped := instasarama.WrapConsumer(c, sensor)
 	_, err := wrapped.ConsumePartition("topic-1", 1, 2)
 	assert.Error(t, err)
 }
@@ -85,7 +85,7 @@ func TestConsumer_Topics(t *testing.T) {
 		topics: []string{"topic-1", "topic-2"},
 	}
 
-	wrapped := instasarama.NewConsumer(c, sensor)
+	wrapped := instasarama.WrapConsumer(c, sensor)
 
 	topics, err := wrapped.Topics()
 	require.NoError(t, err)
@@ -102,7 +102,7 @@ func TestConsumer_Topics_Error(t *testing.T) {
 		topics: []string{"topic-1", "topic-2"},
 	}
 
-	wrapped := instasarama.NewConsumer(c, sensor)
+	wrapped := instasarama.WrapConsumer(c, sensor)
 	_, err := wrapped.Topics()
 	assert.Error(t, err)
 }
@@ -118,7 +118,7 @@ func TestConsumer_Partitions(t *testing.T) {
 		recorder := instana.NewTestRecorder()
 		sensor := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{}, recorder))
 
-		wrapped := instasarama.NewConsumer(c, sensor)
+		wrapped := instasarama.WrapConsumer(c, sensor)
 		partitions, err := wrapped.Partitions("topic-1")
 		require.NoError(t, err)
 
@@ -131,7 +131,7 @@ func TestConsumer_Partitions(t *testing.T) {
 		recorder := instana.NewTestRecorder()
 		sensor := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{}, recorder))
 
-		wrapped := instasarama.NewConsumer(c, sensor)
+		wrapped := instasarama.WrapConsumer(c, sensor)
 		partitions, err := wrapped.Partitions("topic-2")
 		require.NoError(t, err)
 
@@ -152,7 +152,7 @@ func TestConsumer_Partitions_Error(t *testing.T) {
 		},
 	}
 
-	wrapped := instasarama.NewConsumer(c, sensor)
+	wrapped := instasarama.WrapConsumer(c, sensor)
 	_, err := wrapped.Partitions("topic-1")
 	assert.Error(t, err)
 }
@@ -169,7 +169,7 @@ func TestConsumer_HighWaterMarks(t *testing.T) {
 		},
 	}
 
-	wrapped := instasarama.NewConsumer(c, sensor)
+	wrapped := instasarama.WrapConsumer(c, sensor)
 	assert.Equal(t, c.offsets, wrapped.HighWaterMarks())
 
 	assert.Empty(t, recorder.GetQueuedSpans())
@@ -181,7 +181,7 @@ func TestConsumer_Close(t *testing.T) {
 
 	c := &testConsumer{}
 
-	wrapped := instasarama.NewConsumer(c, sensor)
+	wrapped := instasarama.WrapConsumer(c, sensor)
 	require.NoError(t, wrapped.Close())
 
 	assert.True(t, c.Closed)
@@ -196,7 +196,7 @@ func TestConsumer_Close_Error(t *testing.T) {
 		Error: errors.New("something went wrong"),
 	}
 
-	wrapped := instasarama.NewConsumer(c, sensor)
+	wrapped := instasarama.WrapConsumer(c, sensor)
 	assert.Error(t, wrapped.Close())
 }
 

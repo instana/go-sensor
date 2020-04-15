@@ -20,7 +20,7 @@ func TestSyncProducer_SendMessage(t *testing.T) {
 	parent := sensor.Tracer().StartSpan("test-span")
 
 	p := &testSyncProducer{}
-	wrapped := instasarama.NewSyncProducer(p, sensor)
+	wrapped := instasarama.WrapSyncProducer(p, sensor)
 
 	_, _, err := wrapped.SendMessage(
 		instasarama.ProducerMessageWithSpan(&sarama.ProducerMessage{Topic: "test-topic"}, parent),
@@ -66,7 +66,7 @@ func TestSyncProducer_SendMessage_NoTraceContext(t *testing.T) {
 	sensor := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{}, recorder))
 
 	p := &testSyncProducer{}
-	wrapped := instasarama.NewSyncProducer(p, sensor)
+	wrapped := instasarama.WrapSyncProducer(p, sensor)
 
 	_, _, err := wrapped.SendMessage(&sarama.ProducerMessage{
 		Topic: "test-topic",
@@ -87,7 +87,7 @@ func TestSyncProducer_SendMessage_Error(t *testing.T) {
 	p := &testSyncProducer{
 		Error: errors.New("something went wrong"),
 	}
-	wrapped := instasarama.NewSyncProducer(p, sensor)
+	wrapped := instasarama.WrapSyncProducer(p, sensor)
 
 	parent := sensor.Tracer().StartSpan("test-span")
 	_, _, err := wrapped.SendMessage(
@@ -117,7 +117,7 @@ func TestSyncProducer_SendMessages_SameTraceContext(t *testing.T) {
 	sensor := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{}, recorder))
 
 	p := &testSyncProducer{}
-	wrapped := instasarama.NewSyncProducer(p, sensor)
+	wrapped := instasarama.WrapSyncProducer(p, sensor)
 
 	parent := sensor.Tracer().StartSpan("test-span")
 	require.NoError(t, wrapped.SendMessages([]*sarama.ProducerMessage{
@@ -190,7 +190,7 @@ func TestSyncProducer_SendMessages_DifferentTraceContext(t *testing.T) {
 	for name, messages := range examples {
 		t.Run(name, func(t *testing.T) {
 			p := &testSyncProducer{}
-			wrapped := instasarama.NewSyncProducer(p, sensor)
+			wrapped := instasarama.WrapSyncProducer(p, sensor)
 
 			require.NoError(t, wrapped.SendMessages(messages))
 
@@ -205,7 +205,7 @@ func TestSyncProducer_SendMessages_NoTraceContext(t *testing.T) {
 	sensor := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{}, recorder))
 
 	p := &testSyncProducer{}
-	wrapped := instasarama.NewSyncProducer(p, sensor)
+	wrapped := instasarama.WrapSyncProducer(p, sensor)
 
 	require.NoError(t, wrapped.SendMessages([]*sarama.ProducerMessage{
 		{Topic: "test-topic-1"},
@@ -227,7 +227,7 @@ func TestSyncProducer_SendMessages_Error(t *testing.T) {
 	p := &testSyncProducer{
 		Error: errors.New("something went wrong"),
 	}
-	wrapped := instasarama.NewSyncProducer(p, sensor)
+	wrapped := instasarama.WrapSyncProducer(p, sensor)
 
 	parent := sensor.Tracer().StartSpan("test-span")
 	assert.Error(t, wrapped.SendMessages([]*sarama.ProducerMessage{
@@ -262,7 +262,7 @@ func TestSyncProducer_Close(t *testing.T) {
 	sensor := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{}, recorder))
 
 	p := &testSyncProducer{}
-	wrapped := instasarama.NewSyncProducer(p, sensor)
+	wrapped := instasarama.WrapSyncProducer(p, sensor)
 	wrapped.Close()
 
 	assert.True(t, p.Closed)

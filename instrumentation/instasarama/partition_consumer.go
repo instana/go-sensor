@@ -15,8 +15,8 @@ type PartitionConsumer struct {
 	messages chan *sarama.ConsumerMessage
 }
 
-// NewPartitionConsumer wraps sarama.PartitionConsumer instance and instruments its calls
-func NewPartitionConsumer(c sarama.PartitionConsumer, sensor *instana.Sensor) *PartitionConsumer {
+// WrapPartitionConsumer wraps sarama.PartitionConsumer instance and instruments its calls
+func WrapPartitionConsumer(c sarama.PartitionConsumer, sensor *instana.Sensor) *PartitionConsumer {
 	pc := &PartitionConsumer{
 		PartitionConsumer: c,
 		sensor:            sensor,

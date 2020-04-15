@@ -44,7 +44,7 @@ func TestPartitionConsumer_Messages(t *testing.T) {
 	}
 	close(pc.messages)
 
-	wrapped := instasarama.NewPartitionConsumer(pc, sensor)
+	wrapped := instasarama.WrapPartitionConsumer(pc, sensor)
 
 	var collected []*sarama.ConsumerMessage
 	timeout := time.After(1 * time.Second)
@@ -119,7 +119,7 @@ func TestPartitionConsumer_AsyncClose(t *testing.T) {
 
 	pc := &testPartitionConsumer{}
 
-	wrapped := instasarama.NewPartitionConsumer(pc, sensor)
+	wrapped := instasarama.WrapPartitionConsumer(pc, sensor)
 	wrapped.AsyncClose()
 
 	assert.True(t, pc.Closed)
@@ -132,7 +132,7 @@ func TestPartitionConsumer_Close(t *testing.T) {
 
 	pc := &testPartitionConsumer{}
 
-	wrapped := instasarama.NewPartitionConsumer(pc, sensor)
+	wrapped := instasarama.WrapPartitionConsumer(pc, sensor)
 	require.NoError(t, wrapped.Close())
 
 	assert.True(t, pc.Closed)
@@ -147,7 +147,7 @@ func TestPartitionConsumer_Close_Error(t *testing.T) {
 		Error: errors.New("something went wrong"),
 	}
 
-	wrapped := instasarama.NewPartitionConsumer(pc, sensor)
+	wrapped := instasarama.WrapPartitionConsumer(pc, sensor)
 	assert.Error(t, wrapped.Close())
 }
 
@@ -159,7 +159,7 @@ func TestPartitionConsumer_HighWaterMarkOffset(t *testing.T) {
 		Offset: 42,
 	}
 
-	wrapped := instasarama.NewPartitionConsumer(pc, sensor)
+	wrapped := instasarama.WrapPartitionConsumer(pc, sensor)
 	assert.Equal(t, pc.Offset, wrapped.HighWaterMarkOffset())
 }
 

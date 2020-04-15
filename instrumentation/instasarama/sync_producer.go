@@ -17,8 +17,31 @@ type SyncProducer struct {
 	sensor *instana.Sensor
 }
 
-// NewSyncProducer wraps sarama.SyncProducer instance and instruments its calls
-func NewSyncProducer(sp sarama.SyncProducer, sensor *instana.Sensor) *SyncProducer {
+// NewSyncProducer creates a new SyncProducer using the given broker addresses and configuration, and
+// instruments its calls
+func NewSyncProducer(addrs []string, config *sarama.Config, sensor *instana.Sensor) (sarama.SyncProducer, error) {
+	sp, err := sarama.NewSyncProducer(addrs, config)
+	if err != nil {
+		return sp, err
+	}
+
+	return WrapSyncProducer(sp, sensor), nil
+}
+
+// NewSyncProducerFromClient creates a new SyncProducer using the given client, and instruments its calls
+func NewSyncProducerFromClient(client sarama.Client, sensor *instana.Sensor) (sarama.SyncProducer, error) {
+	sp, err := sarama.NewSyncProducerFromClient(client)
+	if err != nil {
+		return sp, err
+	}
+
+	return WrapSyncProducer(sp, sensor), nil
+}
+
+// WrapSyncProducer wraps an existing sarama.SyncProducer instance and instruments its calls. To initialize a new
+// sync producer instance use instasarama.NewSyncProducer() and instasarama.NewSyncProducerFromClient() convenience
+// methods instead
+func WrapSyncProducer(sp sarama.SyncProducer, sensor *instana.Sensor) *SyncProducer {
 	return &SyncProducer{
 		SyncProducer: sp,
 		sensor:       sensor,

@@ -44,10 +44,33 @@ const (
 	apAllChansReady = apSuccessesChanReady | apErrorsChanReady
 )
 
+// NewAsyncProducer creates a new sarama.AsyncProducer using the given broker addresses and configuration, and
+// instruments its calls
+func NewAsyncProducer(addrs []string, conf *sarama.Config, sensor *instana.Sensor) (sarama.AsyncProducer, error) {
+	ap, err := sarama.NewAsyncProducer(addrs, conf)
+	if err != nil {
+		return ap, err
+	}
+
+	return WrapAsyncProducer(ap, conf, sensor), nil
+}
+
+// NewAsyncProducerFromClient creates a new sarama.AsyncProducer using the given client, and
+// instruments its calls
+func NewAsyncProducerFromClient(client sarama.Client, sensor *instana.Sensor) (sarama.AsyncProducer, error) {
+	ap, err := sarama.NewAsyncProducerFromClient(client)
+	if err != nil {
+		return ap, err
+	}
+
+	return WrapAsyncProducer(ap, client.Config(), sensor), nil
+}
+
 // WrapAsyncProducer wraps an existing sarama.AsyncProducer and instruments its calls. It requires the same
 // config that was used to create this consumer to detect whether the producer is supposed to return
-// successes/errors.
-func NewAsyncProducer(p sarama.AsyncProducer, conf *sarama.Config, sensor *instana.Sensor) *AsyncProducer {
+// successes/errors. To initialize a new  sync producer instance use instasarama.NewAsyncProducer() and
+// instasarama.NewAsyncProducerFromClient() convenience methods instead
+func WrapAsyncProducer(p sarama.AsyncProducer, conf *sarama.Config, sensor *instana.Sensor) *AsyncProducer {
 	ap := &AsyncProducer{
 		AsyncProducer: p,
 		sensor:        sensor,

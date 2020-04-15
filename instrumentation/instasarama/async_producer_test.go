@@ -22,7 +22,7 @@ func TestAsyncProducer_Input(t *testing.T) {
 	ap := newTestAsyncProducer(nil)
 	defer ap.Teardown()
 
-	wrapped := instasarama.NewAsyncProducer(ap, sarama.NewConfig(), sensor)
+	wrapped := instasarama.WrapAsyncProducer(ap, sarama.NewConfig(), sensor)
 	wrapped.Input() <- msg
 
 	var published *sarama.ProducerMessage
@@ -80,7 +80,7 @@ func TestAsyncProducer_Input_WithAwaitResult_Success(t *testing.T) {
 	conf.Producer.Return.Successes = true
 	conf.Producer.Return.Errors = true
 
-	wrapped := instasarama.NewAsyncProducer(ap, conf, sensor)
+	wrapped := instasarama.WrapAsyncProducer(ap, conf, sensor)
 	wrapped.Input() <- msg
 
 	var published *sarama.ProducerMessage
@@ -158,7 +158,7 @@ func TestAsyncProducer_Input_WithAwaitResult_Error(t *testing.T) {
 	conf.Producer.Return.Successes = true
 	conf.Producer.Return.Errors = true
 
-	wrapped := instasarama.NewAsyncProducer(ap, conf, sensor)
+	wrapped := instasarama.WrapAsyncProducer(ap, conf, sensor)
 	wrapped.Input() <- msg
 
 	var published *sarama.ProducerMessage
@@ -236,7 +236,7 @@ func TestAsyncProducer_Input_NoTraceContext(t *testing.T) {
 	ap := newTestAsyncProducer(nil)
 	defer ap.Teardown()
 
-	wrapped := instasarama.NewAsyncProducer(ap, sarama.NewConfig(), sensor)
+	wrapped := instasarama.WrapAsyncProducer(ap, sarama.NewConfig(), sensor)
 	wrapped.Input() <- msg
 
 	select {
@@ -262,7 +262,7 @@ func TestAsyncProducer_Successes(t *testing.T) {
 
 	ap.successes <- msg
 
-	wrapped := instasarama.NewAsyncProducer(ap, sarama.NewConfig(), sensor)
+	wrapped := instasarama.WrapAsyncProducer(ap, sarama.NewConfig(), sensor)
 
 	select {
 	case received := <-wrapped.Successes():
@@ -286,7 +286,7 @@ func TestAsyncProducer_Errors(t *testing.T) {
 
 	ap.errors <- msg
 
-	wrapped := instasarama.NewAsyncProducer(ap, sarama.NewConfig(), sensor)
+	wrapped := instasarama.WrapAsyncProducer(ap, sarama.NewConfig(), sensor)
 
 	select {
 	case received := <-wrapped.Errors():
