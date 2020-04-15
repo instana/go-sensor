@@ -91,6 +91,23 @@ type Span struct {
 	Data      typedSpanData `json:"data"`
 }
 
+func newSpan(span *spanS, from *fromS) Span {
+	data := RegisteredSpanType(span.Operation).ExtractData(span)
+
+	return Span{
+		TraceID:   span.context.TraceID,
+		ParentID:  span.context.ParentID,
+		SpanID:    span.context.SpanID,
+		Timestamp: uint64(span.Start.UnixNano()) / uint64(time.Millisecond),
+		Duration:  uint64(span.Duration) / uint64(time.Millisecond),
+		Name:      string(data.Type()),
+		Ec:        span.ErrorCount,
+		From:      from,
+		Kind:      int(data.Kind()),
+		Data:      data,
+	}
+}
+
 // SpanData contains fields to be sent in the `data` section of an OT span document. These fields are
 // common for all span types.
 type SpanData struct {
