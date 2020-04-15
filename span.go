@@ -114,7 +114,7 @@ func (r *spanS) LogFields(fields ...otlog.Field) {
 
 	for _, v := range fields {
 		// If this tag indicates an error, increase the error count
-		if v.Key() == "error" {
+		if v.Key() == "error" || v.Key() == "error.object" {
 			r.ErrorCount++
 		}
 	}
