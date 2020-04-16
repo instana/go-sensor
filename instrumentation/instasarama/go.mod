@@ -3,7 +3,7 @@ module github.com/instana/go-sensor/instrumentation/instasarama
 go 1.9
 
 require (
-	github.com/Shopify/sarama v1.14.0
+	github.com/Shopify/sarama v1.19.0
 	github.com/Shopify/toxiproxy v2.1.4+incompatible // indirect
 	github.com/eapache/go-resiliency v1.2.0 // indirect
 	github.com/eapache/go-xerial-snappy v0.0.0-20180814174437-776d5712da21 // indirect
