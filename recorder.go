@@ -62,8 +62,6 @@ func (r *Recorder) RecordSpan(span *spanS) {
 		return
 	}
 
-	data := RegisteredSpanType(span.Operation).ExtractData(span)
-
 	r.Lock()
 	defer r.Unlock()
 
@@ -71,18 +69,7 @@ func (r *Recorder) RecordSpan(span *spanS) {
 		r.spans = r.spans[1:]
 	}
 
-	r.spans = append(r.spans, Span{
-		TraceID:   span.context.TraceID,
-		ParentID:  span.context.ParentID,
-		SpanID:    span.context.SpanID,
-		Timestamp: uint64(span.Start.UnixNano()) / uint64(time.Millisecond),
-		Duration:  uint64(span.Duration) / uint64(time.Millisecond),
-		Name:      string(data.Type()),
-		Ec:        span.ErrorCount,
-		From:      sensor.agent.from,
-		Kind:      int(data.Kind()),
-		Data:      data,
-	})
+	r.spans = append(r.spans, newSpan(span, sensor.agent.from))
 
 	if r.testMode || !sensor.agent.canSend() {
 		return

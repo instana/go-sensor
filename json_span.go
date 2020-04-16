@@ -86,9 +86,39 @@ type Span struct {
 	Duration  uint64        `json:"d"`
 	Name      string        `json:"n"`
 	From      *fromS        `json:"f"`
+	Batch     *batchInfo    `json:"b,omitempty"`
 	Kind      int           `json:"k"`
 	Ec        int           `json:"ec,omitempty"`
 	Data      typedSpanData `json:"data"`
+}
+
+func newSpan(span *spanS, from *fromS) Span {
+	data := RegisteredSpanType(span.Operation).ExtractData(span)
+	sp := Span{
+		TraceID:   span.context.TraceID,
+		ParentID:  span.context.ParentID,
+		SpanID:    span.context.SpanID,
+		Timestamp: uint64(span.Start.UnixNano()) / uint64(time.Millisecond),
+		Duration:  uint64(span.Duration) / uint64(time.Millisecond),
+		Name:      string(data.Type()),
+		Ec:        span.ErrorCount,
+		From:      from,
+		Kind:      int(data.Kind()),
+		Data:      data,
+	}
+
+	if bs, ok := span.Tags[batchSizeTag].(int); ok {
+		if bs > 1 {
+			sp.Batch = &batchInfo{Size: bs}
+		}
+		delete(span.Tags, batchSizeTag)
+	}
+
+	return sp
+}
+
+type batchInfo struct {
+	Size int `json:"s"`
 }
 
 // SpanData contains fields to be sent in the `data` section of an OT span document. These fields are
