@@ -9,20 +9,6 @@ import (
 	otlog "github.com/opentracing/opentracing-go/log"
 )
 
-type spanKey struct {
-	Topic     string
-	Partition int32
-	Offset    int64
-}
-
-func activeSpanKey(msg *sarama.ProducerMessage) spanKey {
-	return spanKey{
-		Topic:     msg.Topic,
-		Partition: msg.Partition,
-		Offset:    msg.Offset,
-	}
-}
-
 // AsyncProducer is a wrapper for sarama.AsyncProducer that instruments its calls using
 // provided instana.Sensor
 type AsyncProducer struct {
@@ -36,7 +22,7 @@ type AsyncProducer struct {
 	errors    chan *sarama.ProducerError
 
 	channelStates uint8 // bit fields describing the open/closed state of the response channels
-	activeSpans   map[spanKey]ot.Span
+	activeSpans   *spanRegistry
 }
 
 const (
@@ -84,7 +70,7 @@ func WrapAsyncProducer(p sarama.AsyncProducer, conf *sarama.Config, sensor *inst
 
 	if conf != nil {
 		ap.awaitResult = conf.Producer.Return.Successes && conf.Producer.Return.Errors
-		ap.activeSpans = make(map[spanKey]ot.Span)
+		ap.activeSpans = newSpanRegistry()
 	}
 
 	go ap.consume()
@@ -109,7 +95,7 @@ func (p *AsyncProducer) consume() {
 			sp := startProducerSpan(p.sensor, msg)
 			if sp != nil {
 				if p.awaitResult { // postpone span finish until the result is received
-					p.activeSpans[activeSpanKey(msg)] = sp
+					p.activeSpans.Add(producerSpanKey(msg), sp)
 				} else {
 					sp.Finish()
 				}
@@ -125,10 +111,7 @@ func (p *AsyncProducer) consume() {
 			}
 			p.successes <- msg
 
-			key := activeSpanKey(msg)
-			if sp, ok := p.activeSpans[key]; ok {
-				delete(p.activeSpans, key)
-
+			if sp, ok := p.activeSpans.Remove(producerSpanKey(msg)); ok {
 				sp.Finish()
 			}
 		case msg, ok := <-p.AsyncProducer.Errors():
@@ -138,10 +121,7 @@ func (p *AsyncProducer) consume() {
 			}
 			p.errors <- msg
 
-			key := activeSpanKey(msg.Msg)
-			if sp, ok := p.activeSpans[key]; ok {
-				delete(p.activeSpans, key)
-
+			if sp, ok := p.activeSpans.Remove(producerSpanKey(msg.Msg)); ok {
 				sp.SetTag("kafka.error", msg.Err)
 				sp.LogFields(otlog.Error(msg.Err))
 				sp.Finish()
