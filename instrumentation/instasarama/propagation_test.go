@@ -347,6 +347,34 @@ func TestProducerMessageCarrier_Update_FieldL(t *testing.T) {
 	}, msg.Headers)
 }
 
+func TestProducerMessageCarrier_RemoveAll(t *testing.T) {
+	msg := sarama.ProducerMessage{
+		Headers: []sarama.RecordHeader{
+			{Key: []byte("X_CUSTOM_1"), Value: []byte("value1")},
+			{
+				Key: []byte("x_instana_c"),
+				Value: []byte{
+					// trace id
+					0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+					0x00, 0x00, 0x00, 0x00, 0xab, 0xcd, 0xef, 0x12,
+					// span id
+					0x00, 0x00, 0x00, 0x00, 0xde, 0xad, 0xbe, 0xef,
+				},
+			},
+			{Key: []byte("X_CUSTOM_2"), Value: []byte("value2")},
+			{Key: []byte("x_INSTANA_L"), Value: []byte{0x01}},
+		},
+	}
+
+	c := instasarama.ProducerMessageCarrier{&msg}
+	c.RemoveAll()
+
+	assert.ElementsMatch(t, []sarama.RecordHeader{
+		{Key: []byte("X_CUSTOM_1"), Value: []byte("value1")},
+		{Key: []byte("X_CUSTOM_2"), Value: []byte("value2")},
+	}, msg.Headers)
+}
+
 func TestProducerMessageCarrier_ForeachKey(t *testing.T) {
 	msg := sarama.ProducerMessage{
 		Headers: []sarama.RecordHeader{
@@ -792,6 +820,36 @@ func TestConsumerMessageCarrier_Update_FieldL(t *testing.T) {
 	assert.ElementsMatch(t, []*sarama.RecordHeader{
 		{Key: []byte("X_CUSTOM_1"), Value: []byte("value1")},
 		{Key: []byte("x_instana_l"), Value: []byte{0x01}},
+		{Key: []byte("X_CUSTOM_2"), Value: []byte("value2")},
+	}, msg.Headers)
+}
+
+func TestConsumerMessageCarrier_RemoveAll(t *testing.T) {
+	msg := sarama.ConsumerMessage{
+		Headers: []*sarama.RecordHeader{
+			{Key: []byte("X_CUSTOM_1"), Value: []byte("value1")},
+			{
+				Key: []byte("x_instana_c"),
+				Value: []byte{
+					// trace id
+					0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+					0x00, 0x00, 0x00, 0x00, 0xab, 0xcd, 0xef, 0x12,
+					// span id
+					0x00, 0x00, 0x00, 0x00, 0xde, 0xad, 0xbe, 0xef,
+				},
+			},
+			nil,
+			{Key: []byte("X_CUSTOM_2"), Value: []byte("value2")},
+			{Key: []byte("x_INSTANA_L"), Value: []byte{0x01}},
+		},
+	}
+
+	c := instasarama.ConsumerMessageCarrier{&msg}
+	c.RemoveAll()
+
+	assert.ElementsMatch(t, []*sarama.RecordHeader{
+		{Key: []byte("X_CUSTOM_1"), Value: []byte("value1")},
+		nil,
 		{Key: []byte("X_CUSTOM_2"), Value: []byte("value2")},
 	}, msg.Headers)
 }

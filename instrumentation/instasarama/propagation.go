@@ -75,6 +75,21 @@ func (c ProducerMessageCarrier) Set(key, val string) {
 	}
 }
 
+// RemoveAll removes all tracing headers previously set by Set()
+func (c ProducerMessageCarrier) RemoveAll() {
+	var ln int
+	for _, header := range c.Message.Headers {
+		if bytes.EqualFold(header.Key, fieldCKey) || bytes.EqualFold(header.Key, fieldLKey) {
+			continue
+		}
+
+		c.Message.Headers[ln] = header
+		ln++
+	}
+
+	c.Message.Headers = c.Message.Headers[:ln]
+}
+
 // ForeachKey implements opentracing.TextMapReader for ProducerMessageCarrier
 func (c ProducerMessageCarrier) ForeachKey(handler func(key, val string) error) error {
 	for _, header := range c.Message.Headers {
@@ -179,6 +194,21 @@ func (c ConsumerMessageCarrier) Set(key, val string) {
 	}
 }
 
+// RemoveAll removes all tracing headers previously set by Set()
+func (c ConsumerMessageCarrier) RemoveAll() {
+	var ln int
+	for _, header := range c.Message.Headers {
+		if header != nil && (bytes.EqualFold(header.Key, fieldCKey) || bytes.EqualFold(header.Key, fieldLKey)) {
+			continue
+		}
+
+		c.Message.Headers[ln] = header
+		ln++
+	}
+
+	c.Message.Headers = c.Message.Headers[:ln]
+}
+
 // ForeachKey implements opentracing.TextMapReader for ConsumerMessageCarrier
 func (c ConsumerMessageCarrier) ForeachKey(handler func(key, val string) error) error {
 	for _, header := range c.Message.Headers {
@@ -235,6 +265,10 @@ func (c ConsumerMessageCarrier) indexOf(key []byte) (int, bool) {
 	}
 
 	return -1, false
+}
+
+func contextPropagationSupported(ver sarama.KafkaVersion) bool {
+	return ver.IsAtLeast(sarama.V0_11_0_0)
 }
 
 func extractTraceSpanID(msg *sarama.ProducerMessage) (string, string, error) {
