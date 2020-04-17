@@ -15,7 +15,8 @@ type AsyncProducer struct {
 	sarama.AsyncProducer
 	sensor *instana.Sensor
 
-	awaitResult bool
+	awaitResult    bool
+	propageContext bool
 
 	input     chan *sarama.ProducerMessage
 	successes chan *sarama.ProducerMessage
@@ -55,7 +56,7 @@ func NewAsyncProducerFromClient(client sarama.Client, sensor *instana.Sensor) (s
 }
 
 // WrapAsyncProducer wraps an existing sarama.AsyncProducer and instruments its calls. It requires the same
-// config that was used to create this consumer to detect whether the producer is supposed to return
+// config that was used to create this producer to detect the Kafka version and whether it's supposed to return
 // successes/errors. To initialize a new  sync producer instance use instasarama.NewAsyncProducer() and
 // instasarama.NewAsyncProducerFromClient() convenience methods instead
 func WrapAsyncProducer(p sarama.AsyncProducer, conf *sarama.Config, sensor *instana.Sensor) *AsyncProducer {
@@ -69,6 +70,7 @@ func WrapAsyncProducer(p sarama.AsyncProducer, conf *sarama.Config, sensor *inst
 	}
 
 	if conf != nil {
+		ap.propageContext = contextPropagationSupported(conf.Version)
 		ap.awaitResult = conf.Producer.Return.Successes && conf.Producer.Return.Errors
 		ap.activeSpans = newSpanRegistry()
 	}
@@ -100,7 +102,12 @@ func (p *AsyncProducer) consume() {
 					sp.Finish()
 				}
 
-				p.sensor.Tracer().Inject(sp.Context(), ot.TextMap, ProducerMessageCarrier{msg})
+				carrier := ProducerMessageCarrier{msg}
+				if p.propageContext {
+					p.sensor.Tracer().Inject(sp.Context(), ot.TextMap, carrier)
+				} else {
+					carrier.RemoveAll()
+				}
 			}
 
 			p.AsyncProducer.Input() <- msg

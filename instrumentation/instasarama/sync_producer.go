@@ -16,7 +16,8 @@ import (
 // provided instana.Sensor
 type SyncProducer struct {
 	sarama.SyncProducer
-	sensor *instana.Sensor
+	sensor         *instana.Sensor
+	propageContext bool
 }
 
 // NewSyncProducer creates a new SyncProducer using the given broker addresses and configuration, and
@@ -27,7 +28,7 @@ func NewSyncProducer(addrs []string, config *sarama.Config, sensor *instana.Sens
 		return sp, err
 	}
 
-	return WrapSyncProducer(sp, sensor), nil
+	return WrapSyncProducer(sp, config, sensor), nil
 }
 
 // NewSyncProducerFromClient creates a new SyncProducer using the given client, and instruments its calls
@@ -37,30 +38,38 @@ func NewSyncProducerFromClient(client sarama.Client, sensor *instana.Sensor) (sa
 		return sp, err
 	}
 
-	return WrapSyncProducer(sp, sensor), nil
+	return WrapSyncProducer(sp, client.Config(), sensor), nil
 }
 
-// WrapSyncProducer wraps an existing sarama.SyncProducer instance and instruments its calls. To initialize a new
-// sync producer instance use instasarama.NewSyncProducer() and instasarama.NewSyncProducerFromClient() convenience
-// methods instead
-func WrapSyncProducer(sp sarama.SyncProducer, sensor *instana.Sensor) *SyncProducer {
+// WrapSyncProducer wraps an existing sarama.SyncProducer instance and instruments its calls. It requires the same
+// config that was used to create this producer to detect the Kafka version and whether it's supposed to return
+// successes/errors. To initialize a new sync producer instance use instasarama.NewSyncProducer() and
+// instasarama.NewSyncProducerFromClient() convenience methods instead
+func WrapSyncProducer(sp sarama.SyncProducer, config *sarama.Config, sensor *instana.Sensor) *SyncProducer {
 	return &SyncProducer{
-		SyncProducer: sp,
-		sensor:       sensor,
+		SyncProducer:   sp,
+		sensor:         sensor,
+		propageContext: contextPropagationSupported(config.Version),
 	}
 }
 
 // SendMessage picks up the trace context previously added to the message with
 // instasarama.ProducerMessageWithSpan(), starts a new child span and injects its
 // context into the message headers before sending it to the underlying producer.
-// The call will not be traced if there the message does not contain trace context.
+// The call will not be traced if there the message does not contain trace context
 func (p *SyncProducer) SendMessage(msg *sarama.ProducerMessage) (int32, int64, error) {
 	sp := startProducerSpan(p.sensor, msg)
 	if sp != nil {
 		defer sp.Finish()
 
-		// forward the trace context, updating the span ids
-		sp.Tracer().Inject(sp.Context(), ot.TextMap, ProducerMessageCarrier{msg})
+		carrier := ProducerMessageCarrier{msg}
+		if p.propageContext {
+			// forward the trace context, updating the span ids
+			sp.Tracer().Inject(sp.Context(), ot.TextMap, carrier)
+		} else {
+			// remove previously added trace headers
+			carrier.RemoveAll()
+		}
 	}
 
 	partition, offset, err := p.SyncProducer.SendMessage(msg)

@@ -24,7 +24,10 @@ func TestAsyncProducer_Input(t *testing.T) {
 	ap := newTestAsyncProducer(nil)
 	defer ap.Teardown()
 
-	wrapped := instasarama.WrapAsyncProducer(ap, sarama.NewConfig(), sensor)
+	conf := sarama.NewConfig()
+	conf.Version = sarama.V0_11_0_0
+
+	wrapped := instasarama.WrapAsyncProducer(ap, conf, sensor)
 	wrapped.Input() <- msg
 
 	var published *sarama.ProducerMessage
@@ -79,6 +82,7 @@ func TestAsyncProducer_Input_WithAwaitResult_Success(t *testing.T) {
 	defer ap.Teardown()
 
 	conf := sarama.NewConfig()
+	conf.Version = sarama.V0_11_0_0
 	conf.Producer.Return.Successes = true
 	conf.Producer.Return.Errors = true
 
@@ -157,6 +161,7 @@ func TestAsyncProducer_Input_WithAwaitResult_Error(t *testing.T) {
 	defer ap.Teardown()
 
 	conf := sarama.NewConfig()
+	conf.Version = sarama.V0_11_0_0
 	conf.Producer.Return.Successes = true
 	conf.Producer.Return.Errors = true
 
