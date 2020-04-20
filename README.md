@@ -90,7 +90,7 @@ func MyFunc(ctx context.Context) {
 	var spanOpts []ot.StartSpanOption
 
 	// retrieve parent span from context and reference it in the new one
-	if parent, ok := instana.SpanFromContext(); ok {
+	if parent, ok := instana.SpanFromContext(ctx); ok {
 	    spanOpts = append(spanOpts, ot.ChildOf(parent.Context()))
 	}
 
