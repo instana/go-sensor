@@ -162,6 +162,10 @@ The provided `parentSpan` is the incoming request from the request handler (see 
 
 [`github.com/instana/go-sensor/instrumentation/instagrpc`](./instrumentation/instagrpc) provides both unary and stream interceptors to instrument GRPC servers and clients that use `google.golang.org/grpc`.
 
+### Kafka producers and consumers
+
+[`github.com/instana/go-sensor/instrumentation/instasarama`](./instrumentation/instasarama) provides both unary and stream interceptors to instrument Kafka producers and consumers built on top of `github.com/Shopify/sarama`.
+
 ## Sensor
 
 To use sensor only without tracing ability, import the `instana` package and run

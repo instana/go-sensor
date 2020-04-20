@@ -4,7 +4,7 @@ matrix:
   include:
     - go: tip
     - go: 1.8.x
-      env: EXCLUDE_DIRS="./instrumentation/instagrpc"
+      env: EXCLUDE_DIRS="./instrumentation/instagrpc ./instrumentation/instasarama"
     - go: 1.9.x
     - go: 1.10.x
     - go: 1.11.x
