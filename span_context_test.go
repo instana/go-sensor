@@ -77,10 +77,11 @@ func TestSpanContext_WithBaggageItem(t *testing.T) {
 
 func TestSpanContext_Clone(t *testing.T) {
 	c := instana.SpanContext{
-		TraceID:  1,
-		SpanID:   2,
-		ParentID: 3,
-		Sampled:  true,
+		TraceID:    1,
+		SpanID:     2,
+		ParentID:   3,
+		Sampled:    true,
+		Suppressed: true,
 		Baggage: map[string]string{
 			"key1": "value1",
 			"key2": "value2",
