@@ -4,20 +4,18 @@ import (
 	"fmt"
 	"net/http"
 	"testing"
-	"time"
 
 	instana "github.com/instana/go-sensor"
 	opentracing "github.com/opentracing/opentracing-go"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestSpanPropagator(t *testing.T) {
-	const op = "test"
-	opts := instana.Options{LogLevel: instana.Debug}
 	recorder := instana.NewTestRecorder()
-	tracer := instana.NewTracerWithEverything(&opts, recorder)
+	tracer := instana.NewTracerWithEverything(&instana.Options{}, recorder)
 
-	sp := tracer.StartSpan(op)
+	sp := tracer.StartSpan("parent-span")
 	sp.SetBaggageItem("foo", "bar")
 
 	tmc := opentracing.HTTPHeadersCarrier(http.Header{})
@@ -29,61 +27,39 @@ func TestSpanPropagator(t *testing.T) {
 	}
 
 	for i, test := range tests {
-		if err := tracer.Inject(sp.Context(), test.typ, test.carrier); err != nil {
-			t.Fatalf("%d: %v", i, err)
-		}
+		require.NoError(t, tracer.Inject(sp.Context(), test.typ, test.carrier), "span %d", i)
 
 		injectedContext, err := tracer.Extract(test.typ, test.carrier)
-		if err != nil {
-			t.Fatalf("%d: %v", i, err)
-		}
+		require.NoError(t, err, "span %d", i)
 
-		child := tracer.StartSpan(
-			op,
-			opentracing.ChildOf(injectedContext))
+		child := tracer.StartSpan("child-span", opentracing.ChildOf(injectedContext))
 		child.Finish()
 	}
 
 	sp.Finish()
 
 	spans := recorder.GetQueuedSpans()
-	if a, e := len(spans), len(tests)+1; a != e {
-		t.Fatalf("expected %d spans, got %d", e, a)
-	}
+	require.Len(t, spans, len(tests)+1)
 
-	// The last span is the original one.
+	// The last span is the parent one
 	exp, spans := spans[len(spans)-1], spans[:len(spans)-1]
-	exp.Duration = uint64(time.Duration(123))
-	// exp.Timestamp = uint64(time.Time{}.Add(1))
-
 	for i, span := range spans {
-		if a, e := span.ParentID, exp.SpanID; a != e {
-			t.Fatalf("%d: ParentID %d does not match expectation %d", i, a, e)
-		}
-
-		if a, e := span.TraceID, exp.TraceID; a != e {
-			t.Fatalf("%d: TraceID changed from %d to %d", i, e, a)
-		}
+		assert.Equal(t, exp.TraceID, span.TraceID, "span %d", i)
+		assert.Equal(t, exp.SpanID, span.ParentID, "span %d", i)
 	}
 }
 
 func TestCaseSensitiveHeaderPropagation(t *testing.T) {
-	var (
-		op                 = "test"
-		spanParentIDBase64 = int64(4884)
-		spanParentIDString = "1314"
-	)
-
-	opts := instana.Options{LogLevel: instana.Debug}
 	recorder := instana.NewTestRecorder()
-	tracer := instana.NewTracerWithEverything(&opts, recorder)
+	tracer := instana.NewTracerWithEverything(&instana.Options{}, recorder)
 
 	// Simulate an existing root span
-	metadata := make(map[string]string)
-	metadata["X-Instana-T"] = spanParentIDString
-	metadata["X-Instana-S"] = spanParentIDString
-	metadata["X-Instana-L"] = "1"
-	metadata["X-Instana-B-Foo"] = "bar"
+	metadata := map[string]string{
+		"X-Instana-T":     "1314",
+		"X-Instana-S":     "1314",
+		"X-Instana-L":     "1",
+		"X-Instana-B-Foo": "bar",
+	}
 
 	tmc1 := opentracing.TextMapCarrier(metadata)
 	tmc2 := opentracing.TextMapCarrier(make(map[string]string))
@@ -102,83 +78,60 @@ func TestCaseSensitiveHeaderPropagation(t *testing.T) {
 	for i, test := range tests {
 		// Extract the existing context
 		injectedContext, err := tracer.Extract(test.typ, test.carrier)
-		if err != nil {
-			t.Fatalf("%d: %v", i, err)
-		}
+		require.NoError(t, err, "span %d", i)
+
 		// Start a new child span and overwrite the baggage key
-		child := tracer.StartSpan(
-			op,
-			opentracing.ChildOf(injectedContext))
+		child := tracer.StartSpan("child-span", opentracing.ChildOf(injectedContext))
 		child.SetBaggageItem("foo", "baz")
 
 		// Inject the context into the metadata
-		if err := tracer.Inject(child.Context(), test.typ, test.carrier); err != nil {
-			t.Fatalf("%d: %v", i, err)
-		}
+		require.NoError(t, tracer.Inject(child.Context(), test.typ, test.carrier), "span %d", i)
 
 		child.Finish()
 		assert.Equal(t, child.BaggageItem("foo"), "baz")
-
 	}
 
-	for _, s := range recorder.GetQueuedSpans() {
-		assert.Equal(t, spanParentIDBase64, s.ParentID)
-		assert.NotEqual(t, spanParentIDBase64, s.SpanID)
+	for i, s := range recorder.GetQueuedSpans() {
+		assert.EqualValues(t, 0x1314, s.ParentID, "span %d", i)
+		assert.NotEqual(t, 0x1314, s.SpanID, "span %d", i)
 	}
 
 }
 
 func TestSingleHeaderPropagation(t *testing.T) {
-	var (
-		op                 = "test"
-		spanParentIDBase64 = int64(4884)
-		spanParentIDString = "1314"
-	)
-
-	opts := instana.Options{LogLevel: instana.Debug}
 	recorder := instana.NewTestRecorder()
-	tracer := instana.NewTracerWithEverything(&opts, recorder)
+	tracer := instana.NewTracerWithEverything(&instana.Options{}, recorder)
 
 	// Simulate an existing root span
-	metadata := make(http.Header)
-	metadata.Set("X-Instana-T", spanParentIDString)
-	metadata.Set("X-Instana-S", spanParentIDString)
+	metadata := http.Header{}
+	metadata.Set("X-Instana-T", "1314")
+	metadata.Set("X-Instana-S", "1314")
 	metadata.Set("X-Instana-L", "1")
 	metadata.Set("X-Instana-B-Foo", "bar")
+
 	tmc1 := opentracing.HTTPHeadersCarrier(metadata)
 
-	tests := []struct {
-		typ, carrier interface{}
-	}{
-		{opentracing.HTTPHeaders, tmc1},
-	}
+	// Extract the existing context
+	injectedContext, err := tracer.Extract(opentracing.HTTPHeaders, tmc1)
+	require.NoError(t, err)
 
-	for i, test := range tests {
-		// Extract the existing context
-		injectedContext, err := tracer.Extract(test.typ, test.carrier)
-		if err != nil {
-			t.Fatalf("%d: %v", i, err)
-		}
-		// Start a new child span and overwrite the baggage key
-		child := tracer.StartSpan(
-			op,
-			opentracing.ChildOf(injectedContext))
-		child.SetBaggageItem("foo", "baz")
+	// Start a new child span and overwrite the baggage key
+	child := tracer.StartSpan("child-span", opentracing.ChildOf(injectedContext))
+	child.SetBaggageItem("foo", "baz")
 
-		// Inject the context into the metadata
-		if err := tracer.Inject(child.Context(), test.typ, test.carrier); err != nil {
-			t.Fatalf("%d: %v", i, err)
-		}
+	// Inject the context into the metadata
+	require.NoError(t, tracer.Inject(child.Context(), opentracing.HTTPHeaders, tmc1))
 
-		child.Finish()
-		s := recorder.GetQueuedSpans()[0]
-		assert.Equal(t, child.BaggageItem("foo"), "baz")
-		assert.Equal(t, []string{fmt.Sprintf("%x", s.SpanID)}, http.Header(test.carrier.(opentracing.HTTPHeadersCarrier))["X-Instana-S"])
-	}
+	child.Finish()
+
+	s := recorder.GetQueuedSpans()[0]
+	assert.Equal(t, child.BaggageItem("foo"), "baz")
+
+	assert.Equal(t, []string{fmt.Sprintf("%x", s.SpanID)}, http.Header(tmc1)["X-Instana-S"])
 
 	for _, s := range recorder.GetQueuedSpans() {
-		assert.Equal(t, spanParentIDBase64, s.ParentID)
-		assert.NotEqual(t, spanParentIDBase64, s.SpanID)
+		assert.Equal(t, 0x1314, s.ParentID)
+		assert.NotEqual(t, 0x1314, s.SpanID)
 	}
 
 }
