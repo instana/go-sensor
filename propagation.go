@@ -8,8 +8,6 @@ import (
 	ot "github.com/opentracing/opentracing-go"
 )
 
-type textMapPropagator struct{}
-
 // Instana header constants
 const (
 	// FieldT Trace ID header
@@ -22,7 +20,7 @@ const (
 	FieldB = "x-instana-b-"
 )
 
-func (r *textMapPropagator) inject(spanContext ot.SpanContext, opaqueCarrier interface{}) error {
+func injectTraceContext(spanContext ot.SpanContext, opaqueCarrier interface{}) error {
 	sc, ok := spanContext.(SpanContext)
 	if !ok {
 		return ot.ErrInvalidSpanContext
@@ -91,7 +89,7 @@ func (r *textMapPropagator) inject(spanContext ot.SpanContext, opaqueCarrier int
 	return nil
 }
 
-func (r *textMapPropagator) extract(opaqueCarrier interface{}) (ot.SpanContext, error) {
+func extractTraceContext(opaqueCarrier interface{}) (ot.SpanContext, error) {
 	carrier, ok := opaqueCarrier.(ot.TextMapReader)
 	if !ok {
 		return nil, ot.ErrInvalidCarrier

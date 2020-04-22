@@ -12,14 +12,13 @@ const (
 )
 
 type tracerS struct {
-	options        TracerOptions
-	textPropagator *textMapPropagator
+	options TracerOptions
 }
 
 func (r *tracerS) Inject(sc ot.SpanContext, format interface{}, carrier interface{}) error {
 	switch format {
 	case ot.TextMap, ot.HTTPHeaders:
-		return r.textPropagator.inject(sc, carrier)
+		return injectTraceContext(sc, carrier)
 	}
 
 	return ot.ErrUnsupportedFormat
@@ -28,7 +27,7 @@ func (r *tracerS) Inject(sc ot.SpanContext, format interface{}, carrier interfac
 func (r *tracerS) Extract(format interface{}, carrier interface{}) (ot.SpanContext, error) {
 	switch format {
 	case ot.TextMap, ot.HTTPHeaders:
-		return r.textPropagator.extract(carrier)
+		return extractTraceContext(carrier)
 	}
 
 	return nil, ot.ErrUnsupportedFormat
@@ -91,12 +90,13 @@ func NewTracerWithOptions(options *Options) ot.Tracer {
 // NewTracerWithEverything Get a new Tracer with the works.
 func NewTracerWithEverything(options *Options, recorder SpanRecorder) ot.Tracer {
 	InitSensor(options)
-	ret := &tracerS{options: TracerOptions{
-		Recorder:       recorder,
-		ShouldSample:   shouldSample,
-		MaxLogsPerSpan: MaxLogsPerSpan}}
-	ret.textPropagator = &textMapPropagator{ret}
-	ret.textPropagator = &textMapPropagator{}
+	ret := &tracerS{
+		options: TracerOptions{
+			Recorder:       recorder,
+			ShouldSample:   shouldSample,
+			MaxLogsPerSpan: MaxLogsPerSpan,
+		},
+	}
 
 	return ret
 }
