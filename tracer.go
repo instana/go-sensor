@@ -15,9 +15,14 @@ type tracerS struct {
 	options TracerOptions
 }
 
-func (r *tracerS) Inject(sc ot.SpanContext, format interface{}, carrier interface{}) error {
+func (r *tracerS) Inject(spanContext ot.SpanContext, format interface{}, carrier interface{}) error {
 	switch format {
 	case ot.TextMap, ot.HTTPHeaders:
+		sc, ok := spanContext.(SpanContext)
+		if !ok {
+			return ot.ErrInvalidSpanContext
+		}
+
 		return injectTraceContext(sc, carrier)
 	}
 

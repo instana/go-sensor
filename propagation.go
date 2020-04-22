@@ -20,12 +20,7 @@ const (
 	FieldB = "x-instana-b-"
 )
 
-func injectTraceContext(spanContext ot.SpanContext, opaqueCarrier interface{}) error {
-	sc, ok := spanContext.(SpanContext)
-	if !ok {
-		return ot.ErrInvalidSpanContext
-	}
-
+func injectTraceContext(sc SpanContext, opaqueCarrier interface{}) error {
 	roCarrier, ok := opaqueCarrier.(ot.TextMapReader)
 	if !ok {
 		return ot.ErrInvalidCarrier
@@ -89,14 +84,12 @@ func injectTraceContext(spanContext ot.SpanContext, opaqueCarrier interface{}) e
 	return nil
 }
 
-func extractTraceContext(opaqueCarrier interface{}) (ot.SpanContext, error) {
+func extractTraceContext(opaqueCarrier interface{}) (SpanContext, error) {
+	var spanContext SpanContext
+
 	carrier, ok := opaqueCarrier.(ot.TextMapReader)
 	if !ok {
-		return nil, ot.ErrInvalidCarrier
-	}
-
-	spanContext := SpanContext{
-		Baggage: make(map[string]string),
+		return spanContext, ot.ErrInvalidCarrier
 	}
 
 	var fieldCount int
@@ -121,22 +114,26 @@ func extractTraceContext(opaqueCarrier interface{}) (ot.SpanContext, error) {
 
 			spanContext.SpanID = spanID
 		default:
-			lk := strings.ToLower(k)
-			if strings.HasPrefix(lk, FieldB) {
-				spanContext.Baggage[strings.TrimPrefix(lk, FieldB)] = v
+			if spanContext.Baggage == nil {
+				spanContext.Baggage = make(map[string]string)
+			}
+
+			if strings.HasPrefix(strings.ToLower(k), FieldB) {
+				// preserve original case of the baggage key
+				spanContext.Baggage[k[len(FieldB):]] = v
 			}
 		}
 
 		return nil
 	})
 	if err != nil {
-		return nil, err
+		return spanContext, err
 	}
 
 	if fieldCount == 0 {
-		return nil, ot.ErrSpanContextNotFound
+		return spanContext, ot.ErrSpanContextNotFound
 	} else if fieldCount < 2 {
-		return nil, ot.ErrSpanContextCorrupted
+		return spanContext, ot.ErrSpanContextCorrupted
 	}
 
 	return spanContext, nil
