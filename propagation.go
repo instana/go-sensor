@@ -51,7 +51,7 @@ func (r *textMapPropagator) inject(spanContext ot.SpanContext, opaqueCarrier int
 			exstfieldL = k
 		default:
 			if strings.HasPrefix(strings.ToLower(k), FieldB) {
-				exstfieldB = string([]rune(k)[0:len(FieldB)])
+				exstfieldB = string([]rune(k)[:len(FieldB)])
 			}
 		}
 		return nil
@@ -62,20 +62,23 @@ func (r *textMapPropagator) inject(spanContext ot.SpanContext, opaqueCarrier int
 		return ot.ErrInvalidCarrier
 	}
 
-	hhcarrier, ok := opaqueCarrier.(ot.HTTPHeadersCarrier)
-	if ok {
-		// If http.Headers has pre-existing keys, calling Set() like we do
-		// below will just append to those existing values and break context
-		// propagation.  So defend against that case, we delete any pre-existing
-		// keys entirely first.
-		y := http.Header(hhcarrier)
-		y.Del(exstfieldT)
-		y.Del(exstfieldS)
-		y.Del(exstfieldL)
+	if c, ok := opaqueCarrier.(ot.HTTPHeadersCarrier); ok {
+		// Even though the godoc claims that the key passed to (*http.Header).Set()
+		// is case-insensitive, it actually normalizes it using textproto.CanonicalMIMEHeaderKey()
+		// before populating the value. As a result headers with non-canonical will not be
+		// overwritted with a new value. This is only the case if header names were set while
+		// initializing the http.Header instance, i.e.
+		//     h := http.Headers{"X-InStAnA-T": {"abc123"}}
+		// and does not apply to a common case when requests are being created using http.NewRequest()
+		// or http.ReadRequest() that call (*http.Header).Set() to set header values.
+		y := http.Header(c)
+		delete(y, exstfieldT)
+		delete(y, exstfieldS)
+		delete(y, exstfieldL)
 
 		for key := range y {
 			if strings.HasPrefix(strings.ToLower(key), FieldB) {
-				y.Del(key)
+				delete(y, key)
 			}
 		}
 	}
