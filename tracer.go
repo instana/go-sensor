@@ -96,6 +96,7 @@ func NewTracerWithEverything(options *Options, recorder SpanRecorder) ot.Tracer 
 		ShouldSample:   shouldSample,
 		MaxLogsPerSpan: MaxLogsPerSpan}}
 	ret.textPropagator = &textMapPropagator{ret}
+	ret.textPropagator = &textMapPropagator{}
 
 	return ret
 }

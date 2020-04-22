@@ -8,9 +8,7 @@ import (
 	ot "github.com/opentracing/opentracing-go"
 )
 
-type textMapPropagator struct {
-	tracer *tracerS
-}
+type textMapPropagator struct{}
 
 // Instana header constants
 const (
