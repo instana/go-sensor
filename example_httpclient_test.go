@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	instana "github.com/instana/go-sensor"
+	"github.com/opentracing/opentracing-go/ext"
 )
 
 // This example shows how to instrument an HTTP client with Instana tracing
@@ -18,23 +19,21 @@ func Example_roundTripper() {
 		Transport: instana.RoundTripper(sensor, nil),
 	}
 
+	// The call should always start with an entry span (https://docs.instana.io/quick_start/custom_tracing/#always-start-new-traces-with-entry-spans)
+	// Normally this would be your HTTP/GRPC/message queue request span, but here we need to
+	// create it explicitly.
+	sp := sensor.Tracer().StartSpan("client-call")
+	sp.SetTag(string(ext.SpanKind), "entry")
+
+	req, err := http.NewRequest(http.MethodGet, "https://www.instana.com", nil)
+	if err != nil {
+		log.Fatalf("failed to create request: %s", err)
+	}
+
+	// Inject the parent span into request context
+	ctx := instana.ContextWithSpan(context.Background(), sp)
+
 	// Use your instrumented http.Client to propagate tracing context with the request
-	_, err := client.Get("https://www.instana.com")
-	if err != nil {
-		log.Fatalf("failed to GET https://www.instana.com: %s", err)
-	}
-
-	// To propagate the existing trace with request, make sure that current span is added
-	// to the request context first.
-	span := sensor.Tracer().StartSpan("query-instana")
-	defer span.Finish()
-
-	ctx := instana.ContextWithSpan(context.Background(), span)
-	req, err := http.NewRequest("GET", "https://www.instana.com", nil)
-	if err != nil {
-		log.Fatalf("failed to create a new request: %s", err)
-	}
-
 	_, err = client.Do(req.WithContext(ctx))
 	if err != nil {
 		log.Fatalf("failed to GET https://www.instana.com: %s", err)

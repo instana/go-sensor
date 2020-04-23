@@ -85,37 +85,33 @@ func TracingHandlerFunc(sensor *Sensor, name string, handler http.HandlerFunc) h
 // If the original RoundTripper is nil, the http.DefaultTransport will be used.
 func RoundTripper(sensor *Sensor, original http.RoundTripper) http.RoundTripper {
 	return tracingRoundTripper(func(req *http.Request) (*http.Response, error) {
+		if original == nil {
+			original = http.DefaultTransport
+		}
+
 		ctx := req.Context()
+		parentSpan, ok := SpanFromContext(ctx)
+		if !ok {
+			// don't trace the exit call if there was no entry span provided
+			return original.RoundTrip(req)
+		}
 
 		sanitizedURL := cloneURL(req.URL)
 		sanitizedURL.RawQuery = ""
 		sanitizedURL.User = nil
 
-		opts := []ot.StartSpanOption{
+		span := sensor.Tracer().StartSpan("http",
 			ext.SpanKindRPCClient,
+			ot.ChildOf(parentSpan.Context()),
 			ot.Tags{
 				"http.url":    sanitizedURL.String(),
 				"http.method": req.Method,
-			},
-		}
-
-		tracer := sensor.Tracer()
-		// use the parent span tracer and context if provided
-		if ps, ok := SpanFromContext(ctx); ok {
-			tracer = ps.Tracer()
-			opts = append(opts, ot.ChildOf(ps.Context()))
-		}
-
-		span := tracer.StartSpan("http", opts...)
+			})
 		defer span.Finish()
 
 		// clone the request since the RoundTrip should not modify the original one
 		req = cloneRequest(ContextWithSpan(ctx, span), req)
-		tracer.Inject(span.Context(), ot.HTTPHeaders, ot.HTTPHeadersCarrier(req.Header))
-
-		if original == nil {
-			original = http.DefaultTransport
-		}
+		sensor.Tracer().Inject(span.Context(), ot.HTTPHeaders, ot.HTTPHeadersCarrier(req.Header))
 
 		resp, err := original.RoundTrip(req)
 		if err != nil {

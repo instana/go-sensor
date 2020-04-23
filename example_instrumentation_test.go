@@ -1,6 +1,7 @@
 package instana_test
 
 import (
+	"context"
 	"net/http"
 
 	instana "github.com/instana/go-sensor"
@@ -23,6 +24,7 @@ func ExampleRoundTripper() {
 	// Here we initialize a new instance of instana.Sensor, however it is STRONGLY recommended
 	// to use a single instance throughout your application
 	sensor := instana.NewSensor("my-http-client")
+	span := sensor.Tracer().StartSpan("entry")
 
 	// http.DefaultTransport is used as a default RoundTripper, however you can provide
 	// your own implementation
@@ -30,7 +32,10 @@ func ExampleRoundTripper() {
 		Transport: instana.RoundTripper(sensor, nil),
 	}
 
-	// Execute request as usual
+	// Inject parent span into therequest context
+	ctx := instana.ContextWithSpan(context.Background(), span)
 	req, _ := http.NewRequest("GET", "https://www.instana.com", nil)
-	client.Do(req)
+
+	// Execute request as usual
+	client.Do(req.WithContext(ctx))
 }
