@@ -2,7 +2,6 @@ package instana
 
 import (
 	"net/http"
-	"strconv"
 	"strings"
 
 	ot "github.com/opentracing/opentracing-go"
@@ -76,7 +75,7 @@ func injectTraceContext(sc SpanContext, opaqueCarrier interface{}) error {
 
 	carrier.Set(exstfieldT, FormatID(sc.TraceID))
 	carrier.Set(exstfieldS, FormatID(sc.SpanID))
-	carrier.Set(exstfieldL, strconv.Itoa(1))
+	carrier.Set(exstfieldL, formatLevel(sc))
 
 	for k, v := range sc.Baggage {
 		carrier.Set(exstfieldB+k, v)
@@ -85,7 +84,9 @@ func injectTraceContext(sc SpanContext, opaqueCarrier interface{}) error {
 }
 
 func extractTraceContext(opaqueCarrier interface{}) (SpanContext, error) {
-	var spanContext SpanContext
+	spanContext := SpanContext{
+		Baggage: make(map[string]string),
+	}
 
 	carrier, ok := opaqueCarrier.(ot.TextMapReader)
 	if !ok {
@@ -113,11 +114,9 @@ func extractTraceContext(opaqueCarrier interface{}) (SpanContext, error) {
 			}
 
 			spanContext.SpanID = spanID
+		case FieldL:
+			spanContext.Suppressed = parseLevel(v)
 		default:
-			if spanContext.Baggage == nil {
-				spanContext.Baggage = make(map[string]string)
-			}
-
 			if strings.HasPrefix(strings.ToLower(k), FieldB) {
 				// preserve original case of the baggage key
 				spanContext.Baggage[k[len(FieldB):]] = v
@@ -137,4 +136,16 @@ func extractTraceContext(opaqueCarrier interface{}) (SpanContext, error) {
 	}
 
 	return spanContext, nil
+}
+
+func parseLevel(s string) bool {
+	return s == "0"
+}
+
+func formatLevel(sc SpanContext) string {
+	if sc.Suppressed {
+		return "0"
+	}
+
+	return "1"
 }
