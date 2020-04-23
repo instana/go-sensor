@@ -30,6 +30,7 @@ func NewRootSpanContext() SpanContext {
 func NewSpanContext(parent SpanContext) SpanContext {
 	c := parent.Clone()
 	c.SpanID, c.ParentID = randomID(), parent.SpanID
+	c.Suppressed = parent.Suppressed
 
 	return c
 }

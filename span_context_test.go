@@ -12,15 +12,17 @@ func TestNewRootSpanContext(t *testing.T) {
 	assert.NotEmpty(t, c.TraceID)
 	assert.Equal(t, c.SpanID, c.TraceID)
 	assert.False(t, c.Sampled)
+	assert.False(t, c.Suppressed)
 	assert.Empty(t, c.Baggage)
 }
 
 func TestNewSpanContext(t *testing.T) {
 	parent := instana.SpanContext{
-		TraceID:  1,
-		SpanID:   2,
-		ParentID: 3,
-		Sampled:  true,
+		TraceID:    1,
+		SpanID:     2,
+		ParentID:   3,
+		Sampled:    true,
+		Suppressed: true,
 		Baggage: map[string]string{
 			"key1": "value1",
 			"key2": "value2",
@@ -31,6 +33,7 @@ func TestNewSpanContext(t *testing.T) {
 	assert.Equal(t, parent.TraceID, c.TraceID)
 	assert.Equal(t, parent.SpanID, c.ParentID)
 	assert.Equal(t, parent.Sampled, c.Sampled)
+	assert.Equal(t, parent.Suppressed, c.Suppressed)
 	assert.Equal(t, parent.Baggage, c.Baggage)
 
 	assert.NotEqual(t, parent.SpanID, c.SpanID)
