@@ -73,7 +73,7 @@ func StreamClientInterceptor(sensor *instana.Sensor) grpc.StreamClientIntercepto
 func startClientSpan(parentSpan ot.Span, target, method, callType string, sensor *instana.Sensor) ot.Span {
 	host, port, err := net.SplitHostPort(target)
 	if err != nil {
-		sensor.Logger().Info("failed to extract server host and port from request metadata: %s", err)
+		sensor.Logger().Info("failed to extract server host and port from request metadata:", err)
 
 		// take our best guess and use :authority as a host if the net.SplitHostPort() fails to parse
 		host, port = target, ""
