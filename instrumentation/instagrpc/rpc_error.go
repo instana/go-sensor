@@ -21,6 +21,5 @@ func addRPCError(sp ot.Span, err interface{}) {
 	}
 
 	sp.SetTag("rpc.error", errMessage)
-	sp.SetTag("message", errMessage)
 	sp.LogFields(logField)
 }
