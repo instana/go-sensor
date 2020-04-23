@@ -53,11 +53,9 @@ func TracingHandlerFunc(sensor *Sensor, name string, handler http.HandlerFunc) h
 			// Be sure to capture any kind of panic / error
 			if err := recover(); err != nil {
 				if e, ok := err.(error); ok {
-					span.SetTag("message", e.Error())
 					span.SetTag("http.error", e.Error())
 					span.LogFields(otlog.Error(e))
 				} else {
-					span.SetTag("message", err)
 					span.SetTag("http.error", err)
 					span.LogFields(otlog.Object("error", err))
 				}
@@ -115,7 +113,6 @@ func RoundTripper(sensor *Sensor, original http.RoundTripper) http.RoundTripper 
 
 		resp, err := original.RoundTrip(req)
 		if err != nil {
-			span.SetTag("message", err.Error())
 			span.SetTag("http.error", err.Error())
 			span.LogFields(otlog.Error(err))
 			return resp, err
