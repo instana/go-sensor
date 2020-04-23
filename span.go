@@ -70,7 +70,9 @@ func (r *spanS) FinishWithOptions(opts ot.FinishOptions) {
 	}
 
 	r.Duration = duration
-	r.tracer.options.Recorder.RecordSpan(r)
+	if !r.context.Suppressed {
+		r.tracer.options.Recorder.RecordSpan(r)
+	}
 }
 
 func (r *spanS) appendLog(lr ot.LogRecord) {
