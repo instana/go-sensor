@@ -53,7 +53,23 @@ func (r *tracerS) StartSpanWithOptions(operationName string, opts ot.StartSpanOp
 		startTime = time.Now()
 	}
 
-	span := &spanS{
+	sc := NewRootSpanContext()
+	for _, ref := range opts.References {
+		if ref.Type == ot.ChildOfRef || ref.Type == ot.FollowsFromRef {
+			sc = NewSpanContext(ref.ReferencedContext.(SpanContext))
+			break
+		}
+	}
+
+	if tag, ok := opts.Tags[suppressTracingTag]; ok {
+		sc.Suppressed = tag.(bool)
+		delete(opts.Tags, suppressTracingTag)
+	}
+
+	sc.Sampled = r.options.ShouldSample(sc.TraceID)
+
+	return &spanS{
+		context:   sc,
 		tracer:    r,
 		Service:   sensor.serviceName,
 		Operation: operationName,
@@ -61,21 +77,6 @@ func (r *tracerS) StartSpanWithOptions(operationName string, opts ot.StartSpanOp
 		Duration:  -1,
 		Tags:      opts.Tags,
 	}
-
-	for _, ref := range opts.References {
-		switch ref.Type {
-		case ot.ChildOfRef, ot.FollowsFromRef:
-			parentCtx := ref.ReferencedContext.(SpanContext)
-			span.context = NewSpanContext(parentCtx)
-
-			return span
-		}
-	}
-
-	span.context = NewRootSpanContext()
-	span.context.Sampled = r.options.ShouldSample(span.context.TraceID)
-
-	return span
 }
 
 func shouldSample(traceID int64) bool {

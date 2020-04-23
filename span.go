@@ -173,6 +173,11 @@ func (r *spanS) SetTag(key string, value interface{}) ot.Span {
 		r.ErrorCount++
 	}
 
+	if key == suppressTracingTag {
+		r.context.Suppressed = true
+		return r
+	}
+
 	r.Tags[key] = value
 
 	return r
