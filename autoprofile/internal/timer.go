@@ -1,6 +1,7 @@
 package internal
 
 import (
+	"sync"
 	"time"
 
 	"github.com/instana/go-sensor/autoprofile/internal/logger"
@@ -9,51 +10,54 @@ import (
 // Timer periodically executes provided job after a delay until it's stopped. Any panic
 // occurred inside the job is recovered and logged
 type Timer struct {
-	delayTimer         *time.Timer
-	delayTimerDone     chan bool
-	intervalTicker     *time.Ticker
-	intervalTickerDone chan bool
-	stopped            bool
+	mu         sync.Mutex
+	delayTimer *time.Timer
+	done       chan bool
+	stopped    bool
+	ticker     *time.Ticker
 }
 
 func NewTimer(delay, interval time.Duration, job func()) *Timer {
 	t := &Timer{
-		stopped: false,
+		done: make(chan bool),
 	}
 
-	t.delayTimerDone = make(chan bool)
-	t.delayTimer = time.NewTimer(delay)
+	t.delayTimer = time.AfterFunc(delay, func() {
+		defer recoverAndLog()
+
+		if interval > 0 {
+			t.runTicker(interval, job)
+		}
+
+		if delay > 0 {
+			job()
+		}
+	})
+
+	return t
+}
+
+func (t *Timer) runTicker(interval time.Duration, job func()) {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+
+	if t.stopped {
+		return
+	}
+
+	t.ticker = time.NewTicker(interval)
 	go func() {
 		defer recoverAndLog()
 
-		select {
-		case <-t.delayTimer.C:
-			if interval > 0 {
-				t.intervalTickerDone = make(chan bool)
-				t.intervalTicker = time.NewTicker(interval)
-				go func() {
-					defer recoverAndLog()
-
-					for {
-						select {
-						case <-t.intervalTicker.C:
-							job()
-						case <-t.intervalTickerDone:
-							return
-						}
-					}
-				}()
-			}
-
-			if delay > 0 {
+		for {
+			select {
+			case <-t.ticker.C:
 				job()
+			case <-t.done:
+				return
 			}
-		case <-t.delayTimerDone:
-			return
 		}
 	}()
-
-	return t
 }
 
 // Stop stops the job execution
@@ -62,14 +66,16 @@ func (t *Timer) Stop() {
 		return
 	}
 
+	t.mu.Lock()
+	defer t.mu.Unlock()
+
 	t.stopped = true
-
 	t.delayTimer.Stop()
-	close(t.delayTimerDone)
 
-	if t.intervalTicker != nil {
-		t.intervalTicker.Stop()
-		close(t.intervalTickerDone)
+	close(t.done)
+
+	if t.ticker != nil {
+		t.ticker.Stop()
 	}
 }
 
