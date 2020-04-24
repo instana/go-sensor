@@ -48,10 +48,17 @@ type agentS struct {
 	client *http.Client
 }
 
-func (r *agentS) init() {
-	r.client = &http.Client{Timeout: 5 * time.Second}
-	r.fsm = newFSM(r)
-	r.setFrom(&fromS{})
+func newAgent(sensor *sensorS) *agentS {
+	sensor.logger.Debug("initializing agent")
+
+	agent := &agentS{
+		sensor: sensor,
+		from:   &fromS{},
+		client: &http.Client{Timeout: 5 * time.Second},
+	}
+	agent.fsm = newFSM(agent)
+
+	return agent
 }
 
 func (r *agentS) makeURL(prefix string) string {

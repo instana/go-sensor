@@ -36,17 +36,8 @@ func (r *sensorS) init(options *Options) {
 
 	r.setOptions(options)
 	r.configureServiceName()
-	r.agent = r.initAgent()
+	r.agent = newAgent(r)
 	r.meter = r.initMeter()
-}
-
-func (r *sensorS) initAgent() *agentS {
-	r.logger.Debug("initializing agent")
-
-	ret := &agentS{sensor: r}
-	ret.init()
-
-	return ret
 }
 
 func (r *sensorS) initMeter() *meterS {
