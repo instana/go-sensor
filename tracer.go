@@ -12,14 +12,18 @@ const (
 )
 
 type tracerS struct {
-	options        TracerOptions
-	textPropagator *textMapPropagator
+	options TracerOptions
 }
 
-func (r *tracerS) Inject(sc ot.SpanContext, format interface{}, carrier interface{}) error {
+func (r *tracerS) Inject(spanContext ot.SpanContext, format interface{}, carrier interface{}) error {
 	switch format {
 	case ot.TextMap, ot.HTTPHeaders:
-		return r.textPropagator.inject(sc, carrier)
+		sc, ok := spanContext.(SpanContext)
+		if !ok {
+			return ot.ErrInvalidSpanContext
+		}
+
+		return injectTraceContext(sc, carrier)
 	}
 
 	return ot.ErrUnsupportedFormat
@@ -28,7 +32,7 @@ func (r *tracerS) Inject(sc ot.SpanContext, format interface{}, carrier interfac
 func (r *tracerS) Extract(format interface{}, carrier interface{}) (ot.SpanContext, error) {
 	switch format {
 	case ot.TextMap, ot.HTTPHeaders:
-		return r.textPropagator.extract(carrier)
+		return extractTraceContext(carrier)
 	}
 
 	return nil, ot.ErrUnsupportedFormat
@@ -49,7 +53,23 @@ func (r *tracerS) StartSpanWithOptions(operationName string, opts ot.StartSpanOp
 		startTime = time.Now()
 	}
 
-	span := &spanS{
+	sc := NewRootSpanContext()
+	for _, ref := range opts.References {
+		if ref.Type == ot.ChildOfRef || ref.Type == ot.FollowsFromRef {
+			sc = NewSpanContext(ref.ReferencedContext.(SpanContext))
+			break
+		}
+	}
+
+	if tag, ok := opts.Tags[suppressTracingTag]; ok {
+		sc.Suppressed = tag.(bool)
+		delete(opts.Tags, suppressTracingTag)
+	}
+
+	sc.Sampled = r.options.ShouldSample(sc.TraceID)
+
+	return &spanS{
+		context:   sc,
 		tracer:    r,
 		Service:   sensor.serviceName,
 		Operation: operationName,
@@ -57,21 +77,6 @@ func (r *tracerS) StartSpanWithOptions(operationName string, opts ot.StartSpanOp
 		Duration:  -1,
 		Tags:      opts.Tags,
 	}
-
-	for _, ref := range opts.References {
-		switch ref.Type {
-		case ot.ChildOfRef, ot.FollowsFromRef:
-			parentCtx := ref.ReferencedContext.(SpanContext)
-			span.context = NewSpanContext(parentCtx)
-
-			return span
-		}
-	}
-
-	span.context = NewRootSpanContext()
-	span.context.Sampled = r.options.ShouldSample(span.context.TraceID)
-
-	return span
 }
 
 func shouldSample(traceID int64) bool {
@@ -91,11 +96,13 @@ func NewTracerWithOptions(options *Options) ot.Tracer {
 // NewTracerWithEverything Get a new Tracer with the works.
 func NewTracerWithEverything(options *Options, recorder SpanRecorder) ot.Tracer {
 	InitSensor(options)
-	ret := &tracerS{options: TracerOptions{
-		Recorder:       recorder,
-		ShouldSample:   shouldSample,
-		MaxLogsPerSpan: MaxLogsPerSpan}}
-	ret.textPropagator = &textMapPropagator{ret}
+	ret := &tracerS{
+		options: TracerOptions{
+			Recorder:       recorder,
+			ShouldSample:   shouldSample,
+			MaxLogsPerSpan: MaxLogsPerSpan,
+		},
+	}
 
 	return ret
 }

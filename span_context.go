@@ -4,16 +4,14 @@ package instana
 type SpanContext struct {
 	// A probabilistically unique identifier for a [multi-span] trace.
 	TraceID int64
-
 	// A probabilistically unique identifier for a span.
 	SpanID int64
-
 	// An optional parent span ID, 0 if this is the root span context.
 	ParentID int64
-
 	// Whether the trace is sampled.
 	Sampled bool
-
+	// Whether the trace is suppressed and should not be sent to the agent.
+	Suppressed bool
 	// The span's associated baggage.
 	Baggage map[string]string // initialized on first use
 }
@@ -32,6 +30,7 @@ func NewRootSpanContext() SpanContext {
 func NewSpanContext(parent SpanContext) SpanContext {
 	c := parent.Clone()
 	c.SpanID, c.ParentID = randomID(), parent.SpanID
+	c.Suppressed = parent.Suppressed
 
 	return c
 }
@@ -61,10 +60,11 @@ func (c SpanContext) WithBaggageItem(key, val string) SpanContext {
 // Clone returns a deep copy of a SpanContext
 func (c SpanContext) Clone() SpanContext {
 	res := SpanContext{
-		TraceID:  c.TraceID,
-		SpanID:   c.SpanID,
-		ParentID: c.ParentID,
-		Sampled:  c.Sampled,
+		TraceID:    c.TraceID,
+		SpanID:     c.SpanID,
+		ParentID:   c.ParentID,
+		Sampled:    c.Sampled,
+		Suppressed: c.Suppressed,
 	}
 
 	if c.Baggage != nil {

@@ -2,15 +2,10 @@ package instana
 
 import (
 	"net/http"
-	"strconv"
 	"strings"
 
 	ot "github.com/opentracing/opentracing-go"
 )
-
-type textMapPropagator struct {
-	tracer *tracerS
-}
 
 // Instana header constants
 const (
@@ -24,12 +19,7 @@ const (
 	FieldB = "x-instana-b-"
 )
 
-func (r *textMapPropagator) inject(spanContext ot.SpanContext, opaqueCarrier interface{}) error {
-	sc, ok := spanContext.(SpanContext)
-	if !ok {
-		return ot.ErrInvalidSpanContext
-	}
-
+func injectTraceContext(sc SpanContext, opaqueCarrier interface{}) error {
 	roCarrier, ok := opaqueCarrier.(ot.TextMapReader)
 	if !ok {
 		return ot.ErrInvalidCarrier
@@ -85,7 +75,7 @@ func (r *textMapPropagator) inject(spanContext ot.SpanContext, opaqueCarrier int
 
 	carrier.Set(exstfieldT, FormatID(sc.TraceID))
 	carrier.Set(exstfieldS, FormatID(sc.SpanID))
-	carrier.Set(exstfieldL, strconv.Itoa(1))
+	carrier.Set(exstfieldL, formatLevel(sc))
 
 	for k, v := range sc.Baggage {
 		carrier.Set(exstfieldB+k, v)
@@ -93,14 +83,14 @@ func (r *textMapPropagator) inject(spanContext ot.SpanContext, opaqueCarrier int
 	return nil
 }
 
-func (r *textMapPropagator) extract(opaqueCarrier interface{}) (ot.SpanContext, error) {
-	carrier, ok := opaqueCarrier.(ot.TextMapReader)
-	if !ok {
-		return nil, ot.ErrInvalidCarrier
-	}
-
+func extractTraceContext(opaqueCarrier interface{}) (SpanContext, error) {
 	spanContext := SpanContext{
 		Baggage: make(map[string]string),
+	}
+
+	carrier, ok := opaqueCarrier.(ot.TextMapReader)
+	if !ok {
+		return spanContext, ot.ErrInvalidCarrier
 	}
 
 	var fieldCount int
@@ -124,24 +114,38 @@ func (r *textMapPropagator) extract(opaqueCarrier interface{}) (ot.SpanContext, 
 			}
 
 			spanContext.SpanID = spanID
+		case FieldL:
+			spanContext.Suppressed = parseLevel(v)
 		default:
-			lk := strings.ToLower(k)
-			if strings.HasPrefix(lk, FieldB) {
-				spanContext.Baggage[strings.TrimPrefix(lk, FieldB)] = v
+			if strings.HasPrefix(strings.ToLower(k), FieldB) {
+				// preserve original case of the baggage key
+				spanContext.Baggage[k[len(FieldB):]] = v
 			}
 		}
 
 		return nil
 	})
 	if err != nil {
-		return nil, err
+		return spanContext, err
 	}
 
 	if fieldCount == 0 {
-		return nil, ot.ErrSpanContextNotFound
+		return spanContext, ot.ErrSpanContextNotFound
 	} else if fieldCount < 2 {
-		return nil, ot.ErrSpanContextCorrupted
+		return spanContext, ot.ErrSpanContextCorrupted
 	}
 
 	return spanContext, nil
+}
+
+func parseLevel(s string) bool {
+	return s == "0"
+}
+
+func formatLevel(sc SpanContext) string {
+	if sc.Suppressed {
+		return "0"
+	}
+
+	return "1"
 }

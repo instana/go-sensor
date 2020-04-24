@@ -254,3 +254,24 @@ func TestSpanErrorLogFields(t *testing.T) {
 
 	assert.Len(t, logRecords, 1)
 }
+
+func TestSpan_Suppressed_StartSpanOption(t *testing.T) {
+	recorder := instana.NewTestRecorder()
+	tracer := instana.NewTracerWithEverything(&instana.Options{}, recorder)
+
+	sp := tracer.StartSpan("test", instana.SuppressTracing())
+	sp.Finish()
+
+	assert.Empty(t, recorder.GetQueuedSpans())
+}
+
+func TestSpan_Suppressed_SetTag(t *testing.T) {
+	recorder := instana.NewTestRecorder()
+	tracer := instana.NewTracerWithEverything(&instana.Options{}, recorder)
+
+	sp := tracer.StartSpan("test")
+	instana.SuppressTracing().Set(sp)
+	sp.Finish()
+
+	assert.Empty(t, recorder.GetQueuedSpans())
+}

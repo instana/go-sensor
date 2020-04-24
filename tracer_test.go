@@ -5,20 +5,19 @@ import (
 
 	instana "github.com/instana/go-sensor"
 	"github.com/stretchr/testify/assert"
-	//opentracing "github.com/opentracing/opentracing-go"
 )
 
 func TestTracerAPI(t *testing.T) {
 	tracer := instana.NewTracer()
-	assert.NotNil(t, tracer, "NewTracer returned nil")
+	assert.NotNil(t, tracer)
 
-	opts := instana.Options{LogLevel: instana.Debug}
 	recorder := instana.NewTestRecorder()
-	tracer = instana.NewTracerWithEverything(&opts, recorder)
-	assert.NotNil(t, tracer, "NewTracerWithEverything returned nil")
+
+	tracer = instana.NewTracerWithEverything(&instana.Options{}, recorder)
+	assert.NotNil(t, tracer)
 
 	tracer = instana.NewTracerWithOptions(&instana.Options{})
-	assert.NotNil(t, tracer, "NewTracerWithOptions returned nil")
+	assert.NotNil(t, tracer)
 }
 
 func TestTracerBasics(t *testing.T) {
@@ -32,4 +31,14 @@ func TestTracerBasics(t *testing.T) {
 
 	spans := recorder.GetQueuedSpans()
 	assert.Equal(t, len(spans), 1)
+}
+
+func TestTracer_StartSpan_SuppressTracing(t *testing.T) {
+	recorder := instana.NewTestRecorder()
+	tracer := instana.NewTracerWithEverything(&instana.Options{}, recorder)
+
+	sp := tracer.StartSpan("test", instana.SuppressTracing())
+
+	sc := sp.Context().(instana.SpanContext)
+	assert.True(t, sc.Suppressed)
 }

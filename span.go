@@ -70,7 +70,9 @@ func (r *spanS) FinishWithOptions(opts ot.FinishOptions) {
 	}
 
 	r.Duration = duration
-	r.tracer.options.Recorder.RecordSpan(r)
+	if !r.context.Suppressed {
+		r.tracer.options.Recorder.RecordSpan(r)
+	}
 }
 
 func (r *spanS) appendLog(lr ot.LogRecord) {
@@ -171,6 +173,11 @@ func (r *spanS) SetTag(key string, value interface{}) ot.Span {
 	// If this tag indicates an error, increase the error count
 	if key == "error" {
 		r.ErrorCount++
+	}
+
+	if key == suppressTracingTag {
+		r.context.Suppressed = true
+		return r
 	}
 
 	r.Tags[key] = value
