@@ -62,31 +62,39 @@ type meterS struct {
 	snapshotCountdown int
 }
 
-func (r *meterS) init() {
-	r.ticker = time.NewTicker(1 * time.Second)
+func newMeter(sensor *sensorS) *meterS {
+	sensor.logger.Debug("initializing meter")
+
+	meter := &meterS{
+		sensor: sensor,
+		ticker: time.NewTicker(1 * time.Second),
+	}
+
 	go func() {
-		r.snapshotCountdown = 1
-		for range r.ticker.C {
-			if r.sensor.agent.canSend() {
-				r.snapshotCountdown--
+		meter.snapshotCountdown = 1
+		for range meter.ticker.C {
+			if meter.sensor.agent.canSend() {
+				meter.snapshotCountdown--
 				var s *SnapshotS
-				if r.snapshotCountdown == 0 {
-					r.snapshotCountdown = SnapshotPeriod
-					s = r.collectSnapshot()
-					r.sensor.logger.Debug("collected snapshot")
+				if meter.snapshotCountdown == 0 {
+					meter.snapshotCountdown = SnapshotPeriod
+					s = meter.collectSnapshot()
+					meter.sensor.logger.Debug("collected snapshot")
 				}
 
-				pid, _ := strconv.Atoi(r.sensor.agent.from.PID)
+				pid, _ := strconv.Atoi(meter.sensor.agent.from.PID)
 				d := &EntityData{
 					PID:      pid,
 					Snapshot: s,
-					Metrics:  r.collectMetrics(),
+					Metrics:  meter.collectMetrics(),
 				}
 
-				go r.send(d)
+				go meter.send(d)
 			}
 		}
 	}()
+
+	return meter
 }
 
 func (r *meterS) send(d *EntityData) {
