@@ -50,15 +50,8 @@ type agentS struct {
 
 func (r *agentS) init() {
 	r.client = &http.Client{Timeout: 5 * time.Second}
-	r.fsm = r.initFsm()
+	r.fsm = newFSM(r)
 	r.setFrom(&fromS{})
-}
-
-func (r *agentS) initFsm() *fsmS {
-	ret := &fsmS{agent: r}
-	ret.init()
-
-	return ret
 }
 
 func (r *agentS) makeURL(prefix string) string {

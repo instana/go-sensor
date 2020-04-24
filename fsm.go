@@ -31,11 +31,16 @@ type fsmS struct {
 
 var procSchedPIDRegex = regexp.MustCompile(`\((\d+),`)
 
-func (r *fsmS) init() {
-	r.agent.sensor.logger.Warn("Stan is on the scene.  Starting Instana instrumentation.")
-	r.agent.sensor.logger.Debug("initializing fsm")
+func newFSM(agent *agentS) *fsmS {
+	agent.sensor.logger.Warn("Stan is on the scene. Starting Instana instrumentation.")
+	agent.sensor.logger.Debug("initializing fsm")
 
-	r.fsm = f.NewFSM(
+	ret := &fsmS{
+		agent:   agent,
+		retries: maximumRetries,
+	}
+
+	ret.fsm = f.NewFSM(
 		"none",
 		f.Events{
 			{Name: eInit, Src: []string{"none", "unannounced", "announced", "ready"}, Dst: "init"},
@@ -43,12 +48,13 @@ func (r *fsmS) init() {
 			{Name: eAnnounce, Src: []string{"unannounced"}, Dst: "announced"},
 			{Name: eTest, Src: []string{"announced"}, Dst: "ready"}},
 		f.Callbacks{
-			"init":              r.lookupAgentHost,
-			"enter_unannounced": r.announceSensor,
-			"enter_announced":   r.testAgent})
+			"init":              ret.lookupAgentHost,
+			"enter_unannounced": ret.announceSensor,
+			"enter_announced":   ret.testAgent,
+		})
+	ret.fsm.Event(eInit)
 
-	r.retries = maximumRetries
-	r.fsm.Event(eInit)
+	return ret
 }
 
 func (r *fsmS) scheduleRetry(e *f.Event, cb func(e *f.Event)) {
