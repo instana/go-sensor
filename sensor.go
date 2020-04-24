@@ -3,7 +3,6 @@ package instana
 import (
 	"errors"
 	"os"
-	"path/filepath"
 
 	"github.com/instana/go-sensor/autoprofile"
 	"github.com/instana/go-sensor/logger"
@@ -24,77 +23,37 @@ type sensorS struct {
 
 var sensor *sensorS
 
-func (r *sensorS) init(options *Options) {
-	// sensor can be initialized explicitly or implicitly through OpenTracing global init
-	if r.meter != nil {
-		return
+func newSensor(options *Options) *sensorS {
+	if options == nil {
+		options = DefaultOptions()
+	} else {
+		options.setDefaults()
 	}
 
-	if r.logger == nil {
-		r.setLogger(defaultLogger)
+	s := &sensorS{
+		options:     options,
+		serviceName: options.Service,
 	}
+	s.setLogger(defaultLogger)
 
-	r.setOptions(options)
-	r.configureServiceName()
-	r.agent = r.initAgent()
-	r.meter = r.initMeter()
-}
-
-func (r *sensorS) initAgent() *agentS {
-	r.logger.Debug("initializing agent")
-
-	ret := &agentS{sensor: r}
-	ret.init()
-
-	return ret
-}
-
-func (r *sensorS) initMeter() *meterS {
-	r.logger.Debug("initializing meter")
-
-	ret := &meterS{sensor: r}
-	ret.init()
-
-	return ret
-}
-
-func (r *sensorS) setOptions(options *Options) {
-	r.options = options
-	if r.options == nil {
-		r.options = &Options{}
-	}
-
-	if r.options.MaxBufferedSpans == 0 {
-		r.options.MaxBufferedSpans = DefaultMaxBufferedSpans
-	}
-
-	if r.options.ForceTransmissionStartingAt == 0 {
-		r.options.ForceTransmissionStartingAt = DefaultForceSpanSendAt
+	// override service name with an env value if set
+	if name, ok := os.LookupEnv("INSTANA_SERVICE_NAME"); ok {
+		s.serviceName = name
 	}
 
 	// handle the legacy (instana.Options).LogLevel value if we use logger.Logger to log
-	if l, ok := r.logger.(*logger.Logger); ok {
-		setLogLevel(l, r.options.LogLevel)
+	if l, ok := s.logger.(*logger.Logger); ok {
+		setLogLevel(l, options.LogLevel)
 	}
+
+	s.agent = newAgent(s)
+	s.meter = newMeter(s)
+
+	return s
 }
 
 func (r *sensorS) setLogger(l LeveledLogger) {
 	r.logger = l
-}
-
-func (r *sensorS) configureServiceName() {
-	if name, ok := os.LookupEnv("INSTANA_SERVICE_NAME"); ok {
-		r.serviceName = name
-		return
-	}
-
-	if r.options != nil {
-		r.serviceName = r.options.Service
-	}
-
-	if r.serviceName == "" {
-		r.serviceName = filepath.Base(os.Args[0])
-	}
 }
 
 // InitSensor intializes the sensor (without tracing) to begin collecting
@@ -104,8 +63,7 @@ func InitSensor(options *Options) {
 		return
 	}
 
-	sensor = &sensorS{}
-	sensor.init(options)
+	sensor = newSensor(options)
 
 	// enable auto-profiling
 	if options.EnableAutoProfile {
