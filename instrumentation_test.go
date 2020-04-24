@@ -47,13 +47,8 @@ func TestTracingHandlerFunc_Write(t *testing.T) {
 	}, data.Tags)
 
 	// check whether the trace context has been sent back to the client
-	traceID, err := instana.Header2ID(rec.Header().Get(instana.FieldT))
-	require.NoError(t, err)
-	assert.Equal(t, span.TraceID, traceID)
-
-	spanID, err := instana.Header2ID(rec.Header().Get(instana.FieldS))
-	require.NoError(t, err)
-	assert.Equal(t, span.SpanID, spanID)
+	assert.Equal(t, instana.FormatID(span.TraceID), rec.Header().Get(instana.FieldT))
+	assert.Equal(t, instana.FormatID(span.SpanID), rec.Header().Get(instana.FieldS))
 }
 
 func TestTracingHandlerFunc_WriteHeaders(t *testing.T) {
@@ -121,45 +116,10 @@ func TestTracingHandlerFunc_PanicHandling(t *testing.T) {
 
 func TestRoundTripper(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{}, recorder))
-
-	rt := instana.RoundTripper(s, testRoundTripper(func(req *http.Request) (*http.Response, error) {
-		assert.NotEmpty(t, req.Header.Get(instana.FieldT))
-		assert.NotEmpty(t, req.Header.Get(instana.FieldS))
-
-		return &http.Response{
-			Status:     http.StatusText(http.StatusNotImplemented),
-			StatusCode: http.StatusNotImplemented,
-		}, nil
-	}))
-
-	resp, err := rt.RoundTrip(httptest.NewRequest("GET", "http://user:password@example.com/hello", nil))
-	require.NoError(t, err)
-	assert.Equal(t, http.StatusNotImplemented, resp.StatusCode)
-
-	spans := recorder.GetQueuedSpans()
-	require.Len(t, spans, 1)
-
-	span := spans[0]
-	assert.Equal(t, 0, span.Ec)
-	assert.EqualValues(t, instana.ExitSpanKind, span.Kind)
-
-	require.IsType(t, instana.HTTPSpanData{}, span.Data)
-	data := span.Data.(instana.HTTPSpanData)
-
-	assert.Equal(t, instana.HTTPSpanTags{
-		Status: http.StatusNotImplemented,
-		Method: "GET",
-		URL:    "http://example.com/hello",
-	}, data.Tags)
-}
-
-func TestRoundTripper_WithParentSpan(t *testing.T) {
-	recorder := instana.NewTestRecorder()
 	tracer := instana.NewTracerWithEverything(&instana.Options{}, recorder)
 	s := instana.NewSensorWithTracer(tracer)
 
-	span := tracer.StartSpan("parent")
+	parentSpan := tracer.StartSpan("parent")
 
 	var traceIDHeader, spanIDHeader string
 	rt := instana.RoundTripper(s, testRoundTripper(func(req *http.Request) (*http.Response, error) {
@@ -172,27 +132,56 @@ func TestRoundTripper_WithParentSpan(t *testing.T) {
 		}, nil
 	}))
 
-	ctx := instana.ContextWithSpan(context.Background(), span)
-	req := httptest.NewRequest("GET", "http://example.com/hello", nil)
+	ctx := instana.ContextWithSpan(context.Background(), parentSpan)
+	req := httptest.NewRequest("GET", "http://user:password@example.com/hello", nil)
 
 	_, err := rt.RoundTrip(req.WithContext(ctx))
 	require.NoError(t, err)
 
-	span.Finish()
+	parentSpan.Finish()
 
 	spans := recorder.GetQueuedSpans()
 	require.Len(t, spans, 2)
 
-	assert.Equal(t, spans[1].TraceID, spans[0].TraceID)
-	assert.Equal(t, spans[1].SpanID, spans[0].ParentID)
+	cSpan, pSpan := spans[0], spans[1]
+	assert.Equal(t, 0, cSpan.Ec)
+	assert.EqualValues(t, instana.ExitSpanKind, cSpan.Kind)
 
-	traceID, err := instana.Header2ID(traceIDHeader)
-	require.NoError(t, err)
-	assert.Equal(t, spans[0].TraceID, traceID)
+	assert.Equal(t, pSpan.TraceID, cSpan.TraceID)
+	assert.Equal(t, pSpan.SpanID, cSpan.ParentID)
 
-	spanID, err := instana.Header2ID(spanIDHeader)
+	assert.Equal(t, instana.FormatID(cSpan.TraceID), traceIDHeader)
+	assert.Equal(t, instana.FormatID(cSpan.SpanID), spanIDHeader)
+
+	require.IsType(t, instana.HTTPSpanData{}, cSpan.Data)
+	data := cSpan.Data.(instana.HTTPSpanData)
+
+	assert.Equal(t, instana.HTTPSpanTags{
+		Method: "GET",
+		Status: http.StatusNotImplemented,
+		URL:    "http://example.com/hello",
+	}, data.Tags)
+}
+
+func TestRoundTripper_WithoutParentSpan(t *testing.T) {
+	recorder := instana.NewTestRecorder()
+	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{}, recorder))
+
+	rt := instana.RoundTripper(s, testRoundTripper(func(req *http.Request) (*http.Response, error) {
+		assert.Empty(t, req.Header.Get(instana.FieldT))
+		assert.Empty(t, req.Header.Get(instana.FieldS))
+
+		return &http.Response{
+			Status:     http.StatusText(http.StatusNotImplemented),
+			StatusCode: http.StatusNotImplemented,
+		}, nil
+	}))
+
+	resp, err := rt.RoundTrip(httptest.NewRequest("GET", "http://example.com/hello", nil))
 	require.NoError(t, err)
-	assert.Equal(t, spans[0].SpanID, spanID)
+	assert.Equal(t, http.StatusNotImplemented, resp.StatusCode)
+
+	assert.Empty(t, recorder.GetQueuedSpans())
 }
 
 func TestRoundTripper_Error(t *testing.T) {
@@ -205,7 +194,10 @@ func TestRoundTripper_Error(t *testing.T) {
 		return nil, serverErr
 	}))
 
-	_, err := rt.RoundTrip(httptest.NewRequest("GET", "http://example.com/hello", nil))
+	ctx := instana.ContextWithSpan(context.Background(), s.Tracer().StartSpan("parent"))
+	req := httptest.NewRequest("GET", "http://example.com/hello", nil)
+
+	_, err := rt.RoundTrip(req.WithContext(ctx))
 	assert.Error(t, err)
 
 	spans := recorder.GetQueuedSpans()
@@ -242,7 +234,10 @@ func TestRoundTripper_DefaultTransport(t *testing.T) {
 
 	rt := instana.RoundTripper(s, nil)
 
-	resp, err := rt.RoundTrip(httptest.NewRequest("GET", ts.URL+"/hello", nil))
+	ctx := instana.ContextWithSpan(context.Background(), s.Tracer().StartSpan("parent"))
+	req := httptest.NewRequest("GET", ts.URL+"/hello", nil)
+
+	resp, err := rt.RoundTrip(req.WithContext(ctx))
 	require.NoError(t, err)
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
 

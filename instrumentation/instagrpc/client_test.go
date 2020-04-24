@@ -111,7 +111,9 @@ func TestUnaryClientInterceptor_ErrorHandling(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	_, err = client.EmptyCall(context.Background(), &grpctest.Empty{})
+	sp := sensor.Tracer().StartSpan("test-span")
+
+	_, err = client.EmptyCall(instana.ContextWithSpan(context.Background(), sp), &grpctest.Empty{})
 	assert.Error(t, err)
 
 	spans := recorder.GetQueuedSpans()
@@ -125,6 +127,34 @@ func TestUnaryClientInterceptor_ErrorHandling(t *testing.T) {
 	assert.Equal(t, 1, span.Ec)
 
 	assert.Equal(t, serverErr.Error(), span.Data.RPC.Error)
+}
+
+func TestUnaryClientInterceptor_NoParentSpan(t *testing.T) {
+	recorder := instana.NewTestRecorder()
+	tracer := instana.NewTracerWithEverything(&instana.Options{}, recorder)
+
+	mdRec := &metadataCapturer{}
+	addr, teardown, err := startTestServer(
+		&testServer{},
+		grpc.UnaryInterceptor(mdRec.UnaryServerInterceptor()),
+	)
+	require.NoError(t, err)
+	defer teardown()
+
+	client, err := newTestServiceClient(
+		addr,
+		time.Second,
+		grpc.WithUnaryInterceptor(
+			instagrpc.UnaryClientInterceptor(instana.NewSensorWithTracer(tracer)),
+		),
+	)
+	require.NoError(t, err)
+
+	_, err = client.EmptyCall(context.Background(), &grpctest.Empty{})
+	require.NoError(t, err)
+
+	// check recorded spans
+	assert.Empty(t, recorder.GetQueuedSpans())
 }
 
 func TestStreamClientInterceptor(t *testing.T) {
@@ -239,7 +269,9 @@ func TestStreamClientInterceptor_ErrorHandling(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	stream, err := client.FullDuplexCall(context.Background())
+	sp := sensor.Tracer().StartSpan("test-span")
+
+	stream, err := client.FullDuplexCall(instana.ContextWithSpan(context.Background(), sp))
 	require.NoError(t, err)
 
 	require.NoError(t, stream.Send(&grpctest.StreamingOutputCallRequest{}))
@@ -259,6 +291,58 @@ func TestStreamClientInterceptor_ErrorHandling(t *testing.T) {
 	assert.Equal(t, 1, span.Ec)
 
 	assert.Equal(t, serverErr.Error(), span.Data.RPC.Error)
+}
+
+func TestStreamClientInterceptor_NoParentSpan(t *testing.T) {
+	recorder := instana.NewTestRecorder()
+	tracer := instana.NewTracerWithEverything(&instana.Options{}, recorder)
+
+	mdRec := &metadataCapturer{}
+	addr, teardown, err := startTestServer(
+		&testServer{},
+		grpc.StreamInterceptor(mdRec.StreamServerInterceptor()),
+	)
+	require.NoError(t, err)
+	defer teardown()
+
+	client, err := newTestServiceClient(
+		addr,
+		time.Second,
+		grpc.WithStreamInterceptor(
+			instagrpc.StreamClientInterceptor(instana.NewSensorWithTracer(tracer)),
+		),
+	)
+	require.NoError(t, err)
+
+	stream, err := client.FullDuplexCall(context.Background())
+	require.NoError(t, err)
+
+	for i := 0; i < 2; i++ {
+		require.NoError(t, stream.Send(&grpctest.StreamingOutputCallRequest{}))
+	}
+	require.NoError(t, stream.CloseSend())
+
+	done := make(chan struct{})
+	go func() {
+		for {
+			_, err := stream.Recv()
+			if err == io.EOF {
+				break
+			}
+		}
+
+		close(done)
+	}()
+
+	timeout := time.After(time.Second)
+	select {
+	case <-timeout:
+		require.FailNow(t, "the test server has never stopped streaming")
+	case <-done:
+		break
+	}
+
+	assert.Empty(t, recorder.GetQueuedSpans())
 }
 
 func newTestServiceClient(addr string, timeout time.Duration, opts ...grpc.DialOption) (grpctest.TestServiceClient, error) {

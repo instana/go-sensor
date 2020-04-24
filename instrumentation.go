@@ -39,9 +39,9 @@ func TracingHandlerFunc(sensor *Sensor, name string, handler http.HandlerFunc) h
 		case nil:
 			opts = append(opts, ext.RPCServerOption(wireContext))
 		case ot.ErrSpanContextNotFound:
-			sensor.Logger().Debug("no span context provided with", req.Method, req.URL.Path)
+			sensor.Logger().Debug("no span context provided with ", req.Method, req.URL.Path)
 		case ot.ErrUnsupportedFormat:
-			sensor.Logger().Info("unsupported span context format provided with", req.Method, req.URL.Path)
+			sensor.Logger().Info("unsupported span context format provided with ", req.Method, req.URL.Path)
 		default:
 			sensor.Logger().Warn("failed to extract span context from the request:", err)
 		}
@@ -53,11 +53,9 @@ func TracingHandlerFunc(sensor *Sensor, name string, handler http.HandlerFunc) h
 			// Be sure to capture any kind of panic / error
 			if err := recover(); err != nil {
 				if e, ok := err.(error); ok {
-					span.SetTag("message", e.Error())
 					span.SetTag("http.error", e.Error())
 					span.LogFields(otlog.Error(e))
 				} else {
-					span.SetTag("message", err)
 					span.SetTag("http.error", err)
 					span.LogFields(otlog.Object("error", err))
 				}
@@ -85,41 +83,36 @@ func TracingHandlerFunc(sensor *Sensor, name string, handler http.HandlerFunc) h
 // If the original RoundTripper is nil, the http.DefaultTransport will be used.
 func RoundTripper(sensor *Sensor, original http.RoundTripper) http.RoundTripper {
 	return tracingRoundTripper(func(req *http.Request) (*http.Response, error) {
+		if original == nil {
+			original = http.DefaultTransport
+		}
+
 		ctx := req.Context()
+		parentSpan, ok := SpanFromContext(ctx)
+		if !ok {
+			// don't trace the exit call if there was no entry span provided
+			return original.RoundTrip(req)
+		}
 
 		sanitizedURL := cloneURL(req.URL)
 		sanitizedURL.RawQuery = ""
 		sanitizedURL.User = nil
 
-		opts := []ot.StartSpanOption{
+		span := sensor.Tracer().StartSpan("http",
 			ext.SpanKindRPCClient,
+			ot.ChildOf(parentSpan.Context()),
 			ot.Tags{
 				"http.url":    sanitizedURL.String(),
 				"http.method": req.Method,
-			},
-		}
-
-		tracer := sensor.Tracer()
-		// use the parent span tracer and context if provided
-		if ps, ok := SpanFromContext(ctx); ok {
-			tracer = ps.Tracer()
-			opts = append(opts, ot.ChildOf(ps.Context()))
-		}
-
-		span := tracer.StartSpan("http", opts...)
+			})
 		defer span.Finish()
 
 		// clone the request since the RoundTrip should not modify the original one
 		req = cloneRequest(ContextWithSpan(ctx, span), req)
-		tracer.Inject(span.Context(), ot.HTTPHeaders, ot.HTTPHeadersCarrier(req.Header))
-
-		if original == nil {
-			original = http.DefaultTransport
-		}
+		sensor.Tracer().Inject(span.Context(), ot.HTTPHeaders, ot.HTTPHeadersCarrier(req.Header))
 
 		resp, err := original.RoundTrip(req)
 		if err != nil {
-			span.SetTag("message", err.Error())
 			span.SetTag("http.error", err.Error())
 			span.LogFields(otlog.Error(err))
 			return resp, err
