@@ -58,7 +58,6 @@ type EntityData struct {
 type meterS struct {
 	sensor            *sensorS
 	numGC             uint32
-	ticker            *time.Ticker
 	snapshotCountdown int
 }
 
@@ -67,12 +66,12 @@ func newMeter(sensor *sensorS) *meterS {
 
 	meter := &meterS{
 		sensor: sensor,
-		ticker: time.NewTicker(1 * time.Second),
 	}
 
+	ticker := time.NewTicker(1 * time.Second)
 	go func() {
 		meter.snapshotCountdown = 1
-		for range meter.ticker.C {
+		for range ticker.C {
 			if meter.sensor.agent.canSend() {
 				meter.snapshotCountdown--
 				var s *SnapshotS
