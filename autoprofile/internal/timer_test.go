@@ -1,6 +1,7 @@
 package internal_test
 
 import (
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -9,40 +10,37 @@ import (
 )
 
 func TestTimer_Restart(t *testing.T) {
-	var fired int
+	var fired int64
 	timer := internal.NewTimer(0, 20*time.Millisecond, func() {
-		fired++
+		atomic.AddInt64(&fired, 1)
 	})
 
 	time.Sleep(30 * time.Millisecond)
 	timer.Stop()
 
-	assert.Equal(t, 1, fired)
+	assert.EqualValues(t, 1, atomic.LoadInt64(&fired))
 
 	time.Sleep(50 * time.Millisecond)
-	assert.Equal(t, 1, fired)
+	assert.EqualValues(t, 1, atomic.LoadInt64(&fired))
 }
 
 func TestTimer_Sleep(t *testing.T) {
-	var fired int
-	timer := internal.NewTimer(20*time.Millisecond, 0, func() {
-		fired++
+	var fired int64
+	timer := internal.NewTimer(0, 20*time.Millisecond, func() {
+		atomic.AddInt64(&fired, 1)
 	})
 
 	time.Sleep(30 * time.Millisecond)
 	timer.Stop()
 
-	assert.Equal(t, 1, fired)
+	assert.EqualValues(t, 1, atomic.LoadInt64(&fired))
 }
 
 func TestTimer_Sleep_Stopped(t *testing.T) {
-	var fired int
 	timer := internal.NewTimer(20*time.Millisecond, 0, func() {
-		fired++
+		t.Error("stopped timer has fired")
 	})
 
 	timer.Stop()
 	time.Sleep(30 * time.Millisecond)
-
-	assert.Equal(t, 0, fired)
 }
