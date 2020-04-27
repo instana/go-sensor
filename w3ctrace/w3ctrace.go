@@ -44,3 +44,16 @@ func Extract(headers http.Header) (Context, error) {
 
 	return tr, nil
 }
+
+// Inject adds the w3c trace context headers, overriding any previously set values
+func Inject(trCtx Context, headers http.Header) {
+	// delete existing headers ignoring the header name case
+	for k := range headers {
+		if strings.EqualFold(k, TraceParentHeader) || strings.EqualFold(k, TraceStateHeader) {
+			delete(headers, k)
+		}
+	}
+
+	headers.Set(TraceParentHeader, trCtx.RawParent)
+	headers.Set(TraceStateHeader, trCtx.RawState)
+}

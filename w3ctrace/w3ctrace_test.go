@@ -49,4 +49,29 @@ func TestExtract_NoContext(t *testing.T) {
 	_, err := w3ctrace.Extract(headers)
 	assert.Equal(t, w3ctrace.ErrContextNotFound, err)
 }
-RawParent
+
+func TestInject(t *testing.T) {
+	examples := map[string]http.Header{
+		"add": {
+			"Authorization": []string{"Basic 123"},
+		},
+		"update": {
+			"Authorization": []string{"Basic 123"},
+			"traceparent":   []string{"00-abcdef1-01"},
+			"TraceState":    []string{"x=y"},
+		},
+	}
+
+	for name, headers := range examples {
+		t.Run(name, func(t *testing.T) {
+			w3ctrace.Inject(w3ctrace.Context{
+				RawParent: exampleTraceParent,
+				RawState:  exampleTraceState,
+			}, headers)
+
+			assert.Equal(t, "Basic 123", headers.Get("Authorization"))
+			assert.Equal(t, exampleTraceParent, headers.Get(w3ctrace.TraceParentHeader))
+			assert.Equal(t, exampleTraceState, headers.Get(w3ctrace.TraceStateHeader))
+		})
+	}
+}
