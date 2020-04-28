@@ -7,13 +7,15 @@ import (
 	"net/textproto"
 	"net/url"
 
+	"github.com/instana/go-sensor/w3ctrace"
 	ot "github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
 	otlog "github.com/opentracing/opentracing-go/log"
 )
 
 // TracingHandlerFunc is an HTTP middleware that captures the tracing data and ensures
-// trace context propagation via OpenTracing headers
+// trace context propagation via OpenTracing headers. The wrapped handler will also propagate
+// the W3C trace context (https://www.w3.org/TR/trace-context/) if found in request
 func TracingHandlerFunc(sensor *Sensor, name string, handler http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		ctx := req.Context()
@@ -71,7 +73,7 @@ func TracingHandlerFunc(sensor *Sensor, name string, handler http.HandlerFunc) h
 		tracer.Inject(span.Context(), ot.HTTPHeaders, ot.HTTPHeadersCarrier(wrapped.Header()))
 
 		ctx = ContextWithSpan(ctx, span)
-		handler(wrapped, req.WithContext(ctx))
+		w3ctrace.TracingHandlerFunc(handler)(wrapped, req.WithContext(ctx))
 
 		if wrapped.Status > 0 {
 			span.SetTag("http.status", wrapped.Status)

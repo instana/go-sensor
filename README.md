@@ -200,6 +200,10 @@ The tracer is able to protocol and piggyback OpenTracing baggage, tags and logs.
 
 The Instana tracer will remap OpenTracing HTTP headers into Instana Headers, so parallel use with some other OpenTracing model is not possible. The Instana tracer is based on the OpenTracing Go basictracer with necessary modifications to map to the Instana tracing model. Also, sampling isn't implemented yet and will be focus of future work.
 
+## W3C Trace Context
+
+The Go sensor library implements minimal support of the [W3C Trace Context](https://www.w3.org/TR/trace-context/) by propagating the `traceparent` and `tracestate` HTTP headers. The [`instana.TracingHandlerFunc()`][instana.TracingHandlerFunc] middleware extracts these headers and adds them to the outgoing request without any changes. This is done before the underlying handler is called, so the user can than alter these values inside their handling function.
+
 ## Events API
 
 The sensor, be it instantiated explicitly or implicitly through the tracer, provides a simple wrapper API to send events to Instana as described in [its documentation](https://docs.instana.io/quick_start/api/#event-sdk-rest-web-service).
@@ -222,3 +226,5 @@ Following examples are included in the `example` folder:
 * [database/elasticsearch.go](./example/database/elasticsearch.go) - Demonstrates how to instrument a database client (Elasticsearch in this case)
 * [httpclient/multi_request.go](./example/httpclient/multi_request.go) - Demonstrates the instrumentation of an HTTP client
 * [many.go](./example/many.go) - Demonstrates how to create nested spans within the same execution context
+
+[instana.TracingHandlerFunc]: https://pkg.go.dev/github.com/instana/go-sensor/?tab=doc#TracingHandlerFunc

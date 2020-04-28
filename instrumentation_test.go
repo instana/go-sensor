@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	instana "github.com/instana/go-sensor"
+	"github.com/instana/go-sensor/w3ctrace"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -80,6 +81,36 @@ func TestTracingHandlerFunc_WriteHeaders(t *testing.T) {
 		Host:   "example.com",
 		Path:   "/test",
 	}, data.Tags)
+}
+
+func TestTracingHandlerFunc_W3CTraceContext(t *testing.T) {
+	const (
+		traceParent = "00-4bf92f3577b34da6a3ce929d0e0e4736-01"
+		traceState  = "vendorname1=opaqueValue1,in=abc123;def456"
+	)
+
+	recorder := instana.NewTestRecorder()
+	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{
+		Service: "go-sensor-test",
+	}, recorder))
+
+	h := instana.TracingHandlerFunc(s, "test-handler", func(w http.ResponseWriter, req *http.Request) {
+		fmt.Fprintln(w, "Ok")
+	})
+
+	rec := httptest.NewRecorder()
+
+	req := httptest.NewRequest(http.MethodGet, "/test", nil)
+	req.Header.Set(w3ctrace.TraceParentHeader, traceParent)
+	req.Header.Set(w3ctrace.TraceStateHeader, traceState)
+
+	h.ServeHTTP(rec, req)
+
+	assert.Equal(t, http.StatusOK, rec.Code)
+	assert.Equal(t, "Ok\n", rec.Body.String())
+
+	assert.Equal(t, traceParent, rec.Header().Get(w3ctrace.TraceParentHeader))
+	assert.Equal(t, traceState, rec.Header().Get(w3ctrace.TraceStateHeader))
 }
 
 func TestTracingHandlerFunc_PanicHandling(t *testing.T) {
