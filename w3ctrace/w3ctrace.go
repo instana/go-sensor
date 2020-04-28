@@ -1,6 +1,7 @@
 package w3ctrace
 
 import (
+	"bytes"
 	"errors"
 	"net/http"
 	"strings"
@@ -12,7 +13,10 @@ const (
 	TraceStateHeader  = "tracestate"
 )
 
-var ErrContextNotFound = errors.New("no w3c context")
+var (
+	ErrContextNotFound  = errors.New("no w3c context")
+	ErrContextCorrupted = errors.New("corrupted w3c context")
+)
 
 // Context represents the W3C trace context
 type Context struct {
@@ -56,4 +60,41 @@ func Inject(trCtx Context, headers http.Header) {
 
 	headers.Set(TraceParentHeader, trCtx.RawParent)
 	headers.Set(TraceStateHeader, trCtx.RawState)
+}
+
+// State is list of key=value pairs representing vendor-specific data in the trace context
+type State []string
+
+// ParseState parses the value of `tracestate` header. It strips any optional white-space chararacters
+// preceding or following the key=value pairs. Empty list items are omitted.
+func ParseState(traceStateValue string) (State, error) {
+	var state State
+
+	for _, st := range strings.SplitN(traceStateValue, ",", 32) {
+		st = strings.TrimSpace(st)
+		if st == "" {
+			continue
+		}
+
+		state = append(state, st)
+	}
+
+	return state, nil
+}
+
+// String returns string representation of a trace state. The returned value is compatible with the
+// `tracestate` header format
+func (st State) String() string {
+	if len(st) == 0 {
+		return ""
+	}
+
+	buf := bytes.NewBuffer(nil)
+	for _, vd := range st {
+		buf.WriteString(vd)
+		buf.WriteByte(',')
+	}
+	buf.Truncate(buf.Len() - 1) // remove trailing comma
+
+	return buf.String()
 }

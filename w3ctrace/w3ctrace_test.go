@@ -75,3 +75,55 @@ func TestInject(t *testing.T) {
 		})
 	}
 }
+
+func TestParseState(t *testing.T) {
+	examples := map[string]struct {
+		Header   string
+		Expected w3ctrace.State
+	}{
+		"empty": {},
+		"single tracing system": {
+			Header:   "rojo=00f067aa0ba902b7",
+			Expected: w3ctrace.State{"rojo=00f067aa0ba902b7"},
+		},
+		"multiple tracing systems": {
+			Header:   "rojo=00f067aa0ba902b7 , congo=t61rcWkgMzE",
+			Expected: w3ctrace.State{"rojo=00f067aa0ba902b7", "congo=t61rcWkgMzE"},
+		},
+		"with empty list items": {
+			Header:   "rojo=00f067aa0ba902b7,    ,,congo=t61rcWkgMzE",
+			Expected: w3ctrace.State{"rojo=00f067aa0ba902b7", "congo=t61rcWkgMzE"},
+		},
+	}
+
+	for name, example := range examples {
+		t.Run(name, func(t *testing.T) {
+			st, err := w3ctrace.ParseState(example.Header)
+			require.NoError(t, err)
+			assert.Equal(t, example.Expected, st)
+		})
+	}
+}
+
+func TestState_String(t *testing.T) {
+	examples := map[string]struct {
+		State    w3ctrace.State
+		Expected string
+	}{
+		"empty": {},
+		"single tracing system": {
+			State:    w3ctrace.State{"rojo=00f067aa0ba902b7"},
+			Expected: "rojo=00f067aa0ba902b7",
+		},
+		"multiple tracing systems": {
+			State:    w3ctrace.State{"rojo=00f067aa0ba902b7", "congo=t61rcWkgMzE"},
+			Expected: "rojo=00f067aa0ba902b7,congo=t61rcWkgMzE",
+		},
+	}
+
+	for name, example := range examples {
+		t.Run(name, func(t *testing.T) {
+			assert.Equal(t, example.Expected, example.State.String())
+		})
+	}
+}
