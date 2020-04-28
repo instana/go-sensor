@@ -8,6 +8,9 @@ import (
 )
 
 const (
+	// The max number of items in `tracestate` as defined by https://www.w3.org/TR/trace-context/#tracestate-header-field-values
+	MaxStateEntries = 32
+
 	// W3C trace context header names as defined by https://www.w3.org/TR/trace-context/
 	TraceParentHeader = "traceparent"
 	TraceStateHeader  = "tracestate"
@@ -80,6 +83,44 @@ func ParseState(traceStateValue string) (State, error) {
 	}
 
 	return state, nil
+}
+
+// Put returns a new state prepended with provided vendor-specific data. It removes any existing
+// entries for this vendor and returns the same state if vendor is empty. If the number of entries
+// in a state reaches the MaxStateEntries, rest of the items will be truncated
+func (st State) Add(vendor, data string) State {
+	if vendor == "" {
+		return st
+	}
+
+	newSt := make(State, 1, len(st)+1)
+	newSt[0] = vendor + "=" + data
+	newSt = append(newSt, st.Remove(vendor)...)
+
+	// truncate the state if it reached the max number of entries
+	if len(newSt) > MaxStateEntries {
+		newSt = newSt[:MaxStateEntries]
+	}
+
+	return newSt
+}
+
+// Remove returns a new state without data for specified vendor. It returns the same state if vendor is empty
+func (st State) Remove(vendor string) State {
+	if vendor == "" {
+		return st
+	}
+
+	prefix := vendor + "="
+
+	var newSt State
+	for _, vd := range st {
+		if !strings.HasPrefix(vd, prefix) {
+			newSt = append(newSt, vd)
+		}
+	}
+
+	return newSt
 }
 
 // String returns string representation of a trace state. The returned value is compatible with the

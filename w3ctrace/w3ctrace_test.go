@@ -1,6 +1,7 @@
 package w3ctrace_test
 
 import (
+	"fmt"
 	"net/http"
 	"testing"
 
@@ -103,6 +104,57 @@ func TestParseState(t *testing.T) {
 			assert.Equal(t, example.Expected, st)
 		})
 	}
+}
+
+func TestState_Add(t *testing.T) {
+	var st w3ctrace.State
+
+	st = st.Add("rojo", "00f067aa0ba902b7")
+	require.Equal(t, w3ctrace.State{"rojo=00f067aa0ba902b7"}, st)
+
+	st = st.Add("congo", "t61rcWkgMzE")
+	require.Equal(t, w3ctrace.State{"congo=t61rcWkgMzE", "rojo=00f067aa0ba902b7"}, st)
+
+	st = st.Add("", "data")
+	require.Equal(t, w3ctrace.State{"congo=t61rcWkgMzE", "rojo=00f067aa0ba902b7"}, st)
+
+	st = st.Add("rojo", "updated")
+	require.Equal(t, w3ctrace.State{"rojo=updated", "congo=t61rcWkgMzE"}, st)
+
+	st = st.Add("rojo", "updated again")
+	require.Equal(t, w3ctrace.State{"rojo=updated again", "congo=t61rcWkgMzE"}, st)
+}
+
+func TestState_Add_MaximumReached(t *testing.T) {
+	var st w3ctrace.State
+
+	for i := 0; i < w3ctrace.MaxStateEntries; i++ {
+		st = st.Add(fmt.Sprintf("vendor%d", i), "data")
+	}
+
+	require.Len(t, st, w3ctrace.MaxStateEntries)
+	require.Equal(t, st[w3ctrace.MaxStateEntries-1], "vendor0=data")
+
+	st = st.Add("newVendor", "data")
+	require.Len(t, st, w3ctrace.MaxStateEntries)
+	assert.Equal(t, st[0], "newVendor=data")
+	assert.Equal(t, st[w3ctrace.MaxStateEntries-1], "vendor1=data")
+}
+
+func TestState_Remove(t *testing.T) {
+	st := w3ctrace.State{"rojo=00f067aa0ba902b7", "congo=t61rcWkgMzE"}
+
+	st = st.Remove("congo")
+	require.Equal(t, w3ctrace.State{"rojo=00f067aa0ba902b7"}, st)
+
+	st = st.Remove("")
+	require.Equal(t, w3ctrace.State{"rojo=00f067aa0ba902b7"}, st)
+
+	st = st.Remove("vendor")
+	require.Equal(t, w3ctrace.State{"rojo=00f067aa0ba902b7"}, st)
+
+	st = st.Remove("rojo")
+	require.Empty(t, st)
 }
 
 func TestState_String(t *testing.T) {
