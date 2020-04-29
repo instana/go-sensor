@@ -53,6 +53,8 @@ func injectTraceContext(sc SpanContext, opaqueCarrier interface{}) error {
 		return ot.ErrInvalidCarrier
 	}
 
+	traceID, spanID := FormatID(sc.TraceID), FormatID(sc.SpanID)
+
 	if c, ok := opaqueCarrier.(ot.HTTPHeadersCarrier); ok {
 		// Even though the godoc claims that the key passed to (*http.Header).Set()
 		// is case-insensitive, it actually normalizes it using textproto.CanonicalMIMEHeaderKey()
@@ -74,12 +76,13 @@ func injectTraceContext(sc SpanContext, opaqueCarrier interface{}) error {
 		}
 
 		if trCtx, ok := sc.ForeignParent.(w3ctrace.Context); ok {
+			trCtx.RawState = trCtx.State().Add(w3ctrace.VendorInstana, traceID+";"+spanID).String()
 			w3ctrace.Inject(trCtx, h)
 		}
 	}
 
-	carrier.Set(exstfieldT, FormatID(sc.TraceID))
-	carrier.Set(exstfieldS, FormatID(sc.SpanID))
+	carrier.Set(exstfieldT, traceID)
+	carrier.Set(exstfieldS, spanID)
 	carrier.Set(exstfieldL, formatLevel(sc))
 
 	for k, v := range sc.Baggage {

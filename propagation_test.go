@@ -53,7 +53,7 @@ func TestTracer_Inject_HTTPHeaders(t *testing.T) {
 				SpanID:  0x3546,
 				ForeignParent: w3ctrace.Context{
 					RawParent: "w3cparent",
-					RawState:  "w3cstate",
+					RawState:  "vendor=w3cstate",
 				},
 				Baggage: map[string]string{
 					"foo": "bar",
@@ -69,7 +69,7 @@ func TestTracer_Inject_HTTPHeaders(t *testing.T) {
 			assert.Equal(t, "bar", headers.Get("X-Instana-B-foo"))
 			// W3C trace context
 			assert.Equal(t, "w3cparent", headers.Get(w3ctrace.TraceParentHeader))
-			assert.Equal(t, "w3cstate", headers.Get(w3ctrace.TraceStateHeader))
+			assert.Equal(t, "in=2435;3546,vendor=w3cstate", headers.Get(w3ctrace.TraceStateHeader))
 			// Original headers
 			assert.Equal(t, "Basic 123", headers.Get("Authorization"))
 
