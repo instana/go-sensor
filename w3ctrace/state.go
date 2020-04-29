@@ -5,6 +5,9 @@ import (
 	"strings"
 )
 
+// Instana vendor key in the `tracestate` list
+const VendorInstana = "in"
+
 // State is list of key=value pairs representing vendor-specific data in the trace context
 type State []string
 
