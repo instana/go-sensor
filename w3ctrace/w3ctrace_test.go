@@ -77,6 +77,15 @@ func TestInject(t *testing.T) {
 	}
 }
 
+func TestContext_State(t *testing.T) {
+	trCtx := w3ctrace.Context{
+		RawParent: exampleTraceParent,
+		RawState:  exampleTraceState,
+	}
+
+	assert.Equal(t, w3ctrace.State{"vendorname1=opaqueValue1", "vendorname2=opaqueValue2"}, trCtx.State())
+}
+
 func TestParseState(t *testing.T) {
 	examples := map[string]struct {
 		Header   string

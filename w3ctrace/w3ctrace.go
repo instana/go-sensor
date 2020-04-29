@@ -65,6 +65,17 @@ func Inject(trCtx Context, headers http.Header) {
 	headers.Set(TraceStateHeader, trCtx.RawState)
 }
 
+// State parses RawState and returns the corresponding list.
+// It silently discards malformed state. To check errors use ParseState().
+func (trCtx Context) State() State {
+	st, err := ParseState(trCtx.RawState)
+	if err != nil {
+		return State{}
+	}
+
+	return st
+}
+
 // State is list of key=value pairs representing vendor-specific data in the trace context
 type State []string
 
