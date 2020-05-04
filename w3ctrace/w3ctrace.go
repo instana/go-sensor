@@ -17,8 +17,9 @@ const (
 )
 
 var (
-	ErrContextNotFound  = errors.New("no w3c context")
-	ErrContextCorrupted = errors.New("corrupted w3c context")
+	ErrContextNotFound    = errors.New("no w3c context")
+	ErrContextCorrupted   = errors.New("corrupted w3c context")
+	ErrUnsupportedVersion = errors.New("unsupported w3c context version")
 )
 
 // Context represents the W3C trace context
