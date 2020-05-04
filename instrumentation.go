@@ -76,6 +76,10 @@ func TracingHandlerFunc(sensor *Sensor, name string, handler http.HandlerFunc) h
 		w3ctrace.TracingHandlerFunc(handler)(wrapped, req.WithContext(ctx))
 
 		if wrapped.Status > 0 {
+			if wrapped.Status > http.StatusInternalServerError {
+				span.SetTag("http.error", http.StatusText(wrapped.Status))
+			}
+
 			span.SetTag("http.status", wrapped.Status)
 		}
 	}

@@ -57,13 +57,13 @@ func TestTracingHandlerFunc_WriteHeaders(t *testing.T) {
 	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{}, recorder))
 
 	h := instana.TracingHandlerFunc(s, "test-handler", func(w http.ResponseWriter, req *http.Request) {
-		w.WriteHeader(http.StatusNotImplemented)
+		w.WriteHeader(http.StatusNotFound)
 	})
 
 	rec := httptest.NewRecorder()
 	h.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/test?q=classified", nil))
 
-	assert.Equal(t, http.StatusNotImplemented, rec.Code)
+	assert.Equal(t, http.StatusNotFound, rec.Code)
 
 	spans := recorder.GetQueuedSpans()
 	require.Len(t, spans, 1)
@@ -76,7 +76,38 @@ func TestTracingHandlerFunc_WriteHeaders(t *testing.T) {
 	data := span.Data.(instana.HTTPSpanData)
 
 	assert.Equal(t, instana.HTTPSpanTags{
-		Status: http.StatusNotImplemented,
+		Status: http.StatusNotFound,
+		Method: "GET",
+		Host:   "example.com",
+		Path:   "/test",
+	}, data.Tags)
+}
+
+func TestTracingHandlerFunc_Error(t *testing.T) {
+	recorder := instana.NewTestRecorder()
+	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{}, recorder))
+
+	h := instana.TracingHandlerFunc(s, "test-handler", func(w http.ResponseWriter, req *http.Request) {
+		http.Error(w, "something went wrong", http.StatusInternalServerError)
+	})
+
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/test", nil))
+
+	assert.Equal(t, http.StatusInternalServerError, rec.Code)
+
+	spans := recorder.GetQueuedSpans()
+	require.Len(t, spans, 1)
+
+	span := spans[0]
+	assert.Equal(t, 0, span.Ec)
+	assert.EqualValues(t, instana.EntrySpanKind, span.Kind)
+
+	require.IsType(t, instana.HTTPSpanData{}, span.Data)
+	data := span.Data.(instana.HTTPSpanData)
+
+	assert.Equal(t, instana.HTTPSpanTags{
+		Status: http.StatusInternalServerError,
 		Method: "GET",
 		Host:   "example.com",
 		Path:   "/test",
