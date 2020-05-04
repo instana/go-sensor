@@ -75,3 +75,14 @@ func (trCtx Context) State() State {
 
 	return st
 }
+
+// Parent parses RawParent and returns the corresponding list.
+// It silently discards malformed value. To check errors use ParseParent().
+func (trCtx Context) Parent() Parent {
+	st, err := ParseParent(trCtx.RawParent)
+	if err != nil {
+		return Parent{}
+	}
+
+	return st
+}
