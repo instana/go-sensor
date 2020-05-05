@@ -11,69 +11,94 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestTracer_Inject_Extract_HTTPHeaders(t *testing.T) {
-	recorder := instana.NewTestRecorder()
-	tracer := instana.NewTracerWithEverything(&instana.Options{}, recorder)
-
-	sp := tracer.StartSpan("test-span")
-	sp.SetBaggageItem("Foo", "bar")
-
-	headers := http.Header{}
-
-	require.NoError(t, tracer.Inject(sp.Context(), ot.HTTPHeaders, ot.HTTPHeadersCarrier(headers)))
-	sp.Finish()
-
-	sc, err := tracer.Extract(ot.HTTPHeaders, ot.HTTPHeadersCarrier(headers))
-	require.NoError(t, err)
-
-	assert.Equal(t, sp.Context(), sc)
-}
-
 func TestTracer_Inject_HTTPHeaders(t *testing.T) {
-	examples := map[string]http.Header{
-		"add headers": {
-			"Authorization": {"Basic 123"},
+	examples := map[string]struct {
+		SpanContext instana.SpanContext
+		Headers     http.Header
+		Expected    http.Header
+	}{
+		"no trace context": {
+			SpanContext: instana.SpanContext{
+				TraceID: 0x2435,
+				SpanID:  0x3546,
+				Baggage: map[string]string{
+					"foo": "bar",
+				},
+			},
+			Headers: http.Header{
+				"Authorization": {"Basic 123"},
+			},
+			Expected: http.Header{
+				"Authorization":   {"Basic 123"},
+				"X-Instana-T":     {"2435"},
+				"X-Instana-S":     {"3546"},
+				"X-Instana-L":     {"1"},
+				"X-Instana-B-Foo": {"bar"},
+				"Traceparent":     {"00-00000000000000000000000000002435-0000000000003546-01"},
+				"Tracestate":      {"in=2435;3546"},
+			},
 		},
-		"update headers": {
-			"Authorization":   {"Basic 123"},
-			"x-instana-t":     {"1314"},
-			"X-INSTANA-S":     {"1314"},
-			"X-Instana-L":     {"1"},
-			"X-Instana-B-foo": {"hello"},
+		"with instana trace": {
+			SpanContext: instana.SpanContext{
+				TraceID: 0x2435,
+				SpanID:  0x3546,
+				Baggage: map[string]string{
+					"foo": "bar",
+				},
+			},
+			Headers: http.Header{
+				"Authorization":   {"Basic 123"},
+				"x-instana-t":     {"1314"},
+				"X-INSTANA-S":     {"1314"},
+				"X-Instana-L":     {"1"},
+				"X-Instana-B-foo": {"hello"},
+			},
+			Expected: http.Header{
+				"Authorization":   {"Basic 123"},
+				"X-Instana-T":     {"2435"},
+				"X-Instana-S":     {"3546"},
+				"X-Instana-L":     {"1"},
+				"X-Instana-B-Foo": {"bar"},
+				"Traceparent":     {"00-00000000000000000000000000002435-0000000000003546-01"},
+				"Tracestate":      {"in=2435;3546"},
+			},
 		},
-	}
-
-	for name, headers := range examples {
-		t.Run(name, func(t *testing.T) {
-			recorder := instana.NewTestRecorder()
-			tracer := instana.NewTracerWithEverything(&instana.Options{}, recorder)
-
-			sc := instana.SpanContext{
+		"with w3c trace": {
+			SpanContext: instana.SpanContext{
 				TraceID: 0x2435,
 				SpanID:  0x3546,
 				ForeignParent: w3ctrace.Context{
-					RawParent: "w3cparent",
-					RawState:  "vendor=w3cstate",
+					RawParent: "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01",
+					RawState:  "rojo=00f067aa0ba902b7",
 				},
 				Baggage: map[string]string{
 					"foo": "bar",
 				},
-			}
+			},
+			Headers: http.Header{
+				"Authorization": {"Basic 123"},
+				"Traceparent":   {"00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01"},
+				"Tracestate":    {"rojo=00f067aa0ba902b7"},
+			},
+			Expected: http.Header{
+				"Authorization":   {"Basic 123"},
+				"X-Instana-T":     {"2435"},
+				"X-Instana-S":     {"3546"},
+				"X-Instana-L":     {"1"},
+				"X-Instana-B-Foo": {"bar"},
+				"Traceparent":     {"00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01"},
+				"Tracestate":      {"in=2435;3546,rojo=00f067aa0ba902b7"},
+			},
+		},
+	}
 
-			require.NoError(t, tracer.Inject(sc, ot.HTTPHeaders, ot.HTTPHeadersCarrier(headers)))
+	for name, example := range examples {
+		t.Run(name, func(t *testing.T) {
+			recorder := instana.NewTestRecorder()
+			tracer := instana.NewTracerWithEverything(&instana.Options{}, recorder)
 
-			// Instana trace context
-			assert.Equal(t, "2435", headers.Get("X-Instana-T"))
-			assert.Equal(t, "3546", headers.Get("X-Instana-S"))
-			assert.Equal(t, "1", headers.Get("X-Instana-L"))
-			assert.Equal(t, "bar", headers.Get("X-Instana-B-foo"))
-			// W3C trace context
-			assert.Equal(t, "w3cparent", headers.Get(w3ctrace.TraceParentHeader))
-			assert.Equal(t, "in=2435;3546,vendor=w3cstate", headers.Get(w3ctrace.TraceStateHeader))
-			// Original headers
-			assert.Equal(t, "Basic 123", headers.Get("Authorization"))
-
-			assert.Len(t, headers, 7)
+			require.NoError(t, tracer.Inject(example.SpanContext, ot.HTTPHeaders, ot.HTTPHeadersCarrier(example.Headers)))
+			assert.Equal(t, example.Expected, example.Headers)
 		})
 	}
 }
@@ -219,24 +244,6 @@ func TestTracer_Extract_HTTPHeaders_CorruptedContext(t *testing.T) {
 			assert.Equal(t, ot.ErrSpanContextCorrupted, err)
 		})
 	}
-}
-
-func TestTracer_Inject_Extract_TextMap(t *testing.T) {
-	recorder := instana.NewTestRecorder()
-	tracer := instana.NewTracerWithEverything(&instana.Options{}, recorder)
-
-	sp := tracer.StartSpan("test-span")
-	sp.SetBaggageItem("foo", "bar")
-
-	carrier := make(map[string]string)
-
-	require.NoError(t, tracer.Inject(sp.Context(), ot.TextMap, ot.TextMapCarrier(carrier)))
-	sp.Finish()
-
-	sc, err := tracer.Extract(ot.TextMap, ot.TextMapCarrier(carrier))
-	require.NoError(t, err)
-
-	assert.Equal(t, sp.Context(), sc)
 }
 
 func TestTracer_Inject_TextMap_AddValues(t *testing.T) {
