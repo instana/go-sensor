@@ -27,6 +27,13 @@ type Context struct {
 	RawState  string
 }
 
+// New initializes a new W3C trace context from given parent
+func New(parent Parent) Context {
+	return Context{
+		RawParent: parent.String(),
+	}
+}
+
 // Extract extracts the W3C trace context from HTTP headers. Returns ErrContextNotFound if
 // provided value doesn't contain traceparent header.
 func Extract(headers http.Header) (Context, error) {
