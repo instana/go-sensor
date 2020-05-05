@@ -89,14 +89,15 @@ func (s *Sensor) WithTracingSpan(operationName string, w http.ResponseWriter, re
 		operationName = f.Name()
 	}
 
+	tags := ot.Tags{
+		string(ext.PeerHostname): req.Host,
+		string(ext.HTTPUrl):      req.URL.Path,
+		string(ext.HTTPMethod):   req.Method,
+	}
+
 	opts := []ot.StartSpanOption{
 		ext.SpanKindRPCServer,
-
-		ot.Tags{
-			string(ext.PeerHostname): req.Host,
-			string(ext.HTTPUrl):      req.URL.Path,
-			string(ext.HTTPMethod):   req.Method,
-		},
+		tags,
 	}
 
 	wireContext, err := s.tracer.Extract(ot.HTTPHeaders, ot.HTTPHeadersCarrier(req.Header))
@@ -116,6 +117,10 @@ func (s *Sensor) WithTracingSpan(operationName string, w http.ResponseWriter, re
 	}
 
 	span := s.tracer.StartSpan(operationName, opts...)
+	if req.Header.Get("X-INSTANA-SYNTHETIC") == "1" {
+		span.SetTag("sy", true)
+	}
+
 	defer span.Finish()
 
 	defer func() {

@@ -46,6 +46,43 @@ func TestWithTracingSpan(t *testing.T) {
 	}, data.Tags.Custom)
 }
 
+func TestWithTracingSyntheticSpan(t *testing.T) {
+	recorder := instana.NewTestRecorder()
+	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{}, recorder))
+
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest("GET", "/test", nil)
+	req.Header.Set("x-instana-synthetic", "1")
+
+	s.WithTracingSpan("test-span", rec, req, func(sp ot.Span) {
+		sp.SetTag("custom-tag", "value")
+	})
+
+	spans := recorder.GetQueuedSpans()
+	require.Len(t, spans, 1)
+
+	span := spans[0]
+	assert.Empty(t, span.ParentID)
+	assert.Equal(t, 0, span.Ec)
+
+	require.IsType(t, instana.SDKSpanData{}, span.Data)
+	data := span.Data.(instana.SDKSpanData)
+
+	assert.Equal(t, "test-span", data.Tags.Name)
+	assert.Equal(t, "entry", data.Tags.Type)
+
+	assert.Equal(t, map[string]interface{}{
+		"tags": ot.Tags{
+			"http.method":   "GET",
+			"http.url":      "/test",
+			"peer.hostname": "example.com",
+			"span.kind":     ext.SpanKindRPCServerEnum,
+			"custom-tag":    "value",
+			"sy":            true,
+		},
+	}, data.Tags.Custom)
+}
+
 func TestWithTracingSpan_PanicHandling(t *testing.T) {
 	recorder := instana.NewTestRecorder()
 	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{}, recorder))
