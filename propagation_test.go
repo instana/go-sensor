@@ -63,31 +63,22 @@ func TestTracer_Inject_HTTPHeaders(t *testing.T) {
 				"Tracestate":      {"in=2435;3546"},
 			},
 		},
-		"with w3c trace": {
+		"with instana trace suppressed": {
 			SpanContext: instana.SpanContext{
-				TraceID: 0x2435,
-				SpanID:  0x3546,
-				ForeignParent: w3ctrace.Context{
-					RawParent: "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01",
-					RawState:  "rojo=00f067aa0ba902b7",
-				},
-				Baggage: map[string]string{
-					"foo": "bar",
-				},
+				TraceID:    0x2435,
+				SpanID:     0x3546,
+				Suppressed: true,
 			},
 			Headers: http.Header{
 				"Authorization": {"Basic 123"},
-				"Traceparent":   {"00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01"},
-				"Tracestate":    {"rojo=00f067aa0ba902b7"},
 			},
 			Expected: http.Header{
-				"Authorization":   {"Basic 123"},
-				"X-Instana-T":     {"2435"},
-				"X-Instana-S":     {"3546"},
-				"X-Instana-L":     {"1"},
-				"X-Instana-B-Foo": {"bar"},
-				"Traceparent":     {"00-4bf92f3577b34da6a3ce929d0e0e4736-0000000000003546-01"},
-				"Tracestate":      {"in=2435;3546,rojo=00f067aa0ba902b7"},
+				"Authorization": {"Basic 123"},
+				"X-Instana-T":   {"2435"},
+				"X-Instana-S":   {"3546"},
+				"X-Instana-L":   {"0"},
+				"Traceparent":   {"00-00000000000000000000000000002435-0000000000003546-00"},
+				"Tracestate":    {""},
 			},
 		},
 	}
@@ -99,6 +90,126 @@ func TestTracer_Inject_HTTPHeaders(t *testing.T) {
 
 			require.NoError(t, tracer.Inject(example.SpanContext, ot.HTTPHeaders, ot.HTTPHeadersCarrier(example.Headers)))
 			assert.Equal(t, example.Expected, example.Headers)
+		})
+	}
+}
+
+func TestTracer_Inject_HTTPHeaders_W3CTraceContext(t *testing.T) {
+	examples := map[string]struct {
+		SpanContext instana.SpanContext
+		Expected    http.Header
+	}{
+		"instana trace suppressed, no w3c trace": {
+			SpanContext: instana.SpanContext{
+				TraceID:    0x2435,
+				SpanID:     0x3546,
+				Suppressed: true,
+			},
+			Expected: http.Header{
+				"X-Instana-T": {"2435"},
+				"X-Instana-S": {"3546"},
+				"X-Instana-L": {"0"},
+				"Traceparent": {"00-00000000000000000000000000002435-0000000000003546-00"},
+				"Tracestate":  {""},
+			},
+		},
+		"instana trace suppressed, w3c trace not sampled": {
+			SpanContext: instana.SpanContext{
+				TraceID: 0x2435,
+				SpanID:  0x3546,
+				ForeignParent: w3ctrace.Context{
+					RawParent: "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-00",
+					RawState:  "rojo=00f067aa0ba902b7",
+				},
+				Suppressed: true,
+			},
+			Expected: http.Header{
+				"X-Instana-T": {"2435"},
+				"X-Instana-S": {"3546"},
+				"X-Instana-L": {"0"},
+				"Traceparent": {"00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-00"},
+				"Tracestate":  {"rojo=00f067aa0ba902b7"},
+			},
+		},
+		"instana trace suppressed, w3c trace sampled": {
+			SpanContext: instana.SpanContext{
+				TraceID: 0x2435,
+				SpanID:  0x3546,
+				ForeignParent: w3ctrace.Context{
+					RawParent: "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01",
+					RawState:  "rojo=00f067aa0ba902b7",
+				},
+				Suppressed: true,
+			},
+			Expected: http.Header{
+				"X-Instana-T": {"2435"},
+				"X-Instana-S": {"3546"},
+				"X-Instana-L": {"0"},
+				"Traceparent": {"00-4bf92f3577b34da6a3ce929d0e0e4736-0000000000003546-00"},
+				"Tracestate":  {"rojo=00f067aa0ba902b7"},
+			},
+		},
+		"instana trace, no w3c trace": {
+			SpanContext: instana.SpanContext{
+				TraceID: 0x2435,
+				SpanID:  0x3546,
+			},
+			Expected: http.Header{
+				"X-Instana-T": {"2435"},
+				"X-Instana-S": {"3546"},
+				"X-Instana-L": {"1"},
+				"Traceparent": {"00-00000000000000000000000000002435-0000000000003546-01"},
+				"Tracestate":  {"in=2435;3546"},
+			},
+		},
+		"instana trace, w3c trace not sampled": {
+			SpanContext: instana.SpanContext{
+				TraceID: 0x2435,
+				SpanID:  0x3546,
+				ForeignParent: w3ctrace.Context{
+					RawParent: "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-00",
+					RawState:  "rojo=00f067aa0ba902b7",
+				},
+			},
+			Expected: http.Header{
+				"X-Instana-T": {"2435"},
+				"X-Instana-S": {"3546"},
+				"X-Instana-L": {"1"},
+				"Traceparent": {"00-4bf92f3577b34da6a3ce929d0e0e4736-0000000000003546-01"},
+				"Tracestate":  {"in=2435;3546,rojo=00f067aa0ba902b7"},
+			},
+		},
+		"instana trace, w3c trace": {
+			SpanContext: instana.SpanContext{
+				TraceID: 0x2435,
+				SpanID:  0x3546,
+				ForeignParent: w3ctrace.Context{
+					RawParent: "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01",
+					RawState:  "rojo=00f067aa0ba902b7",
+				},
+			},
+			Expected: http.Header{
+				"X-Instana-T": {"2435"},
+				"X-Instana-S": {"3546"},
+				"X-Instana-L": {"1"},
+				"Traceparent": {"00-4bf92f3577b34da6a3ce929d0e0e4736-0000000000003546-01"},
+				"Tracestate":  {"in=2435;3546,rojo=00f067aa0ba902b7"},
+			},
+		},
+	}
+
+	for name, example := range examples {
+		t.Run(name, func(t *testing.T) {
+			recorder := instana.NewTestRecorder()
+			tracer := instana.NewTracerWithEverything(&instana.Options{}, recorder)
+
+			headers := http.Header{}
+			if example.SpanContext.ForeignParent != nil {
+				w3ctrace.Inject(example.SpanContext.ForeignParent.(w3ctrace.Context), headers)
+			}
+
+			require.NoError(t, tracer.Inject(example.SpanContext, ot.HTTPHeaders, ot.HTTPHeadersCarrier(headers)))
+			assert.Equal(t, example.Expected, headers)
 		})
 	}
 }
