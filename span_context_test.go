@@ -18,11 +18,12 @@ func TestNewRootSpanContext(t *testing.T) {
 
 func TestNewSpanContext(t *testing.T) {
 	parent := instana.SpanContext{
-		TraceID:    1,
-		SpanID:     2,
-		ParentID:   3,
-		Sampled:    true,
-		Suppressed: true,
+		TraceID:       1,
+		SpanID:        2,
+		ParentID:      3,
+		Sampled:       true,
+		Suppressed:    true,
+		ForeignParent: []byte("foreign trace"),
 		Baggage: map[string]string{
 			"key1": "value1",
 			"key2": "value2",
@@ -34,6 +35,7 @@ func TestNewSpanContext(t *testing.T) {
 	assert.Equal(t, parent.SpanID, c.ParentID)
 	assert.Equal(t, parent.Sampled, c.Sampled)
 	assert.Equal(t, parent.Suppressed, c.Suppressed)
+	assert.Equal(t, parent.ForeignParent, c.ForeignParent)
 	assert.Equal(t, parent.Baggage, c.Baggage)
 
 	assert.NotEqual(t, parent.SpanID, c.SpanID)
@@ -80,11 +82,12 @@ func TestSpanContext_WithBaggageItem(t *testing.T) {
 
 func TestSpanContext_Clone(t *testing.T) {
 	c := instana.SpanContext{
-		TraceID:    1,
-		SpanID:     2,
-		ParentID:   3,
-		Sampled:    true,
-		Suppressed: true,
+		TraceID:       1,
+		SpanID:        2,
+		ParentID:      3,
+		Sampled:       true,
+		Suppressed:    true,
+		ForeignParent: []byte("foreign trace"),
 		Baggage: map[string]string{
 			"key1": "value1",
 			"key2": "value2",

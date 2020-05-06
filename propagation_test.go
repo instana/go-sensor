@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	instana "github.com/instana/go-sensor"
+	"github.com/instana/go-sensor/w3ctrace"
 	ot "github.com/opentracing/opentracing-go"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -50,6 +51,10 @@ func TestTracer_Inject_HTTPHeaders(t *testing.T) {
 			sc := instana.SpanContext{
 				TraceID: 0x2435,
 				SpanID:  0x3546,
+				ForeignParent: w3ctrace.Context{
+					RawParent: "w3cparent",
+					RawState:  "w3cstate",
+				},
 				Baggage: map[string]string{
 					"foo": "bar",
 				},
@@ -57,13 +62,18 @@ func TestTracer_Inject_HTTPHeaders(t *testing.T) {
 
 			require.NoError(t, tracer.Inject(sc, ot.HTTPHeaders, ot.HTTPHeadersCarrier(headers)))
 
+			// Instana trace context
 			assert.Equal(t, "2435", headers.Get("X-Instana-T"))
 			assert.Equal(t, "3546", headers.Get("X-Instana-S"))
 			assert.Equal(t, "1", headers.Get("X-Instana-L"))
 			assert.Equal(t, "bar", headers.Get("X-Instana-B-foo"))
+			// W3C trace context
+			assert.Equal(t, "w3cparent", headers.Get(w3ctrace.TraceParentHeader))
+			assert.Equal(t, "w3cstate", headers.Get(w3ctrace.TraceStateHeader))
+			// Original headers
 			assert.Equal(t, "Basic 123", headers.Get("Authorization"))
 
-			assert.Len(t, headers, 5)
+			assert.Len(t, headers, 7)
 		})
 	}
 }
@@ -126,6 +136,24 @@ func TestTracer_Extract_HTTPHeaders(t *testing.T) {
 				SpanID:     0x2435,
 				Suppressed: true,
 				Baggage:    map[string]string{},
+			},
+		},
+		"w3c trace context": {
+			Headers: map[string]string{
+				"x-instana-t": "1314",
+				"X-INSTANA-S": "2435",
+				"X-Instana-L": "1",
+				"traceparent": "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01",
+				"tracestate":  "rojo=00f067aa0ba902b7",
+			},
+			Expected: instana.SpanContext{
+				TraceID: 0x1314,
+				SpanID:  0x2435,
+				Baggage: map[string]string{},
+				ForeignParent: w3ctrace.Context{
+					RawParent: "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01",
+					RawState:  "rojo=00f067aa0ba902b7",
+				},
 			},
 		},
 	}

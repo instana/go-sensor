@@ -7,12 +7,19 @@ import (
 )
 
 const (
+	// The max number of items in `tracestate` as defined by https://www.w3.org/TR/trace-context/#tracestate-header-field-values
+	MaxStateEntries = 32
+
 	// W3C trace context header names as defined by https://www.w3.org/TR/trace-context/
 	TraceParentHeader = "traceparent"
 	TraceStateHeader  = "tracestate"
 )
 
-var ErrContextNotFound = errors.New("no w3c context")
+var (
+	ErrContextNotFound    = errors.New("no w3c context")
+	ErrContextCorrupted   = errors.New("corrupted w3c context")
+	ErrUnsupportedVersion = errors.New("unsupported w3c context version")
+)
 
 // Context represents the W3C trace context
 type Context struct {
@@ -56,4 +63,26 @@ func Inject(trCtx Context, headers http.Header) {
 
 	headers.Set(TraceParentHeader, trCtx.RawParent)
 	headers.Set(TraceStateHeader, trCtx.RawState)
+}
+
+// State parses RawState and returns the corresponding list.
+// It silently discards malformed state. To check errors use ParseState().
+func (trCtx Context) State() State {
+	st, err := ParseState(trCtx.RawState)
+	if err != nil {
+		return State{}
+	}
+
+	return st
+}
+
+// Parent parses RawParent and returns the corresponding list.
+// It silently discards malformed value. To check errors use ParseParent().
+func (trCtx Context) Parent() Parent {
+	st, err := ParseParent(trCtx.RawParent)
+	if err != nil {
+		return Parent{}
+	}
+
+	return st
 }
