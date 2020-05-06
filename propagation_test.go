@@ -86,7 +86,7 @@ func TestTracer_Inject_HTTPHeaders(t *testing.T) {
 				"X-Instana-S":     {"3546"},
 				"X-Instana-L":     {"1"},
 				"X-Instana-B-Foo": {"bar"},
-				"Traceparent":     {"00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01"},
+				"Traceparent":     {"00-4bf92f3577b34da6a3ce929d0e0e4736-0000000000003546-01"},
 				"Tracestate":      {"in=2435;3546,rojo=00f067aa0ba902b7"},
 			},
 		},

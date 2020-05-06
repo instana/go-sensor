@@ -102,7 +102,12 @@ func addW3CTraceContext(h http.Header, sc SpanContext) {
 		})
 	}
 
+	p := trCtx.Parent()
+	p.ParentID = spanID
+
+	trCtx.RawParent = p.String()
 	trCtx.RawState = trCtx.State().Add(w3ctrace.VendorInstana, traceID+";"+spanID).String()
+
 	w3ctrace.Inject(trCtx, h)
 }
 
