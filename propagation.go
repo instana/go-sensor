@@ -62,15 +62,19 @@ func injectTraceContext(sc SpanContext, opaqueCarrier interface{}) error {
 		//     h := http.Headers{"X-InStAnA-T": {"abc123"}}
 		// and does not apply to a common case when requests are being created using http.NewRequest()
 		// or http.ReadRequest() that call (*http.Header).Set() to set header values.
-		y := http.Header(c)
-		delete(y, exstfieldT)
-		delete(y, exstfieldS)
-		delete(y, exstfieldL)
+		h := http.Header(c)
+		delete(h, exstfieldT)
+		delete(h, exstfieldS)
+		delete(h, exstfieldL)
 
-		for key := range y {
+		for key := range h {
 			if strings.HasPrefix(strings.ToLower(key), FieldB) {
-				delete(y, key)
+				delete(h, key)
 			}
+		}
+
+		if trCtx, ok := sc.ForeignParent.(w3ctrace.Context); ok {
+			w3ctrace.Inject(trCtx, h)
 		}
 	}
 

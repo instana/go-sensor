@@ -51,6 +51,10 @@ func TestTracer_Inject_HTTPHeaders(t *testing.T) {
 			sc := instana.SpanContext{
 				TraceID: 0x2435,
 				SpanID:  0x3546,
+				ForeignParent: w3ctrace.Context{
+					RawParent: "w3cparent",
+					RawState:  "w3cstate",
+				},
 				Baggage: map[string]string{
 					"foo": "bar",
 				},
@@ -58,13 +62,18 @@ func TestTracer_Inject_HTTPHeaders(t *testing.T) {
 
 			require.NoError(t, tracer.Inject(sc, ot.HTTPHeaders, ot.HTTPHeadersCarrier(headers)))
 
+			// Instana trace context
 			assert.Equal(t, "2435", headers.Get("X-Instana-T"))
 			assert.Equal(t, "3546", headers.Get("X-Instana-S"))
 			assert.Equal(t, "1", headers.Get("X-Instana-L"))
 			assert.Equal(t, "bar", headers.Get("X-Instana-B-foo"))
+			// W3C trace context
+			assert.Equal(t, "w3cparent", headers.Get(w3ctrace.TraceParentHeader))
+			assert.Equal(t, "w3cstate", headers.Get(w3ctrace.TraceStateHeader))
+			// Original headers
 			assert.Equal(t, "Basic 123", headers.Get("Authorization"))
 
-			assert.Len(t, headers, 5)
+			assert.Len(t, headers, 7)
 		})
 	}
 }
