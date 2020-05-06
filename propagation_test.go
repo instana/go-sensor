@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	instana "github.com/instana/go-sensor"
+	"github.com/instana/go-sensor/w3ctrace"
 	ot "github.com/opentracing/opentracing-go"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -126,6 +127,24 @@ func TestTracer_Extract_HTTPHeaders(t *testing.T) {
 				SpanID:     0x2435,
 				Suppressed: true,
 				Baggage:    map[string]string{},
+			},
+		},
+		"w3c trace context": {
+			Headers: map[string]string{
+				"x-instana-t": "1314",
+				"X-INSTANA-S": "2435",
+				"X-Instana-L": "1",
+				"traceparent": "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01",
+				"tracestate":  "rojo=00f067aa0ba902b7",
+			},
+			Expected: instana.SpanContext{
+				TraceID: 0x1314,
+				SpanID:  0x2435,
+				Baggage: map[string]string{},
+				ForeignParent: w3ctrace.Context{
+					RawParent: "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01",
+					RawState:  "rojo=00f067aa0ba902b7",
+				},
 			},
 		},
 	}

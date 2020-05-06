@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/instana/go-sensor/w3ctrace"
 	ot "github.com/opentracing/opentracing-go"
 )
 
@@ -133,6 +134,12 @@ func extractTraceContext(opaqueCarrier interface{}) (SpanContext, error) {
 		return spanContext, ot.ErrSpanContextNotFound
 	} else if fieldCount < 2 {
 		return spanContext, ot.ErrSpanContextCorrupted
+	}
+
+	if c, ok := opaqueCarrier.(ot.HTTPHeadersCarrier); ok {
+		if trCtx, err := w3ctrace.Extract(http.Header(c)); err == nil {
+			spanContext.ForeignParent = trCtx
+		}
 	}
 
 	return spanContext, nil
