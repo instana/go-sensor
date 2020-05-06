@@ -14,6 +14,8 @@ type SpanContext struct {
 	Suppressed bool
 	// The span's associated baggage.
 	Baggage map[string]string // initialized on first use
+	// The 3rd-party trace context
+	ForeignParent interface{}
 }
 
 // NewRootSpanContext initializes a new root span context issuing a new trace ID
@@ -31,6 +33,7 @@ func NewSpanContext(parent SpanContext) SpanContext {
 	c := parent.Clone()
 	c.SpanID, c.ParentID = randomID(), parent.SpanID
 	c.Suppressed = parent.Suppressed
+	c.ForeignParent = parent.ForeignParent
 
 	return c
 }
@@ -60,11 +63,12 @@ func (c SpanContext) WithBaggageItem(key, val string) SpanContext {
 // Clone returns a deep copy of a SpanContext
 func (c SpanContext) Clone() SpanContext {
 	res := SpanContext{
-		TraceID:    c.TraceID,
-		SpanID:     c.SpanID,
-		ParentID:   c.ParentID,
-		Sampled:    c.Sampled,
-		Suppressed: c.Suppressed,
+		TraceID:       c.TraceID,
+		SpanID:        c.SpanID,
+		ParentID:      c.ParentID,
+		Sampled:       c.Sampled,
+		Suppressed:    c.Suppressed,
+		ForeignParent: c.ForeignParent,
 	}
 
 	if c.Baggage != nil {
