@@ -73,6 +73,25 @@ func TestState_Add_MaximumReached(t *testing.T) {
 	assert.Equal(t, st[w3ctrace.MaxStateEntries-1], "vendor1=data")
 }
 
+func TestState_Fetch(t *testing.T) {
+	st := w3ctrace.State{"rojo=00f067aa0ba902b7", "congo=t61rcWkgMzE"}
+
+	t.Run("existing", func(t *testing.T) {
+		if vd, ok := st.Fetch("rojo"); assert.True(t, ok) {
+			assert.Equal(t, "00f067aa0ba902b7", vd)
+		}
+
+		if vd, ok := st.Fetch("congo"); assert.True(t, ok) {
+			assert.Equal(t, "t61rcWkgMzE", vd)
+		}
+	})
+
+	t.Run("non-existing", func(t *testing.T) {
+		_, ok := st.Fetch("vendor")
+		assert.False(t, ok)
+	})
+}
+
 func TestState_Remove(t *testing.T) {
 	st := w3ctrace.State{"rojo=00f067aa0ba902b7", "congo=t61rcWkgMzE"}
 
