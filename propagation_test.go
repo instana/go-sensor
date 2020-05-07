@@ -292,6 +292,21 @@ func TestTracer_Extract_HTTPHeaders(t *testing.T) {
 				},
 			},
 		},
+		"w3c trace context, no instana headers": {
+			Headers: map[string]string{
+				"traceparent": "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01",
+				"tracestate":  "rojo=00f067aa0ba902b7,in=1314;2435",
+			},
+			Expected: instana.SpanContext{
+				TraceID: 0x1314,
+				SpanID:  0x2435,
+				Baggage: map[string]string{},
+				ForeignParent: w3ctrace.Context{
+					RawParent: "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01",
+					RawState:  "rojo=00f067aa0ba902b7,in=1314;2435",
+				},
+			},
+		},
 	}
 
 	for name, example := range examples {
@@ -313,15 +328,45 @@ func TestTracer_Extract_HTTPHeaders(t *testing.T) {
 }
 
 func TestTracer_Extract_HTTPHeaders_NoContext(t *testing.T) {
-	recorder := instana.NewTestRecorder()
-	tracer := instana.NewTracerWithEverything(&instana.Options{}, recorder)
-
-	headers := http.Header{
-		"Authorization": {"Basic 123"},
+	examples := map[string]struct {
+		Headers  map[string]string
+		Expected instana.SpanContext
+	}{
+		"no w3c trace context": {
+			Headers: map[string]string{
+				"Authorization": "Basic 123",
+			},
+		},
+		"w3c trace context without instana entry": {
+			Headers: map[string]string{
+				"Authorization": "Basic 123",
+				"traceparent":   "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01",
+				"tracestate":    "rojo=00f067aa0ba902b7",
+			},
+		},
+		"w3c trace context with malformed instana entry": {
+			Headers: map[string]string{
+				"Authorization": "Basic 123",
+				"traceparent":   "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01",
+				"tracestate":    "rojo=00f067aa0ba902b7,in=hello",
+			},
+		},
 	}
 
-	_, err := tracer.Extract(ot.HTTPHeaders, ot.HTTPHeadersCarrier(headers))
-	assert.Equal(t, ot.ErrSpanContextNotFound, err)
+	for name, example := range examples {
+		t.Run(name, func(t *testing.T) {
+			recorder := instana.NewTestRecorder()
+			tracer := instana.NewTracerWithEverything(&instana.Options{}, recorder)
+
+			headers := http.Header{}
+			for k, v := range example.Headers {
+				headers.Set(k, v)
+			}
+
+			_, err := tracer.Extract(ot.HTTPHeaders, ot.HTTPHeadersCarrier(headers))
+			assert.Equal(t, ot.ErrSpanContextNotFound, err)
+		})
+	}
 }
 
 func TestTracer_Extract_HTTPHeaders_CorruptedContext(t *testing.T) {
