@@ -50,15 +50,26 @@ func (st State) Add(vendor, data string) State {
 
 // Fetch retrieves stored vendor-specific data for given vendor
 func (st State) Fetch(vendor string) (string, bool) {
+	i := st.Index(vendor)
+	if i < 0 {
+		return "", false
+	}
+
+	return strings.TrimPrefix(st[i], vendor+"="), true
+}
+
+// Index returns the index of vendor-specific data for given vendor in the state.
+// It returns -1 if the state does not contain data for this vendor.
+func (st State) Index(vendor string) int {
 	prefix := vendor + "="
 
-	for _, vd := range st {
+	for i, vd := range st {
 		if strings.HasPrefix(vd, prefix) {
-			return strings.TrimPrefix(vd, prefix), true
+			return i
 		}
 	}
 
-	return "", false
+	return -1
 }
 
 // Remove returns a new state without data for specified vendor. It returns the same state if vendor is empty
