@@ -18,7 +18,7 @@ func TestBasicSpan(t *testing.T) {
 	tracer := instana.NewTracerWithEverything(&instana.Options{}, recorder)
 
 	sp := tracer.StartSpan("test")
-	time.Sleep(2 * time.Millisecond)
+	time.Sleep(10 * time.Millisecond)
 	sp.Finish()
 
 	spans := recorder.GetQueuedSpans()
@@ -28,7 +28,7 @@ func TestBasicSpan(t *testing.T) {
 	assert.NotEmpty(t, span.SpanID)
 	assert.NotEmpty(t, span.TraceID)
 	assert.NotEmpty(t, span.Timestamp)
-	assert.Equal(t, uint64(2), span.Duration)
+	assert.InDelta(t, uint64(10), span.Duration, 5.0)
 	assert.Equal(t, "sdk", span.Name)
 
 	require.IsType(t, instana.SDKSpanData{}, span.Data)
