@@ -115,6 +115,11 @@ func newSpan(span *spanS, from *fromS) Span {
 		delete(span.Tags, batchSizeTag)
 	}
 
+	if syn, ok := span.Tags[syntheticCallTag].(bool); ok {
+		sp.Synthetic = syn
+		delete(span.Tags, syntheticCallTag)
+	}
+
 	return sp
 }
 
