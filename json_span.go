@@ -89,6 +89,7 @@ type Span struct {
 	Batch     *batchInfo    `json:"b,omitempty"`
 	Kind      int           `json:"k"`
 	Ec        int           `json:"ec,omitempty"`
+	Synthetic bool          `json:"sy,omitempty"`
 	Data      typedSpanData `json:"data"`
 }
 
