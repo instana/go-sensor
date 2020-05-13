@@ -110,3 +110,34 @@ func TestContext_Parent(t *testing.T) {
 		},
 	}, trCtx.Parent())
 }
+
+func TestContext_IsZero(t *testing.T) {
+	examples := map[string]struct {
+		Context  w3ctrace.Context
+		Expected bool
+	}{
+		"empty": {
+			Context:  w3ctrace.Context{},
+			Expected: true,
+		},
+		"non-empty": {
+			Context: w3ctrace.Context{
+				RawParent: "parent",
+				RawState:  "state",
+			},
+			Expected: false,
+		},
+		"with empty state": {
+			Context: w3ctrace.Context{
+				RawParent: "parent",
+			},
+			Expected: false,
+		},
+	}
+
+	for name, example := range examples {
+		t.Run(name, func(t *testing.T) {
+			assert.Equal(t, example.Expected, example.Context.IsZero())
+		})
+	}
+}

@@ -34,6 +34,11 @@ func New(parent Parent) Context {
 	}
 }
 
+// IsZero returns whether a context is a zero value
+func (c Context) IsZero() bool {
+	return c.RawParent == ""
+}
+
 // Extract extracts the W3C trace context from HTTP headers. Returns ErrContextNotFound if
 // provided value doesn't contain traceparent header.
 func Extract(headers http.Header) (Context, error) {
