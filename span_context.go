@@ -39,7 +39,11 @@ func NewRootSpanContext() SpanContext {
 func NewSpanContext(parent SpanContext) SpanContext {
 	c := parent.Clone()
 	c.SpanID, c.ParentID = randomID(), parent.SpanID
-	c.Foreign = false
+
+	if parent.Foreign {
+		c.Foreign = false
+		c.ForeignParent = parent.W3CContext
+	}
 
 	return c
 }
@@ -69,13 +73,14 @@ func (c SpanContext) WithBaggageItem(key, val string) SpanContext {
 // Clone returns a deep copy of a SpanContext
 func (c SpanContext) Clone() SpanContext {
 	res := SpanContext{
-		TraceID:    c.TraceID,
-		SpanID:     c.SpanID,
-		ParentID:   c.ParentID,
-		Sampled:    c.Sampled,
-		Suppressed: c.Suppressed,
-		Foreign:    c.Foreign,
-		W3CContext: c.W3CContext,
+		TraceID:       c.TraceID,
+		SpanID:        c.SpanID,
+		ParentID:      c.ParentID,
+		Sampled:       c.Sampled,
+		Suppressed:    c.Suppressed,
+		Foreign:       c.Foreign,
+		ForeignParent: c.ForeignParent,
+		W3CContext:    c.W3CContext,
 	}
 
 	if c.Baggage != nil {

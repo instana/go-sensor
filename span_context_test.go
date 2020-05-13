@@ -14,8 +14,9 @@ func TestNewRootSpanContext(t *testing.T) {
 	assert.Equal(t, c.SpanID, c.TraceID)
 	assert.False(t, c.Sampled)
 	assert.False(t, c.Suppressed)
-	assert.False(t, c.Foreign)
 	assert.Empty(t, c.Baggage)
+	assert.False(t, c.Foreign)
+	assert.Nil(t, c.ForeignParent)
 }
 
 func TestNewSpanContext(t *testing.T) {
@@ -47,7 +48,9 @@ func TestNewSpanContext(t *testing.T) {
 	assert.NotEqual(t, parent.SpanID, c.SpanID)
 	assert.NotEmpty(t, c.SpanID)
 	assert.False(t, &c.Baggage == &parent.Baggage)
+
 	assert.False(t, c.Foreign)
+	assert.Equal(t, parent.W3CContext, c.ForeignParent)
 }
 
 func TestSpanContext_WithBaggageItem(t *testing.T) {
@@ -89,12 +92,13 @@ func TestSpanContext_WithBaggageItem(t *testing.T) {
 
 func TestSpanContext_Clone(t *testing.T) {
 	c := instana.SpanContext{
-		TraceID:    1,
-		SpanID:     2,
-		ParentID:   3,
-		Sampled:    true,
-		Suppressed: true,
-		Foreign:    true,
+		TraceID:       1,
+		SpanID:        2,
+		ParentID:      3,
+		Sampled:       true,
+		Suppressed:    true,
+		Foreign:       true,
+		ForeignParent: []byte("parent"),
 		W3CContext: w3ctrace.New(w3ctrace.Parent{
 			TraceID:  "w3ctraceid",
 			ParentID: "w3cparentid",
