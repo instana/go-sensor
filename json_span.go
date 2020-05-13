@@ -3,6 +3,7 @@ package instana
 import (
 	"time"
 
+	"github.com/instana/go-sensor/w3ctrace"
 	"github.com/opentracing/opentracing-go/ext"
 )
 
@@ -77,35 +78,68 @@ func (k SpanKind) String() string {
 	}
 }
 
+// ForeignParent represents a related 3rd-party trace context, e.g. a W3C Trace Context
+type ForeignParent struct {
+	TraceID          string `json:"t"`
+	ParentID         string `json:"p"`
+	LatestTraceState string `json:"lts,omitempty"`
+}
+
+func newForeignParent(p interface{}) *ForeignParent {
+	switch p := p.(type) {
+	case w3ctrace.Context:
+		return newW3CForeignParent(p)
+	default:
+		return nil
+	}
+}
+
+func newW3CForeignParent(trCtx w3ctrace.Context) *ForeignParent {
+	p, s := trCtx.Parent(), trCtx.State()
+
+	var lastVendorData string
+	if len(s) > 0 {
+		lastVendorData = s[0]
+	}
+
+	return &ForeignParent{
+		TraceID:          p.TraceID,
+		ParentID:         p.ParentID,
+		LatestTraceState: lastVendorData,
+	}
+}
+
 // Span represents the OpenTracing span document to be sent to the agent
 type Span struct {
-	TraceID   int64         `json:"t"`
-	ParentID  int64         `json:"p,omitempty"`
-	SpanID    int64         `json:"s"`
-	Timestamp uint64        `json:"ts"`
-	Duration  uint64        `json:"d"`
-	Name      string        `json:"n"`
-	From      *fromS        `json:"f"`
-	Batch     *batchInfo    `json:"b,omitempty"`
-	Kind      int           `json:"k"`
-	Ec        int           `json:"ec,omitempty"`
-	Synthetic bool          `json:"sy,omitempty"`
-	Data      typedSpanData `json:"data"`
+	TraceID       int64          `json:"t"`
+	ParentID      int64          `json:"p,omitempty"`
+	SpanID        int64          `json:"s"`
+	Timestamp     uint64         `json:"ts"`
+	Duration      uint64         `json:"d"`
+	Name          string         `json:"n"`
+	From          *fromS         `json:"f"`
+	Batch         *batchInfo     `json:"b,omitempty"`
+	Kind          int            `json:"k"`
+	Ec            int            `json:"ec,omitempty"`
+	Data          typedSpanData  `json:"data"`
+	Synthetic     bool           `json:"sy,omitempty"`
+	ForeignParent *ForeignParent `json:"fp,omitempty"`
 }
 
 func newSpan(span *spanS, from *fromS) Span {
 	data := RegisteredSpanType(span.Operation).ExtractData(span)
 	sp := Span{
-		TraceID:   span.context.TraceID,
-		ParentID:  span.context.ParentID,
-		SpanID:    span.context.SpanID,
-		Timestamp: uint64(span.Start.UnixNano()) / uint64(time.Millisecond),
-		Duration:  uint64(span.Duration) / uint64(time.Millisecond),
-		Name:      string(data.Type()),
-		Ec:        span.ErrorCount,
-		From:      from,
-		Kind:      int(data.Kind()),
-		Data:      data,
+		TraceID:       span.context.TraceID,
+		ParentID:      span.context.ParentID,
+		SpanID:        span.context.SpanID,
+		Timestamp:     uint64(span.Start.UnixNano()) / uint64(time.Millisecond),
+		Duration:      uint64(span.Duration) / uint64(time.Millisecond),
+		Name:          string(data.Type()),
+		Ec:            span.ErrorCount,
+		From:          from,
+		ForeignParent: newForeignParent(span.context.ForeignParent),
+		Kind:          int(data.Kind()),
+		Data:          data,
 	}
 
 	if bs, ok := span.Tags[batchSizeTag].(int); ok {
