@@ -1,5 +1,7 @@
 package instana
 
+import "github.com/instana/go-sensor/w3ctrace"
+
 // SpanContext holds the basic Span metadata.
 type SpanContext struct {
 	// A probabilistically unique identifier for a [multi-span] trace.
@@ -14,7 +16,9 @@ type SpanContext struct {
 	Suppressed bool
 	// The span's associated baggage.
 	Baggage map[string]string // initialized on first use
-	// The 3rd-party trace context
+	// The W3C trace context
+	W3CContext w3ctrace.Context
+	// The 3rd party parent if the context is derived from non-Instana trace
 	ForeignParent interface{}
 }
 
@@ -32,8 +36,6 @@ func NewRootSpanContext() SpanContext {
 func NewSpanContext(parent SpanContext) SpanContext {
 	c := parent.Clone()
 	c.SpanID, c.ParentID = randomID(), parent.SpanID
-	c.Suppressed = parent.Suppressed
-	c.ForeignParent = parent.ForeignParent
 
 	return c
 }
@@ -63,12 +65,12 @@ func (c SpanContext) WithBaggageItem(key, val string) SpanContext {
 // Clone returns a deep copy of a SpanContext
 func (c SpanContext) Clone() SpanContext {
 	res := SpanContext{
-		TraceID:       c.TraceID,
-		SpanID:        c.SpanID,
-		ParentID:      c.ParentID,
-		Sampled:       c.Sampled,
-		Suppressed:    c.Suppressed,
-		ForeignParent: c.ForeignParent,
+		TraceID:    c.TraceID,
+		SpanID:     c.SpanID,
+		ParentID:   c.ParentID,
+		Sampled:    c.Sampled,
+		Suppressed: c.Suppressed,
+		W3CContext: c.W3CContext,
 	}
 
 	if c.Baggage != nil {

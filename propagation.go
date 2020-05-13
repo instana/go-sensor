@@ -152,10 +152,10 @@ func extractTraceContext(opaqueCarrier interface{}) (SpanContext, error) {
 
 func addW3CTraceContext(h http.Header, sc SpanContext) {
 	traceID, spanID := FormatID(sc.TraceID), FormatID(sc.SpanID)
+	trCtx := sc.W3CContext
 
 	// check for an existing w3c trace
-	trCtx, ok := sc.ForeignParent.(w3ctrace.Context)
-	if !ok {
+	if trCtx.IsZero() {
 		// initiate trace if none
 		trCtx = w3ctrace.New(w3ctrace.Parent{
 			Version:  w3ctrace.Version_Max,
@@ -190,7 +190,7 @@ func pickupW3CTraceContext(h http.Header, sc *SpanContext) {
 	if err != nil {
 		return
 	}
-	sc.ForeignParent = trCtx
+	sc.W3CContext = trCtx
 
 	vd, ok := trCtx.State().Fetch(w3ctrace.VendorInstana)
 	if !ok {

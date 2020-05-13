@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	instana "github.com/instana/go-sensor"
+	"github.com/instana/go-sensor/w3ctrace"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -18,12 +19,15 @@ func TestNewRootSpanContext(t *testing.T) {
 
 func TestNewSpanContext(t *testing.T) {
 	parent := instana.SpanContext{
-		TraceID:       1,
-		SpanID:        2,
-		ParentID:      3,
-		Sampled:       true,
-		Suppressed:    true,
-		ForeignParent: []byte("foreign trace"),
+		TraceID:    1,
+		SpanID:     2,
+		ParentID:   3,
+		Sampled:    true,
+		Suppressed: true,
+		W3CContext: w3ctrace.New(w3ctrace.Parent{
+			TraceID:  "w3ctraceid",
+			ParentID: "w3cparentid",
+		}),
 		Baggage: map[string]string{
 			"key1": "value1",
 			"key2": "value2",
@@ -35,7 +39,7 @@ func TestNewSpanContext(t *testing.T) {
 	assert.Equal(t, parent.SpanID, c.ParentID)
 	assert.Equal(t, parent.Sampled, c.Sampled)
 	assert.Equal(t, parent.Suppressed, c.Suppressed)
-	assert.Equal(t, parent.ForeignParent, c.ForeignParent)
+	assert.Equal(t, parent.W3CContext, c.W3CContext)
 	assert.Equal(t, parent.Baggage, c.Baggage)
 
 	assert.NotEqual(t, parent.SpanID, c.SpanID)
@@ -82,12 +86,15 @@ func TestSpanContext_WithBaggageItem(t *testing.T) {
 
 func TestSpanContext_Clone(t *testing.T) {
 	c := instana.SpanContext{
-		TraceID:       1,
-		SpanID:        2,
-		ParentID:      3,
-		Sampled:       true,
-		Suppressed:    true,
-		ForeignParent: []byte("foreign trace"),
+		TraceID:    1,
+		SpanID:     2,
+		ParentID:   3,
+		Sampled:    true,
+		Suppressed: true,
+		W3CContext: w3ctrace.New(w3ctrace.Parent{
+			TraceID:  "w3ctraceid",
+			ParentID: "w3cparentid",
+		}),
 		Baggage: map[string]string{
 			"key1": "value1",
 			"key2": "value2",
