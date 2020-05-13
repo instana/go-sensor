@@ -14,6 +14,7 @@ func TestNewRootSpanContext(t *testing.T) {
 	assert.Equal(t, c.SpanID, c.TraceID)
 	assert.False(t, c.Sampled)
 	assert.False(t, c.Suppressed)
+	assert.False(t, c.Foreign)
 	assert.Empty(t, c.Baggage)
 }
 
@@ -24,6 +25,7 @@ func TestNewSpanContext(t *testing.T) {
 		ParentID:   3,
 		Sampled:    true,
 		Suppressed: true,
+		Foreign:    true,
 		W3CContext: w3ctrace.New(w3ctrace.Parent{
 			TraceID:  "w3ctraceid",
 			ParentID: "w3cparentid",
@@ -45,6 +47,7 @@ func TestNewSpanContext(t *testing.T) {
 	assert.NotEqual(t, parent.SpanID, c.SpanID)
 	assert.NotEmpty(t, c.SpanID)
 	assert.False(t, &c.Baggage == &parent.Baggage)
+	assert.False(t, c.Foreign)
 }
 
 func TestSpanContext_WithBaggageItem(t *testing.T) {
@@ -91,6 +94,7 @@ func TestSpanContext_Clone(t *testing.T) {
 		ParentID:   3,
 		Sampled:    true,
 		Suppressed: true,
+		Foreign:    true,
 		W3CContext: w3ctrace.New(w3ctrace.Parent{
 			TraceID:  "w3ctraceid",
 			ParentID: "w3cparentid",

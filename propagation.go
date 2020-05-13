@@ -134,6 +134,7 @@ func extractTraceContext(opaqueCarrier interface{}) (SpanContext, error) {
 			return spanContext, ot.ErrSpanContextNotFound
 		}
 
+		spanContext.Foreign = true
 		return spanContext, nil
 	}
 
@@ -192,7 +193,13 @@ func pickupW3CTraceContext(h http.Header, sc *SpanContext) {
 	}
 	sc.W3CContext = trCtx
 
-	vd, ok := trCtx.State().Fetch(w3ctrace.VendorInstana)
+	st := trCtx.State()
+
+	// the last vendor in tracestate is not Instana, that means we're dealing
+	// with a trace coming from a service that is not instrumented by us
+	sc.Foreign = st.Index(w3ctrace.VendorInstana) != 0
+
+	vd, ok := st.Fetch(w3ctrace.VendorInstana)
 	if !ok {
 		return
 	}
