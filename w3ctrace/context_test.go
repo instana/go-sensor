@@ -14,6 +14,16 @@ const (
 	exampleTraceState  = "vendorname1=opaqueValue1 , vendorname2=opaqueValue2"
 )
 
+func TestNew(t *testing.T) {
+	p := w3ctrace.Parent{
+		Version:  w3ctrace.Version_Max,
+		TraceID:  "1234",
+		ParentID: "5678",
+	}
+
+	assert.Equal(t, w3ctrace.Context{RawParent: p.String()}, w3ctrace.New(p))
+}
+
 func TestExtract(t *testing.T) {
 	examples := map[string]struct {
 		ParentHeader string

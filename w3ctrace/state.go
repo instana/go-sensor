@@ -5,6 +5,9 @@ import (
 	"strings"
 )
 
+// Instana vendor key in the `tracestate` list
+const VendorInstana = "in"
+
 // State is list of key=value pairs representing vendor-specific data in the trace context
 type State []string
 
@@ -43,6 +46,19 @@ func (st State) Add(vendor, data string) State {
 	}
 
 	return newSt
+}
+
+// Fetch retrieves stored vendor-specific data for given vendor
+func (st State) Fetch(vendor string) (string, bool) {
+	prefix := vendor + "="
+
+	for _, vd := range st {
+		if strings.HasPrefix(vd, prefix) {
+			return strings.TrimPrefix(vd, prefix), true
+		}
+	}
+
+	return "", false
 }
 
 // Remove returns a new state without data for specified vendor. It returns the same state if vendor is empty

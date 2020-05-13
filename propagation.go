@@ -73,9 +73,7 @@ func injectTraceContext(sc SpanContext, opaqueCarrier interface{}) error {
 			}
 		}
 
-		if trCtx, ok := sc.ForeignParent.(w3ctrace.Context); ok {
-			w3ctrace.Inject(trCtx, h)
-		}
+		addW3CTraceContext(h, sc)
 	}
 
 	carrier.Set(exstfieldT, FormatID(sc.TraceID))
@@ -85,6 +83,7 @@ func injectTraceContext(sc SpanContext, opaqueCarrier interface{}) error {
 	for k, v := range sc.Baggage {
 		carrier.Set(exstfieldB+k, v)
 	}
+
 	return nil
 }
 
@@ -98,27 +97,17 @@ func extractTraceContext(opaqueCarrier interface{}) (SpanContext, error) {
 		return spanContext, ot.ErrInvalidCarrier
 	}
 
-	var fieldCount int
+	if c, ok := opaqueCarrier.(ot.HTTPHeadersCarrier); ok {
+		pickupW3CTraceContext(http.Header(c), &spanContext)
+	}
+
+	var traceID, spanID string
 	err := carrier.ForeachKey(func(k, v string) error {
 		switch strings.ToLower(k) {
 		case FieldT:
-			fieldCount++
-
-			traceID, err := ParseID(v)
-			if err != nil {
-				return ot.ErrSpanContextCorrupted
-			}
-
-			spanContext.TraceID = traceID
+			traceID = v
 		case FieldS:
-			fieldCount++
-
-			spanID, err := ParseID(v)
-			if err != nil {
-				return ot.ErrSpanContextCorrupted
-			}
-
-			spanContext.SpanID = spanID
+			spanID = v
 		case FieldL:
 			spanContext.Suppressed = parseLevel(v)
 		default:
@@ -134,19 +123,93 @@ func extractTraceContext(opaqueCarrier interface{}) (SpanContext, error) {
 		return spanContext, err
 	}
 
-	if fieldCount == 0 {
-		return spanContext, ot.ErrSpanContextNotFound
-	} else if fieldCount < 2 {
+	if traceID == "" && spanID == "" {
+		// there was no trace context provided in Instana headers, but we still
+		// need to check if we found it earlier in W3C trace context state before
+		// claiming that it was not found
+		if spanContext.TraceID == 0 && spanContext.SpanID == 0 {
+			return spanContext, ot.ErrSpanContextNotFound
+		}
+
+		return spanContext, nil
+	}
+
+	spanContext.TraceID, err = ParseID(traceID)
+	if err != nil {
 		return spanContext, ot.ErrSpanContextCorrupted
 	}
 
-	if c, ok := opaqueCarrier.(ot.HTTPHeadersCarrier); ok {
-		if trCtx, err := w3ctrace.Extract(http.Header(c)); err == nil {
-			spanContext.ForeignParent = trCtx
-		}
+	spanContext.SpanID, err = ParseID(spanID)
+	if err != nil {
+		return spanContext, ot.ErrSpanContextCorrupted
 	}
 
 	return spanContext, nil
+}
+
+func addW3CTraceContext(h http.Header, sc SpanContext) {
+	traceID, spanID := FormatID(sc.TraceID), FormatID(sc.SpanID)
+
+	// check for an existing w3c trace
+	trCtx, ok := sc.ForeignParent.(w3ctrace.Context)
+	if !ok {
+		// initiate trace if none
+		trCtx = w3ctrace.New(w3ctrace.Parent{
+			Version:  w3ctrace.Version_Max,
+			TraceID:  traceID,
+			ParentID: spanID,
+			Flags: w3ctrace.Flags{
+				Sampled: !sc.Suppressed,
+			},
+		})
+	}
+
+	// update the traceparent parent ID if any of trace contexts enable tracing
+	p := trCtx.Parent()
+	if !sc.Suppressed || p.Flags.Sampled {
+		p.ParentID = spanID
+	}
+
+	// sync the traceparent `sampled` flags with the X-Instana-L value
+	p.Flags.Sampled = !sc.Suppressed
+
+	// participate in w3c trace context if tracing is enabled
+	if !sc.Suppressed {
+		trCtx.RawState = trCtx.State().Add(w3ctrace.VendorInstana, traceID+";"+spanID).String()
+	}
+
+	trCtx.RawParent = p.String()
+	w3ctrace.Inject(trCtx, h)
+}
+
+func pickupW3CTraceContext(h http.Header, sc *SpanContext) {
+	trCtx, err := w3ctrace.Extract(h)
+	if err != nil {
+		return
+	}
+	sc.ForeignParent = trCtx
+
+	vd, ok := trCtx.State().Fetch(w3ctrace.VendorInstana)
+	if !ok {
+		return
+	}
+
+	i := strings.Index(vd, ";")
+	if i < 0 {
+		return
+	}
+
+	traceID, err := ParseID(vd[:i])
+	if err != nil {
+		return
+	}
+
+	spanID, err := ParseID(vd[i+1:])
+	if err != nil {
+		return
+	}
+
+	sc.TraceID, sc.SpanID = traceID, spanID
 }
 
 func parseLevel(s string) bool {
