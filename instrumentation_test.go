@@ -126,7 +126,7 @@ func TestTracingHandlerFunc_W3CTraceContext_ForeignParent(t *testing.T) {
 		IncomingHeaders map[string]string
 		Expected        *instana.ForeignParent
 	}{
-		"incoming w3c, no instana headers": {
+		"incoming w3c, no instana headers, latest state from instana": {
 			IncomingHeaders: map[string]string{
 				w3ctrace.TraceParentHeader: "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01",
 				w3ctrace.TraceStateHeader:  "in=abc123;def456,vendorname1=opaqueValue1",

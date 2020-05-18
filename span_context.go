@@ -22,9 +22,6 @@ type SpanContext struct {
 	Baggage map[string]string // initialized on first use
 	// The W3C trace context
 	W3CContext w3ctrace.Context
-	// A flag that signals that this context comes from a service that is
-	// not monitored by Instana
-	Foreign bool
 	// The 3rd party parent if the context is derived from non-Instana trace
 	ForeignParent interface{}
 }
@@ -127,7 +124,6 @@ func (c SpanContext) Clone() SpanContext {
 		ParentID:      c.ParentID,
 		Sampled:       c.Sampled,
 		Suppressed:    c.Suppressed,
-		Foreign:       c.Foreign,
 		ForeignParent: c.ForeignParent,
 		W3CContext:    c.W3CContext,
 	}

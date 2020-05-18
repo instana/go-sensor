@@ -15,7 +15,6 @@ func TestNewRootSpanContext(t *testing.T) {
 	assert.False(t, c.Sampled)
 	assert.False(t, c.Suppressed)
 	assert.Empty(t, c.Baggage)
-	assert.False(t, c.Foreign)
 	assert.Nil(t, c.ForeignParent)
 }
 
@@ -157,7 +156,6 @@ func TestSpanContext_Clone(t *testing.T) {
 		ParentID:      3,
 		Sampled:       true,
 		Suppressed:    true,
-		Foreign:       true,
 		ForeignParent: []byte("parent"),
 		W3CContext: w3ctrace.New(w3ctrace.Parent{
 			TraceID:  "w3ctraceid",
