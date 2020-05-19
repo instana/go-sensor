@@ -18,6 +18,9 @@ const (
 	FieldL = "x-instana-l"
 	// FieldB OT Baggage header
 	FieldB = "x-instana-b-"
+	// FieldSynthetic if set to 1, marks the call as synthetic, e.g.
+	// a healthcheck request
+	FieldSynthetic = "x-instana-synthetic"
 )
 
 func injectTraceContext(sc SpanContext, opaqueCarrier interface{}) error {

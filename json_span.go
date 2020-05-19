@@ -89,6 +89,7 @@ type Span struct {
 	Batch     *batchInfo    `json:"b,omitempty"`
 	Kind      int           `json:"k"`
 	Ec        int           `json:"ec,omitempty"`
+	Synthetic bool          `json:"sy,omitempty"`
 	Data      typedSpanData `json:"data"`
 }
 
@@ -112,6 +113,11 @@ func newSpan(span *spanS, from *fromS) Span {
 			sp.Batch = &batchInfo{Size: bs}
 		}
 		delete(span.Tags, batchSizeTag)
+	}
+
+	if syn, ok := span.Tags[syntheticCallTag].(bool); ok {
+		sp.Synthetic = syn
+		delete(span.Tags, syntheticCallTag)
 	}
 
 	return sp

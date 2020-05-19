@@ -5,6 +5,7 @@ import ot "github.com/opentracing/opentracing-go"
 const (
 	batchSizeTag       = "batch_size"
 	suppressTracingTag = "suppress_tracing"
+	syntheticCallTag   = "synthetic_call"
 )
 
 // BatchSize returns an opentracing.Tag to mark the span as a batched span representing
@@ -18,4 +19,8 @@ func BatchSize(n int) ot.Tag {
 // as not to be sent to the agent
 func SuppressTracing() ot.Tag {
 	return ot.Tag{Key: suppressTracingTag, Value: true}
+}
+
+func syntheticCall() ot.Tag {
+	return ot.Tag{Key: syntheticCallTag, Value: true}
 }

@@ -36,6 +36,7 @@ func TestTracingHandlerFunc_Write(t *testing.T) {
 	span := spans[0]
 	assert.Equal(t, 0, span.Ec)
 	assert.EqualValues(t, instana.EntrySpanKind, span.Kind)
+	assert.False(t, span.Synthetic)
 
 	require.IsType(t, instana.HTTPSpanData{}, span.Data)
 	data := span.Data.(instana.HTTPSpanData)
@@ -71,6 +72,7 @@ func TestTracingHandlerFunc_WriteHeaders(t *testing.T) {
 	span := spans[0]
 	assert.Equal(t, 0, span.Ec)
 	assert.EqualValues(t, instana.EntrySpanKind, span.Kind)
+	assert.False(t, span.Synthetic)
 
 	require.IsType(t, instana.HTTPSpanData{}, span.Data)
 	data := span.Data.(instana.HTTPSpanData)
@@ -102,6 +104,7 @@ func TestTracingHandlerFunc_Error(t *testing.T) {
 	span := spans[0]
 	assert.Equal(t, 0, span.Ec)
 	assert.EqualValues(t, instana.EntrySpanKind, span.Kind)
+	assert.False(t, span.Synthetic)
 
 	require.IsType(t, instana.HTTPSpanData{}, span.Data)
 	data := span.Data.(instana.HTTPSpanData)
@@ -144,6 +147,28 @@ func TestTracingHandlerFunc_W3CTraceContext(t *testing.T) {
 	assert.Equal(t, traceState, rec.Header().Get(w3ctrace.TraceStateHeader))
 }
 
+func TestTracingHandlerFunc_SyntheticCall(t *testing.T) {
+	recorder := instana.NewTestRecorder()
+	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{}, recorder))
+
+	h := instana.TracingHandlerFunc(s, "test-handler", func(w http.ResponseWriter, req *http.Request) {
+		fmt.Fprintln(w, "Ok")
+	})
+
+	rec := httptest.NewRecorder()
+
+	req := httptest.NewRequest(http.MethodGet, "/test", nil)
+	req.Header.Set(instana.FieldSynthetic, "1")
+
+	h.ServeHTTP(rec, req)
+
+	assert.Equal(t, http.StatusOK, rec.Code)
+
+	spans := recorder.GetQueuedSpans()
+	require.Len(t, spans, 1)
+	assert.True(t, spans[0].Synthetic)
+}
+
 func TestTracingHandlerFunc_PanicHandling(t *testing.T) {
 	recorder := instana.NewTestRecorder()
 	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{}, recorder))
@@ -163,6 +188,7 @@ func TestTracingHandlerFunc_PanicHandling(t *testing.T) {
 	span := spans[0]
 	assert.Equal(t, 1, span.Ec)
 	assert.EqualValues(t, instana.EntrySpanKind, span.Kind)
+	assert.False(t, span.Synthetic)
 
 	require.IsType(t, instana.HTTPSpanData{}, span.Data)
 	data := span.Data.(instana.HTTPSpanData)

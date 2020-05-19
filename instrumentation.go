@@ -48,6 +48,10 @@ func TracingHandlerFunc(sensor *Sensor, name string, handler http.HandlerFunc) h
 			sensor.Logger().Warn("failed to extract span context from the request:", err)
 		}
 
+		if req.Header.Get(FieldSynthetic) == "1" {
+			opts = append(opts, syntheticCall())
+		}
+
 		span := tracer.StartSpan("g.http", opts...)
 		defer span.Finish()
 
