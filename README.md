@@ -202,7 +202,10 @@ The Instana tracer will remap OpenTracing HTTP headers into Instana Headers, so 
 
 ## W3C Trace Context
 
-The Go sensor library implements minimal support of the [W3C Trace Context](https://www.w3.org/TR/trace-context/) by propagating the `traceparent` and `tracestate` HTTP headers. The [`instana.TracingHandlerFunc()`][instana.TracingHandlerFunc] middleware extracts these headers and adds them to the outgoing request without any changes. This is done before the underlying handler is called, so the user can than alter these values inside their handling function.
+The Go sensor library fully supports [the W3C Trace Context standard](https://www.w3.org/TR/trace-context/):
+
+* An [instrumented `http.Client`][instana.RoundTripper] sends the `traceparent` and `tracestate` headers, updating them with the exit span ID and flags.
+* Any `http.Handler` instrumented with [`instana.TracingHandlerFunc()`][instana.TracingHandlerFunc] picks up the trace context passed in the `traceparent` header, potentially restoring the trace from `tracestate` even if the upstream service is not instrumented with Instana.
 
 ## Events API
 
@@ -228,3 +231,4 @@ Following examples are included in the `example` folder:
 * [many.go](./example/many.go) - Demonstrates how to create nested spans within the same execution context
 
 [instana.TracingHandlerFunc]: https://pkg.go.dev/github.com/instana/go-sensor/?tab=doc#TracingHandlerFunc
+[instana.RoundTripper]: https://pkg.go.dev/github.com/instana/go-sensor/?tab=doc#RoundTripper
