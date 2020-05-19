@@ -1,5 +1,11 @@
 package instana
 
+import (
+	"strings"
+
+	"github.com/instana/go-sensor/w3ctrace"
+)
+
 // SpanContext holds the basic Span metadata.
 type SpanContext struct {
 	// A probabilistically unique identifier for a [multi-span] trace.
@@ -14,7 +20,9 @@ type SpanContext struct {
 	Suppressed bool
 	// The span's associated baggage.
 	Baggage map[string]string // initialized on first use
-	// The 3rd-party trace context
+	// The W3C trace context
+	W3CContext w3ctrace.Context
+	// The 3rd party parent if the context is derived from non-Instana trace
 	ForeignParent interface{}
 }
 
@@ -30,12 +38,60 @@ func NewRootSpanContext() SpanContext {
 
 // NewSpanContext initializes a new child span context from its parent
 func NewSpanContext(parent SpanContext) SpanContext {
+	foreign := parent.restoreFromForeignTraceContext(parent.W3CContext)
+
 	c := parent.Clone()
 	c.SpanID, c.ParentID = randomID(), parent.SpanID
-	c.Suppressed = parent.Suppressed
-	c.ForeignParent = parent.ForeignParent
+
+	if foreign {
+		c.ForeignParent = c.W3CContext
+	}
 
 	return c
+}
+
+func (c *SpanContext) restoreFromForeignTraceContext(trCtx w3ctrace.Context) bool {
+	if trCtx.IsZero() {
+		return false
+	}
+
+	st := c.W3CContext.State()
+
+	if c.TraceID != 0 && c.SpanID != 0 {
+		// we've got Instana trace parent, but still need to check if the last
+		// service upstream is instrumented with Instana, i.e. is the last one
+		// to update the `tracestate`
+		return st.Index(w3ctrace.VendorInstana) > 0
+	}
+
+	// we've got only have the 3rd-party context, which means that upstream is
+	// tracing, but not with Instana, so need to either start a new trace or
+	// try to pickup the existing one from `tracestate`
+	c.TraceID = randomID()
+
+	vd, ok := st.Fetch(w3ctrace.VendorInstana)
+	if !ok {
+		return true
+	}
+
+	i := strings.Index(vd, ";")
+	if i < 0 {
+		return true
+	}
+
+	traceID, err := ParseID(vd[:i])
+	if err != nil {
+		return true
+	}
+
+	spanID, err := ParseID(vd[i+1:])
+	if err != nil {
+		return true
+	}
+
+	c.TraceID, c.SpanID = traceID, spanID
+
+	return true
 }
 
 // ForeachBaggageItem belongs to the opentracing.SpanContext interface
@@ -69,6 +125,7 @@ func (c SpanContext) Clone() SpanContext {
 		Sampled:       c.Sampled,
 		Suppressed:    c.Suppressed,
 		ForeignParent: c.ForeignParent,
+		W3CContext:    c.W3CContext,
 	}
 
 	if c.Baggage != nil {

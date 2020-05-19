@@ -24,8 +24,10 @@ func TestTracingHandlerFunc_Write(t *testing.T) {
 		fmt.Fprintln(w, "Ok")
 	})
 
+	req := httptest.NewRequest(http.MethodGet, "/test?q=classified", nil)
+
 	rec := httptest.NewRecorder()
-	h.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/test?q=classified", nil))
+	h.ServeHTTP(rec, req)
 
 	assert.Equal(t, http.StatusOK, rec.Code)
 	assert.Equal(t, "Ok\n", rec.Body.String())
@@ -37,6 +39,8 @@ func TestTracingHandlerFunc_Write(t *testing.T) {
 	assert.Equal(t, 0, span.Ec)
 	assert.EqualValues(t, instana.EntrySpanKind, span.Kind)
 	assert.False(t, span.Synthetic)
+
+	assert.Nil(t, span.ForeignParent)
 
 	require.IsType(t, instana.HTTPSpanData{}, span.Data)
 	data := span.Data.(instana.HTTPSpanData)
@@ -117,34 +121,74 @@ func TestTracingHandlerFunc_Error(t *testing.T) {
 	}, data.Tags)
 }
 
-func TestTracingHandlerFunc_W3CTraceContext(t *testing.T) {
-	const (
-		traceParent = "00-4bf92f3577b34da6a3ce929d0e0e4736-01"
-		traceState  = "vendorname1=opaqueValue1,in=abc123;def456"
-	)
+func TestTracingHandlerFunc_W3CTraceContext_ForeignParent(t *testing.T) {
+	examples := map[string]struct {
+		IncomingHeaders map[string]string
+		Expected        *instana.ForeignParent
+	}{
+		"incoming w3c, no instana headers, latest state from instana": {
+			IncomingHeaders: map[string]string{
+				w3ctrace.TraceParentHeader: "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01",
+				w3ctrace.TraceStateHeader:  "in=abc123;def456,vendorname1=opaqueValue1",
+			},
+			Expected: &instana.ForeignParent{
+				TraceID:          "4bf92f3577b34da6a3ce929d0e0e4736",
+				ParentID:         "00f067aa0ba902b7",
+				LatestTraceState: "in=abc123;def456",
+			},
+		},
+		"incoming w3c, with instana headers, latest state from instana": {
+			IncomingHeaders: map[string]string{
+				w3ctrace.TraceParentHeader: "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01",
+				w3ctrace.TraceStateHeader:  "in=abc123;def456,vendorname1=opaqueValue1",
+				instana.FieldT:             "abc123",
+				instana.FieldS:             "def456",
+			},
+		},
+		"incoming w3c, with instana headers, latest state not from instana": {
+			IncomingHeaders: map[string]string{
+				w3ctrace.TraceParentHeader: "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01",
+				w3ctrace.TraceStateHeader:  "vendorname1=opaqueValue1,in=abc123;def456",
+				instana.FieldT:             "abc123",
+				instana.FieldS:             "def456",
+			},
+			Expected: &instana.ForeignParent{
+				TraceID:          "4bf92f3577b34da6a3ce929d0e0e4736",
+				ParentID:         "00f067aa0ba902b7",
+				LatestTraceState: "vendorname1=opaqueValue1",
+			},
+		},
+	}
 
-	recorder := instana.NewTestRecorder()
-	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{
-		Service: "go-sensor-test",
-	}, recorder))
+	for name, example := range examples {
+		t.Run(name, func(t *testing.T) {
+			recorder := instana.NewTestRecorder()
+			s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{
+				Service: "go-sensor-test",
+			}, recorder))
 
-	h := instana.TracingHandlerFunc(s, "test-handler", func(w http.ResponseWriter, req *http.Request) {
-		fmt.Fprintln(w, "Ok")
-	})
+			h := instana.TracingHandlerFunc(s, "test-handler", func(w http.ResponseWriter, req *http.Request) {
+				fmt.Fprintln(w, "Ok")
+			})
 
-	rec := httptest.NewRecorder()
+			rec := httptest.NewRecorder()
 
-	req := httptest.NewRequest(http.MethodGet, "/test", nil)
-	req.Header.Set(w3ctrace.TraceParentHeader, traceParent)
-	req.Header.Set(w3ctrace.TraceStateHeader, traceState)
+			req := httptest.NewRequest(http.MethodGet, "/test", nil)
+			for k, v := range example.IncomingHeaders {
+				req.Header.Set(k, v)
+			}
 
-	h.ServeHTTP(rec, req)
+			h.ServeHTTP(rec, req)
 
-	assert.Equal(t, http.StatusOK, rec.Code)
-	assert.Equal(t, "Ok\n", rec.Body.String())
+			assert.Equal(t, http.StatusOK, rec.Code)
+			assert.Equal(t, "Ok\n", rec.Body.String())
 
-	assert.Equal(t, traceParent, rec.Header().Get(w3ctrace.TraceParentHeader))
-	assert.Equal(t, traceState, rec.Header().Get(w3ctrace.TraceStateHeader))
+			spans := recorder.GetQueuedSpans()
+			require.Len(t, spans, 1)
+
+			assert.Equal(t, example.Expected, spans[0].ForeignParent)
+		})
+	}
 }
 
 func TestTracingHandlerFunc_SyntheticCall(t *testing.T) {

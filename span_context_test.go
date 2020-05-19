@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	instana "github.com/instana/go-sensor"
+	"github.com/instana/go-sensor/w3ctrace"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -14,33 +15,101 @@ func TestNewRootSpanContext(t *testing.T) {
 	assert.False(t, c.Sampled)
 	assert.False(t, c.Suppressed)
 	assert.Empty(t, c.Baggage)
+	assert.Nil(t, c.ForeignParent)
 }
 
 func TestNewSpanContext(t *testing.T) {
-	parent := instana.SpanContext{
-		TraceID:       1,
-		SpanID:        2,
-		ParentID:      3,
-		Sampled:       true,
-		Suppressed:    true,
-		ForeignParent: []byte("foreign trace"),
-		Baggage: map[string]string{
-			"key1": "value1",
-			"key2": "value2",
+	examples := map[string]instana.SpanContext{
+		"no w3c trace": {
+			TraceID:    1,
+			SpanID:     2,
+			ParentID:   3,
+			Sampled:    true,
+			Suppressed: true,
+			Baggage: map[string]string{
+				"key1": "value1",
+				"key2": "value2",
+			},
+		},
+		"with w3c trace, no instana state": {
+			TraceID: 1,
+			SpanID:  2,
+			W3CContext: w3ctrace.Context{
+				RawParent: "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01",
+				RawState:  "vendor1=data",
+			},
+		},
+		"with w3c trace, last state from instana": {
+			TraceID: 1,
+			SpanID:  2,
+			W3CContext: w3ctrace.Context{
+				RawParent: "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01",
+				RawState:  "in=1234;5678,vendor1=data",
+			},
 		},
 	}
 
-	c := instana.NewSpanContext(parent)
-	assert.Equal(t, parent.TraceID, c.TraceID)
-	assert.Equal(t, parent.SpanID, c.ParentID)
-	assert.Equal(t, parent.Sampled, c.Sampled)
-	assert.Equal(t, parent.Suppressed, c.Suppressed)
-	assert.Equal(t, parent.ForeignParent, c.ForeignParent)
-	assert.Equal(t, parent.Baggage, c.Baggage)
+	for name, parent := range examples {
+		t.Run(name, func(t *testing.T) {
+			c := instana.NewSpanContext(parent)
+			assert.Equal(t, parent.TraceID, c.TraceID)
+			assert.Equal(t, parent.SpanID, c.ParentID)
+			assert.Equal(t, parent.Sampled, c.Sampled)
+			assert.Equal(t, parent.Suppressed, c.Suppressed)
+			assert.Equal(t, parent.W3CContext, c.W3CContext)
+			assert.Equal(t, parent.Baggage, c.Baggage)
 
-	assert.NotEqual(t, parent.SpanID, c.SpanID)
-	assert.NotEmpty(t, c.SpanID)
-	assert.False(t, &c.Baggage == &parent.Baggage)
+			assert.NotEqual(t, parent.SpanID, c.SpanID)
+			assert.NotEmpty(t, c.SpanID)
+			assert.False(t, &c.Baggage == &parent.Baggage)
+			assert.Nil(t, c.ForeignParent)
+		})
+	}
+}
+
+func TestNewSpanContext_ForeignParent(t *testing.T) {
+	examples := map[string]struct {
+		Parent           instana.SpanContext
+		ExpectedTraceID  int64
+		ExpectedParentID int64
+	}{
+		"no trace, last state from instana": {
+			Parent: instana.SpanContext{
+				W3CContext: w3ctrace.Context{
+					RawParent: "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01",
+					RawState:  "in=1234;5678,vendor1=data",
+				},
+			},
+			ExpectedTraceID:  0x1234,
+			ExpectedParentID: 0x5678,
+		},
+		"with trace, last state not from instana": {
+			Parent: instana.SpanContext{
+				TraceID: 0x4321,
+				SpanID:  0x8765,
+				W3CContext: w3ctrace.Context{
+					RawParent: "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01",
+					RawState:  "vendor1=data,in=1234;5678",
+				},
+			},
+			ExpectedTraceID:  0x4321,
+			ExpectedParentID: 0x8765,
+		},
+	}
+
+	for name, example := range examples {
+		t.Run(name, func(t *testing.T) {
+			c := instana.NewSpanContext(example.Parent)
+			assert.NotEqual(t, example.Parent.SpanID, c.SpanID)
+			assert.Equal(t, instana.SpanContext{
+				TraceID:       example.ExpectedTraceID,
+				SpanID:        c.SpanID,
+				ParentID:      example.ExpectedParentID,
+				W3CContext:    example.Parent.W3CContext,
+				ForeignParent: example.Parent.W3CContext,
+			}, c)
+		})
+	}
 }
 
 func TestSpanContext_WithBaggageItem(t *testing.T) {
@@ -87,7 +156,11 @@ func TestSpanContext_Clone(t *testing.T) {
 		ParentID:      3,
 		Sampled:       true,
 		Suppressed:    true,
-		ForeignParent: []byte("foreign trace"),
+		ForeignParent: []byte("parent"),
+		W3CContext: w3ctrace.New(w3ctrace.Parent{
+			TraceID:  "w3ctraceid",
+			ParentID: "w3cparentid",
+		}),
 		Baggage: map[string]string{
 			"key1": "value1",
 			"key2": "value2",

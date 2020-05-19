@@ -92,6 +92,19 @@ func TestState_Fetch(t *testing.T) {
 	})
 }
 
+func TestState_Index(t *testing.T) {
+	st := w3ctrace.State{"rojo=00f067aa0ba902b7", "congo=t61rcWkgMzE"}
+
+	t.Run("existing", func(t *testing.T) {
+		assert.Equal(t, 0, st.Index("rojo"))
+		assert.Equal(t, 1, st.Index("congo"))
+	})
+
+	t.Run("non-existing", func(t *testing.T) {
+		assert.Equal(t, -1, st.Index("vendor"))
+	})
+}
+
 func TestState_Remove(t *testing.T) {
 	st := w3ctrace.State{"rojo=00f067aa0ba902b7", "congo=t61rcWkgMzE"}
 

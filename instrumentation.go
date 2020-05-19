@@ -41,9 +41,9 @@ func TracingHandlerFunc(sensor *Sensor, name string, handler http.HandlerFunc) h
 		case nil:
 			opts = append(opts, ext.RPCServerOption(wireContext))
 		case ot.ErrSpanContextNotFound:
-			sensor.Logger().Debug("no span context provided with ", req.Method, req.URL.Path)
+			sensor.Logger().Debug("no span context provided with ", req.Method, " ", req.URL.Path)
 		case ot.ErrUnsupportedFormat:
-			sensor.Logger().Info("unsupported span context format provided with ", req.Method, req.URL.Path)
+			sensor.Logger().Info("unsupported span context format provided with ", req.Method, " ", req.URL.Path)
 		default:
 			sensor.Logger().Warn("failed to extract span context from the request:", err)
 		}

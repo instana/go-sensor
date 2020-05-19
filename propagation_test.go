@@ -117,7 +117,7 @@ func TestTracer_Inject_HTTPHeaders_W3CTraceContext(t *testing.T) {
 			SpanContext: instana.SpanContext{
 				TraceID: 0x2435,
 				SpanID:  0x3546,
-				ForeignParent: w3ctrace.Context{
+				W3CContext: w3ctrace.Context{
 					RawParent: "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-00",
 					RawState:  "rojo=00f067aa0ba902b7",
 				},
@@ -135,7 +135,7 @@ func TestTracer_Inject_HTTPHeaders_W3CTraceContext(t *testing.T) {
 			SpanContext: instana.SpanContext{
 				TraceID: 0x2435,
 				SpanID:  0x3546,
-				ForeignParent: w3ctrace.Context{
+				W3CContext: w3ctrace.Context{
 					RawParent: "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01",
 					RawState:  "rojo=00f067aa0ba902b7",
 				},
@@ -166,7 +166,7 @@ func TestTracer_Inject_HTTPHeaders_W3CTraceContext(t *testing.T) {
 			SpanContext: instana.SpanContext{
 				TraceID: 0x2435,
 				SpanID:  0x3546,
-				ForeignParent: w3ctrace.Context{
+				W3CContext: w3ctrace.Context{
 					RawParent: "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-00",
 					RawState:  "rojo=00f067aa0ba902b7",
 				},
@@ -183,7 +183,7 @@ func TestTracer_Inject_HTTPHeaders_W3CTraceContext(t *testing.T) {
 			SpanContext: instana.SpanContext{
 				TraceID: 0x2435,
 				SpanID:  0x3546,
-				ForeignParent: w3ctrace.Context{
+				W3CContext: w3ctrace.Context{
 					RawParent: "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01",
 					RawState:  "rojo=00f067aa0ba902b7",
 				},
@@ -202,11 +202,7 @@ func TestTracer_Inject_HTTPHeaders_W3CTraceContext(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			recorder := instana.NewTestRecorder()
 			tracer := instana.NewTracerWithEverything(&instana.Options{}, recorder)
-
 			headers := http.Header{}
-			if example.SpanContext.ForeignParent != nil {
-				w3ctrace.Inject(example.SpanContext.ForeignParent.(w3ctrace.Context), headers)
-			}
 
 			require.NoError(t, tracer.Inject(example.SpanContext, ot.HTTPHeaders, ot.HTTPHeadersCarrier(headers)))
 			assert.Equal(t, example.Expected, headers)
@@ -274,7 +270,25 @@ func TestTracer_Extract_HTTPHeaders(t *testing.T) {
 				Baggage:    map[string]string{},
 			},
 		},
-		"w3c trace context": {
+		"w3c trace context, last vendor is instana": {
+			Headers: map[string]string{
+				"x-instana-t": "1314",
+				"X-INSTANA-S": "2435",
+				"X-Instana-L": "1",
+				"traceparent": "00-4bf92f3577b34da6a3ce929d0e0e4736-0000000000002435-01",
+				"tracestate":  "in=1314;2435,rojo=00f067aa0ba902b7",
+			},
+			Expected: instana.SpanContext{
+				TraceID: 0x1314,
+				SpanID:  0x2435,
+				Baggage: map[string]string{},
+				W3CContext: w3ctrace.Context{
+					RawParent: "00-4bf92f3577b34da6a3ce929d0e0e4736-0000000000002435-01",
+					RawState:  "in=1314;2435,rojo=00f067aa0ba902b7",
+				},
+			},
+		},
+		"w3c trace context, last vendor not instana": {
 			Headers: map[string]string{
 				"x-instana-t": "1314",
 				"X-INSTANA-S": "2435",
@@ -286,7 +300,7 @@ func TestTracer_Extract_HTTPHeaders(t *testing.T) {
 				TraceID: 0x1314,
 				SpanID:  0x2435,
 				Baggage: map[string]string{},
-				ForeignParent: w3ctrace.Context{
+				W3CContext: w3ctrace.Context{
 					RawParent: "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01",
 					RawState:  "rojo=00f067aa0ba902b7",
 				},
@@ -295,15 +309,13 @@ func TestTracer_Extract_HTTPHeaders(t *testing.T) {
 		"w3c trace context, no instana headers": {
 			Headers: map[string]string{
 				"traceparent": "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01",
-				"tracestate":  "rojo=00f067aa0ba902b7,in=1314;2435",
+				"tracestate":  "in=1314;2435,rojo=00f067aa0ba902b7",
 			},
 			Expected: instana.SpanContext{
-				TraceID: 0x1314,
-				SpanID:  0x2435,
 				Baggage: map[string]string{},
-				ForeignParent: w3ctrace.Context{
+				W3CContext: w3ctrace.Context{
 					RawParent: "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01",
-					RawState:  "rojo=00f067aa0ba902b7,in=1314;2435",
+					RawState:  "in=1314;2435,rojo=00f067aa0ba902b7",
 				},
 			},
 		},
@@ -335,20 +347,6 @@ func TestTracer_Extract_HTTPHeaders_NoContext(t *testing.T) {
 		"no w3c trace context": {
 			Headers: map[string]string{
 				"Authorization": "Basic 123",
-			},
-		},
-		"w3c trace context without instana entry": {
-			Headers: map[string]string{
-				"Authorization": "Basic 123",
-				"traceparent":   "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01",
-				"tracestate":    "rojo=00f067aa0ba902b7",
-			},
-		},
-		"w3c trace context with malformed instana entry": {
-			Headers: map[string]string{
-				"Authorization": "Basic 123",
-				"traceparent":   "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01",
-				"tracestate":    "rojo=00f067aa0ba902b7,in=hello",
 			},
 		},
 	}

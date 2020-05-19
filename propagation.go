@@ -127,10 +127,7 @@ func extractTraceContext(opaqueCarrier interface{}) (SpanContext, error) {
 	}
 
 	if traceID == "" && spanID == "" {
-		// there was no trace context provided in Instana headers, but we still
-		// need to check if we found it earlier in W3C trace context state before
-		// claiming that it was not found
-		if spanContext.TraceID == 0 && spanContext.SpanID == 0 {
+		if spanContext.W3CContext.IsZero() {
 			return spanContext, ot.ErrSpanContextNotFound
 		}
 
@@ -152,10 +149,10 @@ func extractTraceContext(opaqueCarrier interface{}) (SpanContext, error) {
 
 func addW3CTraceContext(h http.Header, sc SpanContext) {
 	traceID, spanID := FormatID(sc.TraceID), FormatID(sc.SpanID)
+	trCtx := sc.W3CContext
 
 	// check for an existing w3c trace
-	trCtx, ok := sc.ForeignParent.(w3ctrace.Context)
-	if !ok {
+	if trCtx.IsZero() {
 		// initiate trace if none
 		trCtx = w3ctrace.New(w3ctrace.Parent{
 			Version:  w3ctrace.Version_Max,
@@ -190,29 +187,7 @@ func pickupW3CTraceContext(h http.Header, sc *SpanContext) {
 	if err != nil {
 		return
 	}
-	sc.ForeignParent = trCtx
-
-	vd, ok := trCtx.State().Fetch(w3ctrace.VendorInstana)
-	if !ok {
-		return
-	}
-
-	i := strings.Index(vd, ";")
-	if i < 0 {
-		return
-	}
-
-	traceID, err := ParseID(vd[:i])
-	if err != nil {
-		return
-	}
-
-	spanID, err := ParseID(vd[i+1:])
-	if err != nil {
-		return
-	}
-
-	sc.TraceID, sc.SpanID = traceID, spanID
+	sc.W3CContext = trCtx
 }
 
 func parseLevel(s string) bool {
