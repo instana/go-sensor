@@ -46,7 +46,7 @@ func leakMemory(duration int, size int) {
 	for j := 0; j < duration; j++ {
 		go func() {
 			for i := 0; i < size; i++ {
-				mem = append(mem, string(i))
+				mem = append(mem, strconv.Itoa(i))
 			}
 		}()
 
