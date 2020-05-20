@@ -36,9 +36,15 @@ func NewRootSpanContext() SpanContext {
 	}
 }
 
-// NewSpanContext initializes a new child span context from its parent
+// NewSpanContext initializes a new child span context from its parent. It will
+// ignore the parent context if it contains neither Instana trace and span IDs
+// nor a W3C trace context
 func NewSpanContext(parent SpanContext) SpanContext {
 	foreign := parent.restoreFromForeignTraceContext(parent.W3CContext)
+
+	if parent.TraceID == 0 && parent.SpanID == 0 {
+		return NewRootSpanContext()
+	}
 
 	c := parent.Clone()
 	c.SpanID, c.ParentID = randomID(), parent.SpanID
