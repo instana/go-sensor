@@ -67,6 +67,16 @@ func TestNewSpanContext(t *testing.T) {
 	}
 }
 
+func TestNewSpanContext_EmptyParent(t *testing.T) {
+	c := instana.NewSpanContext(instana.SpanContext{})
+	assert.NotEmpty(t, c.TraceID)
+	assert.Equal(t, c.SpanID, c.TraceID)
+	assert.False(t, c.Sampled)
+	assert.False(t, c.Suppressed)
+	assert.Empty(t, c.Baggage)
+	assert.Nil(t, c.ForeignParent)
+}
+
 func TestNewSpanContext_ForeignParent(t *testing.T) {
 	examples := map[string]struct {
 		Parent           instana.SpanContext
