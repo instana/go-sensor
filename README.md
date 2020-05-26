@@ -111,33 +111,28 @@ Minimal changes are required for Instana to be able to capture the necessary inf
 
 That said, a simple handler function like the following will simple be wrapped and registered like normal.
 
-For your own preference registering the handler and wrapping it can be two separate steps or a single one. The following example code shows both versions, starting with two steps.
+The following example code demonstrates how to instrument an HTTP handler using `instana.TracingHandlerFunc()`:
 
 ```go
-import (
-	"net/http"
+sensor := instana.NewSensor("my-http-server")
 
-	instana "github.com/instana/go-sensor"
-	ot "github.com/opentracing/opentracing-go"
-)
+http.HandleFunc("/", instana.TracingHandlerFunc(sensor, "/", func(w http.ResponseWriter, req *http.Request) {
+	// Extract the parent span and use its tracer to initialize any child spans to trace the calls
+	// inside the handler, e.g. database queries, 3rd-party API requests, etc.
+	if parent, ok := instana.SpanFromContext(req.Context()); ok {
+		sp := parent.Tracer().StartSpan("index")
+		defer sp.Finish()
+	}
 
-// Doing registration and wrapping
-func main() {
-	http.HandleFunc(
-		"/path/to/handler",
-		sensor.TracingHandlerFunc("myHandler", myHandler),
-	)
-}
+	// ...
+}))
+```
 
-// Accessing the parent request inside a handler
-func myHandler(w http.ResponseWriter, req *http.Request) {
-	ctx := req.Context()
-	parent, _ := instana.SpanFromContext(ctx))
-    
-	tracer := parent.Tracer()
-	spanCtx := parent.Context().(instana.SpanContext)
-	traceID := spanCtx.TraceID // use this with EumSnippet
-}
+In case your handler is implemented as an http.Handler, pass its `ServeHTTP` method instead:
+
+```go
+h := http.FileServer(http.Dir("./"))
+http.HandleFunc("/files", instana.TracingHandlerFunc(sensor, "index", h.ServeHTTP))
 ```
 
 ### Executing HTTP Requests
