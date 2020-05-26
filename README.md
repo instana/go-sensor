@@ -212,18 +212,18 @@ To learn more, see the [Events API](https://github.com/instana/go-sensor/blob/ma
 
 AutoProfile™ generates and reports process profiles to Instana. Unlike development-time and on-demand profilers, where a user must manually initiate profiling, AutoProfile™ automatically schedules and continuously performs profiling appropriate for critical production environments.
 
-
 ## Examples
 
 Following examples are included in the `example` folder:
 
 * [ot-simple/simple.go](./example/ot-simple/simple.go) - Demonstrates basic usage of the tracer
-* [webserver/http.go](./example/webserver/http.go) - Demonstrates how http server and client should be instrumented
-* [rpc/rpc.go](./example/rpc/rpc.go) - Demonstrates a basic RPC service
-* [event/](./example/event/) - Demonstrates usage of the Events API
 * [database/elasticsearch.go](./example/database/elasticsearch.go) - Demonstrates how to instrument a database client (Elasticsearch in this case)
-* [httpclient/multi_request.go](./example/httpclient/multi_request.go) - Demonstrates the instrumentation of an HTTP client
 * [many.go](./example/many.go) - Demonstrates how to create nested spans within the same execution context
+* [event/](./example/event/) - Demonstrates usage of the Events API
+* [autoprofile/](./example/autoprofile/) - Demonstrates usage of the AutoProfile™
 
+For more examples please consult the [godoc][godoc].
+
+[godoc]: https://pkg.go.dev/github.com/instana/go-sensor/?tab=doc#pkg-examples
 [instana.TracingHandlerFunc]: https://pkg.go.dev/github.com/instana/go-sensor/?tab=doc#TracingHandlerFunc
 [instana.RoundTripper]: https://pkg.go.dev/github.com/instana/go-sensor/?tab=doc#RoundTripper
