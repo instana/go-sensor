@@ -99,19 +99,7 @@ func (r *fsmS) lookupAgentHost(e *f.Event) {
 
 	}
 
-	hostNames := []string{
-		r.agent.host,
-		os.Getenv("INSTANA_AGENT_HOST"),
-		agentDefaultHost,
-	}
-	for _, name := range hostNames {
-		if name == "" {
-			continue
-		}
-
-		go r.checkHost(name, cb)
-		break
-	}
+	go r.checkHost(r.agent.host, cb)
 }
 
 func (r *fsmS) checkHost(host string, cb func(found bool, host string)) {
