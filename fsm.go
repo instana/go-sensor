@@ -100,7 +100,7 @@ func (r *fsmS) lookupAgentHost(e *f.Event) {
 	}
 
 	hostNames := []string{
-		r.agent.sensor.options.AgentHost,
+		r.agent.host,
 		os.Getenv("INSTANA_AGENT_HOST"),
 		agentDefaultHost,
 	}

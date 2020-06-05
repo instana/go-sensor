@@ -55,6 +55,7 @@ func newAgent(sensor *sensorS) *agentS {
 	agent := &agentS{
 		sensor: sensor,
 		from:   &fromS{},
+		host:   sensor.options.AgentHost,
 		port:   strconv.Itoa(sensor.options.AgentPort),
 		client: &http.Client{Timeout: 5 * time.Second},
 		logger: sensor.logger,
