@@ -44,6 +44,7 @@ type agentS struct {
 	fsm    *fsmS
 	from   *fromS
 	host   string
+	port   string
 	client *http.Client
 	logger LeveledLogger
 }
@@ -54,6 +55,7 @@ func newAgent(sensor *sensorS) *agentS {
 	agent := &agentS{
 		sensor: sensor,
 		from:   &fromS{},
+		port:   strconv.Itoa(sensor.options.AgentPort),
 		client: &http.Client{Timeout: 5 * time.Second},
 		logger: sensor.logger,
 	}
@@ -76,7 +78,7 @@ func (r *agentS) makeHostURL(host string, prefix string) string {
 	buffer.WriteString("http://")
 	buffer.WriteString(host)
 	buffer.WriteString(":")
-	buffer.WriteString(strconv.Itoa(r.sensor.options.AgentPort))
+	buffer.WriteString(r.port)
 	buffer.WriteString(prefix)
 	if prefix[len(prefix)-1:] == "." && r.from.PID != "" {
 		buffer.WriteString(r.from.PID)
