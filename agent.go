@@ -46,6 +46,7 @@ type agentS struct {
 	from   *fromS
 	host   string
 	client *http.Client
+	logger LeveledLogger
 }
 
 func newAgent(sensor *sensorS) *agentS {
@@ -55,10 +56,15 @@ func newAgent(sensor *sensorS) *agentS {
 		sensor: sensor,
 		from:   &fromS{},
 		client: &http.Client{Timeout: 5 * time.Second},
+		logger: sensor.logger,
 	}
 	agent.fsm = newFSM(agent)
 
 	return agent
+}
+
+func (r *agentS) setLogger(l LeveledLogger) {
+	r.logger = l
 }
 
 func (r *agentS) makeURL(prefix string) string {
@@ -160,7 +166,7 @@ func (r *agentS) fullRequestResponse(url string, method string, data interface{}
 		// this is the time where the entity is registering in the Instana
 		// backend and it will return 404 until it's done.
 		if !r.fsm.fsm.Is("announced") {
-			r.sensor.logger.Info(err, url)
+			r.logger.Info(err, url)
 		}
 	}
 
