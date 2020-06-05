@@ -46,7 +46,7 @@ func newSensor(options *Options) *sensorS {
 		setLogLevel(l, options.LogLevel)
 	}
 
-	s.agent = newAgent(s)
+	s.agent = newAgent(s.options.AgentHost, s.options.AgentPort, s.logger)
 	s.meter = newMeter(s)
 
 	return s

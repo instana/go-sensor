@@ -40,7 +40,6 @@ type fromS struct {
 }
 
 type agentS struct {
-	sensor *sensorS
 	fsm    *fsmS
 	from   *fromS
 	host   string
@@ -49,16 +48,19 @@ type agentS struct {
 	logger LeveledLogger
 }
 
-func newAgent(sensor *sensorS) *agentS {
-	sensor.logger.Debug("initializing agent")
+func newAgent(host string, port int, logger LeveledLogger) *agentS {
+	if logger == nil {
+		logger = defaultLogger
+	}
+
+	logger.Debug("initializing agent")
 
 	agent := &agentS{
-		sensor: sensor,
 		from:   &fromS{},
-		host:   sensor.options.AgentHost,
-		port:   strconv.Itoa(sensor.options.AgentPort),
+		host:   host,
+		port:   strconv.Itoa(port),
 		client: &http.Client{Timeout: 5 * time.Second},
-		logger: sensor.logger,
+		logger: logger,
 	}
 	agent.fsm = newFSM(agent)
 
