@@ -2,7 +2,6 @@ package instana
 
 import (
 	"runtime"
-	"strconv"
 	"time"
 )
 
@@ -65,16 +64,11 @@ func newMeter(sensor *sensorS) *meterS {
 	ticker := time.NewTicker(1 * time.Second)
 	go func() {
 		for range ticker.C {
-			if meter.sensor.agent.canSend() {
-				pid, _ := strconv.Atoi(meter.sensor.agent.from.PID)
-				d := &EntityData{
-					PID:      pid,
-					Snapshot: meter.sensor.agent.collectSnapshot(),
-					Metrics:  meter.collectMetrics(),
-				}
-
-				go meter.sensor.agent.SendMetrics(d)
+			if !meter.sensor.agent.canSend() {
+				continue
 			}
+
+			go meter.sensor.agent.SendMetrics(meter.collectMetrics())
 		}
 	}()
 

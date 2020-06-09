@@ -80,10 +80,17 @@ func newAgent(serviceName, host string, port int, logger LeveledLogger) *agentS 
 }
 
 // SendMetrics sends collected entity data to the host agent
-func (agent *agentS) SendMetrics(data *EntityData) {
-	_, err := agent.request(agent.makeURL(agentDataURL), "POST", data)
+func (agent *agentS) SendMetrics(data *MetricsS) {
+	pid, err := strconv.Atoi(agent.from.PID)
+	if err != nil && agent.from.PID != "" {
+		agent.logger.Debug("agent got malformed PID %q", agent.from.PID)
+	}
 
-	if err != nil {
+	if _, err = agent.request(agent.makeURL(agentDataURL), "POST", &EntityData{
+		PID:      pid,
+		Snapshot: agent.collectSnapshot(),
+		Metrics:  data,
+	}); err != nil {
 		agent.reset()
 	}
 }
