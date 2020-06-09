@@ -135,7 +135,7 @@ func (r *meterS) collectMetrics() *MetricsS {
 
 func (r *meterS) collectSnapshot() *SnapshotS {
 	return &SnapshotS{
-		Name:     r.sensor.serviceName,
+		Name:     r.sensor.agent.ServiceName,
 		Version:  runtime.Version(),
 		Root:     runtime.GOROOT(),
 		MaxProcs: runtime.GOMAXPROCS(0),

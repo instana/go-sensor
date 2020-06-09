@@ -40,15 +40,16 @@ type fromS struct {
 }
 
 type agentS struct {
-	fsm    *fsmS
-	from   *fromS
-	host   string
-	port   string
-	client *http.Client
-	logger LeveledLogger
+	ServiceName string
+	fsm         *fsmS
+	from        *fromS
+	host        string
+	port        string
+	client      *http.Client
+	logger      LeveledLogger
 }
 
-func newAgent(host string, port int, logger LeveledLogger) *agentS {
+func newAgent(serviceName, host string, port int, logger LeveledLogger) *agentS {
 	if logger == nil {
 		logger = defaultLogger
 	}
@@ -56,11 +57,12 @@ func newAgent(host string, port int, logger LeveledLogger) *agentS {
 	logger.Debug("initializing agent")
 
 	agent := &agentS{
-		from:   &fromS{},
-		host:   host,
-		port:   strconv.Itoa(port),
-		client: &http.Client{Timeout: 5 * time.Second},
-		logger: logger,
+		ServiceName: serviceName,
+		from:        &fromS{},
+		host:        host,
+		port:        strconv.Itoa(port),
+		client:      &http.Client{Timeout: 5 * time.Second},
+		logger:      logger,
 	}
 	agent.fsm = newFSM(agent)
 

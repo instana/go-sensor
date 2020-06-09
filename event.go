@@ -39,7 +39,7 @@ func SendDefaultServiceEvent(title string, text string, sev severity, duration t
 		// configured on the sensor) so we send blank.
 		SendServiceEvent("", title, text, sev, duration)
 	} else {
-		SendServiceEvent(sensor.serviceName, title, text, sev, duration)
+		SendServiceEvent(sensor.agent.ServiceName, title, text, sev, duration)
 	}
 }
 
