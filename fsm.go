@@ -32,8 +32,8 @@ type fsmS struct {
 var procSchedPIDRegex = regexp.MustCompile(`\((\d+),`)
 
 func newFSM(agent *agentS) *fsmS {
-	agent.sensor.logger.Warn("Stan is on the scene. Starting Instana instrumentation.")
-	agent.sensor.logger.Debug("initializing fsm")
+	agent.logger.Warn("Stan is on the scene. Starting Instana instrumentation.")
+	agent.logger.Debug("initializing fsm")
 
 	ret := &fsmS{
 		agent:   agent,
@@ -74,14 +74,14 @@ func (r *fsmS) lookupAgentHost(e *f.Event) {
 
 		gateway, err := getDefaultGateway("/proc/net/route")
 		if err != nil {
-			r.agent.sensor.logger.Error("failed to fetch the default gateway, scheduling retry: ", err)
+			r.agent.logger.Error("failed to fetch the default gateway, scheduling retry: ", err)
 			r.scheduleRetry(e, r.lookupAgentHost)
 
 			return
 		}
 
 		if gateway == "" {
-			r.agent.sensor.logger.Error("default gateway not available, scheduling retry")
+			r.agent.logger.Error("default gateway not available, scheduling retry")
 			r.scheduleRetry(e, r.lookupAgentHost)
 
 			return
@@ -93,29 +93,17 @@ func (r *fsmS) lookupAgentHost(e *f.Event) {
 				return
 			}
 
-			r.agent.sensor.logger.Error("cannot connect to the agent through localhost or default gateway, scheduling retry")
+			r.agent.logger.Error("cannot connect to the agent through localhost or default gateway, scheduling retry")
 			r.scheduleRetry(e, r.lookupAgentHost)
 		})
 
 	}
 
-	hostNames := []string{
-		r.agent.sensor.options.AgentHost,
-		os.Getenv("INSTANA_AGENT_HOST"),
-		agentDefaultHost,
-	}
-	for _, name := range hostNames {
-		if name == "" {
-			continue
-		}
-
-		go r.checkHost(name, cb)
-		break
-	}
+	go r.checkHost(r.agent.host, cb)
 }
 
 func (r *fsmS) checkHost(host string, cb func(found bool, host string)) {
-	r.agent.sensor.logger.Debug("checking host", host)
+	r.agent.logger.Debug("checking host", host)
 
 	header, err := r.agent.requestHeader(r.agent.makeHostURL(host, "/"), "GET", "Server")
 
@@ -123,7 +111,7 @@ func (r *fsmS) checkHost(host string, cb func(found bool, host string)) {
 }
 
 func (r *fsmS) lookupSuccess(host string) {
-	r.agent.sensor.logger.Debug("agent lookup success", host)
+	r.agent.logger.Debug("agent lookup success", host)
 
 	r.agent.setHost(host)
 	r.retries = maximumRetries
@@ -133,12 +121,12 @@ func (r *fsmS) lookupSuccess(host string) {
 func (r *fsmS) announceSensor(e *f.Event) {
 	cb := func(b bool, from *fromS) {
 		if b {
-			r.agent.sensor.logger.Info("Host agent available. We're in business. Announced pid:", from.PID)
+			r.agent.logger.Info("Host agent available. We're in business. Announced pid:", from.PID)
 			r.agent.setFrom(from)
 			r.retries = maximumRetries
 			r.fsm.Event(eAnnounce)
 		} else {
-			r.agent.sensor.logger.Error("Cannot announce sensor. Scheduling retry.")
+			r.agent.logger.Error("Cannot announce sensor. Scheduling retry.")
 			r.retries--
 			if r.retries > 0 {
 				r.scheduleRetry(e, r.announceSensor)
@@ -148,12 +136,12 @@ func (r *fsmS) announceSensor(e *f.Event) {
 		}
 	}
 
-	r.agent.sensor.logger.Debug("announcing sensor to the agent")
+	r.agent.logger.Debug("announcing sensor to the agent")
 
 	go func(cb func(b bool, from *fromS)) {
 		defer func() {
 			if err := recover(); err != nil {
-				r.agent.sensor.logger.Debug("Announce recovered:", err)
+				r.agent.logger.Debug("Announce recovered:", err)
 			}
 		}()
 
@@ -186,10 +174,10 @@ func (r *fsmS) announceSensor(e *f.Event) {
 			Args: os.Args[1:],
 		}
 		if name, args, ok := getProcCommandLine(); ok {
-			r.agent.sensor.logger.Debug("got cmdline from /proc: ", name, args)
+			r.agent.logger.Debug("got cmdline from /proc: ", name, args)
 			d.Name, d.Args = name, args
 		} else {
-			r.agent.sensor.logger.Debug("no /proc, using OS reported cmdline")
+			r.agent.logger.Debug("no /proc, using OS reported cmdline")
 		}
 
 		if _, err := os.Stat("/proc"); err == nil {
@@ -200,7 +188,7 @@ func (r *fsmS) announceSensor(e *f.Event) {
 					f, err := tcpConn.File()
 
 					if err != nil {
-						r.agent.sensor.logger.Error(err)
+						r.agent.logger.Error(err)
 					} else {
 						d.Fd = fmt.Sprintf("%v", f.Fd())
 
@@ -228,7 +216,7 @@ func (r *fsmS) testAgent(e *f.Event) {
 			r.retries = maximumRetries
 			r.fsm.Event(eTest)
 		} else {
-			r.agent.sensor.logger.Debug("Agent is not yet ready. Scheduling retry.")
+			r.agent.logger.Debug("Agent is not yet ready. Scheduling retry.")
 			r.retries--
 			if r.retries > 0 {
 				r.scheduleRetry(e, r.testAgent)
@@ -238,7 +226,7 @@ func (r *fsmS) testAgent(e *f.Event) {
 		}
 	}
 
-	r.agent.sensor.logger.Debug("testing communication with the agent")
+	r.agent.logger.Debug("testing communication with the agent")
 
 	go func(cb func(b bool)) {
 		_, err := r.agent.head(r.agent.makeURL(agentDataURL))

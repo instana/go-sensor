@@ -6,7 +6,6 @@ import (
 	"errors"
 	"io/ioutil"
 	"net/http"
-	"os"
 	"strconv"
 	"time"
 )
@@ -41,24 +40,35 @@ type fromS struct {
 }
 
 type agentS struct {
-	sensor *sensorS
 	fsm    *fsmS
 	from   *fromS
 	host   string
+	port   string
 	client *http.Client
+	logger LeveledLogger
 }
 
-func newAgent(sensor *sensorS) *agentS {
-	sensor.logger.Debug("initializing agent")
+func newAgent(host string, port int, logger LeveledLogger) *agentS {
+	if logger == nil {
+		logger = defaultLogger
+	}
+
+	logger.Debug("initializing agent")
 
 	agent := &agentS{
-		sensor: sensor,
 		from:   &fromS{},
+		host:   host,
+		port:   strconv.Itoa(port),
 		client: &http.Client{Timeout: 5 * time.Second},
+		logger: logger,
 	}
 	agent.fsm = newFSM(agent)
 
 	return agent
+}
+
+func (r *agentS) setLogger(l LeveledLogger) {
+	r.logger = l
 }
 
 func (r *agentS) makeURL(prefix string) string {
@@ -66,28 +76,12 @@ func (r *agentS) makeURL(prefix string) string {
 }
 
 func (r *agentS) makeHostURL(host string, prefix string) string {
-	envPort := os.Getenv("INSTANA_AGENT_PORT")
-	port := agentDefaultPort
-	if r.sensor.options.AgentPort > 0 {
-		return r.makeFullURL(host, r.sensor.options.AgentPort, prefix)
-	}
-	if envPort == "" {
-		return r.makeFullURL(host, port, prefix)
-	}
-	port, err := strconv.Atoi(envPort)
-	if err != nil {
-		return r.makeFullURL(host, agentDefaultPort, prefix)
-	}
-	return r.makeFullURL(host, port, prefix)
-}
-
-func (r *agentS) makeFullURL(host string, port int, prefix string) string {
 	var buffer bytes.Buffer
 
 	buffer.WriteString("http://")
 	buffer.WriteString(host)
 	buffer.WriteString(":")
-	buffer.WriteString(strconv.Itoa(port))
+	buffer.WriteString(r.port)
 	buffer.WriteString(prefix)
 	if prefix[len(prefix)-1:] == "." && r.from.PID != "" {
 		buffer.WriteString(r.from.PID)
@@ -159,8 +153,8 @@ func (r *agentS) fullRequestResponse(url string, method string, data interface{}
 		// Ignore errors while in announced stated (before ready) as
 		// this is the time where the entity is registering in the Instana
 		// backend and it will return 404 until it's done.
-		if !r.sensor.agent.fsm.fsm.Is("announced") {
-			r.sensor.logger.Info(err, url)
+		if !r.fsm.fsm.Is("announced") {
+			r.logger.Info(err, url)
 		}
 	}
 

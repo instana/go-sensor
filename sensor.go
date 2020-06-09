@@ -46,7 +46,7 @@ func newSensor(options *Options) *sensorS {
 		setLogLevel(l, options.LogLevel)
 	}
 
-	s.agent = newAgent(s)
+	s.agent = newAgent(s.options.AgentHost, s.options.AgentPort, s.logger)
 	s.meter = newMeter(s)
 
 	return s
@@ -54,6 +54,10 @@ func newSensor(options *Options) *sensorS {
 
 func (r *sensorS) setLogger(l LeveledLogger) {
 	r.logger = l
+
+	if r.agent != nil {
+		r.agent.setLogger(r.logger)
+	}
 }
 
 // InitSensor intializes the sensor (without tracing) to begin collecting
