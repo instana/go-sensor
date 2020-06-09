@@ -6,7 +6,9 @@ import (
 	"errors"
 	"io/ioutil"
 	"net/http"
+	"runtime"
 	"strconv"
+	"sync"
 	"time"
 )
 
@@ -19,6 +21,10 @@ const (
 	agentDefaultHost  = "localhost"
 	agentDefaultPort  = 42699
 	agentHeader       = "Instana Agent"
+
+	// SnapshotPeriod is the amount of time in seconds between snapshot reports.
+	SnapshotPeriod             = 600
+	snapshotCollectionInterval = SnapshotPeriod * time.Second
 )
 
 type agentResponse struct {
@@ -41,12 +47,16 @@ type fromS struct {
 
 type agentS struct {
 	ServiceName string
-	fsm         *fsmS
 	from        *fromS
 	host        string
 	port        string
-	client      *http.Client
-	logger      LeveledLogger
+
+	snapshotMu                 sync.RWMutex
+	lastSnapshotCollectionTime time.Time
+
+	fsm    *fsmS
+	client *http.Client
+	logger LeveledLogger
 }
 
 func newAgent(serviceName, host string, port int, logger LeveledLogger) *agentS {
@@ -182,4 +192,29 @@ func (r *agentS) setHost(host string) {
 
 func (r *agentS) reset() {
 	r.fsm.reset()
+}
+
+func (agent *agentS) collectSnapshot() *SnapshotS {
+	agent.snapshotMu.RLock()
+	lastSnapshotCollectionTime := agent.lastSnapshotCollectionTime
+	agent.snapshotMu.RUnlock()
+
+	if time.Since(lastSnapshotCollectionTime) < snapshotCollectionInterval {
+		return nil
+	}
+
+	agent.snapshotMu.Lock()
+	defer agent.snapshotMu.Unlock()
+
+	agent.lastSnapshotCollectionTime = time.Now()
+	agent.logger.Debug("collected snapshot")
+
+	return &SnapshotS{
+		Name:     agent.ServiceName,
+		Version:  runtime.Version(),
+		Root:     runtime.GOROOT(),
+		MaxProcs: runtime.GOMAXPROCS(0),
+		Compiler: runtime.Compiler,
+		NumCPU:   runtime.NumCPU(),
+	}
 }

@@ -6,11 +6,6 @@ import (
 	"time"
 )
 
-const (
-	// SnapshotPeriod is the amount of time in seconds between snapshot reports.
-	SnapshotPeriod = 600
-)
-
 // SnapshotS struct to hold snapshot data.
 type SnapshotS struct {
 	Name     string `json:"name"`
@@ -56,9 +51,8 @@ type EntityData struct {
 }
 
 type meterS struct {
-	sensor            *sensorS
-	numGC             uint32
-	snapshotCountdown int
+	sensor *sensorS
+	numGC  uint32
 }
 
 func newMeter(sensor *sensorS) *meterS {
@@ -70,21 +64,12 @@ func newMeter(sensor *sensorS) *meterS {
 
 	ticker := time.NewTicker(1 * time.Second)
 	go func() {
-		meter.snapshotCountdown = 1
 		for range ticker.C {
 			if meter.sensor.agent.canSend() {
-				meter.snapshotCountdown--
-				var s *SnapshotS
-				if meter.snapshotCountdown == 0 {
-					meter.snapshotCountdown = SnapshotPeriod
-					s = meter.collectSnapshot()
-					meter.sensor.logger.Debug("collected snapshot")
-				}
-
 				pid, _ := strconv.Atoi(meter.sensor.agent.from.PID)
 				d := &EntityData{
 					PID:      pid,
-					Snapshot: s,
+					Snapshot: meter.sensor.agent.collectSnapshot(),
 					Metrics:  meter.collectMetrics(),
 				}
 
@@ -131,14 +116,4 @@ func (r *meterS) collectMetrics() *MetricsS {
 		CgoCall:   runtime.NumCgoCall(),
 		Goroutine: runtime.NumGoroutine(),
 		Memory:    r.collectMemoryMetrics()}
-}
-
-func (r *meterS) collectSnapshot() *SnapshotS {
-	return &SnapshotS{
-		Name:     r.sensor.agent.ServiceName,
-		Version:  runtime.Version(),
-		Root:     runtime.GOROOT(),
-		MaxProcs: runtime.GOMAXPROCS(0),
-		Compiler: runtime.Compiler,
-		NumCPU:   runtime.NumCPU()}
 }
