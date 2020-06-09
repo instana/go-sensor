@@ -67,6 +67,15 @@ func newAgent(host string, port int, logger LeveledLogger) *agentS {
 	return agent
 }
 
+// SendMetrics sends collected entity data to the host agent
+func (agent *agentS) SendMetrics(data *EntityData) {
+	_, err := agent.request(agent.makeURL(agentDataURL), "POST", data)
+
+	if err != nil {
+		agent.reset()
+	}
+}
+
 func (r *agentS) setLogger(l LeveledLogger) {
 	r.logger = l
 }

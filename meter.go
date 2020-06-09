@@ -88,20 +88,12 @@ func newMeter(sensor *sensorS) *meterS {
 					Metrics:  meter.collectMetrics(),
 				}
 
-				go meter.send(d)
+				go meter.sensor.agent.SendMetrics(d)
 			}
 		}
 	}()
 
 	return meter
-}
-
-func (r *meterS) send(d *EntityData) {
-	_, err := r.sensor.agent.request(r.sensor.agent.makeURL(agentDataURL), "POST", d)
-
-	if err != nil {
-		r.sensor.agent.reset()
-	}
 }
 
 func (r *meterS) collectMemoryMetrics() *MemoryS {
