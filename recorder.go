@@ -46,7 +46,7 @@ func (r *Recorder) init() {
 	ticker := time.NewTicker(1 * time.Second)
 	go func() {
 		for range ticker.C {
-			if sensor.agent.canSend() {
+			if sensor.agent.Ready() {
 				r.send()
 			}
 		}
@@ -58,7 +58,7 @@ func (r *Recorder) init() {
 func (r *Recorder) RecordSpan(span *spanS) {
 	// If we're not announced and not in test mode then just
 	// return
-	if !r.testMode && !sensor.agent.canSend() {
+	if !r.testMode && !sensor.agent.Ready() {
 		return
 	}
 
@@ -71,7 +71,7 @@ func (r *Recorder) RecordSpan(span *spanS) {
 
 	r.spans = append(r.spans, newSpan(span, sensor.agent.from))
 
-	if r.testMode || !sensor.agent.canSend() {
+	if r.testMode || !sensor.agent.Ready() {
 		return
 	}
 

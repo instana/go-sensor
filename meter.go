@@ -64,7 +64,7 @@ func newMeter(sensor *sensorS) *meterS {
 	ticker := time.NewTicker(1 * time.Second)
 	go func() {
 		for range ticker.C {
-			if !meter.sensor.agent.canSend() {
+			if !meter.sensor.agent.Ready() {
 				continue
 			}
 

@@ -81,10 +81,6 @@ func newAgent(serviceName, host string, port int, logger LeveledLogger) *agentS 
 
 // Ready returns whether the agent has finished the announcement and is ready to send data
 func (agent *agentS) Ready() bool {
-	return agent.canSend()
-}
-
-func (agent *agentS) canSend() bool {
 	return agent.fsm.fsm.Current() == "ready"
 }
 

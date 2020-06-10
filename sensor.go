@@ -82,7 +82,7 @@ func InitSensor(options *Options) {
 		})
 
 		autoprofile.SetSendProfilesFunc(func(profiles interface{}) error {
-			if !sensor.agent.canSend() {
+			if !sensor.agent.Ready() {
 				return errors.New("sender not ready")
 			}
 
