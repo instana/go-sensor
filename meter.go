@@ -49,29 +49,34 @@ type EntityData struct {
 	Metrics  *MetricsS  `json:"metrics"`
 }
 
+type metricSender interface {
+	Ready() bool
+	SendMetrics(*MetricsS) error
+}
+
 type meterS struct {
-	sensor *sensorS
-	numGC  uint32
+	numGC uint32
 
 	logger LeveledLogger
+	agent  metricSender
 }
 
 func newMeter(sensor *sensorS) *meterS {
 	sensor.logger.Debug("initializing meter")
 
 	meter := &meterS{
-		sensor: sensor,
 		logger: sensor.logger,
+		agent:  sensor.agent,
 	}
 
 	ticker := time.NewTicker(1 * time.Second)
 	go func() {
 		for range ticker.C {
-			if !meter.sensor.agent.Ready() {
+			if !meter.agent.Ready() {
 				continue
 			}
 
-			go meter.sensor.agent.SendMetrics(meter.collectMetrics())
+			go meter.agent.SendMetrics(meter.collectMetrics())
 		}
 	}()
 
@@ -105,8 +110,6 @@ func (r *meterS) collectMemoryMetrics() *MemoryS {
 	if r.numGC < memStats.NumGC {
 		ret.PauseNs = memStats.PauseNs[(memStats.NumGC+255)%256]
 		r.numGC = memStats.NumGC
-	} else {
-		ret.PauseNs = 0
 	}
 
 	return ret
@@ -116,5 +119,6 @@ func (r *meterS) collectMetrics() *MetricsS {
 	return &MetricsS{
 		CgoCall:   runtime.NumCgoCall(),
 		Goroutine: runtime.NumGoroutine(),
-		Memory:    r.collectMemoryMetrics()}
+		Memory:    r.collectMemoryMetrics(),
+	}
 }

@@ -85,7 +85,7 @@ func (agent *agentS) Ready() bool {
 }
 
 // SendMetrics sends collected entity data to the host agent
-func (agent *agentS) SendMetrics(data *MetricsS) {
+func (agent *agentS) SendMetrics(data *MetricsS) error {
 	pid, err := strconv.Atoi(agent.from.PID)
 	if err != nil && agent.from.PID != "" {
 		agent.logger.Debug("agent got malformed PID %q", agent.from.PID)
@@ -96,8 +96,13 @@ func (agent *agentS) SendMetrics(data *MetricsS) {
 		Snapshot: agent.collectSnapshot(),
 		Metrics:  data,
 	}); err != nil {
+		agent.logger.Error("failed to send metrics to the host agent: ", err)
 		agent.reset()
+
+		return err
 	}
+
+	return nil
 }
 
 func (r *agentS) setLogger(l LeveledLogger) {
