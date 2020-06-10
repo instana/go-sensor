@@ -61,12 +61,16 @@ type meterS struct {
 	agent  metricSender
 }
 
-func newMeter(sensor *sensorS) *meterS {
-	sensor.logger.Debug("initializing meter")
+func newMeter(agent metricSender, logger LeveledLogger) *meterS {
+	if logger == nil {
+		logger = defaultLogger
+	}
+
+	logger.Debug("initializing meter")
 
 	meter := &meterS{
-		logger: sensor.logger,
-		agent:  sensor.agent,
+		logger: logger,
+		agent:  agent,
 	}
 
 	ticker := time.NewTicker(1 * time.Second)

@@ -47,7 +47,7 @@ func newSensor(options *Options) *sensorS {
 	}
 
 	s.agent = newAgent(s.serviceName, s.options.AgentHost, s.options.AgentPort, s.logger)
-	s.meter = newMeter(s)
+	s.meter = newMeter(s.agent, s.logger)
 
 	return s
 }
