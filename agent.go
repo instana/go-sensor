@@ -79,6 +79,15 @@ func newAgent(serviceName, host string, port int, logger LeveledLogger) *agentS 
 	return agent
 }
 
+// Ready returns whether the agent has finished the announcement and is ready to send data
+func (agent *agentS) Ready() bool {
+	return agent.canSend()
+}
+
+func (agent *agentS) canSend() bool {
+	return agent.fsm.fsm.Current() == "ready"
+}
+
 // SendMetrics sends collected entity data to the host agent
 func (agent *agentS) SendMetrics(data *MetricsS) {
 	pid, err := strconv.Atoi(agent.from.PID)
