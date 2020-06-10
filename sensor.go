@@ -58,6 +58,10 @@ func (r *sensorS) setLogger(l LeveledLogger) {
 	if r.agent != nil {
 		r.agent.setLogger(r.logger)
 	}
+
+	if r.meter != nil {
+		r.meter.setLogger(r.logger)
+	}
 }
 
 // InitSensor intializes the sensor (without tracing) to begin collecting

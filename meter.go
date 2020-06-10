@@ -52,6 +52,8 @@ type EntityData struct {
 type meterS struct {
 	sensor *sensorS
 	numGC  uint32
+
+	logger LeveledLogger
 }
 
 func newMeter(sensor *sensorS) *meterS {
@@ -59,6 +61,7 @@ func newMeter(sensor *sensorS) *meterS {
 
 	meter := &meterS{
 		sensor: sensor,
+		logger: sensor.logger,
 	}
 
 	ticker := time.NewTicker(1 * time.Second)
@@ -73,6 +76,10 @@ func newMeter(sensor *sensorS) *meterS {
 	}()
 
 	return meter
+}
+
+func (m *meterS) setLogger(l LeveledLogger) {
+	m.logger = l
 }
 
 func (r *meterS) collectMemoryMetrics() *MemoryS {
