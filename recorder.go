@@ -124,13 +124,9 @@ func (r *Recorder) clearQueuedSpans() {
 // Retrieve the queued spans and post them to the host agent asynchronously.
 func (r *Recorder) send() {
 	spansToSend := r.GetQueuedSpans()
-	if len(spansToSend) > 0 {
-		go func() {
-			_, err := sensor.agent.request(sensor.agent.makeURL(agentTracesURL), "POST", spansToSend)
-			if err != nil {
-				sensor.logger.Debug("Posting traces failed in send(): ", err)
-				sensor.agent.reset()
-			}
-		}()
+	if len(spansToSend) == 0 {
+		return
 	}
+
+	go sensor.agent.SendSpans(spansToSend)
 }

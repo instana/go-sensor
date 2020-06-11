@@ -118,6 +118,19 @@ func (agent *agentS) SendEvent(event *EventData) error {
 	return nil
 }
 
+// SendSpans sends collected spans to the host agent
+func (agent *agentS) SendSpans(spans []Span) error {
+	_, err := agent.request(agent.makeURL(agentTracesURL), "POST", spans)
+	if err != nil {
+		agent.logger.Error("failed to send spans to the host agent: ", err)
+		agent.reset()
+
+		return err
+	}
+
+	return nil
+}
+
 func (r *agentS) setLogger(l LeveledLogger) {
 	r.logger = l
 }
