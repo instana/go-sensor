@@ -34,16 +34,17 @@ const (
 
 // SendDefaultServiceEvent sends a default event which already contains the service and host
 func SendDefaultServiceEvent(title string, text string, sev severity, duration time.Duration) {
-	if sensor == nil {
-		// Since no sensor was initialized, there is no default service (as
-		// configured on the sensor) so we send blank.
-		SendServiceEvent("", title, text, sev, duration)
-	} else {
-		SendServiceEvent(sensor.agent.ServiceName, title, text, sev, duration)
+	var service string
+	if sensor != nil {
+		service = sensor.serviceName
 	}
+
+	// If the sensor is not yet initialized, there is no default service (as
+	// configured on the sensor) so we will send blank instead
+	SendServiceEvent(service, title, text, sev, duration)
 }
 
-// SendServiceEvent send an event on a specific service
+// SendServiceEvent sends an event on a specific service
 func SendServiceEvent(service string, title string, text string, sev severity, duration time.Duration) {
 	sendEvent(&EventData{
 		Title:    title,
@@ -56,7 +57,7 @@ func SendServiceEvent(service string, title string, text string, sev severity, d
 	})
 }
 
-// SendHostEvent send an event on the current host
+// SendHostEvent sends an event on the current host
 func SendHostEvent(title string, text string, sev severity, duration time.Duration) {
 	sendEvent(&EventData{
 		Title:    title,
@@ -73,6 +74,7 @@ func sendEvent(event *EventData) {
 		// normal host, docker, kubernetes etc..
 		InitSensor(&Options{})
 	}
-	//we do fire & forget here, because the whole pid dance isn't necessary to send events
-	go sensor.agent.request(sensor.agent.makeURL(agentEventURL), "POST", event)
+
+	// we do fire & forget here, because the whole pid dance isn't necessary to send events
+	go sensor.agent.SendEvent(event)
 }

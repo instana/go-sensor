@@ -105,6 +105,19 @@ func (agent *agentS) SendMetrics(data *MetricsS) error {
 	return nil
 }
 
+// SendEvent sends an event using Instana Events API
+func (agent *agentS) SendEvent(event *EventData) error {
+	_, err := agent.request(agent.makeURL(agentEventURL), "POST", event)
+	if err != nil {
+		// do not reset the agent as it might be not initialized at this state yet
+		agent.logger.Warn("failed to send event ", event.Title, " to the host agent: ", err)
+
+		return err
+	}
+
+	return nil
+}
+
 func (r *agentS) setLogger(l LeveledLogger) {
 	r.logger = l
 }
