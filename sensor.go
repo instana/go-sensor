@@ -13,9 +13,17 @@ const (
 	DefaultForceSpanSendAt  = 500
 )
 
+type agentClient interface {
+	Ready() bool
+	SendMetrics(data *MetricsS) error
+	SendEvent(event *EventData) error
+	SendSpans(spans []Span) error
+	SendProfiles(profiles []autoprofile.Profile) error
+}
+
 type sensorS struct {
 	meter       *meterS
-	agent       *agentS
+	agent       agentClient
 	logger      LeveledLogger
 	options     *Options
 	serviceName string
@@ -55,8 +63,8 @@ func newSensor(options *Options) *sensorS {
 func (r *sensorS) setLogger(l LeveledLogger) {
 	r.logger = l
 
-	if r.agent != nil {
-		r.agent.setLogger(r.logger)
+	if agent, ok := r.agent.(*agentS); ok && agent != nil {
+		agent.setLogger(r.logger)
 	}
 
 	if r.meter != nil {
