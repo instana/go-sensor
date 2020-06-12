@@ -28,15 +28,39 @@ const (
 	UnitPercent     = "percent"
 )
 
-type CallSite struct {
-	MethodName  string
-	FileName    string
-	FileLine    int64
-	Metadata    map[string]string
-	measurement float64
-	numSamples  int64
-	children    map[string]*CallSite
-	updateLock  *sync.RWMutex
+// AgentProfile is a presenter type used to serialize a collected profile
+// to JSON format supported by Instana profile sensor
+type AgentProfile struct {
+	ID        string          `json:"id"`
+	ProcessID string          `json:"pid"`
+	Runtime   string          `json:"runtime"`
+	Category  string          `json:"category"`
+	Type      string          `json:"type"`
+	Unit      string          `json:"unit"`
+	Roots     []AgentCallSite `json:"roots"`
+	Duration  int64           `json:"duration"`
+	Timespan  int64           `json:"timespan"`
+	Timestamp int64           `json:"timestamp"`
+}
+
+func NewAgentProfile(p *Profile) AgentProfile {
+	callSites := make([]AgentCallSite, 0, len(p.Roots))
+	for _, root := range p.Roots {
+		callSites = append(callSites, NewAgentCallSite(root))
+	}
+
+	return AgentProfile{
+		ProcessID: p.ProcessID,
+		ID:        p.ID,
+		Runtime:   p.Runtime,
+		Category:  p.Category,
+		Type:      p.Type,
+		Unit:      p.Unit,
+		Roots:     callSites,
+		Duration:  p.Duration,
+		Timespan:  p.Timespan,
+		Timestamp: p.Timestamp,
+	}
 }
 
 type Profile struct {
@@ -90,6 +114,46 @@ func (p *Profile) ToMap() map[string]interface{} {
 	}
 
 	return profileMap
+}
+
+// AgentCallSite is a presenter type used to serialize a call site
+// to JSON format supported by Instana profile sensor
+type AgentCallSite struct {
+	MethodName  string          `json:"method_name"`
+	FileName    string          `json:"file_name"`
+	FileLine    int64           `json:"file_line"`
+	Measurement float64         `json:"measurement"`
+	NumSamples  int64           `json:"num_samples"`
+	Children    []AgentCallSite `json:"children"`
+}
+
+func NewAgentCallSite(cs *CallSite) AgentCallSite {
+	children := make([]AgentCallSite, 0, len(cs.children))
+	for _, child := range cs.children {
+		children = append(children, NewAgentCallSite(child))
+	}
+
+	m, ns := cs.Measurement()
+
+	return AgentCallSite{
+		MethodName:  cs.MethodName,
+		FileName:    cs.FileName,
+		FileLine:    cs.FileLine,
+		Measurement: m,
+		NumSamples:  ns,
+		Children:    children,
+	}
+}
+
+type CallSite struct {
+	MethodName  string
+	FileName    string
+	FileLine    int64
+	Metadata    map[string]string
+	measurement float64
+	numSamples  int64
+	children    map[string]*CallSite
+	updateLock  *sync.RWMutex
 }
 
 func NewCallSite(methodName string, fileName string, fileLine int64) *CallSite {
