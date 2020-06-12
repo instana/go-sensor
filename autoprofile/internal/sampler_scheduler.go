@@ -139,7 +139,7 @@ func (ss *SamplerScheduler) Report() {
 			logger.Info("external PID from agent is not available, using own PID")
 		}
 
-		ss.profileRecorder.Record(profile.ToMap())
+		ss.profileRecorder.Record(NewAgentProfile(profile))
 		logger.Debug(ss.config.LogPrefix, "recorded profile")
 	}
 

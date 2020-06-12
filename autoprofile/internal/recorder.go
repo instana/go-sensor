@@ -77,7 +77,7 @@ func (pr *Recorder) Size() int {
 	return len(pr.queue)
 }
 
-func (pr *Recorder) Record(record map[string]interface{}) {
+func (pr *Recorder) Record(record AgentProfile) {
 	if pr.MaxBufferedProfiles < 1 {
 		return
 	}

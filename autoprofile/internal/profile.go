@@ -77,7 +77,7 @@ type Profile struct {
 }
 
 func NewProfile(category string, typ string, unit string, roots []*CallSite, duration int64, timespan int64) *Profile {
-	p := &Profile{
+	return &Profile{
 		ProcessID: strconv.Itoa(os.Getpid()),
 		ID:        GenerateUUID(),
 		Runtime:   RuntimeGolang,
@@ -89,31 +89,6 @@ func NewProfile(category string, typ string, unit string, roots []*CallSite, dur
 		Timespan:  timespan * 1000,
 		Timestamp: time.Now().Unix() * 1000,
 	}
-
-	return p
-}
-
-func (p *Profile) ToMap() map[string]interface{} {
-	rootsMap := make([]interface{}, 0)
-
-	for _, root := range p.Roots {
-		rootsMap = append(rootsMap, root.ToMap())
-	}
-
-	profileMap := map[string]interface{}{
-		"pid":       p.ProcessID,
-		"id":        p.ID,
-		"runtime":   p.Runtime,
-		"category":  p.Category,
-		"type":      p.Type,
-		"unit":      p.Unit,
-		"roots":     rootsMap,
-		"duration":  p.Duration,
-		"timespan":  p.Timespan,
-		"timestamp": p.Timestamp,
-	}
-
-	return profileMap
 }
 
 // AgentCallSite is a presenter type used to serialize a call site
@@ -185,25 +160,6 @@ func (cs *CallSite) Increment(value float64, numSamples int64) {
 
 func (cs *CallSite) Measurement() (value float64, numSamples int64) {
 	return cs.measurement, cs.numSamples
-}
-
-func (cs *CallSite) ToMap() map[string]interface{} {
-	childrenMap := make([]interface{}, 0)
-	for _, child := range cs.children {
-		childrenMap = append(childrenMap, child.ToMap())
-	}
-
-	m, ns := cs.Measurement()
-	callSiteMap := map[string]interface{}{
-		"method_name": cs.MethodName,
-		"file_name":   cs.FileName,
-		"file_line":   cs.FileLine,
-		"measurement": m,
-		"num_samples": ns,
-		"children":    childrenMap,
-	}
-
-	return callSiteMap
 }
 
 func (cs *CallSite) findChild(methodName, fileName string, fileLine int64) *CallSite {

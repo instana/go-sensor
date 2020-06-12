@@ -18,12 +18,8 @@ func TestRecorder_Flush(t *testing.T) {
 		return nil
 	}
 
-	rec.Record(map[string]interface{}{
-		"a": 1,
-	})
-	rec.Record(map[string]interface{}{
-		"a": 2,
-	})
+	rec.Record(internal.AgentProfile{ID: "1"})
+	rec.Record(internal.AgentProfile{ID: "2"})
 
 	rec.Flush()
 
@@ -39,12 +35,8 @@ func TestRecorder_Flush_Fail(t *testing.T) {
 		return errors.New("some error")
 	}
 
-	rec.Record(map[string]interface{}{
-		"a": 1,
-	})
-	rec.Record(map[string]interface{}{
-		"a": 2,
-	})
+	rec.Record(internal.AgentProfile{ID: "1"})
+	rec.Record(internal.AgentProfile{ID: "2"})
 
 	rec.Flush()
 

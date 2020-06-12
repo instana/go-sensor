@@ -22,8 +22,8 @@ func TestCreateAllocationCallGraph(t *testing.T) {
 	samp := internal.NewAllocationSampler()
 	internal.IncludeProfilerFrames = true
 
-	p, err := samp.Profile(500*1e6, 120)
+	profile, err := samp.Profile(500*1e6, 120)
 	require.NoError(t, err)
 
-	assert.Contains(t, fmt.Sprintf("%v", p.ToMap()), "TestCreateAllocationCallGraph")
+	assert.Contains(t, fmt.Sprintf("%v", internal.NewAgentProfile(profile)), "TestCreateAllocationCallGraph")
 }
