@@ -2,23 +2,13 @@ package internal
 
 import (
 	"math/rand"
-	"os"
-	"strconv"
 	"sync"
 	"time"
 
 	"github.com/instana/go-sensor/autoprofile/internal/logger"
 )
 
-var (
-	GetPID        = GetLocalPID
-	samplerActive Flag
-)
-
-func GetLocalPID() string {
-	logger.Warn("using the local process pid as a default")
-	return strconv.Itoa(os.Getpid())
-}
+var samplerActive Flag
 
 type SamplerConfig struct {
 	LogPrefix          string
@@ -129,14 +119,6 @@ func (ss *SamplerScheduler) Report() {
 			logger.Debug(ss.config.LogPrefix, "not recording empty profile")
 			ss.Reset()
 			return
-		}
-
-		externalPID := GetPID()
-		if externalPID != "" {
-			profile.ProcessID = externalPID
-			logger.Debug("using external PID", externalPID)
-		} else {
-			logger.Info("external PID from agent is not available, using own PID")
 		}
 
 		ss.profileRecorder.Record(NewAgentProfile(profile))

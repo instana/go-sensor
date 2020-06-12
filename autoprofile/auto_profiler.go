@@ -91,13 +91,9 @@ func Disable() {
 }
 
 // SetGetExternalPIDFunc configures the profiler to use provided function to retrieve the current PID
-func SetGetExternalPIDFunc(fn func() string) {
-	if fn == nil {
-		fn = internal.GetLocalPID
-	}
-
-	internal.GetPID = fn
-}
+//
+// Deprecated: this is a noop function, the PID is populated by the agent before sending
+func SetGetExternalPIDFunc(fn func() string) {}
 
 // SetSendProfilesFunc configures the profiler to use provided function to write collected profiles
 func SetSendProfilesFunc(fn SendProfilesFunc) {

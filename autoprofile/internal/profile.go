@@ -2,7 +2,6 @@ package internal
 
 import (
 	"bytes"
-	"os"
 	"strconv"
 	"sync"
 	"time"
@@ -32,7 +31,6 @@ const (
 // to JSON format supported by Instana profile sensor
 type AgentProfile struct {
 	ID        string          `json:"id"`
-	ProcessID string          `json:"pid"`
 	Runtime   string          `json:"runtime"`
 	Category  string          `json:"category"`
 	Type      string          `json:"type"`
@@ -50,7 +48,6 @@ func NewAgentProfile(p *Profile) AgentProfile {
 	}
 
 	return AgentProfile{
-		ProcessID: p.ProcessID,
 		ID:        p.ID,
 		Runtime:   p.Runtime,
 		Category:  p.Category,
@@ -65,7 +62,6 @@ func NewAgentProfile(p *Profile) AgentProfile {
 
 type Profile struct {
 	ID        string
-	ProcessID string
 	Runtime   string
 	Category  string
 	Type      string
@@ -78,7 +74,6 @@ type Profile struct {
 
 func NewProfile(category string, typ string, unit string, roots []*CallSite, duration int64, timespan int64) *Profile {
 	return &Profile{
-		ProcessID: strconv.Itoa(os.Getpid()),
 		ID:        GenerateUUID(),
 		Runtime:   RuntimeGolang,
 		Category:  category,
