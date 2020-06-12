@@ -141,9 +141,19 @@ func (agent *agentS) SendSpans(spans []Span) error {
 	return nil
 }
 
+type hostAgentProfile struct {
+	autoprofile.Profile
+	ProcessID string `json:"pid"`
+}
+
 // SendProfiles sends profile data to the agent
 func (agent *agentS) SendProfiles(profiles []autoprofile.Profile) error {
-	_, err := agent.request(agent.makeURL(agentProfilesURL), "POST", profiles)
+	agentProfiles := make([]hostAgentProfile, 0, len(profiles))
+	for _, p := range profiles {
+		agentProfiles = append(agentProfiles, hostAgentProfile{p, agent.from.PID})
+	}
+
+	_, err := agent.request(agent.makeURL(agentProfilesURL), "POST", agentProfiles)
 	if err != nil {
 		agent.logger.Error("failed to send profile data to the host agent: ", err)
 		agent.reset()
