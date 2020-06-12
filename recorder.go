@@ -61,7 +61,7 @@ func (r *Recorder) RecordSpan(span *spanS) {
 		r.spans = r.spans[1:]
 	}
 
-	r.spans = append(r.spans, newSpan(span, sensor.agent.from))
+	r.spans = append(r.spans, newSpan(span))
 
 	if r.testMode || !sensor.agent.Ready() {
 		return

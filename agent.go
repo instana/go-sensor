@@ -118,9 +118,19 @@ func (agent *agentS) SendEvent(event *EventData) error {
 	return nil
 }
 
+type hostAgentSpan struct {
+	Span
+	From *fromS `json:"f"` // override the `f` fields with agent-specific type
+}
+
 // SendSpans sends collected spans to the host agent
 func (agent *agentS) SendSpans(spans []Span) error {
-	_, err := agent.request(agent.makeURL(agentTracesURL), "POST", spans)
+	agentSpans := make([]hostAgentSpan, 0, len(spans))
+	for _, sp := range spans {
+		agentSpans = append(agentSpans, hostAgentSpan{sp, agent.from})
+	}
+
+	_, err := agent.request(agent.makeURL(agentTracesURL), "POST", agentSpans)
 	if err != nil {
 		agent.logger.Error("failed to send spans to the host agent: ", err)
 		agent.reset()
