@@ -48,10 +48,9 @@ type fromS struct {
 }
 
 type agentS struct {
-	ServiceName string
-	from        *fromS
-	host        string
-	port        string
+	from *fromS
+	host string
+	port string
 
 	snapshotMu                 sync.RWMutex
 	lastSnapshotCollectionTime time.Time
@@ -69,12 +68,11 @@ func newAgent(serviceName, host string, port int, logger LeveledLogger) *agentS 
 	logger.Debug("initializing agent")
 
 	agent := &agentS{
-		ServiceName: serviceName,
-		from:        &fromS{},
-		host:        host,
-		port:        strconv.Itoa(port),
-		client:      &http.Client{Timeout: 5 * time.Second},
-		logger:      logger,
+		from:   &fromS{},
+		host:   host,
+		port:   strconv.Itoa(port),
+		client: &http.Client{Timeout: 5 * time.Second},
+		logger: logger,
 	}
 	agent.fsm = newFSM(agent)
 
@@ -268,7 +266,7 @@ func (agent *agentS) collectSnapshot() *SnapshotS {
 	agent.logger.Debug("collected snapshot")
 
 	return &SnapshotS{
-		Name:     agent.ServiceName,
+		Name:     sensor.serviceName,
 		Version:  runtime.Version(),
 		Root:     runtime.GOROOT(),
 		MaxProcs: runtime.GOMAXPROCS(0),
