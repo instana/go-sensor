@@ -81,24 +81,14 @@ func InitSensor(options *Options) {
 			MaxBufferedProfiles:   options.MaxBufferedProfiles,
 		})
 
-		autoprofile.SetGetExternalPIDFunc(func() string {
-			return sensor.agent.from.PID
-		})
-
-		autoprofile.SetSendProfilesFunc(func(profiles interface{}) error {
+		autoprofile.SetSendProfilesFunc(func(profiles []autoprofile.Profile) error {
 			if !sensor.agent.Ready() {
 				return errors.New("sender not ready")
 			}
 
 			sensor.logger.Debug("sending profiles to agent")
 
-			_, err := sensor.agent.request(sensor.agent.makeURL(agentProfilesURL), "POST", profiles)
-			if err != nil {
-				sensor.agent.reset()
-				sensor.logger.Error(err)
-			}
-
-			return err
+			return sensor.agent.SendProfiles(profiles)
 		})
 
 		autoprofile.Enable()

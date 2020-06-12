@@ -10,6 +10,8 @@ import (
 	"strconv"
 	"sync"
 	"time"
+
+	"github.com/instana/go-sensor/autoprofile"
 )
 
 const (
@@ -123,6 +125,19 @@ func (agent *agentS) SendSpans(spans []Span) error {
 	_, err := agent.request(agent.makeURL(agentTracesURL), "POST", spans)
 	if err != nil {
 		agent.logger.Error("failed to send spans to the host agent: ", err)
+		agent.reset()
+
+		return err
+	}
+
+	return nil
+}
+
+// SendProfiles sends profile data to the agent
+func (agent *agentS) SendProfiles(profiles []autoprofile.Profile) error {
+	_, err := agent.request(agent.makeURL(agentProfilesURL), "POST", profiles)
+	if err != nil {
+		agent.logger.Error("failed to send profile data to the host agent: ", err)
 		agent.reset()
 
 		return err

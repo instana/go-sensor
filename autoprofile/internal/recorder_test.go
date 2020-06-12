@@ -6,14 +6,13 @@ import (
 
 	"github.com/instana/go-sensor/autoprofile/internal"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestRecorder_Flush(t *testing.T) {
-	var profiles interface{}
+	var profiles []internal.AgentProfile
 
 	rec := internal.NewRecorder()
-	rec.SendProfiles = func(p interface{}) error {
+	rec.SendProfiles = func(p []internal.AgentProfile) error {
 		profiles = p
 		return nil
 	}
@@ -23,15 +22,14 @@ func TestRecorder_Flush(t *testing.T) {
 
 	rec.Flush()
 
-	require.IsType(t, []interface{}{}, profiles)
-	assert.Len(t, profiles.([]interface{}), 2)
+	assert.Len(t, profiles, 2)
 
 	assert.Equal(t, 0, rec.Size())
 }
 
 func TestRecorder_Flush_Fail(t *testing.T) {
 	rec := internal.NewRecorder()
-	rec.SendProfiles = func(profiles interface{}) error {
+	rec.SendProfiles = func(profiles []internal.AgentProfile) error {
 		return errors.New("some error")
 	}
 
