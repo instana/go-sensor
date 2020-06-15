@@ -2,7 +2,6 @@ package internal
 
 import (
 	"bytes"
-	"os"
 	"strconv"
 	"sync"
 	"time"
@@ -28,20 +27,41 @@ const (
 	UnitPercent     = "percent"
 )
 
-type CallSite struct {
-	MethodName  string
-	FileName    string
-	FileLine    int64
-	Metadata    map[string]string
-	measurement float64
-	numSamples  int64
-	children    map[string]*CallSite
-	updateLock  *sync.RWMutex
+// AgentProfile is a presenter type used to serialize a collected profile
+// to JSON format supported by Instana profile sensor
+type AgentProfile struct {
+	ID        string          `json:"id"`
+	Runtime   string          `json:"runtime"`
+	Category  string          `json:"category"`
+	Type      string          `json:"type"`
+	Unit      string          `json:"unit"`
+	Roots     []AgentCallSite `json:"roots"`
+	Duration  int64           `json:"duration"`
+	Timespan  int64           `json:"timespan"`
+	Timestamp int64           `json:"timestamp"`
+}
+
+func NewAgentProfile(p *Profile) AgentProfile {
+	callSites := make([]AgentCallSite, 0, len(p.Roots))
+	for _, root := range p.Roots {
+		callSites = append(callSites, NewAgentCallSite(root))
+	}
+
+	return AgentProfile{
+		ID:        p.ID,
+		Runtime:   p.Runtime,
+		Category:  p.Category,
+		Type:      p.Type,
+		Unit:      p.Unit,
+		Roots:     callSites,
+		Duration:  p.Duration,
+		Timespan:  p.Timespan,
+		Timestamp: p.Timestamp,
+	}
 }
 
 type Profile struct {
 	ID        string
-	ProcessID string
 	Runtime   string
 	Category  string
 	Type      string
@@ -53,8 +73,7 @@ type Profile struct {
 }
 
 func NewProfile(category string, typ string, unit string, roots []*CallSite, duration int64, timespan int64) *Profile {
-	p := &Profile{
-		ProcessID: strconv.Itoa(os.Getpid()),
+	return &Profile{
 		ID:        GenerateUUID(),
 		Runtime:   RuntimeGolang,
 		Category:  category,
@@ -65,31 +84,46 @@ func NewProfile(category string, typ string, unit string, roots []*CallSite, dur
 		Timespan:  timespan * 1000,
 		Timestamp: time.Now().Unix() * 1000,
 	}
-
-	return p
 }
 
-func (p *Profile) ToMap() map[string]interface{} {
-	rootsMap := make([]interface{}, 0)
+// AgentCallSite is a presenter type used to serialize a call site
+// to JSON format supported by Instana profile sensor
+type AgentCallSite struct {
+	MethodName  string          `json:"method_name"`
+	FileName    string          `json:"file_name"`
+	FileLine    int64           `json:"file_line"`
+	Measurement float64         `json:"measurement"`
+	NumSamples  int64           `json:"num_samples"`
+	Children    []AgentCallSite `json:"children"`
+}
 
-	for _, root := range p.Roots {
-		rootsMap = append(rootsMap, root.ToMap())
+func NewAgentCallSite(cs *CallSite) AgentCallSite {
+	children := make([]AgentCallSite, 0, len(cs.children))
+	for _, child := range cs.children {
+		children = append(children, NewAgentCallSite(child))
 	}
 
-	profileMap := map[string]interface{}{
-		"pid":       p.ProcessID,
-		"id":        p.ID,
-		"runtime":   p.Runtime,
-		"category":  p.Category,
-		"type":      p.Type,
-		"unit":      p.Unit,
-		"roots":     rootsMap,
-		"duration":  p.Duration,
-		"timespan":  p.Timespan,
-		"timestamp": p.Timestamp,
-	}
+	m, ns := cs.Measurement()
 
-	return profileMap
+	return AgentCallSite{
+		MethodName:  cs.MethodName,
+		FileName:    cs.FileName,
+		FileLine:    cs.FileLine,
+		Measurement: m,
+		NumSamples:  ns,
+		Children:    children,
+	}
+}
+
+type CallSite struct {
+	MethodName  string
+	FileName    string
+	FileLine    int64
+	Metadata    map[string]string
+	measurement float64
+	numSamples  int64
+	children    map[string]*CallSite
+	updateLock  *sync.RWMutex
 }
 
 func NewCallSite(methodName string, fileName string, fileLine int64) *CallSite {
@@ -121,25 +155,6 @@ func (cs *CallSite) Increment(value float64, numSamples int64) {
 
 func (cs *CallSite) Measurement() (value float64, numSamples int64) {
 	return cs.measurement, cs.numSamples
-}
-
-func (cs *CallSite) ToMap() map[string]interface{} {
-	childrenMap := make([]interface{}, 0)
-	for _, child := range cs.children {
-		childrenMap = append(childrenMap, child.ToMap())
-	}
-
-	m, ns := cs.Measurement()
-	callSiteMap := map[string]interface{}{
-		"method_name": cs.MethodName,
-		"file_name":   cs.FileName,
-		"file_line":   cs.FileLine,
-		"measurement": m,
-		"num_samples": ns,
-		"children":    childrenMap,
-	}
-
-	return callSiteMap
 }
 
 func (cs *CallSite) findChild(methodName, fileName string, fileLine int64) *CallSite {

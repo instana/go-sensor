@@ -12,10 +12,10 @@ const (
 )
 
 // SendProfilesFunc is a callback to emit collected profiles from recorder
-type SendProfilesFunc func(interface{}) error
+type SendProfilesFunc func([]AgentProfile) error
 
 // NoopSendProfiles is the default function to be called by Recorded to send collected profiles
-func NoopSendProfiles(interface{}) error {
+func NoopSendProfiles([]AgentProfile) error {
 	logger.Warn(
 		"autoprofile.SendProfiles callback is not set, ",
 		"make sure that you have it configured using autoprofile.SetSendProfilesFunc() in your code",
@@ -31,7 +31,7 @@ type Recorder struct {
 
 	started            Flag
 	flushTimer         *Timer
-	queue              []interface{}
+	queue              []AgentProfile
 	queueLock          *sync.Mutex
 	lastFlushTimestamp int64
 	backoffSeconds     int64
@@ -43,7 +43,7 @@ func NewRecorder() *Recorder {
 		SendProfiles:        NoopSendProfiles,
 		MaxBufferedProfiles: DefaultMaxBufferedProfiles,
 
-		queue:     make([]interface{}, 0),
+		queue:     make([]AgentProfile, 0),
 		queueLock: &sync.Mutex{},
 	}
 
@@ -77,7 +77,7 @@ func (pr *Recorder) Size() int {
 	return len(pr.queue)
 }
 
-func (pr *Recorder) Record(record map[string]interface{}) {
+func (pr *Recorder) Record(record AgentProfile) {
 	if pr.MaxBufferedProfiles < 1 {
 		return
 	}
@@ -106,7 +106,7 @@ func (pr *Recorder) Flush() {
 
 	pr.queueLock.Lock()
 	outgoing := pr.queue
-	pr.queue = make([]interface{}, 0)
+	pr.queue = make([]AgentProfile, 0)
 	pr.queueLock.Unlock()
 
 	pr.lastFlushTimestamp = now

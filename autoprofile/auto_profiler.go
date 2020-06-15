@@ -6,6 +6,14 @@ import (
 	instalogger "github.com/instana/go-sensor/logger"
 )
 
+// Profile represents profiler data sent to the host agent
+//
+// The type alias here is needed to expose the type defined inside the internal package.
+// Ideally this type should've been defined in the same package with instana.agentS, however
+// due to the way we activate profiling, this would introduce a circular dependency.
+type Profile internal.AgentProfile
+type SendProfilesFunc func(profiles []Profile) error
+
 var (
 	profileRecorder     = internal.NewRecorder()
 	cpuSamplerScheduler = internal.NewSamplerScheduler(profileRecorder, internal.NewCPUSampler(), internal.SamplerConfig{
@@ -83,21 +91,25 @@ func Disable() {
 }
 
 // SetGetExternalPIDFunc configures the profiler to use provided function to retrieve the current PID
-func SetGetExternalPIDFunc(fn func() string) {
-	if fn == nil {
-		fn = internal.GetLocalPID
-	}
-
-	internal.GetPID = fn
-}
+//
+// Deprecated: this is a noop function, the PID is populated by the agent before sending
+func SetGetExternalPIDFunc(fn func() string) {}
 
 // SetSendProfilesFunc configures the profiler to use provided function to write collected profiles
-func SetSendProfilesFunc(fn internal.SendProfilesFunc) {
+func SetSendProfilesFunc(fn SendProfilesFunc) {
 	if fn == nil {
-		fn = internal.NoopSendProfiles
+		profileRecorder.SendProfiles = internal.NoopSendProfiles
+		return
 	}
 
-	profileRecorder.SendProfiles = fn
+	profileRecorder.SendProfiles = func(data []internal.AgentProfile) error {
+		profiles := make([]Profile, 0, len(data))
+		for _, p := range data {
+			profiles = append(profiles, Profile(p))
+		}
+
+		return fn(profiles)
+	}
 }
 
 // Options contains profiler configuration

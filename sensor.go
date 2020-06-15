@@ -13,9 +13,17 @@ const (
 	DefaultForceSpanSendAt  = 500
 )
 
+type agentClient interface {
+	Ready() bool
+	SendMetrics(data *MetricsS) error
+	SendEvent(event *EventData) error
+	SendSpans(spans []Span) error
+	SendProfiles(profiles []autoprofile.Profile) error
+}
+
 type sensorS struct {
 	meter       *meterS
-	agent       *agentS
+	agent       agentClient
 	logger      LeveledLogger
 	options     *Options
 	serviceName string
@@ -46,8 +54,8 @@ func newSensor(options *Options) *sensorS {
 		setLogLevel(l, options.LogLevel)
 	}
 
-	s.agent = newAgent(s.options.AgentHost, s.options.AgentPort, s.logger)
-	s.meter = newMeter(s)
+	s.agent = newAgent(s.serviceName, s.options.AgentHost, s.options.AgentPort, s.logger)
+	s.meter = newMeter(s.agent, s.logger)
 
 	return s
 }
@@ -55,8 +63,12 @@ func newSensor(options *Options) *sensorS {
 func (r *sensorS) setLogger(l LeveledLogger) {
 	r.logger = l
 
-	if r.agent != nil {
-		r.agent.setLogger(r.logger)
+	if agent, ok := r.agent.(*agentS); ok && agent != nil {
+		agent.setLogger(r.logger)
+	}
+
+	if r.meter != nil {
+		r.meter.setLogger(r.logger)
 	}
 }
 
@@ -77,24 +89,14 @@ func InitSensor(options *Options) {
 			MaxBufferedProfiles:   options.MaxBufferedProfiles,
 		})
 
-		autoprofile.SetGetExternalPIDFunc(func() string {
-			return sensor.agent.from.PID
-		})
-
-		autoprofile.SetSendProfilesFunc(func(profiles interface{}) error {
-			if !sensor.agent.canSend() {
+		autoprofile.SetSendProfilesFunc(func(profiles []autoprofile.Profile) error {
+			if !sensor.agent.Ready() {
 				return errors.New("sender not ready")
 			}
 
 			sensor.logger.Debug("sending profiles to agent")
 
-			_, err := sensor.agent.request(sensor.agent.makeURL(agentProfilesURL), "POST", profiles)
-			if err != nil {
-				sensor.agent.reset()
-				sensor.logger.Error(err)
-			}
-
-			return err
+			return sensor.agent.SendProfiles(profiles)
 		})
 
 		autoprofile.Enable()

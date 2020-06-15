@@ -24,7 +24,7 @@ func TestCreateBlockProfile(t *testing.T) {
 	profile, err := blockSampler.Profile(500*1e6, 120)
 	require.NoError(t, err)
 
-	assert.Contains(t, fmt.Sprintf("%v", profile.ToMap()), "simulateBlocking")
+	assert.Contains(t, fmt.Sprintf("%v", internal.NewAgentProfile(profile)), "simulateBlocking")
 }
 
 func simulateBlocking(d time.Duration) {

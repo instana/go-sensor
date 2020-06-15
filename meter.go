@@ -2,13 +2,7 @@ package instana
 
 import (
 	"runtime"
-	"strconv"
 	"time"
-)
-
-const (
-	// SnapshotPeriod is the amount of time in seconds between snapshot reports.
-	SnapshotPeriod = 600
 )
 
 // SnapshotS struct to hold snapshot data.
@@ -55,53 +49,46 @@ type EntityData struct {
 	Metrics  *MetricsS  `json:"metrics"`
 }
 
-type meterS struct {
-	sensor            *sensorS
-	numGC             uint32
-	snapshotCountdown int
+type metricSender interface {
+	Ready() bool
+	SendMetrics(*MetricsS) error
 }
 
-func newMeter(sensor *sensorS) *meterS {
-	sensor.logger.Debug("initializing meter")
+type meterS struct {
+	numGC uint32
+
+	logger LeveledLogger
+	agent  metricSender
+}
+
+func newMeter(agent metricSender, logger LeveledLogger) *meterS {
+	if logger == nil {
+		logger = defaultLogger
+	}
+
+	logger.Debug("initializing meter")
 
 	meter := &meterS{
-		sensor: sensor,
+		logger: logger,
+		agent:  agent,
 	}
 
 	ticker := time.NewTicker(1 * time.Second)
 	go func() {
-		meter.snapshotCountdown = 1
 		for range ticker.C {
-			if meter.sensor.agent.canSend() {
-				meter.snapshotCountdown--
-				var s *SnapshotS
-				if meter.snapshotCountdown == 0 {
-					meter.snapshotCountdown = SnapshotPeriod
-					s = meter.collectSnapshot()
-					meter.sensor.logger.Debug("collected snapshot")
-				}
-
-				pid, _ := strconv.Atoi(meter.sensor.agent.from.PID)
-				d := &EntityData{
-					PID:      pid,
-					Snapshot: s,
-					Metrics:  meter.collectMetrics(),
-				}
-
-				go meter.send(d)
+			if !meter.agent.Ready() {
+				continue
 			}
+
+			go meter.agent.SendMetrics(meter.collectMetrics())
 		}
 	}()
 
 	return meter
 }
 
-func (r *meterS) send(d *EntityData) {
-	_, err := r.sensor.agent.request(r.sensor.agent.makeURL(agentDataURL), "POST", d)
-
-	if err != nil {
-		r.sensor.agent.reset()
-	}
+func (m *meterS) setLogger(l LeveledLogger) {
+	m.logger = l
 }
 
 func (r *meterS) collectMemoryMetrics() *MemoryS {
@@ -127,8 +114,6 @@ func (r *meterS) collectMemoryMetrics() *MemoryS {
 	if r.numGC < memStats.NumGC {
 		ret.PauseNs = memStats.PauseNs[(memStats.NumGC+255)%256]
 		r.numGC = memStats.NumGC
-	} else {
-		ret.PauseNs = 0
 	}
 
 	return ret
@@ -138,15 +123,6 @@ func (r *meterS) collectMetrics() *MetricsS {
 	return &MetricsS{
 		CgoCall:   runtime.NumCgoCall(),
 		Goroutine: runtime.NumGoroutine(),
-		Memory:    r.collectMemoryMetrics()}
-}
-
-func (r *meterS) collectSnapshot() *SnapshotS {
-	return &SnapshotS{
-		Name:     r.sensor.serviceName,
-		Version:  runtime.Version(),
-		Root:     runtime.GOROOT(),
-		MaxProcs: runtime.GOMAXPROCS(0),
-		Compiler: runtime.Compiler,
-		NumCPU:   runtime.NumCPU()}
+		Memory:    r.collectMemoryMetrics(),
+	}
 }

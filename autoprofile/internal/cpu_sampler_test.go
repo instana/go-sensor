@@ -24,7 +24,7 @@ func TestCreateCPUProfile(t *testing.T) {
 	profile, err := cpuSampler.Profile(500*1e6, 120)
 	require.NoError(t, err)
 
-	assert.Contains(t, fmt.Sprintf("%v", profile.ToMap()), "simulateCPULoad")
+	assert.Contains(t, fmt.Sprintf("%v", internal.NewAgentProfile(profile)), "simulateCPULoad")
 }
 
 func simulateCPULoad(d time.Duration) {

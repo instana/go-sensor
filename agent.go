@@ -6,8 +6,12 @@ import (
 	"errors"
 	"io/ioutil"
 	"net/http"
+	"runtime"
 	"strconv"
+	"sync"
 	"time"
+
+	"github.com/instana/go-sensor/autoprofile"
 )
 
 const (
@@ -19,6 +23,10 @@ const (
 	agentDefaultHost  = "localhost"
 	agentDefaultPort  = 42699
 	agentHeader       = "Instana Agent"
+
+	// SnapshotPeriod is the amount of time in seconds between snapshot reports.
+	SnapshotPeriod             = 600
+	snapshotCollectionInterval = SnapshotPeriod * time.Second
 )
 
 type agentResponse struct {
@@ -40,15 +48,19 @@ type fromS struct {
 }
 
 type agentS struct {
+	from *fromS
+	host string
+	port string
+
+	snapshotMu                 sync.RWMutex
+	lastSnapshotCollectionTime time.Time
+
 	fsm    *fsmS
-	from   *fromS
-	host   string
-	port   string
 	client *http.Client
 	logger LeveledLogger
 }
 
-func newAgent(host string, port int, logger LeveledLogger) *agentS {
+func newAgent(serviceName, host string, port int, logger LeveledLogger) *agentS {
 	if logger == nil {
 		logger = defaultLogger
 	}
@@ -65,6 +77,91 @@ func newAgent(host string, port int, logger LeveledLogger) *agentS {
 	agent.fsm = newFSM(agent)
 
 	return agent
+}
+
+// Ready returns whether the agent has finished the announcement and is ready to send data
+func (agent *agentS) Ready() bool {
+	return agent.fsm.fsm.Current() == "ready"
+}
+
+// SendMetrics sends collected entity data to the host agent
+func (agent *agentS) SendMetrics(data *MetricsS) error {
+	pid, err := strconv.Atoi(agent.from.PID)
+	if err != nil && agent.from.PID != "" {
+		agent.logger.Debug("agent got malformed PID %q", agent.from.PID)
+	}
+
+	if _, err = agent.request(agent.makeURL(agentDataURL), "POST", &EntityData{
+		PID:      pid,
+		Snapshot: agent.collectSnapshot(),
+		Metrics:  data,
+	}); err != nil {
+		agent.logger.Error("failed to send metrics to the host agent: ", err)
+		agent.reset()
+
+		return err
+	}
+
+	return nil
+}
+
+// SendEvent sends an event using Instana Events API
+func (agent *agentS) SendEvent(event *EventData) error {
+	_, err := agent.request(agent.makeURL(agentEventURL), "POST", event)
+	if err != nil {
+		// do not reset the agent as it might be not initialized at this state yet
+		agent.logger.Warn("failed to send event ", event.Title, " to the host agent: ", err)
+
+		return err
+	}
+
+	return nil
+}
+
+type hostAgentSpan struct {
+	Span
+	From *fromS `json:"f"` // override the `f` fields with agent-specific type
+}
+
+// SendSpans sends collected spans to the host agent
+func (agent *agentS) SendSpans(spans []Span) error {
+	agentSpans := make([]hostAgentSpan, 0, len(spans))
+	for _, sp := range spans {
+		agentSpans = append(agentSpans, hostAgentSpan{sp, agent.from})
+	}
+
+	_, err := agent.request(agent.makeURL(agentTracesURL), "POST", agentSpans)
+	if err != nil {
+		agent.logger.Error("failed to send spans to the host agent: ", err)
+		agent.reset()
+
+		return err
+	}
+
+	return nil
+}
+
+type hostAgentProfile struct {
+	autoprofile.Profile
+	ProcessID string `json:"pid"`
+}
+
+// SendProfiles sends profile data to the agent
+func (agent *agentS) SendProfiles(profiles []autoprofile.Profile) error {
+	agentProfiles := make([]hostAgentProfile, 0, len(profiles))
+	for _, p := range profiles {
+		agentProfiles = append(agentProfiles, hostAgentProfile{p, agent.from.PID})
+	}
+
+	_, err := agent.request(agent.makeURL(agentProfilesURL), "POST", agentProfiles)
+	if err != nil {
+		agent.logger.Error("failed to send profile data to the host agent: ", err)
+		agent.reset()
+
+		return err
+	}
+
+	return nil
 }
 
 func (r *agentS) setLogger(l LeveledLogger) {
@@ -171,4 +268,29 @@ func (r *agentS) setHost(host string) {
 
 func (r *agentS) reset() {
 	r.fsm.reset()
+}
+
+func (agent *agentS) collectSnapshot() *SnapshotS {
+	agent.snapshotMu.RLock()
+	lastSnapshotCollectionTime := agent.lastSnapshotCollectionTime
+	agent.snapshotMu.RUnlock()
+
+	if time.Since(lastSnapshotCollectionTime) < snapshotCollectionInterval {
+		return nil
+	}
+
+	agent.snapshotMu.Lock()
+	defer agent.snapshotMu.Unlock()
+
+	agent.lastSnapshotCollectionTime = time.Now()
+	agent.logger.Debug("collected snapshot")
+
+	return &SnapshotS{
+		Name:     sensor.serviceName,
+		Version:  runtime.Version(),
+		Root:     runtime.GOROOT(),
+		MaxProcs: runtime.GOMAXPROCS(0),
+		Compiler: runtime.Compiler,
+		NumCPU:   runtime.NumCPU(),
+	}
 }

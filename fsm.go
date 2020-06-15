@@ -238,7 +238,3 @@ func (r *fsmS) reset() {
 	r.retries = maximumRetries
 	r.fsm.Event(eInit)
 }
-
-func (r *agentS) canSend() bool {
-	return r.fsm.fsm.Current() == "ready"
-}

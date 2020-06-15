@@ -126,7 +126,7 @@ type Span struct {
 	ForeignParent *ForeignParent `json:"fp,omitempty"`
 }
 
-func newSpan(span *spanS, from *fromS) Span {
+func newSpan(span *spanS) Span {
 	data := RegisteredSpanType(span.Operation).ExtractData(span)
 	sp := Span{
 		TraceID:       span.context.TraceID,
@@ -136,7 +136,6 @@ func newSpan(span *spanS, from *fromS) Span {
 		Duration:      uint64(span.Duration) / uint64(time.Millisecond),
 		Name:          string(data.Type()),
 		Ec:            span.ErrorCount,
-		From:          from,
 		ForeignParent: newForeignParent(span.context.ForeignParent),
 		Kind:          int(data.Kind()),
 		Data:          data,

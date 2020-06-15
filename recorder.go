@@ -21,36 +21,28 @@ type Recorder struct {
 	testMode bool
 }
 
-// NewRecorder Establish a Recorder span recorder
+// NewRecorder initializes a new span recorder
 func NewRecorder() *Recorder {
-	r := new(Recorder)
-	r.init()
-	return r
-}
-
-// NewTestRecorder Establish a new span recorder used for testing
-func NewTestRecorder() *Recorder {
-	r := new(Recorder)
-	r.testMode = true
-	r.init()
-	return r
-}
-
-func (r *Recorder) init() {
-	r.clearQueuedSpans()
-
-	if r.testMode {
-		return
-	}
+	r := &Recorder{}
 
 	ticker := time.NewTicker(1 * time.Second)
 	go func() {
 		for range ticker.C {
-			if sensor.agent.canSend() {
+			if sensor.agent.Ready() {
 				r.send()
 			}
 		}
 	}()
+
+	return r
+}
+
+// NewTestRecorder initializes a new span recorder that keeps all collected
+// until they are requested. This recorder does not send spans to the agent (used for testing)
+func NewTestRecorder() *Recorder {
+	return &Recorder{
+		testMode: true,
+	}
 }
 
 // RecordSpan accepts spans to be recorded and and added to the span queue
@@ -58,7 +50,7 @@ func (r *Recorder) init() {
 func (r *Recorder) RecordSpan(span *spanS) {
 	// If we're not announced and not in test mode then just
 	// return
-	if !r.testMode && !sensor.agent.canSend() {
+	if !r.testMode && !sensor.agent.Ready() {
 		return
 	}
 
@@ -69,9 +61,9 @@ func (r *Recorder) RecordSpan(span *spanS) {
 		r.spans = r.spans[1:]
 	}
 
-	r.spans = append(r.spans, newSpan(span, sensor.agent.from))
+	r.spans = append(r.spans, newSpan(span))
 
-	if r.testMode || !sensor.agent.canSend() {
+	if r.testMode || !sensor.agent.Ready() {
 		return
 	}
 
@@ -109,28 +101,15 @@ func (r *Recorder) GetQueuedSpans() []Span {
 //   This is meant to be called from GetQueuedSpans which handles
 //   locking.
 func (r *Recorder) clearQueuedSpans() {
-	var mbs int
-
-	if len(r.spans) > 0 {
-		if sensor != nil {
-			mbs = sensor.options.MaxBufferedSpans
-		} else {
-			mbs = DefaultMaxBufferedSpans
-		}
-		r.spans = make([]Span, 0, mbs)
-	}
+	r.spans = r.spans[:0]
 }
 
 // Retrieve the queued spans and post them to the host agent asynchronously.
 func (r *Recorder) send() {
 	spansToSend := r.GetQueuedSpans()
-	if len(spansToSend) > 0 {
-		go func() {
-			_, err := sensor.agent.request(sensor.agent.makeURL(agentTracesURL), "POST", spansToSend)
-			if err != nil {
-				sensor.logger.Debug("Posting traces failed in send(): ", err)
-				sensor.agent.reset()
-			}
-		}()
+	if len(spansToSend) == 0 {
+		return
 	}
+
+	go sensor.agent.SendSpans(spansToSend)
 }
