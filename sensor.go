@@ -60,7 +60,12 @@ func newSensor(options *Options) *sensorS {
 		setLogLevel(l, options.LogLevel)
 	}
 
-	s.agent = newAgent(s.serviceName, s.options.AgentHost, s.options.AgentPort, s.logger)
+	switch {
+	case os.Getenv("AWS_EXECUTION_ENV") == "AWS_ECS_FARGATE":
+		s.agent = newFargateAgent(os.Getenv("INSTANA_AGENT_ENDPOINT"), os.Getenv("INSTANA_AGENT_KEY"), nil, s.logger)
+	default:
+		s.agent = newAgent(s.serviceName, s.options.AgentHost, s.options.AgentPort, s.logger)
+	}
 	s.meter = newMeter(s.agent, s.logger)
 
 	return s
