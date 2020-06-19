@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 
 	"github.com/instana/go-sensor/autoprofile"
+	"github.com/instana/go-sensor/aws"
 	"github.com/instana/go-sensor/logger"
 )
 
@@ -62,7 +63,12 @@ func newSensor(options *Options) *sensorS {
 
 	switch {
 	case os.Getenv("AWS_EXECUTION_ENV") == "AWS_ECS_FARGATE":
-		s.agent = newFargateAgent(os.Getenv("INSTANA_AGENT_ENDPOINT"), os.Getenv("INSTANA_AGENT_KEY"), nil, s.logger)
+		s.agent = newFargateAgent(
+			os.Getenv("INSTANA_AGENT_ENDPOINT"),
+			os.Getenv("INSTANA_AGENT_KEY"),
+			aws.NewECSMetadataProvider(os.Getenv("ECS_CONTAINER_METADATA_URI"), nil),
+			s.logger,
+		)
 	default:
 		s.agent = newAgent(s.serviceName, s.options.AgentHost, s.options.AgentPort, s.logger)
 	}
