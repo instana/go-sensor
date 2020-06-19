@@ -104,6 +104,22 @@ func getProcCommandLine() (string, []string, bool) {
 	return parts[0], parts[1:], true
 }
 
+func getProcessEnv() map[string]string {
+	osEnv := os.Environ()
+
+	env := make(map[string]string, len(osEnv))
+	for _, envVar := range osEnv {
+		idx := strings.Index(envVar, "=")
+		if idx < 0 {
+			continue
+		}
+
+		env[envVar[:idx]] = envVar[idx+1:]
+	}
+
+	return env
+}
+
 func getDefaultGateway(routeTableFile string) (string, error) {
 	routeTable, err := os.Open(routeTableFile)
 	if err != nil {
