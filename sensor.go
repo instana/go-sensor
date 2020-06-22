@@ -3,6 +3,7 @@ package instana
 import (
 	"errors"
 	"os"
+	"strings"
 
 	"github.com/instana/go-sensor/autoprofile"
 	"github.com/instana/go-sensor/logger"
@@ -82,7 +83,7 @@ func InitSensor(options *Options) {
 	sensor = newSensor(options)
 
 	// enable auto-profiling
-	if options.EnableAutoProfile {
+	if options.EnableAutoProfile || strings.ToLower(os.Getenv("INSTANA_AUTO_PROFILE")) == "true" {
 		autoprofile.SetLogger(sensor.logger)
 		autoprofile.SetOptions(autoprofile.Options{
 			IncludeProfilerFrames: options.IncludeProfilerFrames,
