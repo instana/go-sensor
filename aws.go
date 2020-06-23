@@ -1,7 +1,13 @@
 package instana
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
+	"fmt"
+	"io"
+	"io/ioutil"
+	"net/http"
 	"os"
 	"os/user"
 	"strconv"
@@ -232,11 +238,12 @@ type fargateAgent struct {
 
 	snapshot fargateSnapshot
 
-	ecs    *aws.ECSMetadataProvider
-	logger LeveledLogger
+	runtimeSnapshot *SnapshotCollector
+	ecs             *aws.ECSMetadataProvider
+	logger          LeveledLogger
 }
 
-func newFargateAgent(acceptorEndpoint, agentKey string, mdProvider *aws.ECSMetadataProvider, logger LeveledLogger) *fargateAgent {
+func newFargateAgent(serviceName, acceptorEndpoint, agentKey string, mdProvider *aws.ECSMetadataProvider, logger LeveledLogger) *fargateAgent {
 	if logger == nil {
 		logger = defaultLogger
 	}
@@ -247,8 +254,12 @@ func newFargateAgent(acceptorEndpoint, agentKey string, mdProvider *aws.ECSMetad
 		Endpoint: acceptorEndpoint,
 		Key:      agentKey,
 		PID:      os.Getpid(),
-		ecs:      mdProvider,
-		logger:   logger,
+		runtimeSnapshot: &SnapshotCollector{
+			CollectionInterval: snapshotCollectionInterval,
+			ServiceName:        serviceName,
+		},
+		ecs:    mdProvider,
+		logger: logger,
 	}
 
 	go func() {
@@ -273,7 +284,48 @@ func newFargateAgent(acceptorEndpoint, agentKey string, mdProvider *aws.ECSMetad
 
 func (a *fargateAgent) Ready() bool { return a.snapshot.EntityID != "" }
 
-func (a *fargateAgent) SendMetrics(data *MetricsS) error                  { return nil }
+func (a *fargateAgent) SendMetrics(data *MetricsS) error {
+	buf := bytes.NewBuffer(nil)
+	if err := json.NewEncoder(buf).Encode(struct {
+		Plugins []acceptorPluginPayload `json:"plugins"`
+	}{
+		Plugins: []acceptorPluginPayload{
+			newECSTaskPluginPayload(a.snapshot),
+			newECSContainerPluginPayload(a.snapshot.Container),
+			newDockerContainerPluginPayload(a.snapshot.Container),
+			newProcessPluginPayload(a.snapshot),
+			newGolangPluginPayload(EntityData{
+				PID:      a.PID,
+				Snapshot: a.runtimeSnapshot.Collect(),
+				Metrics:  data,
+			}),
+		},
+	},
+	); err != nil {
+		return fmt.Errorf("failed to marshal metrics payload: %s", err)
+	}
+
+	req, err := http.NewRequest(http.MethodPost, a.Endpoint+"/metrics", buf)
+	if err != nil {
+		return fmt.Errorf("failed to prepare send metrics request: %s", err)
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("X-Instana-Host", a.snapshot.EntityID)
+	req.Header.Set("X-Instana-Key", a.Key)
+	req.Header.Set("X-Instana-Time", strconv.FormatInt(time.Now().UnixNano()/int64(time.Millisecond), 10))
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return fmt.Errorf("failed to send metrics: %s", err)
+	}
+
+	defer resp.Body.Close()
+	io.CopyN(ioutil.Discard, resp.Body, 1<<20)
+
+	return nil
+}
+
 func (a *fargateAgent) SendEvent(event *EventData) error                  { return nil }
 func (a *fargateAgent) SendSpans(spans []Span) error                      { return nil }
 func (a *fargateAgent) SendProfiles(profiles []autoprofile.Profile) error { return nil }

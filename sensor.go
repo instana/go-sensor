@@ -67,6 +67,7 @@ func newSensor(options *Options) *sensorS {
 		// whether ECS_CONTAINER_METADATA_URI is set
 		if mdURI := os.Getenv("ECS_CONTAINER_METADATA_URI"); mdURI != "" {
 			s.agent = newFargateAgent(
+				s.serviceName,
 				os.Getenv("INSTANA_ENDPOINT_URL"),
 				os.Getenv("INSTANA_AGENT_KEY"),
 				aws.NewECSMetadataProvider(mdURI, nil),
