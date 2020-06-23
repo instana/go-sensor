@@ -14,6 +14,7 @@ import (
 
 type fargateSnapshot struct {
 	EntityID  string
+	PID       int
 	Task      aws.ECSTaskMetadata
 	Container aws.ECSContainerMetadata
 }
@@ -23,8 +24,9 @@ type awsContainerLimits struct {
 	Memory int `json:"memory"`
 }
 
-func newFargateSnapshot(taskMD aws.ECSTaskMetadata, containerMD aws.ECSContainerMetadata) fargateSnapshot {
+func newFargateSnapshot(pid int, taskMD aws.ECSTaskMetadata, containerMD aws.ECSContainerMetadata) fargateSnapshot {
 	return fargateSnapshot{
+		PID:       pid,
 		EntityID:  ecsEntityID(containerMD),
 		Task:      taskMD,
 		Container: containerMD,
@@ -183,8 +185,6 @@ type processPluginData struct {
 func newProcessPluginPayload(snapshot fargateSnapshot) acceptorPluginPayload {
 	const pluginName = "com.instana.plugin.process"
 
-	pid := os.Getpid()
-
 	var currUser, currGroup string
 	if u, err := user.Current(); err == nil {
 		currUser = u.Username
@@ -196,9 +196,9 @@ func newProcessPluginPayload(snapshot fargateSnapshot) acceptorPluginPayload {
 
 	return acceptorPluginPayload{
 		Name:     pluginName,
-		EntityID: strconv.Itoa(pid),
+		EntityID: strconv.Itoa(snapshot.PID),
 		Data: processPluginData{
-			PID:           pid,
+			PID:           snapshot.PID,
 			Exec:          os.Args[0],
 			Args:          os.Args[1:],
 			Env:           getProcessEnv(),
@@ -228,6 +228,7 @@ func newGolangPluginPayload(data interface{}) acceptorPluginPayload {
 type fargateAgent struct {
 	Endpoint string
 	Key      string
+	PID      int
 
 	snapshot fargateSnapshot
 
@@ -245,6 +246,7 @@ func newFargateAgent(acceptorEndpoint, agentKey string, mdProvider *aws.ECSMetad
 	agent := &fargateAgent{
 		Endpoint: acceptorEndpoint,
 		Key:      agentKey,
+		PID:      os.Getpid(),
 		ecs:      mdProvider,
 		logger:   logger,
 	}
@@ -315,7 +317,7 @@ func (a *fargateAgent) collectSnapshot(ctx context.Context) (fargateSnapshot, bo
 
 	a.logger.Debug("collected snapshot")
 
-	return newFargateSnapshot(taskMD, containerMD), true
+	return newFargateSnapshot(a.PID, taskMD, containerMD), true
 }
 
 func ecsEntityID(md aws.ECSContainerMetadata) string {
