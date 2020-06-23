@@ -321,6 +321,18 @@ func (a *fargateAgent) SendMetrics(data *MetricsS) error {
 	}
 
 	defer resp.Body.Close()
+
+	if resp.StatusCode >= http.StatusBadRequest {
+		respBody, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			a.logger.Debug("failed to read server response: ", err)
+			return nil
+		}
+
+		a.logger.Info("acceptor has responded with ", resp.Status, ": ", string(respBody))
+		return nil
+	}
+
 	io.CopyN(ioutil.Discard, resp.Body, 1<<20)
 
 	return nil
