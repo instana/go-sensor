@@ -30,19 +30,19 @@ type ContainerNetwork struct {
 // ECSContainerV3Metadata represents the ECS container metadata as described in
 // https://docs.aws.amazon.com/AmazonECS/latest/developerguide/container-metadata.html#metadata-file-format
 type ECSContainerMetadata struct {
-	DockerID        string          `json:"DockerId"`
-	Name            string          `json:"Name"`
-	DockerName      string          `json:"DockerName"`
-	Image           string          `json:"Image"`
-	ImageID         string          `json:"ImageID"`
-	DesiredStatus   string          `json:"DesiredStatus"`
-	KnownStatus     string          `json:"KnownStatus"`
-	Limits          ContainerLimits `json:"Limits"`
-	CreatedAt       time.Time       `json:"CreatedAt"`
-	StartedAt       time.Time       `json:"StartedAt"`
-	Type            string          `json:"Type"`
-	ContainerLabels `json:"Labels"`
+	DockerID        string             `json:"DockerId"`
+	Name            string             `json:"Name"`
+	DockerName      string             `json:"DockerName"`
+	Image           string             `json:"Image"`
+	ImageID         string             `json:"ImageID"`
+	DesiredStatus   string             `json:"DesiredStatus"`
+	KnownStatus     string             `json:"KnownStatus"`
+	Limits          ContainerLimits    `json:"Limits"`
+	CreatedAt       time.Time          `json:"CreatedAt"`
+	StartedAt       time.Time          `json:"StartedAt"`
+	Type            string             `json:"Type"`
 	Networks        []ContainerNetwork `json:"Networks"`
+	ContainerLabels `json:"Labels"`
 }
 
 // ECSTaskMetadata represents the ECS task metadata as described in
