@@ -63,15 +63,26 @@ func newSensor(options *Options) *sensorS {
 
 	switch {
 	case os.Getenv("AWS_EXECUTION_ENV") == "AWS_ECS_FARGATE":
-		s.agent = newFargateAgent(
-			os.Getenv("INSTANA_AGENT_ENDPOINT"),
-			os.Getenv("INSTANA_AGENT_KEY"),
-			aws.NewECSMetadataProvider(os.Getenv("ECS_CONTAINER_METADATA_URI"), nil),
-			s.logger,
-		)
+		// seems like the app is running on AWS Fargate, but we still need to check
+		// whether ECS_CONTAINER_METADATA_URI is set
+		if mdURI := os.Getenv("ECS_CONTAINER_METADATA_URI"); mdURI != "" {
+			s.agent = newFargateAgent(
+				os.Getenv("INSTANA_ENDPOINT_URL"),
+				os.Getenv("INSTANA_AGENT_KEY"),
+				aws.NewECSMetadataProvider(mdURI, nil),
+				s.logger,
+			)
+
+			break
+		}
+
+		s.logger.Error("the task metadata URI is not set in ECS_CONTAINER_METADATA_URI env var, falling back to host agent mode")
+
+		fallthrough
 	default:
 		s.agent = newAgent(s.serviceName, s.options.AgentHost, s.options.AgentPort, s.logger)
 	}
+
 	s.meter = newMeter(s.agent, s.logger)
 
 	return s
