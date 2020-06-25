@@ -18,7 +18,7 @@ const (
 	eAnnounce = "announce"
 	eTest     = "test"
 
-	retryPeriod    = 30 * 1000
+	retryPeriod    = 30 * 1000 * time.Millisecond
 	maximumRetries = 2
 )
 
@@ -58,7 +58,7 @@ func newFSM(agent *agentS) *fsmS {
 }
 
 func (r *fsmS) scheduleRetry(e *f.Event, cb func(e *f.Event)) {
-	r.timer = time.NewTimer(retryPeriod * time.Millisecond)
+	r.timer = time.NewTimer(retryPeriod)
 	go func() {
 		<-r.timer.C
 		cb(e)
