@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/instana/go-sensor/acceptor"
 	"github.com/instana/go-sensor/autoprofile"
 	"github.com/instana/go-sensor/aws"
 	"github.com/instana/go-sensor/logger"
@@ -17,7 +18,7 @@ const (
 
 type agentClient interface {
 	Ready() bool
-	SendMetrics(data *MetricsS) error
+	SendMetrics(data acceptor.Metrics) error
 	SendEvent(event *EventData) error
 	SendSpans(spans []Span) error
 	SendProfiles(profiles []autoprofile.Profile) error

@@ -174,11 +174,7 @@ func newFargateAgent(serviceName, acceptorEndpoint, agentKey string, mdProvider 
 
 func (a *fargateAgent) Ready() bool { return a.snapshot.EntityID != "" }
 
-func (a *fargateAgent) SendMetrics(data *MetricsS) error {
-	if data == nil {
-		data = &MetricsS{}
-	}
-
+func (a *fargateAgent) SendMetrics(data acceptor.Metrics) error {
 	buf := bytes.NewBuffer(nil)
 	if err := json.NewEncoder(buf).Encode(struct {
 		Plugins []acceptor.PluginPayload `json:"plugins"`
@@ -191,7 +187,7 @@ func (a *fargateAgent) SendMetrics(data *MetricsS) error {
 			acceptor.NewGoProcessPluginPayload(acceptor.GoProcessData{
 				PID:      a.PID,
 				Snapshot: a.runtimeSnapshot.Collect(),
-				Metrics:  acceptor.Metrics(*data),
+				Metrics:  data,
 			}),
 		},
 	},

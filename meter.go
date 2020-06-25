@@ -21,7 +21,7 @@ type EntityData acceptor.GoProcessData
 
 type metricSender interface {
 	Ready() bool
-	SendMetrics(*MetricsS) error
+	SendMetrics(acceptor.Metrics) error
 }
 
 type meterS struct {
@@ -89,8 +89,8 @@ func (r *meterS) collectMemoryMetrics() acceptor.MemoryStats {
 	return ret
 }
 
-func (r *meterS) collectMetrics() *MetricsS {
-	return &MetricsS{
+func (r *meterS) collectMetrics() acceptor.Metrics {
+	return acceptor.Metrics{
 		CgoCall:     runtime.NumCgoCall(),
 		Goroutine:   runtime.NumGoroutine(),
 		MemoryStats: r.collectMemoryMetrics(),
