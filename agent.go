@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/instana/go-sensor/acceptor"
 	"github.com/instana/go-sensor/autoprofile"
 )
 
@@ -91,10 +92,14 @@ func (agent *agentS) SendMetrics(data *MetricsS) error {
 		agent.logger.Debug("agent got malformed PID %q", agent.from.PID)
 	}
 
-	if _, err = agent.request(agent.makeURL(agentDataURL), "POST", &EntityData{
+	if data == nil {
+		data = &MetricsS{}
+	}
+
+	if _, err = agent.request(agent.makeURL(agentDataURL), "POST", acceptor.GoProcessData{
 		PID:      pid,
-		Snapshot: agent.snapshot.Collect(),
-		Metrics:  data,
+		Snapshot: (*acceptor.RuntimeInfo)(agent.snapshot.Collect()),
+		Metrics:  acceptor.Metrics(*data),
 	}); err != nil {
 		agent.logger.Error("failed to send metrics to the host agent: ", err)
 		agent.reset()

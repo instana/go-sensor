@@ -54,3 +54,15 @@ func TestNewProcessPluginPayload(t *testing.T) {
 		Data:     data,
 	}, acceptor.NewProcessPluginPayload("id1", data))
 }
+
+func TestNewGoProcessPluginPayload(t *testing.T) {
+	data := acceptor.GoProcessData{
+		PID: 42,
+	}
+
+	assert.Equal(t, acceptor.PluginPayload{
+		Name:     "com.instana.plugin.golang",
+		EntityID: "42",
+		Data:     data,
+	}, acceptor.NewGoProcessPluginPayload(data))
+}

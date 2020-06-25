@@ -121,16 +121,6 @@ func newProcessPluginPayload(snapshot fargateSnapshot) acceptor.PluginPayload {
 	})
 }
 
-func newGolangPluginPayload(data EntityData) acceptor.PluginPayload {
-	const pluginName = "com.instana.plugin.golang"
-
-	return acceptor.PluginPayload{
-		Name:     pluginName,
-		EntityID: strconv.Itoa(data.PID),
-		Data:     data,
-	}
-}
-
 type fargateAgent struct {
 	Endpoint string
 	Key      string
@@ -185,6 +175,10 @@ func newFargateAgent(serviceName, acceptorEndpoint, agentKey string, mdProvider 
 func (a *fargateAgent) Ready() bool { return a.snapshot.EntityID != "" }
 
 func (a *fargateAgent) SendMetrics(data *MetricsS) error {
+	if data == nil {
+		data = &MetricsS{}
+	}
+
 	buf := bytes.NewBuffer(nil)
 	if err := json.NewEncoder(buf).Encode(struct {
 		Plugins []acceptor.PluginPayload `json:"plugins"`
@@ -194,10 +188,10 @@ func (a *fargateAgent) SendMetrics(data *MetricsS) error {
 			newECSContainerPluginPayload(a.snapshot.Container),
 			newDockerContainerPluginPayload(a.snapshot.Container),
 			newProcessPluginPayload(a.snapshot),
-			newGolangPluginPayload(EntityData{
+			acceptor.NewGoProcessPluginPayload(acceptor.GoProcessData{
 				PID:      a.PID,
 				Snapshot: a.runtimeSnapshot.Collect(),
-				Metrics:  data,
+				Metrics:  acceptor.Metrics(*data),
 			}),
 		},
 	},
