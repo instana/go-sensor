@@ -98,7 +98,11 @@ func InitSensor(options *Options) {
 		return sensor.agent.SendProfiles(profiles)
 	})
 
-	if options.EnableAutoProfile {
+	if _, ok := os.LookupEnv("INSTANA_AUTO_PROFILE"); ok || options.EnableAutoProfile {
+		if !options.EnableAutoProfile {
+			sensor.logger.Info("INSTANA_AUTO_PROFILE is set, activating AutoProfile™")
+		}
+
 		autoprofile.Enable()
 	}
 
