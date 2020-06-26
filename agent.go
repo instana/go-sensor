@@ -6,9 +6,7 @@ import (
 	"errors"
 	"io/ioutil"
 	"net/http"
-	"runtime"
 	"strconv"
-	"sync"
 	"time"
 
 	"github.com/instana/go-sensor/autoprofile"
@@ -52,12 +50,10 @@ type agentS struct {
 	host string
 	port string
 
-	snapshotMu                 sync.RWMutex
-	lastSnapshotCollectionTime time.Time
-
-	fsm    *fsmS
-	client *http.Client
-	logger LeveledLogger
+	fsm      *fsmS
+	client   *http.Client
+	snapshot *SnapshotCollector
+	logger   LeveledLogger
 }
 
 func newAgent(serviceName, host string, port int, logger LeveledLogger) *agentS {
@@ -72,6 +68,10 @@ func newAgent(serviceName, host string, port int, logger LeveledLogger) *agentS 
 		host:   host,
 		port:   strconv.Itoa(port),
 		client: &http.Client{Timeout: 5 * time.Second},
+		snapshot: &SnapshotCollector{
+			CollectionInterval: snapshotCollectionInterval,
+			ServiceName:        serviceName,
+		},
 		logger: logger,
 	}
 	agent.fsm = newFSM(agent)
@@ -93,7 +93,7 @@ func (agent *agentS) SendMetrics(data *MetricsS) error {
 
 	if _, err = agent.request(agent.makeURL(agentDataURL), "POST", &EntityData{
 		PID:      pid,
-		Snapshot: agent.collectSnapshot(),
+		Snapshot: agent.snapshot.Collect(),
 		Metrics:  data,
 	}); err != nil {
 		agent.logger.Error("failed to send metrics to the host agent: ", err)
@@ -268,29 +268,4 @@ func (r *agentS) setHost(host string) {
 
 func (r *agentS) reset() {
 	r.fsm.reset()
-}
-
-func (agent *agentS) collectSnapshot() *SnapshotS {
-	agent.snapshotMu.RLock()
-	lastSnapshotCollectionTime := agent.lastSnapshotCollectionTime
-	agent.snapshotMu.RUnlock()
-
-	if time.Since(lastSnapshotCollectionTime) < snapshotCollectionInterval {
-		return nil
-	}
-
-	agent.snapshotMu.Lock()
-	defer agent.snapshotMu.Unlock()
-
-	agent.lastSnapshotCollectionTime = time.Now()
-	agent.logger.Debug("collected snapshot")
-
-	return &SnapshotS{
-		Name:     sensor.serviceName,
-		Version:  runtime.Version(),
-		Root:     runtime.GOROOT(),
-		MaxProcs: runtime.GOMAXPROCS(0),
-		Compiler: runtime.Compiler,
-		NumCPU:   runtime.NumCPU(),
-	}
 }
