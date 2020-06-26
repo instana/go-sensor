@@ -206,6 +206,7 @@ type testConsumerGroupSession struct {
 	Messages []*sarama.ConsumerMessage
 }
 
+func (s *testConsumerGroupSession) Commit()                    {}
 func (s *testConsumerGroupSession) Claims() map[string][]int32 { return nil }
 func (s *testConsumerGroupSession) MemberID() string           { return "" }
 func (s *testConsumerGroupSession) GenerationID() int32        { return 0 }
