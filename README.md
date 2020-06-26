@@ -212,6 +212,27 @@ To learn more, see the [Events API](https://github.com/instana/go-sensor/blob/ma
 
 AutoProfile™ generates and reports process profiles to Instana. Unlike development-time and on-demand profilers, where a user must manually initiate profiling, AutoProfile™ automatically schedules and continuously performs profiling appropriate for critical production environments.
 
+### Activation from within the application code
+
+To enable continuous profiling for your service provide `EnableAutoProfile: true` while initializing the sensor:
+
+```go
+func main() {
+	instana.InitSensor(&instana.Options{
+		EnableAutoProfile: true,
+		// ...other options
+	})
+
+	// ...
+}
+```
+
+To temporarily turn AutoProfile™ on and off from your code, call `autoprofile.Enable()` and `autoprofile.Disable()`.
+
+### Activation without code changes
+
+To enable AutoProfile™ for an app without code changes, set `INSTANA_AUTO_PROFILE=true` env variable. Note that this value takes precedence and overrides any attempt to disable profiling from inside the application code.
+
 ## Examples
 
 Following examples are included in the `example` folder:

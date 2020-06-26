@@ -1,6 +1,8 @@
 package autoprofile
 
 import (
+	"os"
+
 	"github.com/instana/go-sensor/autoprofile/internal"
 	"github.com/instana/go-sensor/autoprofile/internal/logger"
 	instalogger "github.com/instana/go-sensor/logger"
@@ -79,6 +81,11 @@ func Enable() {
 // Disable disables the auto profiling (default)
 func Disable() {
 	if !enabled {
+		return
+	}
+
+	if _, ok := os.LookupEnv("INSTANA_AUTO_PROFILE"); ok {
+		logger.Info("INSTANA_AUTO_PROFILE is set, ignoring the attempt to disable AutoProfile™")
 		return
 	}
 

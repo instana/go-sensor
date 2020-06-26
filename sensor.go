@@ -81,23 +81,27 @@ func InitSensor(options *Options) {
 
 	sensor = newSensor(options)
 
-	// enable auto-profiling
-	if options.EnableAutoProfile {
-		autoprofile.SetLogger(sensor.logger)
-		autoprofile.SetOptions(autoprofile.Options{
-			IncludeProfilerFrames: options.IncludeProfilerFrames,
-			MaxBufferedProfiles:   options.MaxBufferedProfiles,
-		})
+	// configure auto-profiling
+	autoprofile.SetLogger(sensor.logger)
+	autoprofile.SetOptions(autoprofile.Options{
+		IncludeProfilerFrames: options.IncludeProfilerFrames,
+		MaxBufferedProfiles:   options.MaxBufferedProfiles,
+	})
 
-		autoprofile.SetSendProfilesFunc(func(profiles []autoprofile.Profile) error {
-			if !sensor.agent.Ready() {
-				return errors.New("sender not ready")
-			}
+	autoprofile.SetSendProfilesFunc(func(profiles []autoprofile.Profile) error {
+		if !sensor.agent.Ready() {
+			return errors.New("sender not ready")
+		}
 
-			sensor.logger.Debug("sending profiles to agent")
+		sensor.logger.Debug("sending profiles to agent")
 
-			return sensor.agent.SendProfiles(profiles)
-		})
+		return sensor.agent.SendProfiles(profiles)
+	})
+
+	if _, ok := os.LookupEnv("INSTANA_AUTO_PROFILE"); ok || options.EnableAutoProfile {
+		if !options.EnableAutoProfile {
+			sensor.logger.Info("INSTANA_AUTO_PROFILE is set, activating AutoProfile™")
+		}
 
 		autoprofile.Enable()
 	}
