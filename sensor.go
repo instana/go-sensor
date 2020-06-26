@@ -81,24 +81,24 @@ func InitSensor(options *Options) {
 
 	sensor = newSensor(options)
 
-	// enable auto-profiling
+	// configure auto-profiling
+	autoprofile.SetLogger(sensor.logger)
+	autoprofile.SetOptions(autoprofile.Options{
+		IncludeProfilerFrames: options.IncludeProfilerFrames,
+		MaxBufferedProfiles:   options.MaxBufferedProfiles,
+	})
+
+	autoprofile.SetSendProfilesFunc(func(profiles []autoprofile.Profile) error {
+		if !sensor.agent.Ready() {
+			return errors.New("sender not ready")
+		}
+
+		sensor.logger.Debug("sending profiles to agent")
+
+		return sensor.agent.SendProfiles(profiles)
+	})
+
 	if options.EnableAutoProfile {
-		autoprofile.SetLogger(sensor.logger)
-		autoprofile.SetOptions(autoprofile.Options{
-			IncludeProfilerFrames: options.IncludeProfilerFrames,
-			MaxBufferedProfiles:   options.MaxBufferedProfiles,
-		})
-
-		autoprofile.SetSendProfilesFunc(func(profiles []autoprofile.Profile) error {
-			if !sensor.agent.Ready() {
-				return errors.New("sender not ready")
-			}
-
-			sensor.logger.Debug("sending profiles to agent")
-
-			return sensor.agent.SendProfiles(profiles)
-		})
-
 		autoprofile.Enable()
 	}
 
