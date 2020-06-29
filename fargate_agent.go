@@ -39,6 +39,7 @@ func newECSTaskPluginPayload(snapshot fargateSnapshot) acceptor.PluginPayload {
 	return acceptor.NewECSTaskPluginPayload(snapshot.Task.TaskARN, acceptor.ECSTaskData{
 		TaskARN:               snapshot.Task.TaskARN,
 		ClusterARN:            snapshot.Container.Cluster,
+		AvailabilityZone:      snapshot.Task.AvailabilityZone,
 		TaskDefinition:        snapshot.Task.Family,
 		TaskDefinitionVersion: snapshot.Task.Revision,
 		DesiredStatus:         snapshot.Task.DesiredStatus,
