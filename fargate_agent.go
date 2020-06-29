@@ -241,8 +241,12 @@ func (a *fargateAgent) SendMetrics(data acceptor.Metrics) error {
 	return nil
 }
 
-func (a *fargateAgent) SendEvent(event *EventData) error                  { return nil }
-func (a *fargateAgent) SendSpans(spans []Span) error                      { return nil }
+func (a *fargateAgent) SendEvent(event *EventData) error { return nil }
+
+func (a *fargateAgent) SendSpans(spans []Span) error {
+	return nil
+}
+
 func (a *fargateAgent) SendProfiles(profiles []autoprofile.Profile) error { return nil }
 
 func (a *fargateAgent) collectSnapshot(ctx context.Context) (fargateSnapshot, bool) {

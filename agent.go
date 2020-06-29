@@ -43,7 +43,11 @@ type discoveryS struct {
 
 type fromS struct {
 	EntityID string `json:"e"`
-	HostID   string `json:"h"`
+	// Serverless agents fields
+	Hostless      bool   `json:"hl,omitempty"`
+	CloudProvider string `json:"cp,omitempty"`
+	// Host agent fields
+	HostID string `json:"h,omitempty"`
 }
 
 type agentS struct {
