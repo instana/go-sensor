@@ -121,7 +121,7 @@ func (r *fsmS) lookupSuccess(host string) {
 func (r *fsmS) announceSensor(e *f.Event) {
 	cb := func(b bool, from *fromS) {
 		if b {
-			r.agent.logger.Info("Host agent available. We're in business. Announced pid:", from.PID)
+			r.agent.logger.Info("Host agent available. We're in business. Announced pid:", from.EntityID)
 			r.agent.setFrom(from)
 			r.retries = maximumRetries
 			r.fsm.Event(eAnnounce)
@@ -205,8 +205,8 @@ func (r *fsmS) announceSensor(e *f.Event) {
 		_, err := r.agent.requestResponse(r.agent.makeURL(agentDiscoveryURL), "PUT", d, ret)
 		cb(err == nil,
 			&fromS{
-				PID:    strconv.Itoa(int(ret.Pid)),
-				HostID: ret.HostID})
+				EntityID: strconv.Itoa(int(ret.Pid)),
+				HostID:   ret.HostID})
 	}(cb)
 }
 

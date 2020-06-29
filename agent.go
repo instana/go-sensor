@@ -42,8 +42,8 @@ type discoveryS struct {
 }
 
 type fromS struct {
-	PID    string `json:"e"`
-	HostID string `json:"h"`
+	EntityID string `json:"e"`
+	HostID   string `json:"h"`
 }
 
 type agentS struct {
@@ -87,9 +87,9 @@ func (agent *agentS) Ready() bool {
 
 // SendMetrics sends collected entity data to the host agent
 func (agent *agentS) SendMetrics(data acceptor.Metrics) error {
-	pid, err := strconv.Atoi(agent.from.PID)
-	if err != nil && agent.from.PID != "" {
-		agent.logger.Debug("agent got malformed PID %q", agent.from.PID)
+	pid, err := strconv.Atoi(agent.from.EntityID)
+	if err != nil && agent.from.EntityID != "" {
+		agent.logger.Debug("agent got malformed PID %q", agent.from.EntityID)
 	}
 
 	if _, err = agent.request(agent.makeURL(agentDataURL), "POST", acceptor.GoProcessData{
@@ -151,7 +151,7 @@ type hostAgentProfile struct {
 func (agent *agentS) SendProfiles(profiles []autoprofile.Profile) error {
 	agentProfiles := make([]hostAgentProfile, 0, len(profiles))
 	for _, p := range profiles {
-		agentProfiles = append(agentProfiles, hostAgentProfile{p, agent.from.PID})
+		agentProfiles = append(agentProfiles, hostAgentProfile{p, agent.from.EntityID})
 	}
 
 	_, err := agent.request(agent.makeURL(agentProfilesURL), "POST", agentProfiles)
@@ -181,8 +181,8 @@ func (r *agentS) makeHostURL(host string, prefix string) string {
 	buffer.WriteString(":")
 	buffer.WriteString(r.port)
 	buffer.WriteString(prefix)
-	if prefix[len(prefix)-1:] == "." && r.from.PID != "" {
-		buffer.WriteString(r.from.PID)
+	if prefix[len(prefix)-1:] == "." && r.from.EntityID != "" {
+		buffer.WriteString(r.from.EntityID)
 	}
 
 	return buffer.String()
