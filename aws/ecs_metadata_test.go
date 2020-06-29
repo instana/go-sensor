@@ -93,11 +93,12 @@ func TestECSMetadataProvider_TaskMetadata(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Equal(t, aws.ECSTaskMetadata{
-		TaskARN:       "arn:aws:ecs:us-east-2:012345678910:task/9781c248-0edd-4cdb-9a93-f63cb662a5d3",
-		Family:        "nginx",
-		Revision:      "5",
-		DesiredStatus: "RUNNING",
-		KnownStatus:   "RUNNING",
+		TaskARN:          "arn:aws:ecs:us-east-2:012345678910:task/9781c248-0edd-4cdb-9a93-f63cb662a5d3",
+		Family:           "nginx",
+		Revision:         "5",
+		AvailabilityZone: "us-east-2b",
+		DesiredStatus:    "RUNNING",
+		KnownStatus:      "RUNNING",
 		Containers: []aws.ECSContainerMetadata{
 			{
 				DockerID:      "731a0d6a3b4210e2448339bc7015aaa79bfe4fa256384f4102db86ef94cbbc4c",

@@ -48,14 +48,15 @@ type ECSContainerMetadata struct {
 // ECSTaskMetadata represents the ECS task metadata as described in
 // https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task-metadata-endpoint-v3.html#task-metadata-endpoint-v3-response
 type ECSTaskMetadata struct {
-	TaskARN       string                 `json:"TaskARN"`
-	Family        string                 `json:"Family"`
-	Revision      string                 `json:"Revision"`
-	DesiredStatus string                 `json:"DesiredStatus"`
-	KnownStatus   string                 `json:"KnownStatus"`
-	Containers    []ECSContainerMetadata `json:"Containers"`
-	PullStartedAt time.Time              `json:"PullStartedAt"`
-	PullStoppedAt time.Time              `json:"PullStoppedAt"`
+	TaskARN          string                 `json:"TaskARN"`
+	AvailabilityZone string                 `json:"AvailabilityZone,omitempty"` // only available starting from ECS platform v1.4
+	Family           string                 `json:"Family"`
+	Revision         string                 `json:"Revision"`
+	DesiredStatus    string                 `json:"DesiredStatus"`
+	KnownStatus      string                 `json:"KnownStatus"`
+	Containers       []ECSContainerMetadata `json:"Containers"`
+	PullStartedAt    time.Time              `json:"PullStartedAt"`
+	PullStoppedAt    time.Time              `json:"PullStoppedAt"`
 }
 
 // ECSMetadataProvider retireves ECS service metadata from the ECS_CONTAINER_METADATA_URI endpoint
