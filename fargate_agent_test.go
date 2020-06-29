@@ -129,6 +129,30 @@ func TestFargateAgent_SendMetrics(t *testing.T) {
 	}
 }
 
+func TestFargateAgent_SendSpans(t *testing.T) {
+	defer agent.Reset()
+
+	sensor := instana.NewSensor("testing")
+
+	sp := sensor.Tracer().StartSpan("entry")
+	sp.SetTag("value", "42")
+	sp.Finish()
+
+	require.Eventually(t, func() bool { return len(agent.Traces) > 0 }, 2*time.Second, 500*time.Millisecond)
+
+	collected := agent.Traces[0]
+
+	assert.Equal(t, "arn:aws:ecs:us-east-2:012345678910:task/9781c248-0edd-4cdb-9a93-f63cb662a5d3::nginx-curl", collected.Header.Get("X-Instana-Host"))
+	assert.Equal(t, "testkey1", collected.Header.Get("X-Instana-Key"))
+	assert.NotEmpty(t, collected.Header.Get("X-Instana-Time"))
+
+	var spans []map[string]json.RawMessage
+	require.NoError(t, json.Unmarshal(collected.Body, &spans))
+
+	require.Len(t, spans, 1)
+	assert.JSONEq(t, `{"hl": true, "cp": "aws", "e": "arn:aws:ecs:us-east-2:012345678910:task/9781c248-0edd-4cdb-9a93-f63cb662a5d3::nginx-curl"}`, string(spans[0]["f"]))
+}
+
 func setupAWSFargateEnv() func() {
 	teardown := restoreEnvVarFunc("AWS_EXECUTION_ENV")
 	os.Setenv("AWS_EXECUTION_ENV", "AWS_ECS_FARGATE")
@@ -168,6 +192,7 @@ type serverlessAgentRequest struct {
 
 type serverlessAgent struct {
 	Metrics []serverlessAgentRequest
+	Traces  []serverlessAgentRequest
 
 	ln           net.Listener
 	restoreEnvFn func()
@@ -186,6 +211,7 @@ func setupServerlessAgent() (*serverlessAgent, error) {
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/metrics", srv.HandleMetrics)
+	mux.HandleFunc("/traces", srv.HandleTraces)
 
 	go http.Serve(ln, mux)
 
@@ -209,8 +235,24 @@ func (srv *serverlessAgent) HandleMetrics(w http.ResponseWriter, req *http.Reque
 	w.WriteHeader(http.StatusNoContent)
 }
 
+func (srv *serverlessAgent) HandleTraces(w http.ResponseWriter, req *http.Request) {
+	body, err := ioutil.ReadAll(req.Body)
+	if err != nil {
+		log.Printf("ERROR: failed to read serverless agent spans request body: %s", err)
+		body = nil
+	}
+
+	srv.Traces = append(srv.Traces, serverlessAgentRequest{
+		Header: req.Header,
+		Body:   body,
+	})
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
 func (srv *serverlessAgent) Reset() {
 	srv.Metrics = nil
+	srv.Traces = nil
 }
 
 func (srv *serverlessAgent) Teardown() {

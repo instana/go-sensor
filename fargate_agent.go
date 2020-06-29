@@ -214,13 +214,45 @@ func (a *fargateAgent) SendMetrics(data acceptor.Metrics) error {
 	}
 
 	req.Header.Set("Content-Type", "application/json")
+
+	return a.sendRequest(req)
+}
+
+func (a *fargateAgent) SendEvent(event *EventData) error { return nil }
+
+func (a *fargateAgent) SendSpans(spans []Span) error {
+	from := newServerlessAgentFromS(a.snapshot.EntityID, "aws")
+
+	agentSpans := make([]agentSpan, 0, len(spans))
+	for _, sp := range spans {
+		agentSpans = append(agentSpans, agentSpan{sp, from})
+	}
+
+	buf := bytes.NewBuffer(nil)
+	if err := json.NewEncoder(buf).Encode(agentSpans); err != nil {
+		return fmt.Errorf("failed to marshal spans payload: %s", err)
+	}
+
+	req, err := http.NewRequest(http.MethodPost, a.Endpoint+"/traces", buf)
+	if err != nil {
+		return fmt.Errorf("failed to prepare send spans request: %s", err)
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+
+	return a.sendRequest(req)
+}
+
+func (a *fargateAgent) SendProfiles(profiles []autoprofile.Profile) error { return nil }
+
+func (a *fargateAgent) sendRequest(req *http.Request) error {
 	req.Header.Set("X-Instana-Host", a.snapshot.EntityID)
 	req.Header.Set("X-Instana-Key", a.Key)
 	req.Header.Set("X-Instana-Time", strconv.FormatInt(time.Now().UnixNano()/int64(time.Millisecond), 10))
 
 	resp, err := a.client.Do(req)
 	if err != nil {
-		return fmt.Errorf("failed to send metrics: %s", err)
+		return fmt.Errorf("failed to send request to the serverless agent: %s", err)
 	}
 
 	defer resp.Body.Close()
@@ -228,11 +260,11 @@ func (a *fargateAgent) SendMetrics(data acceptor.Metrics) error {
 	if resp.StatusCode >= http.StatusBadRequest {
 		respBody, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
-			a.logger.Debug("failed to read server response: ", err)
+			a.logger.Debug("failed to read serverless agent response: ", err)
 			return nil
 		}
 
-		a.logger.Info("acceptor has responded with ", resp.Status, ": ", string(respBody))
+		a.logger.Info("serverless agent has responded with ", resp.Status, ": ", string(respBody))
 		return nil
 	}
 
@@ -240,14 +272,6 @@ func (a *fargateAgent) SendMetrics(data acceptor.Metrics) error {
 
 	return nil
 }
-
-func (a *fargateAgent) SendEvent(event *EventData) error { return nil }
-
-func (a *fargateAgent) SendSpans(spans []Span) error {
-	return nil
-}
-
-func (a *fargateAgent) SendProfiles(profiles []autoprofile.Profile) error { return nil }
 
 func (a *fargateAgent) collectSnapshot(ctx context.Context) (fargateSnapshot, bool) {
 	var wg sync.WaitGroup
