@@ -57,6 +57,14 @@ func newHostAgentFromS(pid int, hostID string) *fromS {
 	}
 }
 
+func newServerlessAgentFromS(entityID, provider string) *fromS {
+	return &fromS{
+		EntityID:      entityID,
+		Hostless:      true,
+		CloudProvider: provider,
+	}
+}
+
 type agentS struct {
 	from *fromS
 	host string
