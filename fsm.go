@@ -203,10 +203,7 @@ func (r *fsmS) announceSensor(e *f.Event) {
 
 		ret := &agentResponse{}
 		_, err := r.agent.requestResponse(r.agent.makeURL(agentDiscoveryURL), "PUT", d, ret)
-		cb(err == nil,
-			&fromS{
-				EntityID: strconv.Itoa(int(ret.Pid)),
-				HostID:   ret.HostID})
+		cb(err == nil, newHostAgentFromS(int(ret.Pid), ret.HostID))
 	}(cb)
 }
 

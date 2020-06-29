@@ -50,6 +50,13 @@ type fromS struct {
 	HostID string `json:"h,omitempty"`
 }
 
+func newHostAgentFromS(pid int, hostID string) *fromS {
+	return &fromS{
+		EntityID: strconv.Itoa(pid),
+		HostID:   hostID,
+	}
+}
+
 type agentS struct {
 	from *fromS
 	host string
