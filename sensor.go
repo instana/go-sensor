@@ -2,8 +2,10 @@ package instana
 
 import (
 	"errors"
+	"net/http"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/instana/go-sensor/acceptor"
 	"github.com/instana/go-sensor/autoprofile"
@@ -67,11 +69,13 @@ func newSensor(options *Options) *sensorS {
 		// seems like the app is running on AWS Fargate, but we still need to check
 		// whether ECS_CONTAINER_METADATA_URI is set
 		if mdURI := os.Getenv("ECS_CONTAINER_METADATA_URI"); mdURI != "" {
+			client := &http.Client{Timeout: 500 * time.Millisecond}
 			s.agent = newFargateAgent(
 				s.serviceName,
 				os.Getenv("INSTANA_ENDPOINT_URL"),
 				os.Getenv("INSTANA_AGENT_KEY"),
-				aws.NewECSMetadataProvider(mdURI, nil),
+				client,
+				aws.NewECSMetadataProvider(mdURI, client),
 				s.logger,
 			)
 

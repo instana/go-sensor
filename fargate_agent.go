@@ -130,13 +130,24 @@ type fargateAgent struct {
 	snapshot fargateSnapshot
 
 	runtimeSnapshot *SnapshotCollector
+	client          *http.Client
 	ecs             *aws.ECSMetadataProvider
 	logger          LeveledLogger
 }
 
-func newFargateAgent(serviceName, acceptorEndpoint, agentKey string, mdProvider *aws.ECSMetadataProvider, logger LeveledLogger) *fargateAgent {
+func newFargateAgent(
+	serviceName, acceptorEndpoint, agentKey string,
+	client *http.Client,
+	mdProvider *aws.ECSMetadataProvider,
+	logger LeveledLogger,
+) *fargateAgent {
+
 	if logger == nil {
 		logger = defaultLogger
+	}
+
+	if client == nil {
+		client = http.DefaultClient
 	}
 
 	logger.Debug("initializing aws fargate agent")
@@ -149,6 +160,7 @@ func newFargateAgent(serviceName, acceptorEndpoint, agentKey string, mdProvider 
 			CollectionInterval: snapshotCollectionInterval,
 			ServiceName:        serviceName,
 		},
+		client: client,
 		ecs:    mdProvider,
 		logger: logger,
 	}
@@ -206,7 +218,7 @@ func (a *fargateAgent) SendMetrics(data acceptor.Metrics) error {
 	req.Header.Set("X-Instana-Key", a.Key)
 	req.Header.Set("X-Instana-Time", strconv.FormatInt(time.Now().UnixNano()/int64(time.Millisecond), 10))
 
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := a.client.Do(req)
 	if err != nil {
 		return fmt.Errorf("failed to send metrics: %s", err)
 	}
