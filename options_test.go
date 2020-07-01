@@ -13,6 +13,5 @@ func TestDefaultOptions(t *testing.T) {
 		AgentPort:                   42699,
 		MaxBufferedSpans:            instana.DefaultMaxBufferedSpans,
 		ForceTransmissionStartingAt: instana.DefaultForceSpanSendAt,
-		Service:                     "go-sensor.test",
 	}, instana.DefaultOptions())
 }

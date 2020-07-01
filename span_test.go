@@ -22,7 +22,7 @@ func TestBasicSpan(t *testing.T) {
 	sp.Finish()
 
 	spans := recorder.GetQueuedSpans()
-	assert.Equal(t, 1, len(spans))
+	require.Len(t, spans, 1)
 	span := spans[0]
 
 	assert.NotEmpty(t, span.SpanID)
@@ -33,7 +33,7 @@ func TestBasicSpan(t *testing.T) {
 
 	require.IsType(t, instana.SDKSpanData{}, span.Data)
 	data := span.Data.(instana.SDKSpanData)
-	assert.Equal(t, "go-sensor.test", data.Service)
+	assert.Empty(t, data.Service)
 
 	assert.Equal(t, "test", data.Tags.Name)
 	assert.Nil(t, data.Tags.Custom["tags"])
@@ -52,7 +52,7 @@ func TestSpanHeritage(t *testing.T) {
 	parentSpan.Finish()
 
 	spans := recorder.GetQueuedSpans()
-	assert.Equal(t, len(spans), 2)
+	require.Len(t, spans, 2)
 
 	cSpan, pSpan := spans[0], spans[1]
 

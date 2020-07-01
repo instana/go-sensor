@@ -41,10 +41,6 @@ func (opts *Options) setDefaults() {
 		opts.ForceTransmissionStartingAt = DefaultForceSpanSendAt
 	}
 
-	if opts.Service == "" {
-		opts.Service = binaryName
-	}
-
 	if opts.AgentHost == "" {
 		opts.AgentHost = agentDefaultHost
 
