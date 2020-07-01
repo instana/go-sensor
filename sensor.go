@@ -44,6 +44,10 @@ func newSensor(options *Options) *sensorS {
 		options:     options,
 		serviceName: options.Service,
 	}
+	if s.serviceName == "" {
+		s.serviceName = binaryName
+	}
+
 	s.setLogger(defaultLogger)
 
 	// override service name with an env value if set
