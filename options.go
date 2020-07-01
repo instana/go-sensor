@@ -2,7 +2,6 @@ package instana
 
 import (
 	"os"
-	"path/filepath"
 	"strconv"
 )
 
@@ -40,10 +39,6 @@ func (opts *Options) setDefaults() {
 
 	if opts.ForceTransmissionStartingAt == 0 {
 		opts.ForceTransmissionStartingAt = DefaultForceSpanSendAt
-	}
-
-	if opts.Service == "" {
-		opts.Service = filepath.Base(os.Args[0])
 	}
 
 	if opts.AgentHost == "" {

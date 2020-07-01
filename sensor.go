@@ -3,6 +3,7 @@ package instana
 import (
 	"errors"
 	"os"
+	"path/filepath"
 
 	"github.com/instana/go-sensor/autoprofile"
 	"github.com/instana/go-sensor/logger"
@@ -30,6 +31,7 @@ type sensorS struct {
 }
 
 var sensor *sensorS
+var binaryName = filepath.Base(os.Args[0])
 
 func newSensor(options *Options) *sensorS {
 	if options == nil {
@@ -42,6 +44,10 @@ func newSensor(options *Options) *sensorS {
 		options:     options,
 		serviceName: options.Service,
 	}
+	if s.serviceName == "" {
+		s.serviceName = binaryName
+	}
+
 	s.setLogger(defaultLogger)
 
 	// override service name with an env value if set
