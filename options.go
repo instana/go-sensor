@@ -2,7 +2,6 @@ package instana
 
 import (
 	"os"
-	"path/filepath"
 	"strconv"
 )
 
@@ -43,7 +42,7 @@ func (opts *Options) setDefaults() {
 	}
 
 	if opts.Service == "" {
-		opts.Service = filepath.Base(os.Args[0])
+		opts.Service = binaryName
 	}
 
 	if opts.AgentHost == "" {

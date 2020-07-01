@@ -3,6 +3,7 @@ package instana
 import (
 	"errors"
 	"os"
+	"path/filepath"
 
 	"github.com/instana/go-sensor/autoprofile"
 	"github.com/instana/go-sensor/logger"
@@ -30,6 +31,7 @@ type sensorS struct {
 }
 
 var sensor *sensorS
+var binaryName = filepath.Base(os.Args[0])
 
 func newSensor(options *Options) *sensorS {
 	if options == nil {
