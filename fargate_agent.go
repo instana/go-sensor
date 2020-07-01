@@ -53,10 +53,9 @@ func newECSTaskPluginPayload(snapshot fargateSnapshot) acceptor.PluginPayload {
 	})
 }
 
-func newECSContainerPluginPayload(container aws.ECSContainerMetadata) acceptor.PluginPayload {
-	return acceptor.NewECSContainerPluginPayload(ecsEntityID(container), acceptor.ECSContainerData{
-		Runtime:               "go",
-		Instrumented:          true,
+func newECSContainerPluginPayload(container aws.ECSContainerMetadata, instrumented bool) acceptor.PluginPayload {
+	data := acceptor.ECSContainerData{
+		Instrumented:          instrumented,
 		DockerID:              container.DockerID,
 		DockerName:            container.DockerName,
 		ContainerName:         container.Name,
@@ -75,7 +74,14 @@ func newECSContainerPluginPayload(container aws.ECSContainerMetadata) acceptor.P
 		CreatedAt: container.CreatedAt,
 		StartedAt: container.StartedAt,
 		Type:      container.Type,
-	})
+	}
+
+	// we only know the runtime for sure for the instrumented container
+	if instrumented {
+		data.Runtime = "go"
+	}
+
+	return acceptor.NewECSContainerPluginPayload(ecsEntityID(container), data)
 }
 
 func newDockerContainerPluginPayload(container aws.ECSContainerMetadata) acceptor.PluginPayload {
@@ -188,13 +194,11 @@ func newFargateAgent(
 func (a *fargateAgent) Ready() bool { return a.snapshot.EntityID != "" }
 
 func (a *fargateAgent) SendMetrics(data acceptor.Metrics) error {
-	buf := bytes.NewBuffer(nil)
-	if err := json.NewEncoder(buf).Encode(struct {
+	payload := struct {
 		Plugins []acceptor.PluginPayload `json:"plugins"`
 	}{
 		Plugins: []acceptor.PluginPayload{
 			newECSTaskPluginPayload(a.snapshot),
-			newECSContainerPluginPayload(a.snapshot.Container),
 			newDockerContainerPluginPayload(a.snapshot.Container),
 			newProcessPluginPayload(a.snapshot),
 			acceptor.NewGoProcessPluginPayload(acceptor.GoProcessData{
@@ -203,8 +207,17 @@ func (a *fargateAgent) SendMetrics(data acceptor.Metrics) error {
 				Metrics:  data,
 			}),
 		},
-	},
-	); err != nil {
+	}
+
+	for _, container := range a.snapshot.Task.Containers {
+		payload.Plugins = append(
+			payload.Plugins,
+			newECSContainerPluginPayload(container, ecsEntityID(container) == a.snapshot.EntityID),
+		)
+	}
+
+	buf := bytes.NewBuffer(nil)
+	if err := json.NewEncoder(buf).Encode(payload); err != nil {
 		return fmt.Errorf("failed to marshal metrics payload: %s", err)
 	}
 
