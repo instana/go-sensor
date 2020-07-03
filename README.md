@@ -40,7 +40,7 @@ Once a host agent found listening on port `42699` (or the port specified in `INS
 
 ### Running on AWS Fargate
 
-To use Instana Go sensor for monitoring a service running on AWS Fargate make sure that you have `INSTANA_ENDPOINT_URL` and `INSTANA_AGENT_KEY` env variables set in your task definition. Please refer to [Instana documentation](https://www.instana.com/docs/ecosystem/aws-fargate/#configure-your-task-definition) for detailed explanation on how to do this.
+To use Instana Go sensor for monitoring a service running on AWS Fargate make sure that you have `INSTANA_ENDPOINT_URL` and `INSTANA_AGENT_KEY` env variables set in your task definition. Note that the `INSTANA_AGENT_HOST` and `INSTANA_AGENT_PORT` env variables will be ignored in this case. Please refer to [Instana documentation](https://www.instana.com/docs/ecosystem/aws-fargate/#configure-your-task-definition) for detailed explanation on how to do this.
 
 ## Common Operations
 
