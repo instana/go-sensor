@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/instana/go-sensor/acceptor"
 	"github.com/instana/go-sensor/autoprofile"
 )
 
@@ -41,8 +42,27 @@ type discoveryS struct {
 }
 
 type fromS struct {
-	PID    string `json:"e"`
-	HostID string `json:"h"`
+	EntityID string `json:"e"`
+	// Serverless agents fields
+	Hostless      bool   `json:"hl,omitempty"`
+	CloudProvider string `json:"cp,omitempty"`
+	// Host agent fields
+	HostID string `json:"h,omitempty"`
+}
+
+func newHostAgentFromS(pid int, hostID string) *fromS {
+	return &fromS{
+		EntityID: strconv.Itoa(pid),
+		HostID:   hostID,
+	}
+}
+
+func newServerlessAgentFromS(entityID, provider string) *fromS {
+	return &fromS{
+		EntityID:      entityID,
+		Hostless:      true,
+		CloudProvider: provider,
+	}
 }
 
 type agentS struct {
@@ -85,13 +105,13 @@ func (agent *agentS) Ready() bool {
 }
 
 // SendMetrics sends collected entity data to the host agent
-func (agent *agentS) SendMetrics(data *MetricsS) error {
-	pid, err := strconv.Atoi(agent.from.PID)
-	if err != nil && agent.from.PID != "" {
-		agent.logger.Debug("agent got malformed PID %q", agent.from.PID)
+func (agent *agentS) SendMetrics(data acceptor.Metrics) error {
+	pid, err := strconv.Atoi(agent.from.EntityID)
+	if err != nil && agent.from.EntityID != "" {
+		agent.logger.Debug("agent got malformed PID %q", agent.from.EntityID)
 	}
 
-	if _, err = agent.request(agent.makeURL(agentDataURL), "POST", &EntityData{
+	if _, err = agent.request(agent.makeURL(agentDataURL), "POST", acceptor.GoProcessData{
 		PID:      pid,
 		Snapshot: agent.snapshot.Collect(),
 		Metrics:  data,
@@ -118,16 +138,16 @@ func (agent *agentS) SendEvent(event *EventData) error {
 	return nil
 }
 
-type hostAgentSpan struct {
+type agentSpan struct {
 	Span
 	From *fromS `json:"f"` // override the `f` fields with agent-specific type
 }
 
 // SendSpans sends collected spans to the host agent
 func (agent *agentS) SendSpans(spans []Span) error {
-	agentSpans := make([]hostAgentSpan, 0, len(spans))
+	agentSpans := make([]agentSpan, 0, len(spans))
 	for _, sp := range spans {
-		agentSpans = append(agentSpans, hostAgentSpan{sp, agent.from})
+		agentSpans = append(agentSpans, agentSpan{sp, agent.from})
 	}
 
 	_, err := agent.request(agent.makeURL(agentTracesURL), "POST", agentSpans)
@@ -150,7 +170,7 @@ type hostAgentProfile struct {
 func (agent *agentS) SendProfiles(profiles []autoprofile.Profile) error {
 	agentProfiles := make([]hostAgentProfile, 0, len(profiles))
 	for _, p := range profiles {
-		agentProfiles = append(agentProfiles, hostAgentProfile{p, agent.from.PID})
+		agentProfiles = append(agentProfiles, hostAgentProfile{p, agent.from.EntityID})
 	}
 
 	_, err := agent.request(agent.makeURL(agentProfilesURL), "POST", agentProfiles)
@@ -180,8 +200,8 @@ func (r *agentS) makeHostURL(host string, prefix string) string {
 	buffer.WriteString(":")
 	buffer.WriteString(r.port)
 	buffer.WriteString(prefix)
-	if prefix[len(prefix)-1:] == "." && r.from.PID != "" {
-		buffer.WriteString(r.from.PID)
+	if prefix[len(prefix)-1:] == "." && r.from.EntityID != "" {
+		buffer.WriteString(r.from.EntityID)
 	}
 
 	return buffer.String()

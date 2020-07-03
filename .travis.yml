@@ -13,6 +13,7 @@ matrix:
 
 script:
   - make test
+  - make integration
 
 notifications:
   slack:

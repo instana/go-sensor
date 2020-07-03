@@ -12,6 +12,36 @@ The Instana Go sensor consists of two parts:
 [![GoDoc](https://img.shields.io/static/v1?label=godoc&message=reference&color=blue)](https://pkg.go.dev/github.com/instana/go-sensor)
 [![OpenTracing Badge](https://img.shields.io/badge/OpenTracing-enabled-blue.svg)](http://opentracing.io)
 
+## Installation
+
+To add Instana Go sensor to your service run:
+
+```bash
+$ go get github.com/instana/go-sensor
+```
+
+To activate background metrics collection, add following line at the beginning of your service initialization (typically this would be the beginning of your `main()` function):
+
+```go
+func main() {
+	instana.InitSensor(instana.DefaultOptions())
+    
+    // ...
+}
+```
+
+Once initialized, the sensor performs a host agent lookup using following list of addresses (in order of priority):
+
+1. The value of `INSTANA_AGENT_HOST` env variable
+2. `localhost`
+3. Default gateway
+
+Once a host agent found listening on port `42699` (or the port specified in `INSTANA_AGENT_PORT` env variable) the sensor begins collecting in-app metrics and sending them to the host agent.
+
+### Running on AWS Fargate
+
+To use Instana Go sensor for monitoring a service running on AWS Fargate make sure that you have `INSTANA_ENDPOINT_URL` and `INSTANA_AGENT_KEY` env variables set in your task definition. Please refer to [Instana documentation](https://www.instana.com/docs/ecosystem/aws-fargate/#configure-your-task-definition) for detailed explanation on how to do this.
+
 ## Common Operations
 
 The Instana Go sensor offers a set of quick features to support tracing of the most common operations like handling HTTP requests and executing HTTP requests.

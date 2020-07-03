@@ -2,10 +2,14 @@ package instana
 
 import (
 	"errors"
+	"net/http"
 	"os"
 	"path/filepath"
+	"time"
 
+	"github.com/instana/go-sensor/acceptor"
 	"github.com/instana/go-sensor/autoprofile"
+	"github.com/instana/go-sensor/aws"
 	"github.com/instana/go-sensor/logger"
 )
 
@@ -16,7 +20,7 @@ const (
 
 type agentClient interface {
 	Ready() bool
-	SendMetrics(data *MetricsS) error
+	SendMetrics(data acceptor.Metrics) error
 	SendEvent(event *EventData) error
 	SendSpans(spans []Span) error
 	SendProfiles(profiles []autoprofile.Profile) error
@@ -60,7 +64,31 @@ func newSensor(options *Options) *sensorS {
 		setLogLevel(l, options.LogLevel)
 	}
 
-	s.agent = newAgent(s.serviceName, s.options.AgentHost, s.options.AgentPort, s.logger)
+	switch {
+	case os.Getenv("AWS_EXECUTION_ENV") == "AWS_ECS_FARGATE":
+		// seems like the app is running on AWS Fargate, but we still need to check
+		// whether ECS_CONTAINER_METADATA_URI is set
+		if mdURI := os.Getenv("ECS_CONTAINER_METADATA_URI"); mdURI != "" {
+			client := &http.Client{Timeout: 500 * time.Millisecond}
+			s.agent = newFargateAgent(
+				s.serviceName,
+				os.Getenv("INSTANA_ENDPOINT_URL"),
+				os.Getenv("INSTANA_AGENT_KEY"),
+				client,
+				aws.NewECSMetadataProvider(mdURI, client),
+				s.logger,
+			)
+
+			break
+		}
+
+		s.logger.Error("the task metadata URI is not set in ECS_CONTAINER_METADATA_URI env var, falling back to host agent mode")
+
+		fallthrough
+	default:
+		s.agent = newAgent(s.serviceName, s.options.AgentHost, s.options.AgentPort, s.logger)
+	}
+
 	s.meter = newMeter(s.agent, s.logger)
 
 	return s

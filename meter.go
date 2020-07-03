@@ -3,55 +3,25 @@ package instana
 import (
 	"runtime"
 	"time"
+
+	"github.com/instana/go-sensor/acceptor"
 )
 
-// SnapshotS struct to hold snapshot data.
-type SnapshotS struct {
-	Name     string `json:"name"`
-	Version  string `json:"version"`
-	Root     string `json:"goroot"`
-	MaxProcs int    `json:"maxprocs"`
-	Compiler string `json:"compiler"`
-	NumCPU   int    `json:"cpu"`
-}
+// SnapshotS struct to hold snapshot data
+type SnapshotS acceptor.RuntimeInfo
 
-// MemoryS struct to hold snapshot data.
-type MemoryS struct {
-	Alloc         uint64  `json:"alloc"`
-	TotalAlloc    uint64  `json:"total_alloc"`
-	Sys           uint64  `json:"sys"`
-	Lookups       uint64  `json:"lookups"`
-	Mallocs       uint64  `json:"mallocs"`
-	Frees         uint64  `json:"frees"`
-	HeapAlloc     uint64  `json:"heap_alloc"`
-	HeapSys       uint64  `json:"heap_sys"`
-	HeapIdle      uint64  `json:"heap_idle"`
-	HeapInuse     uint64  `json:"heap_in_use"`
-	HeapReleased  uint64  `json:"heap_released"`
-	HeapObjects   uint64  `json:"heap_objects"`
-	PauseTotalNs  uint64  `json:"pause_total_ns"`
-	PauseNs       uint64  `json:"pause_ns"`
-	NumGC         uint32  `json:"num_gc"`
-	GCCPUFraction float64 `json:"gc_cpu_fraction"`
-}
+// MemoryS struct to hold snapshot data
+type MemoryS acceptor.MemoryStats
 
-// MetricsS struct to hold snapshot data.
-type MetricsS struct {
-	CgoCall   int64    `json:"cgo_call"`
-	Goroutine int      `json:"goroutine"`
-	Memory    *MemoryS `json:"memory"`
-}
+// MetricsS struct to hold snapshot data
+type MetricsS acceptor.Metrics
 
-// EntityData struct to hold snapshot data.
-type EntityData struct {
-	PID      int        `json:"pid"`
-	Snapshot *SnapshotS `json:"snapshot,omitempty"`
-	Metrics  *MetricsS  `json:"metrics"`
-}
+// EntityData struct to hold snapshot data
+type EntityData acceptor.GoProcessData
 
 type metricSender interface {
 	Ready() bool
-	SendMetrics(*MetricsS) error
+	SendMetrics(acceptor.Metrics) error
 }
 
 type meterS struct {
@@ -91,10 +61,10 @@ func (m *meterS) setLogger(l LeveledLogger) {
 	m.logger = l
 }
 
-func (r *meterS) collectMemoryMetrics() *MemoryS {
+func (r *meterS) collectMemoryMetrics() acceptor.MemoryStats {
 	var memStats runtime.MemStats
 	runtime.ReadMemStats(&memStats)
-	ret := &MemoryS{
+	ret := acceptor.MemoryStats{
 		Alloc:         memStats.Alloc,
 		TotalAlloc:    memStats.TotalAlloc,
 		Sys:           memStats.Sys,
@@ -119,10 +89,10 @@ func (r *meterS) collectMemoryMetrics() *MemoryS {
 	return ret
 }
 
-func (r *meterS) collectMetrics() *MetricsS {
-	return &MetricsS{
-		CgoCall:   runtime.NumCgoCall(),
-		Goroutine: runtime.NumGoroutine(),
-		Memory:    r.collectMemoryMetrics(),
+func (r *meterS) collectMetrics() acceptor.Metrics {
+	return acceptor.Metrics{
+		CgoCall:     runtime.NumCgoCall(),
+		Goroutine:   runtime.NumGoroutine(),
+		MemoryStats: r.collectMemoryMetrics(),
 	}
 }

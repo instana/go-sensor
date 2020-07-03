@@ -4,6 +4,8 @@ import (
 	"runtime"
 	"sync"
 	"time"
+
+	"github.com/instana/go-sensor/acceptor"
 )
 
 // SnapshotCollector returns a snapshot of Go runtime
@@ -17,7 +19,7 @@ type SnapshotCollector struct {
 
 // Collect returns a snaphot of current runtime state. Any call this
 // method made before the next interval elapses will return nil
-func (sc *SnapshotCollector) Collect() *SnapshotS {
+func (sc *SnapshotCollector) Collect() *acceptor.RuntimeInfo {
 	sc.mu.RLock()
 	lastSnapshotCollectionTime := sc.lastCollectionTime
 	sc.mu.RUnlock()
@@ -31,7 +33,7 @@ func (sc *SnapshotCollector) Collect() *SnapshotS {
 
 	sc.lastCollectionTime = time.Now()
 
-	return &SnapshotS{
+	return &acceptor.RuntimeInfo{
 		Name:     sc.ServiceName,
 		Version:  runtime.Version(),
 		Root:     runtime.GOROOT(),

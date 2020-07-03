@@ -6,6 +6,7 @@ import (
 	"time"
 
 	instana "github.com/instana/go-sensor"
+	"github.com/instana/go-sensor/acceptor"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -15,7 +16,7 @@ func TestSnapshotCollector_Collect(t *testing.T) {
 		CollectionInterval: 500 * time.Millisecond,
 	}
 
-	assert.Equal(t, &instana.SnapshotS{
+	assert.Equal(t, &acceptor.RuntimeInfo{
 		Name:     sc.ServiceName,
 		Version:  runtime.Version(),
 		Root:     runtime.GOROOT(),
@@ -35,7 +36,7 @@ func TestSnapshotCollector_Collect(t *testing.T) {
 		time.Sleep(sc.CollectionInterval)
 		runtime.GOMAXPROCS(oldNumProcs + 1)
 
-		assert.Equal(t, &instana.SnapshotS{
+		assert.Equal(t, &acceptor.RuntimeInfo{
 			Name:     sc.ServiceName,
 			Version:  runtime.Version(),
 			Root:     runtime.GOROOT(),
