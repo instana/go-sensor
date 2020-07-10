@@ -14,9 +14,13 @@ import (
 )
 
 // TracingHandlerFunc is an HTTP middleware that captures the tracing data and ensures
-// trace context propagation via OpenTracing headers. The wrapped handler will also propagate
-// the W3C trace context (https://www.w3.org/TR/trace-context/) if found in request
-func TracingHandlerFunc(sensor *Sensor, name string, handler http.HandlerFunc) http.HandlerFunc {
+// trace context propagation via OpenTracing headers. The pathTemplate parameter, when provided,
+// will be added to the span as a template string used to match the route containing variables, regular
+// expressions, etc.
+//
+// The wrapped handler will also propagate the W3C trace context (https://www.w3.org/TR/trace-context/)
+// if found in request.
+func TracingHandlerFunc(sensor *Sensor, pathTemplate string, handler http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		ctx := req.Context()
 
@@ -50,6 +54,10 @@ func TracingHandlerFunc(sensor *Sensor, name string, handler http.HandlerFunc) h
 
 		if req.Header.Get(FieldSynthetic) == "1" {
 			opts = append(opts, syntheticCall())
+		}
+
+		if pathTemplate != "" && req.URL.Path != pathTemplate {
+			opts = append(opts, ot.Tag{Key: "http.path_tpl", Value: pathTemplate})
 		}
 
 		span := tracer.StartSpan("g.http", opts...)
