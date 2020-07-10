@@ -21,6 +21,10 @@ func TestTracingHandlerFunc_Write(t *testing.T) {
 	}, recorder))
 
 	h := instana.TracingHandlerFunc(s, "test-handler", func(w http.ResponseWriter, req *http.Request) {
+		if sp, ok := instana.SpanFromContext(req.Context()); ok {
+			sp.SetTag("http.path_tpl", "/{action}")
+		}
+
 		fmt.Fprintln(w, "Ok")
 	})
 
@@ -46,10 +50,11 @@ func TestTracingHandlerFunc_Write(t *testing.T) {
 	data := span.Data.(instana.HTTPSpanData)
 
 	assert.Equal(t, instana.HTTPSpanTags{
-		Host:   "example.com",
-		Status: http.StatusOK,
-		Method: "GET",
-		Path:   "/test",
+		Host:         "example.com",
+		Status:       http.StatusOK,
+		Method:       "GET",
+		Path:         "/test",
+		PathTemplate: "/{action}",
 	}, data.Tags)
 
 	// check whether the trace context has been sent back to the client
