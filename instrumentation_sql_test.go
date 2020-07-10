@@ -7,6 +7,7 @@ import (
 
 	instana "github.com/instana/go-sensor"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestInstrumentSQLDriver(t *testing.T) {
@@ -15,6 +16,15 @@ func TestInstrumentSQLDriver(t *testing.T) {
 	}
 
 	assert.Contains(t, sql.Drivers(), "test_driver_with_instana")
+}
+
+func TestOpenSQLDB(t *testing.T) {
+	if !sqlDriverRegistered("test_driver_with_instana") {
+		instana.InstrumentSQLDriver(instana.NewSensor("go-sensor-test"), "test_driver", sqlDriver{})
+	}
+
+	_, err := instana.OpenSQLDB("test_driver", "connection string")
+	require.NoError(t, err)
 }
 
 func sqlDriverRegistered(name string) bool {

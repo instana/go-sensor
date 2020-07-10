@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"database/sql/driver"
 	"errors"
+	"strings"
 
 	ot "github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
@@ -20,6 +21,16 @@ func InstrumentSQLDriver(sensor *Sensor, name string, driver driver.Driver) {
 		Driver: driver,
 		sensor: sensor,
 	})
+}
+
+// OpenSQLDB is a convenience wrapper for `sql.Open()` to use the instrumented version
+// of a driver previosly registered using `instana.InstrumentSQLDriver()`
+func OpenSQLDB(driverName, dataSourceName string) (*sql.DB, error) {
+	if !strings.HasSuffix(driverName, "_with_instana") {
+		driverName += "_with_instana"
+	}
+
+	return sql.Open(driverName, dataSourceName)
 }
 
 type wrappedSQLDriver struct {
