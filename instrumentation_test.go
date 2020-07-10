@@ -20,7 +20,7 @@ func TestTracingHandlerFunc_Write(t *testing.T) {
 		Service: "go-sensor-test",
 	}, recorder))
 
-	h := instana.TracingHandlerFunc(s, "test-handler", func(w http.ResponseWriter, req *http.Request) {
+	h := instana.TracingHandlerFunc(s, "/{action}", func(w http.ResponseWriter, req *http.Request) {
 		fmt.Fprintln(w, "Ok")
 	})
 
@@ -46,10 +46,11 @@ func TestTracingHandlerFunc_Write(t *testing.T) {
 	data := span.Data.(instana.HTTPSpanData)
 
 	assert.Equal(t, instana.HTTPSpanTags{
-		Host:   "example.com",
-		Status: http.StatusOK,
-		Method: "GET",
-		Path:   "/test",
+		Host:         "example.com",
+		Status:       http.StatusOK,
+		Method:       "GET",
+		Path:         "/test",
+		PathTemplate: "/{action}",
 	}, data.Tags)
 
 	// check whether the trace context has been sent back to the client
@@ -61,7 +62,7 @@ func TestTracingHandlerFunc_WriteHeaders(t *testing.T) {
 	recorder := instana.NewTestRecorder()
 	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{}, recorder))
 
-	h := instana.TracingHandlerFunc(s, "test-handler", func(w http.ResponseWriter, req *http.Request) {
+	h := instana.TracingHandlerFunc(s, "/test", func(w http.ResponseWriter, req *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
 	})
 
@@ -93,7 +94,7 @@ func TestTracingHandlerFunc_Error(t *testing.T) {
 	recorder := instana.NewTestRecorder()
 	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{}, recorder))
 
-	h := instana.TracingHandlerFunc(s, "test-handler", func(w http.ResponseWriter, req *http.Request) {
+	h := instana.TracingHandlerFunc(s, "/test", func(w http.ResponseWriter, req *http.Request) {
 		http.Error(w, "something went wrong", http.StatusInternalServerError)
 	})
 
@@ -217,7 +218,7 @@ func TestTracingHandlerFunc_PanicHandling(t *testing.T) {
 	recorder := instana.NewTestRecorder()
 	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{}, recorder))
 
-	h := instana.TracingHandlerFunc(s, "test-handler", func(w http.ResponseWriter, req *http.Request) {
+	h := instana.TracingHandlerFunc(s, "/test", func(w http.ResponseWriter, req *http.Request) {
 		panic("something went wrong")
 	})
 

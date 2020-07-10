@@ -32,3 +32,29 @@ func Example_tracingHandlerFunc() {
 		log.Fatalf("failed to start server: %s", err)
 	}
 }
+
+// This example demonstrates how to instrument a 3rd-party HTTP router that uses pattern matching to make sure
+// the original path template is forwarded to Instana
+func Example_httpRoutePatternMatching() {
+	sensor := instana.NewSensor("my-http-server")
+
+	// Initialize your router. Here for simplicity we use stdlib http.ServeMux, however you
+	// can use any router that supports http.Handler/http.HandlerFunc, such as github.com/gorilla/mux
+	r := http.NewServeMux()
+
+	// Wrap the handler using instana.TracingHandlerFunc() and pass the path template
+	// used to route requests to it. This value will be attached to the span and displayed
+	// in UI as `http.path_tpl` if the request path is different (we assume that this request
+	// has been routed to the handler via a matched pattern)
+	r.HandleFunc("/articles/{category}/{id:[0-9]+}", instana.TracingHandlerFunc(
+		sensor,
+		"/articles/{category}/{id:[0-9]+}",
+		func(w http.ResponseWriter, req *http.Request) {
+			// ...
+		},
+	))
+
+	if err := http.ListenAndServe(":0", nil); err != nil {
+		log.Fatalf("failed to start server: %s", err)
+	}
+}

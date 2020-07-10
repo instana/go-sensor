@@ -272,6 +272,8 @@ type HTTPSpanTags struct {
 	Method string `json:"method,omitempty"`
 	// Path is the path part of the request URL
 	Path string `json:"path,omitempty"`
+	// PathTemplate is the raw template string used to route the request
+	PathTemplate string `json:"path_tpl,omitempty"`
 	// The name:port of the host to which the request had been sent
 	Host string `json:"host,omitempty"`
 	// The name of the protocol used for request ("http" or "https")
@@ -293,6 +295,8 @@ func NewHTTPSpanTags(span *spanS) HTTPSpanTags {
 			readStringTag(&tags.Method, v)
 		case "http.path":
 			readStringTag(&tags.Path, v)
+		case "http.path_tpl":
+			readStringTag(&tags.PathTemplate, v)
 		case "http.host":
 			readStringTag(&tags.Host, v)
 		case "http.protocol":
