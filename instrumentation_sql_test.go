@@ -8,35 +8,192 @@ import (
 	"testing"
 
 	instana "github.com/instana/go-sensor"
+	ot "github.com/opentracing/opentracing-go"
+	"github.com/opentracing/opentracing-go/ext"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func TestInstrumentSQLDriver(t *testing.T) {
-	if !sqlDriverRegistered("test_driver_with_instana") {
-		instana.InstrumentSQLDriver(instana.NewSensor("go-sensor-test"), "test_driver", sqlDriver{})
-	}
-
-	assert.Contains(t, sql.Drivers(), "test_driver_with_instana")
-}
-
 func TestOpenSQLDB(t *testing.T) {
-	if !sqlDriverRegistered("test_driver_with_instana") {
-		instana.InstrumentSQLDriver(instana.NewSensor("go-sensor-test"), "test_driver", sqlDriver{})
-	}
+	recorder := instana.NewTestRecorder()
+	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{
+		Service: "go-sensor-test",
+	}, recorder))
 
-	_, err := instana.OpenSQLDB("test_driver", "connection string")
+	instana.InstrumentSQLDriver(s, "test_driver", sqlDriver{})
+	require.Contains(t, sql.Drivers(), "test_driver_with_instana")
+
+	db, err := instana.OpenSQLDB("test_driver", "connection string")
 	require.NoError(t, err)
+
+	t.Run("Exec", func(t *testing.T) {
+		res, err := db.Exec("TEST QUERY")
+		require.NoError(t, err)
+
+		lastID, err := res.LastInsertId()
+		require.NoError(t, err)
+		assert.Equal(t, int64(42), lastID)
+
+		spans := recorder.GetQueuedSpans()
+		require.Len(t, spans, 1)
+
+		span := spans[0]
+		assert.Equal(t, 0, span.Ec)
+		assert.EqualValues(t, instana.ExitSpanKind, span.Kind)
+
+		require.IsType(t, instana.SDKSpanData{}, span.Data)
+		data := span.Data.(instana.SDKSpanData)
+
+		assert.Equal(t, instana.SDKSpanTags{
+			Name: "sdk.database",
+			Type: "exit",
+			Custom: map[string]interface{}{
+				"tags": ot.Tags{
+					"span.kind":    ext.SpanKindRPCClientEnum,
+					"db.instance":  "connection string",
+					"db.statement": "TEST QUERY",
+					"db.type":      "sql",
+				},
+			},
+		}, data.Tags)
+	})
+
+	t.Run("Query", func(t *testing.T) {
+		res, err := db.Query("TEST QUERY")
+		require.NoError(t, err)
+
+		cols, err := res.Columns()
+		require.NoError(t, err)
+		assert.Equal(t, []string{"col1", "col2"}, cols)
+
+		spans := recorder.GetQueuedSpans()
+		require.Len(t, spans, 1)
+
+		span := spans[0]
+		assert.Equal(t, 0, span.Ec)
+		assert.EqualValues(t, instana.ExitSpanKind, span.Kind)
+
+		require.IsType(t, instana.SDKSpanData{}, span.Data)
+		data := span.Data.(instana.SDKSpanData)
+
+		assert.Equal(t, instana.SDKSpanTags{
+			Name: "sdk.database",
+			Type: "exit",
+			Custom: map[string]interface{}{
+				"tags": ot.Tags{
+					"span.kind":    ext.SpanKindRPCClientEnum,
+					"db.instance":  "connection string",
+					"db.statement": "TEST QUERY",
+					"db.type":      "sql",
+				},
+			},
+		}, data.Tags)
+	})
 }
 
-func sqlDriverRegistered(name string) bool {
-	for _, drv := range sql.Drivers() {
-		if drv == name {
-			return true
-		}
-	}
+func TestOpenSQLDB_URIConnString(t *testing.T) {
+	recorder := instana.NewTestRecorder()
+	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{
+		Service: "go-sensor-test",
+	}, recorder))
 
-	return false
+	instana.InstrumentSQLDriver(s, "fake_db_driver", sqlDriver{})
+	require.Contains(t, sql.Drivers(), "test_driver_with_instana")
+
+	db, err := instana.OpenSQLDB("fake_db_driver", "db://user1:p@55w0rd@db-host:1234/test-schema?param=value")
+	require.NoError(t, err)
+
+	_, err = db.Exec("TEST QUERY")
+	require.NoError(t, err)
+
+	spans := recorder.GetQueuedSpans()
+	require.Len(t, spans, 1)
+
+	require.IsType(t, instana.SDKSpanData{}, spans[0].Data)
+	data := spans[0].Data.(instana.SDKSpanData)
+
+	assert.Equal(t, instana.SDKSpanTags{
+		Name: "sdk.database",
+		Type: "exit",
+		Custom: map[string]interface{}{
+			"tags": ot.Tags{
+				"span.kind":    ext.SpanKindRPCClientEnum,
+				"db.instance":  "test-schema",
+				"db.statement": "TEST QUERY",
+				"db.type":      "sql",
+			},
+		},
+	}, data.Tags)
+}
+
+func TestOpenSQLDB_PostgresKVConnString(t *testing.T) {
+	recorder := instana.NewTestRecorder()
+	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{
+		Service: "go-sensor-test",
+	}, recorder))
+
+	instana.InstrumentSQLDriver(s, "fake_postgres_driver", sqlDriver{})
+	require.Contains(t, sql.Drivers(), "fake_postgres_driver_with_instana")
+
+	db, err := instana.OpenSQLDB("fake_postgres_driver", "host=db-host1,db-host-2 hostaddr=1.2.3.4,2.3.4.5 connect_timeout=10  port=1234 user=user1 password=p@55w0rd dbname=test-schema")
+	require.NoError(t, err)
+
+	_, err = db.Exec("TEST QUERY")
+	require.NoError(t, err)
+
+	spans := recorder.GetQueuedSpans()
+	require.Len(t, spans, 1)
+
+	require.IsType(t, instana.SDKSpanData{}, spans[0].Data)
+	data := spans[0].Data.(instana.SDKSpanData)
+
+	assert.Equal(t, instana.SDKSpanTags{
+		Name: "sdk.database",
+		Type: "exit",
+		Custom: map[string]interface{}{
+			"tags": ot.Tags{
+				"span.kind":    ext.SpanKindRPCClientEnum,
+				"db.instance":  "test-schema",
+				"db.statement": "TEST QUERY",
+				"db.type":      "sql",
+			},
+		},
+	}, data.Tags)
+}
+
+func TestOpenSQLDB_MySQLKVConnString(t *testing.T) {
+	recorder := instana.NewTestRecorder()
+	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{
+		Service: "go-sensor-test",
+	}, recorder))
+
+	instana.InstrumentSQLDriver(s, "fake_mysql_driver", sqlDriver{})
+	require.Contains(t, sql.Drivers(), "fake_mysql_driver_with_instana")
+
+	db, err := instana.OpenSQLDB("fake_mysql_driver", "Server=db-host1, db-host2;Database=test-schema;Uid=user1;Pwd=p@55w0rd;")
+	require.NoError(t, err)
+
+	_, err = db.Exec("TEST QUERY")
+	require.NoError(t, err)
+
+	spans := recorder.GetQueuedSpans()
+	require.Len(t, spans, 1)
+
+	require.IsType(t, instana.SDKSpanData{}, spans[0].Data)
+	data := spans[0].Data.(instana.SDKSpanData)
+
+	assert.Equal(t, instana.SDKSpanTags{
+		Name: "sdk.database",
+		Type: "exit",
+		Custom: map[string]interface{}{
+			"tags": ot.Tags{
+				"span.kind":    ext.SpanKindRPCClientEnum,
+				"db.instance":  "test-schema",
+				"db.statement": "TEST QUERY",
+				"db.type":      "sql",
+			},
+		},
+	}, data.Tags)
 }
 
 type sqlDriver struct{ Error error }

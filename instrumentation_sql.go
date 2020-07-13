@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"database/sql/driver"
 	"errors"
+	"net/url"
 	"strings"
 
 	ot "github.com/opentracing/opentracing-go"
@@ -50,17 +51,17 @@ func (drv *wrappedSQLDriver) Open(name string) (driver.Conn, error) {
 	}
 
 	return &wrappedSQLConn{
-		Conn:       conn,
-		connString: name,
-		sensor:     drv.sensor,
+		Conn:    conn,
+		details: parseDBConnDetails(name),
+		sensor:  drv.sensor,
 	}, nil
 }
 
 type wrappedSQLConn struct {
 	driver.Conn
 
-	connString string
-	sensor     *Sensor
+	details dbConnDetails
+	sensor  *Sensor
 }
 
 func (conn *wrappedSQLConn) Prepare(query string) (driver.Stmt, error) {
@@ -74,10 +75,10 @@ func (conn *wrappedSQLConn) Prepare(query string) (driver.Stmt, error) {
 	}
 
 	return &wrappedSQLStmt{
-		Stmt:       stmt,
-		connString: conn.connString,
-		query:      query,
-		sensor:     conn.sensor,
+		Stmt:        stmt,
+		connDetails: conn.details,
+		query:       query,
+		sensor:      conn.sensor,
 	}, nil
 }
 
@@ -101,15 +102,15 @@ func (conn *wrappedSQLConn) PrepareContext(ctx context.Context, query string) (d
 	}
 
 	return &wrappedSQLStmt{
-		Stmt:       stmt,
-		connString: conn.connString,
-		query:      query,
-		sensor:     conn.sensor,
+		Stmt:        stmt,
+		connDetails: conn.details,
+		query:       query,
+		sensor:      conn.sensor,
 	}, nil
 }
 
 func (conn *wrappedSQLConn) ExecContext(ctx context.Context, query string, args []driver.NamedValue) (driver.Result, error) {
-	sp := startSQLSpan(ctx, conn.connString, query, conn.sensor)
+	sp := startSQLSpan(ctx, conn.details, query, conn.sensor)
 	defer sp.Finish()
 
 	if c, ok := conn.Conn.(driver.ExecerContext); ok {
@@ -147,13 +148,13 @@ func (conn *wrappedSQLConn) ExecContext(ctx context.Context, query string, args 
 type wrappedSQLStmt struct {
 	driver.Stmt
 
-	connString string
-	query      string
-	sensor     *Sensor
+	connDetails dbConnDetails
+	query       string
+	sensor      *Sensor
 }
 
 func (stmt *wrappedSQLStmt) ExecContext(ctx context.Context, args []driver.NamedValue) (driver.Result, error) {
-	sp := startSQLSpan(ctx, stmt.connString, stmt.query, stmt.sensor)
+	sp := startSQLSpan(ctx, stmt.connDetails, stmt.query, stmt.sensor)
 	defer sp.Finish()
 
 	if s, ok := stmt.Stmt.(driver.StmtExecContext); ok {
@@ -185,7 +186,7 @@ func (stmt *wrappedSQLStmt) ExecContext(ctx context.Context, args []driver.Named
 }
 
 func (stmt *wrappedSQLStmt) QueryContext(ctx context.Context, args []driver.NamedValue) (driver.Rows, error) {
-	sp := startSQLSpan(ctx, stmt.connString, stmt.query, stmt.sensor)
+	sp := startSQLSpan(ctx, stmt.connDetails, stmt.query, stmt.sensor)
 	defer sp.Finish()
 
 	if s, ok := stmt.Stmt.(driver.StmtQueryContext); ok {
@@ -216,13 +217,13 @@ func (stmt *wrappedSQLStmt) QueryContext(ctx context.Context, args []driver.Name
 	return res, err
 }
 
-func startSQLSpan(ctx context.Context, connString, query string, sensor *Sensor) ot.Span {
+func startSQLSpan(ctx context.Context, conn dbConnDetails, query string, sensor *Sensor) ot.Span {
 	opts := []ot.StartSpanOption{
 		ext.SpanKindRPCClient,
 		ot.Tags{
 			string(ext.DBType):      "sql",
 			string(ext.DBStatement): query,
-			string(ext.DBInstance):  connString,
+			string(ext.DBInstance):  conn.Schema,
 		},
 	}
 	if parentSpan, ok := SpanFromContext(ctx); ok {
@@ -230,6 +231,119 @@ func startSQLSpan(ctx context.Context, connString, query string, sensor *Sensor)
 	}
 
 	return sensor.Tracer().StartSpan("sdk.database", opts...)
+}
+
+type dbConnDetails struct {
+	Host, Port string
+	Schema     string
+	User       string
+}
+
+func parseDBConnDetails(connStr string) dbConnDetails {
+	strategies := [...]func(string) (dbConnDetails, bool){
+		parseDBConnDetailsURI,
+		parsePostgresConnDetailsKV,
+		parseMySQLConnDetailsKV,
+	}
+	for _, parseFn := range strategies {
+		if details, ok := parseFn(connStr); ok {
+			return details
+		}
+	}
+
+	return dbConnDetails{Schema: connStr}
+}
+
+// parseDBConnDetailsURI attempts to parse a connection string as an URI, assuming that it has
+// following format: [scheme://][user[:[password]]@]host[:port][/schema][?attribute1=value1&attribute2=value2...]
+func parseDBConnDetailsURI(connStr string) (dbConnDetails, bool) {
+	u, err := url.Parse(connStr)
+	if err != nil {
+		return dbConnDetails{}, false
+	}
+
+	if u.Scheme == "" {
+		return dbConnDetails{}, false
+	}
+
+	details := dbConnDetails{
+		Host:   u.Hostname(),
+		Port:   u.Port(),
+		Schema: u.Path[1:],
+	}
+
+	if u.User != nil {
+		details.User = u.User.Username()
+	}
+
+	return details, true
+}
+
+// parsePostgresConnDetailsKV parses a space-separated PostgreSQL-style connection string
+func parsePostgresConnDetailsKV(connStr string) (dbConnDetails, bool) {
+	var details dbConnDetails
+
+	for _, field := range strings.Split(connStr, " ") {
+		fieldNorm := strings.ToLower(field)
+
+		var (
+			prefix   string
+			fieldPtr *string
+		)
+		switch {
+		case strings.HasPrefix(fieldNorm, "host="):
+			if details.Host != "" {
+				// hostaddr= takes precedence
+				continue
+			}
+
+			prefix, fieldPtr = "host=", &details.Host
+		case strings.HasPrefix(fieldNorm, "hostaddr="):
+			prefix, fieldPtr = "hostaddr=", &details.Host
+		case strings.HasPrefix(fieldNorm, "port="):
+			prefix, fieldPtr = "port=", &details.Port
+		case strings.HasPrefix(fieldNorm, "user="):
+			prefix, fieldPtr = "user=", &details.User
+		case strings.HasPrefix(fieldNorm, "dbname="):
+			prefix, fieldPtr = "dbname=", &details.Schema
+		default:
+			continue
+		}
+
+		*fieldPtr = field[len(prefix):]
+	}
+
+	return details, details.Schema != ""
+}
+
+// parseMySQLConnDetailsKV parses a semicolon-separated MySQL-style connection string
+func parseMySQLConnDetailsKV(connStr string) (dbConnDetails, bool) {
+	var details dbConnDetails
+
+	for _, field := range strings.Split(connStr, ";") {
+		fieldNorm := strings.ToLower(field)
+
+		var (
+			prefix   string
+			fieldPtr *string
+		)
+		switch {
+		case strings.HasPrefix(fieldNorm, "server="):
+			prefix, fieldPtr = "server=", &details.Host
+		case strings.HasPrefix(fieldNorm, "port="):
+			prefix, fieldPtr = "port=", &details.Port
+		case strings.HasPrefix(fieldNorm, "uid="):
+			prefix, fieldPtr = "uid=", &details.User
+		case strings.HasPrefix(fieldNorm, "database="):
+			prefix, fieldPtr = "database=", &details.Schema
+		default:
+			continue
+		}
+
+		*fieldPtr = field[len(prefix):]
+	}
+
+	return details, details.Schema != ""
 }
 
 // The following code is ported from $GOROOT/src/database/sql/ctxutil.go
