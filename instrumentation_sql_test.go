@@ -53,6 +53,7 @@ func TestOpenSQLDB(t *testing.T) {
 					"db.instance":  "connection string",
 					"db.statement": "TEST QUERY",
 					"db.type":      "sql",
+					"peer.address": "connection string",
 				},
 			},
 		}, data.Tags)
@@ -85,6 +86,7 @@ func TestOpenSQLDB(t *testing.T) {
 					"db.instance":  "connection string",
 					"db.statement": "TEST QUERY",
 					"db.type":      "sql",
+					"peer.address": "connection string",
 				},
 			},
 		}, data.Tags)
@@ -117,10 +119,13 @@ func TestOpenSQLDB_URIConnString(t *testing.T) {
 		Type: "exit",
 		Custom: map[string]interface{}{
 			"tags": ot.Tags{
-				"span.kind":    ext.SpanKindRPCClientEnum,
-				"db.instance":  "test-schema",
-				"db.statement": "TEST QUERY",
-				"db.type":      "sql",
+				"span.kind":     ext.SpanKindRPCClientEnum,
+				"db.instance":   "test-schema",
+				"db.statement":  "TEST QUERY",
+				"db.type":       "sql",
+				"peer.address":  "db://user1@db-host:1234/test-schema?param=value",
+				"peer.hostname": "db-host",
+				"peer.port":     "1234",
 			},
 		},
 	}, data.Tags)
@@ -152,10 +157,13 @@ func TestOpenSQLDB_PostgresKVConnString(t *testing.T) {
 		Type: "exit",
 		Custom: map[string]interface{}{
 			"tags": ot.Tags{
-				"span.kind":    ext.SpanKindRPCClientEnum,
-				"db.instance":  "test-schema",
-				"db.statement": "TEST QUERY",
-				"db.type":      "sql",
+				"span.kind":     ext.SpanKindRPCClientEnum,
+				"db.instance":   "test-schema",
+				"db.statement":  "TEST QUERY",
+				"db.type":       "sql",
+				"peer.address":  "host=db-host1,db-host-2 hostaddr=1.2.3.4,2.3.4.5 connect_timeout=10  port=1234 user=user1 dbname=test-schema",
+				"peer.hostname": "1.2.3.4,2.3.4.5",
+				"peer.port":     "1234",
 			},
 		},
 	}, data.Tags)
@@ -170,7 +178,7 @@ func TestOpenSQLDB_MySQLKVConnString(t *testing.T) {
 	instana.InstrumentSQLDriver(s, "fake_mysql_driver", sqlDriver{})
 	require.Contains(t, sql.Drivers(), "fake_mysql_driver_with_instana")
 
-	db, err := instana.OpenSQLDB("fake_mysql_driver", "Server=db-host1, db-host2;Database=test-schema;Uid=user1;Pwd=p@55w0rd;")
+	db, err := instana.OpenSQLDB("fake_mysql_driver", "Server=db-host1, db-host2;Database=test-schema;Port=1234;Uid=user1;Pwd=p@55w0rd;")
 	require.NoError(t, err)
 
 	_, err = db.Exec("TEST QUERY")
@@ -187,10 +195,13 @@ func TestOpenSQLDB_MySQLKVConnString(t *testing.T) {
 		Type: "exit",
 		Custom: map[string]interface{}{
 			"tags": ot.Tags{
-				"span.kind":    ext.SpanKindRPCClientEnum,
-				"db.instance":  "test-schema",
-				"db.statement": "TEST QUERY",
-				"db.type":      "sql",
+				"span.kind":     ext.SpanKindRPCClientEnum,
+				"db.instance":   "test-schema",
+				"db.statement":  "TEST QUERY",
+				"db.type":       "sql",
+				"peer.address":  "Server=db-host1, db-host2;Database=test-schema;Port=1234;Uid=user1;",
+				"peer.hostname": "db-host1, db-host2",
+				"peer.port":     "1234",
 			},
 		},
 	}, data.Tags)

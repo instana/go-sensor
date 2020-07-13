@@ -6,6 +6,7 @@ import (
 	"database/sql/driver"
 	"errors"
 	"net/url"
+	"regexp"
 	"strings"
 
 	ot "github.com/opentracing/opentracing-go"
@@ -218,14 +219,27 @@ func (stmt *wrappedSQLStmt) QueryContext(ctx context.Context, args []driver.Name
 }
 
 func startSQLSpan(ctx context.Context, conn dbConnDetails, query string, sensor *Sensor) ot.Span {
-	opts := []ot.StartSpanOption{
-		ext.SpanKindRPCClient,
-		ot.Tags{
-			string(ext.DBType):      "sql",
-			string(ext.DBStatement): query,
-			string(ext.DBInstance):  conn.Schema,
-		},
+	tags := ot.Tags{
+		string(ext.DBType):      "sql",
+		string(ext.DBStatement): query,
+		string(ext.PeerAddress): conn.RawString,
 	}
+
+	if conn.Schema != "" {
+		tags[string(ext.DBInstance)] = conn.Schema
+	} else {
+		tags[string(ext.DBInstance)] = conn.RawString
+	}
+
+	if conn.Host != "" {
+		tags[string(ext.PeerHostname)] = conn.Host
+	}
+
+	if conn.Port != "" {
+		tags[string(ext.PeerPort)] = conn.Port
+	}
+
+	opts := []ot.StartSpanOption{ext.SpanKindRPCClient, tags}
 	if parentSpan, ok := SpanFromContext(ctx); ok {
 		opts = append(opts, ot.ChildOf(parentSpan.Context()))
 	}
@@ -234,6 +248,7 @@ func startSQLSpan(ctx context.Context, conn dbConnDetails, query string, sensor 
 }
 
 type dbConnDetails struct {
+	RawString  string
 	Host, Port string
 	Schema     string
 	User       string
@@ -251,7 +266,7 @@ func parseDBConnDetails(connStr string) dbConnDetails {
 		}
 	}
 
-	return dbConnDetails{Schema: connStr}
+	return dbConnDetails{RawString: connStr}
 }
 
 // parseDBConnDetailsURI attempts to parse a connection string as an URI, assuming that it has
@@ -267,17 +282,25 @@ func parseDBConnDetailsURI(connStr string) (dbConnDetails, bool) {
 	}
 
 	details := dbConnDetails{
-		Host:   u.Hostname(),
-		Port:   u.Port(),
-		Schema: u.Path[1:],
+		RawString: connStr,
+		Host:      u.Hostname(),
+		Port:      u.Port(),
+		Schema:    u.Path[1:],
 	}
 
 	if u.User != nil {
 		details.User = u.User.Username()
+
+		// create a copy without user password
+		u := cloneURL(u)
+		u.User = url.User(details.User)
+		details.RawString = u.String()
 	}
 
 	return details, true
 }
+
+var postgresKVPasswordRegex = regexp.MustCompile(`(^|\s)password=[^\s]+(\s|$)`)
 
 // parsePostgresConnDetailsKV parses a space-separated PostgreSQL-style connection string
 func parsePostgresConnDetailsKV(connStr string) (dbConnDetails, bool) {
@@ -313,12 +336,20 @@ func parsePostgresConnDetailsKV(connStr string) (dbConnDetails, bool) {
 		*fieldPtr = field[len(prefix):]
 	}
 
-	return details, details.Schema != ""
+	if details.Schema == "" {
+		return dbConnDetails{}, false
+	}
+
+	details.RawString = postgresKVPasswordRegex.ReplaceAllString(connStr, " ")
+
+	return details, true
 }
+
+var mysqlKVPasswordRegex = regexp.MustCompile(`(?i)(^|;)Pwd=[^;]+(;|$)`)
 
 // parseMySQLConnDetailsKV parses a semicolon-separated MySQL-style connection string
 func parseMySQLConnDetailsKV(connStr string) (dbConnDetails, bool) {
-	var details dbConnDetails
+	details := dbConnDetails{RawString: connStr}
 
 	for _, field := range strings.Split(connStr, ";") {
 		fieldNorm := strings.ToLower(field)
@@ -343,7 +374,13 @@ func parseMySQLConnDetailsKV(connStr string) (dbConnDetails, bool) {
 		*fieldPtr = field[len(prefix):]
 	}
 
-	return details, details.Schema != ""
+	if details.Schema == "" {
+		return dbConnDetails{}, false
+	}
+
+	details.RawString = mysqlKVPasswordRegex.ReplaceAllString(connStr, ";")
+
+	return details, true
 }
 
 // The following code is ported from $GOROOT/src/database/sql/ctxutil.go

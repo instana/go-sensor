@@ -50,6 +50,7 @@ func TestWrapSQLConnector_Exec(t *testing.T) {
 				"db.instance":  "connection string",
 				"db.statement": "TEST QUERY",
 				"db.type":      "sql",
+				"peer.address": "connection string",
 			},
 		},
 	}, data.Tags)
@@ -128,6 +129,7 @@ func TestWrapSQLConnector_Query(t *testing.T) {
 				"db.instance":  "connection string",
 				"db.statement": "TEST QUERY",
 				"db.type":      "sql",
+				"peer.address": "connection string",
 			},
 		},
 	}, data.Tags)
