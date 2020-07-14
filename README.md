@@ -7,6 +7,7 @@ The Instana Go sensor consists of two parts:
 
 * metrics sensor
 * [OpenTracing](http://opentracing.io) tracer
+* AutoProfile™ continuous profiler
 
 [![Build Status](https://travis-ci.org/instana/go-sensor.svg?branch=master)](https://travis-ci.org/instana/go-sensor)
 [![GoDoc](https://img.shields.io/static/v1?label=godoc&message=reference&color=blue)](https://pkg.go.dev/github.com/instana/go-sensor)
@@ -30,6 +31,13 @@ func main() {
 }
 ```
 
+The init function takes an `Options` object with the following optional fields:
+
+* **Service** - global service name that will be used to identify the program in the Instana backend
+* **AgentHost**, **AgentPort** - default to `localhost:42699`, set the coordinates of the Instana proxy agent
+* **LogLevel** - one of `Error`, `Warn`, `Info` or `Debug`
+* **EnableAutoProfile** - enables automatic continuous process profiling when `true`
+
 Once initialized, the sensor performs a host agent lookup using following list of addresses (in order of priority):
 
 1. The value of `INSTANA_AGENT_HOST` env variable
@@ -41,6 +49,14 @@ Once a host agent found listening on port `42699` (or the port specified in `INS
 ### Running on AWS Fargate
 
 To use Instana Go sensor for monitoring a service running on AWS Fargate make sure that you have `INSTANA_ENDPOINT_URL` and `INSTANA_AGENT_KEY` env variables set in your task definition. Note that the `INSTANA_AGENT_HOST` and `INSTANA_AGENT_PORT` env variables will be ignored in this case. Please refer to [Instana documentation](https://www.instana.com/docs/ecosystem/aws-fargate/#configure-your-task-definition) for detailed explanation on how to do this.
+
+### Using Instana to gather process metrics only
+
+To use sensor without tracing ability, import the `instana` package and add the following line at the beginning of your `main()` function:
+
+```go
+instana.InitSensor(opt)
+```
 
 ## Common Operations
 
@@ -54,7 +70,7 @@ var sensor = instana.NewSensor("my-service")
 
 A full example can be found under the examples folder in [example/webserver/instana/http.go](./example/webserver/instana/http.go).
 
-### Log Output
+### Setting the sensor log output
 
 The Go sensor uses a leveled logger to log internal errors and diagnostic information. The default `logger.Logger` uses `log.Logger`
 configured with `log.Lstdflags` as a backend and writes messages to `os.Stderr`. By default this logger only prints out the `ERROR` level
@@ -133,7 +149,9 @@ func MyFunc(ctx context.Context) {
 }
 ```
 
-### HTTP Server Handlers
+### HTTP servers and clients
+
+#### Instrumenting HTTP request handling
 
 With support to wrap a `http.HandlerFunc`, Instana quickly adds the possibility to trace requests and collect child spans, executed in the context of the request span.
 
@@ -165,7 +183,7 @@ h := http.FileServer(http.Dir("./"))
 http.HandleFunc("/files", instana.TracingHandlerFunc(sensor, "index", h.ServeHTTP))
 ```
 
-### Executing HTTP Requests
+#### Instrumenting HTTP request execution
 
 Requesting data or information from other, often external systems, is commonly implemented through HTTP requests. To make sure traces contain all spans, especially over all the different systems, certain span information have to be injected into the HTTP request headers before sending it out. Instana's Go sensor provides support to automate this process as much as possible.
 
@@ -229,23 +247,6 @@ db, err := sql.OpenDB(instana.WrapSQLConnector(sensor, "mysql://...", connector)
 ### Kafka producers and consumers
 
 [`github.com/instana/go-sensor/instrumentation/instasarama`](./instrumentation/instasarama) provides both unary and stream interceptors to instrument Kafka producers and consumers built on top of `github.com/Shopify/sarama`.
-
-## Sensor
-
-To use sensor only without tracing ability, import the `instana` package and run
-
-```go
-instana.InitSensor(opt)
-```
-
-in your main function. The init function takes an `Options` object with the following optional fields:
-
-* **Service** - global service name that will be used to identify the program in the Instana backend
-* **AgentHost**, **AgentPort** - default to `localhost:42699`, set the coordinates of the Instana proxy agent
-* **LogLevel** - one of `Error`, `Warn`, `Info` or `Debug`
-* **EnableAutoProfile** - enables automatic continuous process profiling when `true`
-
-Once initialized, the sensor will try to connect to the given Instana agent and in case of connection success will send metrics and snapshot information through the agent to the backend.
 
 ## OpenTracing
 
