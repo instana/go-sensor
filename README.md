@@ -13,6 +13,30 @@ The Instana Go sensor consists of two parts:
 [![GoDoc](https://img.shields.io/static/v1?label=godoc&message=reference&color=blue)](https://pkg.go.dev/github.com/instana/go-sensor)
 [![OpenTracing Badge](https://img.shields.io/badge/OpenTracing-enabled-blue.svg)](http://opentracing.io)
 
+## Table of Contents
+
+* [Installation](#installation)
+  * [Running on AWS Fargate](#running-on-aws-fargate)
+  * [Using Instana to gather process metrics only](#using-instana-to-gather-process-metrics-only)
+* [Common Operations](#common-operations)
+  * [Setting the sensor log output](#setting-the-sensor-log-output)
+  * [Trace Context Propagation](#trace-context-propagation)
+  * [HTTP servers and clients](#http-servers-and-clients)
+    * [Instrumenting HTTP request handling](#instrumenting-http-request-handling)
+    * [Instrumenting HTTP request execution](#instrumenting-http-request-execution)
+  * [Database Calls](#database-calls)
+    * [Instrumenting sql\.Open()](#instrumenting-sqlopen)
+    * [Instrumenting sql\.OpenDB()](#instrumenting-sqlopendb)
+  * [GRPC servers and clients](#grpc-servers-and-clients)
+  * [Kafka producers and consumers](#kafka-producers-and-consumers)
+* [OpenTracing](#opentracing)
+* [W3C Trace Context](#w3c-trace-context)
+* [Events API](#events-api)
+* [AutoProfile™](#autoprofile)
+  * [Activation from within the application code](#activation-from-within-the-application-code)
+  * [Activation without code changes](#activation-without-code-changes)
+* [Examples](#examples)
+
 ## Installation
 
 To add Instana Go sensor to your service run:
@@ -31,12 +55,16 @@ func main() {
 }
 ```
 
-The init function takes an `Options` object with the following optional fields:
+The `instana.InitSensor()` function takes an `*instana.Options` object with the following optional fields:
 
 * **Service** - global service name that will be used to identify the program in the Instana backend
 * **AgentHost**, **AgentPort** - default to `localhost:42699`, set the coordinates of the Instana proxy agent
 * **LogLevel** - one of `Error`, `Warn`, `Info` or `Debug`
 * **EnableAutoProfile** - enables automatic continuous process profiling when `true`
+* **MaxBufferedSpans** - the maximum number of spans to buffer
+* **ForceTransmissionStartingAt** - the number of spans to collect before flushing the buffer to the agent
+* **MaxBufferedProfiles** - the maximum number of profiles to buffer
+* **IncludeProfilerFrames** - whether to include profiler calls into the profile or not
 
 Once initialized, the sensor performs a host agent lookup using following list of addresses (in order of priority):
 
