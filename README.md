@@ -50,12 +50,12 @@ To activate background metrics collection, add following line at the beginning o
 ```go
 func main() {
 	instana.InitSensor(instana.DefaultOptions())
-    
-    // ...
+
+	// ...
 }
 ```
 
-The `instana.InitSensor()` function takes an `*instana.Options` object with the following optional fields:
+The `instana.InitSensor()` function takes an `*instana.Options` struct with the following optional fields:
 
 * **Service** - global service name that will be used to identify the program in the Instana backend
 * **AgentHost**, **AgentPort** - default to `localhost:42699`, set the coordinates of the Instana proxy agent
