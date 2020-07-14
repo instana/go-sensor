@@ -183,6 +183,45 @@ resp, err := client.Do(req.WithContext(ctx))
 
 The provided `parentSpan` is the incoming request from the request handler (see above) and provides the necessary tracing and span information to create a child span and inject it into the request.
 
+### Database Calls
+
+The Go sensor provides `instana.InstrumentSQLDriver()` and `instana.WrapSQLConnector()` (since Go v1.10+) to instrument SQL database calls made with `database/sql`. The tracer will then automatically capture the `Query` and `Exec` calls, gather information about the query, such as statement, execution time, etc. and forward them to be displayed as a part of the trace.
+
+#### Instrumenting `sql.Open()`
+
+To instrument a database driver, register it using `instana.InstrumentSQLDriver()` first and replace the call to `sql.Open()` with `instana.OpenSQLDB()`. Here is an example on how to do this for `github.com/lib/pq` PostgreSQL driver:
+
+```go
+// Create a new instana.Sensor instance
+sensor := instana.NewSensor("my-daatabase-app")
+
+// Instrument the driver
+instana.InstrumentSQLDriver(sensor, "postgres", &pq.Driver{})
+
+// Create an instance of *sql.DB to use for database queries
+db, err := instana.OpenSQLDB("postgres", "postgres://...")
+```
+
+The instrumented driver is registered with the name `<original_name>_with_instana`, e.g. in the example above the name would be `postgres_with_instana`.
+
+#### Instrumenting `sql.OpenDB()`
+
+Starting from Go v1.10 `database/sql` provides a new way to initialize `*sql.DB` that does not require the use of global driver registry. If the database driver library provides a type that satisfies the `database/sql/driver.Connector` interface, it can be used to create a database connection.
+
+To instrument a `driver.Connector` instance, wrap it using `instana.WrapSQLConnector()`. Here is an example on how this can be done for `github.com/go-sql-driver/mysql/` MySQL driver:
+
+```go
+// Create a new instana.Sensor instance
+sensor := instana.NewSensor("my-daatabase-app")
+
+// Initialize a new connector
+connector, err := mysql.NewConnector(cfg)
+// ...
+
+// Wrap the connector before passing it to sql.OpenDB()
+db, err := sql.OpenDB(instana.WrapSQLConnector(sensor, "mysql://...", connector))
+```
+
 ### GRPC servers and clients
 
 [`github.com/instana/go-sensor/instrumentation/instagrpc`](./instrumentation/instagrpc) provides both unary and stream interceptors to instrument GRPC servers and clients that use `google.golang.org/grpc`.
