@@ -25,9 +25,9 @@ func InstrumentSQLDriver(sensor *Sensor, name string, driver driver.Driver) {
 	})
 }
 
-// OpenSQLDB is a convenience wrapper for `sql.Open()` to use the instrumented version
+// SQLOpen is a convenience wrapper for `sql.Open()` to use the instrumented version
 // of a driver previosly registered using `instana.InstrumentSQLDriver()`
-func OpenSQLDB(driverName, dataSourceName string) (*sql.DB, error) {
+func SQLOpen(driverName, dataSourceName string) (*sql.DB, error) {
 	if !strings.HasSuffix(driverName, "_with_instana") {
 		driverName += "_with_instana"
 	}

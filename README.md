@@ -10,7 +10,7 @@ The Instana Go sensor consists of two parts:
 * AutoProfile™ continuous profiler
 
 [![Build Status](https://travis-ci.org/instana/go-sensor.svg?branch=master)](https://travis-ci.org/instana/go-sensor)
-[![GoDoc](https://img.shields.io/static/v1?label=godoc&message=reference&color=blue)](https://pkg.go.dev/github.com/instana/go-sensor)
+[![GoDoc](https://img.shields.io/static/v1?label=godoc&message=reference&color=blue)][pkg.go.dev]
 [![OpenTracing Badge](https://img.shields.io/badge/OpenTracing-enabled-blue.svg)](http://opentracing.io)
 
 ## Table of Contents
@@ -235,7 +235,7 @@ The Go sensor provides `instana.InstrumentSQLDriver()` and `instana.WrapSQLConne
 
 #### Instrumenting `sql.Open()`
 
-To instrument a database driver, register it using `instana.InstrumentSQLDriver()` first and replace the call to `sql.Open()` with `instana.OpenSQLDB()`. Here is an example on how to do this for `github.com/lib/pq` PostgreSQL driver:
+To instrument a database driver, register it using `instana.InstrumentSQLDriver()` first and replace the call to `sql.Open()` with `instana.SQLOpen()`. Here is an example on how to do this for `github.com/lib/pq` PostgreSQL driver:
 
 ```go
 // Create a new instana.Sensor instance
@@ -245,8 +245,10 @@ sensor := instana.NewSensor("my-daatabase-app")
 instana.InstrumentSQLDriver(sensor, "postgres", &pq.Driver{})
 
 // Create an instance of *sql.DB to use for database queries
-db, err := instana.OpenSQLDB("postgres", "postgres://...")
+db, err := instana.SQLOpen("postgres", "postgres://...")
 ```
+
+You can find the complete example in the [Examples section][godoc] of package documentation on [pkg.go.dev][pkg.go.dev].
 
 The instrumented driver is registered with the name `<original_name>_with_instana`, e.g. in the example above the name would be `postgres_with_instana`.
 
@@ -267,6 +269,8 @@ connector, err := mysql.NewConnector(cfg)
 // Wrap the connector before passing it to sql.OpenDB()
 db, err := sql.OpenDB(instana.WrapSQLConnector(sensor, "mysql://...", connector))
 ```
+
+You can find the complete example in the [Examples section][godoc] of package documentation on [pkg.go.dev][pkg.go.dev].
 
 ### GRPC servers and clients
 
@@ -344,5 +348,6 @@ Following examples are included in the `example` folder:
 For more examples please consult the [godoc][godoc].
 
 [godoc]: https://pkg.go.dev/github.com/instana/go-sensor/?tab=doc#pkg-examples
+[pkg.go.dev]: https://pkg.go.dev/github.com/instana/go-sensor
 [instana.TracingHandlerFunc]: https://pkg.go.dev/github.com/instana/go-sensor/?tab=doc#TracingHandlerFunc
 [instana.RoundTripper]: https://pkg.go.dev/github.com/instana/go-sensor/?tab=doc#RoundTripper

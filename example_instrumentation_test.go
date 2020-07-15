@@ -41,7 +41,7 @@ func ExampleRoundTripper() {
 }
 
 // This example demonstrates how to instrument an *sql.DB instance created with sql.Open()
-func ExampleOpenSQLDB() {
+func ExampleSQLOpen() {
 	// Here we initialize a new instance of instana.Sensor, however it is STRONGLY recommended
 	// to use a single instance throughout your application
 	sensor := instana.NewSensor("my-http-client")
@@ -50,8 +50,8 @@ func ExampleOpenSQLDB() {
 	// pq.Driver{} or mysql.Driver{}, but here we use a test mock to avoid bringing external dependencies
 	instana.InstrumentSQLDriver(sensor, "your_db_driver", sqlDriver{})
 
-	// Replace sql.Open() with instana.OpenSQLDB()
-	db, _ := instana.OpenSQLDB("your_db_driver", "driver connection string")
+	// Replace sql.Open() with instana.SQLOpen()
+	db, _ := instana.SQLOpen("your_db_driver", "driver connection string")
 
 	// Inject parent span into the context
 	span := sensor.Tracer().StartSpan("entry")

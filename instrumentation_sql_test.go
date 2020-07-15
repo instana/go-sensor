@@ -23,7 +23,7 @@ func TestOpenSQLDB(t *testing.T) {
 	instana.InstrumentSQLDriver(s, "test_driver", sqlDriver{})
 	require.Contains(t, sql.Drivers(), "test_driver_with_instana")
 
-	db, err := instana.OpenSQLDB("test_driver", "connection string")
+	db, err := instana.SQLOpen("test_driver", "connection string")
 	require.NoError(t, err)
 
 	t.Run("Exec", func(t *testing.T) {
@@ -102,7 +102,7 @@ func TestOpenSQLDB_URIConnString(t *testing.T) {
 	instana.InstrumentSQLDriver(s, "fake_db_driver", sqlDriver{})
 	require.Contains(t, sql.Drivers(), "test_driver_with_instana")
 
-	db, err := instana.OpenSQLDB("fake_db_driver", "db://user1:p@55w0rd@db-host:1234/test-schema?param=value")
+	db, err := instana.SQLOpen("fake_db_driver", "db://user1:p@55w0rd@db-host:1234/test-schema?param=value")
 	require.NoError(t, err)
 
 	_, err = db.Exec("TEST QUERY")
@@ -140,7 +140,7 @@ func TestOpenSQLDB_PostgresKVConnString(t *testing.T) {
 	instana.InstrumentSQLDriver(s, "fake_postgres_driver", sqlDriver{})
 	require.Contains(t, sql.Drivers(), "fake_postgres_driver_with_instana")
 
-	db, err := instana.OpenSQLDB("fake_postgres_driver", "host=db-host1,db-host-2 hostaddr=1.2.3.4,2.3.4.5 connect_timeout=10  port=1234 user=user1 password=p@55w0rd dbname=test-schema")
+	db, err := instana.SQLOpen("fake_postgres_driver", "host=db-host1,db-host-2 hostaddr=1.2.3.4,2.3.4.5 connect_timeout=10  port=1234 user=user1 password=p@55w0rd dbname=test-schema")
 	require.NoError(t, err)
 
 	_, err = db.Exec("TEST QUERY")
@@ -178,7 +178,7 @@ func TestOpenSQLDB_MySQLKVConnString(t *testing.T) {
 	instana.InstrumentSQLDriver(s, "fake_mysql_driver", sqlDriver{})
 	require.Contains(t, sql.Drivers(), "fake_mysql_driver_with_instana")
 
-	db, err := instana.OpenSQLDB("fake_mysql_driver", "Server=db-host1, db-host2;Database=test-schema;Port=1234;Uid=user1;Pwd=p@55w0rd;")
+	db, err := instana.SQLOpen("fake_mysql_driver", "Server=db-host1, db-host2;Database=test-schema;Port=1234;Uid=user1;Pwd=p@55w0rd;")
 	require.NoError(t, err)
 
 	_, err = db.Exec("TEST QUERY")
