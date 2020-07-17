@@ -135,7 +135,7 @@ func extractTraceContext(opaqueCarrier interface{}) (SpanContext, error) {
 	}
 
 	if traceID == "" && spanID == "" {
-		if spanContext.W3CContext.IsZero() {
+		if spanContext.W3CContext.IsZero() && spanContext.Correlation.ID == "" {
 			return spanContext, ot.ErrSpanContextNotFound
 		}
 

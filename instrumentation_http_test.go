@@ -227,8 +227,6 @@ func TestTracingHandlerFunc_EUMCall(t *testing.T) {
 	rec := httptest.NewRecorder()
 
 	req := httptest.NewRequest(http.MethodGet, "/test", nil)
-	req.Header.Set(instana.FieldT, "0000000000002435")
-	req.Header.Set(instana.FieldS, "0000000000003546")
 	req.Header.Set(instana.FieldL, "1,correlationType=web;correlationId=eum correlation id")
 
 	h.ServeHTTP(rec, req)
