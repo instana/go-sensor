@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	instana "github.com/instana/go-sensor"
+	ot "github.com/opentracing/opentracing-go"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -41,4 +42,19 @@ func TestTracer_StartSpan_SuppressTracing(t *testing.T) {
 
 	sc := sp.Context().(instana.SpanContext)
 	assert.True(t, sc.Suppressed)
+}
+
+func TestTracer_StartSpan_WithCorrelationData(t *testing.T) {
+	recorder := instana.NewTestRecorder()
+	tracer := instana.NewTracerWithEverything(&instana.Options{}, recorder)
+
+	sp := tracer.StartSpan("test", ot.ChildOf(instana.SpanContext{
+		Correlation: instana.EUMCorrelationData{
+			Type: "type1",
+			ID:   "id1",
+		},
+	}))
+
+	sc := sp.Context().(instana.SpanContext)
+	assert.Equal(t, instana.EUMCorrelationData{}, sc.Correlation)
 }
