@@ -36,6 +36,7 @@ func TestTracer_Inject_HTTPHeaders(t *testing.T) {
 				"X-Instana-B-Foo": {"bar"},
 				"Traceparent":     {"00-00000000000000000000000000002435-0000000000003546-01"},
 				"Tracestate":      {"in=2435;3546"},
+				"Server-Timing":   {"intid;desc=2435"},
 			},
 		},
 		"with instana trace": {
@@ -61,6 +62,7 @@ func TestTracer_Inject_HTTPHeaders(t *testing.T) {
 				"X-Instana-B-Foo": {"bar"},
 				"Traceparent":     {"00-00000000000000000000000000002435-0000000000003546-01"},
 				"Tracestate":      {"in=2435;3546"},
+				"Server-Timing":   {"intid;desc=2435"},
 			},
 		},
 		"with instana trace suppressed": {
@@ -79,6 +81,7 @@ func TestTracer_Inject_HTTPHeaders(t *testing.T) {
 				"X-Instana-L":   {"0"},
 				"Traceparent":   {"00-00000000000000000000000000002435-0000000000003546-00"},
 				"Tracestate":    {""},
+				"Server-Timing": {"intid;desc=2435"},
 			},
 		},
 	}
@@ -106,11 +109,12 @@ func TestTracer_Inject_HTTPHeaders_W3CTraceContext(t *testing.T) {
 				Suppressed: true,
 			},
 			Expected: http.Header{
-				"X-Instana-T": {"2435"},
-				"X-Instana-S": {"3546"},
-				"X-Instana-L": {"0"},
-				"Traceparent": {"00-00000000000000000000000000002435-0000000000003546-00"},
-				"Tracestate":  {""},
+				"X-Instana-T":   {"2435"},
+				"X-Instana-S":   {"3546"},
+				"X-Instana-L":   {"0"},
+				"Traceparent":   {"00-00000000000000000000000000002435-0000000000003546-00"},
+				"Tracestate":    {""},
+				"Server-Timing": {"intid;desc=2435"},
 			},
 		},
 		"instana trace suppressed, w3c trace not sampled": {
@@ -124,11 +128,12 @@ func TestTracer_Inject_HTTPHeaders_W3CTraceContext(t *testing.T) {
 				Suppressed: true,
 			},
 			Expected: http.Header{
-				"X-Instana-T": {"2435"},
-				"X-Instana-S": {"3546"},
-				"X-Instana-L": {"0"},
-				"Traceparent": {"00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-00"},
-				"Tracestate":  {"rojo=00f067aa0ba902b7"},
+				"X-Instana-T":   {"2435"},
+				"X-Instana-S":   {"3546"},
+				"X-Instana-L":   {"0"},
+				"Traceparent":   {"00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-00"},
+				"Tracestate":    {"rojo=00f067aa0ba902b7"},
+				"Server-Timing": {"intid;desc=2435"},
 			},
 		},
 		"instana trace suppressed, w3c trace sampled": {
@@ -142,11 +147,12 @@ func TestTracer_Inject_HTTPHeaders_W3CTraceContext(t *testing.T) {
 				Suppressed: true,
 			},
 			Expected: http.Header{
-				"X-Instana-T": {"2435"},
-				"X-Instana-S": {"3546"},
-				"X-Instana-L": {"0"},
-				"Traceparent": {"00-4bf92f3577b34da6a3ce929d0e0e4736-0000000000003546-00"},
-				"Tracestate":  {"rojo=00f067aa0ba902b7"},
+				"X-Instana-T":   {"2435"},
+				"X-Instana-S":   {"3546"},
+				"X-Instana-L":   {"0"},
+				"Traceparent":   {"00-4bf92f3577b34da6a3ce929d0e0e4736-0000000000003546-00"},
+				"Tracestate":    {"rojo=00f067aa0ba902b7"},
+				"Server-Timing": {"intid;desc=2435"},
 			},
 		},
 		"instana trace, no w3c trace": {
@@ -155,11 +161,12 @@ func TestTracer_Inject_HTTPHeaders_W3CTraceContext(t *testing.T) {
 				SpanID:  0x3546,
 			},
 			Expected: http.Header{
-				"X-Instana-T": {"2435"},
-				"X-Instana-S": {"3546"},
-				"X-Instana-L": {"1"},
-				"Traceparent": {"00-00000000000000000000000000002435-0000000000003546-01"},
-				"Tracestate":  {"in=2435;3546"},
+				"X-Instana-T":   {"2435"},
+				"X-Instana-S":   {"3546"},
+				"X-Instana-L":   {"1"},
+				"Traceparent":   {"00-00000000000000000000000000002435-0000000000003546-01"},
+				"Tracestate":    {"in=2435;3546"},
+				"Server-Timing": {"intid;desc=2435"},
 			},
 		},
 		"instana trace, w3c trace not sampled": {
@@ -172,11 +179,12 @@ func TestTracer_Inject_HTTPHeaders_W3CTraceContext(t *testing.T) {
 				},
 			},
 			Expected: http.Header{
-				"X-Instana-T": {"2435"},
-				"X-Instana-S": {"3546"},
-				"X-Instana-L": {"1"},
-				"Traceparent": {"00-4bf92f3577b34da6a3ce929d0e0e4736-0000000000003546-01"},
-				"Tracestate":  {"in=2435;3546,rojo=00f067aa0ba902b7"},
+				"X-Instana-T":   {"2435"},
+				"X-Instana-S":   {"3546"},
+				"X-Instana-L":   {"1"},
+				"Traceparent":   {"00-4bf92f3577b34da6a3ce929d0e0e4736-0000000000003546-01"},
+				"Tracestate":    {"in=2435;3546,rojo=00f067aa0ba902b7"},
+				"Server-Timing": {"intid;desc=2435"},
 			},
 		},
 		"instana trace, w3c trace": {
@@ -189,11 +197,12 @@ func TestTracer_Inject_HTTPHeaders_W3CTraceContext(t *testing.T) {
 				},
 			},
 			Expected: http.Header{
-				"X-Instana-T": {"2435"},
-				"X-Instana-S": {"3546"},
-				"X-Instana-L": {"1"},
-				"Traceparent": {"00-4bf92f3577b34da6a3ce929d0e0e4736-0000000000003546-01"},
-				"Tracestate":  {"in=2435;3546,rojo=00f067aa0ba902b7"},
+				"X-Instana-T":   {"2435"},
+				"X-Instana-S":   {"3546"},
+				"X-Instana-L":   {"1"},
+				"Traceparent":   {"00-4bf92f3577b34da6a3ce929d0e0e4736-0000000000003546-01"},
+				"Tracestate":    {"in=2435;3546,rojo=00f067aa0ba902b7"},
+				"Server-Timing": {"intid;desc=2435"},
 			},
 		},
 	}
@@ -233,6 +242,28 @@ func TestTracer_Inject_HTTPHeaders_SuppressedTracing(t *testing.T) {
 	assert.Equal(t, "3546", headers.Get("X-Instana-S"))
 	assert.Equal(t, "0", headers.Get("X-Instana-L"))
 	assert.Equal(t, "Basic 123", headers.Get("Authorization"))
+	assert.Equal(t, "intid;desc=2435", headers.Get("Server-Timing"))
+}
+
+func TestTracer_Inject_HTTPHeaders_WithExistingServerTiming(t *testing.T) {
+	recorder := instana.NewTestRecorder()
+	tracer := instana.NewTracerWithEverything(&instana.Options{}, recorder)
+
+	headers := http.Header{
+		"x-instana-t":   {"1314"},
+		"X-INSTANA-S":   {"1314"},
+		"X-Instana-L":   {"1"},
+		"Server-Timing": {"db;dur=53, app;dur=47.2", `cache;desc="Cache Read";dur=23.2`},
+	}
+
+	sc := instana.SpanContext{
+		TraceID:    0x2435,
+		SpanID:     0x3546,
+		Suppressed: true,
+	}
+
+	require.NoError(t, tracer.Inject(sc, ot.HTTPHeaders, ot.HTTPHeadersCarrier(headers)))
+	assert.Equal(t, `db;dur=53, app;dur=47.2, cache;desc="Cache Read";dur=23.2, intid;desc=2435`, headers.Get("Server-Timing"))
 }
 
 func TestTracer_Extract_HTTPHeaders(t *testing.T) {

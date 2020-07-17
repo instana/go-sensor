@@ -77,6 +77,7 @@ func injectTraceContext(sc SpanContext, opaqueCarrier interface{}) error {
 		}
 
 		addW3CTraceContext(h, sc)
+		addEUMHeaders(h, sc)
 	}
 
 	carrier.Set(exstfieldT, FormatID(sc.TraceID))
@@ -188,6 +189,12 @@ func pickupW3CTraceContext(h http.Header, sc *SpanContext) {
 		return
 	}
 	sc.W3CContext = trCtx
+}
+
+func addEUMHeaders(h http.Header, sc SpanContext) {
+	// Preserve original Server-Timing header values by combining them into a comma-separated list
+	st := append(h["Server-Timing"], "intid;desc="+FormatID(sc.TraceID))
+	h.Set("Server-Timing", strings.Join(st, ", "))
 }
 
 func parseLevel(s string) bool {
