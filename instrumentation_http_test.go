@@ -39,6 +39,8 @@ func TestTracingHandlerFunc_Write(t *testing.T) {
 	assert.Equal(t, 0, span.Ec)
 	assert.EqualValues(t, instana.EntrySpanKind, span.Kind)
 	assert.False(t, span.Synthetic)
+	assert.Empty(t, span.CorrelationType)
+	assert.Empty(t, span.CorrelationID)
 
 	assert.Nil(t, span.ForeignParent)
 
@@ -212,6 +214,31 @@ func TestTracingHandlerFunc_SyntheticCall(t *testing.T) {
 	spans := recorder.GetQueuedSpans()
 	require.Len(t, spans, 1)
 	assert.True(t, spans[0].Synthetic)
+}
+
+func TestTracingHandlerFunc_EUMCall(t *testing.T) {
+	recorder := instana.NewTestRecorder()
+	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{}, recorder))
+
+	h := instana.TracingHandlerFunc(s, "test-handler", func(w http.ResponseWriter, req *http.Request) {
+		fmt.Fprintln(w, "Ok")
+	})
+
+	rec := httptest.NewRecorder()
+
+	req := httptest.NewRequest(http.MethodGet, "/test", nil)
+	req.Header.Set(instana.FieldT, "0000000000002435")
+	req.Header.Set(instana.FieldS, "0000000000003546")
+	req.Header.Set(instana.FieldL, "1,correlationType=web;correlationId=eum correlation id")
+
+	h.ServeHTTP(rec, req)
+
+	assert.Equal(t, http.StatusOK, rec.Code)
+
+	spans := recorder.GetQueuedSpans()
+	require.Len(t, spans, 1)
+	assert.Equal(t, "web", spans[0].CorrelationType)
+	assert.Equal(t, "eum correlation id", spans[0].CorrelationID)
 }
 
 func TestTracingHandlerFunc_PanicHandling(t *testing.T) {
