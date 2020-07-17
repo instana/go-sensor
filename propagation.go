@@ -1,6 +1,7 @@
 package instana
 
 import (
+	"errors"
 	"net/http"
 	"strings"
 
@@ -113,7 +114,13 @@ func extractTraceContext(opaqueCarrier interface{}) (SpanContext, error) {
 		case FieldS:
 			spanID = v
 		case FieldL:
-			spanContext.Suppressed = parseLevel(v)
+			suppressed, corrData, err := parseLevel(v)
+			if err != nil {
+				sensor.logger.Info("failed to parse %s: %s %q", k, err, v)
+				// use defaults
+				suppressed, corrData = false, EUMCorrelationData{}
+			}
+			spanContext.Suppressed, spanContext.Correlation = suppressed, corrData
 		default:
 			if strings.HasPrefix(strings.ToLower(k), FieldB) {
 				// preserve original case of the baggage key
@@ -197,8 +204,88 @@ func addEUMHeaders(h http.Header, sc SpanContext) {
 	h.Set("Server-Timing", strings.Join(st, ", "))
 }
 
-func parseLevel(s string) bool {
-	return s == "0"
+var errMalformedHeader = errors.New("malformed header value")
+
+func parseLevel(s string) (bool, EUMCorrelationData, error) {
+	const (
+		levelState uint8 = iota
+		partSeparatorState
+		correlationPartState
+		correlationTypeState
+		correlationIDState
+		finalState
+	)
+
+	if s == "" {
+		return false, EUMCorrelationData{}, nil
+	}
+
+	var (
+		typeInd                 int
+		state                   uint8
+		level, corrType, corrID string
+	)
+PARSE:
+	for ptr := 0; state != finalState && ptr < len(s); ptr++ {
+		switch state {
+		case levelState: // looking for 0 or 1
+			level = s[ptr : ptr+1]
+
+			if level != "0" && level != "1" {
+				break PARSE
+			}
+
+			if ptr == len(s)-1 { // no correlation ID provided
+				state = finalState
+			} else {
+				state = partSeparatorState
+			}
+		case partSeparatorState: // skip OWS while looking for ','
+			switch s[ptr] {
+			case ' ', '\t': // advance
+			case ',':
+				state = correlationPartState
+			default:
+				break PARSE
+			}
+		case correlationPartState: // skip OWS while searching for 'correlationType=' prefix
+			switch {
+			case s[ptr] == ' ' || s[ptr] == '\t': // advance
+			case strings.HasPrefix(s[ptr:], "correlationType="):
+				ptr += 15 // advance to the end of prefix
+				typeInd = ptr + 1
+				state = correlationTypeState
+			default:
+				break PARSE
+			}
+		case correlationTypeState: // skip OWS while looking for ';'
+			switch s[ptr] {
+			case ' ', '\t': // possibly trailing OWS, advance
+			case ';':
+				state = correlationIDState
+			default:
+				corrType = s[typeInd : ptr+1]
+			}
+		case correlationIDState: //  skip OWS while searching for 'correlationId=' prefix
+			switch {
+			case s[ptr] == ' ' || s[ptr] == '\t': // leading OWS, advance
+			case strings.HasPrefix(s[ptr:], "correlationId="):
+				ptr += 14
+				corrID = s[ptr:]
+				state = finalState
+			default:
+				break PARSE
+			}
+		default:
+			break PARSE
+		}
+	}
+
+	if state != finalState {
+		return false, EUMCorrelationData{}, errMalformedHeader
+	}
+
+	return level == "0", EUMCorrelationData{Type: corrType, ID: corrID}, nil
 }
 
 func formatLevel(sc SpanContext) string {
