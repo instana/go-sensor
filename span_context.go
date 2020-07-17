@@ -6,6 +6,13 @@ import (
 	"github.com/instana/go-sensor/w3ctrace"
 )
 
+// EUMCorrelationData represents the data sent by the Instana End-User Monitoring script
+// integrated into frontend
+type EUMCorrelationData struct {
+	Type string
+	ID   string
+}
+
 // SpanContext holds the basic Span metadata.
 type SpanContext struct {
 	// A probabilistically unique identifier for a [multi-span] trace.
@@ -22,6 +29,8 @@ type SpanContext struct {
 	Baggage map[string]string // initialized on first use
 	// The W3C trace context
 	W3CContext w3ctrace.Context
+	// Correlation is the correlation data sent by the frontend EUM script
+	Correlation EUMCorrelationData
 	// The 3rd party parent if the context is derived from non-Instana trace
 	ForeignParent interface{}
 }
