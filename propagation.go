@@ -120,7 +120,10 @@ func extractTraceContext(opaqueCarrier interface{}) (SpanContext, error) {
 				// use defaults
 				suppressed, corrData = false, EUMCorrelationData{}
 			}
-			spanContext.Suppressed, spanContext.Correlation = suppressed, corrData
+			spanContext.Suppressed = suppressed
+			if !spanContext.Suppressed {
+				spanContext.Correlation = corrData
+			}
 		default:
 			if strings.HasPrefix(strings.ToLower(k), FieldB) {
 				// preserve original case of the baggage key
@@ -134,8 +137,13 @@ func extractTraceContext(opaqueCarrier interface{}) (SpanContext, error) {
 		return spanContext, err
 	}
 
+	// For compatibility reasons X-Instana-{T,S} values if EUM has provided correlation ID
+	if spanContext.Correlation.ID != "" {
+		return spanContext, nil
+	}
+
 	if traceID == "" && spanID == "" {
-		if spanContext.W3CContext.IsZero() && spanContext.Correlation.ID == "" {
+		if spanContext.W3CContext.IsZero() {
 			return spanContext, ot.ErrSpanContextNotFound
 		}
 
