@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/instana/go-sensor/autoprofile/internal"
-	"github.com/stretchr/testify/assert"
+	"github.com/instana/testify/assert"
 )
 
 func TestTimer_Restart(t *testing.T) {

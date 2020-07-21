@@ -5,8 +5,8 @@ import (
 
 	instana "github.com/instana/go-sensor"
 	ext "github.com/opentracing/opentracing-go/ext"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
+	"github.com/instana/testify/assert"
+	"github.com/instana/testify/require"
 )
 
 func TestRecorderBasics(t *testing.T) {

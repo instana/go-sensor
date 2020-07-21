@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/instana/go-sensor/autoprofile/internal"
-	"github.com/stretchr/testify/assert"
+	"github.com/instana/testify/assert"
 )
 
 func TestCallSite_Increment(t *testing.T) {

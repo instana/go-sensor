@@ -7,8 +7,8 @@ import (
 	instana "github.com/instana/go-sensor"
 	"github.com/instana/go-sensor/w3ctrace"
 	ot "github.com/opentracing/opentracing-go"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
+	"github.com/instana/testify/assert"
+	"github.com/instana/testify/require"
 )
 
 func TestTracer_Inject_HTTPHeaders(t *testing.T) {

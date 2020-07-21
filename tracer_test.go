@@ -5,7 +5,7 @@ import (
 
 	instana "github.com/instana/go-sensor"
 	ot "github.com/opentracing/opentracing-go"
-	"github.com/stretchr/testify/assert"
+	"github.com/instana/testify/assert"
 )
 
 func TestTracerAPI(t *testing.T) {

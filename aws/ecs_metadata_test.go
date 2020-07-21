@@ -8,8 +8,8 @@ import (
 	"time"
 
 	"github.com/instana/go-sensor/aws"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
+	"github.com/instana/testify/assert"
+	"github.com/instana/testify/require"
 )
 
 func TestECSMetadataProvider_ContainerMetadata(t *testing.T) {
