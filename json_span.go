@@ -111,34 +111,38 @@ func newW3CForeignParent(trCtx w3ctrace.Context) *ForeignParent {
 
 // Span represents the OpenTracing span document to be sent to the agent
 type Span struct {
-	TraceID       int64          `json:"t"`
-	ParentID      int64          `json:"p,omitempty"`
-	SpanID        int64          `json:"s"`
-	Timestamp     uint64         `json:"ts"`
-	Duration      uint64         `json:"d"`
-	Name          string         `json:"n"`
-	From          *fromS         `json:"f"`
-	Batch         *batchInfo     `json:"b,omitempty"`
-	Kind          int            `json:"k"`
-	Ec            int            `json:"ec,omitempty"`
-	Data          typedSpanData  `json:"data"`
-	Synthetic     bool           `json:"sy,omitempty"`
-	ForeignParent *ForeignParent `json:"fp,omitempty"`
+	TraceID         int64          `json:"t"`
+	ParentID        int64          `json:"p,omitempty"`
+	SpanID          int64          `json:"s"`
+	Timestamp       uint64         `json:"ts"`
+	Duration        uint64         `json:"d"`
+	Name            string         `json:"n"`
+	From            *fromS         `json:"f"`
+	Batch           *batchInfo     `json:"b,omitempty"`
+	Kind            int            `json:"k"`
+	Ec              int            `json:"ec,omitempty"`
+	Data            typedSpanData  `json:"data"`
+	Synthetic       bool           `json:"sy,omitempty"`
+	ForeignParent   *ForeignParent `json:"fp,omitempty"`
+	CorrelationType string         `json:"crtp,omitempty"`
+	CorrelationID   string         `json:"crid,omitempty"`
 }
 
 func newSpan(span *spanS) Span {
 	data := RegisteredSpanType(span.Operation).ExtractData(span)
 	sp := Span{
-		TraceID:       span.context.TraceID,
-		ParentID:      span.context.ParentID,
-		SpanID:        span.context.SpanID,
-		Timestamp:     uint64(span.Start.UnixNano()) / uint64(time.Millisecond),
-		Duration:      uint64(span.Duration) / uint64(time.Millisecond),
-		Name:          string(data.Type()),
-		Ec:            span.ErrorCount,
-		ForeignParent: newForeignParent(span.context.ForeignParent),
-		Kind:          int(data.Kind()),
-		Data:          data,
+		TraceID:         span.context.TraceID,
+		ParentID:        span.context.ParentID,
+		SpanID:          span.context.SpanID,
+		Timestamp:       uint64(span.Start.UnixNano()) / uint64(time.Millisecond),
+		Duration:        uint64(span.Duration) / uint64(time.Millisecond),
+		Name:            string(data.Type()),
+		Ec:              span.ErrorCount,
+		ForeignParent:   newForeignParent(span.context.ForeignParent),
+		CorrelationType: span.Correlation.Type,
+		CorrelationID:   span.Correlation.ID,
+		Kind:            int(data.Kind()),
+		Data:            data,
 	}
 
 	if bs, ok := span.Tags[batchSizeTag].(int); ok {

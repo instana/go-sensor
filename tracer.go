@@ -53,10 +53,14 @@ func (r *tracerS) StartSpanWithOptions(operationName string, opts ot.StartSpanOp
 		startTime = time.Now()
 	}
 
+	var corrData EUMCorrelationData
+
 	sc := NewRootSpanContext()
 	for _, ref := range opts.References {
 		if ref.Type == ot.ChildOfRef || ref.Type == ot.FollowsFromRef {
-			sc = NewSpanContext(ref.ReferencedContext.(SpanContext))
+			parent := ref.ReferencedContext.(SpanContext)
+			corrData = parent.Correlation
+			sc = NewSpanContext(parent)
 			break
 		}
 	}
@@ -69,13 +73,14 @@ func (r *tracerS) StartSpanWithOptions(operationName string, opts ot.StartSpanOp
 	sc.Sampled = r.options.ShouldSample(sc.TraceID)
 
 	return &spanS{
-		context:   sc,
-		tracer:    r,
-		Service:   sensor.options.Service,
-		Operation: operationName,
-		Start:     startTime,
-		Duration:  -1,
-		Tags:      opts.Tags,
+		context:     sc,
+		tracer:      r,
+		Service:     sensor.options.Service,
+		Operation:   operationName,
+		Start:       startTime,
+		Duration:    -1,
+		Correlation: corrData,
+		Tags:        opts.Tags,
 	}
 }
 

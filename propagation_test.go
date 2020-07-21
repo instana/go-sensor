@@ -301,6 +301,20 @@ func TestTracer_Extract_HTTPHeaders(t *testing.T) {
 				Baggage:    map[string]string{},
 			},
 		},
+		"tracing disabled, with correlation data": {
+			Headers: map[string]string{
+				"Authorization": "Basic 123",
+				"x-instana-t":   "1314",
+				"X-INSTANA-S":   "2435",
+				"X-Instana-L":   "0,correlationType=web;correlationId=1234",
+			},
+			Expected: instana.SpanContext{
+				TraceID:    0x1314,
+				SpanID:     0x2435,
+				Suppressed: true,
+				Baggage:    map[string]string{},
+			},
+		},
 		"w3c trace context, last vendor is instana": {
 			Headers: map[string]string{
 				"x-instana-t": "1314",
@@ -366,6 +380,48 @@ func TestTracer_Extract_HTTPHeaders(t *testing.T) {
 			require.NoError(t, err)
 
 			assert.Equal(t, example.Expected, sc)
+		})
+	}
+}
+
+func TestTracer_Extract_HTTPHeaders_WithEUMCorrelation(t *testing.T) {
+	examples := map[string]struct {
+		Headers  map[string]string
+		Expected instana.SpanContext
+	}{
+		"tracing enabled, no instana headers": {
+			Headers: map[string]string{
+				"X-Instana-L": "1,correlationType=web;correlationId=1234",
+			},
+		},
+		"tracing enabled, with instana headers": {
+			Headers: map[string]string{
+				"X-Instana-T": "0000000000002435",
+				"X-Instana-S": "0000000000003546",
+				"X-Instana-L": "1,correlationType=web;correlationId=1234",
+			},
+		},
+	}
+
+	for name, example := range examples {
+		t.Run(name, func(t *testing.T) {
+			recorder := instana.NewTestRecorder()
+			tracer := instana.NewTracerWithEverything(&instana.Options{}, recorder)
+
+			headers := http.Header{}
+			for k, v := range example.Headers {
+				headers.Set(k, v)
+			}
+
+			sc, err := tracer.Extract(ot.HTTPHeaders, ot.HTTPHeadersCarrier(headers))
+			require.NoError(t, err)
+
+			spanContext := sc.(instana.SpanContext)
+
+			assert.EqualValues(t, 0, spanContext.TraceID)
+			assert.EqualValues(t, 0, spanContext.SpanID)
+			assert.Empty(t, spanContext.ParentID)
+			assert.Equal(t, instana.EUMCorrelationData{ID: "1234", Type: "web"}, spanContext.Correlation)
 		})
 	}
 }

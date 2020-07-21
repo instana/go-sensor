@@ -9,13 +9,14 @@ import (
 )
 
 type spanS struct {
-	Service    string
-	Operation  string
-	Start      time.Time
-	Duration   time.Duration
-	Tags       ot.Tags
-	Logs       []ot.LogRecord
-	ErrorCount int
+	Service     string
+	Operation   string
+	Start       time.Time
+	Duration    time.Duration
+	Correlation EUMCorrelationData
+	Tags        ot.Tags
+	Logs        []ot.LogRecord
+	ErrorCount  int
 
 	tracer *tracerS
 	mu     sync.Mutex
