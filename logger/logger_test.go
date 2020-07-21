@@ -5,8 +5,8 @@ import (
 	"testing"
 
 	"github.com/instana/go-sensor/logger"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
+	"github.com/instana/testify/assert"
+	"github.com/instana/testify/require"
 )
 
 func TestLogger_SetPrefix(t *testing.T) {

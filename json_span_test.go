@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	instana "github.com/instana/go-sensor"
-	"github.com/stretchr/testify/assert"
+	"github.com/instana/testify/assert"
 )
 
 func TestRegisteredSpanType_ExtractData(t *testing.T) {

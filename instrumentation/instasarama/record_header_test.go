@@ -6,8 +6,8 @@ import (
 	"testing"
 
 	"github.com/instana/go-sensor/instrumentation/instasarama"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
+	"github.com/instana/testify/assert"
+	"github.com/instana/testify/require"
 )
 
 func TestPackUnpackTraceContextHeader(t *testing.T) {

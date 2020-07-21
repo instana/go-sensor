@@ -9,8 +9,8 @@ import (
 	ot "github.com/opentracing/opentracing-go"
 	ext "github.com/opentracing/opentracing-go/ext"
 	"github.com/opentracing/opentracing-go/log"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
+	"github.com/instana/testify/assert"
+	"github.com/instana/testify/require"
 )
 
 func TestBasicSpan(t *testing.T) {
