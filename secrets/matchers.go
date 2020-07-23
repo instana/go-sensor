@@ -7,6 +7,12 @@ import (
 	"strings"
 )
 
+// NoneMatcher does not match any string. It's used as a default value for (instana.Options).Secrets
+type NoneMatcher struct{}
+
+// Match returns false for any string
+func (m NoneMatcher) Match(s string) bool { return false }
+
 // EqualsMatcher matches a string that is contained in the terms list. This is the
 // matcher for the 'equals' match type
 type EqualsMatcher struct {
