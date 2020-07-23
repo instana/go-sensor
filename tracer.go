@@ -12,7 +12,8 @@ const (
 )
 
 type tracerS struct {
-	options TracerOptions
+	recorder SpanRecorder
+	options  TracerOptions
 }
 
 func (r *tracerS) Inject(spanContext ot.SpanContext, format interface{}, carrier interface{}) error {
@@ -102,8 +103,8 @@ func NewTracerWithOptions(options *Options) ot.Tracer {
 func NewTracerWithEverything(options *Options, recorder SpanRecorder) ot.Tracer {
 	InitSensor(options)
 	ret := &tracerS{
+		recorder: recorder,
 		options: TracerOptions{
-			Recorder:       recorder,
 			ShouldSample:   shouldSample,
 			MaxLogsPerSpan: MaxLogsPerSpan,
 		},

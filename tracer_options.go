@@ -34,8 +34,6 @@ type TracerOptions struct {
 	// Spans into no-ops. More precisely, tags and log events are silently
 	// discarded. If NewSpanEventListener is set, the callbacks will still fire.
 	TrimUnsampledSpans bool
-	// Recorder receives Spans which have been finished.
-	Recorder SpanRecorder
 	// NewSpanEventListener can be used to enhance the tracer by effectively
 	// attaching external code to trace events. See NetTraceIntegrator for a
 	// practical example, and event.go for the list of possible events.

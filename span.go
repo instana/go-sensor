@@ -72,7 +72,7 @@ func (r *spanS) FinishWithOptions(opts ot.FinishOptions) {
 
 	r.Duration = duration
 	if !r.context.Suppressed {
-		r.tracer.options.Recorder.RecordSpan(r)
+		r.tracer.recorder.RecordSpan(r)
 	}
 }
 
