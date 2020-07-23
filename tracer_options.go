@@ -13,6 +13,11 @@ type Tracer interface {
 	Options() TracerOptions
 }
 
+// Matcher verifies whether a string meets predefined conditions
+type Matcher interface {
+	Match(s string) bool
+}
+
 // TracerOptions allows creating a customized Tracer via NewWithOptions. The object
 // must not be updated when there is an active tracer using it.
 type TracerOptions struct {
@@ -88,4 +93,10 @@ type TracerOptions struct {
 	// reduces allocations. However, if you have any use-after-finish race
 	// conditions the code may panic.
 	EnableSpanPool bool
+	// Secrets is a secrets matcher used to filter out sensitive data from HTTP requests, database
+	// connection strings, etc. By default tracer does not filter any values. Package `secrets`
+	// provides a set of secret matchers supported by the host agent configuration.
+	//
+	// See https://www.instana.com/docs/setup_and_manage/host_agent/configuration/#secrets for details
+	Secrets Matcher
 }
