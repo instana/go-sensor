@@ -1,24 +1,15 @@
 package instana
 
 import (
-	opentracing "github.com/opentracing/opentracing-go"
+	"github.com/instana/go-sensor/secrets"
 )
-
-// Tracer extends the opentracing.Tracer interface
-type Tracer interface {
-	opentracing.Tracer
-
-	// Options gets the Options used in New() or NewWithOptions().
-	Options() TracerOptions
-}
 
 // Matcher verifies whether a string meets predefined conditions
 type Matcher interface {
 	Match(s string) bool
 }
 
-// TracerOptions allows creating a customized Tracer via NewWithOptions. The object
-// must not be updated when there is an active tracer using it.
+// TracerOptions carry the tracer configuration
 type TracerOptions struct {
 	// DropAllLogs turns log events on all spans into no-ops
 	DropAllLogs bool
@@ -32,4 +23,12 @@ type TracerOptions struct {
 	//
 	// See https://www.instana.com/docs/setup_and_manage/host_agent/configuration/#secrets for details
 	Secrets Matcher
+}
+
+// DefaultTracerOptions returns the default set of options to configure a tracer
+func DefaultTracerOptions() TracerOptions {
+	return TracerOptions{
+		MaxLogsPerSpan: MaxLogsPerSpan,
+		Secrets:        secrets.NoneMatcher{},
+	}
 }

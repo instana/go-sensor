@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"runtime"
 
+	"github.com/opentracing/opentracing-go"
 	ot "github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
 	otlog "github.com/opentracing/opentracing-go/log"
@@ -12,6 +13,14 @@ import (
 
 type SpanSensitiveFunc func(span ot.Span)
 type ContextSensitiveFunc func(span ot.Span, ctx context.Context)
+
+// Tracer extends the opentracing.Tracer interface
+type Tracer interface {
+	opentracing.Tracer
+
+	// Options gets the current tracer options
+	Options() TracerOptions
+}
 
 // Sensor is used to inject tracing information into requests
 type Sensor struct {
