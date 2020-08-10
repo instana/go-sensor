@@ -278,8 +278,8 @@ func (r *agentS) fullRequestResponse(url string, method string, data interface{}
 	return ret, err
 }
 
-func (r *agentS) setFrom(from *fromS) {
-	r.from = from
+func (r *agentS) applyHostAgentSettings(resp agentResponse) {
+	r.from = newHostAgentFromS(int(resp.Pid), resp.HostID)
 }
 
 func (r *agentS) setHost(host string) {
