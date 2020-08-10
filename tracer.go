@@ -71,8 +71,6 @@ func (r *tracerS) StartSpanWithOptions(operationName string, opts ot.StartSpanOp
 		delete(opts.Tags, suppressTracingTag)
 	}
 
-	sc.Sampled = r.options.ShouldSample(sc.TraceID)
-
 	return &spanS{
 		context:     sc,
 		tracer:      r,
@@ -83,10 +81,6 @@ func (r *tracerS) StartSpanWithOptions(operationName string, opts ot.StartSpanOp
 		Correlation: corrData,
 		Tags:        opts.Tags,
 	}
-}
-
-func shouldSample(traceID int64) bool {
-	return false
 }
 
 // NewTracer Get a new Tracer with the default options applied.
@@ -105,7 +99,6 @@ func NewTracerWithEverything(options *Options, recorder SpanRecorder) ot.Tracer 
 	ret := &tracerS{
 		recorder: recorder,
 		options: TracerOptions{
-			ShouldSample:   shouldSample,
 			MaxLogsPerSpan: MaxLogsPerSpan,
 		},
 	}

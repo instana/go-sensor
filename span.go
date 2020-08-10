@@ -32,10 +32,6 @@ func (r *spanS) BaggageItem(key string) string {
 }
 
 func (r *spanS) SetBaggageItem(key, val string) ot.Span {
-	if r.trim() {
-		return r
-	}
-
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	r.context = r.context.WithBaggageItem(key, val)
@@ -84,22 +80,18 @@ func (r *spanS) appendLog(lr ot.LogRecord) {
 }
 
 func (r *spanS) Log(ld ot.LogData) {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-
-	if r.trim() || r.tracer.options.DropAllLogs {
+	if r.tracer.options.DropAllLogs {
 		return
 	}
+
+	r.mu.Lock()
+	defer r.mu.Unlock()
 
 	if ld.Timestamp.IsZero() {
 		ld.Timestamp = time.Now()
 	}
 
 	r.appendLog(ld.ToLogRecord())
-}
-
-func (r *spanS) trim() bool {
-	return !r.context.Sampled && r.tracer.options.TrimUnsampledSpans
 }
 
 func (r *spanS) LogEvent(event string) {
@@ -126,11 +118,12 @@ func (r *spanS) LogFields(fields ...otlog.Field) {
 		Fields: fields,
 	}
 
-	r.mu.Lock()
-	defer r.mu.Unlock()
-	if r.trim() || r.tracer.options.DropAllLogs {
+	if r.tracer.options.DropAllLogs {
 		return
 	}
+
+	r.mu.Lock()
+	defer r.mu.Unlock()
 
 	if lr.Timestamp.IsZero() {
 		lr.Timestamp = time.Now()
@@ -162,10 +155,6 @@ func (r *spanS) SetOperationName(operationName string) ot.Span {
 func (r *spanS) SetTag(key string, value interface{}) ot.Span {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-
-	if r.trim() {
-		return r
-	}
 
 	if r.Tags == nil {
 		r.Tags = ot.Tags{}
