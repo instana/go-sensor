@@ -83,25 +83,28 @@ func (r *tracerS) StartSpanWithOptions(operationName string, opts ot.StartSpanOp
 	}
 }
 
-// NewTracer Get a new Tracer with the default options applied.
+// NewTracer initializes a new tracer with default options
 func NewTracer() ot.Tracer {
-	return NewTracerWithOptions(&Options{})
+	return NewTracerWithOptions(nil)
 }
 
-// NewTracerWithOptions Get a new Tracer with the specified options.
+// NewTracerWithOptions initializes and configures a new tracer that collects and sends spans to the host agent
 func NewTracerWithOptions(options *Options) ot.Tracer {
 	return NewTracerWithEverything(options, NewRecorder())
 }
 
-// NewTracerWithEverything Get a new Tracer with the works.
+// NewTracerWithEverything initializes and configures a new tracer
 func NewTracerWithEverything(options *Options, recorder SpanRecorder) ot.Tracer {
 	InitSensor(options)
-	ret := &tracerS{
+
+	tracer := &tracerS{
 		recorder: recorder,
-		options: TracerOptions{
-			MaxLogsPerSpan: MaxLogsPerSpan,
-		},
+		options:  DefaultTracerOptions(),
 	}
 
-	return ret
+	if options != nil {
+		tracer.options = options.Tracer
+	}
+
+	return tracer
 }

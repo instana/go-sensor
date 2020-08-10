@@ -5,8 +5,7 @@ import (
 	"strconv"
 )
 
-// Options allows the user to configure the to-be-initialized
-// sensor
+// Options allows the user to configure the to-be-initialized sensor
 type Options struct {
 	Service                     string
 	AgentHost                   string
@@ -17,6 +16,7 @@ type Options struct {
 	EnableAutoProfile           bool
 	MaxBufferedProfiles         int
 	IncludeProfilerFrames       bool
+	Tracer                      TracerOptions
 }
 
 // DefaultOptions returns the default set of options to configure Instana sensor.
@@ -26,7 +26,9 @@ type Options struct {
 // taken from the env INSTANA_AGENT_HOST and INSTANA_AGENT_PORT if set, and default
 // to localhost and 46999 otherwise.
 func DefaultOptions() *Options {
-	opts := &Options{}
+	opts := &Options{
+		Tracer: DefaultTracerOptions(),
+	}
 	opts.setDefaults()
 
 	return opts
@@ -55,5 +57,9 @@ func (opts *Options) setDefaults() {
 		if port, err := strconv.Atoi(os.Getenv("INSTANA_AGENT_PORT")); err == nil {
 			opts.AgentPort = port
 		}
+	}
+
+	if opts.Tracer.Secrets == nil {
+		opts.Tracer = DefaultTracerOptions()
 	}
 }
