@@ -83,6 +83,11 @@ func (r *tracerS) StartSpanWithOptions(operationName string, opts ot.StartSpanOp
 	}
 }
 
+// Options returns current tracer options
+func (r *tracerS) Options() TracerOptions {
+	return r.options
+}
+
 // NewTracer initializes a new tracer with default options
 func NewTracer() ot.Tracer {
 	return NewTracerWithOptions(nil)

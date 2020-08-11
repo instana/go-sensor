@@ -73,14 +73,14 @@ func (r *spanS) FinishWithOptions(opts ot.FinishOptions) {
 }
 
 func (r *spanS) appendLog(lr ot.LogRecord) {
-	maxLogs := r.tracer.options.MaxLogsPerSpan
+	maxLogs := r.tracer.Options().MaxLogsPerSpan
 	if maxLogs == 0 || len(r.Logs) < maxLogs {
 		r.Logs = append(r.Logs, lr)
 	}
 }
 
 func (r *spanS) Log(ld ot.LogData) {
-	if r.tracer.options.DropAllLogs {
+	if r.tracer.Options().DropAllLogs {
 		return
 	}
 
@@ -118,7 +118,7 @@ func (r *spanS) LogFields(fields ...otlog.Field) {
 		Fields: fields,
 	}
 
-	if r.tracer.options.DropAllLogs {
+	if r.tracer.Options().DropAllLogs {
 		return
 	}
 
