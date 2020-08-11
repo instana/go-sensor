@@ -1,9 +1,5 @@
 package instana
 
-import (
-	"github.com/instana/go-sensor/secrets"
-)
-
 // TracerOptions carry the tracer configuration
 type TracerOptions struct {
 	// DropAllLogs turns log events on all spans into no-ops
@@ -24,6 +20,6 @@ type TracerOptions struct {
 func DefaultTracerOptions() TracerOptions {
 	return TracerOptions{
 		MaxLogsPerSpan: MaxLogsPerSpan,
-		Secrets:        secrets.NoneMatcher{},
+		Secrets:        DefaultSecretsMatcher(),
 	}
 }

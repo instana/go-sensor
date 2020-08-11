@@ -62,3 +62,10 @@ func NamedMatcher(name string, list []string) (Matcher, error) {
 		return nil, fmt.Errorf("unknown secrets matcher type %q", name)
 	}
 }
+
+// DefaultSecretsMatcher returns the default secrets matcher, that matches strings containing
+// "key", "password" and "secret" ignoring the case
+func DefaultSecretsMatcher() Matcher {
+	m, _ := NamedMatcher(ContainsIgnoreCaseMatcher, []string{"key", "password", "secret"})
+	return m
+}
