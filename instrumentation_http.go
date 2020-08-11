@@ -63,6 +63,13 @@ func TracingHandlerFunc(sensor *Sensor, pathTemplate string, handler http.Handle
 		span := tracer.StartSpan("g.http", opts...)
 		defer span.Finish()
 
+		if t, ok := tracer.(Tracer); ok {
+			params := collectHTTPParams(req, t.Options().Secrets)
+			if len(params) > 0 {
+				span.SetTag("http.params", params.Encode())
+			}
+		}
+
 		defer func() {
 			// Be sure to capture any kind of panic / error
 			if err := recover(); err != nil {
@@ -129,6 +136,13 @@ func RoundTripper(sensor *Sensor, original http.RoundTripper) http.RoundTripper 
 		req = cloneRequest(ContextWithSpan(ctx, span), req)
 		sensor.Tracer().Inject(span.Context(), ot.HTTPHeaders, ot.HTTPHeadersCarrier(req.Header))
 
+		if t, ok := sensor.Tracer().(Tracer); ok {
+			params := collectHTTPParams(req, t.Options().Secrets)
+			if len(params) > 0 {
+				span.SetTag("http.params", params.Encode())
+			}
+		}
+
 		resp, err := original.RoundTrip(req)
 		if err != nil {
 			span.SetTag("http.error", err.Error())
@@ -165,6 +179,18 @@ type tracingRoundTripper func(*http.Request) (*http.Response, error)
 
 func (rt tracingRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
 	return rt(req)
+}
+
+func collectHTTPParams(req *http.Request, matcher Matcher) url.Values {
+	params := cloneURLValues(req.URL.Query())
+
+	for k := range params {
+		if matcher.Match(k) {
+			params[k] = []string{"<redacted>"}
+		}
+	}
+
+	return params
 }
 
 // The following code is ported from $GOROOT/src/net/http/clone.go with minor changes

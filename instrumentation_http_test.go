@@ -24,7 +24,7 @@ func TestTracingHandlerFunc_Write(t *testing.T) {
 		fmt.Fprintln(w, "Ok")
 	})
 
-	req := httptest.NewRequest(http.MethodGet, "/test?q=classified", nil)
+	req := httptest.NewRequest(http.MethodGet, "/test?q=term", nil)
 
 	rec := httptest.NewRecorder()
 	h.ServeHTTP(rec, req)
@@ -52,6 +52,7 @@ func TestTracingHandlerFunc_Write(t *testing.T) {
 		Status:       http.StatusOK,
 		Method:       "GET",
 		Path:         "/test",
+		Params:       "q=term",
 		PathTemplate: "/{action}",
 	}, data.Tags)
 
@@ -69,7 +70,7 @@ func TestTracingHandlerFunc_WriteHeaders(t *testing.T) {
 	})
 
 	rec := httptest.NewRecorder()
-	h.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/test?q=classified", nil))
+	h.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/test?q=term", nil))
 
 	assert.Equal(t, http.StatusNotFound, rec.Code)
 
@@ -89,7 +90,55 @@ func TestTracingHandlerFunc_WriteHeaders(t *testing.T) {
 		Method: "GET",
 		Host:   "example.com",
 		Path:   "/test",
+		Params: "q=term",
 	}, data.Tags)
+}
+
+func TestTracingHandlerFunc_SecretsFiltering(t *testing.T) {
+	recorder := instana.NewTestRecorder()
+	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{
+		Service: "go-sensor-test",
+	}, recorder))
+
+	h := instana.TracingHandlerFunc(s, "/{action}", func(w http.ResponseWriter, req *http.Request) {
+		fmt.Fprintln(w, "Ok")
+	})
+
+	req := httptest.NewRequest(http.MethodGet, "/test?q=term&sensitive_key=s3cr3t&myPassword=qwerty&SECRET_VALUE=1", nil)
+
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, req)
+
+	assert.Equal(t, http.StatusOK, rec.Code)
+	assert.Equal(t, "Ok\n", rec.Body.String())
+
+	spans := recorder.GetQueuedSpans()
+	require.Len(t, spans, 1)
+
+	span := spans[0]
+	assert.Equal(t, 0, span.Ec)
+	assert.EqualValues(t, instana.EntrySpanKind, span.Kind)
+	assert.False(t, span.Synthetic)
+	assert.Empty(t, span.CorrelationType)
+	assert.Empty(t, span.CorrelationID)
+
+	assert.Nil(t, span.ForeignParent)
+
+	require.IsType(t, instana.HTTPSpanData{}, span.Data)
+	data := span.Data.(instana.HTTPSpanData)
+
+	assert.Equal(t, instana.HTTPSpanTags{
+		Host:         "example.com",
+		Status:       http.StatusOK,
+		Method:       "GET",
+		Path:         "/test",
+		Params:       "SECRET_VALUE=%3Credacted%3E&myPassword=%3Credacted%3E&q=term&sensitive_key=%3Credacted%3E",
+		PathTemplate: "/{action}",
+	}, data.Tags)
+
+	// check whether the trace context has been sent back to the client
+	assert.Equal(t, instana.FormatID(span.TraceID), rec.Header().Get(instana.FieldT))
+	assert.Equal(t, instana.FormatID(span.SpanID), rec.Header().Get(instana.FieldS))
 }
 
 func TestTracingHandlerFunc_Error(t *testing.T) {
@@ -249,7 +298,7 @@ func TestTracingHandlerFunc_PanicHandling(t *testing.T) {
 
 	rec := httptest.NewRecorder()
 	assert.Panics(t, func() {
-		h.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/test?q=classified", nil))
+		h.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/test?q=term", nil))
 	})
 
 	spans := recorder.GetQueuedSpans()
@@ -268,6 +317,7 @@ func TestTracingHandlerFunc_PanicHandling(t *testing.T) {
 		Method: "GET",
 		Host:   "example.com",
 		Path:   "/test",
+		Params: "q=term",
 		Error:  "something went wrong",
 	}, data.Tags)
 }
@@ -291,7 +341,7 @@ func TestRoundTripper(t *testing.T) {
 	}))
 
 	ctx := instana.ContextWithSpan(context.Background(), parentSpan)
-	req := httptest.NewRequest("GET", "http://user:password@example.com/hello", nil)
+	req := httptest.NewRequest("GET", "http://user:password@example.com/hello?q=term&sensitive_key=s3cr3t&myPassword=qwerty&SECRET_VALUE=1", nil)
 
 	_, err := rt.RoundTrip(req.WithContext(ctx))
 	require.NoError(t, err)
@@ -318,6 +368,7 @@ func TestRoundTripper(t *testing.T) {
 		Method: "GET",
 		Status: http.StatusNotImplemented,
 		URL:    "http://example.com/hello",
+		Params: "SECRET_VALUE=%3Credacted%3E&myPassword=%3Credacted%3E&q=term&sensitive_key=%3Credacted%3E",
 	}, data.Tags)
 }
 
@@ -353,7 +404,7 @@ func TestRoundTripper_Error(t *testing.T) {
 	}))
 
 	ctx := instana.ContextWithSpan(context.Background(), s.Tracer().StartSpan("parent"))
-	req := httptest.NewRequest("GET", "http://example.com/hello", nil)
+	req := httptest.NewRequest("GET", "http://example.com/hello?q=term&key=s3cr3t", nil)
 
 	_, err := rt.RoundTrip(req.WithContext(ctx))
 	assert.Error(t, err)
@@ -371,6 +422,7 @@ func TestRoundTripper_Error(t *testing.T) {
 	assert.Equal(t, instana.HTTPSpanTags{
 		Method: "GET",
 		URL:    "http://example.com/hello",
+		Params: "key=%3Credacted%3E&q=term",
 		Error:  "something went wrong",
 	}, data.Tags)
 }
