@@ -4,11 +4,6 @@ import (
 	"github.com/instana/go-sensor/secrets"
 )
 
-// Matcher verifies whether a string meets predefined conditions
-type Matcher interface {
-	Match(s string) bool
-}
-
 // TracerOptions carry the tracer configuration
 type TracerOptions struct {
 	// DropAllLogs turns log events on all spans into no-ops
