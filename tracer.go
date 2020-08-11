@@ -13,7 +13,6 @@ const (
 
 type tracerS struct {
 	recorder SpanRecorder
-	options  TracerOptions
 }
 
 func (r *tracerS) Inject(spanContext ot.SpanContext, format interface{}, carrier interface{}) error {
@@ -85,7 +84,11 @@ func (r *tracerS) StartSpanWithOptions(operationName string, opts ot.StartSpanOp
 
 // Options returns current tracer options
 func (r *tracerS) Options() TracerOptions {
-	return r.options
+	if sensor.options == nil {
+		return DefaultTracerOptions()
+	}
+
+	return sensor.options.Tracer
 }
 
 // NewTracer initializes a new tracer with default options
@@ -104,11 +107,6 @@ func NewTracerWithEverything(options *Options, recorder SpanRecorder) ot.Tracer 
 
 	tracer := &tracerS{
 		recorder: recorder,
-		options:  DefaultTracerOptions(),
-	}
-
-	if options != nil {
-		tracer.options = options.Tracer
 	}
 
 	return tracer
