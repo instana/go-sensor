@@ -21,10 +21,14 @@ func TestTracingHandlerFunc_Write(t *testing.T) {
 	}, recorder))
 
 	h := instana.TracingHandlerFunc(s, "/{action}", func(w http.ResponseWriter, req *http.Request) {
+		w.Header().Set("X-Response", "true")
+		w.Header().Set("X-Custom-Header-2", "response")
 		fmt.Fprintln(w, "Ok")
 	})
 
 	req := httptest.NewRequest(http.MethodGet, "/test?q=term", nil)
+	req.Header.Set("Authorization", "Basic blah")
+	req.Header.Set("X-Custom-Header-1", "request")
 
 	rec := httptest.NewRecorder()
 	h.ServeHTTP(rec, req)
@@ -48,11 +52,15 @@ func TestTracingHandlerFunc_Write(t *testing.T) {
 	data := span.Data.(instana.HTTPSpanData)
 
 	assert.Equal(t, instana.HTTPSpanTags{
-		Host:         "example.com",
-		Status:       http.StatusOK,
-		Method:       "GET",
-		Path:         "/test",
-		Params:       "q=term",
+		Host:   "example.com",
+		Status: http.StatusOK,
+		Method: "GET",
+		Path:   "/test",
+		Params: "q=term",
+		Headers: map[string]string{
+			"x-custom-header-1": "request",
+			"x-custom-header-2": "response",
+		},
 		PathTemplate: "/{action}",
 	}, data.Tags)
 
@@ -337,11 +345,17 @@ func TestRoundTripper(t *testing.T) {
 		return &http.Response{
 			Status:     http.StatusText(http.StatusNotImplemented),
 			StatusCode: http.StatusNotImplemented,
+			Header: http.Header{
+				"X-Response":        []string{"true"},
+				"X-Custom-Header-2": []string{"response"},
+			},
 		}, nil
 	}))
 
 	ctx := instana.ContextWithSpan(context.Background(), parentSpan)
 	req := httptest.NewRequest("GET", "http://user:password@example.com/hello?q=term&sensitive_key=s3cr3t&myPassword=qwerty&SECRET_VALUE=1", nil)
+	req.Header.Set("X-Custom-Header-1", "request")
+	req.Header.Set("Authorization", "Basic blah")
 
 	_, err := rt.RoundTrip(req.WithContext(ctx))
 	require.NoError(t, err)
@@ -369,6 +383,10 @@ func TestRoundTripper(t *testing.T) {
 		Status: http.StatusNotImplemented,
 		URL:    "http://example.com/hello",
 		Params: "SECRET_VALUE=%3Credacted%3E&myPassword=%3Credacted%3E&q=term&sensitive_key=%3Credacted%3E",
+		Headers: map[string]string{
+			"x-custom-header-1": "request",
+			"x-custom-header-2": "response",
+		},
 	}, data.Tags)
 }
 

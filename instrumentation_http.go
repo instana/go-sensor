@@ -63,15 +63,34 @@ func TracingHandlerFunc(sensor *Sensor, pathTemplate string, handler http.Handle
 		span := tracer.StartSpan("g.http", opts...)
 		defer span.Finish()
 
+		var collectableHTTPHeaders []string
 		if t, ok := tracer.(Tracer); ok {
-			params := collectHTTPParams(req, t.Options().Secrets)
+			opts := t.Options()
+			collectableHTTPHeaders = opts.CollectableHTTPHeaders
+
+			params := collectHTTPParams(req, opts.Secrets)
 			if len(params) > 0 {
 				span.SetTag("http.params", params.Encode())
 			}
 		}
 
+		collectedHeaders := make(map[string]string)
+		// make sure collected headers are sent in case of panic/error
 		defer func() {
-			// Be sure to capture any kind of panic / error
+			if len(collectedHeaders) > 0 {
+				span.SetTag("http.header", collectedHeaders)
+			}
+		}()
+
+		// collect request headers
+		for _, h := range collectableHTTPHeaders {
+			if v := req.Header.Get(h); v != "" {
+				collectedHeaders[h] = v
+			}
+		}
+
+		defer func() {
+			// Be sure to capture any kind of panic/error
 			if err := recover(); err != nil {
 				if e, ok := err.(error); ok {
 					span.SetTag("http.error", e.Error())
@@ -93,6 +112,13 @@ func TracingHandlerFunc(sensor *Sensor, pathTemplate string, handler http.Handle
 
 		ctx = ContextWithSpan(ctx, span)
 		w3ctrace.TracingHandlerFunc(handler)(wrapped, req.WithContext(ctx))
+
+		// collect response headers
+		for _, h := range collectableHTTPHeaders {
+			if v := wrapped.Header().Get(h); v != "" {
+				collectedHeaders[h] = v
+			}
+		}
 
 		if wrapped.Status > 0 {
 			if wrapped.Status > http.StatusInternalServerError {
@@ -136,10 +162,29 @@ func RoundTripper(sensor *Sensor, original http.RoundTripper) http.RoundTripper 
 		req = cloneRequest(ContextWithSpan(ctx, span), req)
 		sensor.Tracer().Inject(span.Context(), ot.HTTPHeaders, ot.HTTPHeadersCarrier(req.Header))
 
+		var collectableHTTPHeaders []string
 		if t, ok := sensor.Tracer().(Tracer); ok {
-			params := collectHTTPParams(req, t.Options().Secrets)
+			opts := t.Options()
+			collectableHTTPHeaders = opts.CollectableHTTPHeaders
+
+			params := collectHTTPParams(req, opts.Secrets)
 			if len(params) > 0 {
 				span.SetTag("http.params", params.Encode())
+			}
+		}
+
+		collectedHeaders := make(map[string]string)
+		// make sure collected headers are sent in case of panic/error
+		defer func() {
+			if len(collectedHeaders) > 0 {
+				span.SetTag("http.header", collectedHeaders)
+			}
+		}()
+
+		// collect request headers
+		for _, h := range collectableHTTPHeaders {
+			if v := req.Header.Get(h); v != "" {
+				collectedHeaders[h] = v
 			}
 		}
 
@@ -148,6 +193,13 @@ func RoundTripper(sensor *Sensor, original http.RoundTripper) http.RoundTripper 
 			span.SetTag("http.error", err.Error())
 			span.LogFields(otlog.Error(err))
 			return resp, err
+		}
+
+		// collect response headers
+		for _, h := range collectableHTTPHeaders {
+			if v := resp.Header.Get(h); v != "" {
+				collectedHeaders[h] = v
+			}
 		}
 
 		span.SetTag(string(ext.HTTPStatusCode), resp.StatusCode)
