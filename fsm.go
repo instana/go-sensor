@@ -119,26 +119,30 @@ func (r *fsmS) lookupSuccess(host string) {
 }
 
 func (r *fsmS) announceSensor(e *f.Event) {
-	cb := func(b bool, from *fromS) {
-		if b {
-			r.agent.logger.Info("Host agent available. We're in business. Announced pid:", from.EntityID)
-			r.agent.setFrom(from)
-			r.retries = maximumRetries
-			r.fsm.Event(eAnnounce)
-		} else {
+	cb := func(success bool, resp agentResponse) {
+		if !success {
 			r.agent.logger.Error("Cannot announce sensor. Scheduling retry.")
 			r.retries--
-			if r.retries > 0 {
-				r.scheduleRetry(e, r.announceSensor)
-			} else {
+			if r.retries == 0 {
 				r.fsm.Event(eInit)
+				return
 			}
+
+			r.scheduleRetry(e, r.announceSensor)
+
+			return
 		}
+
+		r.agent.logger.Info("Host agent available. We're in business. Announced pid:", resp.Pid)
+		r.agent.applyHostAgentSettings(resp)
+
+		r.retries = maximumRetries
+		r.fsm.Event(eAnnounce)
 	}
 
 	r.agent.logger.Debug("announcing sensor to the agent")
 
-	go func(cb func(b bool, from *fromS)) {
+	go func(cb func(success bool, resp agentResponse)) {
 		defer func() {
 			if err := recover(); err != nil {
 				r.agent.logger.Debug("Announce recovered:", err)
@@ -201,9 +205,9 @@ func (r *fsmS) announceSensor(e *f.Event) {
 			}
 		}
 
-		ret := &agentResponse{}
-		_, err := r.agent.requestResponse(r.agent.makeURL(agentDiscoveryURL), "PUT", d, ret)
-		cb(err == nil, newHostAgentFromS(int(ret.Pid), ret.HostID))
+		var resp agentResponse
+		_, err := r.agent.requestResponse(r.agent.makeURL(agentDiscoveryURL), "PUT", d, &resp)
+		cb(err == nil, resp)
 	}(cb)
 }
 

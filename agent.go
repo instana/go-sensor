@@ -29,8 +29,12 @@ const (
 )
 
 type agentResponse struct {
-	Pid    uint32 `json:"pid"`
-	HostID string `json:"agentUuid"`
+	Pid     uint32 `json:"pid"`
+	HostID  string `json:"agentUuid"`
+	Secrets struct {
+		Matcher string   `json:"matcher"`
+		List    []string `json:"list"`
+	} `json:"secrets"`
 }
 
 type discoveryS struct {
@@ -278,8 +282,17 @@ func (r *agentS) fullRequestResponse(url string, method string, data interface{}
 	return ret, err
 }
 
-func (r *agentS) setFrom(from *fromS) {
-	r.from = from
+func (r *agentS) applyHostAgentSettings(resp agentResponse) {
+	r.from = newHostAgentFromS(int(resp.Pid), resp.HostID)
+
+	if resp.Secrets.Matcher != "" {
+		m, err := NamedMatcher(resp.Secrets.Matcher, resp.Secrets.List)
+		if err != nil {
+			r.logger.Warn("failed to apply secrets matcher configuration: %s", err)
+		} else {
+			sensor.options.Tracer.Secrets = m
+		}
+	}
 }
 
 func (r *agentS) setHost(host string) {

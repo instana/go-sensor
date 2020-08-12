@@ -13,5 +13,6 @@ func TestDefaultOptions(t *testing.T) {
 		AgentPort:                   42699,
 		MaxBufferedSpans:            instana.DefaultMaxBufferedSpans,
 		ForceTransmissionStartingAt: instana.DefaultForceSpanSendAt,
+		Tracer:                      instana.DefaultTracerOptions(),
 	}, instana.DefaultOptions())
 }

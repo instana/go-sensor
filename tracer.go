@@ -12,7 +12,7 @@ const (
 )
 
 type tracerS struct {
-	options TracerOptions
+	recorder SpanRecorder
 }
 
 func (r *tracerS) Inject(spanContext ot.SpanContext, format interface{}, carrier interface{}) error {
@@ -70,8 +70,6 @@ func (r *tracerS) StartSpanWithOptions(operationName string, opts ot.StartSpanOp
 		delete(opts.Tags, suppressTracingTag)
 	}
 
-	sc.Sampled = r.options.ShouldSample(sc.TraceID)
-
 	return &spanS{
 		context:     sc,
 		tracer:      r,
@@ -84,30 +82,32 @@ func (r *tracerS) StartSpanWithOptions(operationName string, opts ot.StartSpanOp
 	}
 }
 
-func shouldSample(traceID int64) bool {
-	return false
+// Options returns current tracer options
+func (r *tracerS) Options() TracerOptions {
+	if sensor.options == nil {
+		return DefaultTracerOptions()
+	}
+
+	return sensor.options.Tracer
 }
 
-// NewTracer Get a new Tracer with the default options applied.
+// NewTracer initializes a new tracer with default options
 func NewTracer() ot.Tracer {
-	return NewTracerWithOptions(&Options{})
+	return NewTracerWithOptions(nil)
 }
 
-// NewTracerWithOptions Get a new Tracer with the specified options.
+// NewTracerWithOptions initializes and configures a new tracer that collects and sends spans to the host agent
 func NewTracerWithOptions(options *Options) ot.Tracer {
 	return NewTracerWithEverything(options, NewRecorder())
 }
 
-// NewTracerWithEverything Get a new Tracer with the works.
+// NewTracerWithEverything initializes and configures a new tracer
 func NewTracerWithEverything(options *Options, recorder SpanRecorder) ot.Tracer {
 	InitSensor(options)
-	ret := &tracerS{
-		options: TracerOptions{
-			Recorder:       recorder,
-			ShouldSample:   shouldSample,
-			MaxLogsPerSpan: MaxLogsPerSpan,
-		},
+
+	tracer := &tracerS{
+		recorder: recorder,
 	}
 
-	return ret
+	return tracer
 }
