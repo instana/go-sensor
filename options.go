@@ -60,6 +60,6 @@ func (opts *Options) setDefaults() {
 	}
 
 	if opts.Tracer.Secrets == nil {
-		opts.Tracer = DefaultTracerOptions()
+		opts.Tracer.Secrets = DefaultSecretsMatcher()
 	}
 }
