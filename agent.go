@@ -35,6 +35,7 @@ type agentResponse struct {
 		Matcher string   `json:"matcher"`
 		List    []string `json:"list"`
 	} `json:"secrets"`
+	ExtraHTTPHeaders []string `json:"extraHeaders"`
 }
 
 type discoveryS struct {
@@ -293,6 +294,8 @@ func (r *agentS) applyHostAgentSettings(resp agentResponse) {
 			sensor.options.Tracer.Secrets = m
 		}
 	}
+
+	sensor.options.Tracer.CollectableHTTPHeaders = resp.ExtraHTTPHeaders
 }
 
 func (r *agentS) setHost(host string) {
