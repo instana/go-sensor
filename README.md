@@ -21,6 +21,7 @@ The Instana Go sensor consists of two parts:
 * [Common Operations](#common-operations)
   * [Setting the sensor log output](#setting-the-sensor-log-output)
   * [Trace Context Propagation](#trace-context-propagation)
+  * [Secrets Filtering](#secrets-filtering)
   * [HTTP servers and clients](#http-servers-and-clients)
     * [Instrumenting HTTP request handling](#instrumenting-http-request-handling)
     * [Instrumenting HTTP request execution](#instrumenting-http-request-execution)
@@ -177,7 +178,16 @@ func MyFunc(ctx context.Context) {
 }
 ```
 
+### Secrets Filtering
+
+Certain instrumentations provided by the Go sensor package, e.g. the [HTTP servers and clients](#http-servers-and-clients) wrappers, collect data that may contain sensitive information, such as passwords, keys and secrets. To avoid leaking these values the Go sensor replaces them with `<redacted>` before sending to the agent. The list of parameter name matchers is defined in `com.instana.secrets` section of the [Host Agent Configuration file](https://www.instana.com/docs/setup_and_manage/host_agent/configuration/#secrets) and will be sent to the in-app tracer during the announcement phase (requires agent Go trace plugin `com.instana.sensor-golang-trace` v1.3.0 and above).
+
+The default setting for the secrets matcher is `contains-ignore-case` with following list of terms: `key`, `password`, `secret`. This would redact the value of a parameter which name _contains_ any of these strings ignoring the case.
+
 ### HTTP servers and clients
+
+The Go sensor module provides instrumentation for clients and servers that use `net/http` package. Once activated (see below) this
+instrumentation automatically collects information about incoming and outgoing requests and sends it to the Instana agent. See the [instana.HTTPSpanTags][instana.HTTPSpanTags] documentation to learn which call details are collected.
 
 #### Instrumenting HTTP request handling
 
@@ -351,3 +361,4 @@ For more examples please consult the [godoc][godoc].
 [pkg.go.dev]: https://pkg.go.dev/github.com/instana/go-sensor
 [instana.TracingHandlerFunc]: https://pkg.go.dev/github.com/instana/go-sensor/?tab=doc#TracingHandlerFunc
 [instana.RoundTripper]: https://pkg.go.dev/github.com/instana/go-sensor/?tab=doc#RoundTripper
+[instana.HTTPSpanTags]: https://pkg.go.dev/github.com/instana/go-sensor/?tab=doc#HTTPSpanTags
