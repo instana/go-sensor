@@ -6,11 +6,11 @@ import (
 	"time"
 
 	instana "github.com/instana/go-sensor"
+	"github.com/instana/testify/assert"
+	"github.com/instana/testify/require"
 	ot "github.com/opentracing/opentracing-go"
 	ext "github.com/opentracing/opentracing-go/ext"
 	"github.com/opentracing/opentracing-go/log"
-	"github.com/instana/testify/assert"
-	"github.com/instana/testify/require"
 )
 
 func TestBasicSpan(t *testing.T) {
@@ -33,7 +33,7 @@ func TestBasicSpan(t *testing.T) {
 
 	require.IsType(t, instana.SDKSpanData{}, span.Data)
 	data := span.Data.(instana.SDKSpanData)
-	assert.Empty(t, data.Service)
+	assert.Equal(t, TestServiceName, data.Service)
 
 	assert.Equal(t, "test", data.Tags.Name)
 	assert.Nil(t, data.Tags.Custom["tags"])

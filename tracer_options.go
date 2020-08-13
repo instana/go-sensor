@@ -14,6 +14,10 @@ type TracerOptions struct {
 	//
 	// See https://www.instana.com/docs/setup_and_manage/host_agent/configuration/#secrets for details
 	Secrets Matcher
+	// CollectableHTTPHeaders is a case-insensitive list of HTTP headers to be collected from HTTP requests and sent to the agent
+	//
+	// See https://www.instana.com/docs/setup_and_manage/host_agent/configuration/#capture-custom-http-headers for details
+	CollectableHTTPHeaders []string
 }
 
 // DefaultTracerOptions returns the default set of options to configure a tracer

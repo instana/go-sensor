@@ -278,6 +278,8 @@ type HTTPSpanTags struct {
 	Path string `json:"path,omitempty"`
 	// Params are the request query string parameters
 	Params string `json:"params,omitempty"`
+	// Headers are the captured request/response headers
+	Headers map[string]string `json:"header,omitempty"`
 	// PathTemplate is the raw template string used to route the request
 	PathTemplate string `json:"path_tpl,omitempty"`
 	// The name:port of the host to which the request had been sent
@@ -303,6 +305,11 @@ func NewHTTPSpanTags(span *spanS) HTTPSpanTags {
 			readStringTag(&tags.Path, v)
 		case "http.params":
 			readStringTag(&tags.Params, v)
+		case "http.header":
+			if m, ok := v.(map[string]string); ok {
+				tags.Headers = m
+			}
+			tags.Headers = v.(map[string]string)
 		case "http.path_tpl":
 			readStringTag(&tags.PathTemplate, v)
 		case "http.host":
