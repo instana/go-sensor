@@ -25,6 +25,7 @@ The Instana Go sensor consists of two parts:
   * [HTTP servers and clients](#http-servers-and-clients)
     * [Instrumenting HTTP request handling](#instrumenting-http-request-handling)
     * [Instrumenting HTTP request execution](#instrumenting-http-request-execution)
+    * [Capturing custom HTTP headers](#capturing-custom-http-headers)
   * [Database Calls](#database-calls)
     * [Instrumenting sql\.Open()](#instrumenting-sqlopen)
     * [Instrumenting sql\.OpenDB()](#instrumenting-sqlopendb)
@@ -56,7 +57,7 @@ func main() {
 }
 ```
 
-The `instana.InitSensor()` function takes an `*instana.Options` struct with the following optional fields:
+The `instana.InitSensor()` function takes an [`*instana.Options`][instana.Options] struct with the following optional fields:
 
 * **Service** - global service name that will be used to identify the program in the Instana backend
 * **AgentHost**, **AgentPort** - default to `localhost:42699`, set the coordinates of the Instana proxy agent
@@ -66,6 +67,7 @@ The `instana.InitSensor()` function takes an `*instana.Options` struct with the 
 * **ForceTransmissionStartingAt** - the number of spans to collect before flushing the buffer to the agent
 * **MaxBufferedProfiles** - the maximum number of profiles to buffer
 * **IncludeProfilerFrames** - whether to include profiler calls into the profile or not
+* **Tracer** - [tracer-specific configuration][instana.TracerOptions] used by all tracers
 
 Once initialized, the sensor performs a host agent lookup using following list of addresses (in order of priority):
 
@@ -239,6 +241,31 @@ resp, err := client.Do(req.WithContext(ctx))
 
 The provided `parentSpan` is the incoming request from the request handler (see above) and provides the necessary tracing and span information to create a child span and inject it into the request.
 
+#### Capturing custom HTTP headers
+
+The HTTP instrumentation wrappers are capable of collecting HTTP headers and sending them along with the incoming/outgoing request spans. The list of case-insensitive header names can be provided both within `(instana.Options).Tracer.CollectableHTTPHeaders` field of the options object passed to `instana.InitSensor()` and in the [Host Agent Configuration file](https://www.instana.com/docs/setup_and_manage/host_agent/configuration/#capture-custom-http-headers). The latter setting takes precedence and requires agent Go trace plugin `com.instana.sensor-golang-trace` v1.3.0 and above:
+
+```go
+instana.InitSensor(&instana.Options{
+	// ...
+	Tracer: instana.TracerOptions{
+		// ...
+		CollectableHTTPHeaders: []string{"x-request-id", "x-loadtest-id"},
+	},
+})
+```
+
+This configuration is an equivalent of following settings in the [Host Agent Configuration file](https://www.instana.com/docs/setup_and_manage/host_agent/configuration/#capture-custom-http-headers):
+
+```
+com.instana.tracing:
+  extra-http-headers:
+    - 'x-request-id'
+    - 'x-loadtest-id'
+```
+
+By default the HTTP instrumentation does not collect any headers.
+
 ### Database Calls
 
 The Go sensor provides `instana.InstrumentSQLDriver()` and `instana.WrapSQLConnector()` (since Go v1.10+) to instrument SQL database calls made with `database/sql`. The tracer will then automatically capture the `Query` and `Exec` calls, gather information about the query, such as statement, execution time, etc. and forward them to be displayed as a part of the trace.
@@ -362,3 +389,5 @@ For more examples please consult the [godoc][godoc].
 [instana.TracingHandlerFunc]: https://pkg.go.dev/github.com/instana/go-sensor/?tab=doc#TracingHandlerFunc
 [instana.RoundTripper]: https://pkg.go.dev/github.com/instana/go-sensor/?tab=doc#RoundTripper
 [instana.HTTPSpanTags]: https://pkg.go.dev/github.com/instana/go-sensor/?tab=doc#HTTPSpanTags
+[instana.Options]: https://pkg.go.dev/github.com/instana/go-sensor/?tab=doc#Options
+[instana.TracerOptions]: https://pkg.go.dev/github.com/instana/go-sensor/?tab=doc#TracerOptions
