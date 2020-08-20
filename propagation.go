@@ -116,7 +116,7 @@ func extractTraceContext(opaqueCarrier interface{}) (SpanContext, error) {
 		case FieldL:
 			suppressed, corrData, err := parseLevel(v)
 			if err != nil {
-				sensor.logger.Info("failed to parse %s: %s %q", k, err, v)
+				sensor.logger.Info("failed to parse ", k, ": ", err, " (", v, ")")
 				// use defaults
 				suppressed, corrData = false, EUMCorrelationData{}
 			}

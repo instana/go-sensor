@@ -48,7 +48,7 @@ func NamedMatcher(name string, list []string) (Matcher, error) {
 		for _, s := range list {
 			ex, err := regexp.Compile(s)
 			if err != nil {
-				sensor.logger.Warn("ignoring malformed regexp secrets matcher %s: %s", s, err)
+				sensor.logger.Warn("ignoring malformed regexp secrets matcher ", s, ": ", err)
 				continue
 			}
 
