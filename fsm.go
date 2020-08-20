@@ -103,7 +103,7 @@ func (r *fsmS) lookupAgentHost(e *f.Event) {
 }
 
 func (r *fsmS) checkHost(host string, cb func(found bool, host string)) {
-	r.agent.logger.Debug("checking host", host)
+	r.agent.logger.Debug("checking host ", host)
 
 	header, err := r.agent.requestHeader(r.agent.makeHostURL(host, "/"), "GET", "Server")
 
@@ -111,7 +111,7 @@ func (r *fsmS) checkHost(host string, cb func(found bool, host string)) {
 }
 
 func (r *fsmS) lookupSuccess(host string) {
-	r.agent.logger.Debug("agent lookup success", host)
+	r.agent.logger.Debug("agent lookup success ", host)
 
 	r.agent.setHost(host)
 	r.retries = maximumRetries
