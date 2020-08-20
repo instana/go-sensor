@@ -289,7 +289,7 @@ func (r *agentS) applyHostAgentSettings(resp agentResponse) {
 	if resp.Secrets.Matcher != "" {
 		m, err := NamedMatcher(resp.Secrets.Matcher, resp.Secrets.List)
 		if err != nil {
-			r.logger.Warn("failed to apply secrets matcher configuration: %s", err)
+			r.logger.Warn("failed to apply secrets matcher configuration: ", err)
 		} else {
 			sensor.options.Tracer.Secrets = m
 		}
