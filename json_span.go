@@ -31,7 +31,8 @@ const (
 	RPCServerSpanType = RegisteredSpanType("rpc-server")
 	RPCClientSpanType = RegisteredSpanType("rpc-client")
 	// Kafka consumer/producer span
-	KafkaSpanType = RegisteredSpanType("kafka")
+	KafkaSpanType      = RegisteredSpanType("kafka")
+	GCPStorageSpanType = RegisteredSpanType("gcs")
 )
 
 // RegisteredSpanType represents the span type supported by Instana
@@ -46,6 +47,8 @@ func (st RegisteredSpanType) ExtractData(span *spanS) typedSpanData {
 		return NewRPCSpanData(span)
 	case KafkaSpanType:
 		return NewKafkaSpanData(span)
+	case GCPStorageSpanType:
+		return NewGCPStorageSpanData(span)
 	default:
 		return NewSDKSpanData(span)
 	}
@@ -209,7 +212,7 @@ type SDKSpanData struct {
 	Tags SDKSpanTags `json:"sdk"`
 }
 
-// NewSDKSpanData initializes a new SDK span data from tracer span
+// NewSDKSpanData initializes a new SDK span data from a tracer span
 func NewSDKSpanData(span *spanS) SDKSpanData {
 	d := NewSpanData(span, SDKSpanType)
 	return SDKSpanData{
@@ -412,6 +415,73 @@ func NewKafkaSpanTags(span *spanS) KafkaSpanTags {
 			readStringTag(&tags.Service, v)
 		case "kafka.access":
 			readStringTag(&tags.Access, v)
+		}
+	}
+
+	return tags
+}
+
+type GCPStorageSpanData struct {
+	SpanData
+	Tags GCPStorageSpanTags `json:"gcs"`
+}
+
+func NewGCPStorageSpanData(span *spanS) GCPStorageSpanData {
+	data := GCPStorageSpanData{
+		SpanData: NewSpanData(span, GCPStorageSpanType),
+		Tags:     NewGCPStorageSpanTags(span),
+	}
+
+	return data
+}
+
+func (d GCPStorageSpanData) Kind() SpanKind {
+	return ExitSpanKind
+}
+
+type GCPStorageSpanTags struct {
+	Operation          string `json:"op,omitempty"`
+	Bucket             string `json:"bucket,omitempty"`
+	Object             string `json:"object,omitempty"`
+	Entity             string `json:"entity,omitempty"`
+	Range              string `json:"range,omitempty"`
+	SourceBucket       string `json:"sourceBucket,omitempty"`
+	SourceObject       string `json:"sourceObject,omitempty"`
+	DestinationBucket  string `json:"destinationBucket,omitempty"`
+	DestinationObject  string `json:"destinationObject,omitempty"`
+	NumberOfOperations string `json:"numberOfOperations,omitempty"`
+	ProjectID          string `json:"projectId,omitempty"`
+	AccessID           string `json:"accessId,omitempty"`
+}
+
+func NewGCPStorageSpanTags(span *spanS) GCPStorageSpanTags {
+	var tags GCPStorageSpanTags
+	for k, v := range span.Tags {
+		switch k {
+		case "gcs.op":
+			readStringTag(&tags.Operation, v)
+		case "gcs.bucket":
+			readStringTag(&tags.Bucket, v)
+		case "gcs.object":
+			readStringTag(&tags.Object, v)
+		case "gcs.entity":
+			readStringTag(&tags.Entity, v)
+		case "gcs.range":
+			readStringTag(&tags.Range, v)
+		case "gcs.sourceBucket":
+			readStringTag(&tags.SourceBucket, v)
+		case "gcs.sourceObject":
+			readStringTag(&tags.SourceObject, v)
+		case "gcs.destinationBucket":
+			readStringTag(&tags.DestinationBucket, v)
+		case "gcs.destinationObject":
+			readStringTag(&tags.DestinationObject, v)
+		case "gcs.numberOfOperations":
+			readStringTag(&tags.NumberOfOperations, v)
+		case "gcs.projectId":
+			readStringTag(&tags.ProjectID, v)
+		case "gcs.accessId":
+			readStringTag(&tags.AccessID, v)
 		}
 	}
 
