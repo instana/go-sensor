@@ -63,14 +63,13 @@ func (b *BucketHandle) DefaultObjectACL() *ACLHandle {
 	return &ACLHandle{b.BucketHandle.DefaultObjectACL()}
 }
 
-// Object returns an ObjectHandle, which provides operations on the named object.
-// This call does not perform any network operations.
-//
-// name must consist entirely of valid UTF-8-encoded runes. The full specification
-// for valid object names can be found at:
-//   https://cloud.google.com/storage/docs/bucket-naming
+// Object returns an instrumented cloud.google.com/go/storage.ObjectHandle, which provides operations on the named object
 func (b *BucketHandle) Object(name string) *ObjectHandle {
-	return &ObjectHandle{b.BucketHandle.Object(name)}
+	return &ObjectHandle{
+		ObjectHandle: b.BucketHandle.Object(name),
+		Bucket:       b.Name,
+		Name:         name,
+	}
 }
 
 // Attrs calls and traces the Attrs() method of the wrapped BucketHandle

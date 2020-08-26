@@ -4,6 +4,8 @@ import (
 	"context"
 
 	"cloud.google.com/go/storage"
+	"github.com/instana/go-sensor/instrumentation/cloud.google.com/go/internal"
+	ot "github.com/opentracing/opentracing-go"
 	"google.golang.org/api/option"
 )
 
@@ -15,23 +17,19 @@ type Client struct {
 	*storage.Client
 }
 
-// NewClient creates a new Google Cloud Storage client.
-// The default scope is ScopeFullControl. To use a different scope, like
-// ScopeReadOnly, use option.WithScopes.
-//
-// Clients should be reused instead of created as needed. The methods of Client
-// are safe for concurrent use by multiple goroutines.
+// NewClient returns a new wrapped cloud.google.com/go/storage.Client
 func NewClient(ctx context.Context, opts ...option.ClientOption) (*Client, error) {
 	c, err := storage.NewClient(ctx, opts...)
-	return &Client{
-		Client: c,
-	}, err
+	return &Client{Client: c}, err
 }
 
-// ObjectHandle provides operations on an object in a Google Cloud Storage bucket.
+// ObjectHandle is an instrumented wrapper for cloud.google.com/go/storage.ObjectHandle
+// that traces calls made to Google Cloud Storage API.
 // Use BucketHandle.Object to get a handle.
 type ObjectHandle struct {
 	*storage.ObjectHandle
+	Bucket string
+	Name   string
 }
 
 // ACL provides access to the object's access control list.
@@ -41,60 +39,82 @@ func (o *ObjectHandle) ACL() *ACLHandle {
 	return &ACLHandle{o.ObjectHandle.ACL()}
 }
 
-// Generation returns a new ObjectHandle that operates on a specific generation
-// of the object.
-// By default, the handle operates on the latest generation. Not
-// all operations work when given a specific generation; check the API
-// endpoints at https://cloud.google.com/storage/docs/json_api/ for details.
+// Generation returns an instrumented ObjectHandle that operates on a specific generation
+// of the object
 func (o *ObjectHandle) Generation(gen int64) *ObjectHandle {
-	return &ObjectHandle{o.ObjectHandle.Generation(gen)}
+	return &ObjectHandle{
+		ObjectHandle: o.ObjectHandle.Generation(gen),
+		Bucket:       o.Bucket,
+		Name:         o.Name,
+	}
 }
 
-// If returns a new ObjectHandle that applies a set of preconditions.
-// Preconditions already set on the ObjectHandle are ignored.
-// Operations on the new handle will return an error if the preconditions are not
-// satisfied. See https://cloud.google.com/storage/docs/generations-preconditions
-// for more details.
+// If returns an instrumented ObjectHandle that applies a set of preconditions
 func (o *ObjectHandle) If(conds storage.Conditions) *ObjectHandle {
-	return &ObjectHandle{o.ObjectHandle.If(conds)}
+	return &ObjectHandle{
+		ObjectHandle: o.ObjectHandle.If(conds),
+		Bucket:       o.Bucket,
+		Name:         o.Name,
+	}
 }
 
-// Key returns a new ObjectHandle that uses the supplied encryption
-// key to encrypt and decrypt the object's contents.
-//
-// Encryption key must be a 32-byte AES-256 key.
-// See https://cloud.google.com/storage/docs/encryption for details.
+// Key returns an instrumented ObjectHandle that uses the supplied encryption
+// key to encrypt and decrypt the object's contents
 func (o *ObjectHandle) Key(encryptionKey []byte) *ObjectHandle {
-	return &ObjectHandle{o.ObjectHandle.Key(encryptionKey)}
+	return &ObjectHandle{
+		ObjectHandle: o.ObjectHandle.Key(encryptionKey),
+		Bucket:       o.Bucket,
+		Name:         o.Name,
+	}
 }
 
-// Attrs returns meta information about the object.
-// ErrObjectNotExist will be returned if the object is not found.
-//
-// INSTRUMENT
+// Attrs calls and traces the Attrs() method of the wrapped ObjectHandle
 func (o *ObjectHandle) Attrs(ctx context.Context) (attrs *storage.ObjectAttrs, err error) {
+	ctx = internal.StartExitSpan(ctx, "gcs", ot.Tags{
+		"gcs.op":     "objects.get",
+		"gcs.bucket": o.Bucket,
+		"gcs.object": o.Name,
+	})
+
+	defer func() { internal.FinishSpan(ctx, err) }()
+
 	return o.ObjectHandle.Attrs(ctx)
 }
 
-// Update updates an object with the provided attributes.
-// All zero-value attributes are ignored.
-// ErrObjectNotExist will be returned if the object is not found.
-//
-// INSTRUMENT
+// Update calls and traces the Update() method of the wrapped ObjectHandle
 func (o *ObjectHandle) Update(ctx context.Context, uattrs storage.ObjectAttrsToUpdate) (oa *storage.ObjectAttrs, err error) {
+	ctx = internal.StartExitSpan(ctx, "gcs", ot.Tags{
+		"gcs.op":     "objects.patch",
+		"gcs.bucket": o.Bucket,
+		"gcs.object": o.Name,
+	})
+
+	defer func() { internal.FinishSpan(ctx, err) }()
+
 	return o.ObjectHandle.Update(ctx, uattrs)
 }
 
-// Delete deletes the single specified object.
-//
-// INSTRUMENT
-func (o *ObjectHandle) Delete(ctx context.Context) error {
+// Delete calls and traces the Delete() method of the wrapped ObjectHandle
+func (o *ObjectHandle) Delete(ctx context.Context) (err error) {
+	ctx = internal.StartExitSpan(ctx, "gcs", ot.Tags{
+		"gcs.op":     "objects.delete",
+		"gcs.bucket": o.Bucket,
+		"gcs.object": o.Name,
+	})
+
+	defer func() { internal.FinishSpan(ctx, err) }()
+
 	return o.ObjectHandle.Delete(ctx)
 }
 
-// ReadCompressed when true causes the read to happen without decompressing.
+// ReadCompressed returns an instrumented ObjectHandle that performs reads without
+// decompressing when given true as an argument
 func (o *ObjectHandle) ReadCompressed(compressed bool) *ObjectHandle {
-	return &ObjectHandle{o.ObjectHandle.ReadCompressed(compressed)}
+	return &ObjectHandle{
+		ObjectHandle: o.ObjectHandle.ReadCompressed(compressed),
+		Bucket:       o.Bucket,
+		Name:         o.Name,
+	}
 }
 
 // NewWriter returns a storage Writer that writes to the GCS object
