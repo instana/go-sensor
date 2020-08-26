@@ -126,33 +126,48 @@ func (b *BucketHandle) LockRetentionPolicy(ctx context.Context) (err error) {
 	return b.BucketHandle.LockRetentionPolicy(ctx)
 }
 
-// Objects returns an iterator over the objects in the bucket that match the Query q.
-// If q is nil, no filtering is done.
-//
-// Note: The returned iterator is not safe for concurrent operations without explicit synchronization.
+// Objects returns an instrumented object iterator that traces and proxies requests to
+// the underlying cloud.google.com/go/storage.ObjectIterator
 func (b *BucketHandle) Objects(ctx context.Context, q *storage.Query) *ObjectIterator {
-	return &ObjectIterator{b.BucketHandle.Objects(ctx, q)}
+	return &ObjectIterator{
+		ObjectIterator: b.BucketHandle.Objects(ctx, q),
+		Bucket:         b.Name,
+		ctx:            ctx,
+	}
 }
 
-// An ObjectIterator is an iterator over ObjectAttrs.
-//
-// Note: This iterator is not safe for concurrent operations without explicit synchronization.
+// ObjectIterator is an instrumented wrapper for cloud.google.com/go/storage.ObjectIterator
+// that traces calls made to Google Cloud Storage API
 type ObjectIterator struct {
 	*storage.ObjectIterator
+	Bucket string
+	ctx    context.Context
 }
 
-// Next returns the next result. Its second return value is iterator.Done if
-// there are no more results. Once Next returns iterator.Done, all subsequent
-// calls will return iterator.Done.
-//
-// If Query.Delimiter is non-empty, some of the ObjectAttrs returned by Next will
-// have a non-empty Prefix field, and a zero value for all other fields. These
-// represent prefixes.
-//
-// Note: This method is not safe for concurrent operations without explicit synchronization.
-//
-// INSTRUMENT
-func (it *ObjectIterator) Next() (*storage.ObjectAttrs, error) {
+// Next calls the Next() method of the wrapped iterator and creates a span for each call
+// that results in an API request
+func (it *ObjectIterator) Next() (attrs *storage.ObjectAttrs, err error) {
+	// don't trace calls returning buffered data
+	if it.ObjectIterator.PageInfo().Remaining() > 0 {
+		return it.ObjectIterator.Next()
+	}
+
+	ctx := internal.StartExitSpan(it.ctx, "gcs", ot.Tags{
+		"gcs.op":     "objects.list",
+		"gcs.bucket": it.Bucket,
+	})
+
+	defer func() {
+		if err == iterator.Done {
+			// the last iterator call only meant for signalling
+			// that all items have been processed, we don't need
+			// a separate span for this
+			return
+		}
+
+		internal.FinishSpan(ctx, err)
+	}()
+
 	return it.ObjectIterator.Next()
 }
 
