@@ -49,18 +49,22 @@ func (b *BucketHandle) Delete(ctx context.Context) (err error) {
 	return b.BucketHandle.Delete(ctx)
 }
 
-// ACL returns an ACLHandle, which provides access to the bucket's access control list.
-// This controls who can list, create or overwrite the objects in a bucket.
-// This call does not perform any network operations.
+// ACL returns an instrumented cloud.google.com/go/storage.ACLHandle
 func (b *BucketHandle) ACL() *ACLHandle {
-	return &ACLHandle{b.BucketHandle.ACL()}
+	return &ACLHandle{
+		ACLHandle: b.BucketHandle.ACL(),
+		Bucket:    b.Name,
+	}
 }
 
-// DefaultObjectACL returns an ACLHandle, which provides access to the bucket's default object ACLs.
-// These ACLs are applied to newly created objects in this bucket that do not have a defined ACL.
-// This call does not perform any network operations.
+// DefaultObjectACL returns an instrumented cloud.google.com/go/storage.ACLHandle, which provides
+// access to the bucket's default object ACLs.
 func (b *BucketHandle) DefaultObjectACL() *ACLHandle {
-	return &ACLHandle{b.BucketHandle.DefaultObjectACL()}
+	return &ACLHandle{
+		ACLHandle: b.BucketHandle.DefaultObjectACL(),
+		Bucket:    b.Name,
+		Default:   true,
+	}
 }
 
 // Object returns an instrumented cloud.google.com/go/storage.ObjectHandle, which provides operations on the named object

@@ -32,11 +32,14 @@ type ObjectHandle struct {
 	Name   string
 }
 
-// ACL provides access to the object's access control list.
-// This controls who can read and write this object.
-// This call does not perform any network operations.
+// ACL returns an instrumented cloud.google.com/go/storage.ACLHandle that provides access to the
+// object's access control list
 func (o *ObjectHandle) ACL() *ACLHandle {
-	return &ACLHandle{o.ObjectHandle.ACL()}
+	return &ACLHandle{
+		ACLHandle: o.ObjectHandle.ACL(),
+		Bucket:    o.Bucket,
+		Object:    o.Name,
+	}
 }
 
 // Generation returns an instrumented ObjectHandle that operates on a specific generation
