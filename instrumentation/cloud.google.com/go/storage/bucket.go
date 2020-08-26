@@ -4,41 +4,48 @@ import (
 	"context"
 
 	"cloud.google.com/go/storage"
-	instana "github.com/instana/go-sensor"
+	"github.com/instana/go-sensor/instrumentation/cloud.google.com/go/internal"
 	ot "github.com/opentracing/opentracing-go"
-	otlog "github.com/opentracing/opentracing-go/log"
 	"google.golang.org/api/iterator"
 )
 
-// BucketHandle provides operations on a Google Cloud Storage bucket.
-// Use Client.Bucket to get a handle.
+// BucketHandle is an instrumented wrapper for cloud.google.com/go/storage.BucketHandle
+// that traces calls made to Google Cloud Storage API
 type BucketHandle struct {
 	*storage.BucketHandle
+	Name string
 }
 
-// Bucket returns a BucketHandle, which provides operations on the named bucket.
-// This call does not perform any network operations.
-//
-// The supplied name must contain only lowercase letters, numbers, dashes,
-// underscores, and dots. The full specification for valid bucket names can be
-// found at:
-//   https://cloud.google.com/storage/docs/bucket-naming
+// Bucket returns an instrumented cloud.google.com/go/storage.BucketHandle
 func (c *Client) Bucket(name string) *BucketHandle {
-	return &BucketHandle{c.Client.Bucket(name)}
+	return &BucketHandle{
+		BucketHandle: c.Client.Bucket(name),
+		Name:         name,
+	}
 }
 
-// Create creates the Bucket in the project.
-// If attrs is nil the API defaults will be used.
-//
-// INSTRUMENT
-func (b *BucketHandle) Create(ctx context.Context, projectID string, attrs *storage.BucketAttrs) error {
+// Create calls and traces the Create() method of the wrapped BucketHandle
+func (b *BucketHandle) Create(ctx context.Context, projectID string, attrs *storage.BucketAttrs) (err error) {
+	ctx = internal.StartExitSpan(ctx, "gcs", ot.Tags{
+		"gcs.op":        "buckets.insert",
+		"gcs.bucket":    b.Name,
+		"gcs.projectId": projectID,
+	})
+
+	defer func() { internal.FinishSpan(ctx, err) }()
+
 	return b.BucketHandle.Create(ctx, projectID, attrs)
 }
 
-// Delete deletes the Bucket.
-//
-// INSTRUMENT
-func (b *BucketHandle) Delete(ctx context.Context) error {
+// Delete calls and traces the Delete() method of the wrapped BucketHandle
+func (b *BucketHandle) Delete(ctx context.Context) (err error) {
+	ctx = internal.StartExitSpan(ctx, "gcs", ot.Tags{
+		"gcs.op":     "buckets.delete",
+		"gcs.bucket": b.Name,
+	})
+
+	defer func() { internal.FinishSpan(ctx, err) }()
+
 	return b.BucketHandle.Delete(ctx)
 }
 
@@ -66,50 +73,56 @@ func (b *BucketHandle) Object(name string) *ObjectHandle {
 	return &ObjectHandle{b.BucketHandle.Object(name)}
 }
 
-// Attrs returns the metadata for the bucket.
-//
-// INSTRUMENT
+// Attrs calls and traces the Attrs() method of the wrapped BucketHandle
 func (b *BucketHandle) Attrs(ctx context.Context) (attrs *storage.BucketAttrs, err error) {
+	ctx = internal.StartExitSpan(ctx, "gcs", ot.Tags{
+		"gcs.op":     "buckets.get",
+		"gcs.bucket": b.Name,
+	})
+
+	defer func() { internal.FinishSpan(ctx, err) }()
+
 	return b.BucketHandle.Attrs(ctx)
 }
 
-// Update updates a bucket's attributes.
-//
-// INSTRUMENT
+// Update calls and traces the Update() method of the wrapped BucketHandle
 func (b *BucketHandle) Update(ctx context.Context, uattrs storage.BucketAttrsToUpdate) (attrs *storage.BucketAttrs, err error) {
+	ctx = internal.StartExitSpan(ctx, "gcs", ot.Tags{
+		"gcs.op":     "buckets.patch",
+		"gcs.bucket": b.Name,
+	})
+
+	defer func() { internal.FinishSpan(ctx, err) }()
+
 	return b.BucketHandle.Update(ctx, uattrs)
 }
 
-// If returns a new BucketHandle that applies a set of preconditions.
-// Preconditions already set on the BucketHandle are ignored.
-// Operations on the new handle will return an error if the preconditions are not
-// satisfied. The only valid preconditions for buckets are MetagenerationMatch
-// and MetagenerationNotMatch.
+// If returns an instrumented BucketHandle that applies set of preconditions
 func (b *BucketHandle) If(conds storage.BucketConditions) *BucketHandle {
-	return &BucketHandle{b.BucketHandle.If(conds)}
+	return &BucketHandle{
+		BucketHandle: b.BucketHandle.If(conds),
+		Name:         b.Name,
+	}
 }
 
-// UserProject returns a new BucketHandle that passes the project ID as the user
-// project for all subsequent calls. Calls with a user project will be billed to that
-// project rather than to the bucket's owning project.
-//
-// A user project is required for all operations on Requester Pays buckets.
+// UserProject returns an instrumented cloud.google.com/go/storage.BucketHandle that passes the project ID as the user
+// project for all subsequent calls
 func (b *BucketHandle) UserProject(projectID string) *BucketHandle {
-	return &BucketHandle{b.BucketHandle.UserProject(projectID)}
+	return &BucketHandle{
+		BucketHandle: b.BucketHandle.UserProject(projectID),
+		Name:         b.Name,
+	}
 }
 
-// LockRetentionPolicy locks a bucket's retention policy until a previously-configured
-// RetentionPeriod past the EffectiveTime. Note that if RetentionPeriod is set to less
-// than a day, the retention policy is treated as a development configuration and locking
-// will have no effect. The BucketHandle must have a metageneration condition that
-// matches the bucket's metageneration. See BucketHandle.If.
-//
-// This feature is in private alpha release. It is not currently available to
-// most customers. It might be changed in backwards-incompatible ways and is not
-// subject to any SLA or deprecation policy.
-//
-// INSTRUMENT
-func (b *BucketHandle) LockRetentionPolicy(ctx context.Context) error {
+// LockRetentionPolicy calls and traces the LockRetentionPolicy() method of the wrapped BucketHandle
+func (b *BucketHandle) LockRetentionPolicy(ctx context.Context) (err error) {
+	ctx = internal.StartExitSpan(ctx, "gcs", ot.Tags{
+		"gcs.op":     "buckets.lockRetentionPolicy",
+		"gcs.bucket": b.Name,
+	})
+
+	defer func() { internal.FinishSpan(ctx, err) }()
+
 	return b.BucketHandle.LockRetentionPolicy(ctx)
 }
 
@@ -160,7 +173,7 @@ type BucketIterator struct {
 	ctx       context.Context
 }
 
-// Next calls the Next() method of a wrapped iterator and creates a span for each call
+// Next calls the Next() method of the wrapped iterator and creates a span for each call
 // that results in an API request
 func (it *BucketIterator) Next() (attrs *storage.BucketAttrs, err error) {
 	// don't trace calls returning buffered data
@@ -168,31 +181,21 @@ func (it *BucketIterator) Next() (attrs *storage.BucketAttrs, err error) {
 		return it.BucketIterator.Next()
 	}
 
-	if sp, ok := instana.SpanFromContext(it.ctx); ok {
-		sp = sp.Tracer().StartSpan(
-			"gcs",
-			ot.ChildOf(sp.Context()),
-			ot.Tags{
-				"gcs.op":        "buckets.list",
-				"gcs.projectId": it.projectID,
-			},
-		)
-		defer func() {
-			if err != nil {
-				if err == iterator.Done {
-					// the last iterator call only meant for signalling
-					// that all items have been processed, we don't need
-					// a separate span for this
-					return
-				}
+	ctx := internal.StartExitSpan(it.ctx, "gcs", ot.Tags{
+		"gcs.op":        "buckets.list",
+		"gcs.projectId": it.projectID,
+	})
 
-				sp.LogFields(otlog.Error(err))
-			}
+	defer func() {
+		if err == iterator.Done {
+			// the last iterator call only meant for signalling
+			// that all items have been processed, we don't need
+			// a separate span for this
+			return
+		}
 
-			sp.Finish()
-		}()
-	}
+		internal.FinishSpan(ctx, err)
+	}()
 
-	attrs, err = it.BucketIterator.Next()
-	return attrs, err
+	return it.BucketIterator.Next()
 }
