@@ -4,6 +4,10 @@ import (
 	"context"
 
 	"cloud.google.com/go/storage"
+	instana "github.com/instana/go-sensor"
+	ot "github.com/opentracing/opentracing-go"
+	otlog "github.com/opentracing/opentracing-go/log"
+	"google.golang.org/api/iterator"
 )
 
 // BucketHandle provides operations on a Google Cloud Storage bucket.
@@ -139,30 +143,56 @@ func (it *ObjectIterator) Next() (*storage.ObjectAttrs, error) {
 	return it.ObjectIterator.Next()
 }
 
-// Buckets returns an iterator over the buckets in the project. You may
-// optionally set the iterator's Prefix field to restrict the list to buckets
-// whose names begin with the prefix. By default, all buckets in the project
-// are returned.
-//
-// Note: The returned iterator is not safe for concurrent operations without explicit synchronization.
+// Buckets returns an instrumented bucket iterator that traces and proxies requests to
+// the underlying cloud.google.com/go/storage.BucketIterator
 func (c *Client) Buckets(ctx context.Context, projectID string) *BucketIterator {
-	return &BucketIterator{c.Client.Buckets(ctx, projectID)}
+	return &BucketIterator{
+		BucketIterator: c.Client.Buckets(ctx, projectID),
+		projectID:      projectID,
+		ctx:            ctx,
+	}
 }
 
-// A BucketIterator is an iterator over BucketAttrs.
-//
-// Note: This iterator is not safe for concurrent operations without explicit synchronization.
+// BucketIterator is an instrumented wrapper for cloud.google.com/go/storage.BucketIterator
 type BucketIterator struct {
 	*storage.BucketIterator
+	projectID string
+	ctx       context.Context
 }
 
-// Next returns the next result. Its second return value is iterator.Done if
-// there are no more results. Once Next returns iterator.Done, all subsequent
-// calls will return iterator.Done.
-//
-// Note: This method is not safe for concurrent operations without explicit synchronization.
-//
-// INSTRUMENT
-func (it *BucketIterator) Next() (*storage.BucketAttrs, error) {
-	return it.BucketIterator.Next()
+// Next calls the Next() method of a wrapped iterator and creates a span for each call
+// that results in an API request
+func (it *BucketIterator) Next() (attrs *storage.BucketAttrs, err error) {
+	// don't trace calls returning buffered data
+	if it.BucketIterator.PageInfo().Remaining() > 0 {
+		return it.BucketIterator.Next()
+	}
+
+	if sp, ok := instana.SpanFromContext(it.ctx); ok {
+		sp = sp.Tracer().StartSpan(
+			"gcs",
+			ot.ChildOf(sp.Context()),
+			ot.Tags{
+				"gcs.op":        "buckets.list",
+				"gcs.projectId": it.projectID,
+			},
+		)
+		defer func() {
+			if err != nil {
+				if err == iterator.Done {
+					// the last iterator call only meant for signalling
+					// that all items have been processed, we don't need
+					// a separate span for this
+					return
+				}
+
+				sp.LogFields(otlog.Error(err))
+			}
+
+			sp.Finish()
+		}()
+	}
+
+	attrs, err = it.BucketIterator.Next()
+	return attrs, err
 }
