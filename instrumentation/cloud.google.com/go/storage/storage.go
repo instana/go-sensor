@@ -9,10 +9,8 @@ import (
 	"google.golang.org/api/option"
 )
 
-// Client is a client for interacting with Google Cloud Storage.
-//
-// Clients should be reused instead of created as needed.
-// The methods of Client are safe for concurrent use by multiple goroutines.
+// Client is an instrumented wrapper for cloud.google.com/go/storage.Client
+// that traces calls made to Google Cloud Storage API
 type Client struct {
 	*storage.Client
 }
@@ -135,15 +133,18 @@ func (o *ObjectHandle) ReadCompressed(compressed bool) *ObjectHandle {
 //
 // It is the caller's responsibility to call Close when writing is done. To
 // stop writing without saving the data, cancel the context.
-//
-// INSTRUMENT
 func (o *ObjectHandle) NewWriter(ctx context.Context) *Writer {
 	return &Writer{o.ObjectHandle.NewWriter(ctx)}
 }
 
-// ServiceAccount fetches the email address of the given project's Google Cloud Storage service account.
-//
-// INSTRUMENT
-func (c *Client) ServiceAccount(ctx context.Context, projectID string) (string, error) {
+// ServiceAccount calls and traces the ServiceAccount() method of the wrapped Client
+func (c *Client) ServiceAccount(ctx context.Context, projectID string) (email string, err error) {
+	ctx = internal.StartExitSpan(ctx, "gcs", ot.Tags{
+		"gcs.op":        "serviceAccount.get",
+		"gcs.projectId": projectID,
+	})
+
+	defer func() { internal.FinishSpan(ctx, err) }()
+
 	return c.Client.ServiceAccount(ctx, projectID)
 }
