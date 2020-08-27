@@ -4,61 +4,75 @@ import (
 	"context"
 
 	"cloud.google.com/go/storage"
+	"github.com/instana/go-sensor/instrumentation/cloud.google.com/go/internal"
+	ot "github.com/opentracing/opentracing-go"
 )
 
-// HMACKeyHandle helps provide access and management for HMAC keys.
-//
-// This type is EXPERIMENTAL and subject to change or removal without notice.
+// HMACKeyHandle is an instrumented wrapper for cloud.google.com/go/storage.HMACKeyHandle
+// that traces calls made to Google Cloud Storage API
 type HMACKeyHandle struct {
 	*storage.HMACKeyHandle
+	ProjectID string
+	AccessID  string
 }
 
-// HMACKeyHandle creates a handle that will be used for HMACKey operations.
-//
-// This method is EXPERIMENTAL and subject to change or removal without notice.
+// HMACKeyHandle returns an instrumented cloud.google.com/go/storage.HMACKeyHandle
 func (c *Client) HMACKeyHandle(projectID, accessID string) *HMACKeyHandle {
-	return &HMACKeyHandle{c.Client.HMACKeyHandle(projectID, accessID)}
+	return &HMACKeyHandle{
+		HMACKeyHandle: c.Client.HMACKeyHandle(projectID, accessID),
+		ProjectID:     projectID,
+		AccessID:      accessID,
+	}
 }
 
-// Get invokes an RPC to retrieve the HMAC key referenced by the
-// HMACKeyHandle's accessID.
-//
-// Options such as UserProjectForHMACKeys can be used to set the
-// userProject to be billed against for operations.
-//
-// This method is EXPERIMENTAL and subject to change or removal without notice.
-//
-// INSTRUMENT
-func (hkh *HMACKeyHandle) Get(ctx context.Context, opts ...storage.HMACKeyOption) (*storage.HMACKey, error) {
+// Get calls and traces the Get() method of the wrapped HMACKeyHandle
+func (hkh *HMACKeyHandle) Get(ctx context.Context, opts ...storage.HMACKeyOption) (hk *storage.HMACKey, err error) {
+	ctx = internal.StartExitSpan(ctx, "gcs", ot.Tags{
+		"gcs.op":        "hmacKeys.get",
+		"gcs.projectId": hkh.ProjectID,
+		"gcs.accessId":  hkh.AccessID,
+	})
+
+	defer func() { internal.FinishSpan(ctx, err) }()
+
 	return hkh.HMACKeyHandle.Get(ctx, opts...)
 }
 
-// Delete invokes an RPC to delete the key referenced by accessID, on Google Cloud Storage.
-// Only inactive HMAC keys can be deleted.
-// After deletion, a key cannot be used to authenticate requests.
-//
-// This method is EXPERIMENTAL and subject to change or removal without notice.
-//
-// INSTRUMENT
-func (hkh *HMACKeyHandle) Delete(ctx context.Context, opts ...storage.HMACKeyOption) error {
+// Delete calls and traces the Delete() method of the wrapped HMACKeyHandle
+func (hkh *HMACKeyHandle) Delete(ctx context.Context, opts ...storage.HMACKeyOption) (err error) {
+	ctx = internal.StartExitSpan(ctx, "gcs", ot.Tags{
+		"gcs.op":        "hmacKeys.delete",
+		"gcs.projectId": hkh.ProjectID,
+		"gcs.accessId":  hkh.AccessID,
+	})
+
+	defer func() { internal.FinishSpan(ctx, err) }()
+
 	return hkh.HMACKeyHandle.Delete(ctx, opts...)
 }
 
-// CreateHMACKey invokes an RPC for Google Cloud Storage to create a new HMACKey.
-//
-// This method is EXPERIMENTAL and subject to change or removal without notice.
-//
-// INSTRUMENT
-func (c *Client) CreateHMACKey(ctx context.Context, projectID, serviceAccountEmail string, opts ...storage.HMACKeyOption) (*storage.HMACKey, error) {
+// CreateHMACKey calls and traces the CreateHMACKey() method of the wrapped Client
+func (c *Client) CreateHMACKey(ctx context.Context, projectID, serviceAccountEmail string, opts ...storage.HMACKeyOption) (hk *storage.HMACKey, err error) {
+	ctx = internal.StartExitSpan(ctx, "gcs", ot.Tags{
+		"gcs.op":        "hmacKeys.create",
+		"gcs.projectId": projectID,
+	})
+
+	defer func() { internal.FinishSpan(ctx, err) }()
+
 	return c.Client.CreateHMACKey(ctx, projectID, serviceAccountEmail, opts...)
 }
 
-// Update mutates the HMACKey referred to by accessID.
-//
-// This method is EXPERIMENTAL and subject to change or removal without notice.
-//
-// INSTRUMENT
-func (h *HMACKeyHandle) Update(ctx context.Context, au storage.HMACKeyAttrsToUpdate, opts ...storage.HMACKeyOption) (*storage.HMACKey, error) {
+// Update calls and traces the Update() method of the wrapped HMACKeyHandle
+func (h *HMACKeyHandle) Update(ctx context.Context, au storage.HMACKeyAttrsToUpdate, opts ...storage.HMACKeyOption) (hk *storage.HMACKey, err error) {
+	ctx = internal.StartExitSpan(ctx, "gcs", ot.Tags{
+		"gcs.op":        "hmacKeys.update",
+		"gcs.projectId": h.ProjectID,
+		"gcs.accessId":  h.AccessID,
+	})
+
+	defer func() { internal.FinishSpan(ctx, err) }()
+
 	return h.HMACKeyHandle.Update(ctx, au, opts...)
 }
 
