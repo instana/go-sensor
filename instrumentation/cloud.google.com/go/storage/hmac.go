@@ -6,6 +6,7 @@ import (
 	"cloud.google.com/go/storage"
 	"github.com/instana/go-sensor/instrumentation/cloud.google.com/go/internal"
 	ot "github.com/opentracing/opentracing-go"
+	"google.golang.org/api/iterator"
 )
 
 // HMACKeyHandle is an instrumented wrapper for cloud.google.com/go/storage.HMACKeyHandle
@@ -76,33 +77,47 @@ func (h *HMACKeyHandle) Update(ctx context.Context, au storage.HMACKeyAttrsToUpd
 	return h.HMACKeyHandle.Update(ctx, au, opts...)
 }
 
-// An HMACKeysIterator is an iterator over HMACKeys.
-//
-// Note: This iterator is not safe for concurrent operations without explicit synchronization.
-//
-// This type is EXPERIMENTAL and subject to change or removal without notice.
+// HMACKeysIterator is an instrumented wrapper for cloud.google.com/go/storage.HMACKeysIterator
+// that traces calls made to Google Cloud Storage API
 type HMACKeysIterator struct {
 	*storage.HMACKeysIterator
+	ProjectID string
+	ctx       context.Context
 }
 
-// ListHMACKeys returns an iterator for listing HMACKeys.
-//
-// Note: This iterator is not safe for concurrent operations without explicit synchronization.
-//
-// This method is EXPERIMENTAL and subject to change or removal without notice.
+// ListHMACKeys returns an instrumented object iterator that traces and proxies requests to
+// the underlying cloud.google.com/go/storage.HMACKeysIterator
 func (c *Client) ListHMACKeys(ctx context.Context, projectID string, opts ...storage.HMACKeyOption) *HMACKeysIterator {
-	return &HMACKeysIterator{c.Client.ListHMACKeys(ctx, projectID, opts...)}
+	return &HMACKeysIterator{
+		HMACKeysIterator: c.Client.ListHMACKeys(ctx, projectID, opts...),
+		ProjectID:        projectID,
+		ctx:              ctx,
+	}
 }
 
-// Next returns the next result. Its second return value is iterator.Done if
-// there are no more results. Once Next returns iterator.Done, all subsequent
-// calls will return iterator.Done.
-//
-// Note: This iterator is not safe for concurrent operations without explicit synchronization.
-//
-// This method is EXPERIMENTAL and subject to change or removal without notice.
-//
-// INSTRUMENT
-func (it *HMACKeysIterator) Next() (*storage.HMACKey, error) {
+// Next calls the Next() method of the wrapped iterator and creates a span for each call
+// that results in an API request
+func (it *HMACKeysIterator) Next() (hk *storage.HMACKey, err error) {
+	// don't trace calls returning buffered data
+	if it.HMACKeysIterator.PageInfo().Remaining() > 0 {
+		return it.HMACKeysIterator.Next()
+	}
+
+	ctx := internal.StartExitSpan(it.ctx, "gcs", ot.Tags{
+		"gcs.op":        "hmacKeys.list",
+		"gcs.projectId": it.ProjectID,
+	})
+
+	defer func() {
+		if err == iterator.Done {
+			// the last iterator call only meant for signalling
+			// that all items have been processed, we don't need
+			// a separate span for this
+			return
+		}
+
+		internal.FinishSpan(ctx, err)
+	}()
+
 	return it.HMACKeysIterator.Next()
 }
