@@ -42,32 +42,36 @@ func (c *Copier) Run(ctx context.Context) (attrs *storage.ObjectAttrs, err error
 	return c.Copier.Run(ctx)
 }
 
-// ComposerFrom creates a Composer that can compose srcs into dst.
-// You can immediately call Run on the returned Composer, or you can
-// configure it first.
-//
-// The encryption key for the destination object will be used to decrypt all
-// source objects and encrypt the destination object. It is an error
-// to specify an encryption key for any of the source objects.
+// ComposerFrom returns an instrumented cloud.google.com/go/storage.Composer
 func (dst *ObjectHandle) ComposerFrom(srcs ...*ObjectHandle) *Composer {
 	srcsCopy := make([]*storage.ObjectHandle, len(srcs))
 	for i := range srcs {
 		srcsCopy[i] = srcs[i].ObjectHandle
 	}
 
-	return &Composer{dst.ObjectHandle.ComposerFrom(srcsCopy...)}
+	return &Composer{
+		Composer:          dst.ObjectHandle.ComposerFrom(srcsCopy...),
+		DestinationBucket: dst.Bucket,
+		DestinationName:   dst.Name,
+	}
 }
 
-// A Composer composes source objects into a destination object.
-//
-// For Requester Pays buckets, the user project of dst is billed.
+// Composer is an instrumented wrapper for cloud.google.com/go/storage.Composer
+// that traces calls made to Google Cloud Storage API
 type Composer struct {
 	*storage.Composer
+	DestinationBucket, DestinationName string
 }
 
-// Run performs the compose operation.
-//
-// INSTRUMENT
+// Run calls and traces the Run() method of the wrapped Composer
 func (c *Composer) Run(ctx context.Context) (attrs *storage.ObjectAttrs, err error) {
+	ctx = internal.StartExitSpan(ctx, "gcs", ot.Tags{
+		"gcs.op":                "objects.compose",
+		"gcs.destinationBucket": c.DestinationBucket,
+		"gcs.destinationObject": c.DestinationName,
+	})
+
+	defer func() { internal.FinishSpan(ctx, err) }()
+
 	return c.Composer.Run(ctx)
 }
