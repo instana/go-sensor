@@ -4,27 +4,41 @@ import (
 	"context"
 
 	"cloud.google.com/go/storage"
+	"github.com/instana/go-sensor/instrumentation/cloud.google.com/go/internal"
+	ot "github.com/opentracing/opentracing-go"
 )
 
-// CopierFrom creates a Copier that can copy src to dst.
-// You can immediately call Run on the returned Copier, or
-// you can configure it first.
-//
-// For Requester Pays buckets, the user project of dst is billed, unless it is empty,
-// in which case the user project of src is billed.
+// CopierFrom returns an instrumented cloud.google.com/go/storage.Copier
 func (dst *ObjectHandle) CopierFrom(src *ObjectHandle) *Copier {
-	return &Copier{dst.ObjectHandle.CopierFrom(src.ObjectHandle)}
+	return &Copier{
+		Copier:            dst.ObjectHandle.CopierFrom(src.ObjectHandle),
+		SourceBucket:      src.Bucket,
+		SourceName:        src.Name,
+		DestinationBucket: dst.Bucket,
+		DestinationName:   dst.Name,
+	}
 }
 
-// A Copier copies a source object to a destination.
+// Copier is an instrumented wrapper for cloud.google.com/go/storage.Copier
+// that traces calls made to Google Cloud Storage API
 type Copier struct {
 	*storage.Copier
+	SourceBucket, SourceName           string
+	DestinationBucket, DestinationName string
 }
 
-// Run performs the copy.
-//
-// INSTRUMENT
+// Run calls and traces the Run() method of the wrapped Copier
 func (c *Copier) Run(ctx context.Context) (attrs *storage.ObjectAttrs, err error) {
+	ctx = internal.StartExitSpan(ctx, "gcs", ot.Tags{
+		"gcs.op":                "objects.copy",
+		"gcs.sourceBucket":      c.SourceBucket,
+		"gcs.sourceObject":      c.SourceName,
+		"gcs.destinationBucket": c.DestinationBucket,
+		"gcs.destinationObject": c.DestinationName,
+	})
+
+	defer func() { internal.FinishSpan(ctx, err) }()
+
 	return c.Copier.Run(ctx)
 }
 
