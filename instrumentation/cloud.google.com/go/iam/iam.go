@@ -2,81 +2,133 @@ package iam
 
 import (
 	"context"
+	"strings"
 
 	"cloud.google.com/go/iam"
+	"github.com/instana/go-sensor/instrumentation/cloud.google.com/go/internal"
+	ot "github.com/opentracing/opentracing-go"
 )
 
-// A Handle provides IAM operations for a resource.
+// Resource describes a Google Cloud IAM resource.
+type Resource struct {
+	Type string
+	Name string
+}
+
+// Handle is an instrumented wrapper for cloud.google.com/go/iam.Handle
+// that traces calls made to Google Cloud IAM API.
 type Handle struct {
 	*iam.Handle
+
+	Resource Resource
 }
 
-// A Handle3 provides IAM operations for a resource. It is similar to a Handle, but provides access to newer IAM features (e.g., conditions).
+// Handle3 is an instrumented wrapper for cloud.google.com/go/iam.Handle3
+// that traces calls made to Google Cloud IAM API.
 type Handle3 struct {
 	*iam.Handle3
+
+	Resource Resource
 }
 
-// InternalNewHandle is for use by the Google Cloud Libraries only.
-//
-// InternalNewHandle returns a Handle for resource.
-// The conn parameter refers to a server that must support the IAMPolicy service.
-func WrapInternalHandle(h *iam.Handle) *Handle {
-	return &Handle{h}
+// WrapInternalHandle returns an instrumented cloud.google.com/go/iam.Handle
+// that traces requests to the Google Cloud API
+func WrapInternalHandle(h *iam.Handle, resource Resource) *Handle {
+	return &Handle{
+		Handle:   h,
+		Resource: resource,
+	}
 }
 
-// V3 returns a Handle3, which is like Handle except it sets
-// requestedPolicyVersion to 3 when retrieving a policy and policy.version to 3
-// when storing a policy.
+// V3 returns an instrumented cloud.google.com/go/iam.Handle3
+// that traces requests to the Google Cloud API
 func (h *Handle) V3() *Handle3 {
-	return &Handle3{h.Handle.V3()}
+	return &Handle3{
+		Handle3:  h.Handle.V3(),
+		Resource: h.Resource,
+	}
 }
 
-// Policy retrieves the IAM policy for the resource.
-//
-// INSTRUMENT
-func (h *Handle) Policy(ctx context.Context) (*iam.Policy, error) {
+// Policy calls and traces the Policy() method of the wrapped Handle
+func (h *Handle) Policy(ctx context.Context) (p *iam.Policy, err error) {
+	internal.StartExitSpan(ctx, "gcs", ot.Tags{
+		"gcs.op":                   iamOpPrefix(h.Resource) + ".getIamPolicy",
+		iamResourceTag(h.Resource): h.Resource.Name,
+	})
+	defer func() { internal.FinishSpan(ctx, err) }()
+
 	return h.Handle.Policy(ctx)
 }
 
-// SetPolicy replaces the resource's current policy with the supplied Policy.
-//
-// If policy was created from a prior call to Get, then the modification will
-// only succeed if the policy has not changed since the Get.
-//
-// INSTRUMENT
-func (h *Handle) SetPolicy(ctx context.Context, policy *iam.Policy) error {
+// SetPolicy calls and traces the SetPolicy() method of the wrapped Handle
+func (h *Handle) SetPolicy(ctx context.Context, policy *iam.Policy) (err error) {
+	internal.StartExitSpan(ctx, "gcs", ot.Tags{
+		"gcs.op":                   iamOpPrefix(h.Resource) + ".setIamPolicy",
+		iamResourceTag(h.Resource): h.Resource.Name,
+	})
+	defer func() { internal.FinishSpan(ctx, err) }()
+
 	return h.Handle.SetPolicy(ctx, policy)
 }
 
-// TestPermissions returns the subset of permissions that the caller has on the resource.
-//
-// INSTRUMENT
-func (h *Handle) TestPermissions(ctx context.Context, permissions []string) ([]string, error) {
+// TestPermissions calls and traces the TestPermissions() method of the wrapped Handle
+func (h *Handle) TestPermissions(ctx context.Context, permissions []string) (allowed []string, err error) {
+	internal.StartExitSpan(ctx, "gcs", ot.Tags{
+		"gcs.op":                   iamOpPrefix(h.Resource) + ".testIamPermissions",
+		iamResourceTag(h.Resource): h.Resource.Name,
+	})
+	defer func() { internal.FinishSpan(ctx, err) }()
+
 	return h.Handle.TestPermissions(ctx, permissions)
 }
 
-// Policy retrieves the IAM policy for the resource.
-//
-// requestedPolicyVersion is always set to 3.
-//
-// INSTRUMENT
-func (h *Handle3) Policy(ctx context.Context) (*iam.Policy3, error) {
+// Policy calls and traces the Policy() method of the wrapped Handle3
+func (h *Handle3) Policy(ctx context.Context) (p *iam.Policy3, err error) {
+	internal.StartExitSpan(ctx, "gcs", ot.Tags{
+		"gcs.op":                   iamOpPrefix(h.Resource) + ".getIamPolicy",
+		iamResourceTag(h.Resource): h.Resource.Name,
+	})
+	defer func() { internal.FinishSpan(ctx, err) }()
+
 	return h.Handle3.Policy(ctx)
 }
 
-// SetPolicy replaces the resource's current policy with the supplied Policy.
-//
-// If policy was created from a prior call to Get, then the modification will
-// only succeed if the policy has not changed since the Get.
-//
-// INSTRUMENT
-func (h *Handle3) SetPolicy(ctx context.Context, policy *iam.Policy3) error {
+// SetPolicy calls and traces the SetPolicy() method of the wrapped Handle3
+func (h *Handle3) SetPolicy(ctx context.Context, policy *iam.Policy3) (err error) {
+	internal.StartExitSpan(ctx, "gcs", ot.Tags{
+		"gcs.op":                   iamOpPrefix(h.Resource) + ".setIamPolicy",
+		iamResourceTag(h.Resource): h.Resource.Name,
+	})
+	defer func() { internal.FinishSpan(ctx, err) }()
+
 	return h.Handle3.SetPolicy(ctx, policy)
 }
 
-// TestPermissions returns the subset of permissions that the caller has on the resource.
-//
-// INSTRUMENT
-func (h *Handle3) TestPermissions(ctx context.Context, permissions []string) ([]string, error) {
+// TestPermissions calls and traces the TestPermissions() method of the wrapped Handle3
+func (h *Handle3) TestPermissions(ctx context.Context, permissions []string) (allowed []string, err error) {
+	internal.StartExitSpan(ctx, "gcs", ot.Tags{
+		"gcs.op":                   iamOpPrefix(h.Resource) + ".testIamPermissions",
+		iamResourceTag(h.Resource): h.Resource.Name,
+	})
+	defer func() { internal.FinishSpan(ctx, err) }()
+
 	return h.Handle3.TestPermissions(ctx, permissions)
+}
+
+func iamOpPrefix(resource Resource) string {
+	switch resource.Type {
+	case "bucket":
+		return "buckets"
+	default:
+		return strings.ToLower(resource.Type)
+	}
+}
+
+func iamResourceTag(resource Resource) string {
+	switch resource.Type {
+	case "bucket":
+		return "gcs.bucket"
+	default:
+		return "gcs." + strings.ToLower(resource.Type)
+	}
 }
