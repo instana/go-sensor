@@ -10,13 +10,17 @@ import (
 	ot "github.com/opentracing/opentracing-go"
 )
 
-// NewReader returns an instrumented wrapper for cloud.google.com/go/storage.Reader for an object
+// NewReader returns an instrumented wrapper for cloud.google.com/go/storage.Reader for an object.
+//
+// See https://pkg.go.dev/cloud.google.com/go/storage?tab=doc#ObjectHandle.NewReader for furter details on wrapped method.
 func (o *ObjectHandle) NewReader(ctx context.Context) (*Reader, error) {
 	return o.NewRangeReader(ctx, 0, -1)
 }
 
 // NewRangeReader returns an instrumented wrapper for cloud.google.com/go/storage.Reader that reads
-// the object partially
+// the object partially.
+//
+// See https://pkg.go.dev/cloud.google.com/go/storage?tab=doc#ObjectHandle.NewRangeReader for furter details on wrapped method.
 func (o *ObjectHandle) NewRangeReader(ctx context.Context, offset, length int64) (r *Reader, err error) {
 	attrsCtx := internal.StartExitSpan(ctx, "gcs", ot.Tags{
 		"gcs.op":     "objects.get",
@@ -36,6 +40,8 @@ func (o *ObjectHandle) NewRangeReader(ctx context.Context, offset, length int64)
 
 // Reader is an instrumented wrapper for cloud.google.com/go/storage.Reader
 // that traces calls made to Google Cloud Storage API.
+//
+// See https://pkg.go.dev/cloud.google.com/go/storage?tab=doc#Reader for furter details on wrapped type.
 type Reader struct {
 	*storage.Reader
 	ctx context.Context
@@ -44,7 +50,9 @@ type Reader struct {
 	Name   string
 }
 
-// Read calls and traces the Read() method of the wrapped Reader
+// Read calls and traces the Read() method of the wrapped cloud.google.com/go.Reader.
+//
+// See https://pkg.go.dev/cloud.google.com/go/storage?tab=doc#Reader.Read for furter details on wrapped method.
 func (r *Reader) Read(p []byte) (n int, err error) {
 	tags := ot.Tags{
 		"gcs.op":     "objects.get",

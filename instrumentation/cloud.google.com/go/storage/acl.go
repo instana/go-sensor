@@ -9,7 +9,9 @@ import (
 )
 
 // ACLHandle is an instrumented wrapper for cloud.google.com/go/storage.ACLHandle
-// that traces calls made to Google Cloud Storage API
+// that traces calls made to Google Cloud Storage API.
+//
+// See https://pkg.go.dev/cloud.google.com/go/storage?tab=doc#ACLHandle for furter details on wrapped type.
 type ACLHandle struct {
 	*storage.ACLHandle
 	Bucket  string
@@ -17,7 +19,9 @@ type ACLHandle struct {
 	Default bool
 }
 
-// Delete calls and traces the Delete() method of the wrapped ACLHandle
+// Delete calls and traces the Delete() method of the wrapped cloud.google.com/go/storage.ACLHandle.
+//
+// See https://pkg.go.dev/cloud.google.com/go/storage?tab=doc#ACLHandle.Delete for furter details on wrapped method.
 func (a *ACLHandle) Delete(ctx context.Context, entity storage.ACLEntity) (err error) {
 	ctx = internal.StartExitSpan(ctx, "gcs", ot.Tags{
 		"gcs.op":     aclOpPrefix(a) + ".delete",
@@ -30,7 +34,9 @@ func (a *ACLHandle) Delete(ctx context.Context, entity storage.ACLEntity) (err e
 	return a.ACLHandle.Delete(ctx, entity)
 }
 
-// Set calls and traces the Set() method of the wrapped ACLHandle
+// Set calls and traces the Set() method of the wrapped cloud.google.com/go/storage.ACLHandle.
+//
+// See https://pkg.go.dev/cloud.google.com/go/storage?tab=doc#ACLHandle.Set for furter details on wrapped method.
 func (a *ACLHandle) Set(ctx context.Context, entity storage.ACLEntity, role storage.ACLRole) (err error) {
 	ctx = internal.StartExitSpan(ctx, "gcs", ot.Tags{
 		"gcs.op":     aclOpPrefix(a) + ".update",
@@ -43,7 +49,9 @@ func (a *ACLHandle) Set(ctx context.Context, entity storage.ACLEntity, role stor
 	return a.ACLHandle.Set(ctx, entity, role)
 }
 
-// List calls and traces the List() method of the wrapped ACLHandle
+// List calls and traces the List() method of the wrapped cloud.google.com/go/storage.ACLHandle.
+//
+// See https://pkg.go.dev/cloud.google.com/go/storage?tab=doc#ACLHandle.List for furter details on wrapped method.
 func (a *ACLHandle) List(ctx context.Context) (rules []storage.ACLRule, err error) {
 	ctx = internal.StartExitSpan(ctx, "gcs", ot.Tags{
 		"gcs.op":     aclOpPrefix(a) + ".list",

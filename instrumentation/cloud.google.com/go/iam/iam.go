@@ -17,22 +17,26 @@ type Resource struct {
 
 // Handle is an instrumented wrapper for cloud.google.com/go/iam.Handle
 // that traces calls made to Google Cloud IAM API.
+//
+// See https://pkg.go.dev/cloud.google.com/go/iam?tab=doc#Handle for furter details on wrapped type.
 type Handle struct {
 	*iam.Handle
 
 	Resource Resource
 }
 
-// Handle3 is an instrumented wrapper for cloud.google.com/go/iam.Handle3
+// Handle3 is an instrumented wrapper for cloud.google.com/go/iam.Handle3.
 // that traces calls made to Google Cloud IAM API.
+//
+// See https://pkg.go.dev/cloud.google.com/go/iam?tab=doc#Handle3 for furter details on wrapped type.
 type Handle3 struct {
 	*iam.Handle3
 
 	Resource Resource
 }
 
-// WrapInternalHandle returns an instrumented cloud.google.com/go/iam.Handle
-// that traces requests to the Google Cloud API
+// WrapInternalHandle returns an instrumented cloud.google.com/go/iam.Handle.
+// that traces requests to the Google Cloud API.
 func WrapInternalHandle(h *iam.Handle, resource Resource) *Handle {
 	return &Handle{
 		Handle:   h,
@@ -40,8 +44,10 @@ func WrapInternalHandle(h *iam.Handle, resource Resource) *Handle {
 	}
 }
 
-// V3 returns an instrumented cloud.google.com/go/iam.Handle3
-// that traces requests to the Google Cloud API
+// V3 returns an instrumented cloud.google.com/go/iam.Handle3.
+// that traces requests to the Google Cloud API.
+//
+// See https://pkg.go.dev/cloud.google.com/go/iam?tab=doc#Handle.V3 for furter details on wrapped method
 func (h *Handle) V3() *Handle3 {
 	return &Handle3{
 		Handle3:  h.Handle.V3(),
@@ -49,7 +55,9 @@ func (h *Handle) V3() *Handle3 {
 	}
 }
 
-// Policy calls and traces the Policy() method of the wrapped Handle
+// Policy calls and traces the Policy() method of the wrapped cloud.google.com/go/iam.Handle.
+//
+// See https://pkg.go.dev/cloud.google.com/go/iam?tab=doc#Handle.Policy for furter details on wrapped method
 func (h *Handle) Policy(ctx context.Context) (p *iam.Policy, err error) {
 	internal.StartExitSpan(ctx, "gcs", ot.Tags{
 		"gcs.op":                   iamOpPrefix(h.Resource) + ".getIamPolicy",
@@ -60,7 +68,9 @@ func (h *Handle) Policy(ctx context.Context) (p *iam.Policy, err error) {
 	return h.Handle.Policy(ctx)
 }
 
-// SetPolicy calls and traces the SetPolicy() method of the wrapped Handle
+// SetPolicy calls and traces the SetPolicy() method of the wrapped cloud.google.com/go/iam.Handle.
+//
+// See https://pkg.go.dev/cloud.google.com/go/iam?tab=doc#Handle.SetPolicy for furter details on wrapped method
 func (h *Handle) SetPolicy(ctx context.Context, policy *iam.Policy) (err error) {
 	internal.StartExitSpan(ctx, "gcs", ot.Tags{
 		"gcs.op":                   iamOpPrefix(h.Resource) + ".setIamPolicy",
@@ -71,7 +81,9 @@ func (h *Handle) SetPolicy(ctx context.Context, policy *iam.Policy) (err error) 
 	return h.Handle.SetPolicy(ctx, policy)
 }
 
-// TestPermissions calls and traces the TestPermissions() method of the wrapped Handle
+// TestPermissions calls and traces the TestPermissions() method of the wrapped cloud.google.com/go/iam.Handle.
+//
+// See https://pkg.go.dev/cloud.google.com/go/iam?tab=doc#Handle.TestPermissions for furter details on wrapped method
 func (h *Handle) TestPermissions(ctx context.Context, permissions []string) (allowed []string, err error) {
 	internal.StartExitSpan(ctx, "gcs", ot.Tags{
 		"gcs.op":                   iamOpPrefix(h.Resource) + ".testIamPermissions",
@@ -82,7 +94,9 @@ func (h *Handle) TestPermissions(ctx context.Context, permissions []string) (all
 	return h.Handle.TestPermissions(ctx, permissions)
 }
 
-// Policy calls and traces the Policy() method of the wrapped Handle3
+// Policy calls and traces the Policy() method of the wrapped cloud.google.com/go/iam.Handle3.
+//
+// See https://pkg.go.dev/cloud.google.com/go/iam?tab=doc#Handle3.Policy for furter details on wrapped method
 func (h *Handle3) Policy(ctx context.Context) (p *iam.Policy3, err error) {
 	internal.StartExitSpan(ctx, "gcs", ot.Tags{
 		"gcs.op":                   iamOpPrefix(h.Resource) + ".getIamPolicy",
@@ -93,7 +107,9 @@ func (h *Handle3) Policy(ctx context.Context) (p *iam.Policy3, err error) {
 	return h.Handle3.Policy(ctx)
 }
 
-// SetPolicy calls and traces the SetPolicy() method of the wrapped Handle3
+// SetPolicy calls and traces the SetPolicy() method of the wrapped cloud.google.com/go/iam.Handle3.
+//
+// See https://pkg.go.dev/cloud.google.com/go/iam?tab=doc#Handle3.SetPolicy for furter details on wrapped method
 func (h *Handle3) SetPolicy(ctx context.Context, policy *iam.Policy3) (err error) {
 	internal.StartExitSpan(ctx, "gcs", ot.Tags{
 		"gcs.op":                   iamOpPrefix(h.Resource) + ".setIamPolicy",
@@ -104,7 +120,9 @@ func (h *Handle3) SetPolicy(ctx context.Context, policy *iam.Policy3) (err error
 	return h.Handle3.SetPolicy(ctx, policy)
 }
 
-// TestPermissions calls and traces the TestPermissions() method of the wrapped Handle3
+// TestPermissions calls and traces the TestPermissions() method of the wrapped cloud.google.com/go/iam.Handle3.
+//
+// See https://pkg.go.dev/cloud.google.com/go/iam?tab=doc#Handle3.TestPermissions for furter details on wrapped method
 func (h *Handle3) TestPermissions(ctx context.Context, permissions []string) (allowed []string, err error) {
 	internal.StartExitSpan(ctx, "gcs", ot.Tags{
 		"gcs.op":                   iamOpPrefix(h.Resource) + ".testIamPermissions",
