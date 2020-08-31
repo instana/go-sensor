@@ -2,47 +2,66 @@ package storage
 
 import (
 	"context"
+	"fmt"
+	"io"
 
 	"cloud.google.com/go/storage"
+	"github.com/instana/go-sensor/instrumentation/cloud.google.com/go/internal"
+	ot "github.com/opentracing/opentracing-go"
 )
 
-// NewReader creates a new Reader to read the contents of the
-// object.
-// ErrObjectNotExist will be returned if the object is not found.
-//
-// The caller must call Close on the returned Reader when done reading.
+// NewReader returns an instrumented wrapper for cloud.google.com/go/storage.Reader for an object
 func (o *ObjectHandle) NewReader(ctx context.Context) (*Reader, error) {
 	return o.NewRangeReader(ctx, 0, -1)
 }
 
-// NewRangeReader reads part of an object, reading at most length bytes
-// starting at the given offset. If length is negative, the object is read
-// until the end. If offset is negative, the object is read abs(offset) bytes
-// from the end, and length must also be negative to indicate all remaining
-// bytes will be read.
-//
-// If the object's metadata property "Content-Encoding" is set to "gzip" or satisfies
-// decompressive transcoding per https://cloud.google.com/storage/docs/transcoding
-// that file will be served back whole, regardless of the requested range as
-// Google Cloud Storage dictates.
-//
-// INSTRUMENT
+// NewRangeReader returns an instrumented wrapper for cloud.google.com/go/storage.Reader that reads
+// the object partially
 func (o *ObjectHandle) NewRangeReader(ctx context.Context, offset, length int64) (r *Reader, err error) {
+	attrsCtx := internal.StartExitSpan(ctx, "gcs", ot.Tags{
+		"gcs.op":     "objects.get",
+		"gcs.bucket": o.Bucket,
+		"gcs.object": o.Name,
+	})
+	defer func() { internal.FinishSpan(attrsCtx, err) }()
+
 	rdr, err := o.ObjectHandle.NewRangeReader(ctx, offset, length)
-	return &Reader{rdr}, err
+	return &Reader{
+		Reader: rdr,
+		ctx:    ctx,
+		Bucket: o.Bucket,
+		Name:   o.Name,
+	}, err
 }
 
-// Reader reads a Cloud Storage object.
-// It implements io.Reader.
-//
-// Typically, a Reader computes the CRC of the downloaded content and compares it to
-// the stored CRC, returning an error from Read if there is a mismatch. This integrity check
-// is skipped if transcoding occurs. See https://cloud.google.com/storage/docs/transcoding.
+// Reader is an instrumented wrapper for cloud.google.com/go/storage.Reader
+// that traces calls made to Google Cloud Storage API.
 type Reader struct {
 	*storage.Reader
+	ctx context.Context
+
+	Bucket string
+	Name   string
 }
 
-// INSTRUMENT
-func (r *Reader) Read(p []byte) (int, error) {
+// Read calls and traces the Read() method of the wrapped Reader
+func (r *Reader) Read(p []byte) (n int, err error) {
+	tags := ot.Tags{
+		"gcs.op":     "objects.get",
+		"gcs.bucket": r.Bucket,
+		"gcs.object": r.Name,
+		"gcs.range":  fmt.Sprintf("%d-%d", r.Attrs.StartOffset, r.Attrs.Size),
+	}
+
+	ctx := internal.StartExitSpan(r.ctx, "gcs", tags)
+	defer func() {
+		if err == io.EOF {
+			internal.FinishSpan(ctx, nil)
+			return
+		}
+
+		internal.FinishSpan(ctx, err)
+	}()
+
 	return r.Reader.Read(p)
 }
