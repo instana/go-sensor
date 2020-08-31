@@ -4,9 +4,13 @@ matrix:
   include:
     - go: tip
     - go: 1.9.x
-      env: VENDOR_DEPS=yes
+      env:
+        - VENDOR_DEPS=yes
+        - EXCLUDE_DIRS=./instrumentation/cloud.google.com/go
     - go: 1.10.x
-      env: VENDOR_DEPS=yes
+      env:
+        - VENDOR_DEPS=yes
+        - EXCLUDE_DIRS=./instrumentation/cloud.google.com/go
     - go: 1.11.x
       env: GO111MODULE=on
     - go: 1.12.x
