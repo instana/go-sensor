@@ -35,15 +35,6 @@ type Handle3 struct {
 	Resource Resource
 }
 
-// WrapInternalHandle returns an instrumented cloud.google.com/go/iam.Handle.
-// that traces requests to the Google Cloud API.
-func WrapInternalHandle(h *iam.Handle, resource Resource) *Handle {
-	return &Handle{
-		Handle:   h,
-		Resource: resource,
-	}
-}
-
 // V3 returns an instrumented cloud.google.com/go/iam.Handle3.
 // that traces requests to the Google Cloud API.
 //
