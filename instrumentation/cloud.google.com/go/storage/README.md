@@ -1,7 +1,7 @@
 Instana instrumentation for Google Cloud Storage
 ================================================
 
-This module contains instrumentation code for Google Cloud Storage clients that use `cloud.google.com/go/storage` library.
+This module contains instrumentation code for Google Cloud Storage clients that use `cloud.google.com/go/storage` library starting from `v1.7.0` and above.
 
 [![GoDoc](https://img.shields.io/static/v1?label=godoc&message=reference&color=blue)][godoc]
 
