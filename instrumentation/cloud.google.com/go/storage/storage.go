@@ -118,23 +118,14 @@ func (o *ObjectHandle) ReadCompressed(compressed bool) *ObjectHandle {
 	}
 }
 
-// NewWriter returns a storage Writer that writes to the GCS object
-// associated with this ObjectHandle.
-//
-// A new object will be created unless an object with this name already exists.
-// Otherwise any previous object with the same name will be replaced.
-// The object will not be available (and any previous object will remain)
-// until Close has been called.
-//
-// Attributes can be set on the object by modifying the returned Writer's
-// ObjectAttrs field before the first call to Write. If no ContentType
-// attribute is specified, the content type will be automatically sniffed
-// using net/http.DetectContentType.
-//
-// It is the caller's responsibility to call Close when writing is done. To
-// stop writing without saving the data, cancel the context.
+// NewWriter returns an instrumented cloud.google.com/go/storage.Writer
+// that traces calls made to Google Cloud Storage API.
 func (o *ObjectHandle) NewWriter(ctx context.Context) *Writer {
-	return &Writer{o.ObjectHandle.NewWriter(ctx)}
+	return &Writer{
+		Writer: o.ObjectHandle.NewWriter(ctx),
+		ctx:    ctx,
+		Bucket: o.Bucket,
+	}
 }
 
 // ServiceAccount calls and traces the ServiceAccount() method of the wrapped Client
