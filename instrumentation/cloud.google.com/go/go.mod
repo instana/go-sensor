@@ -7,7 +7,7 @@ require (
 	cloud.google.com/go/storage v1.7.0
 	github.com/golang/protobuf v1.4.2 // indirect
 	github.com/google/go-cmp v0.5.1 // indirect
-	github.com/instana/go-sensor v1.17.0
+	github.com/instana/go-sensor v1.18.0
 	github.com/opentracing/opentracing-go v1.2.0
 	go.opencensus.io v0.22.4 // indirect
 	golang.org/x/net v0.0.0-20200813134508-3edf25e44fcc // indirect
