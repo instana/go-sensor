@@ -99,7 +99,6 @@ func newDockerContainerPluginPayload(container aws.ECSContainerMetadata) accepto
 		Labels:      container.ContainerLabels,
 		Names:       []string{container.DockerName},
 		NetworkMode: networkMode,
-		Memory:      container.Limits.Memory,
 	})
 }
 
