@@ -7,6 +7,8 @@ import (
 	"io"
 	"net/http"
 	"time"
+
+	"github.com/instana/go-sensor/docker"
 )
 
 // ContainerLimits represents the resource limits specified at the task level
@@ -117,6 +119,28 @@ func (c *ECSMetadataProvider) TaskMetadata(ctx context.Context) (ECSTaskMetadata
 
 	if err := json.NewDecoder(body).Decode(&data); err != nil {
 		return data, fmt.Errorf("malformed task metadata response: %s", err)
+	}
+
+	return data, nil
+}
+
+// TaskStats returns Docker stats for current ECS task
+func (c *ECSMetadataProvider) TaskStats(ctx context.Context) (map[string]docker.ContainerStats, error) {
+	var data map[string]docker.ContainerStats
+
+	req, err := http.NewRequest(http.MethodGet, c.Endpoint+"/task/stats", nil)
+	if err != nil {
+		return data, fmt.Errorf("failed to prepare request: %s", err)
+	}
+
+	body, err := c.executeRequest(req.WithContext(ctx))
+	if err != nil {
+		return data, fmt.Errorf("failed to fetch task metadata: %s", err)
+	}
+	defer body.Close()
+
+	if err := json.NewDecoder(body).Decode(&data); err != nil {
+		return data, fmt.Errorf("malformed task stats response: %s", err)
 	}
 
 	return data, nil

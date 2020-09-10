@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/instana/go-sensor/aws"
+	"github.com/instana/go-sensor/docker"
 	"github.com/instana/testify/assert"
 	"github.com/instana/testify/require"
 )
@@ -176,6 +177,104 @@ func TestECSMetadataProvider_TaskMetadata_MalformedResponse(t *testing.T) {
 	c := aws.NewECSMetadataProvider(endpoint, nil)
 
 	_, err := c.TaskMetadata(context.Background())
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "malformed")
+}
+
+func TestECSMetadataProvider_TaskStats(t *testing.T) {
+	endpoint, mux, teardown := setupTS()
+	defer teardown()
+
+	mux.HandleFunc("/task/stats", func(w http.ResponseWriter, req *http.Request) {
+		http.ServeFile(w, req, "testdata/task_stats.json")
+	})
+
+	c := aws.NewECSMetadataProvider(endpoint, nil)
+
+	data, err := c.TaskStats(context.Background())
+	require.NoError(t, err)
+
+	require.Contains(t, data, "43481a6ce4842eec8fe72fc28500c6b52edcc0917f105b83379f88cac1ff3946")
+
+	stats := data["43481a6ce4842eec8fe72fc28500c6b52edcc0917f105b83379f88cac1ff3946"]
+	stats.ReadAt = stats.ReadAt.UTC().Truncate(time.Second)
+
+	assert.Equal(t, docker.ContainerStats{
+		ReadAt: time.Date(2020, time.September, 9, 9, 54, 21, 0, time.UTC),
+		Networks: map[string]docker.ContainerNetworkStats{
+			"eth1": {
+				TxDropped: 1,
+				TxErrors:  2,
+				TxPackets: 444,
+				TxBytes:   106367,
+				RxDropped: 3,
+				RxErrors:  4,
+				RxPackets: 3105,
+				RxBytes:   4172695,
+			},
+		},
+		Memory: docker.ContainerMemoryStats{
+			Stats: docker.MemoryStats{
+				ActiveAnon:   4681728,
+				ActiveFile:   12288,
+				InactiveAnon: 100,
+				InactiveFile: 602112,
+				TotalRss:     5283840,
+				TotalCache:   12290,
+			},
+			MaxUsage: 6549504,
+			Usage:    6148096,
+			Limit:    536870912,
+		},
+		CPU: docker.ContainerCPUStats{
+			System:     360200000000,
+			OnlineCPUs: 2,
+			Usage: docker.CPUUsageStats{
+				Total:  281318382,
+				Kernel: 20000000,
+				User:   180000000,
+			},
+			Throttling: docker.CPUThrottlingStats{
+				Periods: 1,
+				Time:    3,
+			},
+		},
+		BlockIO: docker.ContainerBlockIOStats{
+			ServiceBytes: []docker.BlockIOOpStats{
+				{Operation: docker.BlockIOReadOp, Value: 1},
+				{Operation: docker.BlockIOWriteOp, Value: 2},
+				{Operation: docker.BlockIOReadOp, Value: 3},
+			},
+		},
+	}, stats)
+}
+
+func TestECSMetadataProvider_TaskStats_ServerError(t *testing.T) {
+	endpoint, mux, teardown := setupTS()
+	defer teardown()
+
+	mux.HandleFunc("/task/stats", func(w http.ResponseWriter, req *http.Request) {
+		http.Error(w, "aws error", http.StatusInternalServerError)
+	})
+
+	c := aws.NewECSMetadataProvider(endpoint, nil)
+
+	_, err := c.TaskStats(context.Background())
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "500 Internal Server Error")
+}
+
+func TestECSMetadataProvider_TaskStats_MalformedResponse(t *testing.T) {
+	endpoint, mux, teardown := setupTS()
+	defer teardown()
+
+	mux.HandleFunc("/task/stats", func(w http.ResponseWriter, req *http.Request) {
+		w.Write([]byte("here is your data"))
+	})
+
+	c := aws.NewECSMetadataProvider(endpoint, nil)
+
+	_, err := c.TaskStats(context.Background())
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "malformed")
 }
