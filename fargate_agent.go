@@ -17,6 +17,7 @@ import (
 	"github.com/instana/go-sensor/acceptor"
 	"github.com/instana/go-sensor/autoprofile"
 	"github.com/instana/go-sensor/aws"
+	"github.com/instana/go-sensor/docker"
 )
 
 type fargateSnapshot struct {
@@ -325,6 +326,56 @@ func (a *fargateAgent) collectSnapshot(ctx context.Context) (fargateSnapshot, bo
 	a.logger.Debug("collected snapshot")
 
 	return newFargateSnapshot(a.PID, taskMD, containerMD), true
+}
+
+type ecsDockerStatsCollector struct {
+	ecs interface {
+		TaskStats(context.Context) (map[string]docker.ContainerStats, error)
+	}
+
+	mu    sync.RWMutex
+	stats map[string]docker.ContainerStats
+}
+
+func (c *ecsDockerStatsCollector) Run(ctx context.Context, collectionInterval time.Duration) {
+	timer := time.NewTicker(collectionInterval)
+	defer timer.Stop()
+
+	for {
+		select {
+		case <-timer.C:
+			fetchCtx, cancel := context.WithTimeout(ctx, collectionInterval)
+			c.fetchStats(fetchCtx)
+			cancel()
+		case <-ctx.Done():
+			return
+		}
+	}
+}
+
+func (c *ecsDockerStatsCollector) Collect() map[string]docker.ContainerStats {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+
+	return c.stats
+}
+
+func (c *ecsDockerStatsCollector) fetchStats(ctx context.Context) {
+	stats, err := c.ecs.TaskStats(ctx)
+	if err != nil {
+		if ctx.Err() != nil {
+			// request either timed out or had been cancelled, keep the old value
+			return
+		}
+
+		// request failed, reset recorded stats
+		// TODO: log error
+		stats = nil
+	}
+
+	c.mu.Lock()
+	c.stats = stats
+	defer c.mu.Unlock()
 }
 
 func ecsEntityID(md aws.ECSContainerMetadata) string {
