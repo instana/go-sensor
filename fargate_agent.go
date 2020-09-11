@@ -136,6 +136,7 @@ type fargateAgent struct {
 	snapshot fargateSnapshot
 
 	runtimeSnapshot *SnapshotCollector
+	dockerStats     *ecsDockerStatsCollector
 	client          *http.Client
 	ecs             *aws.ECSMetadataProvider
 	logger          LeveledLogger
@@ -166,6 +167,9 @@ func newFargateAgent(
 			CollectionInterval: snapshotCollectionInterval,
 			ServiceName:        serviceName,
 		},
+		dockerStats: &ecsDockerStatsCollector{
+			ecs: mdProvider,
+		},
 		client: client,
 		ecs:    mdProvider,
 		logger: logger,
@@ -187,6 +191,7 @@ func newFargateAgent(
 			time.Sleep(snapshotCollectionInterval)
 		}
 	}()
+	go agent.dockerStats.Run(context.Background(), time.Second)
 
 	return agent
 }
