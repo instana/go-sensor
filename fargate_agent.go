@@ -85,7 +85,7 @@ func newECSContainerPluginPayload(container aws.ECSContainerMetadata, instrument
 	return acceptor.NewECSContainerPluginPayload(ecsEntityID(container), data)
 }
 
-func newDockerContainerPluginPayload(container aws.ECSContainerMetadata) acceptor.PluginPayload {
+func newDockerContainerPluginPayload(container aws.ECSContainerMetadata, prevStats, currentStats docker.ContainerStats) acceptor.PluginPayload {
 	var networkMode string
 	if len(container.Networks) > 0 {
 		networkMode = container.Networks[0].Mode
@@ -100,6 +100,10 @@ func newDockerContainerPluginPayload(container aws.ECSContainerMetadata) accepto
 		Labels:      container.ContainerLabels,
 		Names:       []string{container.DockerName},
 		NetworkMode: networkMode,
+		Memory:      acceptor.NewDockerMemoryStatsUpdate(prevStats.Memory, currentStats.Memory),
+		CPU:         acceptor.NewDockerCPUStatsDelta(prevStats.CPU, currentStats.CPU),
+		Network:     acceptor.NewDockerNetworkAggregatedStatsDelta(prevStats.Networks, currentStats.Networks),
+		BlockIO:     acceptor.NewDockerBlockIOStatsDelta(prevStats.BlockIO, currentStats.BlockIO),
 	})
 }
 
@@ -133,7 +137,8 @@ type fargateAgent struct {
 	Key      string
 	PID      int
 
-	snapshot fargateSnapshot
+	snapshot        fargateSnapshot
+	lastDockerStats map[string]docker.ContainerStats
 
 	runtimeSnapshot *SnapshotCollector
 	dockerStats     *ecsDockerStatsCollector
@@ -198,13 +203,27 @@ func newFargateAgent(
 
 func (a *fargateAgent) Ready() bool { return a.snapshot.EntityID != "" }
 
-func (a *fargateAgent) SendMetrics(data acceptor.Metrics) error {
+func (a *fargateAgent) SendMetrics(data acceptor.Metrics) (err error) {
+	dockerStats := a.dockerStats.Collect()
+	defer func() {
+		if err == nil {
+			// only update the last sent stats if they were transmitted successfully
+			// since they are updated on the backend incrementally using received
+			// deltas
+			a.lastDockerStats = dockerStats
+		}
+	}()
+
 	payload := struct {
 		Plugins []acceptor.PluginPayload `json:"plugins"`
 	}{
 		Plugins: []acceptor.PluginPayload{
 			newECSTaskPluginPayload(a.snapshot),
-			newDockerContainerPluginPayload(a.snapshot.Container),
+			newDockerContainerPluginPayload(
+				a.snapshot.Container,
+				a.lastDockerStats[a.snapshot.Container.DockerID],
+				dockerStats[a.snapshot.Container.DockerID],
+			),
 			newProcessPluginPayload(a.snapshot),
 			acceptor.NewGoProcessPluginPayload(acceptor.GoProcessData{
 				PID:      a.PID,
