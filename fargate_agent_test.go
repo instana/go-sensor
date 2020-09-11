@@ -142,16 +142,14 @@ func TestFargateAgent_SendMetrics(t *testing.T) {
 
 			assert.NotEmpty(t, d.EntityID)
 			assert.Equal(t, "43481a6ce4842eec8fe72fc28500c6b52edcc0917f105b83379f88cac1ff3946", d.Data["Id"])
+		})
 
-			var found bool
-			for _, container := range pluginData["com.instana.plugin.aws.ecs.container"] {
-				if container.Data["containerName"] == "nginx-curl" {
-					found = true
-					assert.Equal(t, container.EntityID, d.EntityID)
-					break
-				}
-			}
-			assert.True(t, found)
+		t.Run("non-instrumented", func(t *testing.T) {
+			d := containers["arn:aws:ecs:us-east-2:012345678910:task/9781c248-0edd-4cdb-9a93-f63cb662a5d3::~internal~ecs~pause"]
+			require.NotEmpty(t, d)
+
+			assert.NotEmpty(t, d.EntityID)
+			assert.Equal(t, "731a0d6a3b4210e2448339bc7015aaa79bfe4fa256384f4102db86ef94cbbc4c", d.Data["Id"])
 		})
 	})
 

@@ -85,15 +85,19 @@ func newECSContainerPluginPayload(container aws.ECSContainerMetadata, instrument
 	return acceptor.NewECSContainerPluginPayload(ecsEntityID(container), data)
 }
 
-func newDockerContainerPluginPayload(container aws.ECSContainerMetadata, prevStats, currentStats docker.ContainerStats) acceptor.PluginPayload {
+func newDockerContainerPluginPayload(
+	container aws.ECSContainerMetadata,
+	prevStats, currentStats docker.ContainerStats,
+	instrumented bool,
+) acceptor.PluginPayload {
+
 	var networkMode string
 	if len(container.Networks) > 0 {
 		networkMode = container.Networks[0].Mode
 	}
 
-	return acceptor.NewDockerPluginPayload(ecsEntityID(container), acceptor.DockerData{
+	data := acceptor.DockerData{
 		ID:          container.DockerID,
-		Command:     os.Args[0],
 		CreatedAt:   container.CreatedAt,
 		StartedAt:   container.StartedAt,
 		Image:       container.Image,
@@ -104,7 +108,14 @@ func newDockerContainerPluginPayload(container aws.ECSContainerMetadata, prevSta
 		CPU:         acceptor.NewDockerCPUStatsDelta(prevStats.CPU, currentStats.CPU),
 		Network:     acceptor.NewDockerNetworkAggregatedStatsDelta(prevStats.Networks, currentStats.Networks),
 		BlockIO:     acceptor.NewDockerBlockIOStatsDelta(prevStats.BlockIO, currentStats.BlockIO),
-	})
+	}
+
+	// we only know the command for the instrumented container
+	if instrumented {
+		data.Command = os.Args[0]
+	}
+
+	return acceptor.NewDockerPluginPayload(ecsEntityID(container), data)
 }
 
 func newProcessPluginPayload(snapshot fargateSnapshot) acceptor.PluginPayload {
@@ -219,11 +230,6 @@ func (a *fargateAgent) SendMetrics(data acceptor.Metrics) (err error) {
 	}{
 		Plugins: []acceptor.PluginPayload{
 			newECSTaskPluginPayload(a.snapshot),
-			newDockerContainerPluginPayload(
-				a.snapshot.Container,
-				a.lastDockerStats[a.snapshot.Container.DockerID],
-				dockerStats[a.snapshot.Container.DockerID],
-			),
 			newProcessPluginPayload(a.snapshot),
 			acceptor.NewGoProcessPluginPayload(acceptor.GoProcessData{
 				PID:      a.PID,
@@ -234,9 +240,16 @@ func (a *fargateAgent) SendMetrics(data acceptor.Metrics) (err error) {
 	}
 
 	for _, container := range a.snapshot.Task.Containers {
+		instrumented := ecsEntityID(container) == a.snapshot.EntityID
 		payload.Plugins = append(
 			payload.Plugins,
-			newECSContainerPluginPayload(container, ecsEntityID(container) == a.snapshot.EntityID),
+			newECSContainerPluginPayload(container, instrumented),
+			newDockerContainerPluginPayload(
+				container,
+				a.lastDockerStats[container.DockerID],
+				dockerStats[container.DockerID],
+				instrumented,
+			),
 		)
 	}
 
