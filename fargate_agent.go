@@ -17,6 +17,7 @@ import (
 	"github.com/instana/go-sensor/acceptor"
 	"github.com/instana/go-sensor/autoprofile"
 	"github.com/instana/go-sensor/aws"
+	"github.com/instana/go-sensor/docker"
 )
 
 type fargateSnapshot struct {
@@ -84,23 +85,37 @@ func newECSContainerPluginPayload(container aws.ECSContainerMetadata, instrument
 	return acceptor.NewECSContainerPluginPayload(ecsEntityID(container), data)
 }
 
-func newDockerContainerPluginPayload(container aws.ECSContainerMetadata) acceptor.PluginPayload {
+func newDockerContainerPluginPayload(
+	container aws.ECSContainerMetadata,
+	prevStats, currentStats docker.ContainerStats,
+	instrumented bool,
+) acceptor.PluginPayload {
+
 	var networkMode string
 	if len(container.Networks) > 0 {
 		networkMode = container.Networks[0].Mode
 	}
 
-	return acceptor.NewDockerPluginPayload(ecsEntityID(container), acceptor.DockerData{
+	data := acceptor.DockerData{
 		ID:          container.DockerID,
-		Command:     os.Args[0],
 		CreatedAt:   container.CreatedAt,
 		StartedAt:   container.StartedAt,
 		Image:       container.Image,
 		Labels:      container.ContainerLabels,
 		Names:       []string{container.DockerName},
 		NetworkMode: networkMode,
-		Memory:      container.Limits.Memory,
-	})
+		Memory:      acceptor.NewDockerMemoryStatsUpdate(prevStats.Memory, currentStats.Memory),
+		CPU:         acceptor.NewDockerCPUStatsDelta(prevStats.CPU, currentStats.CPU),
+		Network:     acceptor.NewDockerNetworkAggregatedStatsDelta(prevStats.Networks, currentStats.Networks),
+		BlockIO:     acceptor.NewDockerBlockIOStatsDelta(prevStats.BlockIO, currentStats.BlockIO),
+	}
+
+	// we only know the command for the instrumented container
+	if instrumented {
+		data.Command = os.Args[0]
+	}
+
+	return acceptor.NewDockerPluginPayload(ecsEntityID(container), data)
 }
 
 func newProcessPluginPayload(snapshot fargateSnapshot) acceptor.PluginPayload {
@@ -133,9 +148,11 @@ type fargateAgent struct {
 	Key      string
 	PID      int
 
-	snapshot fargateSnapshot
+	snapshot        fargateSnapshot
+	lastDockerStats map[string]docker.ContainerStats
 
 	runtimeSnapshot *SnapshotCollector
+	dockerStats     *ecsDockerStatsCollector
 	client          *http.Client
 	ecs             *aws.ECSMetadataProvider
 	logger          LeveledLogger
@@ -166,6 +183,9 @@ func newFargateAgent(
 			CollectionInterval: snapshotCollectionInterval,
 			ServiceName:        serviceName,
 		},
+		dockerStats: &ecsDockerStatsCollector{
+			ecs: mdProvider,
+		},
 		client: client,
 		ecs:    mdProvider,
 		logger: logger,
@@ -187,19 +207,29 @@ func newFargateAgent(
 			time.Sleep(snapshotCollectionInterval)
 		}
 	}()
+	go agent.dockerStats.Run(context.Background(), time.Second)
 
 	return agent
 }
 
 func (a *fargateAgent) Ready() bool { return a.snapshot.EntityID != "" }
 
-func (a *fargateAgent) SendMetrics(data acceptor.Metrics) error {
+func (a *fargateAgent) SendMetrics(data acceptor.Metrics) (err error) {
+	dockerStats := a.dockerStats.Collect()
+	defer func() {
+		if err == nil {
+			// only update the last sent stats if they were transmitted successfully
+			// since they are updated on the backend incrementally using received
+			// deltas
+			a.lastDockerStats = dockerStats
+		}
+	}()
+
 	payload := struct {
 		Plugins []acceptor.PluginPayload `json:"plugins"`
 	}{
 		Plugins: []acceptor.PluginPayload{
 			newECSTaskPluginPayload(a.snapshot),
-			newDockerContainerPluginPayload(a.snapshot.Container),
 			newProcessPluginPayload(a.snapshot),
 			acceptor.NewGoProcessPluginPayload(acceptor.GoProcessData{
 				PID:      a.PID,
@@ -210,9 +240,16 @@ func (a *fargateAgent) SendMetrics(data acceptor.Metrics) error {
 	}
 
 	for _, container := range a.snapshot.Task.Containers {
+		instrumented := ecsEntityID(container) == a.snapshot.EntityID
 		payload.Plugins = append(
 			payload.Plugins,
-			newECSContainerPluginPayload(container, ecsEntityID(container) == a.snapshot.EntityID),
+			newECSContainerPluginPayload(container, instrumented),
+			newDockerContainerPluginPayload(
+				container,
+				a.lastDockerStats[container.DockerID],
+				dockerStats[container.DockerID],
+				instrumented,
+			),
 		)
 	}
 
@@ -326,6 +363,56 @@ func (a *fargateAgent) collectSnapshot(ctx context.Context) (fargateSnapshot, bo
 	a.logger.Debug("collected snapshot")
 
 	return newFargateSnapshot(a.PID, taskMD, containerMD), true
+}
+
+type ecsDockerStatsCollector struct {
+	ecs interface {
+		TaskStats(context.Context) (map[string]docker.ContainerStats, error)
+	}
+
+	mu    sync.RWMutex
+	stats map[string]docker.ContainerStats
+}
+
+func (c *ecsDockerStatsCollector) Run(ctx context.Context, collectionInterval time.Duration) {
+	timer := time.NewTicker(collectionInterval)
+	defer timer.Stop()
+
+	for {
+		select {
+		case <-timer.C:
+			fetchCtx, cancel := context.WithTimeout(ctx, collectionInterval)
+			c.fetchStats(fetchCtx)
+			cancel()
+		case <-ctx.Done():
+			return
+		}
+	}
+}
+
+func (c *ecsDockerStatsCollector) Collect() map[string]docker.ContainerStats {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+
+	return c.stats
+}
+
+func (c *ecsDockerStatsCollector) fetchStats(ctx context.Context) {
+	stats, err := c.ecs.TaskStats(ctx)
+	if err != nil {
+		if ctx.Err() != nil {
+			// request either timed out or had been cancelled, keep the old value
+			return
+		}
+
+		// request failed, reset recorded stats
+		// TODO: log error
+		stats = nil
+	}
+
+	c.mu.Lock()
+	c.stats = stats
+	defer c.mu.Unlock()
 }
 
 func ecsEntityID(md aws.ECSContainerMetadata) string {

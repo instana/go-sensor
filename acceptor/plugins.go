@@ -81,20 +81,23 @@ func NewECSContainerPluginPayload(entityID string, data ECSContainerData) Plugin
 
 // DockerData is a representation of a Docker container for com.instana.plugin.docker plugin
 type DockerData struct {
-	ID               string              `json:"Id"`
-	Command          string              `json:"Command"`
-	CreatedAt        time.Time           `json:"Created"`
-	StartedAt        time.Time           `json:"Started"`
-	Image            string              `json:"Image"`
-	Labels           aws.ContainerLabels `json:"Labels,omitempty"`
-	Ports            string              `json:"Ports,omitempty"`
-	PortBindings     string              `json:"PortBindings,omitempty"`
-	Names            []string            `json:"Names,omitempty"`
-	NetworkMode      string              `json:"NetworkMode,omitempty"`
-	StorageDriver    string              `json:"StorageDriver,omitempty"`
-	DockerVersion    string              `json:"docker_version,omitempty"`
-	DockerAPIVersion string              `json:"docker_api_version,omitempty"`
-	Memory           int                 `json:"Memory"`
+	ID               string                             `json:"Id"`
+	Command          string                             `json:"Command"`
+	CreatedAt        time.Time                          `json:"Created"`
+	StartedAt        time.Time                          `json:"Started"`
+	Image            string                             `json:"Image"`
+	Labels           aws.ContainerLabels                `json:"Labels,omitempty"`
+	Ports            string                             `json:"Ports,omitempty"`
+	PortBindings     string                             `json:"PortBindings,omitempty"`
+	Names            []string                           `json:"Names,omitempty"`
+	NetworkMode      string                             `json:"NetworkMode,omitempty"`
+	StorageDriver    string                             `json:"StorageDriver,omitempty"`
+	DockerVersion    string                             `json:"docker_version,omitempty"`
+	DockerAPIVersion string                             `json:"docker_api_version,omitempty"`
+	Network          *DockerNetworkAggregatedStatsDelta `json:"network,omitempty"`
+	CPU              *DockerCPUStatsDelta               `json:"cpu,omitempty"`
+	Memory           *DockerMemoryStatsUpdate           `json:"memory,omitempty"`
+	BlockIO          *DockerBlockIOStatsDelta           `json:"blkio,omitempty"`
 }
 
 // NewDockerPluginPayload returns payload for the Docker plugin of Instana acceptor

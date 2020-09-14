@@ -129,21 +129,28 @@ func TestFargateAgent_SendMetrics(t *testing.T) {
 	})
 
 	t.Run("Docker plugin payload", func(t *testing.T) {
-		require.Len(t, pluginData["com.instana.plugin.docker"], 1)
-		d := pluginData["com.instana.plugin.docker"][0]
+		require.Len(t, pluginData["com.instana.plugin.docker"], 2)
 
-		assert.NotEmpty(t, d.EntityID)
-		assert.Equal(t, "43481a6ce4842eec8fe72fc28500c6b52edcc0917f105b83379f88cac1ff3946", d.Data["Id"])
-
-		var found bool
-		for _, container := range pluginData["com.instana.plugin.aws.ecs.container"] {
-			if container.Data["containerName"] == "nginx-curl" {
-				found = true
-				assert.Equal(t, container.EntityID, d.EntityID)
-				break
-			}
+		containers := make(map[string]serverlessAgentPluginPayload)
+		for _, container := range pluginData["com.instana.plugin.docker"] {
+			containers[container.EntityID] = container
 		}
-		assert.True(t, found)
+
+		t.Run("instrumented", func(t *testing.T) {
+			d := containers["arn:aws:ecs:us-east-2:012345678910:task/9781c248-0edd-4cdb-9a93-f63cb662a5d3::nginx-curl"]
+			require.NotEmpty(t, d)
+
+			assert.NotEmpty(t, d.EntityID)
+			assert.Equal(t, "43481a6ce4842eec8fe72fc28500c6b52edcc0917f105b83379f88cac1ff3946", d.Data["Id"])
+		})
+
+		t.Run("non-instrumented", func(t *testing.T) {
+			d := containers["arn:aws:ecs:us-east-2:012345678910:task/9781c248-0edd-4cdb-9a93-f63cb662a5d3::~internal~ecs~pause"]
+			require.NotEmpty(t, d)
+
+			assert.NotEmpty(t, d.EntityID)
+			assert.Equal(t, "731a0d6a3b4210e2448339bc7015aaa79bfe4fa256384f4102db86ef94cbbc4c", d.Data["Id"])
+		})
 	})
 
 	t.Run("Process plugin payload", func(t *testing.T) {
@@ -207,6 +214,9 @@ func setupMetadataServer() func() {
 	})
 	mux.HandleFunc("/task", func(w http.ResponseWriter, req *http.Request) {
 		http.ServeFile(w, req, "aws/testdata/task_metadata.json")
+	})
+	mux.HandleFunc("/task/stats", func(w http.ResponseWriter, req *http.Request) {
+		http.ServeFile(w, req, "aws/testdata/task_stats.json")
 	})
 
 	srv := httptest.NewServer(mux)

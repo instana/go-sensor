@@ -1,0 +1,130 @@
+{
+  "43481a6ce4842eec8fe72fc28500c6b52edcc0917f105b83379f88cac1ff3946": {
+    "read": "2020-09-09T09:54:21.803969293Z",
+    "preread": "2020-09-09T09:54:16.80439292Z",
+    "pids_stats": {
+    },
+    "blkio_stats": {
+      "io_service_bytes_recursive": [
+        {
+          "value": 1,
+          "op": "READ"
+        },
+        {
+          "value": 2,
+          "op": "WRITE"
+        },
+        {
+          "value": 3,
+          "op": "READ"
+        }
+      ],
+      "io_serviced_recursive": [],
+      "io_queue_recursive": [],
+      "io_service_time_recursive": [],
+      "io_wait_time_recursive": [],
+      "io_merged_recursive": [],
+      "io_time_recursive": [],
+      "sectors_recursive": []
+    },
+    "num_procs": 0,
+    "storage_stats": {
+    },
+    "cpu_stats": {
+      "cpu_usage": {
+        "total_usage": 281318382,
+        "percpu_usage": [
+          214203988,
+          67114394,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "usage_in_kernelmode": 20000000,
+        "usage_in_usermode": 180000000
+      },
+      "system_cpu_usage": 360200000000,
+      "online_cpus": 2,
+      "throttling_data": {
+        "periods": 1,
+        "throttled_periods": 2,
+        "throttled_time": 3
+      }
+    },
+    "precpu_stats": {
+      "cpu_usage": {
+        "total_usage": 0,
+        "usage_in_kernelmode": 0,
+        "usage_in_usermode": 0
+      },
+      "throttling_data": {
+        "periods": 0,
+        "throttled_periods": 0,
+        "throttled_time": 0
+      }
+    },
+    "memory_stats": {
+      "usage": 6148096,
+      "max_usage": 6549504,
+      "stats": {
+        "active_anon": 4681728,
+        "active_file": 12288,
+        "cache": 12288,
+        "dirty": 0,
+        "hierarchical_memory_limit": 536870912,
+        "hierarchical_memsw_limit": 9.223372036854772e+18,
+        "inactive_anon": 100,
+        "inactive_file": 602112,
+        "mapped_file": 0,
+        "pgfault": 3723,
+        "pgmajfault": 0,
+        "pgpgin": 3163,
+        "pgpgout": 1870,
+        "rss": 5283840,
+        "rss_huge": 0,
+        "total_active_anon": 4681728,
+        "total_active_file": 12288,
+        "total_cache": 12290,
+        "total_dirty": 0,
+        "total_inactive_anon": 0,
+        "total_inactive_file": 602112,
+        "total_mapped_file": 0,
+        "total_pgfault": 3723,
+        "total_pgmajfault": 0,
+        "total_pgpgin": 3163,
+        "total_pgpgout": 1870,
+        "total_rss": 5283840,
+        "total_rss_huge": 0,
+        "total_unevictable": 0,
+        "total_writeback": 0,
+        "unevictable": 0,
+        "writeback": 0
+      },
+      "limit": 536870912
+    },
+    "name": "fargate-go-service",
+    "id": "43481a6ce4842eec8fe72fc28500c6b52edcc0917f105b83379f88cac1ff3946",
+    "networks": {
+      "eth1": {
+        "rx_bytes": 4172695,
+        "rx_packets": 3105,
+        "rx_errors": 4,
+        "rx_dropped": 3,
+        "tx_bytes": 106367,
+        "tx_packets": 444,
+        "tx_errors": 2,
+        "tx_dropped": 1
+      }
+    }
+  }
+}
