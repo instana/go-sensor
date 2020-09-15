@@ -190,7 +190,8 @@ func newFargateAgent(
 			ServiceName:        serviceName,
 		},
 		dockerStats: &ecsDockerStatsCollector{
-			ecs: mdProvider,
+			ecs:    mdProvider,
+			logger: logger,
 		},
 		processStats: &processStatsCollector{
 			logger: logger,
@@ -381,6 +382,7 @@ type ecsDockerStatsCollector struct {
 	ecs interface {
 		TaskStats(context.Context) (map[string]docker.ContainerStats, error)
 	}
+	logger LeveledLogger
 
 	mu    sync.RWMutex
 	stats map[string]docker.ContainerStats
@@ -414,11 +416,12 @@ func (c *ecsDockerStatsCollector) fetchStats(ctx context.Context) {
 	if err != nil {
 		if ctx.Err() != nil {
 			// request either timed out or had been cancelled, keep the old value
+			c.logger.Debug("failed to retireve Docker container stats (timed out), skipping")
 			return
 		}
 
 		// request failed, reset recorded stats
-		// TODO: log error
+		c.logger.Warn("failed to retrieve Docker container stats: ", err)
 		stats = nil
 	}
 
