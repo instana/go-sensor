@@ -10,17 +10,22 @@ type ProcessCPUStatsDelta struct {
 
 // NewDockerCPUStatsDelta calculates the difference between two CPU usage stats.
 // It returns nil if stats are equal or if the stats were taken at the same time (ticks).
+// The stats are considered to be equal if the change is less then 1%.
 func NewProcessCPUStatsDelta(prev, next process.CPUStats, ticksElapsed int) *ProcessCPUStatsDelta {
 	if prev == next || ticksElapsed == 0 {
 		return nil
 	}
 
 	delta := &ProcessCPUStatsDelta{}
-	if prev.System < next.System {
-		delta.System = float64(next.System-prev.System) / float64(ticksElapsed)
+	if d := float64(next.System-prev.System) / float64(ticksElapsed); d >= 0.01 {
+		delta.System = d
 	}
-	if prev.User < next.User {
-		delta.User = float64(next.User-prev.User) / float64(ticksElapsed)
+	if d := float64(next.User-prev.User) / float64(ticksElapsed); d >= 0.01 {
+		delta.User = d
+	}
+
+	if delta.User == 0 && delta.System == 0 {
+		return nil
 	}
 
 	return delta

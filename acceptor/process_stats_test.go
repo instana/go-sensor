@@ -22,6 +22,14 @@ func TestNewProcessCPUStatsDelta(t *testing.T) {
 		assert.Nil(t, acceptor.NewProcessCPUStatsDelta(process.CPUStats{}, stats, 0))
 	})
 
+	t.Run("increased insignificantly", func(t *testing.T) {
+		assert.Nil(t, acceptor.NewProcessCPUStatsDelta(process.CPUStats{}, stats, 10000))
+	})
+
+	t.Run("decreased both", func(t *testing.T) {
+		assert.Nil(t, acceptor.NewProcessCPUStatsDelta(stats, process.CPUStats{}, 2))
+	})
+
 	t.Run("increased", func(t *testing.T) {
 		assert.Equal(t,
 			&acceptor.ProcessCPUStatsDelta{
@@ -32,13 +40,24 @@ func TestNewProcessCPUStatsDelta(t *testing.T) {
 		)
 	})
 
-	t.Run("decreased", func(t *testing.T) {
+	t.Run("one has increased insignificantly", func(t *testing.T) {
 		assert.Equal(t,
 			&acceptor.ProcessCPUStatsDelta{
-				User:   0,
-				System: 0,
+				System: 0.01,
 			},
-			acceptor.NewProcessCPUStatsDelta(stats, process.CPUStats{}, 2),
+			acceptor.NewProcessCPUStatsDelta(process.CPUStats{}, stats, 1000),
+		)
+	})
+
+	t.Run("one has decreased", func(t *testing.T) {
+		assert.Equal(t,
+			&acceptor.ProcessCPUStatsDelta{
+				User: 0.5,
+			},
+			acceptor.NewProcessCPUStatsDelta(stats, process.CPUStats{
+				User:   stats.User * 2,
+				System: stats.System / 2,
+			}, 2),
 		)
 	})
 }
