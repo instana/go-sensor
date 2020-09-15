@@ -192,10 +192,12 @@ func newFargateAgent(
 		dockerStats: &ecsDockerStatsCollector{
 			ecs: mdProvider,
 		},
-		processStats: &processStatsCollector{},
-		client:       client,
-		ecs:          mdProvider,
-		logger:       logger,
+		processStats: &processStatsCollector{
+			logger: logger,
+		},
+		client: client,
+		ecs:    mdProvider,
+		logger: logger,
 	}
 
 	go func() {
@@ -433,8 +435,9 @@ type processStats struct {
 }
 
 type processStatsCollector struct {
-	mu    sync.RWMutex
-	stats processStats
+	logger LeveledLogger
+	mu     sync.RWMutex
+	stats  processStats
 }
 
 func (c *processStatsCollector) Run(ctx context.Context, collectionInterval time.Duration) {
@@ -477,7 +480,7 @@ func (c *processStatsCollector) fetchStats(ctx context.Context) {
 
 		st, tick, err := process.Stats().CPU()
 		if err != nil {
-			// TODO: log error
+			c.logger.Debug("failed to read process CPU stats, skipping: ", err)
 			return
 		}
 
@@ -489,7 +492,7 @@ func (c *processStatsCollector) fetchStats(ctx context.Context) {
 
 		st, err := process.Stats().Memory()
 		if err != nil {
-			// TODO: log error
+			c.logger.Debug("failed to read process memory stats, skipping: ", err)
 			return
 		}
 
@@ -501,7 +504,7 @@ func (c *processStatsCollector) fetchStats(ctx context.Context) {
 
 		st, err := process.Stats().Limits()
 		if err != nil {
-			// TODO: log error
+			c.logger.Debug("failed to read process open files stats, skipping: ", err)
 			return
 		}
 
@@ -512,6 +515,7 @@ func (c *processStatsCollector) fetchStats(ctx context.Context) {
 	case <-done:
 		break
 	case <-ctx.Done():
+		c.logger.Debug("failed to obtain process stats (timed out)")
 		return // context has been cancelled, skip this update
 	}
 
