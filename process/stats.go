@@ -6,3 +6,9 @@ type MemStats struct {
 	Rss    int
 	Shared int
 }
+
+// CPUStats represents CPU stats for a process
+type CPUStats struct {
+	User   int
+	System int
+}

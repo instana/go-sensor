@@ -13,3 +13,8 @@ func Stats() statsReader {
 func (statsReader) Memory() (MemStats, error) {
 	return MemStats{}, nil
 }
+
+// CPU returns CPU stats for current process
+func (statsReader) CPU() (CPUStats, error) {
+	return CPUStats{}, nil
+}

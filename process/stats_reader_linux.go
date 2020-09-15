@@ -53,3 +53,49 @@ func (rdr statsReader) Memory() (MemStats, error) {
 		Shared: shared * pageSize,
 	}, nil
 }
+
+// CPU returns CPU stats for current process
+func (rdr statsReader) CPU() (CPUStats, error) {
+	fd, err := os.Open(rdr.ProcPath + "/stat")
+	if err != nil {
+		return CPUStats{}, nil
+	}
+	defer fd.Close()
+
+	var (
+		stats   CPUStats
+		skipInt int
+		skipCh  byte
+	)
+
+	// The command in `/proc/self/stat` output is truncated to 15 bytes (16 including the terminating null byte)
+	comm := rdr.Command
+	if len(comm) > 15 {
+		comm = comm[:15]
+	}
+
+	// The fields come in order described in `/proc/[pid]/stat` section
+	// of https://man7.org/linux/man-pages/man5/proc.5.html. We skip parsing
+	// the `comm` field since it may contain space characters that break fmt.Fscanf format.
+	if _, err := fmt.Fscanf(fd, "%d ("+comm+") %c %d %d %d %d %d %d %d %d %d %d %d %d",
+		&skipInt,      // pid
+		&skipCh,       // state
+		&skipInt,      // ppid
+		&skipInt,      // pgrp
+		&skipInt,      // session
+		&skipInt,      // tty_nr
+		&skipInt,      // tpgid
+		&skipInt,      // flags
+		&skipInt,      // minflt
+		&skipInt,      // cminflt
+		&skipInt,      // majflt
+		&skipInt,      // cmajflt
+		&stats.User,   // utime
+		&stats.System, // stime
+		// ... the rest of the fields are not used and thus omitted
+	); err != nil {
+		return stats, fmt.Errorf("failed to parse %s: %s", fd.Name(), err)
+	}
+
+	return stats, nil
+}

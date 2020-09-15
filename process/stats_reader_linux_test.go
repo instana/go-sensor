@@ -22,3 +22,16 @@ func TestStats_Memory(t *testing.T) {
 		Shared: 3 * 4 << 10,
 	}, stats)
 }
+
+func TestStats_CPU(t *testing.T) {
+	rdr := process.Stats()
+	rdr.ProcPath = "testdata"
+	rdr.Command = "Hello, brave new world"
+
+	stats, err := rdr.CPU()
+	require.NoError(t, err)
+	assert.Equal(t, process.CPUStats{
+		User:   14,
+		System: 15,
+	}, stats)
+}
