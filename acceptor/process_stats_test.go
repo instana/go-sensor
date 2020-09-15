@@ -8,35 +8,37 @@ import (
 	"github.com/instana/testify/assert"
 )
 
-func TestNewProcessCPUStatsUpdate(t *testing.T) {
+func TestNewProcessCPUStatsDelta(t *testing.T) {
 	stats := process.CPUStats{
 		User:   1,
 		System: 10,
 	}
 
-	t.Run("equal", func(t *testing.T) {
-		assert.Nil(t, acceptor.NewProcessCPUStatsUpdate(stats, stats))
+	t.Run("equal stats", func(t *testing.T) {
+		assert.Nil(t, acceptor.NewProcessCPUStatsDelta(stats, stats, 2))
 	})
 
-	t.Run("changed", func(t *testing.T) {
+	t.Run("same time", func(t *testing.T) {
+		assert.Nil(t, acceptor.NewProcessCPUStatsDelta(process.CPUStats{}, stats, 0))
+	})
+
+	t.Run("increased", func(t *testing.T) {
 		assert.Equal(t,
-			&acceptor.ProcessCPUStatsUpdate{
-				User:   &stats.User,
-				System: &stats.System,
+			&acceptor.ProcessCPUStatsDelta{
+				User:   0.5,
+				System: 5,
 			},
-			acceptor.NewProcessCPUStatsUpdate(process.CPUStats{}, stats),
+			acceptor.NewProcessCPUStatsDelta(process.CPUStats{}, stats, 2),
 		)
 	})
 
-	t.Run("changed some", func(t *testing.T) {
+	t.Run("decreased", func(t *testing.T) {
 		assert.Equal(t,
-			&acceptor.ProcessCPUStatsUpdate{
-				System: &stats.System,
+			&acceptor.ProcessCPUStatsDelta{
+				User:   0,
+				System: 0,
 			},
-			acceptor.NewProcessCPUStatsUpdate(process.CPUStats{
-				User:   stats.User,
-				System: stats.System * 2,
-			}, stats),
+			acceptor.NewProcessCPUStatsDelta(stats, process.CPUStats{}, 2),
 		)
 	})
 }

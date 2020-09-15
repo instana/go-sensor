@@ -14,9 +14,9 @@ func (statsReader) Memory() (MemStats, error) {
 	return MemStats{}, nil
 }
 
-// CPU returns CPU stats for current process
-func (statsReader) CPU() (CPUStats, error) {
-	return CPUStats{}, nil
+// CPU returns CPU stats for current process and the CPU tick they were taken on
+func (statsReader) CPU() (CPUStats, int, error) {
+	return CPUStats{}, 0, nil
 }
 
 // Limits returns resource limits configured for current process

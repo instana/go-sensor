@@ -13,7 +13,7 @@ import (
 
 const (
 	pageSize = 4 << 10 // standard setting, applicable for most systems
-	procPath = "/proc/self"
+	procPath = "/proc"
 )
 
 type statsReader struct {
@@ -31,7 +31,7 @@ func Stats() statsReader {
 
 // Memory returns memory stats for current process
 func (rdr statsReader) Memory() (MemStats, error) {
-	fd, err := os.Open(rdr.ProcPath + "/statm")
+	fd, err := os.Open(rdr.ProcPath + "/self/statm")
 	if err != nil {
 		return MemStats{}, nil
 	}
@@ -57,11 +57,11 @@ func (rdr statsReader) Memory() (MemStats, error) {
 	}, nil
 }
 
-// CPU returns CPU stats for current process
-func (rdr statsReader) CPU() (CPUStats, error) {
-	fd, err := os.Open(rdr.ProcPath + "/stat")
+// CPU returns CPU stats for current process and the CPU tick they were taken on
+func (rdr statsReader) CPU() (CPUStats, int, error) {
+	fd, err := os.Open(rdr.ProcPath + "/self/stat")
 	if err != nil {
-		return CPUStats{}, nil
+		return CPUStats{}, 0, nil
 	}
 	defer fd.Close()
 
@@ -97,15 +97,80 @@ func (rdr statsReader) CPU() (CPUStats, error) {
 		&stats.System, // stime
 		// ... the rest of the fields are not used and thus omitted
 	); err != nil {
-		return stats, fmt.Errorf("failed to parse %s: %s", fd.Name(), err)
+		return stats, 0, fmt.Errorf("failed to parse %s: %s", fd.Name(), err)
 	}
 
-	return stats, nil
+	tick, err := rdr.currentTick()
+	if err != nil {
+		return stats, 0, fmt.Errorf("failed to get current CPU tick: %s", err)
+	}
+
+	return stats, tick, nil
+}
+
+// currentTick parses /proc/stat, sums up the total number of ticks spent on each CPU and averages them
+// by the number of CPUs
+func (rdr statsReader) currentTick() (int, error) {
+	fd, err := os.Open(rdr.ProcPath + "/stat")
+	if err != nil {
+		return 0, nil
+	}
+	defer fd.Close()
+
+	sc := bufio.NewScanner(fd)
+	sc.Split(bufio.ScanLines)
+
+	var (
+		ticks, cpuCount                                    int
+		user, nice, sys, idle, iowait, irq, softIRQ, steal int
+		skipStr                                            string
+	)
+
+	for sc.Scan() {
+		s := sc.Text()
+		if !strings.HasPrefix(s, "cpu") {
+			continue
+		}
+
+		if strings.HasPrefix(s, "cpu ") { // skip total CPU line
+			continue
+		}
+
+		// The fields come in order described in `/proc/stat` section
+		// of https://man7.org/linux/man-pages/man5/proc.5.html
+		if _, err := fmt.Sscanf(s, "%s %d %d %d %d %d %d %d %d",
+			&skipStr, // CPU label
+			&user,
+			&nice,
+			&sys,
+			&idle,
+			&iowait,
+			&irq,
+			&softIRQ,
+			&steal,
+			// ... the rest of the fields are not used and thus omitted
+		); err != nil {
+			return 0, fmt.Errorf("failed to parse %s: %s", fd.Name(), err)
+		}
+
+		ticks += user + nice + sys + idle + iowait + irq + softIRQ + steal
+		cpuCount++
+	}
+
+	if err := sc.Err(); err != nil {
+		return 0, fmt.Errorf("failed to read %s: %s", fd.Name(), err)
+	}
+
+	if cpuCount < 2 {
+		return ticks, nil
+	}
+
+	return ticks / cpuCount, nil
 }
 
 // Limits returns resource limits configured for current process
 func (rdr statsReader) Limits() (ResourceLimits, error) {
-	fd, err := os.Open(rdr.ProcPath + "/limits")
+	fd, err := os.Open(rdr.ProcPath + "/self/limits")
 	if err != nil {
 		return ResourceLimits{}, nil
 	}
@@ -147,7 +212,7 @@ func (rdr statsReader) Limits() (ResourceLimits, error) {
 }
 
 func (rdr statsReader) currentOpenFiles() (int, error) {
-	fds, err := ioutil.ReadDir(rdr.ProcPath + "/fd/")
+	fds, err := ioutil.ReadDir(rdr.ProcPath + "/self/fd/")
 	if err != nil {
 		return 0, fmt.Errorf("failed to list %s: %s", rdr.ProcPath+"/fd/", err)
 	}

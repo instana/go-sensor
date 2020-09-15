@@ -28,8 +28,9 @@ func TestStats_CPU(t *testing.T) {
 	rdr.ProcPath = "testdata"
 	rdr.Command = "Hello, brave new world"
 
-	stats, err := rdr.CPU()
+	stats, tick, err := rdr.CPU()
 	require.NoError(t, err)
+	assert.Equal(t, 71695348, tick)
 	assert.Equal(t, process.CPUStats{
 		User:   14,
 		System: 15,

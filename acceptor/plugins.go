@@ -125,7 +125,7 @@ type ProcessData struct {
 	Start         int64                        `json:"start"`
 	HostName      string                       `json:"com.instana.plugin.host.name"`
 	HostPID       int                          `json:"com.instana.plugin.host.pid,string"`
-	CPU           *ProcessCPUStatsUpdate       `json:"cpu,omitempty"`
+	CPU           *ProcessCPUStatsDelta        `json:"cpu,omitempty"`
 	Memory        *ProcessMemoryStatsUpdate    `json:"mem,omitempty"`
 	OpenFiles     *ProcessOpenFilesStatsUpdate `json:"openFiles,omitempty"`
 }

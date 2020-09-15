@@ -3,27 +3,27 @@ package acceptor
 import "github.com/instana/go-sensor/process"
 
 // ProcessCPUStatsUpdate represents the CPU stats that have changed since the last measurement
-type ProcessCPUStatsUpdate struct {
-	User   *int `json:"user,omitempty"`
-	System *int `json:"sys,omitempty"`
+type ProcessCPUStatsDelta struct {
+	User   float64 `json:"user,omitempty"`
+	System float64 `json:"sys,omitempty"`
 }
 
-// NewProcessCPUStatsUpdate returns the fields that have been updated since the last measurement.
-// It returns nil if nothing has changed.
-func NewProcessCPUStatsUpdate(prev, next process.CPUStats) *ProcessCPUStatsUpdate {
-	if prev == next {
+// NewDockerCPUStatsDelta calculates the difference between two CPU usage stats.
+// It returns nil if stats are equal or if the stats were taken at the same time (ticks).
+func NewProcessCPUStatsDelta(prev, next process.CPUStats, ticksElapsed int) *ProcessCPUStatsDelta {
+	if prev == next || ticksElapsed == 0 {
 		return nil
 	}
 
-	update := &ProcessCPUStatsUpdate{}
-	if prev.System != next.System {
-		update.System = &next.System
+	delta := &ProcessCPUStatsDelta{}
+	if prev.System < next.System {
+		delta.System = float64(next.System-prev.System) / float64(ticksElapsed)
 	}
-	if prev.User != next.User {
-		update.User = &next.User
+	if prev.User < next.User {
+		delta.User = float64(next.User-prev.User) / float64(ticksElapsed)
 	}
 
-	return update
+	return delta
 }
 
 // ProcessMemoryStatsUpdate represents the memory stats that have changed since the last measurement

@@ -141,7 +141,7 @@ func newProcessPluginPayload(snapshot fargateSnapshot, prevStats, currentStats p
 		Start:         snapshot.Container.StartedAt.UnixNano() / int64(time.Millisecond),
 		HostName:      snapshot.Container.TaskARN,
 		HostPID:       snapshot.PID,
-		CPU:           acceptor.NewProcessCPUStatsUpdate(prevStats.CPU, currentStats.CPU),
+		CPU:           acceptor.NewProcessCPUStatsDelta(prevStats.CPU, currentStats.CPU, currentStats.Tick-prevStats.Tick),
 		Memory:        acceptor.NewProcessMemoryStatsUpdate(prevStats.Memory, currentStats.Memory),
 		OpenFiles:     acceptor.NewProcessOpenFilesStatsUpdate(prevStats.Limits, currentStats.Limits),
 	})
@@ -426,6 +426,7 @@ func (c *ecsDockerStatsCollector) fetchStats(ctx context.Context) {
 }
 
 type processStats struct {
+	Tick   int
 	CPU    process.CPUStats
 	Memory process.MemStats
 	Limits process.ResourceLimits
@@ -474,13 +475,13 @@ func (c *processStatsCollector) fetchStats(ctx context.Context) {
 	go func() {
 		defer wg.Done()
 
-		st, err := process.Stats().CPU()
+		st, tick, err := process.Stats().CPU()
 		if err != nil {
 			// TODO: log error
 			return
 		}
 
-		stats.CPU = st
+		stats.CPU, stats.Tick = st, tick
 	}()
 
 	go func() {
