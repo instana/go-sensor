@@ -35,3 +35,17 @@ func TestStats_CPU(t *testing.T) {
 		System: 15,
 	}, stats)
 }
+
+func TestStats_Limits(t *testing.T) {
+	rdr := process.Stats()
+	rdr.ProcPath = "testdata"
+
+	limits, err := rdr.Limits()
+	require.NoError(t, err)
+	assert.Equal(t, process.ResourceLimits{
+		OpenFiles: process.LimitedResource{
+			Current: 4,
+			Max:     1024,
+		},
+	}, limits)
+}

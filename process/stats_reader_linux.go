@@ -3,9 +3,12 @@
 package process
 
 import (
+	"bufio"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"path"
+	"strings"
 )
 
 const (
@@ -98,4 +101,56 @@ func (rdr statsReader) CPU() (CPUStats, error) {
 	}
 
 	return stats, nil
+}
+
+// Limits returns resource limits configured for current process
+func (rdr statsReader) Limits() (ResourceLimits, error) {
+	fd, err := os.Open(rdr.ProcPath + "/limits")
+	if err != nil {
+		return ResourceLimits{}, nil
+	}
+	defer fd.Close()
+
+	sc := bufio.NewScanner(fd)
+	sc.Split(bufio.ScanLines)
+
+	var limits ResourceLimits
+
+	for sc.Scan() {
+		s := sc.Text()
+		if !strings.HasPrefix(s, "Max open files") {
+			continue
+		}
+
+		s = strings.TrimLeft(s[14:], " \t") // trim the "max open files" prefix along with trailing space
+		if !strings.HasPrefix(s, "unlimited") {
+			if _, err := fmt.Sscanf(s, "%d", &limits.OpenFiles.Max); err != nil {
+				return limits, fmt.Errorf("unexpected %s format: %s", fd.Name(), err)
+			}
+		}
+
+		break
+	}
+
+	if err := sc.Err(); err != nil {
+		return limits, fmt.Errorf("failed to read %s: %s", fd.Name(), err)
+	}
+
+	fdNum, err := rdr.currentOpenFiles()
+	if err != nil {
+		return limits, fmt.Errorf("failed to get the number of open files: %s", err)
+	}
+
+	limits.OpenFiles.Current = fdNum
+
+	return limits, nil
+}
+
+func (rdr statsReader) currentOpenFiles() (int, error) {
+	fds, err := ioutil.ReadDir(rdr.ProcPath + "/fd/")
+	if err != nil {
+		return 0, fmt.Errorf("failed to list %s: %s", rdr.ProcPath+"/fd/", err)
+	}
+
+	return len(fds), nil
 }

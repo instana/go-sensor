@@ -18,3 +18,8 @@ func (statsReader) Memory() (MemStats, error) {
 func (statsReader) CPU() (CPUStats, error) {
 	return CPUStats{}, nil
 }
+
+// Limits returns resource limits configured for current process
+func (statsReader) Limits() (ResourceLimits, error) {
+	return ResourceLimits{}, nil
+}
