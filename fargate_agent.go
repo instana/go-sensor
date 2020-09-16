@@ -25,6 +25,7 @@ type fargateSnapshot struct {
 	EntityID  string
 	PID       int
 	Zone      string
+	Tags      map[string]interface{}
 	Task      aws.ECSTaskMetadata
 	Container aws.ECSContainerMetadata
 }
@@ -154,6 +155,7 @@ type fargateAgent struct {
 	Key      string
 	PID      int
 	Zone     string
+	Tags     map[string]interface{}
 
 	snapshot         fargateSnapshot
 	lastDockerStats  map[string]docker.ContainerStats
@@ -189,6 +191,7 @@ func newFargateAgent(
 		Key:      agentKey,
 		PID:      os.Getpid(),
 		Zone:     os.Getenv("INSTANA_ZONE"),
+		Tags:     parseInstanaTags(os.Getenv("INSTANA_TAGS")),
 		runtimeSnapshot: &SnapshotCollector{
 			CollectionInterval: snapshotCollectionInterval,
 			ServiceName:        serviceName,
@@ -379,6 +382,7 @@ func (a *fargateAgent) collectSnapshot(ctx context.Context) (fargateSnapshot, bo
 
 	snapshot := newFargateSnapshot(a.PID, taskMD, containerMD)
 	snapshot.Zone = a.Zone
+	snapshot.Tags = a.Tags
 
 	a.logger.Debug("collected snapshot")
 
