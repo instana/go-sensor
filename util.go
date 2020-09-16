@@ -178,3 +178,36 @@ func hexGatewayToAddr(gateway []rune) (string, error) {
 
 	return fmt.Sprintf("%v.%v.%v.%v", octets[0], octets[1], octets[2], octets[3]), nil
 }
+
+// parseInstanaTags parses the tags string passed via INSTANA_TAGS.
+// The tag string is a comma-separated list of keys optionally followed by an '=' character and a string value:
+//
+//     INSTANA_TAGS := key1[=value1][,key2[=value2],...]
+//
+// The leading and trailing space is truncated from key names, values are used as-is. If a key does not have
+// value associated, it's considered to be nil.
+func parseInstanaTags(tagStr string) map[string]interface{} {
+	tags := make(map[string]interface{})
+
+	for _, s := range strings.Split(tagStr, ",") {
+		kv := strings.SplitN(s, "=", 2)
+
+		k := strings.TrimSpace(kv[0])
+		if k == "" {
+			continue
+		}
+
+		var v interface{}
+		if len(kv) > 1 {
+			v = kv[1]
+		}
+
+		tags[k] = v
+	}
+
+	if len(tags) == 0 {
+		return nil
+	}
+
+	return tags
+}
