@@ -24,17 +24,18 @@ type AWSContainerLimits struct {
 
 // ECSTaskData is a representation of an ECS task for com.instana.plugin.aws.ecs.task plugin
 type ECSTaskData struct {
-	TaskARN               string             `json:"taskArn"`
-	ClusterARN            string             `json:"clusterArn"`
-	AvailabilityZone      string             `json:"availabilityZone,omitempty"`
-	InstanaZone           string             `json:"instanaZone,omitempty"`
-	TaskDefinition        string             `json:"taskDefinition"`
-	TaskDefinitionVersion string             `json:"taskDefinitionVersion"`
-	DesiredStatus         string             `json:"desiredStatus"`
-	KnownStatus           string             `json:"knownStatus"`
-	Limits                AWSContainerLimits `json:"limits"`
-	PullStartedAt         time.Time          `json:"pullStartedAt"`
-	PullStoppedAt         time.Time          `json:"pullStoppedAt"`
+	TaskARN               string                 `json:"taskArn"`
+	ClusterARN            string                 `json:"clusterArn"`
+	AvailabilityZone      string                 `json:"availabilityZone,omitempty"`
+	InstanaZone           string                 `json:"instanaZone,omitempty"`
+	TaskDefinition        string                 `json:"taskDefinition"`
+	TaskDefinitionVersion string                 `json:"taskDefinitionVersion"`
+	DesiredStatus         string                 `json:"desiredStatus"`
+	KnownStatus           string                 `json:"knownStatus"`
+	Limits                AWSContainerLimits     `json:"limits"`
+	PullStartedAt         time.Time              `json:"pullStartedAt"`
+	PullStoppedAt         time.Time              `json:"pullStoppedAt"`
+	Tags                  map[string]interface{} `json:"tags,omitempty"`
 }
 
 // NewECSTaskPluginPayload returns payload for the ECS task plugin of Instana acceptor

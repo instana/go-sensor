@@ -55,6 +55,7 @@ func newECSTaskPluginPayload(snapshot fargateSnapshot) acceptor.PluginPayload {
 		},
 		PullStartedAt: snapshot.Task.PullStartedAt,
 		PullStoppedAt: snapshot.Task.PullStoppedAt,
+		Tags:          snapshot.Tags,
 	})
 }
 
