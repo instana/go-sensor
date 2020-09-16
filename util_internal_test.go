@@ -192,3 +192,31 @@ eth0	00000000	010011AC	0003	0	0	0	00000000	0	0	0
 		}()
 	}
 }
+
+func TestParseInstanaTags(t *testing.T) {
+	examples := map[string]struct {
+		Value    string
+		Expected map[string]interface{}
+	}{
+		"empty":                   {"", nil},
+		"single tag, empty key":   {"=value", nil},
+		"single tag, no value":    {"key", map[string]interface{}{"key": nil}},
+		"single tag, empty value": {"key=", map[string]interface{}{"key": ""}},
+		"single tag, with value":  {"key=value", map[string]interface{}{"key": "value"}},
+		"multiple tags, mixed": {
+			`key1,  key2=  , key3   ="",key4=42`,
+			map[string]interface{}{
+				"key1": nil,
+				"key2": "  ",
+				"key3": `""`,
+				"key4": "42",
+			},
+		},
+	}
+
+	for name, example := range examples {
+		t.Run(name, func(t *testing.T) {
+			assert.Equal(t, example.Expected, parseInstanaTags(example.Value))
+		})
+	}
+}

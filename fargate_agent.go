@@ -24,14 +24,16 @@ import (
 type fargateSnapshot struct {
 	EntityID  string
 	PID       int
+	Zone      string
+	Tags      map[string]interface{}
 	Task      aws.ECSTaskMetadata
 	Container aws.ECSContainerMetadata
 }
 
 func newFargateSnapshot(pid int, taskMD aws.ECSTaskMetadata, containerMD aws.ECSContainerMetadata) fargateSnapshot {
 	return fargateSnapshot{
-		PID:       pid,
 		EntityID:  ecsEntityID(containerMD),
+		PID:       pid,
 		Task:      taskMD,
 		Container: containerMD,
 	}
@@ -42,7 +44,7 @@ func newECSTaskPluginPayload(snapshot fargateSnapshot) acceptor.PluginPayload {
 		TaskARN:               snapshot.Task.TaskARN,
 		ClusterARN:            snapshot.Container.Cluster,
 		AvailabilityZone:      snapshot.Task.AvailabilityZone,
-		InstanaZone:           os.Getenv("INSTANA_ZONE"),
+		InstanaZone:           snapshot.Zone,
 		TaskDefinition:        snapshot.Task.Family,
 		TaskDefinitionVersion: snapshot.Task.Revision,
 		DesiredStatus:         snapshot.Task.DesiredStatus,
@@ -53,6 +55,7 @@ func newECSTaskPluginPayload(snapshot fargateSnapshot) acceptor.PluginPayload {
 		},
 		PullStartedAt: snapshot.Task.PullStartedAt,
 		PullStoppedAt: snapshot.Task.PullStoppedAt,
+		Tags:          snapshot.Tags,
 	})
 }
 
@@ -152,6 +155,8 @@ type fargateAgent struct {
 	Endpoint string
 	Key      string
 	PID      int
+	Zone     string
+	Tags     map[string]interface{}
 
 	snapshot         fargateSnapshot
 	lastDockerStats  map[string]docker.ContainerStats
@@ -186,6 +191,8 @@ func newFargateAgent(
 		Endpoint: acceptorEndpoint,
 		Key:      agentKey,
 		PID:      os.Getpid(),
+		Zone:     os.Getenv("INSTANA_ZONE"),
+		Tags:     parseInstanaTags(os.Getenv("INSTANA_TAGS")),
 		runtimeSnapshot: &SnapshotCollector{
 			CollectionInterval: snapshotCollectionInterval,
 			ServiceName:        serviceName,
@@ -374,9 +381,13 @@ func (a *fargateAgent) collectSnapshot(ctx context.Context) (fargateSnapshot, bo
 		return fargateSnapshot{}, false
 	}
 
+	snapshot := newFargateSnapshot(a.PID, taskMD, containerMD)
+	snapshot.Zone = a.Zone
+	snapshot.Tags = a.Tags
+
 	a.logger.Debug("collected snapshot")
 
-	return newFargateSnapshot(a.PID, taskMD, containerMD), true
+	return snapshot, true
 }
 
 type ecsDockerStatsCollector struct {
