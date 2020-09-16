@@ -31,6 +31,9 @@ func TestMain(m *testing.M) {
 	defer restoreEnvVarFunc("INSTANA_AGENT_KEY")
 	os.Setenv("INSTANA_AGENT_KEY", "testkey1")
 
+	defer restoreEnvVarFunc("INSTANA_ZONE")
+	os.Setenv("INSTANA_ZONE", "testzone")
+
 	var err error
 	agent, err = setupServerlessAgent()
 	if err != nil {
@@ -74,6 +77,7 @@ func TestFargateAgent_SendMetrics(t *testing.T) {
 		assert.NotEmpty(t, d.EntityID)
 		assert.Equal(t, d.Data["taskArn"], d.EntityID)
 
+		assert.Equal(t, "testzone", d.Data["instanaZone"])
 		assert.Equal(t, "default", d.Data["clusterArn"])
 		assert.Equal(t, "nginx", d.Data["taskDefinition"])
 		assert.Equal(t, "5", d.Data["taskDefinitionVersion"])
