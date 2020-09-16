@@ -27,6 +27,7 @@ type ECSTaskData struct {
 	TaskARN               string             `json:"taskArn"`
 	ClusterARN            string             `json:"clusterArn"`
 	AvailabilityZone      string             `json:"availabilityZone,omitempty"`
+	InstanaZone           string             `json:"instanaZone,omitempty"`
 	TaskDefinition        string             `json:"taskDefinition"`
 	TaskDefinitionVersion string             `json:"taskDefinitionVersion"`
 	DesiredStatus         string             `json:"desiredStatus"`
