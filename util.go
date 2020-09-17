@@ -211,3 +211,31 @@ func parseInstanaTags(tagStr string) map[string]interface{} {
 
 	return tags
 }
+
+// parseInstanaSecrets parses the tags string passed via INSTANA_SECRETS.
+// The secrets matcher configuration string is expected to have the following format:
+//
+//     INSTANA_SECRETS := <matcher>:<secret>[,<secret>]
+//
+// Where `matcher` is one of:
+// * `equals` - matches a string if it's contained in the secrets list
+// * `equals-ignore-case` is a case-insensitive version of `equals`
+// * `contains` matches a string if it contains any of the secrets list values
+// * `contains-ignore-case` is a case-insensitive version of `contains`
+// * `regex` matches a string if it fully matches any of the regular expressions provided in the secrets list
+//
+// This function returns DefaultSecretsMatcher() if there is no matcher configuration provided.
+func parseInstanaSecrets(matcherStr string) (Matcher, error) {
+	if matcherStr == "" {
+		return DefaultSecretsMatcher(), nil
+	}
+
+	ind := strings.Index(matcherStr, ":")
+	if ind < 0 {
+		return nil, fmt.Errorf("malformed INSTANA_SECRETS configuration: %q", matcherStr)
+	}
+
+	matcher, config := strings.TrimSpace(matcherStr[:ind]), strings.Split(matcherStr[ind+1:], ",")
+
+	return NamedMatcher(matcher, config)
+}

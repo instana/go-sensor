@@ -59,7 +59,15 @@ func (opts *Options) setDefaults() {
 		}
 	}
 
-	if opts.Tracer.Secrets == nil {
-		opts.Tracer.Secrets = DefaultSecretsMatcher()
+	secretsMatcher, err := parseInstanaSecrets(os.Getenv("INSTANA_SECRETS"))
+	if err != nil {
+		defaultLogger.Warn("invalid INSTANA_SECRETS= env variable value: ", err, ", ignoring")
+		secretsMatcher = opts.Tracer.Secrets
 	}
+
+	if secretsMatcher == nil {
+		secretsMatcher = DefaultSecretsMatcher()
+	}
+
+	opts.Tracer.Secrets = secretsMatcher
 }
