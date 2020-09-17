@@ -239,3 +239,23 @@ func parseInstanaSecrets(matcherStr string) (Matcher, error) {
 
 	return NamedMatcher(matcher, config)
 }
+
+// parseInstanaExtraHTTPHeaders parses the tags string passed via INSTANA_EXTRA_HTTP_HEADERS.
+// The header names are expected to come in a semicolon-separated list:
+//
+//     INSTANA_EXTRA_HTTP_HEADERS := header1[;header2;...]
+//
+// Any leading and trailing whitespace characters will be trimmed from header names.
+func parseInstanaExtraHTTPHeaders(headersStr string) []string {
+	var headers []string
+	for _, h := range strings.Split(headersStr, ";") {
+		h = strings.TrimSpace(h)
+		if h == "" {
+			continue
+		}
+
+		headers = append(headers, h)
+	}
+
+	return headers
+}

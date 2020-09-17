@@ -261,3 +261,20 @@ func TestParseInstanaSecrets_Error(t *testing.T) {
 		})
 	}
 }
+
+func TestParseInstanaExtraHTTPHeaders(t *testing.T) {
+	examples := map[string]struct {
+		Value    string
+		Expected []string
+	}{
+		"empty":    {"", nil},
+		"one":      {"a", []string{"a"}},
+		"multiple": {"a; ;  b  ;c;", []string{"a", "b", "c"}},
+	}
+
+	for name, example := range examples {
+		t.Run(name, func(t *testing.T) {
+			assert.Equal(t, example.Expected, parseInstanaExtraHTTPHeaders(example.Value))
+		})
+	}
+}

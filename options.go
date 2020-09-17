@@ -70,4 +70,8 @@ func (opts *Options) setDefaults() {
 	}
 
 	opts.Tracer.Secrets = secretsMatcher
+
+	if collectableHeaders, ok := os.LookupEnv("INSTANA_EXTRA_HTTP_HEADERS"); ok {
+		opts.Tracer.CollectableHTTPHeaders = parseInstanaExtraHTTPHeaders(collectableHeaders)
+	}
 }
