@@ -69,7 +69,16 @@ func newSensor(options *Options) *sensorS {
 		// seems like the app is running on AWS Fargate, but we still need to check
 		// whether ECS_CONTAINER_METADATA_URI is set
 		if mdURI := os.Getenv("ECS_CONTAINER_METADATA_URI"); mdURI != "" {
-			client := &http.Client{Timeout: 500 * time.Millisecond}
+			client, err := acceptor.NewHTTPClient(500 * time.Millisecond)
+			if err != nil {
+				if err == acceptor.ErrMalformedProxyURL {
+					s.logger.Warn(err)
+				} else {
+					s.logger.Error("failed to initialize acceptor HTTP client, falling back to the default one: ", err)
+					client = http.DefaultClient
+				}
+			}
+
 			s.agent = newFargateAgent(
 				s.serviceName,
 				os.Getenv("INSTANA_ENDPOINT_URL"),
