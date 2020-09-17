@@ -312,7 +312,6 @@ func NewHTTPSpanTags(span *spanS) HTTPSpanTags {
 			if m, ok := v.(map[string]string); ok {
 				tags.Headers = m
 			}
-			tags.Headers = v.(map[string]string)
 		case "http.path_tpl":
 			readStringTag(&tags.PathTemplate, v)
 		case "http.host":
