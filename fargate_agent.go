@@ -133,11 +133,22 @@ func newProcessPluginPayload(snapshot fargateSnapshot, prevStats, currentStats p
 		}
 	}
 
+	env := getProcessEnv()
+	for k := range env {
+		if k == "INSTANA_AGENT_KEY" {
+			continue
+		}
+
+		if sensor.options.Tracer.Secrets.Match(k) {
+			env[k] = "<redacted>"
+		}
+	}
+
 	return acceptor.NewProcessPluginPayload(strconv.Itoa(snapshot.PID), acceptor.ProcessData{
 		PID:           snapshot.PID,
 		Exec:          os.Args[0],
 		Args:          os.Args[1:],
-		Env:           getProcessEnv(),
+		Env:           env,
 		User:          currUser,
 		Group:         currGroup,
 		ContainerID:   snapshot.Container.DockerID,

@@ -37,6 +37,12 @@ func TestMain(m *testing.M) {
 	defer restoreEnvVarFunc("INSTANA_TAGS")
 	os.Setenv("INSTANA_TAGS", "key1=value1,key2")
 
+	defer restoreEnvVarFunc("INSTANA_SECRETS")
+	os.Setenv("INSTANA_SECRETS", "contains-ignore-case:key,password,secret,classified")
+
+	defer restoreEnvVarFunc("CLASSIFIED_DATA")
+	os.Setenv("CLASSIFIED_DATA", "classified")
+
 	var err error
 	agent, err = setupServerlessAgent()
 	if err != nil {
@@ -169,6 +175,16 @@ func TestFargateAgent_SendMetrics(t *testing.T) {
 
 		assert.Equal(t, "docker", d.Data["containerType"])
 		assert.Equal(t, "43481a6ce4842eec8fe72fc28500c6b52edcc0917f105b83379f88cac1ff3946", d.Data["container"])
+		if assert.IsType(t, map[string]interface{}{}, d.Data["env"]) {
+			env := d.Data["env"].(map[string]interface{})
+
+			assert.Equal(t, os.Getenv("INSTANA_ZONE"), env["INSTANA_ZONE"])
+			assert.Equal(t, os.Getenv("INSTANA_TAGS"), env["INSTANA_TAGS"])
+			assert.Equal(t, os.Getenv("INSTANA_AGENT_KEY"), env["INSTANA_AGENT_KEY"])
+
+			assert.Equal(t, "<redacted>", env["INSTANA_SECRETS"])
+			assert.Equal(t, "<redacted>", env["CLASSIFIED_DATA"])
+		}
 	})
 
 	t.Run("Go process plugin payload", func(t *testing.T) {
