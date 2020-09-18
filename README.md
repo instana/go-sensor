@@ -3,9 +3,9 @@
 # Instana Go Sensor
 go-sensor requires Go version 1.9 or greater.
 
-The Instana Go sensor consists of two parts:
+The Instana Go sensor consists of three parts:
 
-* metrics sensor
+* Metrics sensor
 * [OpenTracing](http://opentracing.io) tracer
 * AutoProfile™ continuous profiler
 
@@ -17,6 +17,7 @@ The Instana Go sensor consists of two parts:
 
 * [Installation](#installation)
   * [Running on AWS Fargate](#running-on-aws-fargate)
+    * [Additional configuration](#additional-configuration)
   * [Using Instana to gather process metrics only](#using-instana-to-gather-process-metrics-only)
 * [Common Operations](#common-operations)
   * [Setting the sensor log output](#setting-the-sensor-log-output)
@@ -80,6 +81,21 @@ Once a host agent found listening on port `42699` (or the port specified in `INS
 ### Running on AWS Fargate
 
 To use Instana Go sensor for monitoring a service running on AWS Fargate make sure that you have `INSTANA_ENDPOINT_URL` and `INSTANA_AGENT_KEY` env variables set in your task definition. Note that the `INSTANA_AGENT_HOST` and `INSTANA_AGENT_PORT` env variables will be ignored in this case. Please refer to [Instana documentation](https://www.instana.com/docs/ecosystem/aws-fargate/#configure-your-task-definition) for detailed explanation on how to do this.
+
+#### Additional configuration
+
+Services running in AWS Fargate don't use host agent to send metrics and trace data to Instana backend, therefore the usual way of configuring the in-app sensor via [`configuration.yaml`](https://www.instana.com/docs/setup_and_manage/host_agent/configuration/#agent-configuration-file) file is not applicable. Instead there is a set of environment variables that can optionally be configured in service task definition:
+
+| Environment variable         | Default value                              | Description                                                                              | 
+|------------------------------|--------------------------------------------|------------------------------------------------------------------------------------------|
+| `INSTANA_TIMEOUT`            | `500`                                      | The Instana backend connection timeout (in milliseconds)                                 |
+| `INSTANA_SECRETS`            | `contains-ignore-case:secret,key,password` | The [secrets filter](#secrets-filtering) (also applied to process environment variables) |
+| `INSTANA_EXTRA_HTTP_HEADERS` | none                                       | A semicolon-separated list of HTTP headers to collect from incoming requests             |
+| `INSTANA_ENDPOINT_PROXY`     | none                                       | A proxy URL to use to connect to Instana backend                                         |
+| `INSTANA_TAGS`               | none                                       | A comma-separated list of tags with optional values to associate with the ECS task       |
+| `INSTANA_ZONE`               | `<Current AWS availability zone>`          | A custom Instana zone name for this service                                              |
+
+Please refer to [Insana documentation](https://www.instana.com/docs/reference/environment_variables/#serverless-monitoring) for more detailed description of these variables and their value format.
 
 ### Using Instana to gather process metrics only
 
