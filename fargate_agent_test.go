@@ -57,25 +57,27 @@ func TestMain(m *testing.M) {
 func TestFargateAgent_SendMetrics(t *testing.T) {
 	defer agent.Reset()
 
-	require.Eventually(t, func() bool { return len(agent.Metrics) > 0 }, 2*time.Second, 500*time.Millisecond)
+	require.Eventually(t, func() bool { return len(agent.Bundles) > 0 }, 2*time.Second, 500*time.Millisecond)
 
-	collected := agent.Metrics[0]
+	collected := agent.Bundles[0]
 
 	assert.Equal(t, "arn:aws:ecs:us-east-2:012345678910:task/9781c248-0edd-4cdb-9a93-f63cb662a5d3::nginx-curl", collected.Header.Get("X-Instana-Host"))
 	assert.Equal(t, "testkey1", collected.Header.Get("X-Instana-Key"))
 	assert.NotEmpty(t, collected.Header.Get("X-Instana-Time"))
 
 	var payload struct {
-		Plugins []struct {
-			Name     string                 `json:"name"`
-			EntityID string                 `json:"entityId"`
-			Data     map[string]interface{} `json:"data"`
-		} `json:"plugins"`
+		Metrics struct {
+			Plugins []struct {
+				Name     string                 `json:"name"`
+				EntityID string                 `json:"entityId"`
+				Data     map[string]interface{} `json:"data"`
+			} `json:"plugins"`
+		} `json:"metrics"`
 	}
 	require.NoError(t, json.Unmarshal(collected.Body, &payload))
 
 	pluginData := make(map[string][]serverlessAgentPluginPayload)
-	for _, plugin := range payload.Plugins {
+	for _, plugin := range payload.Metrics.Plugins {
 		pluginData[plugin.Name] = append(pluginData[plugin.Name], serverlessAgentPluginPayload{plugin.EntityID, plugin.Data})
 	}
 
@@ -209,16 +211,34 @@ func TestFargateAgent_SendSpans(t *testing.T) {
 	sp.SetTag("value", "42")
 	sp.Finish()
 
-	require.Eventually(t, func() bool { return len(agent.Traces) > 0 }, 2*time.Second, 500*time.Millisecond)
+	require.Eventually(t, func() bool {
+		if len(agent.Bundles) == 0 {
+			return false
+		}
 
-	collected := agent.Traces[0]
+		for _, bundle := range agent.Bundles {
+			var payload struct {
+				Spans []json.RawMessage `json:"spans"`
+			}
 
-	assert.Equal(t, "arn:aws:ecs:us-east-2:012345678910:task/9781c248-0edd-4cdb-9a93-f63cb662a5d3::nginx-curl", collected.Header.Get("X-Instana-Host"))
-	assert.Equal(t, "testkey1", collected.Header.Get("X-Instana-Key"))
-	assert.NotEmpty(t, collected.Header.Get("X-Instana-Time"))
+			json.Unmarshal(bundle.Body, &payload)
+			if len(payload.Spans) > 0 {
+				return true
+			}
+		}
+
+		return false
+	}, 4*time.Second, 500*time.Millisecond)
 
 	var spans []map[string]json.RawMessage
-	require.NoError(t, json.Unmarshal(collected.Body, &spans))
+	for _, bundle := range agent.Bundles {
+		var payload struct {
+			Spans []map[string]json.RawMessage `json:"spans"`
+		}
+
+		require.NoError(t, json.Unmarshal(bundle.Body, &payload), "%s", string(bundle.Body))
+		spans = append(spans, payload.Spans...)
+	}
 
 	require.Len(t, spans, 1)
 	assert.JSONEq(t, `{"hl": true, "cp": "aws", "e": "arn:aws:ecs:us-east-2:012345678910:task/9781c248-0edd-4cdb-9a93-f63cb662a5d3::nginx-curl"}`, string(spans[0]["f"]))
@@ -265,8 +285,7 @@ type serverlessAgentRequest struct {
 }
 
 type serverlessAgent struct {
-	Metrics []serverlessAgentRequest
-	Traces  []serverlessAgentRequest
+	Bundles []serverlessAgentRequest
 
 	ln           net.Listener
 	restoreEnvFn func()
@@ -284,8 +303,7 @@ func setupServerlessAgent() (*serverlessAgent, error) {
 	}
 
 	mux := http.NewServeMux()
-	mux.HandleFunc("/metrics", srv.HandleMetrics)
-	mux.HandleFunc("/traces", srv.HandleTraces)
+	mux.HandleFunc("/bundle", srv.HandleBundle)
 
 	go http.Serve(ln, mux)
 
@@ -294,29 +312,14 @@ func setupServerlessAgent() (*serverlessAgent, error) {
 	return srv, nil
 }
 
-func (srv *serverlessAgent) HandleMetrics(w http.ResponseWriter, req *http.Request) {
-	body, err := ioutil.ReadAll(req.Body)
-	if err != nil {
-		log.Printf("ERROR: failed to read serverless agent metrics request body: %s", err)
-		body = nil
-	}
-
-	srv.Metrics = append(srv.Metrics, serverlessAgentRequest{
-		Header: req.Header,
-		Body:   body,
-	})
-
-	w.WriteHeader(http.StatusNoContent)
-}
-
-func (srv *serverlessAgent) HandleTraces(w http.ResponseWriter, req *http.Request) {
+func (srv *serverlessAgent) HandleBundle(w http.ResponseWriter, req *http.Request) {
 	body, err := ioutil.ReadAll(req.Body)
 	if err != nil {
 		log.Printf("ERROR: failed to read serverless agent spans request body: %s", err)
 		body = nil
 	}
 
-	srv.Traces = append(srv.Traces, serverlessAgentRequest{
+	srv.Bundles = append(srv.Bundles, serverlessAgentRequest{
 		Header: req.Header,
 		Body:   body,
 	})
@@ -325,8 +328,7 @@ func (srv *serverlessAgent) HandleTraces(w http.ResponseWriter, req *http.Reques
 }
 
 func (srv *serverlessAgent) Reset() {
-	srv.Metrics = nil
-	srv.Traces = nil
+	srv.Bundles = nil
 }
 
 func (srv *serverlessAgent) Teardown() {
