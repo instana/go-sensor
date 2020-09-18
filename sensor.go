@@ -16,6 +16,8 @@ import (
 const (
 	DefaultMaxBufferedSpans = 1000
 	DefaultForceSpanSendAt  = 500
+
+	defaultServerlessTimeout = 500 * time.Millisecond
 )
 
 type agentClient interface {
@@ -69,7 +71,13 @@ func newSensor(options *Options) *sensorS {
 		// seems like the app is running on AWS Fargate, but we still need to check
 		// whether ECS_CONTAINER_METADATA_URI is set
 		if mdURI := os.Getenv("ECS_CONTAINER_METADATA_URI"); mdURI != "" {
-			client, err := acceptor.NewHTTPClient(500 * time.Millisecond)
+			timeout, err := parseInstanaTimeout(os.Getenv("INSTANA_TIMEOUT"))
+			if err != nil {
+				s.logger.Warn("malformed INSTANA_TIMEOUT value, falling back to the default one: ", err)
+				timeout = defaultServerlessTimeout
+			}
+
+			client, err := acceptor.NewHTTPClient(timeout)
 			if err != nil {
 				if err == acceptor.ErrMalformedProxyURL {
 					s.logger.Warn(err)

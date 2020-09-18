@@ -93,7 +93,7 @@ func parseInstanaExtraHTTPHeaders(s string) []string {
 // This function returns the default timeout 500ms if provided with an empty string.
 func parseInstanaTimeout(s string) (time.Duration, error) {
 	if s == "" {
-		return 500 * time.Millisecond, nil
+		return defaultServerlessTimeout, nil
 	}
 
 	ms, err := strconv.ParseUint(s, 10, 64)

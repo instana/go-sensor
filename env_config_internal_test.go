@@ -99,7 +99,7 @@ func TestParseInstanaTimeout(t *testing.T) {
 		Value    string
 		Expected time.Duration
 	}{
-		"empty":            {"", 500 * time.Millisecond},
+		"empty":            {"", defaultServerlessTimeout},
 		"positive integer": {"123", 123 * time.Millisecond},
 	}
 
