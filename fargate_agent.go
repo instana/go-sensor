@@ -162,6 +162,10 @@ func newProcessPluginPayload(snapshot fargateSnapshot, prevStats, currentStats p
 	})
 }
 
+type metricsPayload struct {
+	Plugins []acceptor.PluginPayload `json:"plugins"`
+}
+
 type fargateAgent struct {
 	Endpoint string
 	Key      string
@@ -172,6 +176,9 @@ type fargateAgent struct {
 	snapshot         fargateSnapshot
 	lastDockerStats  map[string]docker.ContainerStats
 	lastProcessStats processStats
+
+	mu        sync.Mutex
+	spanQueue []agentSpan
 
 	runtimeSnapshot *SnapshotCollector
 	dockerStats     *ecsDockerStatsCollector
@@ -258,23 +265,26 @@ func (a *fargateAgent) SendMetrics(data acceptor.Metrics) (err error) {
 	}()
 
 	payload := struct {
-		Plugins []acceptor.PluginPayload `json:"plugins"`
+		Metrics metricsPayload `json:"metrics,omitempty"`
+		Spans   []agentSpan    `json:"spans,omitempty"`
 	}{
-		Plugins: []acceptor.PluginPayload{
-			newECSTaskPluginPayload(a.snapshot),
-			newProcessPluginPayload(a.snapshot, a.lastProcessStats, processStats),
-			acceptor.NewGoProcessPluginPayload(acceptor.GoProcessData{
-				PID:      a.PID,
-				Snapshot: a.runtimeSnapshot.Collect(),
-				Metrics:  data,
-			}),
+		Metrics: metricsPayload{
+			Plugins: []acceptor.PluginPayload{
+				newECSTaskPluginPayload(a.snapshot),
+				newProcessPluginPayload(a.snapshot, a.lastProcessStats, processStats),
+				acceptor.NewGoProcessPluginPayload(acceptor.GoProcessData{
+					PID:      a.PID,
+					Snapshot: a.runtimeSnapshot.Collect(),
+					Metrics:  data,
+				}),
+			},
 		},
 	}
 
 	for _, container := range a.snapshot.Task.Containers {
 		instrumented := ecsEntityID(container) == a.snapshot.EntityID
-		payload.Plugins = append(
-			payload.Plugins,
+		payload.Metrics.Plugins = append(
+			payload.Metrics.Plugins,
 			newECSContainerPluginPayload(container, instrumented),
 			newDockerContainerPluginPayload(
 				container,
@@ -285,12 +295,20 @@ func (a *fargateAgent) SendMetrics(data acceptor.Metrics) (err error) {
 		)
 	}
 
+	a.mu.Lock()
+	if len(a.spanQueue) > 0 {
+		payload.Spans = make([]agentSpan, len(a.spanQueue))
+		copy(payload.Spans, a.spanQueue)
+		a.spanQueue = a.spanQueue[:0]
+	}
+	a.mu.Unlock()
+
 	buf := bytes.NewBuffer(nil)
 	if err := json.NewEncoder(buf).Encode(payload); err != nil {
 		return fmt.Errorf("failed to marshal metrics payload: %s", err)
 	}
 
-	req, err := http.NewRequest(http.MethodPost, a.Endpoint+"/metrics", buf)
+	req, err := http.NewRequest(http.MethodPost, a.Endpoint+"/bundle", buf)
 	if err != nil {
 		return fmt.Errorf("failed to prepare send metrics request: %s", err)
 	}
@@ -310,19 +328,12 @@ func (a *fargateAgent) SendSpans(spans []Span) error {
 		agentSpans = append(agentSpans, agentSpan{sp, from})
 	}
 
-	buf := bytes.NewBuffer(nil)
-	if err := json.NewEncoder(buf).Encode(agentSpans); err != nil {
-		return fmt.Errorf("failed to marshal spans payload: %s", err)
-	}
+	// enqueue the spans to send them in a bundle with metrics instead of sending immidiately
+	a.mu.Lock()
+	a.spanQueue = append(a.spanQueue, agentSpans...)
+	a.mu.Unlock()
 
-	req, err := http.NewRequest(http.MethodPost, a.Endpoint+"/traces", buf)
-	if err != nil {
-		return fmt.Errorf("failed to prepare send spans request: %s", err)
-	}
-
-	req.Header.Set("Content-Type", "application/json")
-
-	return a.sendRequest(req)
+	return nil
 }
 
 func (a *fargateAgent) SendProfiles(profiles []autoprofile.Profile) error { return nil }
