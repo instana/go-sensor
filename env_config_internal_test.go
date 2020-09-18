@@ -3,6 +3,7 @@ package instana
 import (
 	"regexp"
 	"testing"
+	"time"
 
 	"github.com/instana/go-sensor/secrets"
 	"github.com/instana/testify/assert"
@@ -89,6 +90,40 @@ func TestParseInstanaExtraHTTPHeaders(t *testing.T) {
 	for name, example := range examples {
 		t.Run(name, func(t *testing.T) {
 			assert.Equal(t, example.Expected, parseInstanaExtraHTTPHeaders(example.Value))
+		})
+	}
+}
+
+func TestParseInstanaTimeout(t *testing.T) {
+	examples := map[string]struct {
+		Value    string
+		Expected time.Duration
+	}{
+		"empty":            {"", 500 * time.Millisecond},
+		"positive integer": {"123", 123 * time.Millisecond},
+	}
+
+	for name, example := range examples {
+		t.Run(name, func(t *testing.T) {
+			d, err := parseInstanaTimeout(example.Value)
+			require.NoError(t, err)
+			assert.Equal(t, example.Expected, d)
+		})
+	}
+}
+
+func TestParseInstanaTimeout_Error(t *testing.T) {
+	examples := map[string]string{
+		"non-number":       "twenty",
+		"non-integer":      "12.5:",
+		"zero":             "0",
+		"negative integer": "-100",
+	}
+
+	for name, example := range examples {
+		t.Run(name, func(t *testing.T) {
+			_, err := parseInstanaTimeout(example)
+			assert.Error(t, err)
 		})
 	}
 }

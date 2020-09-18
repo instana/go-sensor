@@ -2,7 +2,9 @@ package instana
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
+	"time"
 )
 
 // parseInstanaTags parses the tags string passed via INSTANA_TAGS.
@@ -84,4 +86,20 @@ func parseInstanaExtraHTTPHeaders(s string) []string {
 	}
 
 	return headers
+}
+
+// parseInstanaTimeout parses the Instana backend connection timeout passed via INSTANA_TIMEOUT.
+// The value is expected to be an integer number of milliseconds, greate than 0.
+// This function returns the default timeout 500ms if provided with an empty string.
+func parseInstanaTimeout(s string) (time.Duration, error) {
+	if s == "" {
+		return 500 * time.Millisecond, nil
+	}
+
+	ms, err := strconv.ParseUint(s, 10, 64)
+	if err != nil || ms < 1 {
+		return 0, fmt.Errorf("invalid timeout value: %q", s)
+	}
+
+	return time.Duration(ms) * time.Millisecond, nil
 }
