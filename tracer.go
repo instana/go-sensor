@@ -32,7 +32,12 @@ func (r *tracerS) Inject(spanContext ot.SpanContext, format interface{}, carrier
 func (r *tracerS) Extract(format interface{}, carrier interface{}) (ot.SpanContext, error) {
 	switch format {
 	case ot.TextMap, ot.HTTPHeaders:
-		return extractTraceContext(carrier)
+		sc, err := extractTraceContext(carrier)
+		if err != nil {
+			return nil, err
+		}
+
+		return sc, nil
 	}
 
 	return nil, ot.ErrUnsupportedFormat
