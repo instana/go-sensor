@@ -4,6 +4,7 @@ package storage
 
 import (
 	"context"
+	"strings"
 
 	"cloud.google.com/go/storage"
 	"github.com/instana/go-sensor/instrumentation/cloud.google.com/go/internal"
@@ -55,14 +56,17 @@ func (c *Copier) Run(ctx context.Context) (attrs *storage.ObjectAttrs, err error
 // See https://pkg.go.dev/cloud.google.com/go/storage?tab=doc#ObjectHandle.ComposerFrom for furter details on wrapped method.
 func (dst *ObjectHandle) ComposerFrom(srcs ...*ObjectHandle) *Composer {
 	srcsCopy := make([]*storage.ObjectHandle, len(srcs))
+	sourceObjects := make([]string, len(srcs))
 	for i := range srcs {
 		srcsCopy[i] = srcs[i].ObjectHandle
+		sourceObjects[i] = srcs[i].Bucket + "/" + srcs[i].Name
 	}
 
 	return &Composer{
 		Composer:          dst.ObjectHandle.ComposerFrom(srcsCopy...),
 		DestinationBucket: dst.Bucket,
 		DestinationName:   dst.Name,
+		SourceObjects:     sourceObjects,
 	}
 }
 
@@ -73,6 +77,7 @@ func (dst *ObjectHandle) ComposerFrom(srcs ...*ObjectHandle) *Composer {
 type Composer struct {
 	*storage.Composer
 	DestinationBucket, DestinationName string
+	SourceObjects                      []string
 }
 
 // Run calls and traces the Run() method of the wrapped cloud.google.com/go/storage.Composer.
@@ -83,6 +88,7 @@ func (c *Composer) Run(ctx context.Context) (attrs *storage.ObjectAttrs, err err
 		"gcs.op":                "objects.compose",
 		"gcs.destinationBucket": c.DestinationBucket,
 		"gcs.destinationObject": c.DestinationName,
+		"gcs.sourceObjects":     strings.Join(c.SourceObjects, ","),
 	})
 
 	defer func() { internal.FinishSpan(ctx, err) }()
