@@ -89,7 +89,7 @@ func (o *ObjectHandle) Key(encryptionKey []byte) *ObjectHandle {
 // See https://pkg.go.dev/cloud.google.com/go/storage?tab=doc#ObjectHandle.Attrs for furter details on wrapped method.
 func (o *ObjectHandle) Attrs(ctx context.Context) (attrs *storage.ObjectAttrs, err error) {
 	ctx = internal.StartExitSpan(ctx, "gcs", ot.Tags{
-		"gcs.op":     "objects.get",
+		"gcs.op":     "objects.attrs",
 		"gcs.bucket": o.Bucket,
 		"gcs.object": o.Name,
 	})
