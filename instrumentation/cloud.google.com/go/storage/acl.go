@@ -29,6 +29,7 @@ func (a *ACLHandle) Delete(ctx context.Context, entity storage.ACLEntity) (err e
 		"gcs.op":     aclOpPrefix(a) + ".delete",
 		"gcs.bucket": a.Bucket,
 		"gcs.object": a.Object,
+		"gcs.entity": string(entity),
 	})
 
 	defer func() { internal.FinishSpan(ctx, err) }()
@@ -44,6 +45,7 @@ func (a *ACLHandle) Set(ctx context.Context, entity storage.ACLEntity, role stor
 		"gcs.op":     aclOpPrefix(a) + ".update",
 		"gcs.bucket": a.Bucket,
 		"gcs.object": a.Object,
+		"gcs.entity": string(entity),
 	})
 
 	defer func() { internal.FinishSpan(ctx, err) }()
