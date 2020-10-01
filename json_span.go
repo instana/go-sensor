@@ -31,8 +31,11 @@ const (
 	RPCServerSpanType = RegisteredSpanType("rpc-server")
 	RPCClientSpanType = RegisteredSpanType("rpc-client")
 	// Kafka consumer/producer span
-	KafkaSpanType      = RegisteredSpanType("kafka")
+	KafkaSpanType = RegisteredSpanType("kafka")
+	// Google Cloud Storage client span
 	GCPStorageSpanType = RegisteredSpanType("gcs")
+	// Google Cloud PubSub client span
+	GCPPubSubSpanType = RegisteredSpanType("gcps")
 )
 
 // RegisteredSpanType represents the span type supported by Instana
@@ -49,6 +52,8 @@ func (st RegisteredSpanType) ExtractData(span *spanS) typedSpanData {
 		return NewKafkaSpanData(span)
 	case GCPStorageSpanType:
 		return NewGCPStorageSpanData(span)
+	case GCPPubSubSpanType:
+		return NewGCPPubSubSpanData(span)
 	default:
 		return NewSDKSpanData(span)
 	}
@@ -481,6 +486,54 @@ func NewGCPStorageSpanTags(span *spanS) GCPStorageSpanTags {
 			readStringTag(&tags.ProjectID, v)
 		case "gcs.accessId":
 			readStringTag(&tags.AccessID, v)
+		}
+	}
+
+	return tags
+}
+
+type GCPPubSubSpanData struct {
+	SpanData
+	Tags GCPPubSubSpanTags `json:"gcps"`
+}
+
+func NewGCPPubSubSpanData(span *spanS) GCPPubSubSpanData {
+	data := GCPPubSubSpanData{
+		SpanData: NewSpanData(span, GCPPubSubSpanType),
+		Tags:     NewGCPPubSubSpanTags(span),
+	}
+
+	return data
+}
+
+func (d GCPPubSubSpanData) Kind() SpanKind {
+	switch d.Tags.Operation {
+	case "consume":
+		return EntrySpanKind
+	default:
+		return ExitSpanKind
+	}
+}
+
+type GCPPubSubSpanTags struct {
+	ProjectID    string `json:"projid"`
+	Operation    string `json:"op"`
+	Topic        string `json:"top"`
+	Subscription string `json:"sub,omitempty"`
+}
+
+func NewGCPPubSubSpanTags(span *spanS) GCPPubSubSpanTags {
+	var tags GCPPubSubSpanTags
+	for k, v := range span.Tags {
+		switch k {
+		case "gcps.projid":
+			readStringTag(&tags.ProjectID, v)
+		case "gcps.op":
+			readStringTag(&tags.Operation, v)
+		case "gcps.top":
+			readStringTag(&tags.Topic, v)
+		case "gcps.sub":
+			readStringTag(&tags.Subscription, v)
 		}
 	}
 
