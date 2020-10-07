@@ -106,8 +106,6 @@ github.com/googleapis/gax-go/v2 v2.0.5/go.mod h1:DWXyrwAJ9X0FpwwEdw+IPEYBICEFu5m
 github.com/hashicorp/golang-lru v0.5.0/go.mod h1:/m3WP610KZHVQ1SGc6re/UDhFvYD7pJ4Ao+sR/qLZy8=
 github.com/hashicorp/golang-lru v0.5.1/go.mod h1:/m3WP610KZHVQ1SGc6re/UDhFvYD7pJ4Ao+sR/qLZy8=
 github.com/ianlancetaylor/demangle v0.0.0-20181102032728-5e5cf60278f6/go.mod h1:aSSvb/t6k1mPoxDqO4vJh6VOCGPwU4O0C2/Eqndh1Sc=
-github.com/instana/go-sensor v1.17.0 h1:Krg7UUlyACTrFtpkMcSgVb3kQ7ZBZ2ov/XeG9/Jgw5Q=
-github.com/instana/go-sensor v1.17.0/go.mod h1:MtFmttTfmBKb8tqAho/FJxUpkFGHemD6rwkjQfgpqSI=
 github.com/instana/go-sensor v1.18.0 h1:PzbQ4sgVu4eWmxBoH71gQqmxirUSxxEdtJtmXSd9zqU=
 github.com/instana/go-sensor v1.18.0/go.mod h1:MtFmttTfmBKb8tqAho/FJxUpkFGHemD6rwkjQfgpqSI=
 github.com/instana/testify v1.6.2-0.20200721153833-94b1851f4d65 h1:T25FL3WEzgmKB0m6XCJNZ65nw09/QIp3T1yXr487D+A=

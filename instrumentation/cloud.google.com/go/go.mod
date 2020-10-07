@@ -4,6 +4,7 @@ go 1.11
 
 require (
 	cloud.google.com/go v0.56.0
+	cloud.google.com/go/pubsub v1.3.1
 	cloud.google.com/go/storage v1.7.0
 	github.com/golang/protobuf v1.4.2 // indirect
 	github.com/google/go-cmp v0.5.1 // indirect
