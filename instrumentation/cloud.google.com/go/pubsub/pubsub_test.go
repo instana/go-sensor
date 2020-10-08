@@ -150,6 +150,129 @@ func TestClient_Topics(t *testing.T) {
 	}
 }
 
+func TestClient_Subscription(t *testing.T) {
+	srv, conn, teardown, err := setupMockServer()
+	require.NoError(t, err)
+	defer teardown()
+
+	top, err := srv.GServer.CreateTopic(context.Background(), &pb.Topic{
+		Name: "projects/test-project/topics/test-topic",
+	})
+	require.NoError(t, err)
+
+	examples := map[string]func(*testing.T, string) *pubsub.Subscription{
+		"ClientProject": func(t *testing.T, topicName string) *pubsub.Subscription {
+			pstest.SetMinAckDeadline(1 * time.Second)
+			defer pstest.ResetMinAckDeadline()
+
+			_, err = srv.GServer.CreateSubscription(context.Background(), &pb.Subscription{
+				Topic:              "projects/test-project/topics/" + topicName,
+				Name:               "projects/test-project/subscriptions/test-subscription",
+				AckDeadlineSeconds: 10,
+			})
+			require.NoError(t, err)
+
+			client, err := pubsub.NewClient(context.Background(), "test-project", option.WithGRPCConn(conn))
+			require.NoError(t, err)
+
+			return client.Subscription("test-subscription")
+		},
+		"OtherProject": func(t *testing.T, topicName string) *pubsub.Subscription {
+			pstest.SetMinAckDeadline(1 * time.Second)
+			defer pstest.ResetMinAckDeadline()
+
+			_, err = srv.GServer.CreateSubscription(context.Background(), &pb.Subscription{
+				Topic:              "projects/test-project/topics/" + topicName,
+				Name:               "projects/test-project/subscriptions/test-subscription",
+				AckDeadlineSeconds: 10,
+			})
+			require.NoError(t, err)
+
+			client, err := pubsub.NewClient(context.Background(), "other-project", option.WithGRPCConn(conn))
+			require.NoError(t, err)
+
+			return client.SubscriptionInProject("test-subscription", "test-project")
+		},
+
+		"CreateSubscriptionWithConfig": func(t *testing.T, topicName string) *pubsub.Subscription {
+			client, err := pubsub.NewClient(context.Background(), "test-project", option.WithGRPCConn(conn))
+			require.NoError(t, err)
+
+			sub, err := client.CreateSubscription(context.Background(), "test-subscription", gpubsub.SubscriptionConfig{
+				Topic: client.Topic(topicName),
+			})
+			require.NoError(t, err)
+
+			return sub
+		},
+	}
+
+	for name, subscribe := range examples {
+		t.Run(name, func(t *testing.T) {
+			srv.ClearMessages()
+
+			sub := subscribe(t, "test-topic")
+			defer sub.Delete(context.Background())
+
+			msgID := srv.Publish(top.Name, []byte("test message"), nil)
+
+			ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+			defer cancel()
+
+			require.NoError(t, sub.Receive(ctx, func(ctx context.Context, msg *gpubsub.Message) {
+				assert.Equal(t, msgID, msg.ID)
+				msg.Ack()
+				cancel()
+			}))
+
+			// ensure the context has been cancelled and not timed out
+			assert.Equal(t, context.Canceled, ctx.Err())
+		})
+	}
+}
+
+func TestClient_Subscriptions(t *testing.T) {
+	pstest.SetMinAckDeadline(1 * time.Second)
+	defer pstest.ResetMinAckDeadline()
+
+	srv, conn, teardown, err := setupMockServer()
+	require.NoError(t, err)
+	defer teardown()
+
+	top, err := srv.GServer.CreateTopic(context.Background(), &pb.Topic{
+		Name: "projects/test-project/topics/test-topic",
+	})
+	require.NoError(t, err)
+
+	subscriptionNames := []string{"first", "second"}
+	for _, subName := range subscriptionNames {
+		_, err = srv.GServer.CreateSubscription(context.Background(), &pb.Subscription{
+			Topic:              top.Name,
+			Name:               "projects/test-project/subscriptions/" + subName,
+			AckDeadlineSeconds: 10,
+		})
+		require.NoError(t, err)
+	}
+
+	client, err := pubsub.NewClient(context.Background(), "test-project", option.WithGRPCConn(conn))
+	require.NoError(t, err)
+
+	var subs []string
+
+	it := client.Subscriptions(context.Background())
+	for {
+		sub, err := it.Next()
+		if err == iterator.Done {
+			break
+		}
+
+		require.NoError(t, err)
+		subs = append(subs, sub.ID())
+	}
+
+	assert.ElementsMatch(t, subscriptionNames, subs)
+}
+
 func setupMockServer() (*pstest.Server, *grpc.ClientConn, func(), error) {
 	srv := pstest.NewServer()
 
