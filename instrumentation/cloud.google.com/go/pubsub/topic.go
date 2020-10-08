@@ -4,6 +4,10 @@ import (
 	"context"
 
 	"cloud.google.com/go/pubsub"
+	instana "github.com/instana/go-sensor"
+	"github.com/opentracing/opentracing-go"
+	"github.com/opentracing/opentracing-go/ext"
+	otlog "github.com/opentracing/opentracing-go/log"
 )
 
 // Topic is an instrumented wrapper for cloud.google.com/go/pubsub.Topic that traces Publish() calls
@@ -16,12 +20,42 @@ type Topic struct {
 }
 
 // Publish adds the trace context found in ctx to the message and publishes it to the wrapped topic.
+// The exit span created for this operation will be finished only after the message was submitted to
+// the server.
 //
 // See https://pkg.go.dev/cloud.google.com/go/pubsub?tab=doc#Topic.Publish for furter details on wrapped method.
-//
-// TODO: instrument
 func (top *Topic) Publish(ctx context.Context, msg *pubsub.Message) *pubsub.PublishResult {
-	return top.Publish(ctx, msg)
+	parent, ok := instana.SpanFromContext(ctx)
+	if !ok {
+		return top.Topic.Publish(ctx, msg)
+	}
+
+	sp := parent.Tracer().StartSpan("gcps",
+		ext.SpanKindProducer,
+		opentracing.ChildOf(parent.Context()),
+		opentracing.Tags{
+			"gcps.op":     "publish",
+			"gcps.projid": top.projectID,
+			"gcps.top":    top.ID(),
+		},
+	)
+
+	if msg.Attributes == nil {
+		msg.Attributes = make(map[string]string)
+	}
+	sp.Tracer().Inject(sp.Context(), opentracing.TextMap, opentracing.TextMapCarrier(msg.Attributes))
+
+	res := top.Topic.Publish(ctx, msg)
+	go func() {
+		_, err := res.Get(context.Background())
+		if err != nil {
+			sp.LogFields(otlog.Error(err))
+		}
+
+		sp.Finish()
+	}()
+
+	return res
 }
 
 // TopicIterator is a wrapper for cloud.google.com/go/pubsub.TopicIterator that retrieves and instruments
