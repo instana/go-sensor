@@ -16,7 +16,10 @@ import (
 // See https://pkg.go.dev/cloud.google.com/go/pubsub?tab=doc#Topic for furter details on wrapped type.
 type Topic struct {
 	*pubsub.Topic
+
 	projectID string
+
+	sensor *instana.Sensor
 }
 
 // Publish adds the trace context found in ctx to the message and publishes it to the wrapped topic.
@@ -59,7 +62,7 @@ func (top *Topic) Publish(ctx context.Context, msg *pubsub.Message) *pubsub.Publ
 }
 
 func (top *Topic) Subscriptions(ctx context.Context) *SubscriptionIterator {
-	return &SubscriptionIterator{top.Topic.Subscriptions(ctx), top.projectID, top.ID()}
+	return &SubscriptionIterator{top.Topic.Subscriptions(ctx), top.projectID, top.ID(), top.sensor}
 }
 
 // TopicIterator is a wrapper for cloud.google.com/go/pubsub.TopicIterator that retrieves and instruments
@@ -68,7 +71,10 @@ func (top *Topic) Subscriptions(ctx context.Context) *SubscriptionIterator {
 // See https://pkg.go.dev/cloud.google.com/go/pubsub?tab=doc#TopicIterator for furter details on wrapped type.
 type TopicIterator struct {
 	*pubsub.TopicIterator
+
 	projectID string
+
+	sensor *instana.Sensor
 }
 
 // Next fetches the next topic in project via the wrapped TopicIterator and returns its wrapped version.
@@ -76,5 +82,5 @@ type TopicIterator struct {
 // See https://pkg.go.dev/cloud.google.com/go/pubsub?tab=doc#TopicIterator.Next for furter details on wrapped method.
 func (it *TopicIterator) Next() (*Topic, error) {
 	top, err := it.TopicIterator.Next()
-	return &Topic{top, it.projectID}, err
+	return &Topic{top, it.projectID, it.sensor}, err
 }

@@ -8,6 +8,7 @@ import (
 
 	gpubsub "cloud.google.com/go/pubsub"
 	"cloud.google.com/go/pubsub/pstest"
+	instana "github.com/instana/go-sensor"
 	"github.com/instana/go-sensor/instrumentation/cloud.google.com/go/pubsub"
 	"github.com/instana/testify/assert"
 	"github.com/instana/testify/require"
@@ -22,6 +23,13 @@ func TestClient_Topic(t *testing.T) {
 	require.NoError(t, err)
 	defer teardown()
 
+	sensor := instana.NewSensorWithTracer(
+		instana.NewTracerWithEverything(
+			instana.DefaultOptions(),
+			instana.NewTestRecorder(),
+		),
+	)
+
 	_, err = srv.GServer.CreateTopic(context.Background(), &pb.Topic{
 		Name: "projects/test-project/topics/test-topic",
 	})
@@ -29,7 +37,7 @@ func TestClient_Topic(t *testing.T) {
 
 	examples := map[string]func(*testing.T, *gpubsub.Message) *gpubsub.PublishResult{
 		"ClientProject": func(t *testing.T, msg *gpubsub.Message) *gpubsub.PublishResult {
-			client, err := pubsub.NewClient(context.Background(), "test-project", option.WithGRPCConn(conn))
+			client, err := pubsub.NewClient(context.Background(), "test-project", sensor, option.WithGRPCConn(conn))
 			require.NoError(t, err)
 
 			top := client.Topic("test-topic")
@@ -37,7 +45,7 @@ func TestClient_Topic(t *testing.T) {
 			return top.Publish(context.Background(), msg)
 		},
 		"OtherProject": func(t *testing.T, msg *gpubsub.Message) *gpubsub.PublishResult {
-			client, err := pubsub.NewClient(context.Background(), "other-project", option.WithGRPCConn(conn))
+			client, err := pubsub.NewClient(context.Background(), "other-project", sensor, option.WithGRPCConn(conn))
 			require.NoError(t, err)
 
 			top := client.TopicInProject("test-topic", "test-project")
@@ -45,7 +53,7 @@ func TestClient_Topic(t *testing.T) {
 			return top.Publish(context.Background(), msg)
 		},
 		"CreateTopic": func(t *testing.T, msg *gpubsub.Message) *gpubsub.PublishResult {
-			client, err := pubsub.NewClient(context.Background(), "test-project", option.WithGRPCConn(conn))
+			client, err := pubsub.NewClient(context.Background(), "test-project", sensor, option.WithGRPCConn(conn))
 			require.NoError(t, err)
 
 			top, err := client.CreateTopic(context.Background(), "new-test-topic")
@@ -54,7 +62,7 @@ func TestClient_Topic(t *testing.T) {
 			return top.Publish(context.Background(), msg)
 		},
 		"CreateTopicWithConfig": func(t *testing.T, msg *gpubsub.Message) *gpubsub.PublishResult {
-			client, err := pubsub.NewClient(context.Background(), "test-project", option.WithGRPCConn(conn))
+			client, err := pubsub.NewClient(context.Background(), "test-project", sensor, option.WithGRPCConn(conn))
 			require.NoError(t, err)
 
 			conf := &gpubsub.TopicConfig{
@@ -107,6 +115,13 @@ func TestClient_Topics(t *testing.T) {
 	require.NoError(t, err)
 	defer teardown()
 
+	sensor := instana.NewSensorWithTracer(
+		instana.NewTracerWithEverything(
+			instana.DefaultOptions(),
+			instana.NewTestRecorder(),
+		),
+	)
+
 	topicNames := []string{"first-topic", "second-topic"}
 
 	for _, topicName := range topicNames {
@@ -116,7 +131,7 @@ func TestClient_Topics(t *testing.T) {
 		require.NoError(t, err)
 	}
 
-	client, err := pubsub.NewClient(context.Background(), "test-project", option.WithGRPCConn(conn))
+	client, err := pubsub.NewClient(context.Background(), "test-project", sensor, option.WithGRPCConn(conn))
 	require.NoError(t, err)
 
 	var res []*gpubsub.PublishResult
@@ -155,6 +170,13 @@ func TestClient_Subscription(t *testing.T) {
 	require.NoError(t, err)
 	defer teardown()
 
+	sensor := instana.NewSensorWithTracer(
+		instana.NewTracerWithEverything(
+			instana.DefaultOptions(),
+			instana.NewTestRecorder(),
+		),
+	)
+
 	top, err := srv.GServer.CreateTopic(context.Background(), &pb.Topic{
 		Name: "projects/test-project/topics/test-topic",
 	})
@@ -172,7 +194,7 @@ func TestClient_Subscription(t *testing.T) {
 			})
 			require.NoError(t, err)
 
-			client, err := pubsub.NewClient(context.Background(), "test-project", option.WithGRPCConn(conn))
+			client, err := pubsub.NewClient(context.Background(), "test-project", sensor, option.WithGRPCConn(conn))
 			require.NoError(t, err)
 
 			return client.Subscription("test-subscription")
@@ -188,18 +210,18 @@ func TestClient_Subscription(t *testing.T) {
 			})
 			require.NoError(t, err)
 
-			client, err := pubsub.NewClient(context.Background(), "other-project", option.WithGRPCConn(conn))
+			client, err := pubsub.NewClient(context.Background(), "other-project", sensor, option.WithGRPCConn(conn))
 			require.NoError(t, err)
 
 			return client.SubscriptionInProject("test-subscription", "test-project")
 		},
 
 		"CreateSubscriptionWithConfig": func(t *testing.T, topicName string) *pubsub.Subscription {
-			client, err := pubsub.NewClient(context.Background(), "test-project", option.WithGRPCConn(conn))
+			client, err := pubsub.NewClient(context.Background(), "test-project", sensor, option.WithGRPCConn(conn))
 			require.NoError(t, err)
 
 			sub, err := client.CreateSubscription(context.Background(), "test-subscription", gpubsub.SubscriptionConfig{
-				Topic: client.Topic(topicName),
+				Topic: client.Topic(topicName).Topic,
 			})
 			require.NoError(t, err)
 
@@ -239,6 +261,13 @@ func TestClient_Subscriptions(t *testing.T) {
 	require.NoError(t, err)
 	defer teardown()
 
+	sensor := instana.NewSensorWithTracer(
+		instana.NewTracerWithEverything(
+			instana.DefaultOptions(),
+			instana.NewTestRecorder(),
+		),
+	)
+
 	top, err := srv.GServer.CreateTopic(context.Background(), &pb.Topic{
 		Name: "projects/test-project/topics/test-topic",
 	})
@@ -254,7 +283,7 @@ func TestClient_Subscriptions(t *testing.T) {
 		require.NoError(t, err)
 	}
 
-	client, err := pubsub.NewClient(context.Background(), "test-project", option.WithGRPCConn(conn))
+	client, err := pubsub.NewClient(context.Background(), "test-project", sensor, option.WithGRPCConn(conn))
 	require.NoError(t, err)
 
 	var subs []string

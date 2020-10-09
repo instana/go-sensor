@@ -28,7 +28,12 @@ func TestTopic_Publish(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	client, err := pubsub.NewClient(context.Background(), "test-project", option.WithGRPCConn(conn))
+	client, err := pubsub.NewClient(
+		context.Background(),
+		"test-project",
+		instana.NewSensorWithTracer(tracer),
+		option.WithGRPCConn(conn),
+	)
 	require.NoError(t, err)
 
 	parent := tracer.StartSpan("testing")
@@ -94,6 +99,9 @@ func TestTopic_Publish(t *testing.T) {
 }
 
 func TestTopic_Publish_NoTrace(t *testing.T) {
+	recorder := instana.NewTestRecorder()
+	tracer := instana.NewTracerWithEverything(instana.DefaultOptions(), recorder)
+
 	srv, conn, teardown, err := setupMockServer()
 	require.NoError(t, err)
 	defer teardown()
@@ -102,7 +110,12 @@ func TestTopic_Publish_NoTrace(t *testing.T) {
 		Name: "projects/test-project/topics/test-topic",
 	})
 
-	client, err := pubsub.NewClient(context.Background(), "test-project", option.WithGRPCConn(conn))
+	client, err := pubsub.NewClient(
+		context.Background(),
+		"test-project",
+		instana.NewSensorWithTracer(tracer),
+		option.WithGRPCConn(conn),
+	)
 	require.NoError(t, err)
 
 	res := client.Topic("test-topic").Publish(context.Background(), &gpubsub.Message{
