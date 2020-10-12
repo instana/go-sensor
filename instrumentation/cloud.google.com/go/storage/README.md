@@ -1,7 +1,7 @@
 Instana instrumentation for Google Cloud Storage
 ================================================
 
-This module contains instrumentation code for Google Cloud Storage clients that use `cloud.google.com/go/storage` library starting from `v1.7.0` and above.
+This module contains instrumentation code for [Google Cloud Storage][gcs] clients that use `cloud.google.com/go/storage` library starting from `v1.7.0` and above.
 
 [![GoDoc](https://img.shields.io/static/v1?label=godoc&message=reference&color=blue)][godoc]
 
@@ -53,3 +53,4 @@ func main() {
 ```
 
 [godoc]: https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/cloud.google.com/go/storage
+[gcs]: https://cloud.google.com/storage

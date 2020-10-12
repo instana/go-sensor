@@ -1,5 +1,7 @@
 // +build go1.11
 
+// Package pubsub provides Instana tracing instrumentation for
+// Google Cloud Pub/Sub producers and consumers that use cloud.google.com/go/pubsub.
 package pubsub
 
 import (
