@@ -8,6 +8,15 @@ import (
 	"google.golang.org/api/option"
 )
 
+type (
+	// Message is a type alias for cloud.google.com/go/pubsub.Message
+	Message = pubsub.Message
+	// PublishResult is a type alias for cloud.google.com/go/pubsub.PublishResult
+	PublishResult = pubsub.PublishResult
+	// Snapshot is a type alias for cloud.google.com/go/pubsub.Snapshot
+	Snapshot = pubsub.Snapshot
+)
+
 // Client is an instrumented wrapper for cloud.google.com/go/pubsub.Client that traces message reads and
 // writes to and from Google Cloud Pub/Sub topics. It also  and ensures Instana trace propagation across
 // the Pub/Sub producers and consumers.

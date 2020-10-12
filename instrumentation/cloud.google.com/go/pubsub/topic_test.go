@@ -6,7 +6,6 @@ import (
 	"testing"
 	"time"
 
-	gpubsub "cloud.google.com/go/pubsub"
 	instana "github.com/instana/go-sensor"
 	"github.com/instana/go-sensor/instrumentation/cloud.google.com/go/pubsub"
 	"github.com/instana/testify/assert"
@@ -39,7 +38,7 @@ func TestTopic_Publish(t *testing.T) {
 	parent := tracer.StartSpan("testing")
 
 	ctx := instana.ContextWithSpan(context.Background(), parent)
-	res := client.Topic("test-topic").Publish(ctx, &gpubsub.Message{
+	res := client.Topic("test-topic").Publish(ctx, &pubsub.Message{
 		Data: []byte("message data"),
 		Attributes: map[string]string{
 			"key1": "value1",
@@ -118,7 +117,7 @@ func TestTopic_Publish_NoTrace(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	res := client.Topic("test-topic").Publish(context.Background(), &gpubsub.Message{
+	res := client.Topic("test-topic").Publish(context.Background(), &pubsub.Message{
 		Data: []byte("message data"),
 		Attributes: map[string]string{
 			"key1": "value1",

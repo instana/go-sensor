@@ -35,8 +35,8 @@ func TestClient_Topic(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	examples := map[string]func(*testing.T, *gpubsub.Message) *gpubsub.PublishResult{
-		"ClientProject": func(t *testing.T, msg *gpubsub.Message) *gpubsub.PublishResult {
+	examples := map[string]func(*testing.T, *pubsub.Message) *pubsub.PublishResult{
+		"ClientProject": func(t *testing.T, msg *pubsub.Message) *pubsub.PublishResult {
 			client, err := pubsub.NewClient(context.Background(), "test-project", sensor, option.WithGRPCConn(conn))
 			require.NoError(t, err)
 
@@ -44,7 +44,7 @@ func TestClient_Topic(t *testing.T) {
 
 			return top.Publish(context.Background(), msg)
 		},
-		"OtherProject": func(t *testing.T, msg *gpubsub.Message) *gpubsub.PublishResult {
+		"OtherProject": func(t *testing.T, msg *pubsub.Message) *pubsub.PublishResult {
 			client, err := pubsub.NewClient(context.Background(), "other-project", sensor, option.WithGRPCConn(conn))
 			require.NoError(t, err)
 
@@ -52,7 +52,7 @@ func TestClient_Topic(t *testing.T) {
 
 			return top.Publish(context.Background(), msg)
 		},
-		"CreateTopic": func(t *testing.T, msg *gpubsub.Message) *gpubsub.PublishResult {
+		"CreateTopic": func(t *testing.T, msg *pubsub.Message) *pubsub.PublishResult {
 			client, err := pubsub.NewClient(context.Background(), "test-project", sensor, option.WithGRPCConn(conn))
 			require.NoError(t, err)
 
@@ -61,7 +61,7 @@ func TestClient_Topic(t *testing.T) {
 
 			return top.Publish(context.Background(), msg)
 		},
-		"CreateTopicWithConfig": func(t *testing.T, msg *gpubsub.Message) *gpubsub.PublishResult {
+		"CreateTopicWithConfig": func(t *testing.T, msg *pubsub.Message) *pubsub.PublishResult {
 			client, err := pubsub.NewClient(context.Background(), "test-project", sensor, option.WithGRPCConn(conn))
 			require.NoError(t, err)
 
@@ -86,7 +86,7 @@ func TestClient_Topic(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			srv.ClearMessages()
 
-			res := publish(t, &gpubsub.Message{
+			res := publish(t, &pubsub.Message{
 				Data: []byte("message data"),
 				Attributes: map[string]string{
 					"key1": "value1",
@@ -134,7 +134,7 @@ func TestClient_Topics(t *testing.T) {
 	client, err := pubsub.NewClient(context.Background(), "test-project", sensor, option.WithGRPCConn(conn))
 	require.NoError(t, err)
 
-	var res []*gpubsub.PublishResult
+	var res []*pubsub.PublishResult
 
 	it := client.Topics(context.Background())
 	for {
@@ -143,7 +143,7 @@ func TestClient_Topics(t *testing.T) {
 			break
 		}
 
-		res = append(res, top.Publish(context.Background(), &gpubsub.Message{
+		res = append(res, top.Publish(context.Background(), &pubsub.Message{
 			Data: []byte("message in " + top.ID()),
 		}))
 	}
@@ -241,7 +241,7 @@ func TestClient_Subscription(t *testing.T) {
 			ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 			defer cancel()
 
-			require.NoError(t, sub.Receive(ctx, func(ctx context.Context, msg *gpubsub.Message) {
+			require.NoError(t, sub.Receive(ctx, func(ctx context.Context, msg *pubsub.Message) {
 				assert.Equal(t, msgID, msg.ID)
 				msg.Ack()
 				cancel()

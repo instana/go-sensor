@@ -5,7 +5,6 @@ import (
 	"testing"
 	"time"
 
-	gpubsub "cloud.google.com/go/pubsub"
 	"cloud.google.com/go/pubsub/pstest"
 	instana "github.com/instana/go-sensor"
 	"github.com/instana/go-sensor/instrumentation/cloud.google.com/go/pubsub"
@@ -55,7 +54,7 @@ func TestSubscription_Receive(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 
-	client.Subscription("test-subscription").Receive(ctx, func(ctx context.Context, msg *gpubsub.Message) {
+	client.Subscription("test-subscription").Receive(ctx, func(ctx context.Context, msg *pubsub.Message) {
 		assert.Equal(t, msgID, msg.ID)
 		msg.Ack()
 		cancel()
@@ -125,7 +124,7 @@ func TestSubscription_Receive_NoTrace(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 
-	client.Subscription("test-subscription").Receive(ctx, func(ctx context.Context, msg *gpubsub.Message) {
+	client.Subscription("test-subscription").Receive(ctx, func(ctx context.Context, msg *pubsub.Message) {
 		assert.Equal(t, msgID, msg.ID)
 		msg.Ack()
 		cancel()
