@@ -82,32 +82,26 @@ func (c *Client) Topics(ctx context.Context) *TopicIterator {
 // See https://pkg.go.dev/cloud.google.com/go/pubsub?tab=doc#Client.CreateSubscription for furter details on wrapped method.
 func (c *Client) CreateSubscription(ctx context.Context, id string, cfg pubsub.SubscriptionConfig) (*Subscription, error) {
 	sub, err := c.Client.CreateSubscription(ctx, id, cfg)
-
-	var topicID string
-	if cfg.Topic != nil {
-		topicID = cfg.Topic.ID()
-	}
-
-	return &Subscription{sub, c.projectID, topicID, c.sensor}, err
+	return &Subscription{sub, c.projectID, c.sensor}, err
 }
 
 // Subscription calls Subscription() of underlying Client and wraps the returned subscription.
 //
 // See https://pkg.go.dev/cloud.google.com/go/pubsub?tab=doc#Client.Subscription for furter details on wrapped method.
 func (c *Client) Subscription(id string) *Subscription {
-	return &Subscription{c.Client.Subscription(id), c.projectID, "", c.sensor}
+	return &Subscription{c.Client.Subscription(id), c.projectID, c.sensor}
 }
 
 // SubscriptionInProject calls SubscriptionInProject() of underlying Client and wraps the returned subscription.
 //
 // See https://pkg.go.dev/cloud.google.com/go/pubsub?tab=doc#Client.SubscriptionInProject for furter details on wrapped method.
 func (c *Client) SubscriptionInProject(id, projectID string) *Subscription {
-	return &Subscription{c.Client.SubscriptionInProject(id, projectID), projectID, "", c.sensor}
+	return &Subscription{c.Client.SubscriptionInProject(id, projectID), projectID, c.sensor}
 }
 
 // Subscriptions calls Subscriptions() of underlying Client and wraps the returned subscription iterator.
 //
 // See https://pkg.go.dev/cloud.google.com/go/pubsub?tab=doc#Client.Subscriptions for furter details on wrapped method.
 func (c *Client) Subscriptions(ctx context.Context) *SubscriptionIterator {
-	return &SubscriptionIterator{c.Client.Subscriptions(ctx), c.projectID, "", c.sensor}
+	return &SubscriptionIterator{c.Client.Subscriptions(ctx), c.projectID, c.sensor}
 }

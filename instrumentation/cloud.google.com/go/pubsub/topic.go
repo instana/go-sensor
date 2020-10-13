@@ -64,7 +64,7 @@ func (top *Topic) Publish(ctx context.Context, msg *pubsub.Message) *pubsub.Publ
 }
 
 func (top *Topic) Subscriptions(ctx context.Context) *SubscriptionIterator {
-	return &SubscriptionIterator{top.Topic.Subscriptions(ctx), top.projectID, top.ID(), top.sensor}
+	return &SubscriptionIterator{top.Topic.Subscriptions(ctx), top.projectID, top.sensor}
 }
 
 // TopicIterator is a wrapper for cloud.google.com/go/pubsub.TopicIterator that retrieves and instruments

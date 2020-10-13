@@ -19,21 +19,8 @@ type Subscription struct {
 	*pubsub.Subscription
 
 	projectID string
-	topicID   string
 
 	sensor *instana.Sensor
-}
-
-func (sub *Subscription) fetchTopicID(ctx context.Context) string {
-	if sub.topicID != "" {
-		return sub.topicID
-	}
-
-	if cfg, err := sub.Subscription.Config(ctx); err == nil {
-		sub.topicID = cfg.Topic.ID()
-	}
-
-	return sub.topicID
 }
 
 // Receive wraps the Receive() call of the underlying cloud.google.com/go/pubsub.Subscription starting a new
@@ -47,7 +34,6 @@ func (sub *Subscription) Receive(ctx context.Context, f func(context.Context, *p
 			opentracing.Tags{
 				"gcps.op":     "consume",
 				"gcps.projid": sub.projectID,
-				"gcps.top":    sub.fetchTopicID(ctx),
 				"gcps.sub":    sub.ID(),
 			},
 		}
@@ -68,8 +54,8 @@ func (sub *Subscription) Receive(ctx context.Context, f func(context.Context, *p
 // See https://pkg.go.dev/cloud.google.com/go/pubsub?tab=doc#SubscriptionIterator for furter details on wrapped type.
 type SubscriptionIterator struct {
 	*pubsub.SubscriptionIterator
+
 	projectID string
-	topicID   string
 
 	sensor *instana.Sensor
 }
@@ -79,5 +65,5 @@ type SubscriptionIterator struct {
 // See https://pkg.go.dev/cloud.google.com/go/pubsub?tab=doc#SubscriptionIterator.Next for furter details on wrapped method.
 func (it *SubscriptionIterator) Next() (*Subscription, error) {
 	sub, err := it.SubscriptionIterator.Next()
-	return &Subscription{sub, it.projectID, it.topicID, it.sensor}, err
+	return &Subscription{sub, it.projectID, it.sensor}, err
 }
