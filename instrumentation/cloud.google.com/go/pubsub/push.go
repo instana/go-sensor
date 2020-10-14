@@ -16,15 +16,15 @@ import (
 )
 
 // TracingHandlerFunc wraps an HTTP handler that handles Google Cloud Pub/Sub push deliveries sent
-// via POST requests. If a request uses any other method, the wrapper simply forwards it to the
-// wrapped handler with no change.
+// via POST requests. If a request uses any other method, the wrapper uses instana.TracingHandlerFunc()
+// to trace it as a regular HTTP request.
 //
 // Please note, that this wrapper consumes the request body in order to to extract the trace context
 // from the message, thus the (net/http.Request).Body is a copy of received data.
-func TracingHandlerFunc(sensor *instana.Sensor, handler http.HandlerFunc) http.HandlerFunc {
+func TracingHandlerFunc(sensor *instana.Sensor, pathTemplate string, handler http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		if req.Method != http.MethodPost {
-			handler(w, req)
+			instana.TracingHandlerFunc(sensor, pathTemplate, handler)(w, req)
 			return
 		}
 
@@ -40,7 +40,7 @@ func TracingHandlerFunc(sensor *instana.Sensor, handler http.HandlerFunc) http.H
 		sp, err := startConsumePushSpan(data, sensor)
 		if err != nil {
 			sensor.Logger().Warn("failed to start google cloud pub/sub consumer trace:", err)
-			handler(w, req)
+			instana.TracingHandlerFunc(sensor, pathTemplate, handler)(w, req)
 			return
 		}
 

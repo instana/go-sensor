@@ -30,7 +30,7 @@ func TestTracingHandler(t *testing.T) {
 		numCalls int
 		reqSpan  opentracing.Span
 	)
-	h := pubsub.TracingHandlerFunc(sensor, func(w http.ResponseWriter, req *http.Request) {
+	h := pubsub.TracingHandlerFunc(sensor, "/", func(w http.ResponseWriter, req *http.Request) {
 		numCalls++
 
 		var ok bool
@@ -89,7 +89,7 @@ func TestTracingHandlerFunc_TracePropagation(t *testing.T) {
 	require.NoError(t, err)
 
 	var numCalls int
-	h := pubsub.TracingHandlerFunc(sensor, func(w http.ResponseWriter, req *http.Request) {
+	h := pubsub.TracingHandlerFunc(sensor, "/", func(w http.ResponseWriter, req *http.Request) {
 		numCalls++
 
 		_, ok := instana.SpanFromContext(req.Context())
@@ -142,11 +142,11 @@ func TestTracingHandlerFunc_NotPubSub(t *testing.T) {
 	)
 
 	var numCalls int
-	h := pubsub.TracingHandlerFunc(sensor, func(w http.ResponseWriter, req *http.Request) {
+	h := pubsub.TracingHandlerFunc(sensor, "/", func(w http.ResponseWriter, req *http.Request) {
 		numCalls++
 
 		_, ok := instana.SpanFromContext(req.Context())
-		assert.False(t, ok)
+		assert.True(t, ok)
 
 		body, err := ioutil.ReadAll(req.Body)
 		require.NoError(t, err)
@@ -163,5 +163,7 @@ func TestTracingHandlerFunc_NotPubSub(t *testing.T) {
 	assert.Equal(t, http.StatusAccepted, rec.Result().StatusCode)
 	assert.Equal(t, 1, numCalls)
 
-	assert.Empty(t, recorder.GetQueuedSpans())
+	spans := recorder.GetQueuedSpans()
+	require.Len(t, spans, 1)
+	assert.Equal(t, "g.http", spans[0].Name)
 }
