@@ -1,0 +1,13 @@
+{
+    "message": {
+        "attributes": {
+            "x-instana-t": "0000000000001234",
+            "x-instana-s": "0000000000005678",
+            "x-instana-l": "1",
+            "key": "value"
+        },
+        "data": "SGVsbG8gQ2xvdWQgUHViL1N1YiEgSGVyZSBpcyBteSBtZXNzYWdlIQ==",
+        "messageId": "136969346945"
+    },
+    "subscription": "projects/myproject/subscriptions/mysubscription"
+}

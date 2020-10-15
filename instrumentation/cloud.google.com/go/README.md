@@ -32,6 +32,7 @@ Instrumented services
 | GCP service          | Instrumentation package                                                                 | Support              |
 |----------------------|-----------------------------------------------------------------------------------------|----------------------|
 | Google Cloud Storage | [`github.com/instana/go-sensor/instrumentation/cloud.google.com/go/storage`](./storage) | Fully instrumented   |
+| Google Cloud Pub/Sub | [`github.com/instana/go-sensor/instrumentation/cloud.google.com/go/pubsub`](./pubsub)   | Publisher & subscriber methods |
 | Google Cloud IAM     | [`github.com/instana/go-sensor/instrumentation/cloud.google.com/go/iam`](./iam)         | GCS buckets IAM only |
 
 [godoc]: https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/cloud.google.com/go
