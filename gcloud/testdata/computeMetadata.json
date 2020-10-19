@@ -1,0 +1,53 @@
+{
+  "instance": {
+    "id": "id1",
+    "region": "projects/1234567890/regions/us-central1",
+    "serviceAccounts": {
+      "service1@example.com": {
+        "aliases": [
+          "default"
+        ],
+        "email": "service1@example.com",
+        "scopes": [
+          "https://mail.google.com/",
+          "https://www.googleapis.com/auth/analytics",
+          "https://www.googleapis.com/auth/calendar",
+          "https://www.googleapis.com/auth/cloud-platform",
+          "https://www.googleapis.com/auth/contacts",
+          "https://www.googleapis.com/auth/drive",
+          "https://www.googleapis.com/auth/presentations",
+          "https://www.googleapis.com/auth/spreadsheets",
+          "https://www.googleapis.com/auth/streetviewpublish",
+          "https://www.googleapis.com/auth/urlshortener",
+          "https://www.googleapis.com/auth/userinfo.email",
+          "https://www.googleapis.com/auth/youtube"
+        ]
+      },
+      "default": {
+        "aliases": [
+          "default"
+        ],
+        "email": "service1@example.com",
+        "scopes": [
+          "https://mail.google.com/",
+          "https://www.googleapis.com/auth/analytics",
+          "https://www.googleapis.com/auth/calendar",
+          "https://www.googleapis.com/auth/cloud-platform",
+          "https://www.googleapis.com/auth/contacts",
+          "https://www.googleapis.com/auth/drive",
+          "https://www.googleapis.com/auth/presentations",
+          "https://www.googleapis.com/auth/spreadsheets",
+          "https://www.googleapis.com/auth/streetviewpublish",
+          "https://www.googleapis.com/auth/urlshortener",
+          "https://www.googleapis.com/auth/userinfo.email",
+          "https://www.googleapis.com/auth/youtube"
+        ]
+      }
+    },
+    "zone": "projects/1234567890/zones/us-central1-1"
+  },
+  "project": {
+    "numericProjectId": 1234567890,
+    "projectId": "test-project"
+  }
+}
