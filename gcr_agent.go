@@ -54,9 +54,11 @@ type gcrAgent struct {
 	Zone     string
 	Tags     map[string]interface{}
 
-	snapshot gcrSnapshot
+	snapshot         gcrSnapshot
+	lastProcessStats processStats
 
 	runtimeSnapshot *SnapshotCollector
+	processStats    *processStatsCollector
 	gcr             *gcloud.ComputeMetadataProvider
 	client          *http.Client
 	logger          LeveledLogger
@@ -93,6 +95,9 @@ func newGCRAgent(
 			CollectionInterval: snapshotCollectionInterval,
 			ServiceName:        serviceName,
 		},
+		processStats: &processStatsCollector{
+			logger: logger,
+		},
 		gcr:    gcloud.NewComputeMetadataProvider(mdURL, client),
 		client: client,
 		logger: logger,
@@ -112,19 +117,31 @@ func newGCRAgent(
 			time.Sleep(snapshotCollectionInterval)
 		}
 	}()
+	go agent.processStats.Run(context.Background(), time.Second)
 
 	return agent
 }
 
 func (a *gcrAgent) Ready() bool { return a.snapshot.Service.EntityID != "" }
 
-func (a *gcrAgent) SendMetrics(data acceptor.Metrics) error {
+func (a *gcrAgent) SendMetrics(data acceptor.Metrics) (err error) {
+	processStats := a.processStats.Collect()
+	defer func() {
+		if err == nil {
+			// only update the last sent stats if they were transmitted successfully
+			// since they are updated on the backend incrementally using received
+			// deltas
+			a.lastProcessStats = processStats
+		}
+	}()
+
 	payload := struct {
 		Metrics metricsPayload `json:"metrics,omitempty"`
 		Spans   []agentSpan    `json:"spans,omitempty"`
 	}{
 		Metrics: metricsPayload{
 			Plugins: []acceptor.PluginPayload{
+				newProcessPluginPayload(a.snapshot.Service, a.lastProcessStats, processStats),
 				acceptor.NewGoProcessPluginPayload(acceptor.GoProcessData{
 					PID:      a.PID,
 					Snapshot: a.runtimeSnapshot.Collect(),

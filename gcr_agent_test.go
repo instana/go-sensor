@@ -78,11 +78,36 @@ func TestGCRAgent_SendMetrics(t *testing.T) {
 		pluginData[plugin.Name] = append(pluginData[plugin.Name], serverlessAgentPluginPayload{plugin.EntityID, plugin.Data})
 	}
 
+	t.Run("Process plugin payload", func(t *testing.T) {
+		require.Len(t, pluginData["com.instana.plugin.process"], 1)
+		d := pluginData["com.instana.plugin.process"][0]
+
+		assert.NotEmpty(t, d.EntityID)
+
+		assert.Equal(t, "gcpCloudRunInstance", d.Data["containerType"])
+		assert.Equal(t, "id1", d.Data["container"])
+		assert.Equal(t, "gcp:cloud-run:revision:test-revision", d.Data["com.instana.plugin.host.name"])
+
+		if assert.IsType(t, map[string]interface{}{}, d.Data["env"]) {
+			env := d.Data["env"].(map[string]interface{})
+
+			assert.Equal(t, os.Getenv("INSTANA_ZONE"), env["INSTANA_ZONE"])
+			assert.Equal(t, os.Getenv("INSTANA_TAGS"), env["INSTANA_TAGS"])
+			assert.Equal(t, os.Getenv("INSTANA_AGENT_KEY"), env["INSTANA_AGENT_KEY"])
+
+			assert.Equal(t, "<redacted>", env["INSTANA_SECRETS"])
+			assert.Equal(t, "<redacted>", env["CLASSIFIED_DATA"])
+		}
+	})
+
 	t.Run("Go process plugin payload", func(t *testing.T) {
 		require.Len(t, pluginData["com.instana.plugin.golang"], 1)
 		d := pluginData["com.instana.plugin.golang"][0]
 
 		assert.NotEmpty(t, d.EntityID)
+
+		require.NotEmpty(t, pluginData["com.instana.plugin.process"])
+		assert.Equal(t, pluginData["com.instana.plugin.process"][0].EntityID, d.EntityID)
 
 		assert.NotEmpty(t, d.Data["metrics"])
 	})
