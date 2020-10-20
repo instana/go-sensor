@@ -11,6 +11,8 @@ import (
 	"github.com/instana/go-sensor/gcloud"
 )
 
+const googleCloudRunMetadataURL = "http://metadata.google.internal"
+
 type gcrSnapshot struct {
 	EntityID string
 	PID      int
@@ -55,13 +57,19 @@ func newGCRAgent(
 
 	logger.Debug("initializing google cloud run agent")
 
+	// allow overriding the metadata URL endpoint for testing purposes
+	mdURL, ok := os.LookupEnv("GOOGLE_CLOUD_RUN_METADATA_ENDPOINT")
+	if !ok {
+		mdURL = googleCloudRunMetadataURL
+	}
+
 	agent := &gcrAgent{
 		Endpoint: acceptorEndpoint,
 		Key:      agentKey,
 		PID:      os.Getpid(),
 		Zone:     os.Getenv("INSTANA_ZONE"),
 		Tags:     parseInstanaTags(os.Getenv("INSTANA_TAGS")),
-		gcr:      gcloud.NewComputeMetadataProvider("http://metadata.google.internal/", client),
+		gcr:      gcloud.NewComputeMetadataProvider(mdURL, client),
 		client:   client,
 		logger:   logger,
 	}

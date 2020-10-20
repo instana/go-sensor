@@ -1,7 +1,6 @@
-
 MODULES = $(filter-out $(EXCLUDE_DIRS), $(shell find . -name go.mod -exec dirname {} \;))
 LINTER ?= $(shell go env GOPATH)/bin/golangci-lint
-INTEGRATION_TESTS = fargate_integration
+INTEGRATION_TESTS = fargate_integration gcr_integration
 
 # the Go version to vendor dependencies listed in go.mod
 VENDOR_GO_VERSION ?= go1.15

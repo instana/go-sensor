@@ -66,14 +66,24 @@ func newSensor(options *Options) *sensorS {
 		setLogLevel(l, options.LogLevel)
 	}
 
-	timeout, err := parseInstanaTimeout(os.Getenv("INSTANA_TIMEOUT"))
-	if err != nil {
-		s.logger.Warn("malformed INSTANA_TIMEOUT value, falling back to the default one: ", err)
-		timeout = defaultServerlessTimeout
-	}
-
 	if agentEndpoint := os.Getenv("INSTANA_ENDPOINT_URL"); agentEndpoint != "" {
-		s.agent = newServerlessAgent(s.serviceName, agentEndpoint, os.Getenv("INSTANA_AGENT_KEY"), timeout, s.logger)
+		timeout, err := parseInstanaTimeout(os.Getenv("INSTANA_TIMEOUT"))
+		if err != nil {
+			s.logger.Warn("malformed INSTANA_TIMEOUT value, falling back to the default one: ", err)
+			timeout = defaultServerlessTimeout
+		}
+
+		client, err := acceptor.NewHTTPClient(timeout)
+		if err != nil {
+			if err == acceptor.ErrMalformedProxyURL {
+				s.logger.Warn(err)
+			} else {
+				s.logger.Error("failed to initialize acceptor HTTP client, falling back to the default one: ", err)
+				client = http.DefaultClient
+			}
+		}
+
+		s.agent = newServerlessAgent(s.serviceName, agentEndpoint, os.Getenv("INSTANA_AGENT_KEY"), client, s.logger)
 	}
 
 	if s.agent == nil {
@@ -134,19 +144,9 @@ func InitSensor(options *Options) {
 	sensor.logger.Debug("initialized sensor")
 }
 
-func newServerlessAgent(serviceName, agentEndpoint, agentKey string, timeout time.Duration, logger LeveledLogger) agentClient {
+func newServerlessAgent(serviceName, agentEndpoint, agentKey string, client *http.Client, logger LeveledLogger) agentClient {
 	switch {
 	case os.Getenv("AWS_EXECUTION_ENV") == "AWS_ECS_FARGATE" && os.Getenv("ECS_CONTAINER_METADATA_URI") != "":
-		client, err := acceptor.NewHTTPClient(timeout)
-		if err != nil {
-			if err == acceptor.ErrMalformedProxyURL {
-				logger.Warn(err)
-			} else {
-				logger.Error("failed to initialize acceptor HTTP client, falling back to the default one: ", err)
-				client = http.DefaultClient
-			}
-		}
-
 		return newFargateAgent(
 			serviceName,
 			agentEndpoint,
@@ -155,6 +155,8 @@ func newServerlessAgent(serviceName, agentEndpoint, agentKey string, timeout tim
 			aws.NewECSMetadataProvider(os.Getenv("ECS_CONTAINER_METADATA_URI"), client),
 			logger,
 		)
+	case os.Getenv("K_SERVICE") != "" && os.Getenv("K_CONFIGURATION") != "" && os.Getenv("K_REVISION") != "": // Knative, e.g. Google Cloud Run
+		return newGCRAgent(serviceName, agentEndpoint, agentKey, client, logger)
 	default:
 		return nil
 	}
