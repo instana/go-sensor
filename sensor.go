@@ -66,43 +66,17 @@ func newSensor(options *Options) *sensorS {
 		setLogLevel(l, options.LogLevel)
 	}
 
-	switch {
-	case os.Getenv("AWS_EXECUTION_ENV") == "AWS_ECS_FARGATE":
-		// seems like the app is running on AWS Fargate, but we still need to check
-		// whether ECS_CONTAINER_METADATA_URI is set
-		if mdURI := os.Getenv("ECS_CONTAINER_METADATA_URI"); mdURI != "" {
-			timeout, err := parseInstanaTimeout(os.Getenv("INSTANA_TIMEOUT"))
-			if err != nil {
-				s.logger.Warn("malformed INSTANA_TIMEOUT value, falling back to the default one: ", err)
-				timeout = defaultServerlessTimeout
-			}
+	timeout, err := parseInstanaTimeout(os.Getenv("INSTANA_TIMEOUT"))
+	if err != nil {
+		s.logger.Warn("malformed INSTANA_TIMEOUT value, falling back to the default one: ", err)
+		timeout = defaultServerlessTimeout
+	}
 
-			client, err := acceptor.NewHTTPClient(timeout)
-			if err != nil {
-				if err == acceptor.ErrMalformedProxyURL {
-					s.logger.Warn(err)
-				} else {
-					s.logger.Error("failed to initialize acceptor HTTP client, falling back to the default one: ", err)
-					client = http.DefaultClient
-				}
-			}
+	if agentEndpoint := os.Getenv("INSTANA_ENDPOINT_URL"); agentEndpoint != "" {
+		s.agent = newServerlessAgent(s.serviceName, agentEndpoint, os.Getenv("INSTANA_AGENT_KEY"), timeout, s.logger)
+	}
 
-			s.agent = newFargateAgent(
-				s.serviceName,
-				os.Getenv("INSTANA_ENDPOINT_URL"),
-				os.Getenv("INSTANA_AGENT_KEY"),
-				client,
-				aws.NewECSMetadataProvider(mdURI, client),
-				s.logger,
-			)
-
-			break
-		}
-
-		s.logger.Error("the task metadata URI is not set in ECS_CONTAINER_METADATA_URI env var, falling back to host agent mode")
-
-		fallthrough
-	default:
+	if s.agent == nil {
 		s.agent = newAgent(s.serviceName, s.options.AgentHost, s.options.AgentPort, s.logger)
 	}
 
@@ -158,4 +132,30 @@ func InitSensor(options *Options) {
 	}
 
 	sensor.logger.Debug("initialized sensor")
+}
+
+func newServerlessAgent(serviceName, agentEndpoint, agentKey string, timeout time.Duration, logger LeveledLogger) agentClient {
+	switch {
+	case os.Getenv("AWS_EXECUTION_ENV") == "AWS_ECS_FARGATE" && os.Getenv("ECS_CONTAINER_METADATA_URI") != "":
+		client, err := acceptor.NewHTTPClient(timeout)
+		if err != nil {
+			if err == acceptor.ErrMalformedProxyURL {
+				logger.Warn(err)
+			} else {
+				logger.Error("failed to initialize acceptor HTTP client, falling back to the default one: ", err)
+				client = http.DefaultClient
+			}
+		}
+
+		return newFargateAgent(
+			serviceName,
+			agentEndpoint,
+			agentKey,
+			client,
+			aws.NewECSMetadataProvider(os.Getenv("ECS_CONTAINER_METADATA_URI"), client),
+			logger,
+		)
+	default:
+		return nil
+	}
 }

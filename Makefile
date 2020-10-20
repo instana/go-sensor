@@ -29,7 +29,7 @@ endif
 integration: $(INTEGRATION_TESTS)
 
 $(INTEGRATION_TESTS):
-	go test $(GOFLAGS) -tags $@ $(shell grep -lR "// +build $@" .)
+	go test $(GOFLAGS) -tags $@ integration_test.go $(shell grep -lR "// +build $@" .)
 
 $(LINTER):
 	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/a2bc9b7a99e3280805309d71036e8c2106853250/install.sh \
@@ -37,7 +37,7 @@ $(LINTER):
 
 
 $(MODULES_VENDOR): $(VENDOR_GO)
-	cd $(shell dirname $@) && $(VENDOR_GO) mod vendor 
+	cd $(shell dirname $@) && $(VENDOR_GO) mod vendor
 	find $@ -name go.mod -delete
 
 $(VENDOR_GO):
