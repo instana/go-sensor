@@ -8,6 +8,22 @@ import (
 	"github.com/instana/go-sensor/process"
 )
 
+type containerSnapshot struct {
+	ID    string
+	Type  string
+	Image string
+}
+
+type serverlessSnapshot struct {
+	EntityID  string
+	Host      string
+	PID       int
+	Container containerSnapshot
+	StartedAt time.Time
+	Zone      string
+	Tags      map[string]interface{}
+}
+
 type processStats struct {
 	Tick   int
 	CPU    process.CPUStats

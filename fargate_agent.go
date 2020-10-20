@@ -21,18 +21,24 @@ import (
 )
 
 type fargateSnapshot struct {
-	EntityID  string
-	PID       int
-	Zone      string
-	Tags      map[string]interface{}
+	Service   serverlessSnapshot
 	Task      aws.ECSTaskMetadata
 	Container aws.ECSContainerMetadata
 }
 
 func newFargateSnapshot(pid int, taskMD aws.ECSTaskMetadata, containerMD aws.ECSContainerMetadata) fargateSnapshot {
 	return fargateSnapshot{
-		EntityID:  ecsEntityID(containerMD),
-		PID:       pid,
+		Service: serverlessSnapshot{
+			EntityID:  ecsEntityID(containerMD),
+			Host:      containerMD.TaskARN,
+			PID:       pid,
+			StartedAt: containerMD.StartedAt,
+			Container: containerSnapshot{
+				ID:    containerMD.DockerID,
+				Type:  "docker",
+				Image: containerMD.Image,
+			},
+		},
 		Task:      taskMD,
 		Container: containerMD,
 	}
@@ -43,7 +49,7 @@ func newECSTaskPluginPayload(snapshot fargateSnapshot) acceptor.PluginPayload {
 		TaskARN:               snapshot.Task.TaskARN,
 		ClusterARN:            snapshot.Container.Cluster,
 		AvailabilityZone:      snapshot.Task.AvailabilityZone,
-		InstanaZone:           snapshot.Zone,
+		InstanaZone:           snapshot.Service.Zone,
 		TaskDefinition:        snapshot.Task.Family,
 		TaskDefinitionVersion: snapshot.Task.Revision,
 		DesiredStatus:         snapshot.Task.DesiredStatus,
@@ -54,7 +60,7 @@ func newECSTaskPluginPayload(snapshot fargateSnapshot) acceptor.PluginPayload {
 		},
 		PullStartedAt: snapshot.Task.PullStartedAt,
 		PullStoppedAt: snapshot.Task.PullStoppedAt,
-		Tags:          snapshot.Tags,
+		Tags:          snapshot.Service.Tags,
 	})
 }
 
@@ -122,7 +128,7 @@ func newDockerContainerPluginPayload(
 	return acceptor.NewDockerPluginPayload(ecsEntityID(container), data)
 }
 
-func newProcessPluginPayload(snapshot fargateSnapshot, prevStats, currentStats processStats) acceptor.PluginPayload {
+func newProcessPluginPayload(snapshot serverlessSnapshot, prevStats, currentStats processStats) acceptor.PluginPayload {
 	var currUser, currGroup string
 	if u, err := user.Current(); err == nil {
 		currUser = u.Username
@@ -150,10 +156,10 @@ func newProcessPluginPayload(snapshot fargateSnapshot, prevStats, currentStats p
 		Env:           env,
 		User:          currUser,
 		Group:         currGroup,
-		ContainerID:   snapshot.Container.DockerID,
-		ContainerType: "docker",
-		Start:         snapshot.Container.StartedAt.UnixNano() / int64(time.Millisecond),
-		HostName:      snapshot.Container.TaskARN,
+		ContainerID:   snapshot.Container.ID,
+		ContainerType: snapshot.Container.Type,
+		Start:         snapshot.StartedAt.UnixNano() / int64(time.Millisecond),
+		HostName:      snapshot.Host,
 		HostPID:       snapshot.PID,
 		CPU:           acceptor.NewProcessCPUStatsDelta(prevStats.CPU, currentStats.CPU, currentStats.Tick-prevStats.Tick),
 		Memory:        acceptor.NewProcessMemoryStatsUpdate(prevStats.Memory, currentStats.Memory),
@@ -248,7 +254,7 @@ func newFargateAgent(
 	return agent
 }
 
-func (a *fargateAgent) Ready() bool { return a.snapshot.EntityID != "" }
+func (a *fargateAgent) Ready() bool { return a.snapshot.Service.EntityID != "" }
 
 func (a *fargateAgent) SendMetrics(data acceptor.Metrics) (err error) {
 	dockerStats := a.dockerStats.Collect()
@@ -270,7 +276,7 @@ func (a *fargateAgent) SendMetrics(data acceptor.Metrics) (err error) {
 		Metrics: metricsPayload{
 			Plugins: []acceptor.PluginPayload{
 				newECSTaskPluginPayload(a.snapshot),
-				newProcessPluginPayload(a.snapshot, a.lastProcessStats, processStats),
+				newProcessPluginPayload(a.snapshot.Service, a.lastProcessStats, processStats),
 				acceptor.NewGoProcessPluginPayload(acceptor.GoProcessData{
 					PID:      a.PID,
 					Snapshot: a.runtimeSnapshot.Collect(),
@@ -281,7 +287,7 @@ func (a *fargateAgent) SendMetrics(data acceptor.Metrics) (err error) {
 	}
 
 	for _, container := range a.snapshot.Task.Containers {
-		instrumented := ecsEntityID(container) == a.snapshot.EntityID
+		instrumented := ecsEntityID(container) == a.snapshot.Service.EntityID
 		payload.Metrics.Plugins = append(
 			payload.Metrics.Plugins,
 			newECSContainerPluginPayload(container, instrumented),
@@ -320,7 +326,7 @@ func (a *fargateAgent) SendMetrics(data acceptor.Metrics) (err error) {
 func (a *fargateAgent) SendEvent(event *EventData) error { return nil }
 
 func (a *fargateAgent) SendSpans(spans []Span) error {
-	from := newServerlessAgentFromS(a.snapshot.EntityID, "aws")
+	from := newServerlessAgentFromS(a.snapshot.Service.EntityID, "aws")
 
 	agentSpans := make([]agentSpan, 0, len(spans))
 	for _, sp := range spans {
@@ -338,7 +344,7 @@ func (a *fargateAgent) SendSpans(spans []Span) error {
 func (a *fargateAgent) SendProfiles(profiles []autoprofile.Profile) error { return nil }
 
 func (a *fargateAgent) sendRequest(req *http.Request) error {
-	req.Header.Set("X-Instana-Host", a.snapshot.EntityID)
+	req.Header.Set("X-Instana-Host", a.snapshot.Service.EntityID)
 	req.Header.Set("X-Instana-Key", a.Key)
 	req.Header.Set("X-Instana-Time", strconv.FormatInt(time.Now().UnixNano()/int64(time.Millisecond), 10))
 
@@ -403,8 +409,8 @@ func (a *fargateAgent) collectSnapshot(ctx context.Context) (fargateSnapshot, bo
 	}
 
 	snapshot := newFargateSnapshot(a.PID, taskMD, containerMD)
-	snapshot.Zone = a.Zone
-	snapshot.Tags = a.Tags
+	snapshot.Service.Zone = a.Zone
+	snapshot.Service.Tags = a.Tags
 
 	a.logger.Debug("collected snapshot")
 

@@ -28,17 +28,21 @@ type gcrMetadata struct {
 }
 
 type gcrSnapshot struct {
-	EntityID string
-	PID      int
-	Zone     string
-	Tags     map[string]interface{}
+	Service  serverlessSnapshot
 	Metadata gcrMetadata
 }
 
 func newGCRSnapshot(pid int, md gcrMetadata) gcrSnapshot {
 	return gcrSnapshot{
-		PID:      pid,
-		EntityID: md.Instance.ID,
+		Service: serverlessSnapshot{
+			EntityID: md.Instance.ID,
+			Host:     "gcp:cloud-run:revision:" + md.Revision,
+			PID:      pid,
+			Container: containerSnapshot{
+				ID:   md.Instance.ID,
+				Type: "gcpCloudRunInstance",
+			},
+		},
 		Metadata: md,
 	}
 }
@@ -112,9 +116,7 @@ func newGCRAgent(
 	return agent
 }
 
-func (a *gcrAgent) Ready() bool {
-	return a.snapshot.EntityID != ""
-}
+func (a *gcrAgent) Ready() bool { return a.snapshot.Service.EntityID != "" }
 
 func (a *gcrAgent) SendMetrics(data acceptor.Metrics) error {
 	payload := struct {
@@ -154,7 +156,7 @@ func (a *gcrAgent) SendSpans(spans []Span) error { return nil }
 func (a *gcrAgent) SendProfiles(profiles []autoprofile.Profile) error { return nil }
 
 func (a *gcrAgent) sendRequest(req *http.Request) error {
-	req.Header.Set("X-Instana-Host", "gcp:cloud-run:revision:"+a.snapshot.Metadata.Revision)
+	req.Header.Set("X-Instana-Host", a.snapshot.Service.Host)
 	req.Header.Set("X-Instana-Key", a.Key)
 	req.Header.Set("X-Instana-Time", strconv.FormatInt(time.Now().UnixNano()/int64(time.Millisecond), 10))
 
@@ -194,8 +196,8 @@ func (a *gcrAgent) collectSnapshot(ctx context.Context) (gcrSnapshot, bool) {
 		Configuration:   os.Getenv("K_CONFIGURATION"),
 		Revision:        os.Getenv("K_REVISION"),
 	})
-	snapshot.Zone = a.Zone
-	snapshot.Tags = a.Tags
+	snapshot.Service.Zone = a.Zone
+	snapshot.Service.Tags = a.Tags
 
 	a.logger.Debug("collected snapshot")
 
