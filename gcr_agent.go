@@ -1,9 +1,15 @@
 package instana
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
+	"fmt"
+	"io"
+	"io/ioutil"
 	"net/http"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/instana/go-sensor/acceptor"
@@ -13,18 +19,27 @@ import (
 
 const googleCloudRunMetadataURL = "http://metadata.google.internal"
 
+type gcrMetadata struct {
+	gcloud.ComputeMetadata
+
+	Service       string
+	Configuration string
+	Revision      string
+}
+
 type gcrSnapshot struct {
 	EntityID string
 	PID      int
 	Zone     string
 	Tags     map[string]interface{}
-	Metadata gcloud.ComputeMetadata
+	Metadata gcrMetadata
 }
 
-func newGCRSnapshot(pid int, md gcloud.ComputeMetadata) gcrSnapshot {
+func newGCRSnapshot(pid int, md gcrMetadata) gcrSnapshot {
 	return gcrSnapshot{
 		PID:      pid,
 		EntityID: md.Instance.ID,
+		Metadata: md,
 	}
 }
 
@@ -37,9 +52,10 @@ type gcrAgent struct {
 
 	snapshot gcrSnapshot
 
-	gcr    *gcloud.ComputeMetadataProvider
-	client *http.Client
-	logger LeveledLogger
+	runtimeSnapshot *SnapshotCollector
+	gcr             *gcloud.ComputeMetadataProvider
+	client          *http.Client
+	logger          LeveledLogger
 }
 
 func newGCRAgent(
@@ -69,9 +85,13 @@ func newGCRAgent(
 		PID:      os.Getpid(),
 		Zone:     os.Getenv("INSTANA_ZONE"),
 		Tags:     parseInstanaTags(os.Getenv("INSTANA_TAGS")),
-		gcr:      gcloud.NewComputeMetadataProvider(mdURL, client),
-		client:   client,
-		logger:   logger,
+		runtimeSnapshot: &SnapshotCollector{
+			CollectionInterval: snapshotCollectionInterval,
+			ServiceName:        serviceName,
+		},
+		gcr:    gcloud.NewComputeMetadataProvider(mdURL, client),
+		client: client,
+		logger: logger,
 	}
 
 	go func() {
@@ -96,13 +116,70 @@ func (a *gcrAgent) Ready() bool {
 	return a.snapshot.EntityID != ""
 }
 
-func (a *gcrAgent) SendMetrics(data acceptor.Metrics) error { return nil }
+func (a *gcrAgent) SendMetrics(data acceptor.Metrics) error {
+	payload := struct {
+		Metrics metricsPayload `json:"metrics,omitempty"`
+		Spans   []agentSpan    `json:"spans,omitempty"`
+	}{
+		Metrics: metricsPayload{
+			Plugins: []acceptor.PluginPayload{
+				acceptor.NewGoProcessPluginPayload(acceptor.GoProcessData{
+					PID:      a.PID,
+					Snapshot: a.runtimeSnapshot.Collect(),
+					Metrics:  data,
+				}),
+			},
+		},
+	}
+
+	buf := bytes.NewBuffer(nil)
+	if err := json.NewEncoder(buf).Encode(payload); err != nil {
+		return fmt.Errorf("failed to marshal metrics payload: %s", err)
+	}
+
+	req, err := http.NewRequest(http.MethodPost, a.Endpoint+"/bundle", buf)
+	if err != nil {
+		return fmt.Errorf("failed to prepare send metrics request: %s", err)
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+
+	return a.sendRequest(req)
+}
 
 func (a *gcrAgent) SendEvent(event *EventData) error { return nil }
 
 func (a *gcrAgent) SendSpans(spans []Span) error { return nil }
 
 func (a *gcrAgent) SendProfiles(profiles []autoprofile.Profile) error { return nil }
+
+func (a *gcrAgent) sendRequest(req *http.Request) error {
+	req.Header.Set("X-Instana-Host", "gcp:cloud-run:revision:"+a.snapshot.Metadata.Revision)
+	req.Header.Set("X-Instana-Key", a.Key)
+	req.Header.Set("X-Instana-Time", strconv.FormatInt(time.Now().UnixNano()/int64(time.Millisecond), 10))
+
+	resp, err := a.client.Do(req)
+	if err != nil {
+		return fmt.Errorf("failed to send request to the serverless agent: %s", err)
+	}
+
+	defer resp.Body.Close()
+
+	if resp.StatusCode >= http.StatusBadRequest {
+		respBody, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			a.logger.Debug("failed to read serverless agent response: ", err)
+			return nil
+		}
+
+		a.logger.Info("serverless agent has responded with ", resp.Status, ": ", string(respBody))
+		return nil
+	}
+
+	io.CopyN(ioutil.Discard, resp.Body, 1<<20)
+
+	return nil
+}
 
 func (a *gcrAgent) collectSnapshot(ctx context.Context) (gcrSnapshot, bool) {
 	md, err := a.gcr.ComputeMetadata(ctx)
@@ -111,7 +188,12 @@ func (a *gcrAgent) collectSnapshot(ctx context.Context) (gcrSnapshot, bool) {
 		return gcrSnapshot{}, false
 	}
 
-	snapshot := newGCRSnapshot(a.PID, md)
+	snapshot := newGCRSnapshot(a.PID, gcrMetadata{
+		ComputeMetadata: md,
+		Service:         os.Getenv("K_SERVICE"),
+		Configuration:   os.Getenv("K_CONFIGURATION"),
+		Revision:        os.Getenv("K_REVISION"),
+	})
 	snapshot.Zone = a.Zone
 	snapshot.Tags = a.Tags
 

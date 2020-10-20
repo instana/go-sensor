@@ -3,13 +3,17 @@
 package instana_test
 
 import (
+	"encoding/json"
 	"log"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"testing"
+	"time"
 
 	instana "github.com/instana/go-sensor"
+	"github.com/instana/testify/assert"
+	"github.com/instana/testify/require"
 )
 
 var agent *serverlessAgent
@@ -17,6 +21,9 @@ var agent *serverlessAgent
 func TestMain(m *testing.M) {
 	teardownEnv := setupGCREnv()
 	defer teardownEnv()
+
+	teardownSrv := setupMetadataServer()
+	defer teardownSrv()
 
 	defer restoreEnvVarFunc("INSTANA_AGENT_KEY")
 	os.Setenv("INSTANA_AGENT_KEY", "testkey1")
@@ -44,6 +51,43 @@ func TestMain(m *testing.M) {
 	os.Exit(m.Run())
 }
 
+func TestGCRAgent_SendMetrics(t *testing.T) {
+	defer agent.Reset()
+
+	require.Eventually(t, func() bool { return len(agent.Bundles) > 0 }, 2*time.Second, 500*time.Millisecond)
+
+	collected := agent.Bundles[0]
+
+	assert.Equal(t, "gcp:cloud-run:revision:test-revision", collected.Header.Get("X-Instana-Host"))
+	assert.Equal(t, "testkey1", collected.Header.Get("X-Instana-Key"))
+	assert.NotEmpty(t, collected.Header.Get("X-Instana-Time"))
+
+	var payload struct {
+		Metrics struct {
+			Plugins []struct {
+				Name     string                 `json:"name"`
+				EntityID string                 `json:"entityId"`
+				Data     map[string]interface{} `json:"data"`
+			} `json:"plugins"`
+		} `json:"metrics"`
+	}
+	require.NoError(t, json.Unmarshal(collected.Body, &payload))
+
+	pluginData := make(map[string][]serverlessAgentPluginPayload)
+	for _, plugin := range payload.Metrics.Plugins {
+		pluginData[plugin.Name] = append(pluginData[plugin.Name], serverlessAgentPluginPayload{plugin.EntityID, plugin.Data})
+	}
+
+	t.Run("Go process plugin payload", func(t *testing.T) {
+		require.Len(t, pluginData["com.instana.plugin.golang"], 1)
+		d := pluginData["com.instana.plugin.golang"][0]
+
+		assert.NotEmpty(t, d.EntityID)
+
+		assert.NotEmpty(t, d.Data["metrics"])
+	})
+}
+
 func setupGCREnv() func() {
 	var teardownFns []func()
 
@@ -65,14 +109,14 @@ func setupGCREnv() func() {
 
 func setupMetadataServer() func() {
 	mux := http.NewServeMux()
-	mux.HandleFunc("/computeMetadata", func(w http.ResponseWriter, req *http.Request) {
-		http.ServeFile(w, req, "gcloud/computeMetadata.json")
+	mux.HandleFunc("/computeMetadata/v1", func(w http.ResponseWriter, req *http.Request) {
+		http.ServeFile(w, req, "gcloud/testdata/computeMetadata.json")
 	})
 
 	srv := httptest.NewServer(mux)
 
 	teardown := restoreEnvVarFunc("GOOGLE_CLOUD_RUN_METADATA_ENDPOINT")
-	os.Setenv("GOOGLE_CLOUD_RUN_METADATA_ENDPOINT", "http://"+srv.URL)
+	os.Setenv("GOOGLE_CLOUD_RUN_METADATA_ENDPOINT", srv.URL)
 
 	return func() {
 		teardown()
