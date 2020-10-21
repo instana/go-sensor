@@ -78,6 +78,23 @@ func TestGCRAgent_SendMetrics(t *testing.T) {
 		pluginData[plugin.Name] = append(pluginData[plugin.Name], serverlessAgentPluginPayload{plugin.EntityID, plugin.Data})
 	}
 
+	t.Run("GCR service revision instance plugin payload", func(t *testing.T) {
+		require.Len(t, pluginData["com.instana.plugin.gcp.run.revision.instance"], 1)
+		d := pluginData["com.instana.plugin.gcp.run.revision.instance"][0]
+
+		assert.Equal(t, "id1", d.EntityID)
+
+		assert.Equal(t, "go", d.Data["runtime"])
+		assert.Equal(t, "us-central1", d.Data["region"])
+		assert.Equal(t, "test-service", d.Data["service"])
+		assert.Equal(t, "test-configuration", d.Data["configuration"])
+		assert.Equal(t, "test-revision", d.Data["revision"])
+		assert.Equal(t, "id1", d.Data["instanceId"])
+		assert.Equal(t, "8081", d.Data["port"])
+		assert.EqualValues(t, 1234567890, d.Data["numericProjectId"])
+		assert.Equal(t, "test-project", d.Data["projectId"])
+	})
+
 	t.Run("Process plugin payload", func(t *testing.T) {
 		require.Len(t, pluginData["com.instana.plugin.process"], 1)
 		d := pluginData["com.instana.plugin.process"][0]
@@ -124,6 +141,9 @@ func setupGCREnv() func() {
 
 	teardownFns = append(teardownFns, restoreEnvVarFunc("K_REVISION"))
 	os.Setenv("K_REVISION", "test-revision")
+
+	teardownFns = append(teardownFns, restoreEnvVarFunc("PORT"))
+	os.Setenv("PORT", "8081")
 
 	return func() {
 		for _, fn := range teardownFns {

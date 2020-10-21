@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/instana/go-sensor/acceptor"
@@ -25,6 +26,7 @@ type gcrMetadata struct {
 	Service       string
 	Configuration string
 	Revision      string
+	Port          string
 }
 
 type gcrSnapshot struct {
@@ -45,6 +47,27 @@ func newGCRSnapshot(pid int, md gcrMetadata) gcrSnapshot {
 		},
 		Metadata: md,
 	}
+}
+
+func newGCRServiceRevisionInstancePluginPayload(snapshot gcrSnapshot) acceptor.PluginPayload {
+	regionName := snapshot.Metadata.Instance.Region
+	if ind := strings.LastIndexByte(regionName, '/'); ind >= 0 {
+		// truncate projects/<projectID>/regions/ prefix to extract the region
+		// from a fully-qualified name
+		regionName = regionName[ind+1:]
+	}
+
+	return acceptor.NewGCRServiceRevisionInstancePluginPayload(snapshot.Service.EntityID, acceptor.GCRServiceRevisionInstanceData{
+		Runtime:          "go",
+		Region:           regionName,
+		Service:          snapshot.Metadata.Service,
+		Configuration:    snapshot.Metadata.Configuration,
+		Revision:         snapshot.Metadata.Revision,
+		InstanceID:       snapshot.Metadata.Instance.ID,
+		Port:             snapshot.Metadata.Port,
+		NumericProjectID: snapshot.Metadata.Project.NumericProjectID,
+		ProjectID:        snapshot.Metadata.Project.ProjectID,
+	})
 }
 
 type gcrAgent struct {
@@ -141,6 +164,7 @@ func (a *gcrAgent) SendMetrics(data acceptor.Metrics) (err error) {
 	}{
 		Metrics: metricsPayload{
 			Plugins: []acceptor.PluginPayload{
+				newGCRServiceRevisionInstancePluginPayload(a.snapshot),
 				newProcessPluginPayload(a.snapshot.Service, a.lastProcessStats, processStats),
 				acceptor.NewGoProcessPluginPayload(acceptor.GoProcessData{
 					PID:      a.PID,
@@ -212,6 +236,7 @@ func (a *gcrAgent) collectSnapshot(ctx context.Context) (gcrSnapshot, bool) {
 		Service:         os.Getenv("K_SERVICE"),
 		Configuration:   os.Getenv("K_CONFIGURATION"),
 		Revision:        os.Getenv("K_REVISION"),
+		Port:            os.Getenv("PORT"),
 	})
 	snapshot.Service.Zone = a.Zone
 	snapshot.Service.Tags = a.Tags
