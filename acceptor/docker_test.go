@@ -8,6 +8,18 @@ import (
 	"github.com/instana/testify/assert"
 )
 
+func TestNewDockerPluginPayload(t *testing.T) {
+	data := acceptor.DockerData{
+		ID: "docker1",
+	}
+
+	assert.Equal(t, acceptor.PluginPayload{
+		Name:     "com.instana.plugin.docker",
+		EntityID: "id1",
+		Data:     data,
+	}, acceptor.NewDockerPluginPayload("id1", data))
+}
+
 func TestNewDockerNetworkAggregatedStatsDelta(t *testing.T) {
 	stats := map[string]docker.ContainerNetworkStats{
 		"eth0": {

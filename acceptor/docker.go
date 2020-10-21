@@ -1,6 +1,43 @@
 package acceptor
 
-import "github.com/instana/go-sensor/docker"
+import (
+	"time"
+
+	"github.com/instana/go-sensor/aws"
+	"github.com/instana/go-sensor/docker"
+)
+
+// DockerData is a representation of a Docker container for com.instana.plugin.docker plugin
+type DockerData struct {
+	ID               string                             `json:"Id"`
+	Command          string                             `json:"Command"`
+	CreatedAt        time.Time                          `json:"Created"`
+	StartedAt        time.Time                          `json:"Started"`
+	Image            string                             `json:"Image"`
+	Labels           aws.ContainerLabels                `json:"Labels,omitempty"`
+	Ports            string                             `json:"Ports,omitempty"`
+	PortBindings     string                             `json:"PortBindings,omitempty"`
+	Names            []string                           `json:"Names,omitempty"`
+	NetworkMode      string                             `json:"NetworkMode,omitempty"`
+	StorageDriver    string                             `json:"StorageDriver,omitempty"`
+	DockerVersion    string                             `json:"docker_version,omitempty"`
+	DockerAPIVersion string                             `json:"docker_api_version,omitempty"`
+	Network          *DockerNetworkAggregatedStatsDelta `json:"network,omitempty"`
+	CPU              *DockerCPUStatsDelta               `json:"cpu,omitempty"`
+	Memory           *DockerMemoryStatsUpdate           `json:"memory,omitempty"`
+	BlockIO          *DockerBlockIOStatsDelta           `json:"blkio,omitempty"`
+}
+
+// NewDockerPluginPayload returns payload for the Docker plugin of Instana acceptor
+func NewDockerPluginPayload(entityID string, data DockerData) PluginPayload {
+	const pluginName = "com.instana.plugin.docker"
+
+	return PluginPayload{
+		Name:     pluginName,
+		EntityID: entityID,
+		Data:     data,
+	}
+}
 
 // DockerNetworkStatsDelta represents the difference between two network interface stats
 type DockerNetworkStatsDelta struct {
