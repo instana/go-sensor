@@ -67,6 +67,8 @@ func newSensor(options *Options) *sensorS {
 	}
 
 	if agentEndpoint := os.Getenv("INSTANA_ENDPOINT_URL"); agentEndpoint != "" {
+		s.logger.Debug("INSTANA_ENDPOINT_URL= is set, switching to the serverless mode")
+
 		timeout, err := parseInstanaTimeout(os.Getenv("INSTANA_TIMEOUT"))
 		if err != nil {
 			s.logger.Warn("malformed INSTANA_TIMEOUT value, falling back to the default one: ", err)
