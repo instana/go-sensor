@@ -520,6 +520,7 @@ type GCPPubSubSpanTags struct {
 	Operation    string `json:"op"`
 	Topic        string `json:"top,omitempty"`
 	Subscription string `json:"sub,omitempty"`
+	MessageID    string `json:"msgid,omitempty"`
 }
 
 func NewGCPPubSubSpanTags(span *spanS) GCPPubSubSpanTags {
@@ -534,6 +535,8 @@ func NewGCPPubSubSpanTags(span *spanS) GCPPubSubSpanTags {
 			readStringTag(&tags.Topic, v)
 		case "gcps.sub":
 			readStringTag(&tags.Subscription, v)
+		case "gcps.msgid":
+			readStringTag(&tags.MessageID, v)
 		}
 	}
 
