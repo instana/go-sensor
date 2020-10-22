@@ -52,9 +52,11 @@ func (top *Topic) Publish(ctx context.Context, msg *pubsub.Message) *pubsub.Publ
 
 	res := top.Topic.Publish(ctx, msg)
 	go func() {
-		_, err := res.Get(context.Background())
+		id, err := res.Get(context.Background())
 		if err != nil {
 			sp.LogFields(otlog.Error(err))
+		} else {
+			sp.SetTag("gcps.msgid", id)
 		}
 
 		sp.Finish()

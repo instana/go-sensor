@@ -76,6 +76,7 @@ func TestTracingHandler(t *testing.T) {
 		Operation:    "CONSUME",
 		ProjectID:    "myproject",
 		Subscription: "mysubscription",
+		MessageID:    "136969346945",
 	}, data.Tags)
 }
 
@@ -132,6 +133,7 @@ func TestTracingHandlerFunc_TracePropagation(t *testing.T) {
 		Operation:    "CONSUME",
 		ProjectID:    "myproject",
 		Subscription: "mysubscription",
+		MessageID:    "136969346945",
 	}, data.Tags)
 }
 
