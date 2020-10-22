@@ -518,7 +518,7 @@ func (d GCPPubSubSpanData) Kind() SpanKind {
 type GCPPubSubSpanTags struct {
 	ProjectID    string `json:"projid"`
 	Operation    string `json:"op"`
-	Topic        string `json:"top"`
+	Topic        string `json:"top,omitempty"`
 	Subscription string `json:"sub,omitempty"`
 }
 
