@@ -82,7 +82,7 @@ func TestTopic_Publish(t *testing.T) {
 
 	data := gcpsSpan.Data.(instana.GCPPubSubSpanData)
 	assert.Equal(t, instana.GCPPubSubSpanTags{
-		Operation: "publish",
+		Operation: "PUBLISH",
 		ProjectID: "test-project",
 		Topic:     "test-topic",
 	}, data.Tags)

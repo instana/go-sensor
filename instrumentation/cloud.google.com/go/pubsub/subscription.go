@@ -32,7 +32,7 @@ func (sub *Subscription) Receive(ctx context.Context, f func(context.Context, *p
 		opts := []opentracing.StartSpanOption{
 			ext.SpanKindConsumer,
 			opentracing.Tags{
-				"gcps.op":     "consume",
+				"gcps.op":     "CONSUME",
 				"gcps.projid": sub.projectID,
 				"gcps.sub":    sub.ID(),
 			},

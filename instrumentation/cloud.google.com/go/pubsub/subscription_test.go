@@ -83,7 +83,7 @@ func TestSubscription_Receive(t *testing.T) {
 
 	data := gcpsSpan.Data.(instana.GCPPubSubSpanData)
 	assert.Equal(t, instana.GCPPubSubSpanTags{
-		Operation:    "consume",
+		Operation:    "CONSUME",
 		ProjectID:    "test-project",
 		Subscription: "test-subscription",
 	}, data.Tags)
@@ -152,7 +152,7 @@ func TestSubscription_Receive_NoTrace(t *testing.T) {
 
 	data := gcpsSpan.Data.(instana.GCPPubSubSpanData)
 	assert.Equal(t, instana.GCPPubSubSpanTags{
-		Operation:    "consume",
+		Operation:    "CONSUME",
 		ProjectID:    "test-project",
 		Subscription: "test-subscription",
 	}, data.Tags)
