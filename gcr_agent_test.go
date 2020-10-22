@@ -1,4 +1,4 @@
-// +build gcr_integration
+// +build gcr,integration
 
 package instana_test
 

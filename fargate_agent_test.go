@@ -1,4 +1,4 @@
-// +build fargate_integration
+// +build fargate,integration
 
 package instana_test
 

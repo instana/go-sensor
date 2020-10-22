@@ -1,6 +1,8 @@
 MODULES = $(filter-out $(EXCLUDE_DIRS), $(shell find . -name go.mod -exec dirname {} \;))
 LINTER ?= $(shell go env GOPATH)/bin/golangci-lint
-INTEGRATION_TESTS = fargate_integration gcr_integration
+
+# The list of Go build tags as they are specified in respective integration test files
+INTEGRATION_TESTS = fargate gcr
 
 # the Go version to vendor dependencies listed in go.mod
 VENDOR_GO_VERSION ?= go1.15
@@ -28,7 +30,7 @@ endif
 integration: $(INTEGRATION_TESTS)
 
 $(INTEGRATION_TESTS):
-	go test $(GOFLAGS) -tags $@ integration_test.go $(shell grep -lR "// +build $@" .)
+	go test $(GOFLAGS) -tags "$@ integration" $(shell grep -lR '^// +build \($@,\)\?integration\(,$@\)\?' .)
 
 $(LINTER):
 	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/a2bc9b7a99e3280805309d71036e8c2106853250/install.sh \
