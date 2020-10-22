@@ -2,9 +2,13 @@ package instana
 
 import (
 	"context"
+	"os"
+	"os/user"
+	"strconv"
 	"sync"
 	"time"
 
+	"github.com/instana/go-sensor/acceptor"
 	"github.com/instana/go-sensor/process"
 )
 
@@ -22,6 +26,45 @@ type serverlessSnapshot struct {
 	StartedAt time.Time
 	Zone      string
 	Tags      map[string]interface{}
+}
+
+func newProcessPluginPayload(snapshot serverlessSnapshot, prevStats, currentStats processStats) acceptor.PluginPayload {
+	var currUser, currGroup string
+	if u, err := user.Current(); err == nil {
+		currUser = u.Username
+
+		if g, err := user.LookupGroupId(u.Gid); err == nil {
+			currGroup = g.Name
+		}
+	}
+
+	env := getProcessEnv()
+	for k := range env {
+		if k == "INSTANA_AGENT_KEY" {
+			continue
+		}
+
+		if sensor.options.Tracer.Secrets.Match(k) {
+			env[k] = "<redacted>"
+		}
+	}
+
+	return acceptor.NewProcessPluginPayload(strconv.Itoa(snapshot.PID), acceptor.ProcessData{
+		PID:           snapshot.PID,
+		Exec:          os.Args[0],
+		Args:          os.Args[1:],
+		Env:           env,
+		User:          currUser,
+		Group:         currGroup,
+		ContainerID:   snapshot.Container.ID,
+		ContainerType: snapshot.Container.Type,
+		Start:         snapshot.StartedAt.UnixNano() / int64(time.Millisecond),
+		HostName:      snapshot.Host,
+		HostPID:       snapshot.PID,
+		CPU:           acceptor.NewProcessCPUStatsDelta(prevStats.CPU, currentStats.CPU, currentStats.Tick-prevStats.Tick),
+		Memory:        acceptor.NewProcessMemoryStatsUpdate(prevStats.Memory, currentStats.Memory),
+		OpenFiles:     acceptor.NewProcessOpenFilesStatsUpdate(prevStats.Limits, currentStats.Limits),
+	})
 }
 
 type processStats struct {

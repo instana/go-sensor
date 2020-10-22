@@ -37,9 +37,10 @@ type gcrSnapshot struct {
 func newGCRSnapshot(pid int, md gcrMetadata) gcrSnapshot {
 	return gcrSnapshot{
 		Service: serverlessSnapshot{
-			EntityID: md.Instance.ID,
-			Host:     "gcp:cloud-run:revision:" + md.Revision,
-			PID:      pid,
+			EntityID:  md.Instance.ID,
+			Host:      "gcp:cloud-run:revision:" + md.Revision,
+			PID:       pid,
+			StartedAt: processStartedAt,
 			Container: containerSnapshot{
 				ID:   md.Instance.ID,
 				Type: "gcpCloudRunInstance",

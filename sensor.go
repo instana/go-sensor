@@ -36,8 +36,11 @@ type sensorS struct {
 	serviceName string
 }
 
-var sensor *sensorS
-var binaryName = filepath.Base(os.Args[0])
+var (
+	sensor           *sensorS
+	binaryName       = filepath.Base(os.Args[0])
+	processStartedAt = time.Now()
+)
 
 func newSensor(options *Options) *sensorS {
 	if options == nil {
