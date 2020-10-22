@@ -1,6 +1,7 @@
 package instana
 
 import (
+	"strings"
 	"time"
 
 	"github.com/instana/go-sensor/w3ctrace"
@@ -507,7 +508,7 @@ func NewGCPPubSubSpanData(span *spanS) GCPPubSubSpanData {
 }
 
 func (d GCPPubSubSpanData) Kind() SpanKind {
-	switch d.Tags.Operation {
+	switch strings.ToLower(d.Tags.Operation) {
 	case "consume":
 		return EntrySpanKind
 	default:
