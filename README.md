@@ -9,9 +9,9 @@ The Instana Go sensor consists of three parts:
 * [OpenTracing](http://opentracing.io) tracer
 * AutoProfile™ continuous profiler
 
-[![Build Status](https://travis-ci.org/instana/go-sensor.svg?branch=master)](https://travis-ci.org/instana/go-sensor)
+[![Build Status](https://circleci.com/gh/instana/go-sensor/tree/master.svg?style=svg)](https://circleci.com/gh/instana/go-sensor/tree/master)
 [![GoDoc](https://img.shields.io/static/v1?label=godoc&message=reference&color=blue)][pkg.go.dev]
-[![OpenTracing Badge](https://img.shields.io/badge/OpenTracing-enabled-blue.svg)](http://opentracing.io)
+[![OpenTracing](https://img.shields.io/badge/OpenTracing-enabled-blue.svg)](http://opentracing.io)
 
 ## Table of Contents
 
@@ -86,7 +86,7 @@ To use Instana Go sensor for monitoring a service running on AWS Fargate make su
 
 Services running in AWS Fargate don't use host agent to send metrics and trace data to Instana backend, therefore the usual way of configuring the in-app sensor via [`configuration.yaml`](https://www.instana.com/docs/setup_and_manage/host_agent/configuration/#agent-configuration-file) file is not applicable. Instead there is a set of environment variables that can optionally be configured in service task definition:
 
-| Environment variable         | Default value                              | Description                                                                              | 
+| Environment variable         | Default value                              | Description                                                                              |
 |------------------------------|--------------------------------------------|------------------------------------------------------------------------------------------|
 | `INSTANA_TIMEOUT`            | `500`                                      | The Instana backend connection timeout (in milliseconds)                                 |
 | `INSTANA_SECRETS`            | `contains-ignore-case:secret,key,password` | The [secrets filter](#secrets-filtering) (also applied to process environment variables) |
@@ -146,7 +146,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func main() {	
+func main() {
 	// initialize Instana sensor
 	instana.InitSensor(&instana.Options{Service: SERVICE})
 
@@ -243,7 +243,7 @@ http.HandleFunc("/files", instana.TracingHandlerFunc(sensor, "index", h.ServeHTT
 
 Requesting data or information from other, often external systems, is commonly implemented through HTTP requests. To make sure traces contain all spans, especially over all the different systems, certain span information have to be injected into the HTTP request headers before sending it out. Instana's Go sensor provides support to automate this process as much as possible.
 
-To have Instana inject information into the request headers, create the `http.Client`, wrap its `Transport` with `instana.RoundTripper()` and use it as in the following example. 
+To have Instana inject information into the request headers, create the `http.Client`, wrap its `Transport` with `instana.RoundTripper()` and use it as in the following example.
 
 ```go
 req, err := http.NewRequest("GET", url, nil)
@@ -363,7 +363,7 @@ The sensor, be it instantiated explicitly or implicitly through the tracer, prov
 
 To learn more, see the [Events API](https://github.com/instana/go-sensor/blob/master/EventAPI.md) document in this repository.
 
-## AutoProfile™ 
+## AutoProfile™
 
 AutoProfile™ generates and reports process profiles to Instana. Unlike development-time and on-demand profilers, where a user must manually initiate profiling, AutoProfile™ automatically schedules and continuously performs profiling appropriate for critical production environments.
 
