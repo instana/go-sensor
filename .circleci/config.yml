@@ -1,9 +1,10 @@
 version: 2
+
 jobs:
   go1.15:
     docker:
       - image: circleci/golang:1.15
-    working_directory: /go/src/github.com/{{ORG_NAME}}/{{REPO_NAME}}
+    working_directory: /go/src/github.com/instana/go-sensor
     steps:
       - checkout
       - restore_cache:
