@@ -9,7 +9,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
-	"os/user"
 	"strconv"
 	"sync"
 	"time"
@@ -18,22 +17,27 @@ import (
 	"github.com/instana/go-sensor/autoprofile"
 	"github.com/instana/go-sensor/aws"
 	"github.com/instana/go-sensor/docker"
-	"github.com/instana/go-sensor/process"
 )
 
 type fargateSnapshot struct {
-	EntityID  string
-	PID       int
-	Zone      string
-	Tags      map[string]interface{}
+	Service   serverlessSnapshot
 	Task      aws.ECSTaskMetadata
 	Container aws.ECSContainerMetadata
 }
 
 func newFargateSnapshot(pid int, taskMD aws.ECSTaskMetadata, containerMD aws.ECSContainerMetadata) fargateSnapshot {
 	return fargateSnapshot{
-		EntityID:  ecsEntityID(containerMD),
-		PID:       pid,
+		Service: serverlessSnapshot{
+			EntityID:  ecsEntityID(containerMD),
+			Host:      containerMD.TaskARN,
+			PID:       pid,
+			StartedAt: processStartedAt,
+			Container: containerSnapshot{
+				ID:    containerMD.DockerID,
+				Type:  "docker",
+				Image: containerMD.Image,
+			},
+		},
 		Task:      taskMD,
 		Container: containerMD,
 	}
@@ -44,7 +48,7 @@ func newECSTaskPluginPayload(snapshot fargateSnapshot) acceptor.PluginPayload {
 		TaskARN:               snapshot.Task.TaskARN,
 		ClusterARN:            snapshot.Container.Cluster,
 		AvailabilityZone:      snapshot.Task.AvailabilityZone,
-		InstanaZone:           snapshot.Zone,
+		InstanaZone:           snapshot.Service.Zone,
 		TaskDefinition:        snapshot.Task.Family,
 		TaskDefinitionVersion: snapshot.Task.Revision,
 		DesiredStatus:         snapshot.Task.DesiredStatus,
@@ -55,7 +59,7 @@ func newECSTaskPluginPayload(snapshot fargateSnapshot) acceptor.PluginPayload {
 		},
 		PullStartedAt: snapshot.Task.PullStartedAt,
 		PullStoppedAt: snapshot.Task.PullStoppedAt,
-		Tags:          snapshot.Tags,
+		Tags:          snapshot.Service.Tags,
 	})
 }
 
@@ -121,45 +125,6 @@ func newDockerContainerPluginPayload(
 	}
 
 	return acceptor.NewDockerPluginPayload(ecsEntityID(container), data)
-}
-
-func newProcessPluginPayload(snapshot fargateSnapshot, prevStats, currentStats processStats) acceptor.PluginPayload {
-	var currUser, currGroup string
-	if u, err := user.Current(); err == nil {
-		currUser = u.Username
-
-		if g, err := user.LookupGroupId(u.Gid); err == nil {
-			currGroup = g.Name
-		}
-	}
-
-	env := getProcessEnv()
-	for k := range env {
-		if k == "INSTANA_AGENT_KEY" {
-			continue
-		}
-
-		if sensor.options.Tracer.Secrets.Match(k) {
-			env[k] = "<redacted>"
-		}
-	}
-
-	return acceptor.NewProcessPluginPayload(strconv.Itoa(snapshot.PID), acceptor.ProcessData{
-		PID:           snapshot.PID,
-		Exec:          os.Args[0],
-		Args:          os.Args[1:],
-		Env:           env,
-		User:          currUser,
-		Group:         currGroup,
-		ContainerID:   snapshot.Container.DockerID,
-		ContainerType: "docker",
-		Start:         snapshot.Container.StartedAt.UnixNano() / int64(time.Millisecond),
-		HostName:      snapshot.Container.TaskARN,
-		HostPID:       snapshot.PID,
-		CPU:           acceptor.NewProcessCPUStatsDelta(prevStats.CPU, currentStats.CPU, currentStats.Tick-prevStats.Tick),
-		Memory:        acceptor.NewProcessMemoryStatsUpdate(prevStats.Memory, currentStats.Memory),
-		OpenFiles:     acceptor.NewProcessOpenFilesStatsUpdate(prevStats.Limits, currentStats.Limits),
-	})
 }
 
 type metricsPayload struct {
@@ -249,7 +214,7 @@ func newFargateAgent(
 	return agent
 }
 
-func (a *fargateAgent) Ready() bool { return a.snapshot.EntityID != "" }
+func (a *fargateAgent) Ready() bool { return a.snapshot.Service.EntityID != "" }
 
 func (a *fargateAgent) SendMetrics(data acceptor.Metrics) (err error) {
 	dockerStats := a.dockerStats.Collect()
@@ -271,7 +236,7 @@ func (a *fargateAgent) SendMetrics(data acceptor.Metrics) (err error) {
 		Metrics: metricsPayload{
 			Plugins: []acceptor.PluginPayload{
 				newECSTaskPluginPayload(a.snapshot),
-				newProcessPluginPayload(a.snapshot, a.lastProcessStats, processStats),
+				newProcessPluginPayload(a.snapshot.Service, a.lastProcessStats, processStats),
 				acceptor.NewGoProcessPluginPayload(acceptor.GoProcessData{
 					PID:      a.PID,
 					Snapshot: a.runtimeSnapshot.Collect(),
@@ -282,7 +247,7 @@ func (a *fargateAgent) SendMetrics(data acceptor.Metrics) (err error) {
 	}
 
 	for _, container := range a.snapshot.Task.Containers {
-		instrumented := ecsEntityID(container) == a.snapshot.EntityID
+		instrumented := ecsEntityID(container) == a.snapshot.Service.EntityID
 		payload.Metrics.Plugins = append(
 			payload.Metrics.Plugins,
 			newECSContainerPluginPayload(container, instrumented),
@@ -321,7 +286,7 @@ func (a *fargateAgent) SendMetrics(data acceptor.Metrics) (err error) {
 func (a *fargateAgent) SendEvent(event *EventData) error { return nil }
 
 func (a *fargateAgent) SendSpans(spans []Span) error {
-	from := newServerlessAgentFromS(a.snapshot.EntityID, "aws")
+	from := newServerlessAgentFromS(a.snapshot.Service.EntityID, "aws")
 
 	agentSpans := make([]agentSpan, 0, len(spans))
 	for _, sp := range spans {
@@ -339,7 +304,7 @@ func (a *fargateAgent) SendSpans(spans []Span) error {
 func (a *fargateAgent) SendProfiles(profiles []autoprofile.Profile) error { return nil }
 
 func (a *fargateAgent) sendRequest(req *http.Request) error {
-	req.Header.Set("X-Instana-Host", a.snapshot.EntityID)
+	req.Header.Set("X-Instana-Host", a.snapshot.Service.EntityID)
 	req.Header.Set("X-Instana-Key", a.Key)
 	req.Header.Set("X-Instana-Time", strconv.FormatInt(time.Now().UnixNano()/int64(time.Millisecond), 10))
 
@@ -404,8 +369,8 @@ func (a *fargateAgent) collectSnapshot(ctx context.Context) (fargateSnapshot, bo
 	}
 
 	snapshot := newFargateSnapshot(a.PID, taskMD, containerMD)
-	snapshot.Zone = a.Zone
-	snapshot.Tags = a.Tags
+	snapshot.Service.Zone = a.Zone
+	snapshot.Service.Tags = a.Tags
 
 	a.logger.Debug("collected snapshot")
 
@@ -457,103 +422,6 @@ func (c *ecsDockerStatsCollector) fetchStats(ctx context.Context) {
 		// request failed, reset recorded stats
 		c.logger.Warn("failed to retrieve Docker container stats: ", err)
 		stats = nil
-	}
-
-	c.mu.Lock()
-	c.stats = stats
-	defer c.mu.Unlock()
-}
-
-type processStats struct {
-	Tick   int
-	CPU    process.CPUStats
-	Memory process.MemStats
-	Limits process.ResourceLimits
-}
-
-type processStatsCollector struct {
-	logger LeveledLogger
-	mu     sync.RWMutex
-	stats  processStats
-}
-
-func (c *processStatsCollector) Run(ctx context.Context, collectionInterval time.Duration) {
-	timer := time.NewTicker(collectionInterval)
-	defer timer.Stop()
-
-	for {
-		select {
-		case <-timer.C:
-			fetchCtx, cancel := context.WithTimeout(ctx, collectionInterval)
-			c.fetchStats(fetchCtx)
-			cancel()
-		case <-ctx.Done():
-			return
-		}
-	}
-}
-
-func (c *processStatsCollector) Collect() processStats {
-	c.mu.RLock()
-	defer c.mu.RUnlock()
-
-	return c.stats
-}
-
-func (c *processStatsCollector) fetchStats(ctx context.Context) {
-	stats := c.Collect()
-
-	var wg sync.WaitGroup
-	wg.Add(3)
-
-	done := make(chan struct{})
-	go func() {
-		wg.Wait()
-		close(done)
-	}()
-
-	go func() {
-		defer wg.Done()
-
-		st, tick, err := process.Stats().CPU()
-		if err != nil {
-			c.logger.Debug("failed to read process CPU stats, skipping: ", err)
-			return
-		}
-
-		stats.CPU, stats.Tick = st, tick
-	}()
-
-	go func() {
-		defer wg.Done()
-
-		st, err := process.Stats().Memory()
-		if err != nil {
-			c.logger.Debug("failed to read process memory stats, skipping: ", err)
-			return
-		}
-
-		stats.Memory = st
-	}()
-
-	go func() {
-		defer wg.Done()
-
-		st, err := process.Stats().Limits()
-		if err != nil {
-			c.logger.Debug("failed to read process open files stats, skipping: ", err)
-			return
-		}
-
-		stats.Limits = st
-	}()
-
-	select {
-	case <-done:
-		break
-	case <-ctx.Done():
-		c.logger.Debug("failed to obtain process stats (timed out)")
-		return // context has been cancelled, skip this update
 	}
 
 	c.mu.Lock()

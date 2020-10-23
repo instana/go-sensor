@@ -8,6 +8,18 @@ import (
 	"github.com/instana/testify/assert"
 )
 
+func TestNewProcessPluginPayload(t *testing.T) {
+	data := acceptor.ProcessData{
+		PID: 42,
+	}
+
+	assert.Equal(t, acceptor.PluginPayload{
+		Name:     "com.instana.plugin.process",
+		EntityID: "id1",
+		Data:     data,
+	}, acceptor.NewProcessPluginPayload("id1", data))
+}
+
 func TestNewProcessCPUStatsDelta(t *testing.T) {
 	stats := process.CPUStats{
 		User:   1,

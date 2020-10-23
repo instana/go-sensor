@@ -2,6 +2,36 @@ package acceptor
 
 import "github.com/instana/go-sensor/process"
 
+// ProcessData is a representation of a running process for com.instana.plugin.process plugin
+type ProcessData struct {
+	PID           int                          `json:"pid"`
+	Exec          string                       `json:"exec"`
+	Args          []string                     `json:"args,omitempty"`
+	Env           map[string]string            `json:"env,omitempty"`
+	User          string                       `json:"user,omitempty"`
+	Group         string                       `json:"group,omitempty"`
+	ContainerID   string                       `json:"container,omitempty"`
+	ContainerPid  int                          `json:"containerPid,string,omitempty"`
+	ContainerType string                       `json:"containerType,omitempty"`
+	Start         int64                        `json:"start"`
+	HostName      string                       `json:"com.instana.plugin.host.name"`
+	HostPID       int                          `json:"com.instana.plugin.host.pid,string"`
+	CPU           *ProcessCPUStatsDelta        `json:"cpu,omitempty"`
+	Memory        *ProcessMemoryStatsUpdate    `json:"mem,omitempty"`
+	OpenFiles     *ProcessOpenFilesStatsUpdate `json:"openFiles,omitempty"`
+}
+
+// NewProcessPluginPayload returns payload for the process plugin of Instana acceptor
+func NewProcessPluginPayload(entityID string, data ProcessData) PluginPayload {
+	const pluginName = "com.instana.plugin.process"
+
+	return PluginPayload{
+		Name:     pluginName,
+		EntityID: entityID,
+		Data:     data,
+	}
+}
+
 // ProcessCPUStatsUpdate represents the CPU stats that have changed since the last measurement
 type ProcessCPUStatsDelta struct {
 	User   float64 `json:"user,omitempty"`

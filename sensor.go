@@ -36,8 +36,11 @@ type sensorS struct {
 	serviceName string
 }
 
-var sensor *sensorS
-var binaryName = filepath.Base(os.Args[0])
+var (
+	sensor           *sensorS
+	binaryName       = filepath.Base(os.Args[0])
+	processStartedAt = time.Now()
+)
 
 func newSensor(options *Options) *sensorS {
 	if options == nil {
@@ -66,43 +69,29 @@ func newSensor(options *Options) *sensorS {
 		setLogLevel(l, options.LogLevel)
 	}
 
-	switch {
-	case os.Getenv("AWS_EXECUTION_ENV") == "AWS_ECS_FARGATE":
-		// seems like the app is running on AWS Fargate, but we still need to check
-		// whether ECS_CONTAINER_METADATA_URI is set
-		if mdURI := os.Getenv("ECS_CONTAINER_METADATA_URI"); mdURI != "" {
-			timeout, err := parseInstanaTimeout(os.Getenv("INSTANA_TIMEOUT"))
-			if err != nil {
-				s.logger.Warn("malformed INSTANA_TIMEOUT value, falling back to the default one: ", err)
-				timeout = defaultServerlessTimeout
-			}
+	if agentEndpoint := os.Getenv("INSTANA_ENDPOINT_URL"); agentEndpoint != "" {
+		s.logger.Debug("INSTANA_ENDPOINT_URL= is set, switching to the serverless mode")
 
-			client, err := acceptor.NewHTTPClient(timeout)
-			if err != nil {
-				if err == acceptor.ErrMalformedProxyURL {
-					s.logger.Warn(err)
-				} else {
-					s.logger.Error("failed to initialize acceptor HTTP client, falling back to the default one: ", err)
-					client = http.DefaultClient
-				}
-			}
-
-			s.agent = newFargateAgent(
-				s.serviceName,
-				os.Getenv("INSTANA_ENDPOINT_URL"),
-				os.Getenv("INSTANA_AGENT_KEY"),
-				client,
-				aws.NewECSMetadataProvider(mdURI, client),
-				s.logger,
-			)
-
-			break
+		timeout, err := parseInstanaTimeout(os.Getenv("INSTANA_TIMEOUT"))
+		if err != nil {
+			s.logger.Warn("malformed INSTANA_TIMEOUT value, falling back to the default one: ", err)
+			timeout = defaultServerlessTimeout
 		}
 
-		s.logger.Error("the task metadata URI is not set in ECS_CONTAINER_METADATA_URI env var, falling back to host agent mode")
+		client, err := acceptor.NewHTTPClient(timeout)
+		if err != nil {
+			if err == acceptor.ErrMalformedProxyURL {
+				s.logger.Warn(err)
+			} else {
+				s.logger.Error("failed to initialize acceptor HTTP client, falling back to the default one: ", err)
+				client = http.DefaultClient
+			}
+		}
 
-		fallthrough
-	default:
+		s.agent = newServerlessAgent(s.serviceName, agentEndpoint, os.Getenv("INSTANA_AGENT_KEY"), client, s.logger)
+	}
+
+	if s.agent == nil {
 		s.agent = newAgent(s.serviceName, s.options.AgentHost, s.options.AgentPort, s.logger)
 	}
 
@@ -158,4 +147,22 @@ func InitSensor(options *Options) {
 	}
 
 	sensor.logger.Debug("initialized sensor")
+}
+
+func newServerlessAgent(serviceName, agentEndpoint, agentKey string, client *http.Client, logger LeveledLogger) agentClient {
+	switch {
+	case os.Getenv("AWS_EXECUTION_ENV") == "AWS_ECS_FARGATE" && os.Getenv("ECS_CONTAINER_METADATA_URI") != "":
+		return newFargateAgent(
+			serviceName,
+			agentEndpoint,
+			agentKey,
+			client,
+			aws.NewECSMetadataProvider(os.Getenv("ECS_CONTAINER_METADATA_URI"), client),
+			logger,
+		)
+	case os.Getenv("K_SERVICE") != "" && os.Getenv("K_CONFIGURATION") != "" && os.Getenv("K_REVISION") != "": // Knative, e.g. Google Cloud Run
+		return newGCRAgent(serviceName, agentEndpoint, agentKey, client, logger)
+	default:
+		return nil
+	}
 }
