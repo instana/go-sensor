@@ -1,0 +1,28 @@
+version: 2
+jobs:
+  go1.15:
+    docker:
+      - image: circleci/golang:1.15
+    working_directory: /go/src/github.com/{{ORG_NAME}}/{{REPO_NAME}}
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - go-mod-v4-{{ checksum "go.sum" }}
+      - run:
+          name: Run unit tests
+          environment:
+            RUN_LINTER: yes
+          command: make test
+      - run:
+          name: Run integration tests
+          command: make integration
+      - save_cache:
+          key: go-mod-v4-{{ checksum "go.sum" }}
+          paths:
+            - "/go/pkg/mod"
+
+workflows:
+  version: 2
+  build:
+    jobs: go1.15
