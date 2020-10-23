@@ -1,9 +1,29 @@
-version: 2
+version: 2.1
+
 jobs:
-  go1.15:
+  build:
+    description: "Run Go unit and integration tests using make targets"
+    parameters:
+      go_version:
+        description: "Go version to use (1.x)"
+        type: string
+      go111module:
+        description: "GO111MODULE= env var value"
+        default: "auto"
+        type: enum
+        enum: ["on", "off", "auto"]
+      vendor_deps:
+        description: "Whether to vendor dependencies before running tests"
+        default: "no"
+        type: enum
+        enum: ["yes", "no"]
+      exclude_dirs:
+        description: "A space-separated list of directories to ignore"
+        default: ""
+        type: string
     docker:
-      - image: circleci/golang:1.15
-    working_directory: /go/src/github.com/{{ORG_NAME}}/{{REPO_NAME}}
+      - image: circleci/golang:<< parameters.go_version >>
+    working_directory: /go/src/github.com/instana/go-sensor
     steps:
       - checkout
       - restore_cache:
@@ -13,10 +33,17 @@ jobs:
           name: Run unit tests
           environment:
             RUN_LINTER: yes
+            GO111MODULE: << parameters.go111module >>
+            VENDOR_DEPS: << parameters.vendor_deps >>
+            EXCLUDE_DIRS: << parameters.exclude_dirs >>
           command: make test
       - run:
           name: Run integration tests
           command: make integration
+          environment:
+            GO111MODULE: << parameters.go111module >>
+            VENDOR_DEPS: << parameters.vendor_deps >>
+            EXCLUDE_DIRS: << parameters.exclude_dirs >>
       - save_cache:
           key: go-mod-v4-{{ checksum "go.sum" }}
           paths:
@@ -26,4 +53,33 @@ workflows:
   version: 2
   build:
     jobs:
-      - "go1.15"
+      - build:
+          name: "latest"
+          go_version: "latest"
+      - build:
+          name: "go1.15"
+          go_version: "1.15"
+      - build:
+          name: "go1.14"
+          go_version: "1.14"
+      - build:
+          name: "go1.13"
+          go_version: "1.13"
+      - build:
+          name: "go1.12"
+          go_version: "1.12"
+          go111module: "on"
+      - build:
+          name: "go1.11"
+          go_version: "1.11"
+          go111module: "on"
+      - build:
+          name: "go1.10"
+          go_version: "1.10"
+          vendor_deps: "yes"
+          exclude_dirs: "./instrumentation/cloud.google.com/go"
+      - build:
+          name: "go1.9"
+          go_version: "1.9"
+          vendor_deps: "yes"
+          exclude_dirs: "./instrumentation/cloud.google.com/go"

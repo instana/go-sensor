@@ -9,11 +9,11 @@ VENDOR_GO_VERSION ?= go1.15
 VENDOR_GO = $(shell go env GOPATH)/bin/$(VENDOR_GO_VERSION)
 MODULES_VENDOR = $(addsuffix /vendor,$(MODULES))
 
-ifdef RUN_LINTER
+ifeq ($(RUN_LINTER),yes)
 test: $(LINTER)
 endif
 
-ifdef VENDOR_DEPS
+ifeq ($(VENDOR_DEPS),yes)
 # We need to vendor all dependencies at once before running test, so the `go get -t -d ./...`
 # on go1.9 and go1.10 does not try to re-download them
 test: $(MODULES_VENDOR)
@@ -23,7 +23,7 @@ test: $(MODULES)
 
 $(MODULES):
 	cd $@ && go get -d -t ./... && go test $(GOFLAGS) ./...
-ifdef RUN_LINTER
+ifeq ($(RUN_LINTER),yes)
 	cd $@ && $(LINTER) run
 endif
 
