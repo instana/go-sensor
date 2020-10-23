@@ -25,4 +25,5 @@ jobs:
 workflows:
   version: 2
   build:
-    jobs: go1.15
+    jobs:
+      - "go1.15"
