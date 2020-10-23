@@ -130,6 +130,48 @@ func TestGCRAgent_SendMetrics(t *testing.T) {
 	})
 }
 
+func TestGCRAgent_SendSpans(t *testing.T) {
+	defer agent.Reset()
+
+	sensor := instana.NewSensor("testing")
+
+	sp := sensor.Tracer().StartSpan("entry")
+	sp.SetTag("value", "42")
+	sp.Finish()
+
+	require.Eventually(t, func() bool {
+		if len(agent.Bundles) == 0 {
+			return false
+		}
+
+		for _, bundle := range agent.Bundles {
+			var payload struct {
+				Spans []json.RawMessage `json:"spans"`
+			}
+
+			json.Unmarshal(bundle.Body, &payload)
+			if len(payload.Spans) > 0 {
+				return true
+			}
+		}
+
+		return false
+	}, 4*time.Second, 500*time.Millisecond)
+
+	var spans []map[string]json.RawMessage
+	for _, bundle := range agent.Bundles {
+		var payload struct {
+			Spans []map[string]json.RawMessage `json:"spans"`
+		}
+
+		require.NoError(t, json.Unmarshal(bundle.Body, &payload), "%s", string(bundle.Body))
+		spans = append(spans, payload.Spans...)
+	}
+
+	require.Len(t, spans, 1)
+	assert.JSONEq(t, `{"hl": true, "cp": "gcp", "e": "id1"}`, string(spans[0]["f"]))
+}
+
 func setupGCREnv() func() {
 	var teardownFns []func()
 

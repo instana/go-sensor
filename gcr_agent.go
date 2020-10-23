@@ -11,6 +11,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/instana/go-sensor/acceptor"
@@ -80,6 +81,9 @@ type gcrAgent struct {
 
 	snapshot         gcrSnapshot
 	lastProcessStats processStats
+
+	mu        sync.Mutex
+	spanQueue []agentSpan
 
 	runtimeSnapshot *SnapshotCollector
 	processStats    *processStatsCollector
@@ -176,6 +180,14 @@ func (a *gcrAgent) SendMetrics(data acceptor.Metrics) (err error) {
 		},
 	}
 
+	a.mu.Lock()
+	if len(a.spanQueue) > 0 {
+		payload.Spans = make([]agentSpan, len(a.spanQueue))
+		copy(payload.Spans, a.spanQueue)
+		a.spanQueue = a.spanQueue[:0]
+	}
+	a.mu.Unlock()
+
 	buf := bytes.NewBuffer(nil)
 	if err := json.NewEncoder(buf).Encode(payload); err != nil {
 		return fmt.Errorf("failed to marshal metrics payload: %s", err)
@@ -193,7 +205,21 @@ func (a *gcrAgent) SendMetrics(data acceptor.Metrics) (err error) {
 
 func (a *gcrAgent) SendEvent(event *EventData) error { return nil }
 
-func (a *gcrAgent) SendSpans(spans []Span) error { return nil }
+func (a *gcrAgent) SendSpans(spans []Span) error {
+	from := newServerlessAgentFromS(a.snapshot.Service.EntityID, "gcp")
+
+	agentSpans := make([]agentSpan, 0, len(spans))
+	for _, sp := range spans {
+		agentSpans = append(agentSpans, agentSpan{sp, from})
+	}
+
+	// enqueue the spans to send them in a bundle with metrics instead of sending immidiately
+	a.mu.Lock()
+	a.spanQueue = append(a.spanQueue, agentSpans...)
+	a.mu.Unlock()
+
+	return nil
+}
 
 func (a *gcrAgent) SendProfiles(profiles []autoprofile.Profile) error { return nil }
 
