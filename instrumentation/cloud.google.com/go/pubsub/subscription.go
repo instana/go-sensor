@@ -35,6 +35,7 @@ func (sub *Subscription) Receive(ctx context.Context, f func(context.Context, *p
 				"gcps.op":     "CONSUME",
 				"gcps.projid": sub.projectID,
 				"gcps.sub":    sub.ID(),
+				"gcps.msgid":  msg.ID,
 			},
 		}
 		if spCtx, err := sub.sensor.Tracer().Extract(opentracing.TextMap, opentracing.TextMapCarrier(msg.Attributes)); err == nil {

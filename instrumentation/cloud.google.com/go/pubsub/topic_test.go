@@ -85,6 +85,7 @@ func TestTopic_Publish(t *testing.T) {
 		Operation: "PUBLISH",
 		ProjectID: "test-project",
 		Topic:     "test-topic",
+		MessageID: msgID,
 	}, data.Tags)
 
 	// trace context propagation

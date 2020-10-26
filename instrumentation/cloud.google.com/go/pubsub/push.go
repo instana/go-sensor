@@ -54,6 +54,7 @@ func startConsumePushSpan(body []byte, sensor *instana.Sensor) (opentracing.Span
 	var delivery struct {
 		Message struct {
 			Attributes map[string]string `json:"attributes"`
+			ID         string            `json:"messageId"`
 		} `json:"message"`
 		Subscription string `json:"subscription"`
 	}
@@ -73,6 +74,7 @@ func startConsumePushSpan(body []byte, sensor *instana.Sensor) (opentracing.Span
 			"gcps.op":     "CONSUME",
 			"gcps.projid": projectID,
 			"gcps.sub":    subscription,
+			"gcps.msgid":  delivery.Message.ID,
 		},
 	}
 

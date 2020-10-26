@@ -86,6 +86,7 @@ func TestSubscription_Receive(t *testing.T) {
 		Operation:    "CONSUME",
 		ProjectID:    "test-project",
 		Subscription: "test-subscription",
+		MessageID:    msgID,
 	}, data.Tags)
 }
 
@@ -155,5 +156,6 @@ func TestSubscription_Receive_NoTrace(t *testing.T) {
 		Operation:    "CONSUME",
 		ProjectID:    "test-project",
 		Subscription: "test-subscription",
+		MessageID:    msgID,
 	}, data.Tags)
 }
