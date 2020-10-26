@@ -16,8 +16,7 @@ The Instana Go sensor consists of three parts:
 ## Table of Contents
 
 * [Installation](#installation)
-  * [Running on AWS Fargate](#running-on-aws-fargate)
-    * [Additional configuration](#additional-configuration)
+  * [Running in serverless environment](#running-in-serverless-environment)
   * [Using Instana to gather process metrics only](#using-instana-to-gather-process-metrics-only)
 * [Common Operations](#common-operations)
   * [Setting the sensor log output](#setting-the-sensor-log-output)
@@ -78,13 +77,14 @@ Once initialized, the sensor performs a host agent lookup using following list o
 
 Once a host agent found listening on port `42699` (or the port specified in `INSTANA_AGENT_PORT` env variable) the sensor begins collecting in-app metrics and sending them to the host agent.
 
-### Running on AWS Fargate
+### Running in serverless environment
 
-To use Instana Go sensor for monitoring a service running on AWS Fargate make sure that you have `INSTANA_ENDPOINT_URL` and `INSTANA_AGENT_KEY` env variables set in your task definition. Note that the `INSTANA_AGENT_HOST` and `INSTANA_AGENT_PORT` env variables will be ignored in this case. Please refer to [Instana documentation](https://www.instana.com/docs/ecosystem/aws-fargate/#configure-your-task-definition) for detailed explanation on how to do this.
+To use Instana Go sensor for monitoring a service running in a serverless environment, such as AWS Fargate or Google Cloud Run, make sure that you have `INSTANA_ENDPOINT_URL` and `INSTANA_AGENT_KEY` env variables set in your task definition. Note that the `INSTANA_AGENT_HOST` and `INSTANA_AGENT_PORT` env variables will be ignored in this case. Please refer to the respective section of Instana documentation for detailed explanation on how to do this:
 
-#### Additional configuration
+* [Configuring AWS Fargate task definition](https://www.instana.com/docs/ecosystem/aws-fargate/#configure-your-task-definition) .
+* [Configuring Google Cloud Run service](https://www.instana.com/docs/ecosystem/google-cloud-run/#configure-your-cloud-run-service) .
 
-Services running in AWS Fargate don't use host agent to send metrics and trace data to Instana backend, therefore the usual way of configuring the in-app sensor via [`configuration.yaml`](https://www.instana.com/docs/setup_and_manage/host_agent/configuration/#agent-configuration-file) file is not applicable. Instead there is a set of environment variables that can optionally be configured in service task definition:
+Services running in serverless environments don't use host agent to send metrics and trace data to Instana backend, therefore the usual way of configuring the in-app sensor via [`configuration.yaml`](https://www.instana.com/docs/setup_and_manage/host_agent/configuration/#agent-configuration-file) file is not applicable. Instead there is a set of environment variables that can optionally be configured in service task definition:
 
 | Environment variable         | Default value                              | Description                                                                              |
 |------------------------------|--------------------------------------------|------------------------------------------------------------------------------------------|
