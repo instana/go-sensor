@@ -39,7 +39,7 @@ func (top *Topic) Publish(ctx context.Context, msg *pubsub.Message) *pubsub.Publ
 		ext.SpanKindProducer,
 		opentracing.ChildOf(parent.Context()),
 		opentracing.Tags{
-			"gcps.op":     "publish",
+			"gcps.op":     "PUBLISH",
 			"gcps.projid": top.projectID,
 			"gcps.top":    top.ID(),
 		},

@@ -70,7 +70,7 @@ func startConsumePushSpan(body []byte, sensor *instana.Sensor) (opentracing.Span
 	opts := []opentracing.StartSpanOption{
 		ext.SpanKindConsumer,
 		opentracing.Tags{
-			"gcps.op":     "consume",
+			"gcps.op":     "CONSUME",
 			"gcps.projid": projectID,
 			"gcps.sub":    subscription,
 		},

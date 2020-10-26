@@ -73,7 +73,7 @@ func TestTracingHandler(t *testing.T) {
 
 	data := gcpsSpan.Data.(instana.GCPPubSubSpanData)
 	assert.Equal(t, instana.GCPPubSubSpanTags{
-		Operation:    "consume",
+		Operation:    "CONSUME",
 		ProjectID:    "myproject",
 		Subscription: "mysubscription",
 	}, data.Tags)
@@ -129,7 +129,7 @@ func TestTracingHandlerFunc_TracePropagation(t *testing.T) {
 
 	data := gcpsSpan.Data.(instana.GCPPubSubSpanData)
 	assert.Equal(t, instana.GCPPubSubSpanTags{
-		Operation:    "consume",
+		Operation:    "CONSUME",
 		ProjectID:    "myproject",
 		Subscription: "mysubscription",
 	}, data.Tags)
