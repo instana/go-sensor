@@ -189,46 +189,46 @@ func (agent *agentS) SendProfiles(profiles []autoprofile.Profile) error {
 	return nil
 }
 
-func (r *agentS) setLogger(l LeveledLogger) {
-	r.logger = l
+func (agent *agentS) setLogger(l LeveledLogger) {
+	agent.logger = l
 }
 
-func (r *agentS) makeURL(prefix string) string {
-	return r.makeHostURL(r.host, prefix)
+func (agent *agentS) makeURL(prefix string) string {
+	return agent.makeHostURL(agent.host, prefix)
 }
 
-func (r *agentS) makeHostURL(host string, prefix string) string {
+func (agent *agentS) makeHostURL(host string, prefix string) string {
 	var buffer bytes.Buffer
 
 	buffer.WriteString("http://")
 	buffer.WriteString(host)
 	buffer.WriteString(":")
-	buffer.WriteString(r.port)
+	buffer.WriteString(agent.port)
 	buffer.WriteString(prefix)
-	if prefix[len(prefix)-1:] == "." && r.from.EntityID != "" {
-		buffer.WriteString(r.from.EntityID)
+	if prefix[len(prefix)-1:] == "." && agent.from.EntityID != "" {
+		buffer.WriteString(agent.from.EntityID)
 	}
 
 	return buffer.String()
 }
 
-func (r *agentS) head(url string) (string, error) {
-	return r.request(url, "HEAD", nil)
+func (agent *agentS) head(url string) (string, error) {
+	return agent.request(url, "HEAD", nil)
 }
 
-func (r *agentS) request(url string, method string, data interface{}) (string, error) {
-	return r.fullRequestResponse(url, method, data, nil, "")
+func (agent *agentS) request(url string, method string, data interface{}) (string, error) {
+	return agent.fullRequestResponse(url, method, data, nil, "")
 }
 
-func (r *agentS) requestResponse(url string, method string, data interface{}, ret interface{}) (string, error) {
-	return r.fullRequestResponse(url, method, data, ret, "")
+func (agent *agentS) requestResponse(url string, method string, data interface{}, ret interface{}) (string, error) {
+	return agent.fullRequestResponse(url, method, data, ret, "")
 }
 
-func (r *agentS) requestHeader(url string, method string, header string) (string, error) {
-	return r.fullRequestResponse(url, method, nil, nil, header)
+func (agent *agentS) requestHeader(url string, method string, header string) (string, error) {
+	return agent.fullRequestResponse(url, method, nil, nil, header)
 }
 
-func (r *agentS) fullRequestResponse(url string, method string, data interface{}, body interface{}, header string) (string, error) {
+func (agent *agentS) fullRequestResponse(url string, method string, data interface{}, body interface{}, header string) (string, error) {
 	var j []byte
 	var ret string
 	var err error
@@ -250,7 +250,7 @@ func (r *agentS) fullRequestResponse(url string, method string, data interface{}
 
 		if err == nil {
 			req.Header.Set("Content-Type", "application/json")
-			resp, err = r.client.Do(req)
+			resp, err = agent.client.Do(req)
 			if err == nil {
 				defer resp.Body.Close()
 
@@ -275,21 +275,21 @@ func (r *agentS) fullRequestResponse(url string, method string, data interface{}
 		// Ignore errors while in announced stated (before ready) as
 		// this is the time where the entity is registering in the Instana
 		// backend and it will return 404 until it's done.
-		if !r.fsm.fsm.Is("announced") {
-			r.logger.Info(err, url)
+		if !agent.fsm.fsm.Is("announced") {
+			agent.logger.Info(err, url)
 		}
 	}
 
 	return ret, err
 }
 
-func (r *agentS) applyHostAgentSettings(resp agentResponse) {
-	r.from = newHostAgentFromS(int(resp.Pid), resp.HostID)
+func (agent *agentS) applyHostAgentSettings(resp agentResponse) {
+	agent.from = newHostAgentFromS(int(resp.Pid), resp.HostID)
 
 	if resp.Secrets.Matcher != "" {
 		m, err := NamedMatcher(resp.Secrets.Matcher, resp.Secrets.List)
 		if err != nil {
-			r.logger.Warn("failed to apply secrets matcher configuration: ", err)
+			agent.logger.Warn("failed to apply secrets matcher configuration: ", err)
 		} else {
 			sensor.options.Tracer.Secrets = m
 		}
@@ -298,10 +298,10 @@ func (r *agentS) applyHostAgentSettings(resp agentResponse) {
 	sensor.options.Tracer.CollectableHTTPHeaders = resp.ExtraHTTPHeaders
 }
 
-func (r *agentS) setHost(host string) {
-	r.host = host
+func (agent *agentS) setHost(host string) {
+	agent.host = host
 }
 
-func (r *agentS) reset() {
-	r.fsm.reset()
+func (agent *agentS) reset() {
+	agent.fsm.reset()
 }

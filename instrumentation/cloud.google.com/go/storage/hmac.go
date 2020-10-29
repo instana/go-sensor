@@ -79,16 +79,16 @@ func (c *Client) CreateHMACKey(ctx context.Context, projectID, serviceAccountEma
 // Update calls and traces the Update() method of the wrapped cloud.google.com/go/storage.HMACKeyHandle.
 //
 // See https://pkg.go.dev/cloud.google.com/go/storage?tab=doc#HMACKeyHandle.Update for furter details on wrapped method.
-func (h *HMACKeyHandle) Update(ctx context.Context, au storage.HMACKeyAttrsToUpdate, opts ...storage.HMACKeyOption) (hk *storage.HMACKey, err error) {
+func (hkh *HMACKeyHandle) Update(ctx context.Context, au storage.HMACKeyAttrsToUpdate, opts ...storage.HMACKeyOption) (hk *storage.HMACKey, err error) {
 	ctx = internal.StartExitSpan(ctx, "gcs", ot.Tags{
 		"gcs.op":        "hmacKeys.update",
-		"gcs.projectId": h.ProjectID,
-		"gcs.accessId":  h.AccessID,
+		"gcs.projectId": hkh.ProjectID,
+		"gcs.accessId":  hkh.AccessID,
 	})
 
 	defer func() { internal.FinishSpan(ctx, err) }()
 
-	return h.HMACKeyHandle.Update(ctx, au, opts...)
+	return hkh.HMACKeyHandle.Update(ctx, au, opts...)
 }
 
 // HMACKeysIterator is an instrumented wrapper for cloud.google.com/go/storage.HMACKeysIterator

@@ -79,8 +79,8 @@ func Inject(trCtx Context, headers http.Header) {
 
 // State parses RawState and returns the corresponding list.
 // It silently discards malformed state. To check errors use ParseState().
-func (trCtx Context) State() State {
-	st, err := ParseState(trCtx.RawState)
+func (c Context) State() State {
+	st, err := ParseState(c.RawState)
 	if err != nil {
 		return State{}
 	}
@@ -90,8 +90,8 @@ func (trCtx Context) State() State {
 
 // Parent parses RawParent and returns the corresponding list.
 // It silently discards malformed value. To check errors use ParseParent().
-func (trCtx Context) Parent() Parent {
-	st, err := ParseParent(trCtx.RawParent)
+func (c Context) Parent() Parent {
+	st, err := ParseParent(c.RawParent)
 	if err != nil {
 		return Parent{}
 	}
