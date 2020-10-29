@@ -19,7 +19,7 @@ func fetchResults(parentSpan ot.Span) {
 	// Making an ElasticSearch query
 	childSpan := ot.StartSpan("elasticsearch", ot.ChildOf(parentSpan.Context()))
 
-	// Set the apropriate tags for the span
+	// Set the appropriate tags for the span
 	//
 	// Client Span
 	childSpan.SetTag(string(ext.SpanKind), string(ext.SpanKindRPCClientEnum))

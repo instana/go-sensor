@@ -16,7 +16,7 @@ type ConsumerGroupHandler struct {
 	sensor  *instana.Sensor
 }
 
-// WrapConsumerGroupHandler wraps the existing group handler and intruments its calls
+// WrapConsumerGroupHandler wraps the existing group handler and instruments its calls
 func WrapConsumerGroupHandler(h sarama.ConsumerGroupHandler, sensor *instana.Sensor) *ConsumerGroupHandler {
 	return &ConsumerGroupHandler{
 		handler: h,

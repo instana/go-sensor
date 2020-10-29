@@ -295,7 +295,7 @@ type HTTPSpanTags struct {
 	Host string `json:"host,omitempty"`
 	// The name of the protocol used for request ("http" or "https")
 	Protocol string `json:"protocol,omitempty"`
-	// The message describing an error occured during the request handling
+	// The message describing an error occurred during the request handling
 	Error string `json:"error,omitempty"`
 }
 
@@ -360,7 +360,7 @@ type RPCSpanTags struct {
 	CallType string `json:"call_type,omitempty"`
 	// The RPC flavor used for this call, e.g. "grpc" for GRPC requests
 	Flavor string `json:"flavor,omitempty"`
-	// The message describing an error occured during the request handling
+	// The message describing an error occurred during the request handling
 	Error string `json:"error,omitempty"`
 }
 

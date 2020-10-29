@@ -25,7 +25,7 @@ func NewConsumer(addrs []string, config *sarama.Config, sensor *instana.Sensor) 
 	return WrapConsumer(c, sensor), nil
 }
 
-// NewConsumerFromClient creates a new consumer using the given client and intruments its calls
+// NewConsumerFromClient creates a new consumer using the given client and instruments its calls
 func NewConsumerFromClient(client sarama.Client, sensor *instana.Sensor) (sarama.Consumer, error) {
 	c, err := sarama.NewConsumerFromClient(client)
 	if err != nil {

@@ -61,7 +61,7 @@ func injectTraceContext(sc SpanContext, opaqueCarrier interface{}) error {
 		// Even though the godoc claims that the key passed to (*http.Header).Set()
 		// is case-insensitive, it actually normalizes it using textproto.CanonicalMIMEHeaderKey()
 		// before populating the value. As a result headers with non-canonical will not be
-		// overwritted with a new value. This is only the case if header names were set while
+		// overwritten with a new value. This is only the case if header names were set while
 		// initializing the http.Header instance, i.e.
 		//     h := http.Headers{"X-InStAnA-T": {"abc123"}}
 		// and does not apply to a common case when requests are being created using http.NewRequest()
