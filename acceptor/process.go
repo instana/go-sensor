@@ -32,13 +32,13 @@ func NewProcessPluginPayload(entityID string, data ProcessData) PluginPayload {
 	}
 }
 
-// ProcessCPUStatsUpdate represents the CPU stats that have changed since the last measurement
+// ProcessCPUStatsDelta represents the CPU stats that have changed since the last measurement
 type ProcessCPUStatsDelta struct {
 	User   float64 `json:"user,omitempty"`
 	System float64 `json:"sys,omitempty"`
 }
 
-// NewDockerCPUStatsDelta calculates the difference between two CPU usage stats.
+// NewProcessCPUStatsDelta calculates the difference between two CPU usage stats.
 // It returns nil if stats are equal or if the stats were taken at the same time (ticks).
 // The stats are considered to be equal if the change is less then 1%.
 func NewProcessCPUStatsDelta(prev, next process.CPUStats, ticksElapsed int) *ProcessCPUStatsDelta {

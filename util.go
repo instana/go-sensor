@@ -46,7 +46,7 @@ func FormatID(id int64) string {
 	return strconv.FormatUint(unsigned, 16)
 }
 
-// Header2ID converts an header context value into an Instana ID.  More
+// ParseID converts an header context value into an Instana ID.  More
 // specifically, this converts an unsigned 64 bit hex value into a signed
 // 64bit integer.
 func ParseID(header string) (int64, error) {

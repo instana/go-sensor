@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-// Instana vendor key in the `tracestate` list
+// VendorInstana is the Instana vendor key in the `tracestate` list
 const VendorInstana = "in"
 
 // State is list of key=value pairs representing vendor-specific data in the trace context
@@ -28,7 +28,7 @@ func ParseState(traceStateValue string) (State, error) {
 	return state, nil
 }
 
-// Put returns a new state prepended with provided vendor-specific data. It removes any existing
+// Add returns a new state prepended with provided vendor-specific data. It removes any existing
 // entries for this vendor and returns the same state if vendor is empty. If the number of entries
 // in a state reaches the MaxStateEntries, rest of the items will be truncated
 func (st State) Add(vendor, data string) State {

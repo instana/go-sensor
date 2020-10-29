@@ -88,7 +88,7 @@ type ContainerBlockIOStats struct {
 	ServiceBytes []BlockIOOpStats `json:"io_service_bytes_recursive"`
 }
 
-// CPUThrottlingStats represents the cgroups CPU usage stats.
+// CPUUsageStats represents the cgroups CPU usage stats.
 //
 // See https://docs.docker.com/config/containers/runmetrics/#metrics-from-cgroups-memory-cpu-block-io
 type CPUUsageStats struct {

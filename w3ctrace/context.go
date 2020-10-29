@@ -7,17 +7,22 @@ import (
 )
 
 const (
-	// The max number of items in `tracestate` as defined by https://www.w3.org/TR/trace-context/#tracestate-header-field-values
+	// MaxStateEntries is the maximum number of items in `tracestate` as defined by
+	// https://www.w3.org/TR/trace-context/#tracestate-header-field-values
 	MaxStateEntries = 32
 
-	// W3C trace context header names as defined by https://www.w3.org/TR/trace-context/
+	// TraceParentHeader is the W3C trace parent header name as defined by https://www.w3.org/TR/trace-context/
 	TraceParentHeader = "traceparent"
-	TraceStateHeader  = "tracestate"
+	// TraceStateHeader is the W3C trace state header name as defined by https://www.w3.org/TR/trace-context/
+	TraceStateHeader = "tracestate"
 )
 
 var (
-	ErrContextNotFound    = errors.New("no w3c context")
-	ErrContextCorrupted   = errors.New("corrupted w3c context")
+	// ErrContextNotFound is an error retuned by w3ctrace.Extract() if provided HTTP headers does not contain W3C trace context
+	ErrContextNotFound = errors.New("no w3c context")
+	// ErrContextCorrupted is an error retuned by w3ctrace.Extract() if provided HTTP headers contain W3C trace context in unexpected format
+	ErrContextCorrupted = errors.New("corrupted w3c context")
+	// ErrUnsupportedVersion is an error retuned by w3ctrace.Extract() if the version of provided W3C trace context is not supported
 	ErrUnsupportedVersion = errors.New("unsupported w3c context version")
 )
 
