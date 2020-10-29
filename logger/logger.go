@@ -7,16 +7,16 @@ import (
 	"sync"
 )
 
+// Valid log levels to be used with (*logger.Logger).SetLevel()
 const (
-	// Valid log levels to be used with (*logger.Logger).SetLevel()
 	ErrorLevel Level = iota
 	WarnLevel
 	InfoLevel
 	DebugLevel
-
-	// Default log prefix
-	DefaultPrefix = "instana: "
 )
+
+// DefaultPrefix is the default log prefix used by Logger
+const DefaultPrefix = "instana: "
 
 // Level defines the minimum logging level for logger.Log
 type Level uint8

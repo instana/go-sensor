@@ -12,16 +12,16 @@ import (
 func TestEqualsMatcher(t *testing.T) {
 	m := secrets.NewEqualsMatcher("one", "two")
 	examples := map[string]bool{
-		"":           false,
-		"one":        true,
-		"two":        true,
-		"ONE":        false,
-		"tWo":        false,
-		"onetwo":     false,
-		"two ":       false,
-		" one":       false,
-		"fourty-two": false,
-		"hello!":     false,
+		"":          false,
+		"one":       true,
+		"two":       true,
+		"ONE":       false,
+		"tWo":       false,
+		"onetwo":    false,
+		"two ":      false,
+		" one":      false,
+		"forty-two": false,
+		"hello!":    false,
 	}
 
 	for s, expected := range examples {
@@ -34,16 +34,16 @@ func TestEqualsMatcher(t *testing.T) {
 func TestEqualsIgnoreCaseMatcher(t *testing.T) {
 	m := secrets.NewEqualsIgnoreCaseMatcher("One", "TWO")
 	examples := map[string]bool{
-		"":           false,
-		"one":        true,
-		"two":        true,
-		"ONE":        true,
-		"tWo":        true,
-		"onetwo":     false,
-		"two ":       false,
-		" one":       false,
-		"fourty-two": false,
-		"hello!":     false,
+		"":          false,
+		"one":       true,
+		"two":       true,
+		"ONE":       true,
+		"tWo":       true,
+		"onetwo":    false,
+		"two ":      false,
+		" one":      false,
+		"forty-two": false,
+		"hello!":    false,
 	}
 
 	for s, expected := range examples {
@@ -56,16 +56,16 @@ func TestEqualsIgnoreCaseMatcher(t *testing.T) {
 func TestContainsMatcher(t *testing.T) {
 	m := secrets.NewContainsMatcher("one", "two")
 	examples := map[string]bool{
-		"":           false,
-		"one":        true,
-		"two":        true,
-		"ONE":        false,
-		"tWo":        false,
-		"onetwo":     true,
-		"two ":       true,
-		" one":       true,
-		"fourty-two": true,
-		"hello!":     false,
+		"":          false,
+		"one":       true,
+		"two":       true,
+		"ONE":       false,
+		"tWo":       false,
+		"onetwo":    true,
+		"two ":      true,
+		" one":      true,
+		"forty-two": true,
+		"hello!":    false,
 	}
 
 	for s, expected := range examples {
@@ -78,16 +78,16 @@ func TestContainsMatcher(t *testing.T) {
 func TestContainsIgnoreCaseMatcher(t *testing.T) {
 	m := secrets.NewContainsIgnoreCaseMatcher("one", "two")
 	examples := map[string]bool{
-		"":           false,
-		"one":        true,
-		"two":        true,
-		"ONE":        true,
-		"tWo":        true,
-		"onetwo":     true,
-		"two ":       true,
-		" one":       true,
-		"fourty-TWO": true,
-		"hello!":     false,
+		"":          false,
+		"one":       true,
+		"two":       true,
+		"ONE":       true,
+		"tWo":       true,
+		"onetwo":    true,
+		"two ":      true,
+		" one":      true,
+		"forty-TWO": true,
+		"hello!":    false,
 	}
 
 	for s, expected := range examples {
@@ -102,16 +102,16 @@ func TestRegexpMatcher(t *testing.T) {
 	require.NoError(t, err)
 
 	examples := map[string]bool{
-		"":           false,
-		"one":        true,
-		"two":        true,
-		"ONE":        true,
-		"tWo":        false,
-		"onetwo":     false,
-		"two ":       false,
-		" one":       false,
-		"fourty-TWO": false,
-		"hello!":     false,
+		"":          false,
+		"one":       true,
+		"two":       true,
+		"ONE":       true,
+		"tWo":       false,
+		"onetwo":    false,
+		"two ":      false,
+		" one":      false,
+		"forty-TWO": false,
+		"hello!":    false,
 	}
 
 	for s, expected := range examples {

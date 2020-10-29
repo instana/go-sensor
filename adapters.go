@@ -11,7 +11,14 @@ import (
 	otlog "github.com/opentracing/opentracing-go/log"
 )
 
+// SpanSensitiveFunc is a function executed within a span context
+//
+// Deprecated: use instana.ContextWithSpan() and instana.SpanFromContext() to inject and retrieve spans
 type SpanSensitiveFunc func(span ot.Span)
+
+// ContextSensitiveFunc is a SpanSensitiveFunc that also takes context.Context
+//
+// Deprecated: use instana.ContextWithSpan() and instana.SpanFromContext() to inject and retrieve spans
 type ContextSensitiveFunc func(span ot.Span, ctx context.Context)
 
 // Tracer extends the opentracing.Tracer interface
@@ -147,7 +154,7 @@ func (s *Sensor) WithTracingSpan(operationName string, w http.ResponseWriter, re
 	f(span)
 }
 
-// Executes the given ContextSensitiveFunc and executes it under the scope of a newly created context.Context,
+// WithTracingContext executes the given ContextSensitiveFunc and executes it under the scope of a newly created context.Context,
 // that provides access to the parent span as 'parentSpan'.
 //
 // Deprecated: please use instana.TracingHandlerFunc() to instrument an HTTP handler

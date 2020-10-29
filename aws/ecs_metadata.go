@@ -17,6 +17,7 @@ type ContainerLimits struct {
 	Memory int `json:"Memory"`
 }
 
+// ContainerLabels represents AWS container labels
 type ContainerLabels struct {
 	Cluster               string `json:"com.amazonaws.ecs.cluster"`
 	TaskARN               string `json:"com.amazonaws.ecs.task-arn"`
@@ -24,12 +25,13 @@ type ContainerLabels struct {
 	TaskDefinitionVersion string `json:"com.amazonaws.ecs.task-definition-version"`
 }
 
+// ContainerNetwork represents AWS container network configuration
 type ContainerNetwork struct {
 	Mode          string   `json:"NetworkMode"`
 	IPv4Addresses []string `json:"IPv4Addresses"`
 }
 
-// ECSContainerV3Metadata represents the ECS container metadata as described in
+// ECSContainerMetadata represents the ECS container metadata as described in
 // https://docs.aws.amazon.com/AmazonECS/latest/developerguide/container-metadata.html#metadata-file-format
 type ECSContainerMetadata struct {
 	DockerID        string             `json:"DockerId"`

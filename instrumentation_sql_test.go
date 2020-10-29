@@ -8,10 +8,10 @@ import (
 	"testing"
 
 	instana "github.com/instana/go-sensor"
-	ot "github.com/opentracing/opentracing-go"
-	"github.com/opentracing/opentracing-go/ext"
 	"github.com/instana/testify/assert"
 	"github.com/instana/testify/require"
+	ot "github.com/opentracing/opentracing-go"
+	"github.com/opentracing/opentracing-go/ext"
 )
 
 func TestOpenSQLDB(t *testing.T) {

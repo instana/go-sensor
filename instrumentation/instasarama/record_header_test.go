@@ -107,8 +107,8 @@ func TestUnpackTraceContextHeader_WrongBufferSize(t *testing.T) {
 func TestPackUnpackTraceLevelHeader(t *testing.T) {
 	// using fixed len arrays here to avoid typos in examples
 	examples := map[string][1]byte{
-		"0": [1]byte{0x00},
-		"1": [1]byte{0x01},
+		"0": {0x00},
+		"1": {0x01},
 	}
 
 	for level, expected := range examples {

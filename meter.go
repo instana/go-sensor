@@ -61,7 +61,7 @@ func (m *meterS) setLogger(l LeveledLogger) {
 	m.logger = l
 }
 
-func (r *meterS) collectMemoryMetrics() acceptor.MemoryStats {
+func (m *meterS) collectMemoryMetrics() acceptor.MemoryStats {
 	var memStats runtime.MemStats
 	runtime.ReadMemStats(&memStats)
 	ret := acceptor.MemoryStats{
@@ -81,18 +81,18 @@ func (r *meterS) collectMemoryMetrics() acceptor.MemoryStats {
 		NumGC:         memStats.NumGC,
 		GCCPUFraction: memStats.GCCPUFraction}
 
-	if r.numGC < memStats.NumGC {
+	if m.numGC < memStats.NumGC {
 		ret.PauseNs = memStats.PauseNs[(memStats.NumGC+255)%256]
-		r.numGC = memStats.NumGC
+		m.numGC = memStats.NumGC
 	}
 
 	return ret
 }
 
-func (r *meterS) collectMetrics() acceptor.Metrics {
+func (m *meterS) collectMetrics() acceptor.Metrics {
 	return acceptor.Metrics{
 		CgoCall:     runtime.NumCgoCall(),
 		Goroutine:   runtime.NumGoroutine(),
-		MemoryStats: r.collectMemoryMetrics(),
+		MemoryStats: m.collectMemoryMetrics(),
 	}
 }

@@ -190,7 +190,7 @@ func NewSpanData(span *spanS, st RegisteredSpanType) SpanData {
 	}
 }
 
-// Name returns the registered name for the span type suitable for use as the value of `n` field.
+// Type returns the registered span type suitable for use as the value of `n` field.
 func (d SpanData) Type() RegisteredSpanType {
 	return d.st
 }
@@ -295,7 +295,7 @@ type HTTPSpanTags struct {
 	Host string `json:"host,omitempty"`
 	// The name of the protocol used for request ("http" or "https")
 	Protocol string `json:"protocol,omitempty"`
-	// The message describing an error occured during the request handling
+	// The message describing an error occurred during the request handling
 	Error string `json:"error,omitempty"`
 }
 
@@ -360,7 +360,7 @@ type RPCSpanTags struct {
 	CallType string `json:"call_type,omitempty"`
 	// The RPC flavor used for this call, e.g. "grpc" for GRPC requests
 	Flavor string `json:"flavor,omitempty"`
-	// The message describing an error occured during the request handling
+	// The message describing an error occurred during the request handling
 	Error string `json:"error,omitempty"`
 }
 
@@ -426,11 +426,13 @@ func NewKafkaSpanTags(span *spanS) KafkaSpanTags {
 	return tags
 }
 
+// GCPStorageSpanData represents the `data` section of a Google Cloud Storage span sent within an OT span document
 type GCPStorageSpanData struct {
 	SpanData
 	Tags GCPStorageSpanTags `json:"gcs"`
 }
 
+// NewGCPStorageSpanData initializes a new Google Cloud Storage span data from tracer span
 func NewGCPStorageSpanData(span *spanS) GCPStorageSpanData {
 	data := GCPStorageSpanData{
 		SpanData: NewSpanData(span, GCPStorageSpanType),
@@ -440,10 +442,12 @@ func NewGCPStorageSpanData(span *spanS) GCPStorageSpanData {
 	return data
 }
 
+// Kind returns the span kind for a Google Cloud Storage span
 func (d GCPStorageSpanData) Kind() SpanKind {
 	return ExitSpanKind
 }
 
+// GCPStorageSpanTags contains fields within the `data.gcs` section of an OT span document
 type GCPStorageSpanTags struct {
 	Operation          string `json:"op,omitempty"`
 	Bucket             string `json:"bucket,omitempty"`
@@ -459,6 +463,7 @@ type GCPStorageSpanTags struct {
 	AccessID           string `json:"accessId,omitempty"`
 }
 
+// NewGCPStorageSpanTags extracts Google Cloud Storage span tags from a tracer span
 func NewGCPStorageSpanTags(span *spanS) GCPStorageSpanTags {
 	var tags GCPStorageSpanTags
 	for k, v := range span.Tags {
@@ -493,11 +498,13 @@ func NewGCPStorageSpanTags(span *spanS) GCPStorageSpanTags {
 	return tags
 }
 
+// GCPPubSubSpanData represents the `data` section of a Google Cloud Pub/Sub span sent within an OT span document
 type GCPPubSubSpanData struct {
 	SpanData
 	Tags GCPPubSubSpanTags `json:"gcps"`
 }
 
+// NewGCPPubSubSpanData initializes a new Google Cloud Pub/Span span data from tracer span
 func NewGCPPubSubSpanData(span *spanS) GCPPubSubSpanData {
 	data := GCPPubSubSpanData{
 		SpanData: NewSpanData(span, GCPPubSubSpanType),
@@ -507,6 +514,7 @@ func NewGCPPubSubSpanData(span *spanS) GCPPubSubSpanData {
 	return data
 }
 
+// Kind returns the span kind for a Google Cloud Pub/Sub span
 func (d GCPPubSubSpanData) Kind() SpanKind {
 	switch strings.ToLower(d.Tags.Operation) {
 	case "consume":
@@ -516,6 +524,7 @@ func (d GCPPubSubSpanData) Kind() SpanKind {
 	}
 }
 
+// GCPPubSubSpanTags contains fields within the `data.gcps` section of an OT span document
 type GCPPubSubSpanTags struct {
 	ProjectID    string `json:"projid"`
 	Operation    string `json:"op"`
@@ -524,6 +533,7 @@ type GCPPubSubSpanTags struct {
 	MessageID    string `json:"msgid,omitempty"`
 }
 
+// NewGCPPubSubSpanTags extracts Google Cloud Pub/Sub span tags from a tracer span
 func NewGCPPubSubSpanTags(span *spanS) GCPPubSubSpanTags {
 	var tags GCPPubSubSpanTags
 	for k, v := range span.Tags {

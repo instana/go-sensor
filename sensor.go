@@ -14,8 +14,10 @@ import (
 )
 
 const (
+	// DefaultMaxBufferedSpans is the default span buffer size
 	DefaultMaxBufferedSpans = 1000
-	DefaultForceSpanSendAt  = 500
+	// DefaultForceSpanSendAt is the default max number of spans to buffer before force sending them to the agent
+	DefaultForceSpanSendAt = 500
 
 	defaultServerlessTimeout = 500 * time.Millisecond
 )

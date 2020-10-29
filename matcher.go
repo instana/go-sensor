@@ -13,7 +13,7 @@ const (
 	EqualsMatcher = "equals"
 	// EqualsIgnoreCaseMatcher matches the string exactly ignoring the case
 	EqualsIgnoreCaseMatcher = "equals-ignore-case"
-	// Contains matches the substring in a string
+	// ContainsMatcher matches the substring in a string
 	ContainsMatcher = "contains"
 	// ContainsIgnoreCaseMatcher matches the substring in a string ignoring the case
 	ContainsIgnoreCaseMatcher = "contains-ignore-case"

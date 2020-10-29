@@ -52,7 +52,7 @@ func (d DockerNetworkStatsDelta) IsZero() bool {
 	return d.Bytes == 0 && d.Packets == 0 && d.Dropped == 0 && d.Errors == 0
 }
 
-// DockerNetworkStatsDelta represents the difference between two network interface stats
+// DockerNetworkAggregatedStatsDelta represents the difference between two network interface stats
 type DockerNetworkAggregatedStatsDelta struct {
 	Rx *DockerNetworkStatsDelta `json:"rx,omitempty"`
 	Tx *DockerNetworkStatsDelta `json:"tx,omitempty"`
@@ -194,7 +194,7 @@ func NewDockerMemoryStatsUpdate(prev, next docker.ContainerMemoryStats) *DockerM
 	return &delta
 }
 
-// DockerMemoryStatsDelta represents the difference between two block I/O usage stats
+// DockerBlockIOStatsDelta represents the difference between two block I/O usage stats
 type DockerBlockIOStatsDelta struct {
 	Read  int `json:"blk_read,omitempty"`
 	Write int `json:"blk_write,omitempty"`
@@ -205,7 +205,7 @@ func (d DockerBlockIOStatsDelta) IsZero() bool {
 	return d.Read == 0 && d.Write == 0
 }
 
-// NewDockerMemoryStatsDelta sums up block I/O reads and writes and calculates the difference between two stat snapshots.
+// NewDockerBlockIOStatsDelta sums up block I/O reads and writes and calculates the difference between two stat snapshots.
 // It returns nil if aggregated stats are equal.
 func NewDockerBlockIOStatsDelta(prev, next docker.ContainerBlockIOStats) *DockerBlockIOStatsDelta {
 	var delta DockerBlockIOStatsDelta

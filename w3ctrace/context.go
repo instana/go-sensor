@@ -7,17 +7,22 @@ import (
 )
 
 const (
-	// The max number of items in `tracestate` as defined by https://www.w3.org/TR/trace-context/#tracestate-header-field-values
+	// MaxStateEntries is the maximum number of items in `tracestate` as defined by
+	// https://www.w3.org/TR/trace-context/#tracestate-header-field-values
 	MaxStateEntries = 32
 
-	// W3C trace context header names as defined by https://www.w3.org/TR/trace-context/
+	// TraceParentHeader is the W3C trace parent header name as defined by https://www.w3.org/TR/trace-context/
 	TraceParentHeader = "traceparent"
-	TraceStateHeader  = "tracestate"
+	// TraceStateHeader is the W3C trace state header name as defined by https://www.w3.org/TR/trace-context/
+	TraceStateHeader = "tracestate"
 )
 
 var (
-	ErrContextNotFound    = errors.New("no w3c context")
-	ErrContextCorrupted   = errors.New("corrupted w3c context")
+	// ErrContextNotFound is an error retuned by w3ctrace.Extract() if provided HTTP headers does not contain W3C trace context
+	ErrContextNotFound = errors.New("no w3c context")
+	// ErrContextCorrupted is an error retuned by w3ctrace.Extract() if provided HTTP headers contain W3C trace context in unexpected format
+	ErrContextCorrupted = errors.New("corrupted w3c context")
+	// ErrUnsupportedVersion is an error retuned by w3ctrace.Extract() if the version of provided W3C trace context is not supported
 	ErrUnsupportedVersion = errors.New("unsupported w3c context version")
 )
 
@@ -79,8 +84,8 @@ func Inject(trCtx Context, headers http.Header) {
 
 // State parses RawState and returns the corresponding list.
 // It silently discards malformed state. To check errors use ParseState().
-func (trCtx Context) State() State {
-	st, err := ParseState(trCtx.RawState)
+func (c Context) State() State {
+	st, err := ParseState(c.RawState)
 	if err != nil {
 		return State{}
 	}
@@ -90,8 +95,8 @@ func (trCtx Context) State() State {
 
 // Parent parses RawParent and returns the corresponding list.
 // It silently discards malformed value. To check errors use ParseParent().
-func (trCtx Context) Parent() Parent {
-	st, err := ParseParent(trCtx.RawParent)
+func (c Context) Parent() Parent {
+	st, err := ParseParent(c.RawParent)
 	if err != nil {
 		return Parent{}
 	}

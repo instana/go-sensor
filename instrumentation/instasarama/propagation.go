@@ -13,9 +13,9 @@ import (
 )
 
 const (
-	// The trace context header key
+	// FieldC is the trace context header key
 	FieldC = "X_INSTANA_C"
-	// The trace level header key
+	// FieldL is the trace level header key
 	FieldL = "X_INSTANA_L"
 )
 

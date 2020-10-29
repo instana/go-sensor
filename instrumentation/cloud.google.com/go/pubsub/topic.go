@@ -65,6 +65,9 @@ func (top *Topic) Publish(ctx context.Context, msg *pubsub.Message) *pubsub.Publ
 	return res
 }
 
+// Subscriptions calls Subscriptions() of underlying Topic and wraps the returned subscription iterator.
+//
+// See https://pkg.go.dev/cloud.google.com/go/pubsub?tab=doc#Topic.Subscriptions for furter details on wrapped method.
 func (top *Topic) Subscriptions(ctx context.Context) *SubscriptionIterator {
 	return &SubscriptionIterator{top.Topic.Subscriptions(ctx), top.projectID, top.sensor}
 }

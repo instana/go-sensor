@@ -293,7 +293,7 @@ func (a *fargateAgent) SendSpans(spans []Span) error {
 		agentSpans = append(agentSpans, agentSpan{sp, from})
 	}
 
-	// enqueue the spans to send them in a bundle with metrics instead of sending immidiately
+	// enqueue the spans to send them in a bundle with metrics instead of sending immediately
 	a.mu.Lock()
 	a.spanQueue = append(a.spanQueue, agentSpans...)
 	a.mu.Unlock()
@@ -415,7 +415,7 @@ func (c *ecsDockerStatsCollector) fetchStats(ctx context.Context) {
 	if err != nil {
 		if ctx.Err() != nil {
 			// request either timed out or had been cancelled, keep the old value
-			c.logger.Debug("failed to retireve Docker container stats (timed out), skipping")
+			c.logger.Debug("failed to retrieve Docker container stats (timed out), skipping")
 			return
 		}
 

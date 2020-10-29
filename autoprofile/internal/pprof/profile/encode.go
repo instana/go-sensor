@@ -278,7 +278,10 @@ func (p *Profile) postDecode() error {
 		pt.Type, err = getString(p.stringTable, &pt.typeX, err)
 		pt.Unit, err = getString(p.stringTable, &pt.unitX, err)
 	}
+
 	p.stringTable = nil
+	_ = err
+
 	return nil
 }
 
