@@ -66,3 +66,13 @@ func NewECSContainerPluginPayload(entityID string, data ECSContainerData) Plugin
 		Data:     data,
 	}
 }
+
+// NewAWSLambdaPluginPayload returns payload for the AWS Lambda plugin of Instana acceptor
+func NewAWSLambdaPluginPayload(entityID string) PluginPayload {
+	const pluginName = "com.instana.plugin.aws.lambda"
+
+	return PluginPayload{
+		Name:     pluginName,
+		EntityID: entityID,
+	}
+}
