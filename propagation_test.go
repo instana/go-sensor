@@ -6,9 +6,9 @@ import (
 
 	instana "github.com/instana/go-sensor"
 	"github.com/instana/go-sensor/w3ctrace"
-	ot "github.com/opentracing/opentracing-go"
 	"github.com/instana/testify/assert"
 	"github.com/instana/testify/require"
+	ot "github.com/opentracing/opentracing-go"
 )
 
 func TestTracer_Inject_HTTPHeaders(t *testing.T) {

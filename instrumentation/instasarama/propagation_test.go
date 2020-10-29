@@ -310,10 +310,10 @@ func TestProducerMessageCarrier_Update_FieldS(t *testing.T) {
 
 func TestProducerMessageCarrier_Set_FieldL(t *testing.T) {
 	examples := map[string][]sarama.RecordHeader{
-		"0": []sarama.RecordHeader{
+		"0": {
 			{Key: []byte(instasarama.FieldL), Value: []byte{0x00}},
 		},
-		"1": []sarama.RecordHeader{
+		"1": {
 			{Key: []byte(instasarama.FieldL), Value: []byte{0x01}},
 		},
 	}
@@ -787,10 +787,10 @@ func TestConsumerMessageCarrier_Update_FieldS(t *testing.T) {
 
 func TestConsumerMessageCarrier_Set_FieldL(t *testing.T) {
 	examples := map[string][]*sarama.RecordHeader{
-		"0": []*sarama.RecordHeader{
+		"0": {
 			{Key: []byte(instasarama.FieldL), Value: []byte{0x00}},
 		},
-		"1": []*sarama.RecordHeader{
+		"1": {
 			{Key: []byte(instasarama.FieldL), Value: []byte{0x01}},
 		},
 	}

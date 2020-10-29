@@ -21,7 +21,7 @@ func TestConsumer_ConsumePartition(t *testing.T) {
 	messages := make(chan *sarama.ConsumerMessage, 1)
 	c := &testConsumer{
 		consumers: map[string]*testPartitionConsumer{
-			"topic-1": &testPartitionConsumer{
+			"topic-1": {
 				messages: messages,
 			},
 		},
@@ -70,7 +70,7 @@ func TestConsumer_ConsumePartition_Error(t *testing.T) {
 	c := &testConsumer{
 		Error: errors.New("something went wrong"),
 		consumers: map[string]*testPartitionConsumer{
-			"topic-1": &testPartitionConsumer{},
+			"topic-1": {},
 		},
 	}
 
@@ -112,7 +112,7 @@ func TestConsumer_Topics_Error(t *testing.T) {
 func TestConsumer_Partitions(t *testing.T) {
 	c := &testConsumer{
 		partitions: map[string][]int32{
-			"topic-1": []int32{1, 2, 3},
+			"topic-1": {1, 2, 3},
 		},
 	}
 
@@ -150,7 +150,7 @@ func TestConsumer_Partitions_Error(t *testing.T) {
 	c := &testConsumer{
 		Error: errors.New("something went wrong"),
 		partitions: map[string][]int32{
-			"topic-1": []int32{1, 2, 3},
+			"topic-1": {1, 2, 3},
 		},
 	}
 
