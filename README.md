@@ -361,9 +361,9 @@ The Go sensor library fully supports [the W3C Trace Context standard](https://ww
 
 ## Events API
 
-The sensor, be it instantiated explicitly or implicitly through the tracer, provides a simple wrapper API to send events to Instana as described in [its documentation](https://docs.instana.io/quick_start/api/#event-sdk-rest-web-service).
+The sensor, be it instantiated explicitly or implicitly through the tracer, provides a simple wrapper API to send events to Instana as described in [its documentation](https://www.instana.com/docs/api/agent/#event-sdk-web-service).
 
-To learn more, see the [Events API](https://github.com/instana/go-sensor/blob/master/EventAPI.md) document in this repository.
+To learn more, see the [Events API](./EventAPI.md) document in this repository.
 
 ## AutoProfile™
 
