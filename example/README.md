@@ -4,6 +4,7 @@ Examples
 This folder contains examples of instrumenting the common use-cases with `github.com/instana/go-sensor`
 
 * [Greeter](./http-database-greeter) - an instrumented HTTP server that queries a database
+* [Doubler](./kafka-producer-consumer) - an instrumented Kafka processor, that counsumes and produces messages
 
 For up-to-date instrumentation code examples please consult the respective godoc:
 
