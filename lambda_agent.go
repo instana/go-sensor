@@ -51,7 +51,7 @@ func newLambdaAgent(
 
 	logger.Debug("initializing aws lambda agent")
 
-	return &lambdaAgent{
+	agent := &lambdaAgent{
 		Endpoint: acceptorEndpoint,
 		Key:      agentKey,
 		PID:      os.Getpid(),
@@ -60,6 +60,19 @@ func newLambdaAgent(
 		client:   client,
 		logger:   logger,
 	}
+
+	go func() {
+		t := time.NewTicker(time.Second)
+		defer t.Stop()
+
+		for range t.C {
+			if err := agent.Flush(context.Background()); err != nil {
+				agent.logger.Error("failed to post collected data: ", err)
+			}
+		}
+	}()
+
+	return agent
 }
 
 func (a *lambdaAgent) Ready() bool { return true }
