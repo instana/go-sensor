@@ -2,7 +2,7 @@ MODULES = $(filter-out $(EXCLUDE_DIRS), $(shell find . -name go.mod -exec dirnam
 LINTER ?= $(shell go env GOPATH)/bin/golangci-lint
 
 # The list of Go build tags as they are specified in respective integration test files
-INTEGRATION_TESTS = fargate gcr
+INTEGRATION_TESTS = fargate gcr lambda
 
 # the Go version to vendor dependencies listed in go.mod
 VENDOR_GO_VERSION ?= go1.15
