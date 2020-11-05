@@ -29,7 +29,7 @@ func NewRecorder() *Recorder {
 	go func() {
 		for range ticker.C {
 			if sensor.agent.Ready() {
-				r.send()
+				go r.send()
 			}
 		}
 	}()
@@ -104,12 +104,12 @@ func (r *Recorder) clearQueuedSpans() {
 	r.spans = r.spans[:0]
 }
 
-// Retrieve the queued spans and post them to the host agent asynchronously.
+// Retrieve the queued spans and post them to the host agent
 func (r *Recorder) send() {
 	spansToSend := r.GetQueuedSpans()
 	if len(spansToSend) == 0 {
 		return
 	}
 
-	go sensor.agent.SendSpans(spansToSend)
+	sensor.agent.SendSpans(spansToSend)
 }
