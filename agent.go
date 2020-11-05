@@ -2,6 +2,7 @@ package instana
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"io/ioutil"
@@ -165,6 +166,9 @@ func (agent *agentS) SendSpans(spans []Span) error {
 
 	return nil
 }
+
+// Flush is a noop for host agent
+func (agent *agentS) Flush(ctx context.Context) error { return nil }
 
 type hostAgentProfile struct {
 	autoprofile.Profile

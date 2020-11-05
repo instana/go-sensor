@@ -1,6 +1,7 @@
 package instana
 
 import (
+	"context"
 	"net/http"
 	"os"
 
@@ -54,3 +55,5 @@ func (a *lambdaAgent) SendEvent(event *EventData) error { return nil }
 func (a *lambdaAgent) SendSpans(spans []Span) error { return nil }
 
 func (a *lambdaAgent) SendProfiles(profiles []autoprofile.Profile) error { return nil }
+
+func (a *lambdaAgent) Flush(ctx context.Context) error { return nil }

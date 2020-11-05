@@ -223,6 +223,34 @@ func (a *gcrAgent) SendSpans(spans []Span) error {
 
 func (a *gcrAgent) SendProfiles(profiles []autoprofile.Profile) error { return nil }
 
+func (a *gcrAgent) Flush(ctx context.Context) error {
+	if len(a.spanQueue) == 0 {
+		return nil
+	}
+
+	if !a.Ready() {
+		return ErrAgentNotReady
+	}
+
+	a.mu.Lock()
+	defer a.mu.Unlock()
+
+	buf := bytes.NewBuffer(nil)
+	if err := json.NewEncoder(buf).Encode(a.spanQueue); err != nil {
+		return fmt.Errorf("failed to marshal traces payload: %s", err)
+	}
+	a.spanQueue = a.spanQueue[:0]
+
+	req, err := http.NewRequest(http.MethodPost, a.Endpoint+"/traces", buf)
+	if err != nil {
+		return fmt.Errorf("failed to prepare send traces request: %s", err)
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+
+	return a.sendRequest(req.WithContext(ctx))
+}
+
 func (a *gcrAgent) sendRequest(req *http.Request) error {
 	req.Header.Set("X-Instana-Host", a.snapshot.Service.Host)
 	req.Header.Set("X-Instana-Key", a.Key)

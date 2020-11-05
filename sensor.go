@@ -1,6 +1,7 @@
 package instana
 
 import (
+	"context"
 	"errors"
 	"net/http"
 	"os"
@@ -29,6 +30,7 @@ type agentClient interface {
 	SendEvent(event *EventData) error
 	SendSpans(spans []Span) error
 	SendProfiles(profiles []autoprofile.Profile) error
+	Flush(context.Context) error
 }
 
 type sensorS struct {

@@ -2,6 +2,7 @@ package instana
 
 import (
 	"context"
+	"errors"
 	"os"
 	"os/user"
 	"strconv"
@@ -11,6 +12,8 @@ import (
 	"github.com/instana/go-sensor/acceptor"
 	"github.com/instana/go-sensor/process"
 )
+
+var ErrAgentNotReady = errors.New("agent not ready")
 
 type containerSnapshot struct {
 	ID    string
