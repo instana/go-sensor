@@ -27,6 +27,8 @@ type Tracer interface {
 
 	// Options gets the current tracer options
 	Options() TracerOptions
+	// Flush sends all finished spans to the agent
+	Flush(context.Context) error
 }
 
 // Sensor is used to inject tracing information into requests
