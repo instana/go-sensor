@@ -558,31 +558,53 @@ func NewGCPPubSubSpanTags(span *spanS) GCPPubSubSpanTags {
 	return tags
 }
 
+// AWSLambdaSpanTags contains fields within the `data.lambda` section of an OT span document
+type AWSLambdaSpanTags struct {
+	// ARN is the ARN of invoked AWS Lambda function with the version attached
+	ARN string `json:"arn"`
+	// Runtime is an Instana constant for this AWS lambda runtime (always "go")
+	Runtime string `json:"runtime"`
+	// Name is the name of invoked function
+	Name string `json:"functionName,omitempty"`
+	// Version is either the numeric version or $LATEST
+	Version string `json:"functionVersion,omitempty"`
+}
+
+// NewAWSLambdaSpanTags extracts AWS Lambda entry span tags from a tracer span
+func NewAWSLambdaSpanTags(span *spanS) AWSLambdaSpanTags {
+	tags := AWSLambdaSpanTags{Runtime: "go"}
+
+	if v, ok := span.Tags["lambda.arn"]; ok {
+		readStringTag(&tags.ARN, v)
+	}
+
+	if v, ok := span.Tags["lambda.name"]; ok {
+		readStringTag(&tags.Name, v)
+	}
+
+	if v, ok := span.Tags["lambda.version"]; ok {
+		readStringTag(&tags.Version, v)
+	}
+
+	return tags
+}
+
 // AWSLambdaSpanData is the base span data type for AWS Lambda entry spans
 type AWSLambdaSpanData struct {
-	Snapshot struct {
-		ARN     string `json:"arn"`
-		Runtime string `json:"runtime"`
-		Name    string `json:"functionName,omitempty"`
-		Version string `json:"functionVersion,omitempty"`
-	} `json:"lambda"`
+	Snapshot AWSLambdaSpanTags `json:"lambda"`
+	HTTP     *HTTPSpanTags     `json:"http,omitempty"`
 }
 
 // NewAWSLambdaSpanData initializes a new AWSLambdaSpanData from span
 func NewAWSLambdaSpanData(span *spanS) AWSLambdaSpanData {
-	var d AWSLambdaSpanData
-	d.Snapshot.Runtime = "go"
-
-	if v, ok := span.Tags["lambda.arn"]; ok {
-		readStringTag(&d.Snapshot.ARN, v)
+	d := AWSLambdaSpanData{
+		Snapshot: NewAWSLambdaSpanTags(span),
 	}
 
-	if v, ok := span.Tags["lambda.name"]; ok {
-		readStringTag(&d.Snapshot.Name, v)
-	}
-
-	if v, ok := span.Tags["lambda.version"]; ok {
-		readStringTag(&d.Snapshot.Version, v)
+	switch span.Tags["lambda.trigger"] {
+	case "aws:api.gateway", "aws:application.load.balancer":
+		tags := NewHTTPSpanTags(span)
+		d.HTTP = &tags
 	}
 
 	return d
