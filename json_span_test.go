@@ -32,6 +32,10 @@ func TestRegisteredSpanType_ExtractData(t *testing.T) {
 			Operation: "test",
 			Expected:  instana.SDKSpanData{},
 		},
+		"aws lambda": {
+			Operation: "aws.lambda.entry",
+			Expected:  instana.AWSLambdaSpanData{},
+		},
 	}
 
 	for name, example := range examples {

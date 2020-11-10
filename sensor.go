@@ -1,10 +1,12 @@
 package instana
 
 import (
+	"context"
 	"errors"
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/instana/go-sensor/acceptor"
@@ -28,6 +30,7 @@ type agentClient interface {
 	SendEvent(event *EventData) error
 	SendSpans(spans []Span) error
 	SendProfiles(profiles []autoprofile.Profile) error
+	Flush(context.Context) error
 }
 
 type sensorS struct {
@@ -154,6 +157,7 @@ func InitSensor(options *Options) {
 func newServerlessAgent(serviceName, agentEndpoint, agentKey string, client *http.Client, logger LeveledLogger) agentClient {
 	switch {
 	case os.Getenv("AWS_EXECUTION_ENV") == "AWS_ECS_FARGATE" && os.Getenv("ECS_CONTAINER_METADATA_URI") != "":
+		// AWS Fargate
 		return newFargateAgent(
 			serviceName,
 			agentEndpoint,
@@ -162,7 +166,11 @@ func newServerlessAgent(serviceName, agentEndpoint, agentKey string, client *htt
 			aws.NewECSMetadataProvider(os.Getenv("ECS_CONTAINER_METADATA_URI"), client),
 			logger,
 		)
-	case os.Getenv("K_SERVICE") != "" && os.Getenv("K_CONFIGURATION") != "" && os.Getenv("K_REVISION") != "": // Knative, e.g. Google Cloud Run
+	case strings.HasPrefix(os.Getenv("AWS_EXECUTION_ENV"), "AWS_Lambda_"):
+		// AWS Lambda
+		return newLambdaAgent(serviceName, agentEndpoint, agentKey, client, logger)
+	case os.Getenv("K_SERVICE") != "" && os.Getenv("K_CONFIGURATION") != "" && os.Getenv("K_REVISION") != "":
+		// Knative, e.g. Google Cloud Run
 		return newGCRAgent(serviceName, agentEndpoint, agentKey, client, logger)
 	default:
 		return nil

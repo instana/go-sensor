@@ -1,6 +1,7 @@
 package instana
 
 import (
+	"context"
 	"time"
 
 	ot "github.com/opentracing/opentracing-go"
@@ -13,6 +14,27 @@ const (
 
 type tracerS struct {
 	recorder SpanRecorder
+}
+
+// NewTracer initializes a new tracer with default options
+func NewTracer() *tracerS {
+	return NewTracerWithOptions(nil)
+}
+
+// NewTracerWithOptions initializes and configures a new tracer that collects and sends spans to the agent
+func NewTracerWithOptions(options *Options) *tracerS {
+	return NewTracerWithEverything(options, NewRecorder())
+}
+
+// NewTracerWithEverything initializes and configures a new tracer
+func NewTracerWithEverything(options *Options, recorder SpanRecorder) *tracerS {
+	InitSensor(options)
+
+	tracer := &tracerS{
+		recorder: recorder,
+	}
+
+	return tracer
 }
 
 func (r *tracerS) Inject(spanContext ot.SpanContext, format interface{}, carrier interface{}) error {
@@ -96,23 +118,11 @@ func (r *tracerS) Options() TracerOptions {
 	return sensor.options.Tracer
 }
 
-// NewTracer initializes a new tracer with default options
-func NewTracer() ot.Tracer {
-	return NewTracerWithOptions(nil)
-}
-
-// NewTracerWithOptions initializes and configures a new tracer that collects and sends spans to the host agent
-func NewTracerWithOptions(options *Options) ot.Tracer {
-	return NewTracerWithEverything(options, NewRecorder())
-}
-
-// NewTracerWithEverything initializes and configures a new tracer
-func NewTracerWithEverything(options *Options, recorder SpanRecorder) ot.Tracer {
-	InitSensor(options)
-
-	tracer := &tracerS{
-		recorder: recorder,
+// Flush forces sendind any queued finished spans to the agent
+func (r *tracerS) Flush(ctx context.Context) error {
+	if err := r.recorder.Flush(ctx); err != nil {
+		return err
 	}
 
-	return tracer
+	return sensor.agent.Flush(ctx)
 }

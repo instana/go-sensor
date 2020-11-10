@@ -37,6 +37,8 @@ const (
 	GCPStorageSpanType = RegisteredSpanType("gcs")
 	// Google Cloud PubSub client span
 	GCPPubSubSpanType = RegisteredSpanType("gcps")
+	// AWS Lambda entry span
+	AWSLambdaEntrySpanType = RegisteredSpanType("aws.lambda.entry")
 )
 
 // RegisteredSpanType represents the span type supported by Instana
@@ -55,6 +57,8 @@ func (st RegisteredSpanType) ExtractData(span *spanS) typedSpanData {
 		return NewGCPStorageSpanData(span)
 	case GCPPubSubSpanType:
 		return NewGCPPubSubSpanData(span)
+	case AWSLambdaEntrySpanType:
+		return NewAWSLambdaSpanData(span)
 	default:
 		return NewSDKSpanData(span)
 	}
@@ -552,6 +556,46 @@ func NewGCPPubSubSpanTags(span *spanS) GCPPubSubSpanTags {
 	}
 
 	return tags
+}
+
+// AWSLambdaSpanData is the base span data type for AWS Lambda entry spans
+type AWSLambdaSpanData struct {
+	Snapshot struct {
+		ARN     string `json:"arn"`
+		Runtime string `json:"runtime"`
+		Name    string `json:"functionName,omitempty"`
+		Version string `json:"functionVersion,omitempty"`
+	} `json:"lambda"`
+}
+
+// NewAWSLambdaSpanData initializes a new AWSLambdaSpanData from span
+func NewAWSLambdaSpanData(span *spanS) AWSLambdaSpanData {
+	var d AWSLambdaSpanData
+	d.Snapshot.Runtime = "go"
+
+	if v, ok := span.Tags["lambda.arn"]; ok {
+		readStringTag(&d.Snapshot.ARN, v)
+	}
+
+	if v, ok := span.Tags["lambda.name"]; ok {
+		readStringTag(&d.Snapshot.Name, v)
+	}
+
+	if v, ok := span.Tags["lambda.version"]; ok {
+		readStringTag(&d.Snapshot.Version, v)
+	}
+
+	return d
+}
+
+// Type returns the span type for an AWS Lambda span
+func (d AWSLambdaSpanData) Type() RegisteredSpanType {
+	return AWSLambdaEntrySpanType
+}
+
+// Kind returns the span kind for an AWS Lambda span
+func (d AWSLambdaSpanData) Kind() SpanKind {
+	return EntrySpanKind
 }
 
 // readStringTag populates the &dst with the tag value if it's of either string or []byte type

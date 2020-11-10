@@ -1,6 +1,8 @@
 package instana
 
 import (
+	"context"
+	"fmt"
 	"sync"
 	"time"
 )
@@ -11,6 +13,8 @@ import (
 type SpanRecorder interface {
 	// Implementations must determine whether and where to store `span`.
 	RecordSpan(span *spanS)
+	// Flush forces sending any buffered finished spans
+	Flush(context.Context) error
 }
 
 // Recorder accepts spans, processes and queues them
@@ -29,7 +33,7 @@ func NewRecorder() *Recorder {
 	go func() {
 		for range ticker.C {
 			if sensor.agent.Ready() {
-				r.send()
+				go r.Flush(context.Background())
 			}
 		}
 	}()
@@ -68,8 +72,8 @@ func (r *Recorder) RecordSpan(span *spanS) {
 	}
 
 	if len(r.spans) >= sensor.options.ForceTransmissionStartingAt {
-		sensor.logger.Debug("Forcing spans to agent. Count:", len(r.spans))
-		go r.send()
+		sensor.logger.Debug("forcing ", len(r.spans), "span(s) to the agent")
+		go r.Flush(context.Background())
 	}
 }
 
@@ -95,6 +99,21 @@ func (r *Recorder) GetQueuedSpans() []Span {
 	return queuedSpans
 }
 
+// Flush sends queued spans to the agent
+func (r *Recorder) Flush(ctx context.Context) error {
+	spansToSend := r.GetQueuedSpans()
+	if len(spansToSend) == 0 {
+		return nil
+	}
+
+	if err := sensor.agent.SendSpans(spansToSend); err != nil {
+		r.spans = append(r.spans, spansToSend...)
+		return fmt.Errorf("failed to send collected spans to the agent: %s", err)
+	}
+
+	return nil
+}
+
 // clearQueuedSpans brings the span queue to empty/0/nada
 //   This function doesn't take the Lock so make sure to have
 //   the write lock before calling.
@@ -102,14 +121,4 @@ func (r *Recorder) GetQueuedSpans() []Span {
 //   locking.
 func (r *Recorder) clearQueuedSpans() {
 	r.spans = r.spans[:0]
-}
-
-// Retrieve the queued spans and post them to the host agent asynchronously.
-func (r *Recorder) send() {
-	spansToSend := r.GetQueuedSpans()
-	if len(spansToSend) == 0 {
-		return
-	}
-
-	go sensor.agent.SendSpans(spansToSend)
 }
