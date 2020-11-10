@@ -62,7 +62,7 @@ func newLambdaAgent(
 	}
 
 	go func() {
-		t := time.NewTicker(time.Second)
+		t := time.NewTicker(awsLambdaAgentFlushPeriod)
 		defer t.Stop()
 
 		for range t.C {
