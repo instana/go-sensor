@@ -40,7 +40,7 @@ func (h *wrappedHandler) Invoke(ctx context.Context, payload []byte) ([]byte, er
 		"lambda.arn":     lc.InvokedFunctionArn + ":" + lambdacontext.FunctionVersion,
 		"lambda.name":    lambdacontext.FunctionName,
 		"lambda.version": lambdacontext.FunctionVersion,
-	})
+	}, extractTriggerEventTags(payload))
 
 	resp, err := h.Handler.Invoke(instana.ContextWithSpan(ctx, sp), payload)
 	if err != nil {
