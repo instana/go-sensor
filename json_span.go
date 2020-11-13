@@ -706,6 +706,48 @@ func (tags AWSLambdaCloudWatchLogsTags) IsZero() bool {
 	return tags.Group == "" && tags.Stream == "" && tags.DecodingError == ""
 }
 
+// AWSS3EventTags represens metadata for an S3 event
+type AWSS3EventTags struct {
+	Name   string `json:"event"`
+	Bucket string `json:"bucket"`
+	Object string `json:"object,omitempty"`
+}
+
+// AWSLambdaS3SpanTags contains fields within the `data.lambda.s3` section of an OT span document
+type AWSLambdaS3SpanTags struct {
+	Events []AWSS3EventTags `json:"events,omitempty"`
+}
+
+// NewAWSLambdaS3SpanTags extracts S3 Event tags for an AWS Lambda entry span. It truncates
+// the events list to the first 3 items and limits each object names to the first 200 characters to reduce the payload.
+func NewAWSLambdaS3SpanTags(span *spanS) AWSLambdaS3SpanTags {
+	var tags AWSLambdaS3SpanTags
+
+	if events, ok := span.Tags["s3.events"]; ok {
+		events, ok := events.([]AWSS3EventTags)
+		if ok {
+			tags.Events = events
+		}
+	}
+
+	if len(tags.Events) > 3 {
+		tags.Events = tags.Events[:3]
+	}
+
+	for i := range tags.Events {
+		if len(tags.Events[i].Object) > 200 {
+			tags.Events[i].Object = tags.Events[i].Object[:200]
+		}
+	}
+
+	return tags
+}
+
+// IsZero returns true if an AWSLambdaS3SpanTags struct was populated with events data
+func (tags AWSLambdaS3SpanTags) IsZero() bool {
+	return len(tags.Events) == 0
+}
+
 // AWSLambdaSpanTags contains fields within the `data.lambda` section of an OT span document
 type AWSLambdaSpanTags struct {
 	// ARN is the ARN of invoked AWS Lambda function with the version attached
@@ -720,6 +762,8 @@ type AWSLambdaSpanTags struct {
 	Trigger string `json:"trigger,omitempty"`
 	// CloudWatch holds the details of a CloudWatch event associated with this lambda
 	CloudWatch *AWSLambdaCloudWatchSpanTags `json:"cw,omitempty"`
+	// S3 holds the details of a S3 events associated with this lambda
+	S3 *AWSLambdaS3SpanTags
 }
 
 // NewAWSLambdaSpanTags extracts AWS Lambda entry span tags from a tracer span
@@ -744,6 +788,10 @@ func NewAWSLambdaSpanTags(span *spanS) AWSLambdaSpanTags {
 
 	if cw := NewAWSLambdaCloudWatchSpanTags(span); !cw.IsZero() {
 		tags.CloudWatch = &cw
+	}
+
+	if st := NewAWSLambdaS3SpanTags(span); !st.IsZero() {
+		tags.S3 = &st
 	}
 
 	return tags

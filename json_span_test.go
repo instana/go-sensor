@@ -225,6 +225,32 @@ func TestNewAWSLambdaSpanData(t *testing.T) {
 				},
 			},
 		},
+		"aws:s3": {
+			Tags: opentracing.Tags{
+				"s3.events": []instana.AWSS3EventTags{
+					{Name: "event1", Bucket: "bucket1", Object: "object1"},
+					{Name: "event2", Bucket: "bucket2", Object: strings.Repeat("long ", 40) + "object2"},
+					{Name: "event3", Bucket: "bucket3"},
+					{Name: "event4", Bucket: "bucket4"},
+				},
+			},
+			Expected: instana.AWSLambdaSpanData{
+				Snapshot: instana.AWSLambdaSpanTags{
+					ARN:     "lambda-arn-1",
+					Runtime: "go",
+					Name:    "test-lambda",
+					Version: "42",
+					Trigger: "aws:s3",
+					S3: &instana.AWSLambdaS3SpanTags{
+						Events: []instana.AWSS3EventTags{
+							{Name: "event1", Bucket: "bucket1", Object: "object1"},
+							{Name: "event2", Bucket: "bucket2", Object: strings.Repeat("long ", 40)},
+							{Name: "event3", Bucket: "bucket3"},
+						},
+					},
+				},
+			},
+		},
 	}
 
 	for trigger, example := range examples {
