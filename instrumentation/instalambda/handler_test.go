@@ -120,3 +120,52 @@ func TestTraceHandlerFunc_ALBEvent(t *testing.T) {
 		},
 	}, span.Data)
 }
+
+func TestTraceHandlerFunc_CloudWatchEvent(t *testing.T) {
+	recorder := instana.NewTestRecorder()
+	sensor := instana.NewSensorWithTracer(instana.NewTracerWithEverything(instana.DefaultOptions(), recorder))
+
+	payload, err := ioutil.ReadFile("testdata/cw_event.json")
+	require.NoError(t, err)
+
+	h := instalambda.TraceHandlerFunc(func(ctx context.Context, evt *events.CloudWatchEvent) error {
+		_, ok := instana.SpanFromContext(ctx)
+		assert.True(t, ok)
+
+		return nil
+	}, sensor)
+
+	lambdacontext.FunctionName = "test-function"
+	lambdacontext.FunctionVersion = "42"
+
+	ctx := lambdacontext.NewContext(context.Background(), &lambdacontext.LambdaContext{
+		AwsRequestID:       "req1",
+		InvokedFunctionArn: "aws:test-function",
+	})
+
+	_, err = h.Invoke(ctx, payload)
+	require.NoError(t, err)
+
+	spans := recorder.GetQueuedSpans()
+	require.Len(t, spans, 1)
+
+	span := spans[0]
+	require.Equal(t, "aws.lambda.entry", span.Name)
+	assert.EqualValues(t, instana.EntrySpanKind, span.Kind)
+
+	assert.Equal(t, instana.AWSLambdaSpanData{
+		Snapshot: instana.AWSLambdaSpanTags{
+			ARN:     "aws:test-function:42",
+			Runtime: "go",
+			Name:    "test-function",
+			Version: "42",
+			Trigger: "aws:cloudwatch.events",
+			CloudWatch: &instana.AWSLambdaCloudWatchSpanTags{
+				Events: &instana.AWSLambdaCloudWatchEventTags{
+					ID:        "cdc73f9d-aea9-11e3-9d5a-835b769c0d9c",
+					Resources: []string{"arn:aws:events:us-east-1:123456789012:rule/my-schedule"},
+				},
+			},
+		},
+	}, span.Data)
+}

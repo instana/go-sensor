@@ -14,6 +14,7 @@ const (
 	unknownEventType triggerEventType = iota
 	apiGatewayEventType
 	albEventType
+	cloudWatchEventType
 )
 
 func detectTriggerEventType(payload []byte) triggerEventType {
@@ -26,6 +27,9 @@ func detectTriggerEventType(payload []byte) triggerEventType {
 		RequestContext struct {
 			ELB json.RawMessage `json:"elb"`
 		} `json:"requestContext"`
+		// CloudWatch fields
+		Source     string `json:"source"`
+		DetailType string `json:"detail-type"`
 	}
 
 	if err := json.Unmarshal(payload, &v); err != nil {
@@ -37,6 +41,8 @@ func detectTriggerEventType(payload []byte) triggerEventType {
 		return apiGatewayEventType
 	case v.RequestContext.ELB != nil:
 		return albEventType
+	case v.Source == "aws.events" && v.DetailType == "Scheduled Event":
+		return cloudWatchEventType
 	default:
 		return unknownEventType
 	}
@@ -82,5 +88,13 @@ func extractALBTriggerTags(evt events.ALBTargetGroupRequest) opentracing.Tags {
 		"http.method":    evt.HTTPMethod,
 		"http.url":       evt.Path,
 		"http.params":    params.Encode(),
+	}
+}
+
+func extractCloudWatchTriggerTags(evt events.CloudWatchEvent) opentracing.Tags {
+	return opentracing.Tags{
+		"lambda.trigger":              "aws:cloudwatch.events",
+		"cloudwatch.events.id":        evt.ID,
+		"cloudwatch.events.resources": evt.Resources,
 	}
 }

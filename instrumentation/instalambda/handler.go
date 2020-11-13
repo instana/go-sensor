@@ -90,6 +90,14 @@ func (h *wrappedHandler) extractTriggerEventTags(payload []byte) opentracing.Tag
 		}
 
 		return extractALBTriggerTags(v)
+	case cloudWatchEventType:
+		var v events.CloudWatchEvent
+		if err := json.Unmarshal(payload, &v); err != nil {
+			h.sensor.Logger().Warn("failed to unmarshal CloudWatch event payload: ", err)
+			return opentracing.Tags{}
+		}
+
+		return extractCloudWatchTriggerTags(v)
 	default:
 		h.sensor.Logger().Info("unsupported AWS Lambda trigger event type, the entry span will include generic tags only")
 		return opentracing.Tags{}
