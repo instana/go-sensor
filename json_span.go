@@ -748,6 +748,41 @@ func (tags AWSLambdaS3SpanTags) IsZero() bool {
 	return len(tags.Events) == 0
 }
 
+// AWSSQSMessageTags represents span tags for an SQS message delivery
+type AWSSQSMessageTags struct {
+	Queue string `json:"queue"`
+}
+
+// AWSLambdaSQSSpanTags contains fields within the `data.lambda.sqs` section of an OT span document
+type AWSLambdaSQSSpanTags struct {
+	// Messages are message tags for an SQS event
+	Messages []AWSSQSMessageTags `json:"messages"`
+}
+
+// NewAWSLambdaSQSSpanTags extracts SQS event tags for an AWS Lambda entry span. It truncates
+// the events list to the first 3 items to reduce the payload.
+func NewAWSLambdaSQSSpanTags(span *spanS) AWSLambdaSQSSpanTags {
+	var tags AWSLambdaSQSSpanTags
+
+	if msgs, ok := span.Tags["sqs.messages"]; ok {
+		msgs, ok := msgs.([]AWSSQSMessageTags)
+		if ok {
+			tags.Messages = msgs
+		}
+	}
+
+	if len(tags.Messages) > 3 {
+		tags.Messages = tags.Messages[:3]
+	}
+
+	return tags
+}
+
+// IsZero returns true if an AWSLambdaSQSSpanTags struct was populated with messages data
+func (tags AWSLambdaSQSSpanTags) IsZero() bool {
+	return len(tags.Messages) == 0
+}
+
 // AWSLambdaSpanTags contains fields within the `data.lambda` section of an OT span document
 type AWSLambdaSpanTags struct {
 	// ARN is the ARN of invoked AWS Lambda function with the version attached
@@ -764,6 +799,8 @@ type AWSLambdaSpanTags struct {
 	CloudWatch *AWSLambdaCloudWatchSpanTags `json:"cw,omitempty"`
 	// S3 holds the details of a S3 events associated with this lambda
 	S3 *AWSLambdaS3SpanTags
+	// SQS holds the details of a SQS events associated with this lambda
+	SQS *AWSLambdaSQSSpanTags
 }
 
 // NewAWSLambdaSpanTags extracts AWS Lambda entry span tags from a tracer span
@@ -792,6 +829,10 @@ func NewAWSLambdaSpanTags(span *spanS) AWSLambdaSpanTags {
 
 	if st := NewAWSLambdaS3SpanTags(span); !st.IsZero() {
 		tags.S3 = &st
+	}
+
+	if sqs := NewAWSLambdaSQSSpanTags(span); !sqs.IsZero() {
+		tags.SQS = &sqs
 	}
 
 	return tags

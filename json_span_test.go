@@ -251,6 +251,23 @@ func TestNewAWSLambdaSpanData(t *testing.T) {
 				},
 			},
 		},
+		"aws:sqs": {
+			Tags: opentracing.Tags{
+				"sqs.messages": []instana.AWSSQSMessageTags{{Queue: "q1"}, {Queue: "q2"}, {Queue: "q3"}, {Queue: "q4"}},
+			},
+			Expected: instana.AWSLambdaSpanData{
+				Snapshot: instana.AWSLambdaSpanTags{
+					ARN:     "lambda-arn-1",
+					Runtime: "go",
+					Name:    "test-lambda",
+					Version: "42",
+					Trigger: "aws:sqs",
+					SQS: &instana.AWSLambdaSQSSpanTags{
+						Messages: []instana.AWSSQSMessageTags{{Queue: "q1"}, {Queue: "q2"}, {Queue: "q3"}},
+					},
+				},
+			},
+		},
 	}
 
 	for trigger, example := range examples {
