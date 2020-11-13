@@ -18,6 +18,7 @@ const (
 	cloudWatchEventType
 	cloudWatchLogsEventType
 	s3EventType
+	sqsEventType
 )
 
 func detectTriggerEventType(payload []byte) triggerEventType {
@@ -56,6 +57,8 @@ func detectTriggerEventType(payload []byte) triggerEventType {
 		return cloudWatchLogsEventType
 	case len(v.Records) > 0 && v.Records[0].Source == "aws:s3":
 		return s3EventType
+	case len(v.Records) > 0 && v.Records[0].Source == "aws:sqs":
+		return sqsEventType
 	default:
 		return unknownEventType
 	}
@@ -147,5 +150,19 @@ func extractS3TriggerTags(evt events.S3Event) opentracing.Tags {
 	return opentracing.Tags{
 		"lambda.trigger": "aws:s3",
 		"s3.events":      events,
+	}
+}
+
+func extractSQSTriggerTags(evt events.SQSEvent) opentracing.Tags {
+	var msgs []instana.AWSSQSMessageTags
+	for _, rec := range evt.Records {
+		msgs = append(msgs, instana.AWSSQSMessageTags{
+			Queue: rec.EventSourceARN,
+		})
+	}
+
+	return opentracing.Tags{
+		"lambda.trigger": "aws:sqs",
+		"sqs.messages":   msgs,
 	}
 }

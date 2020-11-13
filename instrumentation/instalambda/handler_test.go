@@ -322,3 +322,52 @@ func TestTraceHandlerFunc_S3Event(t *testing.T) {
 		},
 	}, span.Data)
 }
+
+func TestTraceHandlerFunc_SQSEvent(t *testing.T) {
+	recorder := instana.NewTestRecorder()
+	sensor := instana.NewSensorWithTracer(instana.NewTracerWithEverything(instana.DefaultOptions(), recorder))
+
+	payload, err := ioutil.ReadFile("testdata/sqs_event.json")
+	require.NoError(t, err)
+
+	h := instalambda.TraceHandlerFunc(func(ctx context.Context, evt *events.SQSEvent) error {
+		_, ok := instana.SpanFromContext(ctx)
+		assert.True(t, ok)
+
+		return nil
+	}, sensor)
+
+	lambdacontext.FunctionName = "test-function"
+	lambdacontext.FunctionVersion = "42"
+
+	ctx := lambdacontext.NewContext(context.Background(), &lambdacontext.LambdaContext{
+		AwsRequestID:       "req1",
+		InvokedFunctionArn: "aws:test-function",
+	})
+
+	_, err = h.Invoke(ctx, payload)
+	require.NoError(t, err)
+
+	spans := recorder.GetQueuedSpans()
+	require.Len(t, spans, 1)
+
+	span := spans[0]
+	require.Equal(t, "aws.lambda.entry", span.Name)
+	assert.EqualValues(t, instana.EntrySpanKind, span.Kind)
+
+	assert.Equal(t, instana.AWSLambdaSpanData{
+		Snapshot: instana.AWSLambdaSpanTags{
+			ARN:     "aws:test-function:42",
+			Runtime: "go",
+			Name:    "test-function",
+			Version: "42",
+			Trigger: "aws:sqs",
+			SQS: &instana.AWSLambdaSQSSpanTags{
+				Messages: []instana.AWSSQSMessageTags{
+					{Queue: "arn:aws:sqs:us-east-2:123456789012:my-queue"},
+					{Queue: "arn:aws:sqs:us-east-2:123456789012:my-queue"},
+				},
+			},
+		},
+	}, span.Data)
+}
