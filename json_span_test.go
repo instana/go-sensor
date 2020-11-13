@@ -1,6 +1,7 @@
 package instana_test
 
 import (
+	"errors"
 	"strings"
 	"testing"
 
@@ -175,8 +176,8 @@ func TestNewAWSLambdaSpanData(t *testing.T) {
 					Name:    "test-lambda",
 					Version: "42",
 					Trigger: "aws:cloudwatch.events",
-					CloudWatch: &instana.AWSCloudWatchTags{
-						Events: &instana.AWSCloudWatchEventTags{
+					CloudWatch: &instana.AWSLambdaCloudWatchSpanTags{
+						Events: &instana.AWSLambdaCloudWatchEventTags{
 							ID: "cw-event-1",
 							Resources: []string{
 								"res1",
@@ -184,6 +185,41 @@ func TestNewAWSLambdaSpanData(t *testing.T) {
 								"res3",
 							},
 							More: true,
+						},
+					},
+				},
+			},
+		},
+		"aws:cloudwatch.logs": {
+			Tags: opentracing.Tags{
+				"cloudwatch.logs.group":  "cw-log-group-1",
+				"cloudwatch.logs.stream": "cw-log-stream-1",
+				"cloudwatch.logs.events": []string{
+					"log1",
+					strings.Repeat("long ", 40) + "log2",
+					"log3",
+					"log4",
+				},
+				"cloudwatch.logs.decodingError": errors.New("none"),
+			},
+			Expected: instana.AWSLambdaSpanData{
+				Snapshot: instana.AWSLambdaSpanTags{
+					ARN:     "lambda-arn-1",
+					Runtime: "go",
+					Name:    "test-lambda",
+					Version: "42",
+					Trigger: "aws:cloudwatch.logs",
+					CloudWatch: &instana.AWSLambdaCloudWatchSpanTags{
+						Logs: &instana.AWSLambdaCloudWatchLogsTags{
+							Group:  "cw-log-group-1",
+							Stream: "cw-log-stream-1",
+							Events: []string{
+								"log1",
+								strings.Repeat("long ", 40),
+								"log3",
+							},
+							More:          true,
+							DecodingError: "none",
 						},
 					},
 				},
