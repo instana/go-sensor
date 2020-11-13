@@ -5,6 +5,7 @@ import (
 	"net/url"
 
 	"github.com/aws/aws-lambda-go/events"
+	instana "github.com/instana/go-sensor"
 	"github.com/opentracing/opentracing-go"
 )
 
@@ -16,6 +17,7 @@ const (
 	albEventType
 	cloudWatchEventType
 	cloudWatchLogsEventType
+	s3EventType
 )
 
 func detectTriggerEventType(payload []byte) triggerEventType {
@@ -33,6 +35,10 @@ func detectTriggerEventType(payload []byte) triggerEventType {
 		DetailType string `json:"detail-type"`
 		// CloudWatch Logs fields
 		AWSLogs json.RawMessage `json:"awslogs"`
+		// S3 and SQS fields
+		Records []struct {
+			Source string `json:"eventSource"`
+		}
 	}
 
 	if err := json.Unmarshal(payload, &v); err != nil {
@@ -48,6 +54,8 @@ func detectTriggerEventType(payload []byte) triggerEventType {
 		return cloudWatchEventType
 	case len(v.AWSLogs) != 0:
 		return cloudWatchLogsEventType
+	case len(v.Records) > 0 && v.Records[0].Source == "aws:s3":
+		return s3EventType
 	default:
 		return unknownEventType
 	}
@@ -123,5 +131,21 @@ func extractCloudWatchLogsTriggerTags(evt events.CloudwatchLogsEvent) opentracin
 		"cloudwatch.logs.group":  logs.LogGroup,
 		"cloudwatch.logs.stream": logs.LogStream,
 		"cloudwatch.logs.events": events,
+	}
+}
+
+func extractS3TriggerTags(evt events.S3Event) opentracing.Tags {
+	var events []instana.AWSS3EventTags
+	for _, rec := range evt.Records {
+		events = append(events, instana.AWSS3EventTags{
+			Name:   rec.EventName,
+			Bucket: rec.S3.Bucket.Name,
+			Object: rec.S3.Object.Key,
+		})
+	}
+
+	return opentracing.Tags{
+		"lambda.trigger": "aws:s3",
+		"s3.events":      events,
 	}
 }
