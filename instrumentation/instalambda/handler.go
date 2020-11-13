@@ -2,8 +2,10 @@ package instalambda
 
 import (
 	"context"
+	"encoding/json"
 	"time"
 
+	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-lambda-go/lambdacontext"
 	instana "github.com/instana/go-sensor"
@@ -40,7 +42,7 @@ func (h *wrappedHandler) Invoke(ctx context.Context, payload []byte) ([]byte, er
 		"lambda.arn":     lc.InvokedFunctionArn + ":" + lambdacontext.FunctionVersion,
 		"lambda.name":    lambdacontext.FunctionName,
 		"lambda.version": lambdacontext.FunctionVersion,
-	}, extractTriggerEventTags(payload))
+	}, h.extractTriggerEventTags(payload))
 
 	resp, err := h.Handler.Invoke(instana.ContextWithSpan(ctx, sp), payload)
 	if err != nil {
@@ -68,4 +70,20 @@ func (h *wrappedHandler) Invoke(ctx context.Context, payload []byte) ([]byte, er
 	}
 
 	return resp, err
+}
+
+func (h *wrappedHandler) extractTriggerEventTags(payload []byte) opentracing.Tags {
+	switch detectTriggerEventType(payload) {
+	case apiGatewayEventType:
+		var v events.APIGatewayProxyRequest
+		if err := json.Unmarshal(payload, &v); err != nil {
+			h.sensor.Logger().Warn("failed to unmarshal API Gateway event payload: ", err)
+			return opentracing.Tags{}
+		}
+
+		return extractAPIGatewayTriggerTags(v)
+	default:
+		h.sensor.Logger().Info("unsupported AWS Lambda trigger event type, the entry span will include generic tags only")
+		return opentracing.Tags{}
+	}
 }
