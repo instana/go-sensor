@@ -1,6 +1,7 @@
 package instana_test
 
 import (
+	"strings"
 	"testing"
 
 	instana "github.com/instana/go-sensor"
@@ -154,6 +155,37 @@ func TestNewAWSLambdaSpanData(t *testing.T) {
 					Host:     "example.com",
 					Protocol: "https",
 					Error:    "Not Found",
+				},
+			},
+		},
+		"aws:cloudwatch.events": {
+			Tags: opentracing.Tags{
+				"cloudwatch.events.id": "cw-event-1",
+				"cloudwatch.events.resources": []string{
+					"res1",
+					strings.Repeat("long ", 40) + "res2",
+					"res3",
+					"res4",
+				},
+			},
+			Expected: instana.AWSLambdaSpanData{
+				Snapshot: instana.AWSLambdaSpanTags{
+					ARN:     "lambda-arn-1",
+					Runtime: "go",
+					Name:    "test-lambda",
+					Version: "42",
+					Trigger: "aws:cloudwatch.events",
+					CloudWatch: &instana.AWSCloudWatchTags{
+						Events: &instana.AWSCloudWatchEventTags{
+							ID: "cw-event-1",
+							Resources: []string{
+								"res1",
+								strings.Repeat("long ", 40),
+								"res3",
+							},
+							More: true,
+						},
+					},
 				},
 			},
 		},

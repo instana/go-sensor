@@ -558,6 +558,82 @@ func NewGCPPubSubSpanTags(span *spanS) GCPPubSubSpanTags {
 	return tags
 }
 
+// AWSCloudWatchTags contains fields within the `data.lambda.cw` section of an OT span document
+type AWSCloudWatchTags struct {
+	Events *AWSCloudWatchEventTags `json:"events,omitempty"`
+}
+
+// NewAWSCloudWatchTags extracts CloudWatch tags for an AWS Lambda entry span
+func NewAWSCloudWatchTags(span *spanS) AWSCloudWatchTags {
+	var tags AWSCloudWatchTags
+
+	if events := NewAWSCloudWatchEventTags(span); !events.IsZero() {
+		tags.Events = &events
+	}
+
+	return tags
+}
+
+// IsZero returns true if an AWSCloudWatchTags struct was populated with event data
+func (tags AWSCloudWatchTags) IsZero() bool {
+	return tags.Events == nil || tags.Events.IsZero()
+}
+
+// AWSCloudWatchEventTags contains fields within the `data.lambda.cw.events` section of an OT span document
+type AWSCloudWatchEventTags struct {
+	// ID is the ID of the event
+	ID string `json:"id"`
+	// Resources contains the event resources
+	Resources []string `json:"resources"`
+	// More is set to true if the event resources list was truncated
+	More bool `json:"more,omitempty"`
+}
+
+// NewAWSCloudWatchEventTags extracts CloudWatch event tags for an AWS Lambda entry span. It truncates
+// the resources list to the first 3 items, populating the `data.lambda.cw.events.more` tag and limits each
+// resource string to the first 200 characters to reduce the payload.
+func NewAWSCloudWatchEventTags(span *spanS) AWSCloudWatchEventTags {
+	var tags AWSCloudWatchEventTags
+
+	if v, ok := span.Tags["cloudwatch.events.id"]; ok {
+		readStringTag(&tags.ID, v)
+	}
+
+	if v, ok := span.Tags["cloudwatch.events.resources"]; ok {
+		switch v := v.(type) {
+		case []string:
+			if len(v) > 3 {
+				v = v[:3]
+				tags.More = true
+			}
+
+			tags.Resources = v
+		case string:
+			tags.Resources = []string{v}
+		case []byte:
+			tags.Resources = []string{string(v)}
+		}
+	}
+
+	// truncate resources
+	if len(tags.Resources) > 3 {
+		tags.Resources, tags.More = tags.Resources[:3], true
+	}
+
+	for i := range tags.Resources {
+		if len(tags.Resources[i]) > 200 {
+			tags.Resources[i] = tags.Resources[i][:200]
+		}
+	}
+
+	return tags
+}
+
+// IsZero returns true if an AWSCloudWatchEventTags struct was populated with event data
+func (tags AWSCloudWatchEventTags) IsZero() bool {
+	return tags.ID == ""
+}
+
 // AWSLambdaSpanTags contains fields within the `data.lambda` section of an OT span document
 type AWSLambdaSpanTags struct {
 	// ARN is the ARN of invoked AWS Lambda function with the version attached
@@ -570,6 +646,8 @@ type AWSLambdaSpanTags struct {
 	Version string `json:"functionVersion,omitempty"`
 	// Trigger is the trigger event type (if any)
 	Trigger string `json:"trigger,omitempty"`
+	// CloudWatch holds the details of a CloudWatch event associated with this lambda
+	CloudWatch *AWSCloudWatchTags `json:"cw,omitempty"`
 }
 
 // NewAWSLambdaSpanTags extracts AWS Lambda entry span tags from a tracer span
@@ -590,6 +668,10 @@ func NewAWSLambdaSpanTags(span *spanS) AWSLambdaSpanTags {
 
 	if v, ok := span.Tags["lambda.trigger"]; ok {
 		readStringTag(&tags.Trigger, v)
+	}
+
+	if cw := NewAWSCloudWatchTags(span); !cw.IsZero() {
+		tags.CloudWatch = &cw
 	}
 
 	return tags
