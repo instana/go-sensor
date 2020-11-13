@@ -169,3 +169,104 @@ func TestTraceHandlerFunc_CloudWatchEvent(t *testing.T) {
 		},
 	}, span.Data)
 }
+
+func TestTraceHandlerFunc_CloudWatchLogsEvent(t *testing.T) {
+	recorder := instana.NewTestRecorder()
+	sensor := instana.NewSensorWithTracer(instana.NewTracerWithEverything(instana.DefaultOptions(), recorder))
+
+	payload, err := ioutil.ReadFile("testdata/cw_logs_event.json")
+	require.NoError(t, err)
+
+	h := instalambda.TraceHandlerFunc(func(ctx context.Context, evt *events.CloudwatchLogsEvent) error {
+		_, ok := instana.SpanFromContext(ctx)
+		assert.True(t, ok)
+
+		return nil
+	}, sensor)
+
+	lambdacontext.FunctionName = "test-function"
+	lambdacontext.FunctionVersion = "42"
+
+	ctx := lambdacontext.NewContext(context.Background(), &lambdacontext.LambdaContext{
+		AwsRequestID:       "req1",
+		InvokedFunctionArn: "aws:test-function",
+	})
+
+	_, err = h.Invoke(ctx, payload)
+	require.NoError(t, err)
+
+	spans := recorder.GetQueuedSpans()
+	require.Len(t, spans, 1)
+
+	span := spans[0]
+	require.Equal(t, "aws.lambda.entry", span.Name)
+	assert.EqualValues(t, instana.EntrySpanKind, span.Kind)
+
+	assert.Equal(t, instana.AWSLambdaSpanData{
+		Snapshot: instana.AWSLambdaSpanTags{
+			ARN:     "aws:test-function:42",
+			Runtime: "go",
+			Name:    "test-function",
+			Version: "42",
+			Trigger: "aws:cloudwatch.logs",
+			CloudWatch: &instana.AWSLambdaCloudWatchSpanTags{
+				Logs: &instana.AWSLambdaCloudWatchLogsTags{
+					Group:  "testLogGroup",
+					Stream: "testLogStream",
+					Events: []string{
+						"[ERROR] First test message",
+						"[ERROR] Second test message",
+					},
+				},
+			},
+		},
+	}, span.Data)
+}
+
+func TestTraceHandlerFunc_CloudWatchLogsEvent_DecodeError(t *testing.T) {
+	recorder := instana.NewTestRecorder()
+	sensor := instana.NewSensorWithTracer(instana.NewTracerWithEverything(instana.DefaultOptions(), recorder))
+
+	payload, err := ioutil.ReadFile("testdata/cw_logs_broken_event.json")
+	require.NoError(t, err)
+
+	h := instalambda.TraceHandlerFunc(func(ctx context.Context, evt *events.CloudwatchLogsEvent) error {
+		_, ok := instana.SpanFromContext(ctx)
+		assert.True(t, ok)
+
+		return nil
+	}, sensor)
+
+	lambdacontext.FunctionName = "test-function"
+	lambdacontext.FunctionVersion = "42"
+
+	ctx := lambdacontext.NewContext(context.Background(), &lambdacontext.LambdaContext{
+		AwsRequestID:       "req1",
+		InvokedFunctionArn: "aws:test-function",
+	})
+
+	_, err = h.Invoke(ctx, payload)
+	require.NoError(t, err)
+
+	spans := recorder.GetQueuedSpans()
+	require.Len(t, spans, 1)
+
+	span := spans[0]
+	require.Equal(t, "aws.lambda.entry", span.Name)
+	assert.EqualValues(t, instana.EntrySpanKind, span.Kind)
+
+	assert.Equal(t, instana.AWSLambdaSpanData{
+		Snapshot: instana.AWSLambdaSpanTags{
+			ARN:     "aws:test-function:42",
+			Runtime: "go",
+			Name:    "test-function",
+			Version: "42",
+			Trigger: "aws:cloudwatch.logs",
+			CloudWatch: &instana.AWSLambdaCloudWatchSpanTags{
+				Logs: &instana.AWSLambdaCloudWatchLogsTags{
+					DecodingError: "unexpected EOF",
+				},
+			},
+		},
+	}, span.Data)
+}
