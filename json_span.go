@@ -568,6 +568,8 @@ type AWSLambdaSpanTags struct {
 	Name string `json:"functionName,omitempty"`
 	// Version is either the numeric version or $LATEST
 	Version string `json:"functionVersion,omitempty"`
+	// Trigger is the trigger event type (if any)
+	Trigger string `json:"trigger,omitempty"`
 }
 
 // NewAWSLambdaSpanTags extracts AWS Lambda entry span tags from a tracer span
@@ -584,6 +586,10 @@ func NewAWSLambdaSpanTags(span *spanS) AWSLambdaSpanTags {
 
 	if v, ok := span.Tags["lambda.version"]; ok {
 		readStringTag(&tags.Version, v)
+	}
+
+	if v, ok := span.Tags["lambda.trigger"]; ok {
+		readStringTag(&tags.Trigger, v)
 	}
 
 	return tags

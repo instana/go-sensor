@@ -109,6 +109,40 @@ func TestNewAWSLambdaSpanData(t *testing.T) {
 					Runtime: "go",
 					Name:    "test-lambda",
 					Version: "42",
+					Trigger: "aws:api.gateway",
+				},
+				HTTP: &instana.HTTPSpanTags{
+					URL:      "https://example.com/lambda",
+					Status:   404,
+					Method:   "GET",
+					Path:     "/lambda",
+					Params:   "q=test&secret=classified",
+					Headers:  map[string]string{"x-custom-header-1": "test"},
+					Host:     "example.com",
+					Protocol: "https",
+					Error:    "Not Found",
+				},
+			},
+		},
+		"aws:application.load.balancer": {
+			Tags: opentracing.Tags{
+				"http.protocol": "https",
+				"http.url":      "https://example.com/lambda",
+				"http.host":     "example.com",
+				"http.method":   "GET",
+				"http.path":     "/lambda",
+				"http.params":   "q=test&secret=classified",
+				"http.header":   map[string]string{"x-custom-header-1": "test"},
+				"http.status":   404,
+				"http.error":    "Not Found",
+			},
+			Expected: instana.AWSLambdaSpanData{
+				Snapshot: instana.AWSLambdaSpanTags{
+					ARN:     "lambda-arn-1",
+					Runtime: "go",
+					Name:    "test-lambda",
+					Version: "42",
+					Trigger: "aws:application.load.balancer",
 				},
 				HTTP: &instana.HTTPSpanTags{
 					URL:      "https://example.com/lambda",
@@ -124,9 +158,6 @@ func TestNewAWSLambdaSpanData(t *testing.T) {
 			},
 		},
 	}
-
-	// ALB tags set is the same as for API Gateway, so we just copy it over
-	examples["aws:application.load.balancer"] = examples["aws:api.gateway"]
 
 	for trigger, example := range examples {
 		t.Run(trigger, func(t *testing.T) {
