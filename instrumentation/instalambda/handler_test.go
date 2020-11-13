@@ -67,3 +67,56 @@ func TestTraceHandlerFunc_APIGatewayEvent(t *testing.T) {
 		},
 	}, span.Data)
 }
+
+func TestTraceHandlerFunc_ALBEvent(t *testing.T) {
+	recorder := instana.NewTestRecorder()
+	sensor := instana.NewSensorWithTracer(instana.NewTracerWithEverything(instana.DefaultOptions(), recorder))
+
+	payload, err := ioutil.ReadFile("testdata/alb_event.json")
+	require.NoError(t, err)
+
+	h := instalambda.TraceHandlerFunc(func(ctx context.Context, evt *events.ALBTargetGroupRequest) (events.ALBTargetGroupResponse, error) {
+		_, ok := instana.SpanFromContext(ctx)
+		assert.True(t, ok)
+
+		return events.ALBTargetGroupResponse{
+			StatusCode: http.StatusOK,
+			Body:       "OK",
+		}, nil
+	}, sensor)
+
+	lambdacontext.FunctionName = "test-function"
+	lambdacontext.FunctionVersion = "42"
+
+	ctx := lambdacontext.NewContext(context.Background(), &lambdacontext.LambdaContext{
+		AwsRequestID:       "req1",
+		InvokedFunctionArn: "aws:test-function",
+	})
+
+	resp, err := h.Invoke(ctx, payload)
+	require.NoError(t, err)
+
+	assert.JSONEq(t, `{"statusCode":200,"statusDescription":"","headers":null,"multiValueHeaders":null,"body":"OK","isBase64Encoded":false}`, string(resp))
+
+	spans := recorder.GetQueuedSpans()
+	require.Len(t, spans, 1)
+
+	span := spans[0]
+	require.Equal(t, "aws.lambda.entry", span.Name)
+	assert.EqualValues(t, instana.EntrySpanKind, span.Kind)
+
+	assert.Equal(t, instana.AWSLambdaSpanData{
+		Snapshot: instana.AWSLambdaSpanTags{
+			ARN:     "aws:test-function:42",
+			Runtime: "go",
+			Name:    "test-function",
+			Version: "42",
+			Trigger: "aws:application.load.balancer",
+		},
+		HTTP: &instana.HTTPSpanTags{
+			URL:    "/lambda",
+			Method: "GET",
+			Params: "query=1234ABCD",
+		},
+	}, span.Data)
+}
