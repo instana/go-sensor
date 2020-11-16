@@ -7,7 +7,12 @@
     "httpMethod": "GET",
     "path": "/lambda",
     "queryStringParameters": {
-        "query": "1234ABCD"
+        "query": "1234ABCD",
+        "secret": "key"
+    },
+    "multiValueQueryStringParameters": {
+        "multikey": ["value1", "value2"],
+        "multisecret": ["key1", "key2"]
     },
     "headers": {
         "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8",
