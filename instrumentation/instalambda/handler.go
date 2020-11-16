@@ -1,3 +1,5 @@
+// Package instalambda provides Instana tracing instrumentation for
+// AWS Lambda functions
 package instalambda
 
 import (
@@ -25,14 +27,17 @@ type wrappedHandler struct {
 	sensor *instana.Sensor
 }
 
+// NewHandler creates a new instrumented handler that can be used with `lambda.StartHandler()` from a handler function
 func NewHandler(handlerFunc interface{}, sensor *instana.Sensor) *wrappedHandler {
 	return WrapHandler(lambda.NewHandler(handlerFunc), sensor)
 }
 
+// WrapHandler instruments a lambda.Handler to trace the invokations with Instana
 func WrapHandler(h lambda.Handler, sensor *instana.Sensor) *wrappedHandler {
 	return &wrappedHandler{h, sensor}
 }
 
+// Invoke is a handler function for a wrapped handler
 func (h *wrappedHandler) Invoke(ctx context.Context, payload []byte) ([]byte, error) {
 	lc, ok := lambdacontext.FromContext(ctx)
 	if !ok {
