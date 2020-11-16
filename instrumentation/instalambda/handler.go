@@ -25,7 +25,7 @@ type wrappedHandler struct {
 	sensor *instana.Sensor
 }
 
-func TraceHandlerFunc(handlerFunc interface{}, sensor *instana.Sensor) *wrappedHandler {
+func NewHandler(handlerFunc interface{}, sensor *instana.Sensor) *wrappedHandler {
 	return WrapHandler(lambda.NewHandler(handlerFunc), sensor)
 }
 

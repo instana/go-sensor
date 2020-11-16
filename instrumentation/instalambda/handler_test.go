@@ -14,14 +14,14 @@ import (
 	"github.com/instana/testify/require"
 )
 
-func TestTraceHandlerFunc_APIGatewayEvent(t *testing.T) {
+func TestNewHandler_APIGatewayEvent(t *testing.T) {
 	recorder := instana.NewTestRecorder()
 	sensor := instana.NewSensorWithTracer(instana.NewTracerWithEverything(instana.DefaultOptions(), recorder))
 
 	payload, err := ioutil.ReadFile("testdata/apigw_event.json")
 	require.NoError(t, err)
 
-	h := instalambda.TraceHandlerFunc(func(ctx context.Context, evt *events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+	h := instalambda.NewHandler(func(ctx context.Context, evt *events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 		_, ok := instana.SpanFromContext(ctx)
 		assert.True(t, ok)
 
@@ -73,14 +73,14 @@ func TestTraceHandlerFunc_APIGatewayEvent(t *testing.T) {
 	}, span.Data)
 }
 
-func TestTraceHandlerFunc_APIGatewayV2Event(t *testing.T) {
+func TestNewHandler_APIGatewayV2Event(t *testing.T) {
 	recorder := instana.NewTestRecorder()
 	sensor := instana.NewSensorWithTracer(instana.NewTracerWithEverything(instana.DefaultOptions(), recorder))
 
 	payload, err := ioutil.ReadFile("testdata/apigw_v2_event.json")
 	require.NoError(t, err)
 
-	h := instalambda.TraceHandlerFunc(func(ctx context.Context, evt *events.APIGatewayV2HTTPRequest) (events.APIGatewayV2HTTPResponse, error) {
+	h := instalambda.NewHandler(func(ctx context.Context, evt *events.APIGatewayV2HTTPRequest) (events.APIGatewayV2HTTPResponse, error) {
 		_, ok := instana.SpanFromContext(ctx)
 		assert.True(t, ok)
 
@@ -132,14 +132,14 @@ func TestTraceHandlerFunc_APIGatewayV2Event(t *testing.T) {
 	}, span.Data)
 }
 
-func TestTraceHandlerFunc_ALBEvent(t *testing.T) {
+func TestNewHandler_ALBEvent(t *testing.T) {
 	recorder := instana.NewTestRecorder()
 	sensor := instana.NewSensorWithTracer(instana.NewTracerWithEverything(instana.DefaultOptions(), recorder))
 
 	payload, err := ioutil.ReadFile("testdata/alb_event.json")
 	require.NoError(t, err)
 
-	h := instalambda.TraceHandlerFunc(func(ctx context.Context, evt *events.ALBTargetGroupRequest) (events.ALBTargetGroupResponse, error) {
+	h := instalambda.NewHandler(func(ctx context.Context, evt *events.ALBTargetGroupRequest) (events.ALBTargetGroupResponse, error) {
 		_, ok := instana.SpanFromContext(ctx)
 		assert.True(t, ok)
 
@@ -190,14 +190,14 @@ func TestTraceHandlerFunc_ALBEvent(t *testing.T) {
 	}, span.Data)
 }
 
-func TestTraceHandlerFunc_CloudWatchEvent(t *testing.T) {
+func TestNewHandler_CloudWatchEvent(t *testing.T) {
 	recorder := instana.NewTestRecorder()
 	sensor := instana.NewSensorWithTracer(instana.NewTracerWithEverything(instana.DefaultOptions(), recorder))
 
 	payload, err := ioutil.ReadFile("testdata/cw_event.json")
 	require.NoError(t, err)
 
-	h := instalambda.TraceHandlerFunc(func(ctx context.Context, evt *events.CloudWatchEvent) error {
+	h := instalambda.NewHandler(func(ctx context.Context, evt *events.CloudWatchEvent) error {
 		_, ok := instana.SpanFromContext(ctx)
 		assert.True(t, ok)
 
@@ -239,14 +239,14 @@ func TestTraceHandlerFunc_CloudWatchEvent(t *testing.T) {
 	}, span.Data)
 }
 
-func TestTraceHandlerFunc_CloudWatchLogsEvent(t *testing.T) {
+func TestNewHandler_CloudWatchLogsEvent(t *testing.T) {
 	recorder := instana.NewTestRecorder()
 	sensor := instana.NewSensorWithTracer(instana.NewTracerWithEverything(instana.DefaultOptions(), recorder))
 
 	payload, err := ioutil.ReadFile("testdata/cw_logs_event.json")
 	require.NoError(t, err)
 
-	h := instalambda.TraceHandlerFunc(func(ctx context.Context, evt *events.CloudwatchLogsEvent) error {
+	h := instalambda.NewHandler(func(ctx context.Context, evt *events.CloudwatchLogsEvent) error {
 		_, ok := instana.SpanFromContext(ctx)
 		assert.True(t, ok)
 
@@ -292,14 +292,14 @@ func TestTraceHandlerFunc_CloudWatchLogsEvent(t *testing.T) {
 	}, span.Data)
 }
 
-func TestTraceHandlerFunc_CloudWatchLogsEvent_DecodeError(t *testing.T) {
+func TestNewHandler_CloudWatchLogsEvent_DecodeError(t *testing.T) {
 	recorder := instana.NewTestRecorder()
 	sensor := instana.NewSensorWithTracer(instana.NewTracerWithEverything(instana.DefaultOptions(), recorder))
 
 	payload, err := ioutil.ReadFile("testdata/cw_logs_broken_event.json")
 	require.NoError(t, err)
 
-	h := instalambda.TraceHandlerFunc(func(ctx context.Context, evt *events.CloudwatchLogsEvent) error {
+	h := instalambda.NewHandler(func(ctx context.Context, evt *events.CloudwatchLogsEvent) error {
 		_, ok := instana.SpanFromContext(ctx)
 		assert.True(t, ok)
 
@@ -340,14 +340,14 @@ func TestTraceHandlerFunc_CloudWatchLogsEvent_DecodeError(t *testing.T) {
 	}, span.Data)
 }
 
-func TestTraceHandlerFunc_S3Event(t *testing.T) {
+func TestNewHandler_S3Event(t *testing.T) {
 	recorder := instana.NewTestRecorder()
 	sensor := instana.NewSensorWithTracer(instana.NewTracerWithEverything(instana.DefaultOptions(), recorder))
 
 	payload, err := ioutil.ReadFile("testdata/s3_event.json")
 	require.NoError(t, err)
 
-	h := instalambda.TraceHandlerFunc(func(ctx context.Context, evt *events.S3Event) error {
+	h := instalambda.NewHandler(func(ctx context.Context, evt *events.S3Event) error {
 		_, ok := instana.SpanFromContext(ctx)
 		assert.True(t, ok)
 
@@ -392,14 +392,14 @@ func TestTraceHandlerFunc_S3Event(t *testing.T) {
 	}, span.Data)
 }
 
-func TestTraceHandlerFunc_SQSEvent(t *testing.T) {
+func TestNewHandler_SQSEvent(t *testing.T) {
 	recorder := instana.NewTestRecorder()
 	sensor := instana.NewSensorWithTracer(instana.NewTracerWithEverything(instana.DefaultOptions(), recorder))
 
 	payload, err := ioutil.ReadFile("testdata/sqs_event.json")
 	require.NoError(t, err)
 
-	h := instalambda.TraceHandlerFunc(func(ctx context.Context, evt *events.SQSEvent) error {
+	h := instalambda.NewHandler(func(ctx context.Context, evt *events.SQSEvent) error {
 		_, ok := instana.SpanFromContext(ctx)
 		assert.True(t, ok)
 
