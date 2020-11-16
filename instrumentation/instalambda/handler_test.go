@@ -68,6 +68,60 @@ func TestTraceHandlerFunc_APIGatewayEvent(t *testing.T) {
 	}, span.Data)
 }
 
+func TestTraceHandlerFunc_APIGatewayV2Event(t *testing.T) {
+	recorder := instana.NewTestRecorder()
+	sensor := instana.NewSensorWithTracer(instana.NewTracerWithEverything(instana.DefaultOptions(), recorder))
+
+	payload, err := ioutil.ReadFile("testdata/apigw_v2_event.json")
+	require.NoError(t, err)
+
+	h := instalambda.TraceHandlerFunc(func(ctx context.Context, evt *events.APIGatewayV2HTTPRequest) (events.APIGatewayV2HTTPResponse, error) {
+		_, ok := instana.SpanFromContext(ctx)
+		assert.True(t, ok)
+
+		return events.APIGatewayV2HTTPResponse{
+			StatusCode: http.StatusOK,
+			Body:       "OK",
+		}, nil
+	}, sensor)
+
+	lambdacontext.FunctionName = "test-function"
+	lambdacontext.FunctionVersion = "42"
+
+	ctx := lambdacontext.NewContext(context.Background(), &lambdacontext.LambdaContext{
+		AwsRequestID:       "req1",
+		InvokedFunctionArn: "aws:test-function",
+	})
+
+	resp, err := h.Invoke(ctx, payload)
+	require.NoError(t, err)
+
+	assert.JSONEq(t, `{"statusCode":200,"headers":null,"multiValueHeaders":null,"body":"OK","cookies":null}`, string(resp))
+
+	spans := recorder.GetQueuedSpans()
+	require.Len(t, spans, 1)
+
+	span := spans[0]
+	require.Equal(t, "aws.lambda.entry", span.Name)
+	assert.EqualValues(t, instana.EntrySpanKind, span.Kind)
+
+	assert.Equal(t, instana.AWSLambdaSpanData{
+		Snapshot: instana.AWSLambdaSpanTags{
+			ARN:     "aws:test-function:42",
+			Runtime: "go",
+			Name:    "test-function",
+			Version: "42",
+			Trigger: "aws:api.gateway",
+		},
+		HTTP: &instana.HTTPSpanTags{
+			URL:          "/my/path",
+			Method:       "POST",
+			PathTemplate: "/my/{resource}",
+			Params:       "q=term&secret=key",
+		},
+	}, span.Data)
+}
+
 func TestTraceHandlerFunc_ALBEvent(t *testing.T) {
 	recorder := instana.NewTestRecorder()
 	sensor := instana.NewSensorWithTracer(instana.NewTracerWithEverything(instana.DefaultOptions(), recorder))

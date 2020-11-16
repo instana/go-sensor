@@ -3,6 +3,7 @@ package instalambda
 import (
 	"encoding/json"
 	"net/url"
+	"strings"
 
 	"github.com/aws/aws-lambda-go/events"
 	instana "github.com/instana/go-sensor"
@@ -14,6 +15,7 @@ type triggerEventType uint8
 const (
 	unknownEventType triggerEventType = iota
 	apiGatewayEventType
+	apiGatewayV2EventType
 	albEventType
 	cloudWatchEventType
 	cloudWatchLogsEventType
@@ -27,10 +29,6 @@ func detectTriggerEventType(payload []byte) triggerEventType {
 		Resource   string `json:"resource"`
 		Path       string `json:"path"`
 		HTTPMethod string `json:"httpMethod"`
-		// ALB fields
-		RequestContext struct {
-			ELB json.RawMessage `json:"elb"`
-		} `json:"requestContext"`
 		// CloudWatch fields
 		Source     string `json:"source"`
 		DetailType string `json:"detail-type"`
@@ -40,6 +38,17 @@ func detectTriggerEventType(payload []byte) triggerEventType {
 		Records []struct {
 			Source string `json:"eventSource"`
 		}
+		// Version is common for multiple event types
+		Version string `json:"version"`
+		// RequestContext is common for multiple event types
+		RequestContext struct {
+			// ALB fields
+			ELB json.RawMessage `json:"elb"`
+			// API Gateway v2.0 fields
+			ApiID string          `json:"apiId"`
+			Stage string          `json:"stage"`
+			HTTP  json.RawMessage `json:"http"`
+		} `json:"requestContext"`
 	}
 
 	if err := json.Unmarshal(payload, &v); err != nil {
@@ -49,6 +58,8 @@ func detectTriggerEventType(payload []byte) triggerEventType {
 	switch {
 	case v.Resource != "" && v.Path != "" && v.HTTPMethod != "" && v.RequestContext.ELB == nil:
 		return apiGatewayEventType
+	case v.Version == "2.0" && v.RequestContext.ApiID != "" && v.RequestContext.Stage != "" && len(v.RequestContext.HTTP) > 0:
+		return apiGatewayV2EventType
 	case v.RequestContext.ELB != nil:
 		return albEventType
 	case v.Source == "aws.events" && v.DetailType == "Scheduled Event":
@@ -82,6 +93,28 @@ func extractAPIGatewayTriggerTags(evt events.APIGatewayProxyRequest) opentracing
 		"http.method":    evt.HTTPMethod,
 		"http.url":       evt.Path,
 		"http.path_tpl":  evt.Resource,
+		"http.params":    params.Encode(),
+	}
+}
+
+func extractAPIGatewayV2TriggerTags(evt events.APIGatewayV2HTTPRequest) opentracing.Tags {
+	params := url.Values{}
+
+	for k, v := range evt.QueryStringParameters {
+		params.Set(k, v)
+	}
+
+	routeKeyPath := evt.RouteKey
+	// Strip any trailing HTTP request method
+	if i := strings.Index(routeKeyPath, " "); i >= 0 {
+		routeKeyPath = evt.RouteKey[i+1:]
+	}
+
+	return opentracing.Tags{
+		"lambda.trigger": "aws:api.gateway",
+		"http.method":    evt.RequestContext.HTTP.Method,
+		"http.url":       evt.RequestContext.HTTP.Path,
+		"http.path_tpl":  routeKeyPath,
 		"http.params":    params.Encode(),
 	}
 }

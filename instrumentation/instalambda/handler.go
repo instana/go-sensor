@@ -82,6 +82,14 @@ func (h *wrappedHandler) extractTriggerEventTags(payload []byte) opentracing.Tag
 		}
 
 		return extractAPIGatewayTriggerTags(v)
+	case apiGatewayV2EventType:
+		var v events.APIGatewayV2HTTPRequest
+		if err := json.Unmarshal(payload, &v); err != nil {
+			h.sensor.Logger().Warn("failed to unmarshal API Gateway v2.0 event payload: ", err)
+			return opentracing.Tags{}
+		}
+
+		return extractAPIGatewayV2TriggerTags(v)
 	case albEventType:
 		var v events.ALBTargetGroupRequest
 		if err := json.Unmarshal(payload, &v); err != nil {
