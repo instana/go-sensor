@@ -10,7 +10,7 @@ The Instana Go sensor consists of three parts:
 * AutoProfile™ continuous profiler
 
 [![Build Status](https://circleci.com/gh/instana/go-sensor/tree/master.svg?style=svg)](https://circleci.com/gh/instana/go-sensor/tree/master)
-[![GoDoc](https://img.shields.io/static/v1?label=godoc&message=reference&color=blue)][pkg.go.dev]
+[![PkgGoDev](https://pkg.go.dev/badge/github.com/instana/go-sensor)][pkg.go.dev]
 [![OpenTracing](https://img.shields.io/badge/OpenTracing-enabled-blue.svg)](http://opentracing.io)
 [![Go Report Card](https://goreportcard.com/badge/github.com/instana/go-sensor)](https://goreportcard.com/report/github.com/instana/go-sensor)
 
