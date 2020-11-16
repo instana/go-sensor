@@ -3,6 +3,7 @@ package instalambda
 import (
 	"context"
 	"encoding/json"
+	"net/http"
 	"time"
 
 	"github.com/aws/aws-lambda-go/events"
@@ -38,11 +39,12 @@ func (h *wrappedHandler) Invoke(ctx context.Context, payload []byte) ([]byte, er
 		return h.Handler.Invoke(ctx, payload)
 	}
 
-	sp := h.sensor.Tracer().StartSpan("aws.lambda.entry", opentracing.Tags{
+	opts := append([]opentracing.StartSpanOption{opentracing.Tags{
 		"lambda.arn":     lc.InvokedFunctionArn + ":" + lambdacontext.FunctionVersion,
 		"lambda.name":    lambdacontext.FunctionName,
 		"lambda.version": lambdacontext.FunctionVersion,
-	}, h.extractTriggerEventTags(payload))
+	}}, h.triggerEventSpanOptions(payload)...)
+	sp := h.sensor.Tracer().StartSpan("aws.lambda.entry", opts...)
 
 	resp, err := h.Handler.Invoke(instana.ContextWithSpan(ctx, sp), payload)
 	if err != nil {
@@ -72,66 +74,101 @@ func (h *wrappedHandler) Invoke(ctx context.Context, payload []byte) ([]byte, er
 	return resp, err
 }
 
-func (h *wrappedHandler) extractTriggerEventTags(payload []byte) opentracing.Tags {
+func (h *wrappedHandler) triggerEventSpanOptions(payload []byte) []opentracing.StartSpanOption {
 	switch detectTriggerEventType(payload) {
 	case apiGatewayEventType:
 		var v events.APIGatewayProxyRequest
 		if err := json.Unmarshal(payload, &v); err != nil {
 			h.sensor.Logger().Warn("failed to unmarshal API Gateway event payload: ", err)
-			return opentracing.Tags{}
+			return []opentracing.StartSpanOption{opentracing.Tags{}}
 		}
 
-		return extractAPIGatewayTriggerTags(v)
+		opts := []opentracing.StartSpanOption{extractAPIGatewayTriggerTags(v)}
+		if parentCtx, ok := h.extractParentContext(v.Headers); ok {
+			opts = append(opts, opentracing.ChildOf(parentCtx))
+		}
+
+		return opts
 	case apiGatewayV2EventType:
 		var v events.APIGatewayV2HTTPRequest
 		if err := json.Unmarshal(payload, &v); err != nil {
 			h.sensor.Logger().Warn("failed to unmarshal API Gateway v2.0 event payload: ", err)
-			return opentracing.Tags{}
+			return []opentracing.StartSpanOption{opentracing.Tags{}}
 		}
 
-		return extractAPIGatewayV2TriggerTags(v)
+		opts := []opentracing.StartSpanOption{extractAPIGatewayV2TriggerTags(v)}
+		if parentCtx, ok := h.extractParentContext(v.Headers); ok {
+			opts = append(opts, opentracing.ChildOf(parentCtx))
+		}
+
+		return opts
 	case albEventType:
 		var v events.ALBTargetGroupRequest
 		if err := json.Unmarshal(payload, &v); err != nil {
 			h.sensor.Logger().Warn("failed to unmarshal ALB event payload: ", err)
-			return opentracing.Tags{}
+			return []opentracing.StartSpanOption{opentracing.Tags{}}
 		}
 
-		return extractALBTriggerTags(v)
+		opts := []opentracing.StartSpanOption{extractALBTriggerTags(v)}
+		if parentCtx, ok := h.extractParentContext(v.Headers); ok {
+			opts = append(opts, opentracing.ChildOf(parentCtx))
+		}
+
+		return opts
 	case cloudWatchEventType:
 		var v events.CloudWatchEvent
 		if err := json.Unmarshal(payload, &v); err != nil {
 			h.sensor.Logger().Warn("failed to unmarshal CloudWatch event payload: ", err)
-			return opentracing.Tags{}
+			return []opentracing.StartSpanOption{opentracing.Tags{}}
 		}
 
-		return extractCloudWatchTriggerTags(v)
+		return []opentracing.StartSpanOption{extractCloudWatchTriggerTags(v)}
 	case cloudWatchLogsEventType:
 		var v events.CloudwatchLogsEvent
 		if err := json.Unmarshal(payload, &v); err != nil {
 			h.sensor.Logger().Warn("failed to unmarshal CloudWatch Logs event payload: ", err)
-			return opentracing.Tags{}
+			return []opentracing.StartSpanOption{opentracing.Tags{}}
 		}
 
-		return extractCloudWatchLogsTriggerTags(v)
+		return []opentracing.StartSpanOption{extractCloudWatchLogsTriggerTags(v)}
 	case s3EventType:
 		var v events.S3Event
 		if err := json.Unmarshal(payload, &v); err != nil {
 			h.sensor.Logger().Warn("failed to unmarshal S3 event payload: ", err)
-			return opentracing.Tags{}
+			return []opentracing.StartSpanOption{opentracing.Tags{}}
 		}
 
-		return extractS3TriggerTags(v)
+		return []opentracing.StartSpanOption{extractS3TriggerTags(v)}
 	case sqsEventType:
 		var v events.SQSEvent
 		if err := json.Unmarshal(payload, &v); err != nil {
 			h.sensor.Logger().Warn("failed to unmarshal SQS event payload: ", err)
-			return opentracing.Tags{}
+			return []opentracing.StartSpanOption{opentracing.Tags{}}
 		}
 
-		return extractSQSTriggerTags(v)
+		return []opentracing.StartSpanOption{extractSQSTriggerTags(v)}
 	default:
 		h.sensor.Logger().Info("unsupported AWS Lambda trigger event type, the entry span will include generic tags only")
-		return opentracing.Tags{}
+		return []opentracing.StartSpanOption{opentracing.Tags{}}
 	}
+}
+
+func (h *wrappedHandler) extractParentContext(headers map[string]string) (opentracing.SpanContext, bool) {
+	hdrs := http.Header{}
+	for k, v := range headers {
+		hdrs.Set(k, v)
+	}
+
+	switch parentCtx, err := h.sensor.Tracer().Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(hdrs)); err {
+	case nil:
+		return parentCtx, true
+	case opentracing.ErrSpanContextNotFound:
+		h.sensor.Logger().Debug("lambda invoke event did not provide trace context")
+	case opentracing.ErrUnsupportedFormat:
+		h.sensor.Logger().Info("lambda invoke event provided trace context in unsupported format")
+	default:
+		h.sensor.Logger().Warn("failed to extract span context from the lambda invoke event:", err)
+	}
+
+	return nil, false
 }

@@ -48,6 +48,11 @@ func TestTraceHandlerFunc_APIGatewayEvent(t *testing.T) {
 	require.Len(t, spans, 1)
 
 	span := spans[0]
+
+	assert.EqualValues(t, 0x1234, span.TraceID)
+	assert.EqualValues(t, 0x4567, span.ParentID)
+	assert.NotEqual(t, span.ParentID, span.SpanID)
+
 	require.Equal(t, "aws.lambda.entry", span.Name)
 	assert.EqualValues(t, instana.EntrySpanKind, span.Kind)
 
@@ -102,6 +107,11 @@ func TestTraceHandlerFunc_APIGatewayV2Event(t *testing.T) {
 	require.Len(t, spans, 1)
 
 	span := spans[0]
+
+	assert.EqualValues(t, 0x1234, span.TraceID)
+	assert.EqualValues(t, 0x4567, span.ParentID)
+	assert.NotEqual(t, span.ParentID, span.SpanID)
+
 	require.Equal(t, "aws.lambda.entry", span.Name)
 	assert.EqualValues(t, instana.EntrySpanKind, span.Kind)
 
@@ -156,6 +166,11 @@ func TestTraceHandlerFunc_ALBEvent(t *testing.T) {
 	require.Len(t, spans, 1)
 
 	span := spans[0]
+
+	assert.EqualValues(t, 0x1234, span.TraceID)
+	assert.EqualValues(t, 0x4567, span.ParentID)
+	assert.NotEqual(t, span.ParentID, span.SpanID)
+
 	require.Equal(t, "aws.lambda.entry", span.Name)
 	assert.EqualValues(t, instana.EntrySpanKind, span.Kind)
 

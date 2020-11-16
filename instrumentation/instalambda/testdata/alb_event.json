@@ -21,7 +21,10 @@
         "x-forwarded-for": "72.12.164.125",
         "x-forwarded-port": "80",
         "x-forwarded-proto": "http",
-        "x-imforwards": "20"
+        "x-imforwards": "20",
+        "X-Instana-T": "0000000000001234",
+        "X-Instana-S": "0000000000004567",
+        "X-Instana-L": "1"
     },
     "body": "",
     "isBase64Encoded": false
