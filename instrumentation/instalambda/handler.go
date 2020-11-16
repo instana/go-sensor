@@ -181,13 +181,19 @@ func (h *wrappedHandler) extractParentContext(headers map[string]string) (opentr
 }
 
 func (h *wrappedHandler) extractAPIGatewayTriggerTags(evt events.APIGatewayProxyRequest) opentracing.Tags {
-	return opentracing.Tags{
+	tags := opentracing.Tags{
 		"lambda.trigger": "aws:api.gateway",
 		"http.method":    evt.HTTPMethod,
 		"http.url":       evt.Path,
 		"http.path_tpl":  evt.Resource,
 		"http.params":    h.sanitizeHTTPParams(evt.QueryStringParameters, evt.MultiValueQueryStringParameters).Encode(),
 	}
+
+	if headers := h.collectHTTPHeaders(evt.Headers, evt.MultiValueHeaders); len(headers) > 0 {
+		tags["http.header"] = headers
+	}
+
+	return tags
 }
 
 func (h *wrappedHandler) extractAPIGatewayV2TriggerTags(evt events.APIGatewayV2HTTPRequest) opentracing.Tags {
@@ -197,22 +203,34 @@ func (h *wrappedHandler) extractAPIGatewayV2TriggerTags(evt events.APIGatewayV2H
 		routeKeyPath = evt.RouteKey[i+1:]
 	}
 
-	return opentracing.Tags{
+	tags := opentracing.Tags{
 		"lambda.trigger": "aws:api.gateway",
 		"http.method":    evt.RequestContext.HTTP.Method,
 		"http.url":       evt.RequestContext.HTTP.Path,
 		"http.path_tpl":  routeKeyPath,
 		"http.params":    h.sanitizeHTTPParams(evt.QueryStringParameters, nil).Encode(),
 	}
+
+	if headers := h.collectHTTPHeaders(evt.Headers, nil); len(headers) > 0 {
+		tags["http.header"] = headers
+	}
+
+	return tags
 }
 
 func (h *wrappedHandler) extractALBTriggerTags(evt events.ALBTargetGroupRequest) opentracing.Tags {
-	return opentracing.Tags{
+	tags := opentracing.Tags{
 		"lambda.trigger": "aws:application.load.balancer",
 		"http.method":    evt.HTTPMethod,
 		"http.url":       evt.Path,
 		"http.params":    h.sanitizeHTTPParams(evt.QueryStringParameters, evt.MultiValueQueryStringParameters).Encode(),
 	}
+
+	if headers := h.collectHTTPHeaders(evt.Headers, evt.MultiValueHeaders); len(headers) > 0 {
+		tags["http.header"] = headers
+	}
+
+	return tags
 }
 
 func (h *wrappedHandler) extractCloudWatchTriggerTags(evt events.CloudWatchEvent) opentracing.Tags {
@@ -304,4 +322,36 @@ func (h *wrappedHandler) sanitizeHTTPParams(
 	}
 
 	return params
+}
+
+func (h *wrappedHandler) collectHTTPHeaders(headers map[string]string, multiValueHeaders map[string][]string) map[string]string {
+	var collectableHeaders []string
+	if tr, ok := h.sensor.Tracer().(instana.Tracer); ok {
+		collectableHeaders = tr.Options().CollectableHTTPHeaders
+	}
+
+	if len(collectableHeaders) == 0 {
+		return nil
+	}
+
+	// Normalize header names first by bringing them to the canonical MIME format to avoid missing headers because of mismatching case
+	hdrs := http.Header{}
+	for k, v := range headers {
+		hdrs.Set(k, v)
+	}
+
+	for k, vv := range multiValueHeaders {
+		for _, v := range vv {
+			hdrs.Add(k, v)
+		}
+	}
+
+	collected := make(map[string]string)
+	for _, k := range collectableHeaders {
+		if v := hdrs.Get(k); v != "" {
+			collected[k] = v
+		}
+	}
+
+	return collected
 }
