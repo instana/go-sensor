@@ -558,31 +558,302 @@ func NewGCPPubSubSpanTags(span *spanS) GCPPubSubSpanTags {
 	return tags
 }
 
+// AWSLambdaCloudWatchSpanTags contains fields within the `data.lambda.cw` section of an OT span document
+type AWSLambdaCloudWatchSpanTags struct {
+	Events *AWSLambdaCloudWatchEventTags `json:"events,omitempty"`
+	Logs   *AWSLambdaCloudWatchLogsTags  `json:"logs,omitempty"`
+}
+
+// NewAWSLambdaCloudWatchSpanTags extracts CloudWatch tags for an AWS Lambda entry span
+func NewAWSLambdaCloudWatchSpanTags(span *spanS) AWSLambdaCloudWatchSpanTags {
+	var tags AWSLambdaCloudWatchSpanTags
+
+	if events := NewAWSLambdaCloudWatchEventTags(span); !events.IsZero() {
+		tags.Events = &events
+	}
+
+	if logs := NewAWSLambdaCloudWatchLogsTags(span); !logs.IsZero() {
+		tags.Logs = &logs
+	}
+
+	return tags
+}
+
+// IsZero returns true if an AWSLambdaCloudWatchSpanTags struct was populated with event data
+func (tags AWSLambdaCloudWatchSpanTags) IsZero() bool {
+	return (tags.Events == nil || tags.Events.IsZero()) && (tags.Logs == nil || tags.Logs.IsZero())
+}
+
+// AWSLambdaCloudWatchEventTags contains fields within the `data.lambda.cw.events` section of an OT span document
+type AWSLambdaCloudWatchEventTags struct {
+	// ID is the ID of the event
+	ID string `json:"id"`
+	// Resources contains the event resources
+	Resources []string `json:"resources"`
+	// More is set to true if the event resources list was truncated
+	More bool `json:"more,omitempty"`
+}
+
+// NewAWSLambdaCloudWatchEventTags extracts CloudWatch event tags for an AWS Lambda entry span. It truncates
+// the resources list to the first 3 items, populating the `data.lambda.cw.events.more` tag and limits each
+// resource string to the first 200 characters to reduce the payload.
+func NewAWSLambdaCloudWatchEventTags(span *spanS) AWSLambdaCloudWatchEventTags {
+	var tags AWSLambdaCloudWatchEventTags
+
+	if v, ok := span.Tags["cloudwatch.events.id"]; ok {
+		readStringTag(&tags.ID, v)
+	}
+
+	if v, ok := span.Tags["cloudwatch.events.resources"]; ok {
+		switch v := v.(type) {
+		case []string:
+			if len(v) > 3 {
+				v = v[:3]
+				tags.More = true
+			}
+
+			tags.Resources = v
+		case string:
+			tags.Resources = []string{v}
+		case []byte:
+			tags.Resources = []string{string(v)}
+		}
+	}
+
+	// truncate resources
+	if len(tags.Resources) > 3 {
+		tags.Resources, tags.More = tags.Resources[:3], true
+	}
+
+	for i := range tags.Resources {
+		if len(tags.Resources[i]) > 200 {
+			tags.Resources[i] = tags.Resources[i][:200]
+		}
+	}
+
+	return tags
+}
+
+// IsZero returns true if an AWSCloudWatchEventTags struct was populated with event data
+func (tags AWSLambdaCloudWatchEventTags) IsZero() bool {
+	return tags.ID == ""
+}
+
+// AWSLambdaCloudWatchLogsTags contains fields within the `data.lambda.cw.logs` section of an OT span document
+type AWSLambdaCloudWatchLogsTags struct {
+	Group         string   `json:"group"`
+	Stream        string   `json:"stream"`
+	Events        []string `json:"events"`
+	More          bool     `json:"more,omitempty"`
+	DecodingError string   `json:"decodingError,omitempty"`
+}
+
+// NewAWSLambdaCloudWatchLogsTags extracts CloudWatch Logs tags for an AWS Lambda entry span. It truncates
+// the log events list to the first 3 items, populating the `data.lambda.cw.logs.more` tag and limits each
+// log string to the first 200 characters to reduce the payload.
+func NewAWSLambdaCloudWatchLogsTags(span *spanS) AWSLambdaCloudWatchLogsTags {
+	var tags AWSLambdaCloudWatchLogsTags
+
+	if v, ok := span.Tags["cloudwatch.logs.group"]; ok {
+		readStringTag(&tags.Group, v)
+	}
+
+	if v, ok := span.Tags["cloudwatch.logs.stream"]; ok {
+		readStringTag(&tags.Stream, v)
+	}
+
+	if v, ok := span.Tags["cloudwatch.logs.decodingError"]; ok {
+		switch v := v.(type) {
+		case error:
+			tags.DecodingError = v.Error()
+		case string:
+			tags.DecodingError = v
+		}
+	}
+
+	if v, ok := span.Tags["cloudwatch.logs.events"]; ok {
+		switch v := v.(type) {
+		case []string:
+			if len(v) > 3 {
+				v = v[:3]
+				tags.More = true
+			}
+
+			tags.Events = v
+		case string:
+			tags.Events = []string{v}
+		case []byte:
+			tags.Events = []string{string(v)}
+		}
+	}
+
+	// truncate events
+	if len(tags.Events) > 3 {
+		tags.Events, tags.More = tags.Events[:3], true
+	}
+
+	for i := range tags.Events {
+		if len(tags.Events[i]) > 200 {
+			tags.Events[i] = tags.Events[i][:200]
+		}
+	}
+
+	return tags
+}
+
+// IsZero returns true if an AWSLambdaCloudWatchLogsTags struct was populated with logs data
+func (tags AWSLambdaCloudWatchLogsTags) IsZero() bool {
+	return tags.Group == "" && tags.Stream == "" && tags.DecodingError == ""
+}
+
+// AWSS3EventTags represens metadata for an S3 event
+type AWSS3EventTags struct {
+	Name   string `json:"event"`
+	Bucket string `json:"bucket"`
+	Object string `json:"object,omitempty"`
+}
+
+// AWSLambdaS3SpanTags contains fields within the `data.lambda.s3` section of an OT span document
+type AWSLambdaS3SpanTags struct {
+	Events []AWSS3EventTags `json:"events,omitempty"`
+}
+
+// NewAWSLambdaS3SpanTags extracts S3 Event tags for an AWS Lambda entry span. It truncates
+// the events list to the first 3 items and limits each object names to the first 200 characters to reduce the payload.
+func NewAWSLambdaS3SpanTags(span *spanS) AWSLambdaS3SpanTags {
+	var tags AWSLambdaS3SpanTags
+
+	if events, ok := span.Tags["s3.events"]; ok {
+		events, ok := events.([]AWSS3EventTags)
+		if ok {
+			tags.Events = events
+		}
+	}
+
+	if len(tags.Events) > 3 {
+		tags.Events = tags.Events[:3]
+	}
+
+	for i := range tags.Events {
+		if len(tags.Events[i].Object) > 200 {
+			tags.Events[i].Object = tags.Events[i].Object[:200]
+		}
+	}
+
+	return tags
+}
+
+// IsZero returns true if an AWSLambdaS3SpanTags struct was populated with events data
+func (tags AWSLambdaS3SpanTags) IsZero() bool {
+	return len(tags.Events) == 0
+}
+
+// AWSSQSMessageTags represents span tags for an SQS message delivery
+type AWSSQSMessageTags struct {
+	Queue string `json:"queue"`
+}
+
+// AWSLambdaSQSSpanTags contains fields within the `data.lambda.sqs` section of an OT span document
+type AWSLambdaSQSSpanTags struct {
+	// Messages are message tags for an SQS event
+	Messages []AWSSQSMessageTags `json:"messages"`
+}
+
+// NewAWSLambdaSQSSpanTags extracts SQS event tags for an AWS Lambda entry span. It truncates
+// the events list to the first 3 items to reduce the payload.
+func NewAWSLambdaSQSSpanTags(span *spanS) AWSLambdaSQSSpanTags {
+	var tags AWSLambdaSQSSpanTags
+
+	if msgs, ok := span.Tags["sqs.messages"]; ok {
+		msgs, ok := msgs.([]AWSSQSMessageTags)
+		if ok {
+			tags.Messages = msgs
+		}
+	}
+
+	if len(tags.Messages) > 3 {
+		tags.Messages = tags.Messages[:3]
+	}
+
+	return tags
+}
+
+// IsZero returns true if an AWSLambdaSQSSpanTags struct was populated with messages data
+func (tags AWSLambdaSQSSpanTags) IsZero() bool {
+	return len(tags.Messages) == 0
+}
+
+// AWSLambdaSpanTags contains fields within the `data.lambda` section of an OT span document
+type AWSLambdaSpanTags struct {
+	// ARN is the ARN of invoked AWS Lambda function with the version attached
+	ARN string `json:"arn"`
+	// Runtime is an Instana constant for this AWS lambda runtime (always "go")
+	Runtime string `json:"runtime"`
+	// Name is the name of invoked function
+	Name string `json:"functionName,omitempty"`
+	// Version is either the numeric version or $LATEST
+	Version string `json:"functionVersion,omitempty"`
+	// Trigger is the trigger event type (if any)
+	Trigger string `json:"trigger,omitempty"`
+	// CloudWatch holds the details of a CloudWatch event associated with this lambda
+	CloudWatch *AWSLambdaCloudWatchSpanTags `json:"cw,omitempty"`
+	// S3 holds the details of a S3 events associated with this lambda
+	S3 *AWSLambdaS3SpanTags
+	// SQS holds the details of a SQS events associated with this lambda
+	SQS *AWSLambdaSQSSpanTags
+}
+
+// NewAWSLambdaSpanTags extracts AWS Lambda entry span tags from a tracer span
+func NewAWSLambdaSpanTags(span *spanS) AWSLambdaSpanTags {
+	tags := AWSLambdaSpanTags{Runtime: "go"}
+
+	if v, ok := span.Tags["lambda.arn"]; ok {
+		readStringTag(&tags.ARN, v)
+	}
+
+	if v, ok := span.Tags["lambda.name"]; ok {
+		readStringTag(&tags.Name, v)
+	}
+
+	if v, ok := span.Tags["lambda.version"]; ok {
+		readStringTag(&tags.Version, v)
+	}
+
+	if v, ok := span.Tags["lambda.trigger"]; ok {
+		readStringTag(&tags.Trigger, v)
+	}
+
+	if cw := NewAWSLambdaCloudWatchSpanTags(span); !cw.IsZero() {
+		tags.CloudWatch = &cw
+	}
+
+	if st := NewAWSLambdaS3SpanTags(span); !st.IsZero() {
+		tags.S3 = &st
+	}
+
+	if sqs := NewAWSLambdaSQSSpanTags(span); !sqs.IsZero() {
+		tags.SQS = &sqs
+	}
+
+	return tags
+}
+
 // AWSLambdaSpanData is the base span data type for AWS Lambda entry spans
 type AWSLambdaSpanData struct {
-	Snapshot struct {
-		ARN     string `json:"arn"`
-		Runtime string `json:"runtime"`
-		Name    string `json:"functionName,omitempty"`
-		Version string `json:"functionVersion,omitempty"`
-	} `json:"lambda"`
+	Snapshot AWSLambdaSpanTags `json:"lambda"`
+	HTTP     *HTTPSpanTags     `json:"http,omitempty"`
 }
 
 // NewAWSLambdaSpanData initializes a new AWSLambdaSpanData from span
 func NewAWSLambdaSpanData(span *spanS) AWSLambdaSpanData {
-	var d AWSLambdaSpanData
-	d.Snapshot.Runtime = "go"
-
-	if v, ok := span.Tags["lambda.arn"]; ok {
-		readStringTag(&d.Snapshot.ARN, v)
+	d := AWSLambdaSpanData{
+		Snapshot: NewAWSLambdaSpanTags(span),
 	}
 
-	if v, ok := span.Tags["lambda.name"]; ok {
-		readStringTag(&d.Snapshot.Name, v)
-	}
-
-	if v, ok := span.Tags["lambda.version"]; ok {
-		readStringTag(&d.Snapshot.Version, v)
+	switch span.Tags["lambda.trigger"] {
+	case "aws:api.gateway", "aws:application.load.balancer":
+		tags := NewHTTPSpanTags(span)
+		d.HTTP = &tags
 	}
 
 	return d
