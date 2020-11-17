@@ -68,7 +68,7 @@ func TestNewHandler_APIGatewayEvent(t *testing.T) {
 			URL:          "/",
 			Method:       "GET",
 			PathTemplate: "/",
-			Params:       "multisecret=key1&multisecret=key2&q=term&secret=key&value=1&value=2",
+			Params:       "multisecret=%3Credacted%3E&multisecret=%3Credacted%3E&q=term&secret=%3Credacted%3E&value=1&value=2",
 		},
 	}, span.Data)
 }
@@ -127,7 +127,7 @@ func TestNewHandler_APIGatewayV2Event(t *testing.T) {
 			URL:          "/my/path",
 			Method:       "POST",
 			PathTemplate: "/my/{resource}",
-			Params:       "q=term&secret=key",
+			Params:       "q=term&secret=%3Credacted%3E",
 		},
 	}, span.Data)
 }
@@ -185,7 +185,7 @@ func TestNewHandler_ALBEvent(t *testing.T) {
 		HTTP: &instana.HTTPSpanTags{
 			URL:    "/lambda",
 			Method: "GET",
-			Params: "query=1234ABCD",
+			Params: "multikey=%3Credacted%3E&multikey=%3Credacted%3E&multisecret=%3Credacted%3E&multisecret=%3Credacted%3E&query=1234ABCD&secret=%3Credacted%3E",
 		},
 	}, span.Data)
 }

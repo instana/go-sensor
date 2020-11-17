@@ -6,6 +6,8 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
+	"net/url"
+	"strings"
 	"time"
 
 	"github.com/aws/aws-lambda-go/events"
@@ -88,7 +90,7 @@ func (h *wrappedHandler) triggerEventSpanOptions(payload []byte) []opentracing.S
 			return []opentracing.StartSpanOption{opentracing.Tags{}}
 		}
 
-		opts := []opentracing.StartSpanOption{extractAPIGatewayTriggerTags(v)}
+		opts := []opentracing.StartSpanOption{h.extractAPIGatewayTriggerTags(v)}
 		if parentCtx, ok := h.extractParentContext(v.Headers); ok {
 			opts = append(opts, opentracing.ChildOf(parentCtx))
 		}
@@ -101,7 +103,7 @@ func (h *wrappedHandler) triggerEventSpanOptions(payload []byte) []opentracing.S
 			return []opentracing.StartSpanOption{opentracing.Tags{}}
 		}
 
-		opts := []opentracing.StartSpanOption{extractAPIGatewayV2TriggerTags(v)}
+		opts := []opentracing.StartSpanOption{h.extractAPIGatewayV2TriggerTags(v)}
 		if parentCtx, ok := h.extractParentContext(v.Headers); ok {
 			opts = append(opts, opentracing.ChildOf(parentCtx))
 		}
@@ -114,7 +116,7 @@ func (h *wrappedHandler) triggerEventSpanOptions(payload []byte) []opentracing.S
 			return []opentracing.StartSpanOption{opentracing.Tags{}}
 		}
 
-		opts := []opentracing.StartSpanOption{extractALBTriggerTags(v)}
+		opts := []opentracing.StartSpanOption{h.extractALBTriggerTags(v)}
 		if parentCtx, ok := h.extractParentContext(v.Headers); ok {
 			opts = append(opts, opentracing.ChildOf(parentCtx))
 		}
@@ -127,7 +129,7 @@ func (h *wrappedHandler) triggerEventSpanOptions(payload []byte) []opentracing.S
 			return []opentracing.StartSpanOption{opentracing.Tags{}}
 		}
 
-		return []opentracing.StartSpanOption{extractCloudWatchTriggerTags(v)}
+		return []opentracing.StartSpanOption{h.extractCloudWatchTriggerTags(v)}
 	case cloudWatchLogsEventType:
 		var v events.CloudwatchLogsEvent
 		if err := json.Unmarshal(payload, &v); err != nil {
@@ -135,7 +137,7 @@ func (h *wrappedHandler) triggerEventSpanOptions(payload []byte) []opentracing.S
 			return []opentracing.StartSpanOption{opentracing.Tags{}}
 		}
 
-		return []opentracing.StartSpanOption{extractCloudWatchLogsTriggerTags(v)}
+		return []opentracing.StartSpanOption{h.extractCloudWatchLogsTriggerTags(v)}
 	case s3EventType:
 		var v events.S3Event
 		if err := json.Unmarshal(payload, &v); err != nil {
@@ -143,7 +145,7 @@ func (h *wrappedHandler) triggerEventSpanOptions(payload []byte) []opentracing.S
 			return []opentracing.StartSpanOption{opentracing.Tags{}}
 		}
 
-		return []opentracing.StartSpanOption{extractS3TriggerTags(v)}
+		return []opentracing.StartSpanOption{h.extractS3TriggerTags(v)}
 	case sqsEventType:
 		var v events.SQSEvent
 		if err := json.Unmarshal(payload, &v); err != nil {
@@ -151,7 +153,7 @@ func (h *wrappedHandler) triggerEventSpanOptions(payload []byte) []opentracing.S
 			return []opentracing.StartSpanOption{opentracing.Tags{}}
 		}
 
-		return []opentracing.StartSpanOption{extractSQSTriggerTags(v)}
+		return []opentracing.StartSpanOption{h.extractSQSTriggerTags(v)}
 	default:
 		h.sensor.Logger().Info("unsupported AWS Lambda trigger event type, the entry span will include generic tags only")
 		return []opentracing.StartSpanOption{opentracing.Tags{}}
@@ -176,4 +178,130 @@ func (h *wrappedHandler) extractParentContext(headers map[string]string) (opentr
 	}
 
 	return nil, false
+}
+
+func (h *wrappedHandler) extractAPIGatewayTriggerTags(evt events.APIGatewayProxyRequest) opentracing.Tags {
+	return opentracing.Tags{
+		"lambda.trigger": "aws:api.gateway",
+		"http.method":    evt.HTTPMethod,
+		"http.url":       evt.Path,
+		"http.path_tpl":  evt.Resource,
+		"http.params":    h.sanitizeHTTPParams(evt.QueryStringParameters, evt.MultiValueQueryStringParameters).Encode(),
+	}
+}
+
+func (h *wrappedHandler) extractAPIGatewayV2TriggerTags(evt events.APIGatewayV2HTTPRequest) opentracing.Tags {
+	routeKeyPath := evt.RouteKey
+	// Strip any trailing HTTP request method
+	if i := strings.Index(routeKeyPath, " "); i >= 0 {
+		routeKeyPath = evt.RouteKey[i+1:]
+	}
+
+	return opentracing.Tags{
+		"lambda.trigger": "aws:api.gateway",
+		"http.method":    evt.RequestContext.HTTP.Method,
+		"http.url":       evt.RequestContext.HTTP.Path,
+		"http.path_tpl":  routeKeyPath,
+		"http.params":    h.sanitizeHTTPParams(evt.QueryStringParameters, nil).Encode(),
+	}
+}
+
+func (h *wrappedHandler) extractALBTriggerTags(evt events.ALBTargetGroupRequest) opentracing.Tags {
+	return opentracing.Tags{
+		"lambda.trigger": "aws:application.load.balancer",
+		"http.method":    evt.HTTPMethod,
+		"http.url":       evt.Path,
+		"http.params":    h.sanitizeHTTPParams(evt.QueryStringParameters, evt.MultiValueQueryStringParameters).Encode(),
+	}
+}
+
+func (h *wrappedHandler) extractCloudWatchTriggerTags(evt events.CloudWatchEvent) opentracing.Tags {
+	return opentracing.Tags{
+		"lambda.trigger":              "aws:cloudwatch.events",
+		"cloudwatch.events.id":        evt.ID,
+		"cloudwatch.events.resources": evt.Resources,
+	}
+}
+
+func (h *wrappedHandler) extractCloudWatchLogsTriggerTags(evt events.CloudwatchLogsEvent) opentracing.Tags {
+	logs, err := evt.AWSLogs.Parse()
+	if err != nil {
+		return opentracing.Tags{
+			"lambda.trigger":                "aws:cloudwatch.logs",
+			"cloudwatch.logs.decodingError": err,
+		}
+	}
+
+	var events []string
+	for _, event := range logs.LogEvents {
+		events = append(events, event.Message)
+	}
+
+	return opentracing.Tags{
+		"lambda.trigger":         "aws:cloudwatch.logs",
+		"cloudwatch.logs.group":  logs.LogGroup,
+		"cloudwatch.logs.stream": logs.LogStream,
+		"cloudwatch.logs.events": events,
+	}
+}
+
+func (h *wrappedHandler) extractS3TriggerTags(evt events.S3Event) opentracing.Tags {
+	var events []instana.AWSS3EventTags
+	for _, rec := range evt.Records {
+		events = append(events, instana.AWSS3EventTags{
+			Name:   rec.EventName,
+			Bucket: rec.S3.Bucket.Name,
+			Object: rec.S3.Object.Key,
+		})
+	}
+
+	return opentracing.Tags{
+		"lambda.trigger": "aws:s3",
+		"s3.events":      events,
+	}
+}
+
+func (h *wrappedHandler) extractSQSTriggerTags(evt events.SQSEvent) opentracing.Tags {
+	var msgs []instana.AWSSQSMessageTags
+	for _, rec := range evt.Records {
+		msgs = append(msgs, instana.AWSSQSMessageTags{
+			Queue: rec.EventSourceARN,
+		})
+	}
+
+	return opentracing.Tags{
+		"lambda.trigger": "aws:sqs",
+		"sqs.messages":   msgs,
+	}
+}
+
+func (h *wrappedHandler) sanitizeHTTPParams(
+	queryStringParams map[string]string,
+	multiValueQueryStringParams map[string][]string,
+) url.Values {
+	secretMatcher := instana.DefaultSecretsMatcher()
+	if tr, ok := h.sensor.Tracer().(instana.Tracer); ok {
+		secretMatcher = tr.Options().Secrets
+	}
+
+	params := url.Values{}
+
+	for k, v := range queryStringParams {
+		if secretMatcher.Match(k) {
+			v = "<redacted>"
+		}
+		params.Set(k, v)
+	}
+
+	for k, vv := range multiValueQueryStringParams {
+		isSecret := secretMatcher.Match(k)
+		for _, v := range vv {
+			if isSecret {
+				v = "<redacted>"
+			}
+			params.Add(k, v)
+		}
+	}
+
+	return params
 }
