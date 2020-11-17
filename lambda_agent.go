@@ -24,8 +24,6 @@ type lambdaAgent struct {
 	Endpoint string
 	Key      string
 	PID      int
-	Zone     string
-	Tags     map[string]interface{}
 
 	snapshot serverlessSnapshot
 
@@ -55,8 +53,6 @@ func newLambdaAgent(
 		Endpoint: acceptorEndpoint,
 		Key:      agentKey,
 		PID:      os.Getpid(),
-		Zone:     os.Getenv("INSTANA_ZONE"),
-		Tags:     parseInstanaTags(os.Getenv("INSTANA_TAGS")),
 		client:   client,
 		logger:   logger,
 	}
@@ -195,8 +191,6 @@ func (a *lambdaAgent) collectSnapshot(spans []Span) serverlessSnapshot {
 		a.snapshot = serverlessSnapshot{
 			EntityID: sp.Snapshot.ARN,
 			Host:     sp.Snapshot.ARN,
-			Zone:     a.Zone,
-			Tags:     a.Tags,
 		}
 		a.logger.Debug("collected snapshot")
 
