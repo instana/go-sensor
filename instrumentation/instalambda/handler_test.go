@@ -4,6 +4,7 @@ import (
 	"context"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"testing"
 
 	"github.com/aws/aws-lambda-go/events"
@@ -13,6 +14,22 @@ import (
 	"github.com/instana/testify/assert"
 	"github.com/instana/testify/require"
 )
+
+func TestMain(m *testing.M) {
+	matcher, err := instana.NamedMatcher(instana.ContainsIgnoreCaseMatcher, []string{"secret"})
+	if err != nil {
+		panic(err)
+	}
+
+	instana.InitSensor(&instana.Options{
+		Tracer: instana.TracerOptions{
+			Secrets:                matcher,
+			CollectableHTTPHeaders: []string{"X-Custom-Header-1", "X-Custom-Header-2"},
+		},
+	})
+
+	os.Exit(m.Run())
+}
 
 func TestNewHandler_APIGatewayEvent(t *testing.T) {
 	recorder := instana.NewTestRecorder()
@@ -69,6 +86,10 @@ func TestNewHandler_APIGatewayEvent(t *testing.T) {
 			Method:       "GET",
 			PathTemplate: "/",
 			Params:       "multisecret=%3Credacted%3E&multisecret=%3Credacted%3E&q=term&secret=%3Credacted%3E&value=1&value=2",
+			Headers: map[string]string{
+				"X-Custom-Header-1": "value1",
+				"X-Custom-Header-2": "value2",
+			},
 		},
 	}, span.Data)
 }
@@ -128,6 +149,10 @@ func TestNewHandler_APIGatewayV2Event(t *testing.T) {
 			Method:       "POST",
 			PathTemplate: "/my/{resource}",
 			Params:       "q=term&secret=%3Credacted%3E",
+			Headers: map[string]string{
+				"X-Custom-Header-1": "value1",
+				"X-Custom-Header-2": "value2",
+			},
 		},
 	}, span.Data)
 }
@@ -186,6 +211,10 @@ func TestNewHandler_ALBEvent(t *testing.T) {
 			URL:    "/lambda",
 			Method: "GET",
 			Params: "multikey=%3Credacted%3E&multikey=%3Credacted%3E&multisecret=%3Credacted%3E&multisecret=%3Credacted%3E&query=1234ABCD&secret=%3Credacted%3E",
+			Headers: map[string]string{
+				"X-Custom-Header-1": "value1",
+				"X-Custom-Header-2": "value2",
+			},
 		},
 	}, span.Data)
 }
