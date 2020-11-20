@@ -37,10 +37,12 @@ func (bs *BlockSampler) Reset() {
 }
 
 func (bs *BlockSampler) Start() error {
-	err := bs.startBlockSampler()
-	if err != nil {
-		return err
+	bs.partialProfile = pprof.Lookup("block")
+	if bs.partialProfile == nil {
+		return errors.New("No block profile found")
 	}
+
+	runtime.SetBlockProfileRate(1e6)
 
 	return nil
 }
@@ -142,17 +144,6 @@ func (bs *BlockSampler) getValueChange(key string, delay float64, contentions in
 
 		return delay, contentions
 	}
-}
-
-func (bs *BlockSampler) startBlockSampler() error {
-	bs.partialProfile = pprof.Lookup("block")
-	if bs.partialProfile == nil {
-		return errors.New("No block profile found")
-	}
-
-	runtime.SetBlockProfileRate(1e6)
-
-	return nil
 }
 
 func (bs *BlockSampler) stopBlockSampler() (*profile.Profile, error) {
