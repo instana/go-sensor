@@ -1,7 +1,6 @@
 package internal
 
 import (
-	"bufio"
 	"bytes"
 	"errors"
 	"fmt"
@@ -150,17 +149,13 @@ func (bs *BlockSampler) getValueChange(key string, delay float64, contentions in
 }
 
 func (bs *BlockSampler) collectProfile() (*profile.Profile, error) {
-	var buf bytes.Buffer
+	buf := bytes.NewBuffer(nil)
 
-	w := bufio.NewWriter(&buf)
-	if err := bs.partialProfile.WriteTo(w, 0); err != nil {
+	if err := bs.partialProfile.WriteTo(buf, 0); err != nil {
 		return nil, err
 	}
 
-	w.Flush()
-
-	r := bufio.NewReader(&buf)
-	p, err := profile.Parse(r)
+	p, err := profile.Parse(buf)
 	if err != nil {
 		return nil, err
 	}
