@@ -48,10 +48,13 @@ func (bs *BlockSampler) Start() error {
 }
 
 func (bs *BlockSampler) Stop() error {
-	p, err := bs.stopBlockSampler()
+	runtime.SetBlockProfileRate(0)
+
+	p, err := bs.collectProfile()
 	if err != nil {
 		return err
 	}
+
 	if p == nil {
 		return errors.New("no profile returned")
 	}
@@ -146,9 +149,7 @@ func (bs *BlockSampler) getValueChange(key string, delay float64, contentions in
 	}
 }
 
-func (bs *BlockSampler) stopBlockSampler() (*profile.Profile, error) {
-	runtime.SetBlockProfileRate(0)
-
+func (bs *BlockSampler) collectProfile() (*profile.Profile, error) {
 	var buf bytes.Buffer
 
 	w := bufio.NewWriter(&buf)
