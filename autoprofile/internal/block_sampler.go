@@ -1,7 +1,6 @@
 package internal
 
 import (
-	"bufio"
 	"bytes"
 	"errors"
 	"fmt"
@@ -16,12 +15,16 @@ type blockValues struct {
 	contentions int64
 }
 
+// BlockSampler collects information about goroutine blocking events, such as waiting on
+// synchronization primitives. This sampler uses the runtime blocking profiler, enabling and
+// disabling it for a period of time.
 type BlockSampler struct {
 	top            *CallSite
 	prevValues     map[string]*blockValues
 	partialProfile *pprof.Profile
 }
 
+// NewBlockSampler initializes a new blocking events sampler
 func NewBlockSampler() *BlockSampler {
 	bs := &BlockSampler{
 		top:            nil,
@@ -32,24 +35,33 @@ func NewBlockSampler() *BlockSampler {
 	return bs
 }
 
+// Reset resets the state of a BlockSampler, starting a new call tree
 func (bs *BlockSampler) Reset() {
 	bs.top = NewCallSite("", "", 0)
 }
 
+// Start enables the reporting of blocking events
 func (bs *BlockSampler) Start() error {
-	err := bs.startBlockSampler()
-	if err != nil {
-		return err
+	bs.partialProfile = pprof.Lookup("block")
+	if bs.partialProfile == nil {
+		return errors.New("No block profile found")
 	}
+
+	runtime.SetBlockProfileRate(1e6)
 
 	return nil
 }
 
+// Stop disables the reporting of blocking events and gathers the collected information
+// into a profile
 func (bs *BlockSampler) Stop() error {
-	p, err := bs.stopBlockSampler()
+	runtime.SetBlockProfileRate(0)
+
+	p, err := bs.collectProfile()
 	if err != nil {
 		return err
 	}
+
 	if p == nil {
 		return errors.New("no profile returned")
 	}
@@ -61,6 +73,7 @@ func (bs *BlockSampler) Stop() error {
 	return nil
 }
 
+// Profile return the collected profile for a given time span
 func (bs *BlockSampler) Profile(duration, timespan int64) (*Profile, error) {
 	roots := make([]*CallSite, 0)
 	for _, child := range bs.top.children {
@@ -117,7 +130,7 @@ func (bs *BlockSampler) updateBlockProfile(p *profile.Profile) error {
 }
 
 func generateValueKey(s *profile.Sample) string {
-	key := ""
+	var key string
 	for _, l := range s.Location {
 		key += fmt.Sprintf("%v:", l.Address)
 	}
@@ -144,31 +157,14 @@ func (bs *BlockSampler) getValueChange(key string, delay float64, contentions in
 	}
 }
 
-func (bs *BlockSampler) startBlockSampler() error {
-	bs.partialProfile = pprof.Lookup("block")
-	if bs.partialProfile == nil {
-		return errors.New("No block profile found")
-	}
+func (bs *BlockSampler) collectProfile() (*profile.Profile, error) {
+	buf := bytes.NewBuffer(nil)
 
-	runtime.SetBlockProfileRate(1e6)
-
-	return nil
-}
-
-func (bs *BlockSampler) stopBlockSampler() (*profile.Profile, error) {
-	runtime.SetBlockProfileRate(0)
-
-	var buf bytes.Buffer
-
-	w := bufio.NewWriter(&buf)
-	if err := bs.partialProfile.WriteTo(w, 0); err != nil {
+	if err := bs.partialProfile.WriteTo(buf, 0); err != nil {
 		return nil, err
 	}
 
-	w.Flush()
-
-	r := bufio.NewReader(&buf)
-	p, err := profile.Parse(r)
+	p, err := profile.Parse(buf)
 	if err != nil {
 		return nil, err
 	}

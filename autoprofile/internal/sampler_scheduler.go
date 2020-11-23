@@ -10,6 +10,7 @@ import (
 
 var samplerActive Flag
 
+// SamplerConfig holds profile sampler setting
 type SamplerConfig struct {
 	LogPrefix          string
 	ReportOnly         bool
@@ -20,6 +21,7 @@ type SamplerConfig struct {
 	ReportInterval     int64
 }
 
+// Sampler gathers continuous profile samples over a period of time
 type Sampler interface {
 	Profile(duration int64, timespan int64) (*Profile, error)
 	Start() error
@@ -27,6 +29,7 @@ type Sampler interface {
 	Reset()
 }
 
+// SamplerScheduler periodically runs the sampler for a time period
 type SamplerScheduler struct {
 	profileRecorder  *Recorder
 	sampler          Sampler
@@ -41,6 +44,7 @@ type SamplerScheduler struct {
 	samplerTimeout   *Timer
 }
 
+// NewSamplerScheduler initializes a new SamplerScheduler for a sampler
 func NewSamplerScheduler(profileRecorder *Recorder, samp Sampler, config SamplerConfig) *SamplerScheduler {
 	pr := &SamplerScheduler{
 		profileRecorder: profileRecorder,
@@ -52,6 +56,7 @@ func NewSamplerScheduler(profileRecorder *Recorder, samp Sampler, config Sampler
 	return pr
 }
 
+// Start runs the SampleScheduler
 func (ss *SamplerScheduler) Start() {
 	if !ss.started.SetIfUnset() {
 		return
@@ -74,6 +79,7 @@ func (ss *SamplerScheduler) Start() {
 	})
 }
 
+// Stop prevents the SamplerScheduler from running the sampler
 func (ss *SamplerScheduler) Stop() {
 	if !ss.started.UnsetIfSet() {
 		return
@@ -88,12 +94,14 @@ func (ss *SamplerScheduler) Stop() {
 	}
 }
 
+// Reset resets the sampler and clears the internal state of the scheduler
 func (ss *SamplerScheduler) Reset() {
 	ss.sampler.Reset()
 	ss.profileStart = time.Now().Unix()
 	ss.samplingDuration = 0
 }
 
+// Report retrieves the collected profile from the sampler and enqueues it for submission
 func (ss *SamplerScheduler) Report() {
 	if !ss.started.IsSet() {
 		return

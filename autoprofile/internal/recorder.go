@@ -7,9 +7,8 @@ import (
 	"github.com/instana/go-sensor/autoprofile/internal/logger"
 )
 
-const (
-	DefaultMaxBufferedProfiles = 100
-)
+// DefaultMaxBufferedProfiles is the default number of profiles to keep in recorder buffer
+const DefaultMaxBufferedProfiles = 100
 
 // SendProfilesFunc is a callback to emit collected profiles from recorder
 type SendProfilesFunc func([]AgentProfile) error
@@ -24,6 +23,7 @@ func NoopSendProfiles([]AgentProfile) error {
 	return nil
 }
 
+// Recorder collects and stores recorded profiles
 type Recorder struct {
 	FlushInterval       int64
 	MaxBufferedProfiles int
@@ -37,6 +37,7 @@ type Recorder struct {
 	backoffSeconds     int64
 }
 
+// NewRecorder initializes and returns a new profile recorder
 func NewRecorder() *Recorder {
 	mq := &Recorder{
 		FlushInterval:       5,
@@ -50,6 +51,7 @@ func NewRecorder() *Recorder {
 	return mq
 }
 
+// Start initiates profile recorder flush loop
 func (pr *Recorder) Start() {
 	if !pr.started.SetIfUnset() {
 		return
@@ -60,6 +62,7 @@ func (pr *Recorder) Start() {
 	})
 }
 
+// Stop terminates profile recorder flush loop
 func (pr *Recorder) Stop() {
 	if !pr.started.UnsetIfSet() {
 		return
@@ -70,6 +73,7 @@ func (pr *Recorder) Stop() {
 	}
 }
 
+// Size returns the number of profiles enqueued for submission
 func (pr *Recorder) Size() int {
 	pr.queueLock.Lock()
 	defer pr.queueLock.Unlock()
@@ -77,6 +81,7 @@ func (pr *Recorder) Size() int {
 	return len(pr.queue)
 }
 
+// Record stores collected AgentProfile and enqueues it for submission
 func (pr *Recorder) Record(record AgentProfile) {
 	if pr.MaxBufferedProfiles < 1 {
 		return
@@ -92,6 +97,7 @@ func (pr *Recorder) Record(record AgentProfile) {
 	logger.Debug("Added record to the queue", record)
 }
 
+// Flush forces the recorder to submit collected profiles
 func (pr *Recorder) Flush() {
 	if pr.Size() == 0 {
 		return

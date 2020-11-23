@@ -8,16 +8,20 @@ import (
 )
 
 const (
+	// RuntimeGolang is the runtime name to send with profiles
 	RuntimeGolang = "golang"
 
+	// Supported profile categories
 	CategoryCPU    = "cpu"
 	CategoryMemory = "memory"
 	CategoryTime   = "time"
 
+	// Supported profile types
 	TypeCPUUsage         = "cpu-usage"
 	TypeMemoryAllocation = "memory-allocations"
 	TypeBlockingCalls    = "blocking-calls"
 
+	// Human-readable measurement units
 	UnitSample      = "sample"
 	UnitMillisecond = "millisecond"
 	UnitMicrosecond = "microsecond"
@@ -41,6 +45,7 @@ type AgentProfile struct {
 	Timestamp int64           `json:"timestamp"`
 }
 
+// NewAgentProfile creates a new profile payload for the host agent
 func NewAgentProfile(p *Profile) AgentProfile {
 	callSites := make([]AgentCallSite, 0, len(p.Roots))
 	for _, root := range p.Roots {
@@ -60,6 +65,7 @@ func NewAgentProfile(p *Profile) AgentProfile {
 	}
 }
 
+// Profile holds the gathered profiling data
 type Profile struct {
 	ID        string
 	Runtime   string
@@ -72,6 +78,7 @@ type Profile struct {
 	Timestamp int64
 }
 
+// NewProfile inititalizes a new profile
 func NewProfile(category string, typ string, unit string, roots []*CallSite, duration int64, timespan int64) *Profile {
 	return &Profile{
 		ID:        GenerateUUID(),
@@ -97,6 +104,7 @@ type AgentCallSite struct {
 	Children    []AgentCallSite `json:"children"`
 }
 
+// NewAgentCallSite initializes a new call site payload for the host agent
 func NewAgentCallSite(cs *CallSite) AgentCallSite {
 	children := make([]AgentCallSite, 0, len(cs.children))
 	for _, child := range cs.children {
@@ -115,6 +123,7 @@ func NewAgentCallSite(cs *CallSite) AgentCallSite {
 	}
 }
 
+// CallSite represents a recorded method call
 type CallSite struct {
 	MethodName  string
 	FileName    string
@@ -126,6 +135,7 @@ type CallSite struct {
 	updateLock  *sync.RWMutex
 }
 
+// NewCallSite initializes a new CallSite
 func NewCallSite(methodName string, fileName string, fileLine int64) *CallSite {
 	cn := &CallSite{
 		MethodName: methodName,
@@ -138,6 +148,7 @@ func NewCallSite(methodName string, fileName string, fileLine int64) *CallSite {
 	return cn
 }
 
+// FindOrAddChild adds a new subcall to a call tree. It returns the existing record the subcall already present
 func (cs *CallSite) FindOrAddChild(methodName, fileName string, fileLine int64) *CallSite {
 	child := cs.findChild(methodName, fileName, fileLine)
 	if child == nil {
@@ -148,11 +159,13 @@ func (cs *CallSite) FindOrAddChild(methodName, fileName string, fileLine int64) 
 	return child
 }
 
+// Increment increases the sampled measurement while adding up the number of samples used
 func (cs *CallSite) Increment(value float64, numSamples int64) {
 	cs.measurement += value
 	cs.numSamples += numSamples
 }
 
+// Measurement returns the sampled measurement along with the number of samples
 func (cs *CallSite) Measurement() (value float64, numSamples int64) {
 	return cs.measurement, cs.numSamples
 }
