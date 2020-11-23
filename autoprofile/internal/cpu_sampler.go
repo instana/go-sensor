@@ -1,7 +1,6 @@
 package internal
 
 import (
-	"bufio"
 	"bytes"
 	"errors"
 	"runtime/pprof"
@@ -11,9 +10,9 @@ import (
 )
 
 type CPUSampler struct {
-	top        *CallSite
-	profBuffer *bytes.Buffer
-	startNano  int64
+	top       *CallSite
+	buf       *bytes.Buffer
+	startNano int64
 }
 
 func NewCPUSampler() *CPUSampler {
@@ -25,8 +24,14 @@ func (cs *CPUSampler) Reset() {
 }
 
 func (cs *CPUSampler) Start() error {
-	err := cs.startCPUSampler()
-	if err != nil {
+	if cs.buf != nil {
+		return nil
+	}
+
+	cs.buf = bytes.NewBuffer(nil)
+	cs.startNano = time.Now().UnixNano()
+
+	if err := pprof.StartCPUProfile(cs.buf); err != nil {
 		return err
 	}
 
@@ -34,10 +39,17 @@ func (cs *CPUSampler) Start() error {
 }
 
 func (cs *CPUSampler) Stop() error {
-	p, err := cs.stopCPUSampler()
+	if cs.buf == nil {
+		return nil
+	}
+
+	pprof.StopCPUProfile()
+
+	p, err := cs.collectProfile()
 	if err != nil {
 		return err
 	}
+
 	if p == nil {
 		return errors.New("no profile returned")
 	}
@@ -55,6 +67,7 @@ func (cs *CPUSampler) Profile(duration int64, timespan int64) (*Profile, error) 
 		roots = append(roots, child)
 	}
 	p := NewProfile(CategoryCPU, TypeCPUUsage, UnitMillisecond, roots, duration, timespan)
+
 	return p, nil
 }
 
@@ -96,47 +109,33 @@ func (cs *CPUSampler) updateCPUProfile(p *profile.Profile) error {
 	return nil
 }
 
-func (cs *CPUSampler) startCPUSampler() error {
-	cs.profBuffer = bytes.NewBuffer(nil)
-	cs.startNano = time.Now().UnixNano()
+func (cs *CPUSampler) collectProfile() (*profile.Profile, error) {
+	defer func() {
+		cs.buf = nil
+	}()
 
-	err := pprof.StartCPUProfile(cs.profBuffer)
+	p, err := profile.Parse(cs.buf)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
-}
-
-func (cs *CPUSampler) stopCPUSampler() (*profile.Profile, error) {
-	pprof.StopCPUProfile()
-
-	r := bufio.NewReader(cs.profBuffer)
-
-	if p, perr := profile.Parse(r); perr == nil {
-		cs.profBuffer = nil
-
-		if p.TimeNanos == 0 {
-			p.TimeNanos = cs.startNano
-		}
-		if p.DurationNanos == 0 {
-			p.DurationNanos = time.Now().UnixNano() - cs.startNano
-		}
-
-		if serr := symbolizeProfile(p); serr != nil {
-			return nil, serr
-		}
-
-		if verr := p.CheckValid(); verr != nil {
-			return nil, verr
-		}
-
-		return p, nil
-	} else {
-		cs.profBuffer = nil
-
-		return nil, perr
+	if p.TimeNanos == 0 {
+		p.TimeNanos = cs.startNano
 	}
+
+	if p.DurationNanos == 0 {
+		p.DurationNanos = time.Now().UnixNano() - cs.startNano
+	}
+
+	if err := symbolizeProfile(p); err != nil {
+		return nil, err
+	}
+
+	if err := p.CheckValid(); err != nil {
+		return nil, err
+	}
+
+	return p, nil
 }
 
 func readFuncInfo(l *profile.Location) (funcName string, fileName string, fileLine int64) {
