@@ -12,20 +12,12 @@ import (
 
 type CPUSampler struct {
 	top        *CallSite
-	profWriter *bufio.Writer
 	profBuffer *bytes.Buffer
 	startNano  int64
 }
 
 func NewCPUSampler() *CPUSampler {
-	cs := &CPUSampler{
-		top:        nil,
-		profWriter: nil,
-		profBuffer: nil,
-		startNano:  0,
-	}
-
-	return cs
+	return &CPUSampler{}
 }
 
 func (cs *CPUSampler) Reset() {
@@ -105,11 +97,10 @@ func (cs *CPUSampler) updateCPUProfile(p *profile.Profile) error {
 }
 
 func (cs *CPUSampler) startCPUSampler() error {
-	cs.profBuffer = &bytes.Buffer{}
-	cs.profWriter = bufio.NewWriter(cs.profBuffer)
+	cs.profBuffer = bytes.NewBuffer(nil)
 	cs.startNano = time.Now().UnixNano()
 
-	err := pprof.StartCPUProfile(cs.profWriter)
+	err := pprof.StartCPUProfile(cs.profBuffer)
 	if err != nil {
 		return err
 	}
@@ -120,11 +111,9 @@ func (cs *CPUSampler) startCPUSampler() error {
 func (cs *CPUSampler) stopCPUSampler() (*profile.Profile, error) {
 	pprof.StopCPUProfile()
 
-	cs.profWriter.Flush()
 	r := bufio.NewReader(cs.profBuffer)
 
 	if p, perr := profile.Parse(r); perr == nil {
-		cs.profWriter = nil
 		cs.profBuffer = nil
 
 		if p.TimeNanos == 0 {
@@ -144,7 +133,6 @@ func (cs *CPUSampler) stopCPUSampler() (*profile.Profile, error) {
 
 		return p, nil
 	} else {
-		cs.profWriter = nil
 		cs.profBuffer = nil
 
 		return nil, perr
