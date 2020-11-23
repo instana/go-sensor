@@ -16,6 +16,7 @@ var (
 	nextID     int64
 )
 
+// GenerateUUID generates a new UUID string
 func GenerateUUID() string {
 	n := atomic.AddInt64(&nextID, 1)
 

@@ -8,6 +8,8 @@ import (
 )
 
 var (
+	// IncludeProfilerFrames is a setting for the frame filter whether or not to include the profiler
+	// frames into the profile
 	IncludeProfilerFrames = false
 	autoprofilePath       = filepath.Join("github.com", "instana", "go-sensor", "autoprofile")
 )

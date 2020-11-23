@@ -9,20 +9,25 @@ import (
 	"github.com/instana/go-sensor/autoprofile/internal/pprof/profile"
 )
 
+// CPUSampler collects information about CPU usage
 type CPUSampler struct {
 	top       *CallSite
 	buf       *bytes.Buffer
 	startNano int64
 }
 
+// NewCPUSampler initializes a new CPI sampler
 func NewCPUSampler() *CPUSampler {
 	return &CPUSampler{}
 }
 
+// Reset resets the state of a CPUProfiler, starting a new call tree. It does not
+// terminate the profiling, so the gathered profile will make up a new call tree.
 func (cs *CPUSampler) Reset() {
 	cs.top = NewCallSite("", "", 0)
 }
 
+// Start enables the collection of CPU usage data
 func (cs *CPUSampler) Start() error {
 	if cs.buf != nil {
 		return nil
@@ -38,6 +43,7 @@ func (cs *CPUSampler) Start() error {
 	return nil
 }
 
+// Stop terminates the collection of CPU usage data and records the collected profile
 func (cs *CPUSampler) Stop() error {
 	if cs.buf == nil {
 		return nil
@@ -61,6 +67,7 @@ func (cs *CPUSampler) Stop() error {
 	return nil
 }
 
+// Profile returns the recorder profile
 func (cs *CPUSampler) Profile(duration int64, timespan int64) (*Profile, error) {
 	roots := make([]*CallSite, 0)
 	for _, child := range cs.top.children {

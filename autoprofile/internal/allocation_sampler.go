@@ -8,23 +8,24 @@ import (
 	profile "github.com/instana/go-sensor/autoprofile/internal/pprof/profile"
 )
 
+// AllocationSampler collects information about the number of memory allocations
 type AllocationSampler struct{}
 
+// NewAllocationSampler initializes a new allocation sampler
 func NewAllocationSampler() *AllocationSampler {
 	return &AllocationSampler{}
 }
 
-func (as *AllocationSampler) Reset() {
-}
+// Reset is a no-op for allocation sampler
+func (as *AllocationSampler) Reset() {}
 
-func (as *AllocationSampler) Start() error {
-	return nil
-}
+// Start is a no-op for allocation sampler
+func (as *AllocationSampler) Start() error { return nil }
 
-func (as *AllocationSampler) Stop() error {
-	return nil
-}
+// Stop is a no-op for allocation sampler
+func (as *AllocationSampler) Stop() error { return nil }
 
+// Profile retrieves the head profile and converts it to the profile.Profile
 func (as *AllocationSampler) Profile(duration int64, timespan int64) (*Profile, error) {
 	hp, err := as.readHeapProfile()
 	if err != nil {

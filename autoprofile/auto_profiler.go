@@ -14,6 +14,8 @@ import (
 // Ideally this type should've been defined in the same package with instana.agentS, however
 // due to the way we activate profiling, this would introduce a circular dependency.
 type Profile internal.AgentProfile
+
+// SendProfilesFunc is a function that submits profiles to the host agent
 type SendProfilesFunc func(profiles []Profile) error
 
 var (

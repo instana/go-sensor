@@ -15,12 +15,16 @@ type blockValues struct {
 	contentions int64
 }
 
+// BlockSampler collects information about goroutine blocking events, such as waiting on
+// synchronization primitives. This sampler uses the runtime blocking profiler, enabling and
+// disabling it for a period of time.
 type BlockSampler struct {
 	top            *CallSite
 	prevValues     map[string]*blockValues
 	partialProfile *pprof.Profile
 }
 
+// NewBlockSampler initializes a new blocking events sampler
 func NewBlockSampler() *BlockSampler {
 	bs := &BlockSampler{
 		top:            nil,
@@ -31,10 +35,12 @@ func NewBlockSampler() *BlockSampler {
 	return bs
 }
 
+// Reset resets the state of a BlockSampler, starting a new call tree
 func (bs *BlockSampler) Reset() {
 	bs.top = NewCallSite("", "", 0)
 }
 
+// Start enables the reporting of blocking events
 func (bs *BlockSampler) Start() error {
 	bs.partialProfile = pprof.Lookup("block")
 	if bs.partialProfile == nil {
@@ -46,6 +52,8 @@ func (bs *BlockSampler) Start() error {
 	return nil
 }
 
+// Stop disables the reporting of blocking events and gathers the collected information
+// into a profile
 func (bs *BlockSampler) Stop() error {
 	runtime.SetBlockProfileRate(0)
 
@@ -65,6 +73,7 @@ func (bs *BlockSampler) Stop() error {
 	return nil
 }
 
+// Profile return the collected profile for a given time span
 func (bs *BlockSampler) Profile(duration, timespan int64) (*Profile, error) {
 	roots := make([]*CallSite, 0)
 	for _, child := range bs.top.children {
@@ -121,7 +130,7 @@ func (bs *BlockSampler) updateBlockProfile(p *profile.Profile) error {
 }
 
 func generateValueKey(s *profile.Sample) string {
-	key := ""
+	var key string
 	for _, l := range s.Location {
 		key += fmt.Sprintf("%v:", l.Address)
 	}

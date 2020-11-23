@@ -17,6 +17,7 @@ type Timer struct {
 	ticker     *time.Ticker
 }
 
+// NewTimer initializes a new Timer
 func NewTimer(delay, interval time.Duration, job func()) *Timer {
 	t := &Timer{
 		done: make(chan bool),
