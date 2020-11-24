@@ -124,7 +124,8 @@ func newW3CForeignParent(trCtx w3ctrace.Context) *ForeignParent {
 
 // Span represents the OpenTracing span document to be sent to the agent
 type Span struct {
-	TraceID         int64          `json:"t"`
+	TraceID         int64          `json:"-"`
+	TraceID128      string         `json:"t"`
 	ParentID        int64          `json:"p,omitempty"`
 	SpanID          int64          `json:"s"`
 	Timestamp       uint64         `json:"ts"`
@@ -145,6 +146,7 @@ func newSpan(span *spanS) Span {
 	data := RegisteredSpanType(span.Operation).ExtractData(span)
 	sp := Span{
 		TraceID:         span.context.TraceID,
+		TraceID128:      FormatLongID(span.context.TraceIDHi, span.context.TraceID),
 		ParentID:        span.context.ParentID,
 		SpanID:          span.context.SpanID,
 		Timestamp:       uint64(span.Start.UnixNano()) / uint64(time.Millisecond),
