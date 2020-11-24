@@ -122,16 +122,16 @@ func (ss *SamplerScheduler) Report() {
 	if err != nil {
 		logger.Error(err)
 		return
-	} else {
-		if len(profile.Roots) == 0 {
-			logger.Debug(ss.config.LogPrefix, "not recording empty profile")
-			ss.Reset()
-			return
-		}
-
-		ss.profileRecorder.Record(NewAgentProfile(profile))
-		logger.Debug(ss.config.LogPrefix, "recorded profile")
 	}
+
+	if len(profile.Roots) == 0 {
+		logger.Debug(ss.config.LogPrefix, "not recording empty profile")
+		ss.Reset()
+		return
+	}
+
+	ss.profileRecorder.Record(NewAgentProfile(profile))
+	logger.Debug(ss.config.LogPrefix, "recorded profile")
 
 	ss.Reset()
 }

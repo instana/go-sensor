@@ -7,21 +7,27 @@ import (
 	"time"
 )
 
+// Supported profile runtimes
 const (
-	// RuntimeGolang is the runtime name to send with profiles
 	RuntimeGolang = "golang"
+)
 
-	// Supported profile categories
+// Supported profile categories
+const (
 	CategoryCPU    = "cpu"
 	CategoryMemory = "memory"
 	CategoryTime   = "time"
+)
 
-	// Supported profile types
+// Supported profile types
+const (
 	TypeCPUUsage         = "cpu-usage"
 	TypeMemoryAllocation = "memory-allocations"
 	TypeBlockingCalls    = "blocking-calls"
+)
 
-	// Human-readable measurement units
+// Human-readable measurement units
+const (
 	UnitSample      = "sample"
 	UnitMillisecond = "millisecond"
 	UnitMicrosecond = "microsecond"
