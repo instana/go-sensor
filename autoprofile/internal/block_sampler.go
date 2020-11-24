@@ -20,7 +20,7 @@ type blockValues struct {
 // disabling it for a period of time.
 type BlockSampler struct {
 	top            *CallSite
-	prevValues     map[string]*blockValues
+	prevValues     map[string]blockValues
 	partialProfile *pprof.Profile
 }
 
@@ -28,7 +28,7 @@ type BlockSampler struct {
 func NewBlockSampler() *BlockSampler {
 	bs := &BlockSampler{
 		top:            nil,
-		prevValues:     make(map[string]*blockValues),
+		prevValues:     make(map[string]blockValues),
 		partialProfile: nil,
 	}
 
@@ -139,22 +139,16 @@ func generateValueKey(s *profile.Sample) string {
 }
 
 func (bs *BlockSampler) getValueChange(key string, delay float64, contentions int64) (float64, int64) {
-	if pv, exists := bs.prevValues[key]; exists {
-		delayChange := delay - pv.delay
-		contentionsChange := contentions - pv.contentions
+	pv := bs.prevValues[key]
 
-		pv.delay = delay
-		pv.contentions = contentions
+	delayChange := delay - pv.delay
+	contentionsChange := contentions - pv.contentions
 
-		return delayChange, contentionsChange
-	} else {
-		bs.prevValues[key] = &blockValues{
-			delay:       delay,
-			contentions: contentions,
-		}
+	pv.delay = delay
+	pv.contentions = contentions
+	bs.prevValues[key] = pv
 
-		return delay, contentions
-	}
+	return delayChange, contentionsChange
 }
 
 func (bs *BlockSampler) collectProfile() (*profile.Profile, error) {
