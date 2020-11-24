@@ -46,6 +46,24 @@ func FormatID(id int64) string {
 	return strconv.FormatUint(unsigned, 16)
 }
 
+// FormatLongID converts a 128-bit Instana ID passed in two quad words to an
+// unsigned hex string suitable for context propagation.
+func FormatLongID(hi, lo int64) string {
+	if hi == 0 {
+		return FormatID(lo)
+	}
+
+	return FormatID(hi) + padHexString(FormatID(lo), 64)
+}
+
+func padHexString(s string, bitSize int) string {
+	if len(s) >= bitSize>>2 {
+		return s
+	}
+
+	return strings.Repeat("0", bitSize>>2-len(s)) + s
+}
+
 // ParseID converts an header context value into an Instana ID.  More
 // specifically, this converts an unsigned 64 bit hex value into a signed
 // 64bit integer.
@@ -71,6 +89,23 @@ func ParseID(header string) (int64, error) {
 	}
 
 	return signedID, nil
+}
+
+// ParseLongID converts an header context value into a 128-bit Instana ID. Both high and low
+// quad words are returned as signed integers.
+func ParseLongID(header string) (hi int64, lo int64, err error) {
+	if len(header) > 16 {
+		hi, err = ParseID(header[:len(header)-16])
+		if err != nil {
+			return 0, 0, fmt.Errorf("failed to parse the higher 4 bytes of a 128-bit integer: %s", err)
+		}
+
+		header = header[len(header)-16:]
+	}
+
+	lo, err = ParseID(header)
+
+	return hi, lo, err
 }
 
 // ID2Header calls instana.FormatID() and returns its result and a nil error.

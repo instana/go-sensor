@@ -19,8 +19,9 @@ func TestTracer_Inject_HTTPHeaders(t *testing.T) {
 	}{
 		"no trace context": {
 			SpanContext: instana.SpanContext{
-				TraceID: 0x2435,
-				SpanID:  0x3546,
+				TraceIDHi: 0x1,
+				TraceID:   0x2435,
+				SpanID:    0x3546,
 				Baggage: map[string]string{
 					"foo": "bar",
 				},
@@ -41,8 +42,9 @@ func TestTracer_Inject_HTTPHeaders(t *testing.T) {
 		},
 		"with instana trace": {
 			SpanContext: instana.SpanContext{
-				TraceID: 0x2435,
-				SpanID:  0x3546,
+				TraceIDHi: 0x1,
+				TraceID:   0x2435,
+				SpanID:    0x3546,
 				Baggage: map[string]string{
 					"foo": "bar",
 				},
@@ -67,6 +69,7 @@ func TestTracer_Inject_HTTPHeaders(t *testing.T) {
 		},
 		"with instana trace suppressed": {
 			SpanContext: instana.SpanContext{
+				TraceIDHi:  0x1,
 				TraceID:    0x2435,
 				SpanID:     0x3546,
 				Suppressed: true,
@@ -104,6 +107,7 @@ func TestTracer_Inject_HTTPHeaders_W3CTraceContext(t *testing.T) {
 	}{
 		"instana trace suppressed, no w3c trace": {
 			SpanContext: instana.SpanContext{
+				TraceIDHi:  0x01,
 				TraceID:    0x2435,
 				SpanID:     0x3546,
 				Suppressed: true,
@@ -119,8 +123,9 @@ func TestTracer_Inject_HTTPHeaders_W3CTraceContext(t *testing.T) {
 		},
 		"instana trace suppressed, w3c trace not sampled": {
 			SpanContext: instana.SpanContext{
-				TraceID: 0x2435,
-				SpanID:  0x3546,
+				TraceIDHi: 0x01,
+				TraceID:   0x2435,
+				SpanID:    0x3546,
 				W3CContext: w3ctrace.Context{
 					RawParent: "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-00",
 					RawState:  "rojo=00f067aa0ba902b7",
@@ -138,8 +143,9 @@ func TestTracer_Inject_HTTPHeaders_W3CTraceContext(t *testing.T) {
 		},
 		"instana trace suppressed, w3c trace sampled": {
 			SpanContext: instana.SpanContext{
-				TraceID: 0x2435,
-				SpanID:  0x3546,
+				TraceIDHi: 0x01,
+				TraceID:   0x2435,
+				SpanID:    0x3546,
 				W3CContext: w3ctrace.Context{
 					RawParent: "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01",
 					RawState:  "rojo=00f067aa0ba902b7",
@@ -157,8 +163,9 @@ func TestTracer_Inject_HTTPHeaders_W3CTraceContext(t *testing.T) {
 		},
 		"instana trace, no w3c trace": {
 			SpanContext: instana.SpanContext{
-				TraceID: 0x2435,
-				SpanID:  0x3546,
+				TraceIDHi: 0x01,
+				TraceID:   0x2435,
+				SpanID:    0x3546,
 			},
 			Expected: http.Header{
 				"X-Instana-T":   {"2435"},
@@ -171,8 +178,9 @@ func TestTracer_Inject_HTTPHeaders_W3CTraceContext(t *testing.T) {
 		},
 		"instana trace, w3c trace not sampled": {
 			SpanContext: instana.SpanContext{
-				TraceID: 0x2435,
-				SpanID:  0x3546,
+				TraceIDHi: 0x01,
+				TraceID:   0x2435,
+				SpanID:    0x3546,
 				W3CContext: w3ctrace.Context{
 					RawParent: "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-00",
 					RawState:  "rojo=00f067aa0ba902b7",
@@ -189,8 +197,9 @@ func TestTracer_Inject_HTTPHeaders_W3CTraceContext(t *testing.T) {
 		},
 		"instana trace, w3c trace": {
 			SpanContext: instana.SpanContext{
-				TraceID: 0x2435,
-				SpanID:  0x3546,
+				TraceIDHi: 0x01,
+				TraceID:   0x2435,
+				SpanID:    0x3546,
 				W3CContext: w3ctrace.Context{
 					RawParent: "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01",
 					RawState:  "rojo=00f067aa0ba902b7",
@@ -231,6 +240,7 @@ func TestTracer_Inject_HTTPHeaders_SuppressedTracing(t *testing.T) {
 	}
 
 	sc := instana.SpanContext{
+		TraceIDHi:  0x1,
 		TraceID:    0x2435,
 		SpanID:     0x3546,
 		Suppressed: true,
@@ -274,14 +284,15 @@ func TestTracer_Extract_HTTPHeaders(t *testing.T) {
 		"tracing enabled": {
 			Headers: map[string]string{
 				"Authorization":   "Basic 123",
-				"x-instana-t":     "1314",
+				"x-instana-t":     "10000000000001314",
 				"X-INSTANA-S":     "2435",
 				"X-Instana-L":     "1",
 				"X-Instana-B-Foo": "bar",
 			},
 			Expected: instana.SpanContext{
-				TraceID: 0x1314,
-				SpanID:  0x2435,
+				TraceIDHi: 0x1,
+				TraceID:   0x1314,
+				SpanID:    0x2435,
 				Baggage: map[string]string{
 					"Foo": "bar",
 				},
@@ -290,11 +301,12 @@ func TestTracer_Extract_HTTPHeaders(t *testing.T) {
 		"tracing disabled": {
 			Headers: map[string]string{
 				"Authorization": "Basic 123",
-				"x-instana-t":   "1314",
+				"x-instana-t":   "10000000000001314",
 				"X-INSTANA-S":   "2435",
 				"X-Instana-L":   "0",
 			},
 			Expected: instana.SpanContext{
+				TraceIDHi:  0x1,
 				TraceID:    0x1314,
 				SpanID:     0x2435,
 				Suppressed: true,
@@ -304,11 +316,12 @@ func TestTracer_Extract_HTTPHeaders(t *testing.T) {
 		"tracing disabled, with correlation data": {
 			Headers: map[string]string{
 				"Authorization": "Basic 123",
-				"x-instana-t":   "1314",
+				"x-instana-t":   "10000000000001314",
 				"X-INSTANA-S":   "2435",
 				"X-Instana-L":   "0,correlationType=web;correlationId=1234",
 			},
 			Expected: instana.SpanContext{
+				TraceIDHi:  0x1,
 				TraceID:    0x1314,
 				SpanID:     0x2435,
 				Suppressed: true,
@@ -317,34 +330,36 @@ func TestTracer_Extract_HTTPHeaders(t *testing.T) {
 		},
 		"w3c trace context, last vendor is instana": {
 			Headers: map[string]string{
-				"x-instana-t": "1314",
+				"x-instana-t": "10000000000001314",
 				"X-INSTANA-S": "2435",
 				"X-Instana-L": "1",
 				"traceparent": "00-4bf92f3577b34da6a3ce929d0e0e4736-0000000000002435-01",
-				"tracestate":  "in=1314;2435,rojo=00f067aa0ba902b7",
+				"tracestate":  "in=10000000000001314;2435,rojo=00f067aa0ba902b7",
 			},
 			Expected: instana.SpanContext{
-				TraceID: 0x1314,
-				SpanID:  0x2435,
-				Baggage: map[string]string{},
+				TraceIDHi: 0x1,
+				TraceID:   0x1314,
+				SpanID:    0x2435,
+				Baggage:   map[string]string{},
 				W3CContext: w3ctrace.Context{
 					RawParent: "00-4bf92f3577b34da6a3ce929d0e0e4736-0000000000002435-01",
-					RawState:  "in=1314;2435,rojo=00f067aa0ba902b7",
+					RawState:  "in=10000000000001314;2435,rojo=00f067aa0ba902b7",
 				},
 			},
 		},
 		"w3c trace context, last vendor not instana": {
 			Headers: map[string]string{
-				"x-instana-t": "1314",
+				"x-instana-t": "10000000000001314",
 				"X-INSTANA-S": "2435",
 				"X-Instana-L": "1",
 				"traceparent": "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01",
 				"tracestate":  "rojo=00f067aa0ba902b7",
 			},
 			Expected: instana.SpanContext{
-				TraceID: 0x1314,
-				SpanID:  0x2435,
-				Baggage: map[string]string{},
+				TraceIDHi: 0x1,
+				TraceID:   0x1314,
+				SpanID:    0x2435,
+				Baggage:   map[string]string{},
 				W3CContext: w3ctrace.Context{
 					RawParent: "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01",
 					RawState:  "rojo=00f067aa0ba902b7",
@@ -354,13 +369,13 @@ func TestTracer_Extract_HTTPHeaders(t *testing.T) {
 		"w3c trace context, no instana headers": {
 			Headers: map[string]string{
 				"traceparent": "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01",
-				"tracestate":  "in=1314;2435,rojo=00f067aa0ba902b7",
+				"tracestate":  "in=10000000000001314;2435,rojo=00f067aa0ba902b7",
 			},
 			Expected: instana.SpanContext{
 				Baggage: map[string]string{},
 				W3CContext: w3ctrace.Context{
 					RawParent: "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01",
-					RawState:  "in=1314;2435,rojo=00f067aa0ba902b7",
+					RawState:  "in=10000000000001314;2435,rojo=00f067aa0ba902b7",
 				},
 			},
 		},
@@ -492,8 +507,9 @@ func TestTracer_Inject_TextMap_AddValues(t *testing.T) {
 	tracer := instana.NewTracerWithEverything(&instana.Options{}, recorder)
 
 	sc := instana.SpanContext{
-		TraceID: 0x2435,
-		SpanID:  0x3546,
+		TraceIDHi: 0x1,
+		TraceID:   0x2435,
+		SpanID:    0x3546,
 		Baggage: map[string]string{
 			"foo": "bar",
 		},
@@ -519,8 +535,9 @@ func TestTracer_Inject_TextMap_UpdateValues(t *testing.T) {
 	tracer := instana.NewTracerWithEverything(&instana.Options{}, recorder)
 
 	sc := instana.SpanContext{
-		TraceID: 0x2435,
-		SpanID:  0x3546,
+		TraceIDHi: 0x1,
+		TraceID:   0x2435,
+		SpanID:    0x3546,
 		Baggage: map[string]string{
 			"foo": "bar",
 		},
@@ -550,6 +567,7 @@ func TestTracer_Inject_TextMap_SuppressedTracing(t *testing.T) {
 	tracer := instana.NewTracerWithEverything(&instana.Options{}, recorder)
 
 	sc := instana.SpanContext{
+		TraceIDHi:  0x1,
 		TraceID:    0x2435,
 		SpanID:     0x3546,
 		Suppressed: true,
@@ -580,14 +598,15 @@ func TestTracer_Extract_TextMap(t *testing.T) {
 		"tracing enabled": {
 			Carrier: map[string]string{
 				"Authorization":   "Basic 123",
-				"x-instana-t":     "1314",
+				"x-instana-t":     "10000000000001314",
 				"X-INSTANA-S":     "2435",
 				"X-Instana-L":     "1",
 				"X-Instana-B-Foo": "bar",
 			},
 			Expected: instana.SpanContext{
-				TraceID: 0x1314,
-				SpanID:  0x2435,
+				TraceIDHi: 0x1,
+				TraceID:   0x1314,
+				SpanID:    0x2435,
 				Baggage: map[string]string{
 					"Foo": "bar",
 				},
@@ -596,11 +615,12 @@ func TestTracer_Extract_TextMap(t *testing.T) {
 		"tracing disabled": {
 			Carrier: map[string]string{
 				"Authorization": "Basic 123",
-				"x-instana-t":   "1314",
+				"x-instana-t":   "10000000000001314",
 				"X-INSTANA-S":   "2435",
 				"X-Instana-L":   "0",
 			},
 			Expected: instana.SpanContext{
+				TraceIDHi:  0x1,
 				TraceID:    0x1314,
 				SpanID:     0x2435,
 				Suppressed: true,

@@ -150,7 +150,7 @@ func extractTraceContext(opaqueCarrier interface{}) (SpanContext, error) {
 		return spanContext, nil
 	}
 
-	spanContext.TraceID, err = ParseID(traceID)
+	spanContext.TraceIDHi, spanContext.TraceID, err = ParseLongID(traceID)
 	if err != nil {
 		return spanContext, ot.ErrSpanContextCorrupted
 	}

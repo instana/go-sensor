@@ -10,6 +10,7 @@ import (
 
 func TestNewRootSpanContext(t *testing.T) {
 	c := instana.NewRootSpanContext()
+
 	assert.NotEmpty(t, c.TraceID)
 	assert.Equal(t, c.SpanID, c.TraceID)
 	assert.False(t, c.Sampled)
@@ -21,6 +22,7 @@ func TestNewRootSpanContext(t *testing.T) {
 func TestNewSpanContext(t *testing.T) {
 	examples := map[string]instana.SpanContext{
 		"no w3c trace": {
+			TraceIDHi:  10,
 			TraceID:    1,
 			SpanID:     2,
 			ParentID:   3,
@@ -32,24 +34,27 @@ func TestNewSpanContext(t *testing.T) {
 			},
 		},
 		"with w3c trace, no instana state": {
-			TraceID: 1,
-			SpanID:  2,
+			TraceIDHi: 10,
+			TraceID:   1,
+			SpanID:    2,
 			W3CContext: w3ctrace.Context{
 				RawParent: "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01",
 				RawState:  "vendor1=data",
 			},
 		},
 		"with w3c trace, last state from instana": {
-			TraceID: 1,
-			SpanID:  2,
+			TraceIDHi: 10,
+			TraceID:   1,
+			SpanID:    2,
 			W3CContext: w3ctrace.Context{
 				RawParent: "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01",
 				RawState:  "in=1234;5678,vendor1=data",
 			},
 		},
 		"with correlation data": {
-			TraceID: 1,
-			SpanID:  2,
+			TraceIDHi: 10,
+			TraceID:   1,
+			SpanID:    2,
 			Correlation: instana.EUMCorrelationData{
 				Type: "web",
 				ID:   "1",
@@ -60,6 +65,8 @@ func TestNewSpanContext(t *testing.T) {
 	for name, parent := range examples {
 		t.Run(name, func(t *testing.T) {
 			c := instana.NewSpanContext(parent)
+
+			assert.Equal(t, parent.TraceIDHi, c.TraceIDHi)
 			assert.Equal(t, parent.TraceID, c.TraceID)
 			assert.Equal(t, parent.SpanID, c.ParentID)
 			assert.Equal(t, parent.Sampled, c.Sampled)
@@ -78,6 +85,7 @@ func TestNewSpanContext(t *testing.T) {
 
 func TestNewSpanContext_EmptyParent(t *testing.T) {
 	c := instana.NewSpanContext(instana.SpanContext{})
+
 	assert.NotEmpty(t, c.TraceID)
 	assert.Equal(t, c.SpanID, c.TraceID)
 	assert.False(t, c.Sampled)
@@ -134,10 +142,11 @@ func TestNewSpanContext_ForeignParent(t *testing.T) {
 
 func TestSpanContext_WithBaggageItem(t *testing.T) {
 	c := instana.SpanContext{
-		TraceID:  1,
-		SpanID:   2,
-		ParentID: 3,
-		Sampled:  true,
+		TraceIDHi: 10,
+		TraceID:   1,
+		SpanID:    2,
+		ParentID:  3,
+		Sampled:   true,
 		Baggage: map[string]string{
 			"key1": "value1",
 			"key2": "value2",
@@ -146,10 +155,11 @@ func TestSpanContext_WithBaggageItem(t *testing.T) {
 
 	updated := c.WithBaggageItem("key3", "value3")
 	assert.Equal(t, instana.SpanContext{
-		TraceID:  1,
-		SpanID:   2,
-		ParentID: 3,
-		Sampled:  true,
+		TraceIDHi: 10,
+		TraceID:   1,
+		SpanID:    2,
+		ParentID:  3,
+		Sampled:   true,
 		Baggage: map[string]string{
 			"key1": "value1",
 			"key2": "value2",
@@ -158,10 +168,11 @@ func TestSpanContext_WithBaggageItem(t *testing.T) {
 	}, updated)
 
 	assert.Equal(t, instana.SpanContext{
-		TraceID:  1,
-		SpanID:   2,
-		ParentID: 3,
-		Sampled:  true,
+		TraceIDHi: 10,
+		TraceID:   1,
+		SpanID:    2,
+		ParentID:  3,
+		Sampled:   true,
 		Baggage: map[string]string{
 			"key1": "value1",
 			"key2": "value2",
@@ -171,6 +182,7 @@ func TestSpanContext_WithBaggageItem(t *testing.T) {
 
 func TestSpanContext_Clone(t *testing.T) {
 	c := instana.SpanContext{
+		TraceIDHi:     10,
 		TraceID:       1,
 		SpanID:        2,
 		ParentID:      3,
@@ -195,10 +207,11 @@ func TestSpanContext_Clone(t *testing.T) {
 
 func TestSpanContext_Clone_NoBaggage(t *testing.T) {
 	c := instana.SpanContext{
-		TraceID:  1,
-		SpanID:   2,
-		ParentID: 3,
-		Sampled:  true,
+		TraceIDHi: 10,
+		TraceID:   1,
+		SpanID:    2,
+		ParentID:  3,
+		Sampled:   true,
 	}
 
 	cloned := c.Clone()
