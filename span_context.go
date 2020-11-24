@@ -15,6 +15,8 @@ type EUMCorrelationData struct {
 
 // SpanContext holds the basic Span metadata.
 type SpanContext struct {
+	// The higher 4 bytes of a 128-bit trace ID
+	TraceIDHi int64
 	// A probabilistically unique identifier for a [multi-span] trace.
 	TraceID int64
 	// A probabilistically unique identifier for a span.
@@ -51,7 +53,7 @@ func NewRootSpanContext() SpanContext {
 func NewSpanContext(parent SpanContext) SpanContext {
 	foreign := parent.restoreFromForeignTraceContext(parent.W3CContext)
 
-	if parent.TraceID == 0 && parent.SpanID == 0 {
+	if parent.TraceIDHi == 0 && parent.TraceID == 0 && parent.SpanID == 0 {
 		return NewRootSpanContext()
 	}
 
@@ -72,7 +74,7 @@ func (c *SpanContext) restoreFromForeignTraceContext(trCtx w3ctrace.Context) boo
 
 	st := c.W3CContext.State()
 
-	if c.TraceID != 0 && c.SpanID != 0 {
+	if (c.TraceIDHi != 0 || c.TraceID != 0) && c.SpanID != 0 {
 		// we've got Instana trace parent, but still need to check if the last
 		// service upstream is instrumented with Instana, i.e. is the last one
 		// to update the `tracestate`
@@ -134,6 +136,7 @@ func (c SpanContext) WithBaggageItem(key, val string) SpanContext {
 // Clone returns a deep copy of a SpanContext
 func (c SpanContext) Clone() SpanContext {
 	res := SpanContext{
+		TraceIDHi:     c.TraceIDHi,
 		TraceID:       c.TraceID,
 		SpanID:        c.SpanID,
 		ParentID:      c.ParentID,
