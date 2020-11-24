@@ -96,7 +96,7 @@ func (c *SpanContext) restoreFromForeignTraceContext(trCtx w3ctrace.Context) boo
 		return true
 	}
 
-	traceID, err := ParseID(vd[:i])
+	traceIDHi, traceIDLo, err := ParseLongID(vd[:i])
 	if err != nil {
 		return true
 	}
@@ -106,7 +106,7 @@ func (c *SpanContext) restoreFromForeignTraceContext(trCtx w3ctrace.Context) boo
 		return true
 	}
 
-	c.TraceID, c.SpanID = traceID, spanID
+	c.TraceIDHi, c.TraceID, c.SpanID = traceIDHi, traceIDLo, spanID
 
 	return true
 }
