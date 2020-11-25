@@ -1,6 +1,7 @@
 package instana
 
 import (
+	"encoding/json"
 	"strings"
 	"time"
 
@@ -124,29 +125,29 @@ func newW3CForeignParent(trCtx w3ctrace.Context) *ForeignParent {
 
 // Span represents the OpenTracing span document to be sent to the agent
 type Span struct {
-	TraceID         int64          `json:"-"`
-	TraceID128      string         `json:"t"`
-	ParentID        int64          `json:"p,omitempty"`
-	SpanID          int64          `json:"s"`
-	Timestamp       uint64         `json:"ts"`
-	Duration        uint64         `json:"d"`
-	Name            string         `json:"n"`
-	From            *fromS         `json:"f"`
-	Batch           *batchInfo     `json:"b,omitempty"`
-	Kind            int            `json:"k"`
-	Ec              int            `json:"ec,omitempty"`
-	Data            typedSpanData  `json:"data"`
-	Synthetic       bool           `json:"sy,omitempty"`
-	ForeignParent   *ForeignParent `json:"fp,omitempty"`
-	CorrelationType string         `json:"crtp,omitempty"`
-	CorrelationID   string         `json:"crid,omitempty"`
+	TraceID         int64
+	TraceIDHi       int64
+	ParentID        int64
+	SpanID          int64
+	Timestamp       uint64
+	Duration        uint64
+	Name            string
+	From            *fromS
+	Batch           *batchInfo
+	Kind            int
+	Ec              int
+	Data            typedSpanData
+	Synthetic       bool
+	ForeignParent   *ForeignParent
+	CorrelationType string
+	CorrelationID   string
 }
 
 func newSpan(span *spanS) Span {
 	data := RegisteredSpanType(span.Operation).ExtractData(span)
 	sp := Span{
 		TraceID:         span.context.TraceID,
-		TraceID128:      FormatLongID(span.context.TraceIDHi, span.context.TraceID),
+		TraceIDHi:       span.context.TraceIDHi,
 		ParentID:        span.context.ParentID,
 		SpanID:          span.context.SpanID,
 		Timestamp:       uint64(span.Start.UnixNano()) / uint64(time.Millisecond),
@@ -173,6 +174,48 @@ func newSpan(span *spanS) Span {
 	}
 
 	return sp
+}
+
+// MarshalJSON serializes span to JSON for sending it to Instana
+func (sp Span) MarshalJSON() ([]byte, error) {
+	var parentID string
+	if sp.ParentID != 0 {
+		parentID = FormatID(sp.ParentID)
+	}
+
+	return json.Marshal(struct {
+		TraceID         string         `json:"t"`
+		ParentID        string         `json:"p,omitempty"`
+		SpanID          string         `json:"s"`
+		Timestamp       uint64         `json:"ts"`
+		Duration        uint64         `json:"d"`
+		Name            string         `json:"n"`
+		From            *fromS         `json:"f"`
+		Batch           *batchInfo     `json:"b,omitempty"`
+		Kind            int            `json:"k"`
+		Ec              int            `json:"ec,omitempty"`
+		Data            typedSpanData  `json:"data"`
+		Synthetic       bool           `json:"sy,omitempty"`
+		ForeignParent   *ForeignParent `json:"fp,omitempty"`
+		CorrelationType string         `json:"crtp,omitempty"`
+		CorrelationID   string         `json:"crid,omitempty"`
+	}{
+		FormatLongID(sp.TraceIDHi, sp.TraceID),
+		parentID,
+		FormatID(sp.SpanID),
+		sp.Timestamp,
+		sp.Duration,
+		sp.Name,
+		sp.From,
+		sp.Batch,
+		sp.Kind,
+		sp.Ec,
+		sp.Data,
+		sp.Synthetic,
+		sp.ForeignParent,
+		sp.CorrelationType,
+		sp.CorrelationID,
+	})
 }
 
 type batchInfo struct {
