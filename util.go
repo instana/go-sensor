@@ -29,6 +29,7 @@ func randomID() int64 {
 // FormatID converts an Instana ID to a value that can be used in
 // context propagation (such as HTTP headers). More specifically,
 // this converts a signed 64 bit integer into an unsigned hex string.
+// The resulting string is always padded with 0 to be 16 characters long.
 func FormatID(id int64) string {
 	// FIXME: We're assuming LittleEndian here
 
@@ -43,17 +44,18 @@ func FormatID(id int64) string {
 	binary.Read(buf, binary.LittleEndian, &unsigned)
 
 	// Convert uint64 to hex string equivalent and return that
-	return strconv.FormatUint(unsigned, 16)
+	return padHexString(strconv.FormatUint(unsigned, 16), 64)
 }
 
 // FormatLongID converts a 128-bit Instana ID passed in two quad words to an
 // unsigned hex string suitable for context propagation.
 func FormatLongID(hi, lo int64) string {
+	loStr := FormatID(lo)
 	if hi == 0 {
-		return FormatID(lo)
+		return loStr
 	}
 
-	return FormatID(hi) + padHexString(FormatID(lo), 64)
+	return FormatID(hi) + loStr
 }
 
 func padHexString(s string, bitSize int) string {
