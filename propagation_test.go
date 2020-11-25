@@ -31,13 +31,13 @@ func TestTracer_Inject_HTTPHeaders(t *testing.T) {
 			},
 			Expected: http.Header{
 				"Authorization":   {"Basic 123"},
-				"X-Instana-T":     {"2435"},
-				"X-Instana-S":     {"3546"},
+				"X-Instana-T":     {"0000000000002435"},
+				"X-Instana-S":     {"0000000000003546"},
 				"X-Instana-L":     {"1"},
 				"X-Instana-B-Foo": {"bar"},
 				"Traceparent":     {"00-00000000000000000000000000002435-0000000000003546-01"},
-				"Tracestate":      {"in=2435;3546"},
-				"Server-Timing":   {"intid;desc=2435"},
+				"Tracestate":      {"in=0000000000002435;0000000000003546"},
+				"Server-Timing":   {"intid;desc=0000000000002435"},
 			},
 		},
 		"with instana trace": {
@@ -51,20 +51,20 @@ func TestTracer_Inject_HTTPHeaders(t *testing.T) {
 			},
 			Headers: http.Header{
 				"Authorization":   {"Basic 123"},
-				"x-instana-t":     {"1314"},
-				"X-INSTANA-S":     {"1314"},
+				"x-instana-t":     {"0000000000001314"},
+				"X-INSTANA-S":     {"0000000000001314"},
 				"X-Instana-L":     {"1"},
 				"X-Instana-B-foo": {"hello"},
 			},
 			Expected: http.Header{
 				"Authorization":   {"Basic 123"},
-				"X-Instana-T":     {"2435"},
-				"X-Instana-S":     {"3546"},
+				"X-Instana-T":     {"0000000000002435"},
+				"X-Instana-S":     {"0000000000003546"},
 				"X-Instana-L":     {"1"},
 				"X-Instana-B-Foo": {"bar"},
 				"Traceparent":     {"00-00000000000000000000000000002435-0000000000003546-01"},
-				"Tracestate":      {"in=2435;3546"},
-				"Server-Timing":   {"intid;desc=2435"},
+				"Tracestate":      {"in=0000000000002435;0000000000003546"},
+				"Server-Timing":   {"intid;desc=0000000000002435"},
 			},
 		},
 		"with instana trace suppressed": {
@@ -79,12 +79,12 @@ func TestTracer_Inject_HTTPHeaders(t *testing.T) {
 			},
 			Expected: http.Header{
 				"Authorization": {"Basic 123"},
-				"X-Instana-T":   {"2435"},
-				"X-Instana-S":   {"3546"},
+				"X-Instana-T":   {"0000000000002435"},
+				"X-Instana-S":   {"0000000000003546"},
 				"X-Instana-L":   {"0"},
 				"Traceparent":   {"00-00000000000000000000000000002435-0000000000003546-00"},
 				"Tracestate":    {""},
-				"Server-Timing": {"intid;desc=2435"},
+				"Server-Timing": {"intid;desc=0000000000002435"},
 			},
 		},
 	}
@@ -113,12 +113,12 @@ func TestTracer_Inject_HTTPHeaders_W3CTraceContext(t *testing.T) {
 				Suppressed: true,
 			},
 			Expected: http.Header{
-				"X-Instana-T":   {"2435"},
-				"X-Instana-S":   {"3546"},
+				"X-Instana-T":   {"0000000000002435"},
+				"X-Instana-S":   {"0000000000003546"},
 				"X-Instana-L":   {"0"},
 				"Traceparent":   {"00-00000000000000000000000000002435-0000000000003546-00"},
 				"Tracestate":    {""},
-				"Server-Timing": {"intid;desc=2435"},
+				"Server-Timing": {"intid;desc=0000000000002435"},
 			},
 		},
 		"instana trace suppressed, w3c trace not sampled": {
@@ -133,12 +133,12 @@ func TestTracer_Inject_HTTPHeaders_W3CTraceContext(t *testing.T) {
 				Suppressed: true,
 			},
 			Expected: http.Header{
-				"X-Instana-T":   {"2435"},
-				"X-Instana-S":   {"3546"},
+				"X-Instana-T":   {"0000000000002435"},
+				"X-Instana-S":   {"0000000000003546"},
 				"X-Instana-L":   {"0"},
 				"Traceparent":   {"00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-00"},
 				"Tracestate":    {"rojo=00f067aa0ba902b7"},
-				"Server-Timing": {"intid;desc=2435"},
+				"Server-Timing": {"intid;desc=0000000000002435"},
 			},
 		},
 		"instana trace suppressed, w3c trace sampled": {
@@ -153,12 +153,12 @@ func TestTracer_Inject_HTTPHeaders_W3CTraceContext(t *testing.T) {
 				Suppressed: true,
 			},
 			Expected: http.Header{
-				"X-Instana-T":   {"2435"},
-				"X-Instana-S":   {"3546"},
+				"X-Instana-T":   {"0000000000002435"},
+				"X-Instana-S":   {"0000000000003546"},
 				"X-Instana-L":   {"0"},
 				"Traceparent":   {"00-4bf92f3577b34da6a3ce929d0e0e4736-0000000000003546-00"},
 				"Tracestate":    {"rojo=00f067aa0ba902b7"},
-				"Server-Timing": {"intid;desc=2435"},
+				"Server-Timing": {"intid;desc=0000000000002435"},
 			},
 		},
 		"instana trace, no w3c trace": {
@@ -168,12 +168,12 @@ func TestTracer_Inject_HTTPHeaders_W3CTraceContext(t *testing.T) {
 				SpanID:    0x3546,
 			},
 			Expected: http.Header{
-				"X-Instana-T":   {"2435"},
-				"X-Instana-S":   {"3546"},
+				"X-Instana-T":   {"0000000000002435"},
+				"X-Instana-S":   {"0000000000003546"},
 				"X-Instana-L":   {"1"},
 				"Traceparent":   {"00-00000000000000000000000000002435-0000000000003546-01"},
-				"Tracestate":    {"in=2435;3546"},
-				"Server-Timing": {"intid;desc=2435"},
+				"Tracestate":    {"in=0000000000002435;0000000000003546"},
+				"Server-Timing": {"intid;desc=0000000000002435"},
 			},
 		},
 		"instana trace, w3c trace not sampled": {
@@ -187,12 +187,12 @@ func TestTracer_Inject_HTTPHeaders_W3CTraceContext(t *testing.T) {
 				},
 			},
 			Expected: http.Header{
-				"X-Instana-T":   {"2435"},
-				"X-Instana-S":   {"3546"},
+				"X-Instana-T":   {"0000000000002435"},
+				"X-Instana-S":   {"0000000000003546"},
 				"X-Instana-L":   {"1"},
 				"Traceparent":   {"00-4bf92f3577b34da6a3ce929d0e0e4736-0000000000003546-01"},
-				"Tracestate":    {"in=2435;3546,rojo=00f067aa0ba902b7"},
-				"Server-Timing": {"intid;desc=2435"},
+				"Tracestate":    {"in=0000000000002435;0000000000003546,rojo=00f067aa0ba902b7"},
+				"Server-Timing": {"intid;desc=0000000000002435"},
 			},
 		},
 		"instana trace, w3c trace": {
@@ -206,12 +206,12 @@ func TestTracer_Inject_HTTPHeaders_W3CTraceContext(t *testing.T) {
 				},
 			},
 			Expected: http.Header{
-				"X-Instana-T":   {"2435"},
-				"X-Instana-S":   {"3546"},
+				"X-Instana-T":   {"0000000000002435"},
+				"X-Instana-S":   {"0000000000003546"},
 				"X-Instana-L":   {"1"},
 				"Traceparent":   {"00-4bf92f3577b34da6a3ce929d0e0e4736-0000000000003546-01"},
-				"Tracestate":    {"in=2435;3546,rojo=00f067aa0ba902b7"},
-				"Server-Timing": {"intid;desc=2435"},
+				"Tracestate":    {"in=0000000000002435;0000000000003546,rojo=00f067aa0ba902b7"},
+				"Server-Timing": {"intid;desc=0000000000002435"},
 			},
 		},
 	}
@@ -234,8 +234,8 @@ func TestTracer_Inject_HTTPHeaders_SuppressedTracing(t *testing.T) {
 
 	headers := http.Header{
 		"Authorization": {"Basic 123"},
-		"x-instana-t":   {"1314"},
-		"X-INSTANA-S":   {"1314"},
+		"x-instana-t":   {"0000000000001314"},
+		"X-INSTANA-S":   {"0000000000001314"},
 		"X-Instana-L":   {"1"},
 	}
 
@@ -248,11 +248,11 @@ func TestTracer_Inject_HTTPHeaders_SuppressedTracing(t *testing.T) {
 
 	require.NoError(t, tracer.Inject(sc, ot.HTTPHeaders, ot.HTTPHeadersCarrier(headers)))
 
-	assert.Equal(t, "2435", headers.Get("X-Instana-T"))
-	assert.Equal(t, "3546", headers.Get("X-Instana-S"))
+	assert.Equal(t, "0000000000002435", headers.Get("X-Instana-T"))
+	assert.Equal(t, "0000000000003546", headers.Get("X-Instana-S"))
 	assert.Equal(t, "0", headers.Get("X-Instana-L"))
 	assert.Equal(t, "Basic 123", headers.Get("Authorization"))
-	assert.Equal(t, "intid;desc=2435", headers.Get("Server-Timing"))
+	assert.Equal(t, "intid;desc=0000000000002435", headers.Get("Server-Timing"))
 }
 
 func TestTracer_Inject_HTTPHeaders_WithExistingServerTiming(t *testing.T) {
@@ -260,8 +260,8 @@ func TestTracer_Inject_HTTPHeaders_WithExistingServerTiming(t *testing.T) {
 	tracer := instana.NewTracerWithEverything(&instana.Options{}, recorder)
 
 	headers := http.Header{
-		"x-instana-t":   {"1314"},
-		"X-INSTANA-S":   {"1314"},
+		"x-instana-t":   {"0000000000001314"},
+		"X-INSTANA-S":   {"0000000000001314"},
 		"X-Instana-L":   {"1"},
 		"Server-Timing": {"db;dur=53, app;dur=47.2", `cache;desc="Cache Read";dur=23.2`},
 	}
@@ -273,7 +273,7 @@ func TestTracer_Inject_HTTPHeaders_WithExistingServerTiming(t *testing.T) {
 	}
 
 	require.NoError(t, tracer.Inject(sc, ot.HTTPHeaders, ot.HTTPHeadersCarrier(headers)))
-	assert.Equal(t, `db;dur=53, app;dur=47.2, cache;desc="Cache Read";dur=23.2, intid;desc=2435`, headers.Get("Server-Timing"))
+	assert.Equal(t, `db;dur=53, app;dur=47.2, cache;desc="Cache Read";dur=23.2, intid;desc=0000000000002435`, headers.Get("Server-Timing"))
 }
 
 func TestTracer_Extract_HTTPHeaders(t *testing.T) {
@@ -284,8 +284,8 @@ func TestTracer_Extract_HTTPHeaders(t *testing.T) {
 		"tracing enabled": {
 			Headers: map[string]string{
 				"Authorization":   "Basic 123",
-				"x-instana-t":     "10000000000001314",
-				"X-INSTANA-S":     "2435",
+				"x-instana-t":     "0000000000000000000000010000000000001314",
+				"X-INSTANA-S":     "0000000000002435",
 				"X-Instana-L":     "1",
 				"X-Instana-B-Foo": "bar",
 			},
@@ -301,8 +301,8 @@ func TestTracer_Extract_HTTPHeaders(t *testing.T) {
 		"tracing disabled": {
 			Headers: map[string]string{
 				"Authorization": "Basic 123",
-				"x-instana-t":   "10000000000001314",
-				"X-INSTANA-S":   "2435",
+				"x-instana-t":   "0000000000000000000000010000000000001314",
+				"X-INSTANA-S":   "0000000000002435",
 				"X-Instana-L":   "0",
 			},
 			Expected: instana.SpanContext{
@@ -522,8 +522,8 @@ func TestTracer_Inject_TextMap_AddValues(t *testing.T) {
 	require.NoError(t, tracer.Inject(sc, ot.TextMap, ot.TextMapCarrier(carrier)))
 
 	assert.Equal(t, map[string]string{
-		"x-instana-t":     "2435",
-		"x-instana-s":     "3546",
+		"x-instana-t":     "0000000000002435",
+		"x-instana-s":     "0000000000003546",
 		"x-instana-l":     "1",
 		"x-instana-b-foo": "bar",
 		"key1":            "value1",
@@ -545,8 +545,8 @@ func TestTracer_Inject_TextMap_UpdateValues(t *testing.T) {
 
 	carrier := map[string]string{
 		"key1":            "value1",
-		"x-instana-t":     "1314",
-		"X-INSTANA-S":     "1314",
+		"x-instana-t":     "0000000000001314",
+		"X-INSTANA-S":     "0000000000001314",
 		"X-Instana-L":     "1",
 		"X-INSTANA-b-foo": "hello",
 	}
@@ -554,8 +554,8 @@ func TestTracer_Inject_TextMap_UpdateValues(t *testing.T) {
 	require.NoError(t, tracer.Inject(sc, ot.TextMap, ot.TextMapCarrier(carrier)))
 
 	assert.Equal(t, map[string]string{
-		"x-instana-t":     "2435",
-		"X-INSTANA-S":     "3546",
+		"x-instana-t":     "0000000000002435",
+		"X-INSTANA-S":     "0000000000003546",
 		"X-Instana-L":     "1",
 		"X-INSTANA-b-foo": "bar",
 		"key1":            "value1",
@@ -575,16 +575,16 @@ func TestTracer_Inject_TextMap_SuppressedTracing(t *testing.T) {
 
 	carrier := map[string]string{
 		"key1":        "value1",
-		"x-instana-t": "1314",
-		"X-INSTANA-S": "1314",
+		"x-instana-t": "0000000000001314",
+		"X-INSTANA-S": "0000000000001314",
 		"X-Instana-L": "1",
 	}
 
 	require.NoError(t, tracer.Inject(sc, ot.TextMap, ot.TextMapCarrier(carrier)))
 
 	assert.Equal(t, map[string]string{
-		"x-instana-t": "2435",
-		"X-INSTANA-S": "3546",
+		"x-instana-t": "0000000000002435",
+		"X-INSTANA-S": "0000000000003546",
 		"X-Instana-L": "0",
 		"key1":        "value1",
 	}, carrier)
