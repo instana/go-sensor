@@ -143,7 +143,7 @@ type fargateAgent struct {
 	lastProcessStats processStats
 
 	mu        sync.Mutex
-	spanQueue []agentSpan
+	spanQueue []Span
 
 	runtimeSnapshot *SnapshotCollector
 	dockerStats     *ecsDockerStatsCollector
@@ -231,7 +231,7 @@ func (a *fargateAgent) SendMetrics(data acceptor.Metrics) (err error) {
 
 	payload := struct {
 		Metrics metricsPayload `json:"metrics,omitempty"`
-		Spans   []agentSpan    `json:"spans,omitempty"`
+		Spans   []Span         `json:"spans,omitempty"`
 	}{
 		Metrics: metricsPayload{
 			Plugins: []acceptor.PluginPayload{
@@ -262,7 +262,7 @@ func (a *fargateAgent) SendMetrics(data acceptor.Metrics) (err error) {
 
 	a.mu.Lock()
 	if len(a.spanQueue) > 0 {
-		payload.Spans = make([]agentSpan, len(a.spanQueue))
+		payload.Spans = make([]Span, len(a.spanQueue))
 		copy(payload.Spans, a.spanQueue)
 		a.spanQueue = a.spanQueue[:0]
 	}
@@ -287,15 +287,13 @@ func (a *fargateAgent) SendEvent(event *EventData) error { return nil }
 
 func (a *fargateAgent) SendSpans(spans []Span) error {
 	from := newServerlessAgentFromS(a.snapshot.Service.EntityID, "aws")
-
-	agentSpans := make([]agentSpan, 0, len(spans))
-	for _, sp := range spans {
-		agentSpans = append(agentSpans, agentSpan{sp, from})
+	for i := range spans {
+		spans[i].From = from
 	}
 
 	// enqueue the spans to send them in a bundle with metrics instead of sending immediately
 	a.mu.Lock()
-	a.spanQueue = append(a.spanQueue, agentSpans...)
+	a.spanQueue = append(a.spanQueue, spans...)
 	a.mu.Unlock()
 
 	return nil

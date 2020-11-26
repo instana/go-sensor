@@ -93,29 +93,25 @@ func (a *lambdaAgent) Flush(ctx context.Context) error {
 
 	from := newServerlessAgentFromS(snapshot.EntityID, "aws")
 
-	a.mu.Lock()
-	spans := make([]Span, len(a.spanQueue))
-	copy(spans, a.spanQueue)
-	a.spanQueue = a.spanQueue[:0]
-	a.mu.Unlock()
-
 	payload := struct {
 		Metrics metricsPayload `json:"metrics,omitempty"`
-		Spans   []agentSpan    `json:"spans,omitempty"`
+		Spans   []Span         `json:"spans,omitempty"`
 	}{
 		Metrics: metricsPayload{
 			Plugins: []acceptor.PluginPayload{
 				acceptor.NewAWSLambdaPluginPayload(snapshot.EntityID),
 			},
 		},
-		Spans: make([]agentSpan, 0, len(spans)),
 	}
 
-	for _, sp := range spans {
-		payload.Spans = append(payload.Spans, agentSpan{
-			Span: sp,
-			From: from,
-		})
+	a.mu.Lock()
+	payload.Spans = make([]Span, len(a.spanQueue))
+	copy(payload.Spans, a.spanQueue)
+	a.spanQueue = a.spanQueue[:0]
+	a.mu.Unlock()
+
+	for i := range payload.Spans {
+		payload.Spans[i].From = from
 	}
 
 	buf := bytes.NewBuffer(nil)
@@ -125,14 +121,14 @@ func (a *lambdaAgent) Flush(ctx context.Context) error {
 
 	req, err := http.NewRequest(http.MethodPost, a.Endpoint+"/bundle", buf)
 	if err != nil {
-		a.enqueueSpans(spans)
+		a.enqueueSpans(payload.Spans)
 		return fmt.Errorf("failed to prepare send traces request: %s", err)
 	}
 
 	req.Header.Set("Content-Type", "application/json")
 
 	if err := a.sendRequest(req.WithContext(ctx)); err != nil {
-		a.enqueueSpans(spans)
+		a.enqueueSpans(payload.Spans)
 		return fmt.Errorf("failed to send traces, will retry later: %s", err)
 	}
 
