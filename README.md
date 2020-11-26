@@ -82,8 +82,9 @@ Once a host agent found listening on port `42699` (or the port specified in `INS
 
 To use Instana Go sensor for monitoring a service running in a serverless environment, such as AWS Fargate or Google Cloud Run, make sure that you have `INSTANA_ENDPOINT_URL` and `INSTANA_AGENT_KEY` env variables set in your task definition. Note that the `INSTANA_AGENT_HOST` and `INSTANA_AGENT_PORT` env variables will be ignored in this case. Please refer to the respective section of Instana documentation for detailed explanation on how to do this:
 
-* [Configuring AWS Fargate task definition](https://www.instana.com/docs/ecosystem/aws-fargate/#configure-your-task-definition) .
-* [Configuring Google Cloud Run service](https://www.instana.com/docs/ecosystem/google-cloud-run/#configure-your-cloud-run-service) .
+* [Configuring AWS Fargate task definitions](https://www.instana.com/docs/ecosystem/aws-fargate/#configure-your-task-definition)
+* [Configuring AWS Lambda functions](https://www.instana.com/docs/ecosystem/aws-lambda/go)
+* [Configuring Google Cloud Run services](https://www.instana.com/docs/ecosystem/google-cloud-run/#configure-your-cloud-run-service)
 
 Services running in serverless environments don't use host agent to send metrics and trace data to Instana backend, therefore the usual way of configuring the in-app sensor via [`configuration.yaml`](https://www.instana.com/docs/setup_and_manage/host_agent/configuration/#agent-configuration-file) file is not applicable. Instead there is a set of environment variables that can optionally be configured in service task definition:
 
