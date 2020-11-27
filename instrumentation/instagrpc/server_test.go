@@ -79,8 +79,8 @@ func TestUnaryServerInterceptor_WithClientTraceID(t *testing.T) {
 	require.NoError(t, err)
 
 	md := metadata.New(map[string]string{
-		instana.FieldT: instana.FormatID(1234567890),
-		instana.FieldS: instana.FormatID(1),
+		instana.FieldT: instana.FormatLongID(0x1, 0x1234567890),
+		instana.FieldS: instana.FormatID(0x1),
 	})
 
 	_, err = client.EmptyCall(
@@ -95,8 +95,8 @@ func TestUnaryServerInterceptor_WithClientTraceID(t *testing.T) {
 	span, err := extractAgentSpan(spans[0])
 	require.NoError(t, err)
 
-	assert.Equal(t, int64(1234567890), span.TraceID)
-	assert.Equal(t, int64(1), span.ParentID)
+	assert.Equal(t, "00000000000000010000001234567890", span.TraceID)
+	assert.Equal(t, "0000000000000001", span.ParentID)
 }
 
 func TestUnaryServerInterceptor_ErrorHandling(t *testing.T) {
@@ -233,8 +233,8 @@ func TestStreamServerInterceptor_WithClientTraceID(t *testing.T) {
 	require.NoError(t, err)
 
 	md := metadata.New(map[string]string{
-		instana.FieldT: instana.FormatID(1234567890),
-		instana.FieldS: instana.FormatID(1),
+		instana.FieldT: instana.FormatLongID(0x1, 0x1234567890),
+		instana.FieldS: instana.FormatID(0x1),
 	})
 
 	stream, err := client.FullDuplexCall(metadata.NewOutgoingContext(context.Background(), md))
@@ -254,8 +254,8 @@ func TestStreamServerInterceptor_WithClientTraceID(t *testing.T) {
 	span, err := extractAgentSpan(spans[0])
 	require.NoError(t, err)
 
-	assert.Equal(t, int64(1234567890), span.TraceID)
-	assert.Equal(t, int64(1), span.ParentID)
+	assert.Equal(t, "00000000000000010000001234567890", span.TraceID)
+	assert.Equal(t, "0000000000000001", span.ParentID)
 }
 
 func TestStreamServerInterceptor_ErrorHandling(t *testing.T) {
