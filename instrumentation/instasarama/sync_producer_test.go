@@ -55,7 +55,7 @@ func TestSyncProducer_SendMessage(t *testing.T) {
 	require.Len(t, p.Messages, 1)
 	assert.Contains(t, p.Messages[0].Headers, sarama.RecordHeader{
 		Key:   []byte("X_INSTANA_C"),
-		Value: instasarama.PackTraceContextHeader(instana.FormatID(cSpan.TraceID), instana.FormatID(cSpan.SpanID)),
+		Value: instasarama.PackTraceContextHeader(cSpan.TraceID, cSpan.SpanID),
 	})
 	assert.Contains(t, p.Messages[0].Headers, sarama.RecordHeader{
 		Key:   []byte("X_INSTANA_L"),
@@ -171,7 +171,7 @@ func TestSyncProducer_SendMessages_SameTraceContext(t *testing.T) {
 	for _, msg := range p.Messages {
 		assert.Contains(t, msg.Headers, sarama.RecordHeader{
 			Key:   []byte("X_INSTANA_C"),
-			Value: instasarama.PackTraceContextHeader(instana.FormatID(cSpan.TraceID), instana.FormatID(cSpan.SpanID)),
+			Value: instasarama.PackTraceContextHeader(cSpan.TraceID, cSpan.SpanID),
 		})
 		assert.Contains(t, msg.Headers, sarama.RecordHeader{
 			Key:   []byte("X_INSTANA_L"),

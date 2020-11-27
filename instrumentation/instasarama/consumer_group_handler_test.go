@@ -63,8 +63,8 @@ func TestConsumerGroupHandler_ConsumeClaim(t *testing.T) {
 		span, err := extractAgentSpan(spans[0])
 		require.NoError(t, err)
 
-		assert.EqualValues(t, 0x0abcde12, span.TraceID)
-		assert.EqualValues(t, 0xdeadbeef, span.ParentID)
+		assert.EqualValues(t, "000000000abcde12", span.TraceID)
+		assert.EqualValues(t, "00000000deadbeef", span.ParentID)
 		assert.NotEqual(t, span.ParentID, span.SpanID)
 
 		assert.Equal(t, span.Name, "kafka")
@@ -77,7 +77,7 @@ func TestConsumerGroupHandler_ConsumeClaim(t *testing.T) {
 
 		assert.Contains(t, h.Messages[0].Headers, &sarama.RecordHeader{
 			Key:   []byte("x_instana_c"),
-			Value: instasarama.PackTraceContextHeader(instana.FormatID(span.TraceID), instana.FormatID(span.SpanID)),
+			Value: instasarama.PackTraceContextHeader(span.TraceID, span.SpanID),
 		})
 		assert.Contains(t, h.Messages[0].Headers, &sarama.RecordHeader{
 			Key:   []byte("x_instana_l"),
@@ -103,7 +103,7 @@ func TestConsumerGroupHandler_ConsumeClaim(t *testing.T) {
 
 		assert.Contains(t, h.Messages[1].Headers, &sarama.RecordHeader{
 			Key:   []byte("X_INSTANA_C"),
-			Value: instasarama.PackTraceContextHeader(instana.FormatID(span.TraceID), instana.FormatID(span.SpanID)),
+			Value: instasarama.PackTraceContextHeader(span.TraceID, span.SpanID),
 		})
 		assert.Contains(t, h.Messages[1].Headers, &sarama.RecordHeader{
 			Key:   []byte("X_INSTANA_L"),

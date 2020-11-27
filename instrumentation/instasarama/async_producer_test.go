@@ -59,7 +59,7 @@ func TestAsyncProducer_Input(t *testing.T) {
 
 	assert.Contains(t, published.Headers, sarama.RecordHeader{
 		Key:   []byte("X_INSTANA_C"),
-		Value: instasarama.PackTraceContextHeader(instana.FormatID(cSpan.TraceID), instana.FormatID(cSpan.SpanID)),
+		Value: instasarama.PackTraceContextHeader(cSpan.TraceID, cSpan.SpanID),
 	})
 	assert.Contains(t, published.Headers, sarama.RecordHeader{
 		Key:   []byte("X_INSTANA_L"),
@@ -138,7 +138,7 @@ func TestAsyncProducer_Input_WithAwaitResult_Success(t *testing.T) {
 
 	assert.Contains(t, published.Headers, sarama.RecordHeader{
 		Key:   []byte("X_INSTANA_C"),
-		Value: instasarama.PackTraceContextHeader(instana.FormatID(cSpan.TraceID), instana.FormatID(cSpan.SpanID)),
+		Value: instasarama.PackTraceContextHeader(cSpan.TraceID, cSpan.SpanID),
 	})
 	assert.Contains(t, published.Headers, sarama.RecordHeader{
 		Key:   []byte("X_INSTANA_L"),
@@ -220,7 +220,7 @@ func TestAsyncProducer_Input_WithAwaitResult_Error(t *testing.T) {
 
 	assert.Contains(t, published.Headers, sarama.RecordHeader{
 		Key:   []byte("X_INSTANA_C"),
-		Value: instasarama.PackTraceContextHeader(instana.FormatID(cSpan.TraceID), instana.FormatID(cSpan.SpanID)),
+		Value: instasarama.PackTraceContextHeader(cSpan.TraceID, cSpan.SpanID),
 	})
 	assert.Contains(t, published.Headers, sarama.RecordHeader{
 		Key:   []byte("X_INSTANA_L"),

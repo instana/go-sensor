@@ -25,7 +25,7 @@ func TestPackUnpackTraceContextHeader(t *testing.T) {
 			},
 		},
 		"with short 64-bit trace id, no span id": {
-			TraceID: "deadbeef1",
+			TraceID: "00000000000000000000000deadbeef1",
 			Expected: [24]byte{
 				// trace id
 				0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -35,7 +35,7 @@ func TestPackUnpackTraceContextHeader(t *testing.T) {
 			},
 		},
 		"with 64-bit trace id, no span id": {
-			TraceID: "deadbeefdeadbeef",
+			TraceID: "0000000000000000deadbeefdeadbeef",
 			Expected: [24]byte{
 				// trace id
 				0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -45,7 +45,7 @@ func TestPackUnpackTraceContextHeader(t *testing.T) {
 			},
 		},
 		"no trace id, with short 64-bit span id": {
-			SpanID: "deadbeef",
+			SpanID: "00000000deadbeef",
 			Expected: [24]byte{
 				// trace id
 				0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -65,12 +65,23 @@ func TestPackUnpackTraceContextHeader(t *testing.T) {
 			},
 		},
 		"with 64-bit trace id and 64-bit span id": {
-			TraceID: "abcd",
-			SpanID:  "deadbeef1",
+			TraceID: "0000000000000000000000000000abcd",
+			SpanID:  "0000000deadbeef1",
 			Expected: [24]byte{
 				// trace id
 				0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 				0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xab, 0xcd,
+				// span id
+				0x00, 0x00, 0x00, 0x0d, 0xea, 0xdb, 0xee, 0xf1,
+			},
+		},
+		"with 128-bit trace id and 64-bit span id": {
+			TraceID: "000000000000abcd000000000000ef12",
+			SpanID:  "0000000deadbeef1",
+			Expected: [24]byte{
+				// trace id
+				0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xab, 0xcd,
+				0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xef, 0x12,
 				// span id
 				0x00, 0x00, 0x00, 0x0d, 0xea, 0xdb, 0xee, 0xf1,
 			},
@@ -83,6 +94,7 @@ func TestPackUnpackTraceContextHeader(t *testing.T) {
 
 			traceID, spanID, err := instasarama.UnpackTraceContextHeader(example.Expected[:])
 			require.NoError(t, err)
+
 			assert.Equal(t, example.TraceID[:], traceID)
 			assert.Equal(t, example.SpanID[:], spanID)
 		})

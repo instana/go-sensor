@@ -37,17 +37,24 @@ func PackTraceContextHeader(traceID, spanID string) []byte {
 	return buf
 }
 
-// UnpackTraceContextHeader unpacks and returns the trace and span ID, removing any leading zeroes.
-// It expects the provided buffer to have exactly 24 bytes.
+// UnpackTraceContextHeader unpacks and returns the trace and span ID, padding them with zeroes
+// to 32 and 16 characters correspondingly. It expects the provided buffer to have exactly 24 bytes.
 func UnpackTraceContextHeader(val []byte) (string, string, error) {
 	if len(val) != 24 {
 		return "", "", fmt.Errorf("unexpected value length: want 24, got %d", len(val))
 	}
 
 	traceID := hex.EncodeToString(bytes.TrimLeft(val[:16], "\000"))
-	spanID := hex.EncodeToString(bytes.TrimLeft(val[16:], "\000"))
+	if traceID != "" && len(traceID) < 32 {
+		traceID = strings.Repeat("0", 32-len(traceID)) + traceID
+	}
 
-	return strings.TrimPrefix(traceID, "0"), strings.TrimPrefix(spanID, "0"), nil
+	spanID := hex.EncodeToString(bytes.TrimLeft(val[16:], "\000"))
+	if spanID != "" && len(spanID) < 16 {
+		spanID = strings.Repeat("0", 16-len(spanID)) + spanID
+	}
+
+	return traceID, spanID, nil
 }
 
 // PackTraceLevelHeader packs the X-INSTANA-L value into a byte slice to be used as (sarama.RecordHeader).Value.
