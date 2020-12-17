@@ -394,9 +394,8 @@ To enable AutoProfile™ for an app without code changes, set `INSTANA_AUTO_PROF
 
 Following examples are included in the `example` folder:
 
-* [ot-simple/simple.go](./example/ot-simple/simple.go) - Demonstrates basic usage of the tracer
-* [database/elasticsearch.go](./example/database/elasticsearch.go) - Demonstrates how to instrument a database client (Elasticsearch in this case)
-* [many.go](./example/many.go) - Demonstrates how to create nested spans within the same execution context
+* [Greeter](./http-database-greeter) - an instrumented HTTP server that queries a database
+* [Doubler](./kafka-producer-consumer) - an instrumented Kafka processor, that counsumes and produces messages
 * [event/](./example/event/) - Demonstrates usage of the Events API
 * [autoprofile/](./example/autoprofile/) - Demonstrates usage of the AutoProfile™
 
