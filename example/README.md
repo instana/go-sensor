@@ -7,6 +7,7 @@ This folder contains examples of instrumenting the common use-cases with `github
 * [Doubler](./kafka-producer-consumer) - an instrumented Kafka processor, that counsumes and produces messages
 * [event/](./example/event/) - Demonstrates usage of the Events API
 * [autoprofile/](./example/autoprofile/) - Demonstrates usage of the AutoProfile™
+* [OpenTracing](./example/opentracing/) - an example of usage of Instana tracer in an app instrumented with OpentTracing
 
 For more up-to-date instrumentation code examples please consult the respective package documentation page:
 

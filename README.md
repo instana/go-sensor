@@ -337,20 +337,27 @@ You can find the complete example in the [Examples section][godoc] of package do
 
 ## OpenTracing
 
-In case you want to use the OpenTracing tracer, it will automatically initialize the sensor and thus also activate the metrics stream. To activate the global tracer, run for example
+Instana tracer provides an interface compatible with [`github.com/opentracing/opentracing-go`](https://github.com/opentracing/opentracing-go) and thus can be used as a global tracer. However, this approach is not recommended. The Go OpenTracing library only offers a low-level interface to create and maintain spans, which means that most of the co
+
+In case you want to integrate Instana into an app that is already instrumented with OpenTracing, register an instance of Instana tracer as a global tracer at the beginning of your `main()` function:
 
 ```go
-ot.InitGlobalTracer(instana.NewTracerWithOptions(&instana.Options{
-	Service:  SERVICE,
-	LogLevel: instana.DEBUG,
-}))
+import (
+	instana "github.com/instana/go-sensor"
+	opentracing "github.com/opentracing/opentracing-go"
+)
+
+func main() {
+	opentracing.InitGlobalTracer(instana.NewTracerWithOptions(instana.DefaultOptions())
+	// ...
+}
 ```
 
-in your main function. The tracer takes the same options that the sensor takes for initialization, described above.
+This will automatically initialize the sensor and thus also activate the metrics stream. The tracer takes the same options that the sensor takes for initialization, described above.
 
-The tracer is able to protocol and piggyback OpenTracing baggage, tags and logs. Only text mapping is implemented yet, binary is not supported. Also, the tracer tries to map the OpenTracing spans to the Instana model based on OpenTracing recommended tags. See [simple.go](./example/ot-simple/simple.go) example for details on how recommended tags are used.
+The tracer is able to protocol and piggyback OpenTracing baggage, tags and logs. Only text mapping is implemented yet, binary is not supported. Also, the tracer tries to map the OpenTracing spans to the Instana model based on OpenTracing recommended tags. See [the Instana OpenTracing integration example](./example/opentracing) for details on how recommended tags are used.
 
-The Instana tracer will remap OpenTracing HTTP headers into Instana Headers, so parallel use with some other OpenTracing model is not possible. The Instana tracer is based on the OpenTracing Go basictracer with necessary modifications to map to the Instana tracing model. Also, sampling isn't implemented yet and will be focus of future work.
+The Instana tracer will remap OpenTracing HTTP headers into Instana headers, so parallel use with some other OpenTracing model is not possible. The Instana tracer is based on the OpenTracing Go basictracer with necessary modifications to map to the Instana tracing model. Also, sampling isn't implemented yet and will be focus of future work.
 
 ## W3C Trace Context
 
@@ -398,6 +405,7 @@ Following examples are included in the `example` folder:
 * [Doubler](./kafka-producer-consumer) - an instrumented Kafka processor, that counsumes and produces messages
 * [event/](./example/event/) - Demonstrates usage of the Events API
 * [autoprofile/](./example/autoprofile/) - Demonstrates usage of the AutoProfile™
+* [OpenTracing](./example/opentracing/) - an example of usage of Instana tracer in an app instrumented with OpentTracing
 
 For more examples please consult the [godoc][godoc].
 
