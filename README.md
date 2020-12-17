@@ -117,7 +117,7 @@ To create an instance of the Instana sensor just request a new instance using th
 var sensor = instana.NewSensor("my-service")
 ```
 
-A full example can be found under the examples folder in [example/webserver/instana/http.go](./example/webserver/instana/http.go).
+A full example can be found under the examples folder in [example/http-database-greeter/](./example/http-database-greeter/).
 
 ### Setting the sensor log output
 
