@@ -151,7 +151,7 @@ func InitSensor(options *Options) {
 		autoprofile.Enable()
 	}
 
-	sensor.logger.Debug("initialized sensor")
+	sensor.logger.Debug("initialized Instana sensor v", Version)
 }
 
 func newServerlessAgent(serviceName, agentEndpoint, agentKey string, client *http.Client, logger LeveledLogger) agentClient {
