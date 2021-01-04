@@ -17,12 +17,13 @@ func TestSnapshotCollector_Collect(t *testing.T) {
 	}
 
 	assert.Equal(t, &acceptor.RuntimeInfo{
-		Name:     sc.ServiceName,
-		Version:  runtime.Version(),
-		Root:     runtime.GOROOT(),
-		MaxProcs: runtime.GOMAXPROCS(0),
-		Compiler: runtime.Compiler,
-		NumCPU:   runtime.NumCPU(),
+		Name:          sc.ServiceName,
+		Version:       runtime.Version(),
+		Root:          runtime.GOROOT(),
+		MaxProcs:      runtime.GOMAXPROCS(0),
+		Compiler:      runtime.Compiler,
+		NumCPU:        runtime.NumCPU(),
+		SensorVersion: instana.Version,
 	}, sc.Collect())
 
 	t.Run("second call before collection interval", func(t *testing.T) {
@@ -37,12 +38,13 @@ func TestSnapshotCollector_Collect(t *testing.T) {
 		runtime.GOMAXPROCS(oldNumProcs + 1)
 
 		assert.Equal(t, &acceptor.RuntimeInfo{
-			Name:     sc.ServiceName,
-			Version:  runtime.Version(),
-			Root:     runtime.GOROOT(),
-			MaxProcs: oldNumProcs + 1,
-			Compiler: runtime.Compiler,
-			NumCPU:   runtime.NumCPU(),
+			Name:          sc.ServiceName,
+			Version:       runtime.Version(),
+			Root:          runtime.GOROOT(),
+			MaxProcs:      oldNumProcs + 1,
+			Compiler:      runtime.Compiler,
+			NumCPU:        runtime.NumCPU(),
+			SensorVersion: instana.Version,
 		}, sc.Collect())
 	})
 }
