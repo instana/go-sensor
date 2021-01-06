@@ -34,11 +34,12 @@ func (sc *SnapshotCollector) Collect() *acceptor.RuntimeInfo {
 	sc.lastCollectionTime = time.Now()
 
 	return &acceptor.RuntimeInfo{
-		Name:     sc.ServiceName,
-		Version:  runtime.Version(),
-		Root:     runtime.GOROOT(),
-		MaxProcs: runtime.GOMAXPROCS(0),
-		Compiler: runtime.Compiler,
-		NumCPU:   runtime.NumCPU(),
+		Name:          sc.ServiceName,
+		Version:       runtime.Version(),
+		Root:          runtime.GOROOT(),
+		MaxProcs:      runtime.GOMAXPROCS(0),
+		Compiler:      runtime.Compiler,
+		NumCPU:        runtime.NumCPU(),
+		SensorVersion: Version,
 	}
 }

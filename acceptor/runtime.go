@@ -4,12 +4,13 @@ import "strconv"
 
 // RuntimeInfo represents Go runtime info to be sent to com.insana.plugin.golang
 type RuntimeInfo struct {
-	Name     string `json:"name"`
-	Version  string `json:"version"`
-	Root     string `json:"goroot"`
-	MaxProcs int    `json:"maxprocs"`
-	Compiler string `json:"compiler"`
-	NumCPU   int    `json:"cpu"`
+	Name          string `json:"name"`
+	Version       string `json:"version"`
+	Root          string `json:"goroot"`
+	MaxProcs      int    `json:"maxprocs"`
+	Compiler      string `json:"compiler"`
+	NumCPU        int    `json:"cpu"`
+	SensorVersion string `json:"iv,omitempty"`
 }
 
 // MemoryStats represents Go runtime memory stats to be sent to com.insana.plugin.golang
