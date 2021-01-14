@@ -39,6 +39,10 @@ func TestRegisteredSpanType_ExtractData(t *testing.T) {
 			Operation: "aws.lambda.entry",
 			Expected:  instana.AWSLambdaSpanData{},
 		},
+		"aws s3": {
+			Operation: "s3",
+			Expected:  instana.AWSS3SpanData{},
+		},
 	}
 
 	for name, example := range examples {
