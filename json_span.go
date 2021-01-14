@@ -43,6 +43,8 @@ const (
 	GCPPubSubSpanType = RegisteredSpanType("gcps")
 	// AWS Lambda entry span
 	AWSLambdaEntrySpanType = RegisteredSpanType("aws.lambda.entry")
+	// AWS S3 client span
+	AWSS3SpanType = RegisteredSpanType("s3")
 )
 
 // RegisteredSpanType represents the span type supported by Instana
@@ -63,6 +65,8 @@ func (st RegisteredSpanType) ExtractData(span *spanS) typedSpanData {
 		return NewGCPPubSubSpanData(span)
 	case AWSLambdaEntrySpanType:
 		return NewAWSLambdaSpanData(span)
+	case AWSS3SpanType:
+		return NewAWSS3SpanData(span)
 	default:
 		return NewSDKSpanData(span)
 	}
@@ -915,6 +919,60 @@ func (d AWSLambdaSpanData) Type() RegisteredSpanType {
 // Kind returns the span kind for an AWS Lambda span
 func (d AWSLambdaSpanData) Kind() SpanKind {
 	return EntrySpanKind
+}
+
+// AWSS3SpanData represents the `data` section of a AWS S3 span sent within an OT span document
+type AWSS3SpanData struct {
+	SpanData
+	Tags AWSS3SpanTags `json:"s3"`
+}
+
+// NewAWSS3SpanData initializes a new AWS S3 span data from tracer span
+func NewAWSS3SpanData(span *spanS) AWSS3SpanData {
+	data := AWSS3SpanData{
+		SpanData: NewSpanData(span, AWSS3SpanType),
+		Tags:     NewAWSS3SpanTags(span),
+	}
+
+	return data
+}
+
+// Kind returns the span kind for a AWS S3 span
+func (d AWSS3SpanData) Kind() SpanKind {
+	return ExitSpanKind
+}
+
+// AWSS3SpanTags contains fields within the `data.s3` section of an OT span document
+type AWSS3SpanTags struct {
+	Region    string `json:"region,omitempty"`
+	Operation string `json:"op,omitempty"`
+	Bucket    string `json:"bucket,omitempty"`
+	Key       string `json:"key,omitempty"`
+	Exists    string `json:"exists,omitempty"`
+	Error     string `json:"error,omitempty"`
+}
+
+// NewAWSS3SpanTags extracts AWS S3 span tags from a tracer span
+func NewAWSS3SpanTags(span *spanS) AWSS3SpanTags {
+	var tags AWSS3SpanTags
+	for k, v := range span.Tags {
+		switch k {
+		case "s3.region":
+			readStringTag(&tags.Region, v)
+		case "s3.op":
+			readStringTag(&tags.Operation, v)
+		case "s3.bucket":
+			readStringTag(&tags.Bucket, v)
+		case "s3.key":
+			readStringTag(&tags.Key, v)
+		case "s3.exists":
+			readStringTag(&tags.Exists, v)
+		case "s3.error":
+			readStringTag(&tags.Error, v)
+		}
+	}
+
+	return tags
 }
 
 // readStringTag populates the &dst with the tag value if it's of either string or []byte type
