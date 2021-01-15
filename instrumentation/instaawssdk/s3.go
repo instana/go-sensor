@@ -23,8 +23,8 @@ func StartS3Span(req *request.Request, sensor *instana.Sensor) {
 		opentracing.ChildOf(parent.Context()),
 		opentracing.Tags{
 			"s3.region": req.ClientInfo.SigningRegion,
-			"s3.op":     req.Operation.Name,
 		},
+		extractS3Tags(req),
 	)
 
 	req.SetContext(instana.ContextWithSpan(req.Context(), sp))

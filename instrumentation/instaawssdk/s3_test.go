@@ -56,7 +56,9 @@ func TestStartS3Span_WithActiveSpan(t *testing.T) {
 
 	assert.Equal(t, instana.AWSS3SpanTags{
 		Region:    "mock-region",
-		Operation: "PutObject",
+		Operation: "put",
+		Bucket:    "test-bucket",
+		Key:       "test-key",
 	}, data.Tags)
 }
 
