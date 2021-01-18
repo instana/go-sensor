@@ -46,6 +46,10 @@ func TestRegisteredSpanType_ExtractData(t *testing.T) {
 			Operation: "s3",
 			Expected:  instana.AWSS3SpanData{},
 		},
+		"aws sqs": {
+			Operation: "sqs",
+			Expected:  instana.AWSSQSSpanData{},
+		},
 	}
 
 	for name, example := range examples {
