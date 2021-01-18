@@ -10,9 +10,18 @@ import (
 	"github.com/opentracing/opentracing-go/ext"
 )
 
-// StartS3Span initiates a new span from AWS S3 request and injects it into the
+// StartS3Span initiates a new span from an AWS S3 request and injects it into the
 // request.Request context
 func StartS3Span(req *request.Request, sensor *instana.Sensor) {
+	tags, err := extractS3Tags(req)
+	if err != nil {
+		if err == errMethodNotInstrumented {
+			return
+		}
+
+		sensor.Logger().Warn("failed to extract S3 tags: ", err)
+	}
+
 	parent, ok := instana.SpanFromContext(req.Context())
 	if !ok {
 		return
@@ -24,7 +33,7 @@ func StartS3Span(req *request.Request, sensor *instana.Sensor) {
 		opentracing.Tags{
 			"s3.region": req.ClientInfo.SigningRegion,
 		},
-		extractS3Tags(req),
+		tags,
 	)
 
 	req.SetContext(instana.ContextWithSpan(req.Context(), sp))

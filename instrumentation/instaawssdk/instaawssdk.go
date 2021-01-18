@@ -11,6 +11,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/aws/aws-sdk-go/service/sqs"
 	instana "github.com/instana/go-sensor"
 	otlog "github.com/opentracing/opentracing-go/log"
 )
@@ -25,6 +26,8 @@ func InstrumentSession(sess *session.Session, sensor *instana.Sensor) {
 		switch req.ClientInfo.ServiceName {
 		case s3.ServiceName:
 			StartS3Span(req, sensor)
+		case sqs.ServiceName:
+			StartSQSSpan(req, sensor)
 		}
 	})
 
@@ -42,6 +45,8 @@ func InstrumentSession(sess *session.Session, sensor *instana.Sensor) {
 		switch req.ClientInfo.ServiceName {
 		case s3.ServiceName:
 			FinalizeS3Span(sp, req)
+		case sqs.ServiceName:
+			FinalizeSQSSpan(sp, req)
 		}
 	})
 }
