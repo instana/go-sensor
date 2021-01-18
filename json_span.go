@@ -42,6 +42,8 @@ const (
 	AWSLambdaEntrySpanType = RegisteredSpanType("aws.lambda.entry")
 	// AWS S3 client span
 	AWSS3SpanType = RegisteredSpanType("s3")
+	// AWS SQS client span
+	AWSSQSSpanType = RegisteredSpanType("sqs")
 )
 
 // RegisteredSpanType represents the span type supported by Instana
@@ -64,6 +66,8 @@ func (st RegisteredSpanType) ExtractData(span *spanS) typedSpanData {
 		return NewAWSLambdaSpanData(span)
 	case AWSS3SpanType:
 		return NewAWSS3SpanData(span)
+	case AWSSQSSpanType:
+		return NewAWSSQSSpanData(span)
 	default:
 		return NewSDKSpanData(span)
 	}
@@ -941,12 +945,16 @@ func (d AWSS3SpanData) Kind() SpanKind {
 
 // AWSS3SpanTags contains fields within the `data.s3` section of an OT span document
 type AWSS3SpanTags struct {
-	Region    string `json:"region,omitempty"`
+	// Region is the AWS region used to access S3
+	Region string `json:"region,omitempty"`
+	// Operation is the operation name, as defined by AWS S3 API
 	Operation string `json:"op,omitempty"`
-	Bucket    string `json:"bucket,omitempty"`
-	Key       string `json:"key,omitempty"`
-	Exists    string `json:"exists,omitempty"`
-	Error     string `json:"error,omitempty"`
+	// Bucket is the bucket name
+	Bucket string `json:"bucket,omitempty"`
+	// Key is the object key
+	Key string `json:"key,omitempty"`
+	// Error is an optional error returned by AWS API
+	Error string `json:"error,omitempty"`
 }
 
 // NewAWSS3SpanTags extracts AWS S3 span tags from a tracer span
@@ -962,9 +970,63 @@ func NewAWSS3SpanTags(span *spanS) AWSS3SpanTags {
 			readStringTag(&tags.Bucket, v)
 		case "s3.key":
 			readStringTag(&tags.Key, v)
-		case "s3.exists":
-			readStringTag(&tags.Exists, v)
 		case "s3.error":
+			readStringTag(&tags.Error, v)
+		}
+	}
+
+	return tags
+}
+
+// AWSSQSSpanData represents the `data` section of a AWS SQS span sent within an OT span document
+type AWSSQSSpanData struct {
+	SpanData
+	Tags AWSSQSSpanTags `json:"sqs"`
+}
+
+// NewAWSSQSSpanData initializes a new AWS SQS span data from tracer span
+func NewAWSSQSSpanData(span *spanS) AWSSQSSpanData {
+	data := AWSSQSSpanData{
+		SpanData: NewSpanData(span, AWSSQSSpanType),
+		Tags:     NewAWSSQSSpanTags(span),
+	}
+
+	return data
+}
+
+// Kind returns the span kind for a AWS SQS span
+func (d AWSSQSSpanData) Kind() SpanKind {
+	return ExitSpanKind
+}
+
+// AWSSQSSpanTags contains fields within the `data.sqs` section of an OT span document
+type AWSSQSSpanTags struct {
+	// Sort is the direction of the call, wither "entry" or "exit"
+	Sort string `json:"sort,omitempty"`
+	// Queue is the queue name
+	Queue string `json:"queue,omitempty"`
+	// Type is the operation name
+	Type string `json:"type,omitempty"`
+	// Size is the optional batch size
+	Size int `json:"size,omitempty`
+	// Error is an optional error returned by AWS API
+	Error string `json:"error,omitempty"`
+}
+
+// NewAWSSQSSpanTags extracts AWS S3 span tags from a tracer span
+func NewAWSSQSSpanTags(span *spanS) AWSSQSSpanTags {
+	var tags AWSSQSSpanTags
+	for k, v := range span.Tags {
+		switch k {
+		case "sqs.sort":
+			readStringTag(&tags.Sort, v)
+		case "sqs.queue":
+			readStringTag(&tags.Queue, v)
+		case "sqs.type":
+			readStringTag(&tags.Type, v)
+		case "sqs.size":
+			readIntTag(&tags.Size, v)
+		case "sqs.error":
 			readStringTag(&tags.Error, v)
 		}
 	}
