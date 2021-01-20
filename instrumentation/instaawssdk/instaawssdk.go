@@ -19,10 +19,9 @@ import (
 var errMethodNotInstrumented = errors.New("method not instrumented")
 
 // InstrumentSession instruments github.com/aws/aws-sdk-go/aws/session.Session by
-// injecting handlers to create and finalize Instana spans while sending and completing
-// requests
+// injecting handlers to create and finalize Instana spans
 func InstrumentSession(sess *session.Session, sensor *instana.Sensor) {
-	sess.Handlers.Send.PushFront(func(req *request.Request) {
+	sess.Handlers.Validate.PushBack(func(req *request.Request) {
 		switch req.ClientInfo.ServiceName {
 		case s3.ServiceName:
 			StartS3Span(req, sensor)

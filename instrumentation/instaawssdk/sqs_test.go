@@ -179,6 +179,163 @@ func TestStartSQSSpan(t *testing.T) {
 	}
 }
 
+func TestStartSQSSpan_TraceContextPropagation_Single(t *testing.T) {
+	recorder := instana.NewTestRecorder()
+	sensor := instana.NewSensorWithTracer(
+		instana.NewTracerWithEverything(instana.DefaultOptions(), recorder),
+	)
+
+	svc := sqs.New(unit.Session)
+
+	parentSp := sensor.Tracer().StartSpan("testing")
+
+	req, _ := svc.SendMessageRequest(&sqs.SendMessageInput{
+		MessageBody:    aws.String("message-1"),
+		MessageGroupId: aws.String("test-group-id"),
+		QueueUrl:       aws.String("test-queue"),
+	})
+	req.SetContext(instana.ContextWithSpan(req.Context(), parentSp))
+
+	instaawssdk.StartSQSSpan(req, sensor)
+
+	sp, ok := instana.SpanFromContext(req.Context())
+	require.True(t, ok)
+
+	sp.Finish()
+	parentSp.Finish()
+
+	spans := recorder.GetQueuedSpans()
+	require.Len(t, spans, 2)
+
+	sqsSpan := spans[0]
+
+	params := req.Params.(*sqs.SendMessageInput)
+	assert.Equal(t, map[string]*sqs.MessageAttributeValue{
+		instaawssdk.FieldT: {
+			DataType:    aws.String("String"),
+			StringValue: aws.String(instana.FormatID(sqsSpan.TraceID)),
+		},
+		instaawssdk.FieldS: {
+			DataType:    aws.String("String"),
+			StringValue: aws.String(instana.FormatID(sqsSpan.SpanID)),
+		},
+		instaawssdk.FieldL: {
+			DataType:    aws.String("String"),
+			StringValue: aws.String("1"),
+		},
+	}, params.MessageAttributes)
+}
+
+func TestStartSQSSpan_TraceContextPropagation_Batch(t *testing.T) {
+	recorder := instana.NewTestRecorder()
+	sensor := instana.NewSensorWithTracer(
+		instana.NewTracerWithEverything(instana.DefaultOptions(), recorder),
+	)
+
+	svc := sqs.New(unit.Session)
+
+	parentSp := sensor.Tracer().StartSpan("testing")
+
+	req, _ := svc.SendMessageBatchRequest(&sqs.SendMessageBatchInput{
+		Entries: []*sqs.SendMessageBatchRequestEntry{
+			{MessageBody: aws.String("message-1"), MessageGroupId: aws.String("test-group-id")},
+			{MessageBody: aws.String("message-2"), MessageGroupId: aws.String("test-group-id")},
+		},
+		QueueUrl: aws.String("test-queue"),
+	})
+	req.SetContext(instana.ContextWithSpan(req.Context(), parentSp))
+
+	instaawssdk.StartSQSSpan(req, sensor)
+
+	sp, ok := instana.SpanFromContext(req.Context())
+	require.True(t, ok)
+
+	sp.Finish()
+	parentSp.Finish()
+
+	spans := recorder.GetQueuedSpans()
+	require.Len(t, spans, 2)
+
+	sqsSpan := spans[0]
+
+	params := req.Params.(*sqs.SendMessageBatchInput)
+	for _, entry := range params.Entries {
+		assert.Equal(t, map[string]*sqs.MessageAttributeValue{
+			instaawssdk.FieldT: {
+				DataType:    aws.String("String"),
+				StringValue: aws.String(instana.FormatID(sqsSpan.TraceID)),
+			},
+			instaawssdk.FieldS: {
+				DataType:    aws.String("String"),
+				StringValue: aws.String(instana.FormatID(sqsSpan.SpanID)),
+			},
+			instaawssdk.FieldL: {
+				DataType:    aws.String("String"),
+				StringValue: aws.String("1"),
+			},
+		}, entry.MessageAttributes)
+	}
+}
+
+func TestStartSQSSpan_TraceContextPropagation_Single_NoActiveSpan(t *testing.T) {
+	recorder := instana.NewTestRecorder()
+	sensor := instana.NewSensorWithTracer(
+		instana.NewTracerWithEverything(instana.DefaultOptions(), recorder),
+	)
+
+	svc := sqs.New(unit.Session)
+
+	req, _ := svc.SendMessageRequest(&sqs.SendMessageInput{
+		MessageBody:    aws.String("message-1"),
+		MessageGroupId: aws.String("test-group-id"),
+		QueueUrl:       aws.String("test-queue"),
+	})
+
+	instaawssdk.StartSQSSpan(req, sensor)
+
+	_, ok := instana.SpanFromContext(req.Context())
+	require.False(t, ok)
+
+	assert.Empty(t, recorder.GetQueuedSpans())
+
+	params := req.Params.(*sqs.SendMessageInput)
+
+	assert.NotContains(t, params.MessageAttributes, instaawssdk.FieldT)
+	assert.NotContains(t, params.MessageAttributes, instaawssdk.FieldS)
+	assert.NotContains(t, params.MessageAttributes, instaawssdk.FieldL)
+}
+
+func TestStartSQSSpan_TraceContextPropagation_Batch_NoActiveSpan(t *testing.T) {
+	recorder := instana.NewTestRecorder()
+	sensor := instana.NewSensorWithTracer(
+		instana.NewTracerWithEverything(instana.DefaultOptions(), recorder),
+	)
+
+	svc := sqs.New(unit.Session)
+
+	req, _ := svc.SendMessageBatchRequest(&sqs.SendMessageBatchInput{
+		Entries: []*sqs.SendMessageBatchRequestEntry{
+			{MessageBody: aws.String("message-1"), MessageGroupId: aws.String("test-group-id")},
+			{MessageBody: aws.String("message-2"), MessageGroupId: aws.String("test-group-id")},
+		},
+		QueueUrl: aws.String("test-queue"),
+	})
+
+	instaawssdk.StartSQSSpan(req, sensor)
+
+	_, ok := instana.SpanFromContext(req.Context())
+	require.False(t, ok)
+
+	assert.Empty(t, recorder.GetQueuedSpans())
+
+	params := req.Params.(*sqs.SendMessageBatchInput)
+	for _, entry := range params.Entries {
+		assert.NotContains(t, entry.MessageAttributes, instaawssdk.FieldT)
+		assert.NotContains(t, entry.MessageAttributes, instaawssdk.FieldS)
+		assert.NotContains(t, entry.MessageAttributes, instaawssdk.FieldL)
+	}
+}
+
 func TestFinalizeSQSSpan(t *testing.T) {
 	svc := sqs.New(unit.Session)
 
