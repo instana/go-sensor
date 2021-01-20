@@ -179,6 +179,32 @@ func TestStartSQSSpan(t *testing.T) {
 	}
 }
 
+func TestStartSQSSpan_NonInstrumentedMethod(t *testing.T) {
+	recorder := instana.NewTestRecorder()
+	sensor := instana.NewSensorWithTracer(
+		instana.NewTracerWithEverything(instana.DefaultOptions(), recorder),
+	)
+
+	parentSp := sensor.Tracer().StartSpan("testing")
+
+	svc := sqs.New(unit.Session)
+	req, _ := svc.RemovePermissionRequest(&sqs.RemovePermissionInput{
+		QueueUrl: aws.String("test-queue"),
+	})
+	req.SetContext(instana.ContextWithSpan(req.Context(), parentSp))
+
+	instaawssdk.StartSQSSpan(req, sensor)
+
+	sp, ok := instana.SpanFromContext(req.Context())
+	assert.True(t, ok)
+	assert.Equal(t, parentSp, sp)
+
+	parentSp.Finish()
+
+	spans := recorder.GetQueuedSpans()
+	require.Len(t, spans, 1)
+}
+
 func TestStartSQSSpan_TraceContextPropagation_Single(t *testing.T) {
 	recorder := instana.NewTestRecorder()
 	sensor := instana.NewSensorWithTracer(
@@ -404,9 +430,7 @@ func TestFinalizeSQSSpan(t *testing.T) {
 			req := example.Request()
 			req.SetContext(instana.ContextWithSpan(req.Context(), sp))
 
-			instaawssdk.FinalizeSQSSpan(sp, req)
-
-			sp.Finish()
+			instaawssdk.FinalizeSQSSpan(req)
 
 			spans := recorder.GetQueuedSpans()
 			require.Len(t, spans, 1)
@@ -435,9 +459,7 @@ func TestFinalizeSQSSpan_WithError(t *testing.T) {
 	req.SetContext(instana.ContextWithSpan(req.Context(), sp))
 	req.Error = awserr.New("42", "test error", errors.New("an error occurred"))
 
-	instaawssdk.FinalizeSQSSpan(sp, req)
-
-	sp.Finish()
+	instaawssdk.FinalizeSQSSpan(req)
 
 	spans := recorder.GetQueuedSpans()
 	require.Len(t, spans, 1)
@@ -449,5 +471,115 @@ func TestFinalizeSQSSpan_WithError(t *testing.T) {
 
 	assert.Equal(t, instana.AWSSQSSpanTags{
 		Error: "42: test error\ncaused by: an error occurred",
+	}, data.Tags)
+}
+
+func TestTraceSQSMessage_WithTraceContext(t *testing.T) {
+	examples := map[string]*sqs.Message{
+		"standard keys": &sqs.Message{
+			Body: aws.String("message body"),
+			MessageAttributes: map[string]*sqs.MessageAttributeValue{
+				"X_INSTANA_T": {
+					DataType:    aws.String("String"),
+					StringValue: aws.String("00000000000000010000000000000002"),
+				},
+				"X_INSTANA_S": {
+					DataType:    aws.String("String"),
+					StringValue: aws.String("0000000000000003"),
+				},
+				"X_INSTANA_L": {
+					DataType:    aws.String("String"),
+					StringValue: aws.String("1"),
+				},
+			},
+		},
+		"legacy keys": &sqs.Message{
+			Body: aws.String("message body"),
+			MessageAttributes: map[string]*sqs.MessageAttributeValue{
+				"X_INSTANA_ST": {
+					DataType:    aws.String("String"),
+					StringValue: aws.String("00000000000000010000000000000002"),
+				},
+				"X_INSTANA_SS": {
+					DataType:    aws.String("String"),
+					StringValue: aws.String("0000000000000003"),
+				},
+				"X_INSTANA_SL": {
+					DataType:    aws.String("String"),
+					StringValue: aws.String("1"),
+				},
+			},
+		},
+	}
+
+	for name, msg := range examples {
+		t.Run(name, func(t *testing.T) {
+			recorder := instana.NewTestRecorder()
+			sensor := instana.NewSensorWithTracer(
+				instana.NewTracerWithEverything(instana.DefaultOptions(), recorder),
+			)
+
+			sp := instaawssdk.TraceSQSMessage(msg, sensor)
+			require.Equal(t, 0, recorder.QueuedSpansCount())
+
+			sp.Finish()
+
+			spans := recorder.GetQueuedSpans()
+			require.Len(t, spans, 1)
+
+			sqsSpan := spans[0]
+
+			assert.EqualValues(t, 0x1, sqsSpan.TraceIDHi)
+			assert.EqualValues(t, 0x2, sqsSpan.TraceID)
+			assert.EqualValues(t, 0x3, sqsSpan.ParentID)
+			assert.NotEqual(t, sqsSpan.ParentID, sqsSpan.SpanID)
+
+			assert.Equal(t, "sqs", sqsSpan.Name)
+			assert.Equal(t, int(instana.EntrySpanKind), sqsSpan.Kind)
+			assert.Empty(t, sqsSpan.Ec)
+
+			assert.IsType(t, instana.AWSSQSSpanData{}, sqsSpan.Data)
+
+			data := sqsSpan.Data.(instana.AWSSQSSpanData)
+			assert.Equal(t, instana.AWSSQSSpanTags{
+				Sort: "entry",
+			}, data.Tags)
+		})
+	}
+}
+
+func TestTraceSQSMessage_NoTraceContext(t *testing.T) {
+	recorder := instana.NewTestRecorder()
+	sensor := instana.NewSensorWithTracer(
+		instana.NewTracerWithEverything(instana.DefaultOptions(), recorder),
+	)
+
+	msg := &sqs.Message{
+		Body: aws.String("message body"),
+	}
+
+	sp := instaawssdk.TraceSQSMessage(msg, sensor)
+	require.Equal(t, 0, recorder.QueuedSpansCount())
+
+	sp.Finish()
+
+	spans := recorder.GetQueuedSpans()
+	require.Len(t, spans, 1)
+
+	sqsSpan := spans[0]
+
+	assert.NotEmpty(t, sqsSpan.TraceID)
+	assert.Empty(t, sqsSpan.ParentID)
+	assert.NotEmpty(t, sqsSpan.SpanID)
+
+	assert.Equal(t, "sqs", sqsSpan.Name)
+	assert.Equal(t, int(instana.EntrySpanKind), sqsSpan.Kind)
+	assert.Empty(t, sqsSpan.Ec)
+
+	assert.IsType(t, instana.AWSSQSSpanData{}, sqsSpan.Data)
+
+	data := sqsSpan.Data.(instana.AWSSQSSpanData)
+	assert.Equal(t, instana.AWSSQSSpanTags{
+		Sort: "entry",
 	}, data.Tags)
 }

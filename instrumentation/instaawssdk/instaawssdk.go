@@ -7,13 +7,14 @@ package instaawssdk
 
 import (
 	"errors"
+	"fmt"
 
+	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/sqs"
 	instana "github.com/instana/go-sensor"
-	otlog "github.com/opentracing/opentracing-go/log"
 )
 
 var errMethodNotInstrumented = errors.New("method not instrumented")
@@ -31,21 +32,25 @@ func InstrumentSession(sess *session.Session, sensor *instana.Sensor) {
 	})
 
 	sess.Handlers.Complete.PushBack(func(req *request.Request) {
-		sp, ok := instana.SpanFromContext(req.Context())
-		if !ok {
-			return
-		}
-		defer sp.Finish()
-
-		if req.Error != nil {
-			sp.LogFields(otlog.Error(req.Error))
-		}
-
 		switch req.ClientInfo.ServiceName {
 		case s3.ServiceName:
-			FinalizeS3Span(sp, req)
+			FinalizeS3Span(req)
 		case sqs.ServiceName:
-			FinalizeSQSSpan(sp, req)
+			FinalizeSQSSpan(req)
+
+			if data, ok := req.Data.(*sqs.ReceiveMessageOutput); ok {
+				params, ok := req.Params.(*sqs.ReceiveMessageInput)
+				if !ok {
+					sensor.Logger().Error(fmt.Sprintf("unexpected SQS ReceiveMessage parameters type: %T", req.Params))
+					break
+				}
+
+				for i := range data.Messages {
+					sp := TraceSQSMessage(data.Messages[i], sensor)
+					sp.SetTag("sqs.queue", aws.StringValue(params.QueueUrl))
+					sp.Finish()
+				}
+			}
 		}
 	})
 }

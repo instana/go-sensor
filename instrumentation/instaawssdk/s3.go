@@ -8,6 +8,7 @@ import (
 	instana "github.com/instana/go-sensor"
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
+	otlog "github.com/opentracing/opentracing-go/log"
 )
 
 // StartS3Span initiates a new span from an AWS S3 request and injects it into the
@@ -41,8 +42,15 @@ func StartS3Span(req *request.Request, sensor *instana.Sensor) {
 
 // FinalizeS3Span retrieves tags from completed request.Request and adds them
 // to the span
-func FinalizeS3Span(sp opentracing.Span, req *request.Request) {
+func FinalizeS3Span(req *request.Request) {
+	sp, ok := instana.SpanFromContext(req.Context())
+	if !ok {
+		return
+	}
+	defer sp.Finish()
+
 	if req.Error != nil {
+		sp.LogFields(otlog.Error(req.Error))
 		sp.SetTag("s3.error", req.Error.Error())
 	}
 }

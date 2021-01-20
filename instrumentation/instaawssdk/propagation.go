@@ -9,6 +9,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/sqs"
 	instana "github.com/instana/go-sensor"
+	"github.com/opentracing/opentracing-go"
 )
 
 const (
@@ -23,6 +24,19 @@ const (
 	legacyFieldS = "X_INSTANA_SS"
 	legacyFieldL = "X_INSTANA_SL"
 )
+
+// SpanContextFromSQSMessage returns the trace context from an SQS message
+func SpanContextFromSQSMessage(msg *sqs.Message, sensor *instana.Sensor) (opentracing.SpanContext, bool) {
+	spanContext, err := sensor.Tracer().Extract(
+		opentracing.TextMap,
+		SQSMessageAttributesCarrier(msg.MessageAttributes),
+	)
+	if err != nil {
+		return nil, false
+	}
+
+	return spanContext, true
+}
 
 // SQSMessageAttributesCarrier is a trace context carrier that propagates Instana
 // OpenTracing headers via AWS SQS messages. It satisfies both opentracing.TextMapReader

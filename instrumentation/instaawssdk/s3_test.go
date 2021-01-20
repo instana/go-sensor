@@ -91,8 +91,7 @@ func TestFinalizeS3_NoError(t *testing.T) {
 	req := newS3Request()
 	req.SetContext(instana.ContextWithSpan(req.Context(), sp))
 
-	instaawssdk.FinalizeS3Span(sp, req)
-	sp.Finish()
+	instaawssdk.FinalizeS3Span(req)
 
 	spans := recorder.GetQueuedSpans()
 	require.Len(t, spans, 1)
@@ -127,8 +126,7 @@ func TestFinalizeS3Span_WithError(t *testing.T) {
 	req.Error = awserr.New("42", "test error", errors.New("an error occurred"))
 	req.SetContext(instana.ContextWithSpan(req.Context(), sp))
 
-	instaawssdk.FinalizeS3Span(sp, req)
-	sp.Finish()
+	instaawssdk.FinalizeS3Span(req)
 
 	spans := recorder.GetQueuedSpans()
 	require.Len(t, spans, 1)

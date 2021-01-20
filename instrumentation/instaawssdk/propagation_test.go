@@ -15,6 +15,115 @@ import (
 	"github.com/instana/testify/require"
 )
 
+func TestSpanContextFromSQSMessage(t *testing.T) {
+	sensor := instana.NewSensorWithTracer(
+		instana.NewTracerWithEverything(
+			instana.DefaultOptions(),
+			instana.NewTestRecorder(),
+		),
+	)
+
+	examples := map[string]*sqs.Message{
+		"standard keys": &sqs.Message{
+			MessageAttributes: map[string]*sqs.MessageAttributeValue{
+				"Custom": {
+					DataType:    aws.String("String"),
+					StringValue: aws.String("custom attribute"),
+				},
+				"X_INSTANA_T": {
+					DataType:    aws.String("String"),
+					StringValue: aws.String("00000000000000010000000000000002"),
+				},
+				"X_INSTANA_S": {
+					DataType:    aws.String("String"),
+					StringValue: aws.String("0000000000000003"),
+				},
+				"X_INSTANA_L": {
+					DataType:    aws.String("String"),
+					StringValue: aws.String("1"),
+				},
+			},
+		},
+		"legacy keys": &sqs.Message{
+			MessageAttributes: map[string]*sqs.MessageAttributeValue{
+				"Custom": {
+					DataType:    aws.String("String"),
+					StringValue: aws.String("custom attribute"),
+				},
+				"X_INSTANA_ST": {
+					DataType:    aws.String("String"),
+					StringValue: aws.String("00000000000000010000000000000002"),
+				},
+				"X_INSTANA_SS": {
+					DataType:    aws.String("String"),
+					StringValue: aws.String("0000000000000003"),
+				},
+				"X_INSTANA_SL": {
+					DataType:    aws.String("String"),
+					StringValue: aws.String("1"),
+				},
+			},
+		},
+	}
+
+	for name, msg := range examples {
+		t.Run(name, func(t *testing.T) {
+			spCtx, ok := instaawssdk.SpanContextFromSQSMessage(msg, sensor)
+			require.True(t, ok)
+			assert.Equal(t, instana.SpanContext{
+				TraceIDHi: 0x01,
+				TraceID:   0x02,
+				SpanID:    0x03,
+				Baggage:   make(map[string]string),
+			}, spCtx)
+		})
+	}
+
+	t.Run("no context", func(t *testing.T) {
+		_, ok := instaawssdk.SpanContextFromSQSMessage(&sqs.Message{}, sensor)
+		assert.False(t, ok)
+	})
+}
+
+func TestSpanContextFromSQSMessage_LegacyHeaders(t *testing.T) {
+	sensor := instana.NewSensorWithTracer(
+		instana.NewTracerWithEverything(
+			instana.DefaultOptions(),
+			instana.NewTestRecorder(),
+		),
+	)
+
+	msg := &sqs.Message{
+		MessageAttributes: map[string]*sqs.MessageAttributeValue{
+			"Custom": {
+				DataType:    aws.String("String"),
+				StringValue: aws.String("custom attribute"),
+			},
+			"X_INSTANA_T": {
+				DataType:    aws.String("String"),
+				StringValue: aws.String("00000000000000010000000000000002"),
+			},
+			"X_INSTANA_S": {
+				DataType:    aws.String("String"),
+				StringValue: aws.String("0000000000000003"),
+			},
+			"X_INSTANA_L": {
+				DataType:    aws.String("String"),
+				StringValue: aws.String("1"),
+			},
+		},
+	}
+
+	spCtx, ok := instaawssdk.SpanContextFromSQSMessage(msg, sensor)
+	require.True(t, ok)
+	assert.Equal(t, instana.SpanContext{
+		TraceIDHi: 0x01,
+		TraceID:   0x02,
+		SpanID:    0x03,
+		Baggage:   make(map[string]string),
+	}, spCtx)
+}
+
 func TestSQSMessageAttributesCarrier_Set_FieldT(t *testing.T) {
 	attrs := make(map[string]*sqs.MessageAttributeValue)
 	c := instaawssdk.SQSMessageAttributesCarrier(attrs)
