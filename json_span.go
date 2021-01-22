@@ -49,6 +49,8 @@ const (
 	AWSSQSSpanType = RegisteredSpanType("sqs")
 	// AWS SNS client span
 	AWSSNSSpanType = RegisteredSpanType("sns")
+	// AWS DynamoDB client span
+	AWSDynamoDBSpanType = RegisteredSpanType("dynamodb")
 )
 
 // RegisteredSpanType represents the span type supported by Instana
@@ -75,6 +77,8 @@ func (st RegisteredSpanType) ExtractData(span *spanS) typedSpanData {
 		return NewAWSSQSSpanData(span)
 	case AWSSNSSpanType:
 		return NewAWSSNSSpanData(span)
+	case AWSDynamoDBSpanType:
+		return NewAWSDynamoDBSpanData(span)
 	default:
 		return NewSDKSpanData(span)
 	}
@@ -1101,6 +1105,54 @@ func NewAWSSNSSpanTags(span *spanS) AWSSNSSpanTags {
 		case "sns.subject":
 			readStringTag(&tags.Subject, v)
 		case "sns.error":
+			readStringTag(&tags.Error, v)
+		}
+	}
+
+	return tags
+}
+
+// AWSDynamoDBSpanData represents the `data` section of a AWS DynamoDB span sent within an OT span document
+type AWSDynamoDBSpanData struct {
+	SpanData
+	Tags AWSDynamoDBSpanTags `json:"sns"`
+}
+
+// NewAWSDynamoDBSpanData initializes a new AWS DynamoDB span data from tracer span
+func NewAWSDynamoDBSpanData(span *spanS) AWSDynamoDBSpanData {
+	data := AWSDynamoDBSpanData{
+		SpanData: NewSpanData(span, AWSDynamoDBSpanType),
+		Tags:     NewAWSDynamoDBSpanTags(span),
+	}
+
+	return data
+}
+
+// Kind returns the span kind for a AWS DynamoDB span
+func (d AWSDynamoDBSpanData) Kind() SpanKind {
+	return ExitSpanKind
+}
+
+// AWSDynamoDBSpanTags contains fields within the `data.sns` section of an OT span document
+type AWSDynamoDBSpanTags struct {
+	// Table is the name of DynamoDB table
+	Table string `json:"table,omitempty"`
+	// Operation is the operation name
+	Operation string `json:"op,omitempty"`
+	// Error is an optional name returned by AWS API
+	Error string `json:"error,omitempty"`
+}
+
+// NewAWSDynamoDBSpanTags extracts AWS DynamoDB span tags from a tracer span
+func NewAWSDynamoDBSpanTags(span *spanS) AWSDynamoDBSpanTags {
+	var tags AWSDynamoDBSpanTags
+	for k, v := range span.Tags {
+		switch k {
+		case "dynamodb.table":
+			readStringTag(&tags.Table, v)
+		case "dynamodb.op":
+			readStringTag(&tags.Operation, v)
+		case "dynamodb.error":
 			readStringTag(&tags.Error, v)
 		}
 	}
