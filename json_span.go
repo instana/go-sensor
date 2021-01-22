@@ -47,6 +47,8 @@ const (
 	AWSS3SpanType = RegisteredSpanType("s3")
 	// AWS SQS client span
 	AWSSQSSpanType = RegisteredSpanType("sqs")
+	// AWS SNS client span
+	AWSSNSSpanType = RegisteredSpanType("sns")
 )
 
 // RegisteredSpanType represents the span type supported by Instana
@@ -71,6 +73,8 @@ func (st RegisteredSpanType) ExtractData(span *spanS) typedSpanData {
 		return NewAWSS3SpanData(span)
 	case AWSSQSSpanType:
 		return NewAWSSQSSpanData(span)
+	case AWSSNSSpanType:
+		return NewAWSSNSSpanData(span)
 	default:
 		return NewSDKSpanData(span)
 	}
@@ -1041,6 +1045,62 @@ func NewAWSSQSSpanTags(span *spanS) AWSSQSSpanTags {
 		case "sqs.size":
 			readIntTag(&tags.Size, v)
 		case "sqs.error":
+			readStringTag(&tags.Error, v)
+		}
+	}
+
+	return tags
+}
+
+// AWSSNSSpanData represents the `data` section of a AWS SNS span sent within an OT span document
+type AWSSNSSpanData struct {
+	SpanData
+	Tags AWSSNSSpanTags `json:"sns"`
+}
+
+// NewAWSSNSSpanData initializes a new AWS SNS span data from tracer span
+func NewAWSSNSSpanData(span *spanS) AWSSNSSpanData {
+	data := AWSSNSSpanData{
+		SpanData: NewSpanData(span, AWSSNSSpanType),
+		Tags:     NewAWSSNSSpanTags(span),
+	}
+
+	return data
+}
+
+// Kind returns the span kind for a AWS SNS span
+func (d AWSSNSSpanData) Kind() SpanKind {
+	return ExitSpanKind
+}
+
+// AWSSNSSpanTags contains fields within the `data.sns` section of an OT span document
+type AWSSNSSpanTags struct {
+	// TopicARN is the topic ARN of an SNS message
+	TopicARN string `json:"topic,omitempty"`
+	// TargetARN is the target ARN of an SNS message
+	TargetARN string `json:"target,omitempty"`
+	// Phone is the phone no. of an SNS message
+	Phone string `json:"phone,omitempty"`
+	// Subject is the subject of an SNS message
+	Subject string `json:"subject,omitempty"`
+	// Error is an optional error returned by AWS API
+	Error string `json:"error,omitempty"`
+}
+
+// NewAWSSNSSpanTags extracts AWS SNS span tags from a tracer span
+func NewAWSSNSSpanTags(span *spanS) AWSSNSSpanTags {
+	var tags AWSSNSSpanTags
+	for k, v := range span.Tags {
+		switch k {
+		case "sns.topic":
+			readStringTag(&tags.TopicARN, v)
+		case "sns.target":
+			readStringTag(&tags.TargetARN, v)
+		case "sns.phone":
+			readStringTag(&tags.Phone, v)
+		case "sns.subject":
+			readStringTag(&tags.Subject, v)
+		case "sns.error":
 			readStringTag(&tags.Error, v)
 		}
 	}
