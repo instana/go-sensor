@@ -1,6 +1,7 @@
 MIT License
 
-Copyright (c) 2016 Instana
+Copyright (c) 2021 IBM Corp.
+Copyright (c) 2016 Instana, Inc. https://www.instana.com/
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
