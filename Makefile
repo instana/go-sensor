@@ -45,4 +45,7 @@ $(VENDOR_GO):
 	go get golang.org/dl/$(VENDOR_GO_VERSION)
 	$(VENDOR_GO) download
 
+install:
+	cd .git/hooks && ln -fs ../../.githooks/* .
+
 .PHONY: test vendor $(MODULES) $(INTEGRATION_TESTS)
