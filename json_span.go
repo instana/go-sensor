@@ -43,6 +43,14 @@ const (
 	GCPPubSubSpanType = RegisteredSpanType("gcps")
 	// AWS Lambda entry span
 	AWSLambdaEntrySpanType = RegisteredSpanType("aws.lambda.entry")
+	// AWS S3 client span
+	AWSS3SpanType = RegisteredSpanType("s3")
+	// AWS SQS client span
+	AWSSQSSpanType = RegisteredSpanType("sqs")
+	// AWS SNS client span
+	AWSSNSSpanType = RegisteredSpanType("sns")
+	// AWS DynamoDB client span
+	AWSDynamoDBSpanType = RegisteredSpanType("dynamodb")
 )
 
 // RegisteredSpanType represents the span type supported by Instana
@@ -63,6 +71,14 @@ func (st RegisteredSpanType) ExtractData(span *spanS) typedSpanData {
 		return NewGCPPubSubSpanData(span)
 	case AWSLambdaEntrySpanType:
 		return NewAWSLambdaSpanData(span)
+	case AWSS3SpanType:
+		return NewAWSS3SpanData(span)
+	case AWSSQSSpanType:
+		return NewAWSSQSSpanData(span)
+	case AWSSNSSpanType:
+		return NewAWSSNSSpanData(span)
+	case AWSDynamoDBSpanType:
+		return NewAWSDynamoDBSpanData(span)
 	default:
 		return NewSDKSpanData(span)
 	}
@@ -915,6 +931,233 @@ func (d AWSLambdaSpanData) Type() RegisteredSpanType {
 // Kind returns the span kind for an AWS Lambda span
 func (d AWSLambdaSpanData) Kind() SpanKind {
 	return EntrySpanKind
+}
+
+// AWSS3SpanData represents the `data` section of a AWS S3 span sent within an OT span document
+type AWSS3SpanData struct {
+	SpanData
+	Tags AWSS3SpanTags `json:"s3"`
+}
+
+// NewAWSS3SpanData initializes a new AWS S3 span data from tracer span
+func NewAWSS3SpanData(span *spanS) AWSS3SpanData {
+	data := AWSS3SpanData{
+		SpanData: NewSpanData(span, AWSS3SpanType),
+		Tags:     NewAWSS3SpanTags(span),
+	}
+
+	return data
+}
+
+// Kind returns the span kind for a AWS S3 span
+func (d AWSS3SpanData) Kind() SpanKind {
+	return ExitSpanKind
+}
+
+// AWSS3SpanTags contains fields within the `data.s3` section of an OT span document
+type AWSS3SpanTags struct {
+	// Region is the AWS region used to access S3
+	Region string `json:"region,omitempty"`
+	// Operation is the operation name, as defined by AWS S3 API
+	Operation string `json:"op,omitempty"`
+	// Bucket is the bucket name
+	Bucket string `json:"bucket,omitempty"`
+	// Key is the object key
+	Key string `json:"key,omitempty"`
+	// Error is an optional error returned by AWS API
+	Error string `json:"error,omitempty"`
+}
+
+// NewAWSS3SpanTags extracts AWS S3 span tags from a tracer span
+func NewAWSS3SpanTags(span *spanS) AWSS3SpanTags {
+	var tags AWSS3SpanTags
+	for k, v := range span.Tags {
+		switch k {
+		case "s3.region":
+			readStringTag(&tags.Region, v)
+		case "s3.op":
+			readStringTag(&tags.Operation, v)
+		case "s3.bucket":
+			readStringTag(&tags.Bucket, v)
+		case "s3.key":
+			readStringTag(&tags.Key, v)
+		case "s3.error":
+			readStringTag(&tags.Error, v)
+		}
+	}
+
+	return tags
+}
+
+// AWSSQSSpanData represents the `data` section of a AWS SQS span sent within an OT span document
+type AWSSQSSpanData struct {
+	SpanData
+	Tags AWSSQSSpanTags `json:"sqs"`
+}
+
+// NewAWSSQSSpanData initializes a new AWS SQS span data from tracer span
+func NewAWSSQSSpanData(span *spanS) AWSSQSSpanData {
+	data := AWSSQSSpanData{
+		SpanData: NewSpanData(span, AWSSQSSpanType),
+		Tags:     NewAWSSQSSpanTags(span),
+	}
+
+	return data
+}
+
+// Kind returns the span kind for a AWS SQS span
+func (d AWSSQSSpanData) Kind() SpanKind {
+	switch d.Tags.Sort {
+	case "entry":
+		return EntrySpanKind
+	case "exit":
+		return ExitSpanKind
+	default:
+		return IntermediateSpanKind
+	}
+}
+
+// AWSSQSSpanTags contains fields within the `data.sqs` section of an OT span document
+type AWSSQSSpanTags struct {
+	// Sort is the direction of the call, wither "entry" or "exit"
+	Sort string `json:"sort,omitempty"`
+	// Queue is the queue name
+	Queue string `json:"queue,omitempty"`
+	// Type is the operation name
+	Type string `json:"type,omitempty"`
+	// MessageGroupID is the message group ID specified while sending messages
+	MessageGroupID string `json:"group,omitempty"`
+	// Size is the optional batch size
+	Size int `json:"size,omitempty"`
+	// Error is an optional error returned by AWS API
+	Error string `json:"error,omitempty"`
+}
+
+// NewAWSSQSSpanTags extracts AWS SQS span tags from a tracer span
+func NewAWSSQSSpanTags(span *spanS) AWSSQSSpanTags {
+	var tags AWSSQSSpanTags
+	for k, v := range span.Tags {
+		switch k {
+		case "sqs.sort":
+			readStringTag(&tags.Sort, v)
+		case "sqs.queue":
+			readStringTag(&tags.Queue, v)
+		case "sqs.type":
+			readStringTag(&tags.Type, v)
+		case "sqs.group":
+			readStringTag(&tags.MessageGroupID, v)
+		case "sqs.size":
+			readIntTag(&tags.Size, v)
+		case "sqs.error":
+			readStringTag(&tags.Error, v)
+		}
+	}
+
+	return tags
+}
+
+// AWSSNSSpanData represents the `data` section of a AWS SNS span sent within an OT span document
+type AWSSNSSpanData struct {
+	SpanData
+	Tags AWSSNSSpanTags `json:"sns"`
+}
+
+// NewAWSSNSSpanData initializes a new AWS SNS span data from tracer span
+func NewAWSSNSSpanData(span *spanS) AWSSNSSpanData {
+	data := AWSSNSSpanData{
+		SpanData: NewSpanData(span, AWSSNSSpanType),
+		Tags:     NewAWSSNSSpanTags(span),
+	}
+
+	return data
+}
+
+// Kind returns the span kind for a AWS SNS span
+func (d AWSSNSSpanData) Kind() SpanKind {
+	return ExitSpanKind
+}
+
+// AWSSNSSpanTags contains fields within the `data.sns` section of an OT span document
+type AWSSNSSpanTags struct {
+	// TopicARN is the topic ARN of an SNS message
+	TopicARN string `json:"topic,omitempty"`
+	// TargetARN is the target ARN of an SNS message
+	TargetARN string `json:"target,omitempty"`
+	// Phone is the phone no. of an SNS message
+	Phone string `json:"phone,omitempty"`
+	// Subject is the subject of an SNS message
+	Subject string `json:"subject,omitempty"`
+	// Error is an optional error returned by AWS API
+	Error string `json:"error,omitempty"`
+}
+
+// NewAWSSNSSpanTags extracts AWS SNS span tags from a tracer span
+func NewAWSSNSSpanTags(span *spanS) AWSSNSSpanTags {
+	var tags AWSSNSSpanTags
+	for k, v := range span.Tags {
+		switch k {
+		case "sns.topic":
+			readStringTag(&tags.TopicARN, v)
+		case "sns.target":
+			readStringTag(&tags.TargetARN, v)
+		case "sns.phone":
+			readStringTag(&tags.Phone, v)
+		case "sns.subject":
+			readStringTag(&tags.Subject, v)
+		case "sns.error":
+			readStringTag(&tags.Error, v)
+		}
+	}
+
+	return tags
+}
+
+// AWSDynamoDBSpanData represents the `data` section of a AWS DynamoDB span sent within an OT span document
+type AWSDynamoDBSpanData struct {
+	SpanData
+	Tags AWSDynamoDBSpanTags `json:"sns"`
+}
+
+// NewAWSDynamoDBSpanData initializes a new AWS DynamoDB span data from tracer span
+func NewAWSDynamoDBSpanData(span *spanS) AWSDynamoDBSpanData {
+	data := AWSDynamoDBSpanData{
+		SpanData: NewSpanData(span, AWSDynamoDBSpanType),
+		Tags:     NewAWSDynamoDBSpanTags(span),
+	}
+
+	return data
+}
+
+// Kind returns the span kind for a AWS DynamoDB span
+func (d AWSDynamoDBSpanData) Kind() SpanKind {
+	return ExitSpanKind
+}
+
+// AWSDynamoDBSpanTags contains fields within the `data.sns` section of an OT span document
+type AWSDynamoDBSpanTags struct {
+	// Table is the name of DynamoDB table
+	Table string `json:"table,omitempty"`
+	// Operation is the operation name
+	Operation string `json:"op,omitempty"`
+	// Error is an optional name returned by AWS API
+	Error string `json:"error,omitempty"`
+}
+
+// NewAWSDynamoDBSpanTags extracts AWS DynamoDB span tags from a tracer span
+func NewAWSDynamoDBSpanTags(span *spanS) AWSDynamoDBSpanTags {
+	var tags AWSDynamoDBSpanTags
+	for k, v := range span.Tags {
+		switch k {
+		case "dynamodb.table":
+			readStringTag(&tags.Table, v)
+		case "dynamodb.op":
+			readStringTag(&tags.Operation, v)
+		case "dynamodb.error":
+			readStringTag(&tags.Error, v)
+		}
+	}
+
+	return tags
 }
 
 // readStringTag populates the &dst with the tag value if it's of either string or []byte type

@@ -42,6 +42,22 @@ func TestRegisteredSpanType_ExtractData(t *testing.T) {
 			Operation: "aws.lambda.entry",
 			Expected:  instana.AWSLambdaSpanData{},
 		},
+		"aws s3": {
+			Operation: "s3",
+			Expected:  instana.AWSS3SpanData{},
+		},
+		"aws sqs": {
+			Operation: "sqs",
+			Expected:  instana.AWSSQSSpanData{},
+		},
+		"aws sns": {
+			Operation: "sns",
+			Expected:  instana.AWSSNSSpanData{},
+		},
+		"aws dynamodb": {
+			Operation: "dynamodb",
+			Expected:  instana.AWSDynamoDBSpanData{},
+		},
 	}
 
 	for name, example := range examples {
