@@ -1,3 +1,6 @@
+// (c) Copyright IBM Corp. 2021
+// (c) Copyright Instana Inc. 2020
+
 package process
 
 // MemStats represents memory stats for a process

@@ -1,0 +1,18 @@
+#!/bin/sh
+
+STATUS=0
+
+if git rev-parse --verify HEAD >/dev/null 2>&1; then
+    against=HEAD
+else
+    against=$(git hash-object -t tree /dev/null)
+fi
+
+for f in $(git diff --cached --name-only $against | grep '\.\(go\|sh\)$'); do
+    if ! head -n4 "$f" | grep -q "Copyright (c) IBM Corp\."; then
+        echo "Missing copyright header in $f"
+        STATUS=1
+    fi
+done
+
+exit $STATUS

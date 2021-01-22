@@ -1,3 +1,6 @@
+// (c) Copyright IBM Corp. 2021
+// (c) Copyright Instana Inc. 2020
+
 // Package instalambda provides Instana tracing instrumentation for
 // AWS Lambda functions
 package instalambda

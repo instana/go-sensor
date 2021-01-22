@@ -1,3 +1,6 @@
+// (c) Copyright IBM Corp. 2021
+// (c) Copyright Instana Inc. 2020
+
 package acceptor
 
 // GCRServiceRevisionInstanceData is a representation of a Google Cloud Run service revision instance

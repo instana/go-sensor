@@ -1,3 +1,6 @@
+// (c) Copyright IBM Corp. 2021
+// (c) Copyright Instana Inc. 2020
+
 package w3ctrace
 
 // Flags contains the trace flags as defined by https://www.w3.org/TR/trace-context/#trace-flags
