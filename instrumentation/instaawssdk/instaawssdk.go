@@ -12,6 +12,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/sqs"
 	instana "github.com/instana/go-sensor"
@@ -28,6 +29,8 @@ func InstrumentSession(sess *session.Session, sensor *instana.Sensor) {
 			StartS3Span(req, sensor)
 		case sqs.ServiceName:
 			StartSQSSpan(req, sensor)
+		case dynamodb.ServiceName:
+			StartDynamoDBSpan(req, sensor)
 		}
 	})
 
@@ -51,6 +54,8 @@ func InstrumentSession(sess *session.Session, sensor *instana.Sensor) {
 					sp.Finish()
 				}
 			}
+		case dynamodb.ServiceName:
+			FinalizeDynamoDBSpan(req)
 		}
 	})
 }
