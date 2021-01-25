@@ -16,6 +16,7 @@ import (
 	"github.com/instana/go-sensor/instrumentation/instaawssdk"
 	"github.com/instana/testify/assert"
 	"github.com/instana/testify/require"
+	"github.com/opentracing/opentracing-go"
 )
 
 func TestStartDynamoDBSpan(t *testing.T) {
@@ -51,7 +52,37 @@ func TestStartDynamoDBSpan(t *testing.T) {
 	assert.Empty(t, dbSpan.Ec)
 
 	assert.IsType(t, instana.AWSDynamoDBSpanData{}, dbSpan.Data)
+	data := dbSpan.Data.(instana.AWSDynamoDBSpanData)
 
+	assert.Equal(t, instana.AWSDynamoDBSpanTags{
+		Operation: "get",
+		Table:     "test-table",
+	}, data.Tags)
+}
+
+func TestStartDynamoDBSpan_NonInstrumentedMethod(t *testing.T) {
+	recorder := instana.NewTestRecorder()
+	sensor := instana.NewSensorWithTracer(
+		instana.NewTracerWithEverything(instana.DefaultOptions(), recorder),
+	)
+
+	parentSp := sensor.Tracer().StartSpan("testing")
+
+	svc := dynamodb.New(unit.Session)
+	req, _ := svc.ListBackupsRequest(&dynamodb.ListBackupsInput{})
+	req.SetContext(instana.ContextWithSpan(req.Context(), parentSp))
+
+	instaawssdk.StartDynamoDBSpan(req, sensor)
+
+	sp, ok := instana.SpanFromContext(req.Context())
+	require.True(t, ok)
+
+	assert.Equal(t, parentSp, sp)
+
+	parentSp.Finish()
+
+	spans := recorder.GetQueuedSpans()
+	require.Len(t, spans, 1)
 }
 
 func TestStartDynamoDBSpan_NoActiveSpan(t *testing.T) {
@@ -73,7 +104,10 @@ func TestFinalizeDynamoDB_NoError(t *testing.T) {
 		instana.NewTracerWithEverything(instana.DefaultOptions(), recorder),
 	)
 
-	sp := sensor.Tracer().StartSpan("dynamodb")
+	sp := sensor.Tracer().StartSpan("dynamodb", opentracing.Tags{
+		"dynamodb.op":    "get",
+		"dynamodb.table": "test-table",
+	})
 
 	req := newDynamoDBRequest()
 	req.SetContext(instana.ContextWithSpan(req.Context(), sp))
@@ -86,6 +120,12 @@ func TestFinalizeDynamoDB_NoError(t *testing.T) {
 	dbSpan := spans[0]
 
 	assert.IsType(t, instana.AWSDynamoDBSpanData{}, dbSpan.Data)
+	data := dbSpan.Data.(instana.AWSDynamoDBSpanData)
+
+	assert.Equal(t, instana.AWSDynamoDBSpanTags{
+		Operation: "get",
+		Table:     "test-table",
+	}, data.Tags)
 }
 
 func TestFinalizeDynamoDBSpan_WithError(t *testing.T) {
@@ -94,7 +134,10 @@ func TestFinalizeDynamoDBSpan_WithError(t *testing.T) {
 		instana.NewTracerWithEverything(instana.DefaultOptions(), recorder),
 	)
 
-	sp := sensor.Tracer().StartSpan("dynamodb")
+	sp := sensor.Tracer().StartSpan("dynamodb", opentracing.Tags{
+		"dynamodb.op":    "get",
+		"dynamodb.table": "test-table",
+	})
 
 	req := newDynamoDBRequest()
 	req.Error = awserr.New("42", "test error", errors.New("an error occurred"))
@@ -111,7 +154,9 @@ func TestFinalizeDynamoDBSpan_WithError(t *testing.T) {
 	data := dbSpan.Data.(instana.AWSDynamoDBSpanData)
 
 	assert.Equal(t, instana.AWSDynamoDBSpanTags{
-		Error: req.Error.Error(),
+		Operation: "get",
+		Table:     "test-table",
+		Error:     req.Error.Error(),
 	}, data.Tags)
 }
 
