@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/sns"
 	"github.com/aws/aws-sdk-go/service/sqs"
 	instana "github.com/instana/go-sensor"
 	"github.com/opentracing/opentracing-go"
@@ -38,74 +39,114 @@ func SpanContextFromSQSMessage(msg *sqs.Message, sensor *instana.Sensor) (opentr
 	return spanContext, true
 }
 
-// SQSMessageAttributesCarrier is a trace context carrier that propagates Instana
-// OpenTracing headers via AWS SQS messages. It satisfies both opentracing.TextMapReader
-// and opentracing.TextMapWriter and thus can be used for context propagation using an
-// OpenTracing tracer.
-type SQSMessageAttributesCarrier map[string]*sqs.MessageAttributeValue
-
-// Set implements opentracing.TextMapWriter for SQSMessageAttributesCarrier
-func (c SQSMessageAttributesCarrier) Set(key, val string) {
-	switch strings.ToLower(key) {
-	case instana.FieldT:
-		if _, ok := c[legacyFieldT]; ok {
-			delete(c, legacyFieldT)
-		}
-
-		c[FieldT] = &sqs.MessageAttributeValue{
-			DataType:    aws.String("String"),
-			StringValue: aws.String(val),
-		}
-	case instana.FieldS:
-		if _, ok := c[legacyFieldS]; ok {
-			delete(c, legacyFieldS)
-		}
-
-		c[FieldS] = &sqs.MessageAttributeValue{
-			DataType:    aws.String("String"),
-			StringValue: aws.String(val),
-		}
-	case instana.FieldL:
-		if _, ok := c[legacyFieldL]; ok {
-			delete(c, legacyFieldL)
-		}
-
-		c[FieldL] = &sqs.MessageAttributeValue{
-			DataType:    aws.String("String"),
-			StringValue: aws.String(val),
-		}
+// SQSMessageAttributesCarrier creates a new trace context carrier suitable for (opentracing.Tracer).Inject()
+// that uses SQS message attributes as a storage
+func SQSMessageAttributesCarrier(attrs map[string]*sqs.MessageAttributeValue) messageAttributesCarrier {
+	return messageAttributesCarrier{
+		Attrs: sqsMessageAttributes(attrs),
 	}
 }
 
-// ForeachKey implements opentracing.TextMapReader for SQSMessageAttributesCarrier
-func (c SQSMessageAttributesCarrier) ForeachKey(handler func(key, val string) error) error {
-	if len(c) == 0 {
-		return nil
+// SNSMessageAttributesCarrier creates a new trace context carrier suitable for (opentracing.Tracer).Inject()
+// that uses SNS message attributes as a storage
+func SNSMessageAttributesCarrier(attrs map[string]*sns.MessageAttributeValue) messageAttributesCarrier {
+	return messageAttributesCarrier{
+		Attrs: snsMessageAttributes(attrs),
+	}
+}
+
+type messageAttributesCarrier struct {
+	Attrs interface {
+		Get(string, string) (string, bool)
+		Set(string, string)
+		Del(string)
+	}
+}
+
+func (c messageAttributesCarrier) Set(key, val string) {
+	switch strings.ToLower(key) {
+	case instana.FieldT:
+		c.Attrs.Del(legacyFieldT)
+		c.Attrs.Set(FieldT, val)
+	case instana.FieldS:
+		c.Attrs.Del(legacyFieldS)
+		c.Attrs.Set(FieldS, val)
+	case instana.FieldL:
+		c.Attrs.Del(legacyFieldL)
+		c.Attrs.Set(FieldL, val)
+	}
+}
+
+func (c messageAttributesCarrier) ForeachKey(handler func(key, val string) error) error {
+	if v, ok := c.Attrs.Get(FieldT, legacyFieldT); ok {
+		handler(instana.FieldT, v)
 	}
 
-	if v, ok := c.getAttributeWithFallback(FieldT, legacyFieldT); ok {
-		handler(instana.FieldT, aws.StringValue(v.StringValue))
+	if v, ok := c.Attrs.Get(FieldS, legacyFieldS); ok {
+		handler(instana.FieldS, v)
 	}
 
-	if v, ok := c.getAttributeWithFallback(FieldS, legacyFieldS); ok {
-		handler(instana.FieldS, aws.StringValue(v.StringValue))
-	}
-
-	if v, ok := c.getAttributeWithFallback(FieldL, legacyFieldL); ok {
-		handler(instana.FieldL, aws.StringValue(v.StringValue))
+	if v, ok := c.Attrs.Get(FieldL, legacyFieldL); ok {
+		handler(instana.FieldL, v)
 	}
 
 	return nil
 }
 
-func (c SQSMessageAttributesCarrier) getAttributeWithFallback(key, fallbackKey string) (*sqs.MessageAttributeValue, bool) {
-	if v, ok := c[key]; ok {
-		return v, ok
+type sqsMessageAttributes map[string]*sqs.MessageAttributeValue
+
+func (attrs sqsMessageAttributes) Get(key, fallbackKey string) (string, bool) {
+	if v, ok := attrs[key]; ok {
+		return aws.StringValue(v.StringValue), ok
 	}
 
-	if v, ok := c[fallbackKey]; ok {
-		return v, ok
+	if fallbackKey == "" {
+		return "", false
 	}
 
-	return nil, false
+	if v, ok := attrs[fallbackKey]; ok {
+		return aws.StringValue(v.StringValue), ok
+	}
+
+	return "", false
+}
+
+func (attrs sqsMessageAttributes) Set(key, val string) {
+	attrs[key] = &sqs.MessageAttributeValue{
+		DataType:    aws.String("String"),
+		StringValue: aws.String(val),
+	}
+}
+
+func (attrs sqsMessageAttributes) Del(key string) {
+	delete(attrs, key)
+}
+
+type snsMessageAttributes map[string]*sns.MessageAttributeValue
+
+func (attrs snsMessageAttributes) Get(key, fallbackKey string) (string, bool) {
+	if v, ok := attrs[key]; ok {
+		return aws.StringValue(v.StringValue), ok
+	}
+
+	if fallbackKey == "" {
+		return "", false
+	}
+
+	if v, ok := attrs[fallbackKey]; ok {
+		return aws.StringValue(v.StringValue), ok
+	}
+
+	return "", false
+}
+
+func (attrs snsMessageAttributes) Set(key, val string) {
+	attrs[key] = &sns.MessageAttributeValue{
+		DataType:    aws.String("String"),
+		StringValue: aws.String(val),
+	}
+}
+
+func (attrs snsMessageAttributes) Del(key string) {
+	delete(attrs, key)
 }
