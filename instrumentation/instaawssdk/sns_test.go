@@ -16,6 +16,7 @@ import (
 	"github.com/instana/go-sensor/instrumentation/instaawssdk"
 	"github.com/instana/testify/assert"
 	"github.com/instana/testify/require"
+	"github.com/opentracing/opentracing-go"
 )
 
 func TestStartSNSSpan_WithActiveSpan(t *testing.T) {
@@ -51,6 +52,14 @@ func TestStartSNSSpan_WithActiveSpan(t *testing.T) {
 	assert.Empty(t, snsSpan.Ec)
 
 	assert.IsType(t, instana.AWSSNSSpanData{}, snsSpan.Data)
+	data := snsSpan.Data.(instana.AWSSNSSpanData)
+
+	assert.Equal(t, instana.AWSSNSSpanTags{
+		TopicARN:  "test-topic-arn",
+		TargetARN: "test-target-arn",
+		Phone:     "test-phone-no",
+		Subject:   "test-subject",
+	}, data.Tags)
 }
 
 func TestStartSNSSpan_NoActiveSpan(t *testing.T) {
@@ -72,7 +81,12 @@ func TestFinalizeSNS_NoError(t *testing.T) {
 		instana.NewTracerWithEverything(instana.DefaultOptions(), recorder),
 	)
 
-	sp := sensor.Tracer().StartSpan("sns")
+	sp := sensor.Tracer().StartSpan("sns", opentracing.Tags{
+		"sns.topic":   "test-topic-arn",
+		"sns.target":  "test-target-arn",
+		"sns.phone":   "test-phone-no",
+		"sns.subject": "test-subject",
+	})
 
 	req := newSNSRequest()
 	req.SetContext(instana.ContextWithSpan(req.Context(), sp))
@@ -85,6 +99,14 @@ func TestFinalizeSNS_NoError(t *testing.T) {
 	snsSpan := spans[0]
 
 	assert.IsType(t, instana.AWSSNSSpanData{}, snsSpan.Data)
+	data := snsSpan.Data.(instana.AWSSNSSpanData)
+
+	assert.Equal(t, instana.AWSSNSSpanTags{
+		TopicARN:  "test-topic-arn",
+		TargetARN: "test-target-arn",
+		Phone:     "test-phone-no",
+		Subject:   "test-subject",
+	}, data.Tags)
 }
 
 func TestFinalizeSNSSpan_WithError(t *testing.T) {
@@ -93,7 +115,12 @@ func TestFinalizeSNSSpan_WithError(t *testing.T) {
 		instana.NewTracerWithEverything(instana.DefaultOptions(), recorder),
 	)
 
-	sp := sensor.Tracer().StartSpan("sns")
+	sp := sensor.Tracer().StartSpan("sns", opentracing.Tags{
+		"sns.topic":   "test-topic-arn",
+		"sns.target":  "test-target-arn",
+		"sns.phone":   "test-phone-no",
+		"sns.subject": "test-subject",
+	})
 
 	req := newSNSRequest()
 	req.Error = awserr.New("42", "test error", errors.New("an error occurred"))
@@ -110,7 +137,11 @@ func TestFinalizeSNSSpan_WithError(t *testing.T) {
 	data := snsSpan.Data.(instana.AWSSNSSpanData)
 
 	assert.Equal(t, instana.AWSSNSSpanTags{
-		Error: req.Error.Error(),
+		TopicARN:  "test-topic-arn",
+		TargetARN: "test-target-arn",
+		Phone:     "test-phone-no",
+		Subject:   "test-subject",
+		Error:     req.Error.Error(),
 	}, data.Tags)
 }
 

@@ -14,6 +14,15 @@ import (
 // StartSNSSpan initiates a new span from an AWS SNS request and injects it into the
 // request.Request context
 func StartSNSSpan(req *request.Request, sensor *instana.Sensor) {
+	tags, err := extractSNSTags(req)
+	if err != nil {
+		if err == errMethodNotInstrumented {
+			return
+		}
+
+		sensor.Logger().Warn("failed to extract SNS tags: ", err)
+	}
+
 	parent, ok := instana.SpanFromContext(req.Context())
 	if !ok {
 		return
@@ -22,6 +31,7 @@ func StartSNSSpan(req *request.Request, sensor *instana.Sensor) {
 	sp := sensor.Tracer().StartSpan("sns",
 		ext.SpanKindRPCClient,
 		opentracing.ChildOf(parent.Context()),
+		tags,
 	)
 
 	req.SetContext(instana.ContextWithSpan(req.Context(), sp))
