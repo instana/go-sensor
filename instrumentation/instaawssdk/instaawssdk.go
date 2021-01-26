@@ -14,8 +14,10 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/aws/aws-sdk-go/service/sns"
 	"github.com/aws/aws-sdk-go/service/sqs"
 	instana "github.com/instana/go-sensor"
+	"github.com/opentracing/opentracing-go"
 )
 
 var errMethodNotInstrumented = errors.New("method not instrumented")
@@ -58,4 +60,41 @@ func InstrumentSession(sess *session.Session, sensor *instana.Sensor) {
 			FinalizeDynamoDBSpan(req)
 		}
 	})
+}
+
+func injectTraceContext(sp opentracing.Span, req *request.Request) {
+	switch params := req.Params.(type) {
+	case *sqs.SendMessageInput:
+		if params.MessageAttributes == nil {
+			params.MessageAttributes = make(map[string]*sqs.MessageAttributeValue)
+		}
+
+		sp.Tracer().Inject(
+			sp.Context(),
+			opentracing.TextMap,
+			SQSMessageAttributesCarrier(params.MessageAttributes),
+		)
+	case *sqs.SendMessageBatchInput:
+		for i := range params.Entries {
+			if params.Entries[i].MessageAttributes == nil {
+				params.Entries[i].MessageAttributes = make(map[string]*sqs.MessageAttributeValue)
+			}
+
+			sp.Tracer().Inject(
+				sp.Context(),
+				opentracing.TextMap,
+				SQSMessageAttributesCarrier(params.Entries[i].MessageAttributes),
+			)
+		}
+	case *sns.PublishInput:
+		if params.MessageAttributes == nil {
+			params.MessageAttributes = make(map[string]*sns.MessageAttributeValue)
+		}
+
+		sp.Tracer().Inject(
+			sp.Context(),
+			opentracing.TextMap,
+			SNSMessageAttributesCarrier(params.MessageAttributes),
+		)
+	}
 }

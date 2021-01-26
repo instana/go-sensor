@@ -118,30 +118,3 @@ func startSQSExitSpan(op string, req *request.Request, sensor *instana.Sensor) {
 	req.SetContext(instana.ContextWithSpan(req.Context(), sp))
 	injectTraceContext(sp, req)
 }
-
-func injectTraceContext(sp opentracing.Span, req *request.Request) {
-	switch params := req.Params.(type) {
-	case *sqs.SendMessageInput:
-		if params.MessageAttributes == nil {
-			params.MessageAttributes = make(map[string]*sqs.MessageAttributeValue)
-		}
-
-		sp.Tracer().Inject(
-			sp.Context(),
-			opentracing.TextMap,
-			SQSMessageAttributesCarrier(params.MessageAttributes),
-		)
-	case *sqs.SendMessageBatchInput:
-		for i := range params.Entries {
-			if params.Entries[i].MessageAttributes == nil {
-				params.Entries[i].MessageAttributes = make(map[string]*sqs.MessageAttributeValue)
-			}
-
-			sp.Tracer().Inject(
-				sp.Context(),
-				opentracing.TextMap,
-				SQSMessageAttributesCarrier(params.Entries[i].MessageAttributes),
-			)
-		}
-	}
-}

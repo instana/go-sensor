@@ -62,6 +62,78 @@ func TestStartSNSSpan_WithActiveSpan(t *testing.T) {
 	}, data.Tags)
 }
 
+func TestStartSNSSpan_NonInstrumentedMethod(t *testing.T) {
+	recorder := instana.NewTestRecorder()
+	sensor := instana.NewSensorWithTracer(
+		instana.NewTracerWithEverything(instana.DefaultOptions(), recorder),
+	)
+
+	parentSp := sensor.Tracer().StartSpan("testing")
+
+	svc := sns.New(unit.Session)
+	req, _ := svc.CheckIfPhoneNumberIsOptedOutRequest(&sns.CheckIfPhoneNumberIsOptedOutInput{
+		PhoneNumber: aws.String("test-phone-no"),
+	})
+	req.SetContext(instana.ContextWithSpan(req.Context(), parentSp))
+
+	instaawssdk.StartSNSSpan(req, sensor)
+
+	sp, ok := instana.SpanFromContext(req.Context())
+	assert.True(t, ok)
+	assert.Equal(t, parentSp, sp)
+
+	parentSp.Finish()
+
+	spans := recorder.GetQueuedSpans()
+	require.Len(t, spans, 1)
+}
+
+func TestStartSNSSpan_TraceContextPropagation_Single(t *testing.T) {
+	recorder := instana.NewTestRecorder()
+	sensor := instana.NewSensorWithTracer(
+		instana.NewTracerWithEverything(instana.DefaultOptions(), recorder),
+	)
+
+	svc := sns.New(unit.Session)
+
+	parentSp := sensor.Tracer().StartSpan("testing")
+
+	req, _ := svc.PublishRequest(&sns.PublishInput{
+		Message:     aws.String("message-1"),
+		PhoneNumber: aws.String("test-phone-no"),
+	})
+	req.SetContext(instana.ContextWithSpan(req.Context(), parentSp))
+
+	instaawssdk.StartSNSSpan(req, sensor)
+
+	sp, ok := instana.SpanFromContext(req.Context())
+	require.True(t, ok)
+
+	sp.Finish()
+	parentSp.Finish()
+
+	spans := recorder.GetQueuedSpans()
+	require.Len(t, spans, 2)
+
+	snsSpan := spans[0]
+
+	params := req.Params.(*sns.PublishInput)
+	assert.Equal(t, map[string]*sns.MessageAttributeValue{
+		instaawssdk.FieldT: {
+			DataType:    aws.String("String"),
+			StringValue: aws.String(instana.FormatID(snsSpan.TraceID)),
+		},
+		instaawssdk.FieldS: {
+			DataType:    aws.String("String"),
+			StringValue: aws.String(instana.FormatID(snsSpan.SpanID)),
+		},
+		instaawssdk.FieldL: {
+			DataType:    aws.String("String"),
+			StringValue: aws.String("1"),
+		},
+	}, params.MessageAttributes)
+}
+
 func TestStartSNSSpan_NoActiveSpan(t *testing.T) {
 	recorder := instana.NewTestRecorder()
 	sensor := instana.NewSensorWithTracer(
