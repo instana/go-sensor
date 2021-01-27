@@ -4,6 +4,8 @@
 package instaawssdk
 
 import (
+	"encoding/base64"
+	"encoding/json"
 	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -149,4 +151,41 @@ func (attrs snsMessageAttributes) Set(key, val string) {
 
 func (attrs snsMessageAttributes) Del(key string) {
 	delete(attrs, key)
+}
+
+func (attrs *snsMessageAttributes) UnmarshalJSON(data []byte) error {
+	var vs map[string]struct {
+		Type  string `json:"Type"`
+		Value string `json:"Value"`
+	}
+
+	if err := json.Unmarshal(data, &vs); err != nil {
+		return err
+	}
+
+	if *attrs == nil {
+		*attrs = make(snsMessageAttributes, len(vs))
+	}
+
+	for k, v := range vs {
+		switch strings.ToLower(v.Type) {
+		case "string":
+			(*attrs)[k] = &sns.MessageAttributeValue{
+				DataType:    aws.String("String"),
+				StringValue: aws.String(v.Value),
+			}
+		case "binary":
+			val, err := base64.StdEncoding.DecodeString(v.Value)
+			if err == nil {
+				(*attrs)[k] = &sns.MessageAttributeValue{
+					DataType:    aws.String("Binary"),
+					BinaryValue: val,
+				}
+			}
+		default:
+			// skip
+		}
+	}
+
+	return nil
 }

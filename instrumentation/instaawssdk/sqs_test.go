@@ -510,6 +510,22 @@ func TestTraceSQSMessage_WithTraceContext(t *testing.T) {
 				},
 			},
 		},
+		"sns notification": &sqs.Message{
+			Body: aws.String(`{
+  "Type" : "Notification",
+  "MessageId" : "id1",
+  "TopicArn" : "test-topic-arn",
+  "Subject" : "Test Message",
+  "Message" : "HI MOM!",
+  "Timestamp" : "2021-01-27T11:22:17.799Z",
+  "SignatureVersion" : "1",
+  "MessageAttributes" : {
+    "X_INSTANA_T" : {"Type":"String","Value":"00000000000000010000000000000002"},
+    "X_INSTANA_S" : {"Type":"String","Value":"0000000000000003"},
+    "X_INSTANA_L" : {"Type":"String","Value":"1"}
+  }
+}`),
+		},
 	}
 
 	for name, msg := range examples {

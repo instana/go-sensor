@@ -4,8 +4,11 @@
 package instaawssdk
 
 import (
+	"encoding/json"
+
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/request"
+	"github.com/aws/aws-sdk-go/service/sns"
 	"github.com/aws/aws-sdk-go/service/sqs"
 	instana "github.com/instana/go-sensor"
 	"github.com/opentracing/opentracing-go"
@@ -73,6 +76,25 @@ func TraceSQSMessage(msg *sqs.Message, sensor *instana.Sensor) opentracing.Span 
 
 	if spCtx, ok := SpanContextFromSQSMessage(msg, sensor); ok {
 		opts = append(opts, opentracing.ChildOf(spCtx))
+	} else {
+		body := aws.StringValue(msg.Body)
+
+		// In case the delivery has been created via a subscription to an SNS topic,
+		// the message body will be a JSON document containing the SNS notification
+		// along with message attributes.
+		var payload struct {
+			MessageAttributes snsMessageAttributes `json:"MessageAttributes"`
+		}
+
+		// try to unmarshal the message attributes and extract the trace context from there
+		if err := json.Unmarshal([]byte(body), &payload); err == nil {
+			if spCtx, err := sensor.Tracer().Extract(
+				opentracing.TextMap,
+				SNSMessageAttributesCarrier(map[string]*sns.MessageAttributeValue(payload.MessageAttributes)),
+			); err == nil {
+				opts = append(opts, opentracing.ChildOf(spCtx))
+			}
+		}
 	}
 
 	sp := sensor.Tracer().StartSpan("sqs", opts...)
