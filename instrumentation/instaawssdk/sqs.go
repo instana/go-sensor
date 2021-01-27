@@ -29,12 +29,29 @@ var sqsInstrumentedOps = map[string]string{
 // StartSQSSpan initiates a new span from an AWS SQS request and injects it into the
 // request.Request context
 func StartSQSSpan(req *request.Request, sensor *instana.Sensor) {
-	op, ok := sqsInstrumentedOps[req.Operation.Name]
+	tags, err := extractSQSTags(req)
+	if err != nil {
+		if err == errMethodNotInstrumented {
+			return
+		}
+
+		sensor.Logger().Warn("failed to extract SQS tags: ", err)
+	}
+
+	parent, ok := instana.SpanFromContext(req.Context())
 	if !ok {
 		return
 	}
 
-	startSQSExitSpan(op, req, sensor)
+	sp := sensor.Tracer().StartSpan("sqs",
+		ext.SpanKindProducer,
+		opentracing.ChildOf(parent.Context()),
+		opentracing.Tags{"sqs.sort": "exit"},
+		tags,
+	)
+
+	req.SetContext(instana.ContextWithSpan(req.Context(), sp))
+	injectTraceContext(sp, req)
 }
 
 // FinalizeSQSSpan retrieves tags from completed request.Request and adds them
@@ -110,33 +127,4 @@ func TraceSQSMessage(msg *sqs.Message, sensor *instana.Sensor) opentracing.Span 
 	)
 
 	return sp
-}
-
-func startSQSExitSpan(op string, req *request.Request, sensor *instana.Sensor) {
-	tags, err := extractSQSTags(req)
-	if err != nil {
-		if err == errMethodNotInstrumented {
-			return
-		}
-
-		sensor.Logger().Warn("failed to extract SQS tags: ", err)
-	}
-
-	parent, ok := instana.SpanFromContext(req.Context())
-	if !ok {
-		return
-	}
-
-	sp := sensor.Tracer().StartSpan("sqs",
-		ext.SpanKindProducer,
-		opentracing.ChildOf(parent.Context()),
-		opentracing.Tags{
-			"sqs.sort": "exit",
-			"sqs.type": op,
-		},
-		tags,
-	)
-
-	req.SetContext(instana.ContextWithSpan(req.Context(), sp))
-	injectTraceContext(sp, req)
 }

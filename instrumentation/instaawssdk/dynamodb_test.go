@@ -69,7 +69,7 @@ func TestStartDynamoDBSpan_NonInstrumentedMethod(t *testing.T) {
 	parentSp := sensor.Tracer().StartSpan("testing")
 
 	svc := dynamodb.New(unit.Session)
-	req, _ := svc.ListBackupsRequest(&dynamodb.ListBackupsInput{})
+	req, _ := svc.DescribeLimitsRequest(&dynamodb.DescribeLimitsInput{})
 	req.SetContext(instana.ContextWithSpan(req.Context(), parentSp))
 
 	instaawssdk.StartDynamoDBSpan(req, sensor)
