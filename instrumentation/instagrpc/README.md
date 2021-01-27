@@ -19,8 +19,8 @@ Usage
 
 For detailed usage example see [the documentation][godoc] or [`example_test.go`](./example_test.go).
 
-This instrumentation requires an `opentracing.Tracer` to initialize spans and handle the trace context propagation.
-You can create a new instance of Instana tracer using `instana.NewTracer()`.
+This instrumentation requires an `instana.Sensor` to initialize spans and handle the trace context propagation.
+You can create a new instance of Instana tracer using [`instana.NewSensor()`][NewSensor].
 
 ### Instrumenting a server
 
@@ -68,6 +68,7 @@ conn, err := grpc.Dial(
 If the context contains an active span stored using [`instana.ContextWithSpan()`][ContextWithSpan], the tracer of this span will be used instead.
 
 [godoc]: https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instagrpc
+[NewSensor]: https://pkg.go.dev/github.com/instana/go-sensor?tab=doc#NewSensor
 [StreamClientInterceptor]: https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instagrpc?tab=doc#StreamClientInterceptor
 [StreamServerInterceptor]: https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instagrpc?tab=doc#StreamServerInterceptor
 [UnaryClientInterceptor]: https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instagrpc?tab=doc#UnaryClientInterceptor
