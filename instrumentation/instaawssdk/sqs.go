@@ -16,16 +16,6 @@ import (
 	otlog "github.com/opentracing/opentracing-go/log"
 )
 
-var sqsInstrumentedOps = map[string]string{
-	"ReceiveMessage":     "",
-	"SendMessage":        "single.sync",
-	"SendMessageBatch":   "batch.sync",
-	"GetQueueUrl":        "get.queue",
-	"CreateQueue":        "create.queue",
-	"DeleteMessage":      "delete.single.sync",
-	"DeleteMessageBatch": "delete.batch.sync",
-}
-
 // StartSQSSpan initiates a new span from an AWS SQS request and injects it into the
 // request.Request context
 func StartSQSSpan(req *request.Request, sensor *instana.Sensor) {
