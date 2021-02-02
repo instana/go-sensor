@@ -219,7 +219,7 @@ func (sp Span) MarshalJSON() ([]byte, error) {
 		CorrelationType string         `json:"crtp,omitempty"`
 		CorrelationID   string         `json:"crid,omitempty"`
 	}{
-		FormatLongID(sp.TraceIDHi, sp.TraceID),
+		FormatID(sp.TraceID),
 		parentID,
 		FormatID(sp.SpanID),
 		sp.Timestamp,
