@@ -36,8 +36,6 @@ type SpanContext struct {
 	W3CContext w3ctrace.Context
 	// Correlation is the correlation data sent by the frontend EUM script
 	Correlation EUMCorrelationData
-	// The 3rd party parent if the context is derived from non-Instana trace
-	ForeignParent interface{}
 }
 
 // NewRootSpanContext initializes a new root span context issuing a new trace ID
@@ -54,7 +52,9 @@ func NewRootSpanContext() SpanContext {
 // ignore the parent context if it contains neither Instana trace and span IDs
 // nor a W3C trace context
 func NewSpanContext(parent SpanContext) SpanContext {
-	foreign := parent.restoreFromForeignTraceContext(parent.W3CContext)
+	if parent.TraceIDHi == 0 && parent.TraceID == 0 && parent.SpanID == 0 {
+		parent = restoreFromW3CTraceContext(parent.W3CContext)
+	}
 
 	if parent.TraceIDHi == 0 && parent.TraceID == 0 && parent.SpanID == 0 {
 		return NewRootSpanContext()
@@ -63,55 +63,45 @@ func NewSpanContext(parent SpanContext) SpanContext {
 	c := parent.Clone()
 	c.SpanID, c.ParentID = randomID(), parent.SpanID
 
-	if foreign {
-		c.ForeignParent = c.W3CContext
-	}
-
 	return c
 }
 
-func (c *SpanContext) restoreFromForeignTraceContext(trCtx w3ctrace.Context) bool {
+func restoreFromW3CTraceContext(trCtx w3ctrace.Context) SpanContext {
 	if trCtx.IsZero() {
-		return false
-	}
-
-	st := c.W3CContext.State()
-
-	if (c.TraceIDHi != 0 || c.TraceID != 0) && c.SpanID != 0 {
-		// we've got Instana trace parent, but still need to check if the last
-		// service upstream is instrumented with Instana, i.e. is the last one
-		// to update the `tracestate`
-		return st.Index(w3ctrace.VendorInstana) > 0
+		return SpanContext{}
 	}
 
 	// we've got only have the 3rd-party context, which means that upstream is
 	// tracing, but not with Instana, so need to either start a new trace or
 	// try to pickup the existing one from `tracestate`
-	c.TraceID = randomID()
 
+	st := trCtx.State()
 	vd, ok := st.Fetch(w3ctrace.VendorInstana)
 	if !ok {
-		return true
+		return SpanContext{}
 	}
 
 	i := strings.Index(vd, ";")
 	if i < 0 {
-		return true
+		return SpanContext{}
 	}
 
 	traceIDHi, traceIDLo, err := ParseLongID(vd[:i])
 	if err != nil {
-		return true
+		return SpanContext{}
 	}
 
 	spanID, err := ParseID(vd[i+1:])
 	if err != nil {
-		return true
+		return SpanContext{}
 	}
 
-	c.TraceIDHi, c.TraceID, c.SpanID = traceIDHi, traceIDLo, spanID
-
-	return true
+	return SpanContext{
+		TraceIDHi:  traceIDHi,
+		TraceID:    traceIDLo,
+		SpanID:     spanID,
+		W3CContext: trCtx,
+	}
 }
 
 // ForeachBaggageItem belongs to the opentracing.SpanContext interface
@@ -139,14 +129,13 @@ func (c SpanContext) WithBaggageItem(key, val string) SpanContext {
 // Clone returns a deep copy of a SpanContext
 func (c SpanContext) Clone() SpanContext {
 	res := SpanContext{
-		TraceIDHi:     c.TraceIDHi,
-		TraceID:       c.TraceID,
-		SpanID:        c.SpanID,
-		ParentID:      c.ParentID,
-		Sampled:       c.Sampled,
-		Suppressed:    c.Suppressed,
-		ForeignParent: c.ForeignParent,
-		W3CContext:    c.W3CContext,
+		TraceIDHi:  c.TraceIDHi,
+		TraceID:    c.TraceID,
+		SpanID:     c.SpanID,
+		ParentID:   c.ParentID,
+		Sampled:    c.Sampled,
+		Suppressed: c.Suppressed,
+		W3CContext: c.W3CContext,
 	}
 
 	if c.Baggage != nil {

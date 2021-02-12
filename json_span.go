@@ -8,7 +8,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/instana/go-sensor/w3ctrace"
 	"github.com/opentracing/opentracing-go/ext"
 )
 
@@ -111,37 +110,6 @@ func (k SpanKind) String() string {
 	}
 }
 
-// ForeignParent represents a related 3rd-party trace context, e.g. a W3C Trace Context
-type ForeignParent struct {
-	TraceID          string `json:"t"`
-	ParentID         string `json:"p"`
-	LatestTraceState string `json:"lts,omitempty"`
-}
-
-func newForeignParent(p interface{}) *ForeignParent {
-	switch p := p.(type) {
-	case w3ctrace.Context:
-		return newW3CForeignParent(p)
-	default:
-		return nil
-	}
-}
-
-func newW3CForeignParent(trCtx w3ctrace.Context) *ForeignParent {
-	p, s := trCtx.Parent(), trCtx.State()
-
-	var lastVendorData string
-	if len(s) > 0 {
-		lastVendorData = s[0]
-	}
-
-	return &ForeignParent{
-		TraceID:          p.TraceID,
-		ParentID:         p.ParentID,
-		LatestTraceState: lastVendorData,
-	}
-}
-
 // Span represents the OpenTracing span document to be sent to the agent
 type Span struct {
 	TraceID         int64
@@ -157,7 +125,6 @@ type Span struct {
 	Ec              int
 	Data            typedSpanData
 	Synthetic       bool
-	ForeignParent   *ForeignParent
 	CorrelationType string
 	CorrelationID   string
 }
@@ -173,7 +140,6 @@ func newSpan(span *spanS) Span {
 		Duration:        uint64(span.Duration) / uint64(time.Millisecond),
 		Name:            string(data.Type()),
 		Ec:              span.ErrorCount,
-		ForeignParent:   newForeignParent(span.context.ForeignParent),
 		CorrelationType: span.Correlation.Type,
 		CorrelationID:   span.Correlation.ID,
 		Kind:            int(data.Kind()),
@@ -203,21 +169,20 @@ func (sp Span) MarshalJSON() ([]byte, error) {
 	}
 
 	return json.Marshal(struct {
-		TraceID         string         `json:"t"`
-		ParentID        string         `json:"p,omitempty"`
-		SpanID          string         `json:"s"`
-		Timestamp       uint64         `json:"ts"`
-		Duration        uint64         `json:"d"`
-		Name            string         `json:"n"`
-		From            *fromS         `json:"f"`
-		Batch           *batchInfo     `json:"b,omitempty"`
-		Kind            int            `json:"k"`
-		Ec              int            `json:"ec,omitempty"`
-		Data            typedSpanData  `json:"data"`
-		Synthetic       bool           `json:"sy,omitempty"`
-		ForeignParent   *ForeignParent `json:"fp,omitempty"`
-		CorrelationType string         `json:"crtp,omitempty"`
-		CorrelationID   string         `json:"crid,omitempty"`
+		TraceID         string        `json:"t"`
+		ParentID        string        `json:"p,omitempty"`
+		SpanID          string        `json:"s"`
+		Timestamp       uint64        `json:"ts"`
+		Duration        uint64        `json:"d"`
+		Name            string        `json:"n"`
+		From            *fromS        `json:"f"`
+		Batch           *batchInfo    `json:"b,omitempty"`
+		Kind            int           `json:"k"`
+		Ec              int           `json:"ec,omitempty"`
+		Data            typedSpanData `json:"data"`
+		Synthetic       bool          `json:"sy,omitempty"`
+		CorrelationType string        `json:"crtp,omitempty"`
+		CorrelationID   string        `json:"crid,omitempty"`
 	}{
 		FormatID(sp.TraceID),
 		parentID,
@@ -231,7 +196,6 @@ func (sp Span) MarshalJSON() ([]byte, error) {
 		sp.Ec,
 		sp.Data,
 		sp.Synthetic,
-		sp.ForeignParent,
 		sp.CorrelationType,
 		sp.CorrelationID,
 	})
