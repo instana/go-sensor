@@ -19,7 +19,6 @@ func TestNewRootSpanContext(t *testing.T) {
 	assert.False(t, c.Sampled)
 	assert.False(t, c.Suppressed)
 	assert.Empty(t, c.Baggage)
-	assert.Nil(t, c.ForeignParent)
 }
 
 func TestNewSpanContext(t *testing.T) {
@@ -81,7 +80,6 @@ func TestNewSpanContext(t *testing.T) {
 			assert.NotEqual(t, parent.SpanID, c.SpanID)
 			assert.NotEmpty(t, c.SpanID)
 			assert.False(t, &c.Baggage == &parent.Baggage)
-			assert.Nil(t, c.ForeignParent)
 		})
 	}
 }
@@ -95,10 +93,9 @@ func TestNewSpanContext_EmptyParent(t *testing.T) {
 	assert.False(t, c.Suppressed)
 	assert.Equal(t, instana.EUMCorrelationData{}, c.Correlation)
 	assert.Empty(t, c.Baggage)
-	assert.Nil(t, c.ForeignParent)
 }
 
-func TestNewSpanContext_ForeignParent(t *testing.T) {
+func TestNewSpanContext_FromW3CTraceContext(t *testing.T) {
 	examples := map[string]struct {
 		Parent           instana.SpanContext
 		ExpectedTraceID  int64
@@ -133,11 +130,10 @@ func TestNewSpanContext_ForeignParent(t *testing.T) {
 			c := instana.NewSpanContext(example.Parent)
 			assert.NotEqual(t, example.Parent.SpanID, c.SpanID)
 			assert.Equal(t, instana.SpanContext{
-				TraceID:       example.ExpectedTraceID,
-				SpanID:        c.SpanID,
-				ParentID:      example.ExpectedParentID,
-				W3CContext:    example.Parent.W3CContext,
-				ForeignParent: example.Parent.W3CContext,
+				TraceID:    example.ExpectedTraceID,
+				SpanID:     c.SpanID,
+				ParentID:   example.ExpectedParentID,
+				W3CContext: example.Parent.W3CContext,
 			}, c)
 		})
 	}
@@ -185,13 +181,12 @@ func TestSpanContext_WithBaggageItem(t *testing.T) {
 
 func TestSpanContext_Clone(t *testing.T) {
 	c := instana.SpanContext{
-		TraceIDHi:     10,
-		TraceID:       1,
-		SpanID:        2,
-		ParentID:      3,
-		Sampled:       true,
-		Suppressed:    true,
-		ForeignParent: []byte("parent"),
+		TraceIDHi:  10,
+		TraceID:    1,
+		SpanID:     2,
+		ParentID:   3,
+		Sampled:    true,
+		Suppressed: true,
 		W3CContext: w3ctrace.New(w3ctrace.Parent{
 			TraceID:  "w3ctraceid",
 			ParentID: "w3cparentid",
