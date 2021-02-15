@@ -121,6 +121,7 @@ func TestNewSpanContext_FromW3CTraceContext(t *testing.T) {
 			RawParent: "00-00000000000000010000000000000002-" + instana.FormatID(c.SpanID) + "-01",
 			RawState:  "in=1234;5678,vendor1=data",
 		},
+		ForeignTrace: true,
 	}, c)
 }
 

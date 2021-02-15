@@ -32,6 +32,8 @@ type SpanContext struct {
 	Baggage map[string]string // initialized on first use
 	// The W3C trace context
 	W3CContext w3ctrace.Context
+	// Whether the used trace ID came from 3rd party, e.g. W3C Trace Context
+	ForeignTrace bool
 	// Correlation is the correlation data sent by the frontend EUM script
 	Correlation EUMCorrelationData
 }
@@ -54,8 +56,10 @@ func NewRootSpanContext() SpanContext {
 // ignore the parent context if it contains neither Instana trace and span IDs
 // nor a W3C trace context
 func NewSpanContext(parent SpanContext) SpanContext {
+	var foreignTrace bool
 	if parent.TraceIDHi == 0 && parent.TraceID == 0 && parent.SpanID == 0 {
 		parent = restoreFromW3CTraceContext(parent.W3CContext)
+		foreignTrace = true
 	}
 
 	if parent.TraceIDHi == 0 && parent.TraceID == 0 && parent.SpanID == 0 {
@@ -64,6 +68,7 @@ func NewSpanContext(parent SpanContext) SpanContext {
 
 	c := parent.Clone()
 	c.SpanID, c.ParentID = randomID(), parent.SpanID
+	c.ForeignTrace = foreignTrace
 
 	// update W3C trace context parent
 	if c.W3CContext.IsZero() {

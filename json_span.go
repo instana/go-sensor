@@ -127,6 +127,7 @@ type Span struct {
 	Synthetic       bool
 	CorrelationType string
 	CorrelationID   string
+	ForeignTrace    bool
 }
 
 func newSpan(span *spanS) Span {
@@ -142,6 +143,7 @@ func newSpan(span *spanS) Span {
 		Ec:              span.ErrorCount,
 		CorrelationType: span.Correlation.Type,
 		CorrelationID:   span.Correlation.ID,
+		ForeignTrace:    span.context.ForeignTrace,
 		Kind:            int(data.Kind()),
 		Data:            data,
 	}
@@ -183,6 +185,7 @@ func (sp Span) MarshalJSON() ([]byte, error) {
 		Synthetic       bool          `json:"sy,omitempty"`
 		CorrelationType string        `json:"crtp,omitempty"`
 		CorrelationID   string        `json:"crid,omitempty"`
+		ForeignTrace    bool          `json:"tp,omitempty"`
 	}{
 		FormatID(sp.TraceID),
 		parentID,
@@ -198,6 +201,7 @@ func (sp Span) MarshalJSON() ([]byte, error) {
 		sp.Synthetic,
 		sp.CorrelationType,
 		sp.CorrelationID,
+		sp.ForeignTrace,
 	})
 }
 

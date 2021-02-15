@@ -162,6 +162,7 @@ func TestTracingHandlerFunc_W3CTraceContext(t *testing.T) {
 	assert.False(t, span.Synthetic)
 	assert.Empty(t, span.CorrelationType)
 	assert.Empty(t, span.CorrelationID)
+	assert.True(t, span.ForeignTrace)
 
 	require.IsType(t, instana.HTTPSpanData{}, span.Data)
 	data := span.Data.(instana.HTTPSpanData)
