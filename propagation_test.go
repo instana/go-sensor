@@ -139,7 +139,7 @@ func TestTracer_Inject_HTTPHeaders_W3CTraceContext(t *testing.T) {
 				"X-Instana-T":   {"0000000000002435"},
 				"X-Instana-S":   {"0000000000003546"},
 				"X-Instana-L":   {"0"},
-				"Traceparent":   {"00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-00"},
+				"Traceparent":   {"00-4bf92f3577b34da6a3ce929d0e0e4736-0000000000003546-00"},
 				"Tracestate":    {"rojo=00f067aa0ba902b7"},
 				"Server-Timing": {"intid;desc=0000000000002435"},
 			},

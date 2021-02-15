@@ -45,11 +45,7 @@ func NewRootSpanContext() SpanContext {
 		SpanID:  spanID,
 	}
 
-	c.W3CContext = w3ctrace.New(w3ctrace.Parent{
-		Version:  w3ctrace.Version_Max,
-		TraceID:  FormatLongID(c.TraceIDHi, c.TraceID),
-		ParentID: FormatID(c.SpanID),
-	})
+	c.W3CContext = newW3CTraceContext(c)
 
 	return c
 }
@@ -68,6 +64,15 @@ func NewSpanContext(parent SpanContext) SpanContext {
 
 	c := parent.Clone()
 	c.SpanID, c.ParentID = randomID(), parent.SpanID
+
+	// update W3C trace context parent
+	if c.W3CContext.IsZero() {
+		c.W3CContext = newW3CTraceContext(c)
+	} else {
+		w3cParent := c.W3CContext.Parent()
+		w3cParent.ParentID = FormatID(c.SpanID)
+		c.W3CContext.RawParent = w3cParent.String()
+	}
 
 	return c
 }
@@ -140,4 +145,15 @@ func (c SpanContext) Clone() SpanContext {
 	}
 
 	return res
+}
+
+func newW3CTraceContext(c SpanContext) w3ctrace.Context {
+	return w3ctrace.New(w3ctrace.Parent{
+		Version:  w3ctrace.Version_Max,
+		TraceID:  FormatLongID(c.TraceIDHi, c.TraceID),
+		ParentID: FormatID(c.SpanID),
+		Flags: w3ctrace.Flags{
+			Sampled: !c.Suppressed,
+		},
+	})
 }

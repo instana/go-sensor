@@ -22,7 +22,9 @@ func TestNewRootSpanContext(t *testing.T) {
 
 	assert.Equal(t, instana.FormatLongID(c.TraceIDHi, c.TraceID), c.W3CContext.Parent().TraceID)
 	assert.Equal(t, instana.FormatID(c.SpanID), c.W3CContext.Parent().ParentID)
-	assert.False(t, c.W3CContext.Parent().Flags.Sampled)
+	assert.Equal(t, w3ctrace.Flags{
+		Sampled: true,
+	}, c.W3CContext.Parent().Flags)
 }
 
 func TestNewSpanContext(t *testing.T) {
@@ -77,7 +79,7 @@ func TestNewSpanContext(t *testing.T) {
 			assert.Equal(t, parent.SpanID, c.ParentID)
 			assert.Equal(t, parent.Sampled, c.Sampled)
 			assert.Equal(t, parent.Suppressed, c.Suppressed)
-			assert.Equal(t, parent.W3CContext, c.W3CContext)
+			assert.Equal(t, instana.FormatID(c.SpanID), c.W3CContext.Parent().ParentID)
 			assert.Equal(t, instana.EUMCorrelationData{}, c.Correlation)
 			assert.Equal(t, parent.Baggage, c.Baggage)
 
@@ -111,11 +113,14 @@ func TestNewSpanContext_FromW3CTraceContext(t *testing.T) {
 
 	assert.NotEqual(t, parent.SpanID, c.SpanID)
 	assert.Equal(t, instana.SpanContext{
-		TraceIDHi:  0x1,
-		TraceID:    0x2,
-		ParentID:   0x3,
-		SpanID:     c.SpanID,
-		W3CContext: parent.W3CContext,
+		TraceIDHi: 0x1,
+		TraceID:   0x2,
+		ParentID:  0x3,
+		SpanID:    c.SpanID,
+		W3CContext: w3ctrace.Context{
+			RawParent: "00-00000000000000010000000000000002-" + instana.FormatID(c.SpanID) + "-01",
+			RawState:  "in=1234;5678,vendor1=data",
+		},
 	}, c)
 }
 

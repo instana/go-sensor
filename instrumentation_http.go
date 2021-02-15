@@ -10,7 +10,6 @@ import (
 	"net/textproto"
 	"net/url"
 
-	"github.com/instana/go-sensor/w3ctrace"
 	ot "github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
 	otlog "github.com/opentracing/opentracing-go/log"
@@ -113,8 +112,7 @@ func TracingHandlerFunc(sensor *Sensor, pathTemplate string, handler http.Handle
 		wrapped := &statusCodeRecorder{ResponseWriter: w}
 		tracer.Inject(span.Context(), ot.HTTPHeaders, ot.HTTPHeadersCarrier(wrapped.Header()))
 
-		ctx = ContextWithSpan(ctx, span)
-		w3ctrace.TracingHandlerFunc(handler)(wrapped, req.WithContext(ctx))
+		handler(wrapped, req.WithContext(ContextWithSpan(ctx, span)))
 
 		// collect response headers
 		for _, h := range collectableHTTPHeaders {

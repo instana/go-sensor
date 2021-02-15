@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	instana "github.com/instana/go-sensor"
@@ -68,6 +69,17 @@ func TestTracingHandlerFunc_Write(t *testing.T) {
 	// check whether the trace context has been sent back to the client
 	assert.Equal(t, instana.FormatID(span.TraceID), rec.Header().Get(instana.FieldT))
 	assert.Equal(t, instana.FormatID(span.SpanID), rec.Header().Get(instana.FieldS))
+
+	// w3c trace context
+	traceparent := rec.Header().Get(w3ctrace.TraceParentHeader)
+	assert.Contains(t, traceparent, instana.FormatLongID(span.TraceIDHi, span.TraceID))
+	assert.Contains(t, traceparent, instana.FormatID(span.SpanID))
+
+	tracestate := rec.Header().Get(w3ctrace.TraceStateHeader)
+	assert.True(t, strings.HasPrefix(
+		tracestate,
+		"in="+instana.FormatID(span.TraceID)+";"+instana.FormatID(span.SpanID),
+	), tracestate)
 }
 
 func TestTracingHandlerFunc_WriteHeaders(t *testing.T) {
@@ -101,6 +113,21 @@ func TestTracingHandlerFunc_WriteHeaders(t *testing.T) {
 		Path:   "/test",
 		Params: "q=term",
 	}, data.Tags)
+
+	// check whether the trace context has been sent back to the client
+	assert.Equal(t, instana.FormatID(span.TraceID), rec.Header().Get(instana.FieldT))
+	assert.Equal(t, instana.FormatID(span.SpanID), rec.Header().Get(instana.FieldS))
+
+	// w3c trace context
+	traceparent := rec.Header().Get(w3ctrace.TraceParentHeader)
+	assert.Contains(t, traceparent, instana.FormatLongID(span.TraceIDHi, span.TraceID))
+	assert.Contains(t, traceparent, instana.FormatID(span.SpanID))
+
+	tracestate := rec.Header().Get(w3ctrace.TraceStateHeader)
+	assert.True(t, strings.HasPrefix(
+		tracestate,
+		"in="+instana.FormatID(span.TraceID)+";"+instana.FormatID(span.SpanID),
+	), tracestate)
 }
 
 func TestTracingHandlerFunc_W3CTraceContext(t *testing.T) {
@@ -149,6 +176,17 @@ func TestTracingHandlerFunc_W3CTraceContext(t *testing.T) {
 	// check whether the trace context has been sent back to the client
 	assert.Equal(t, instana.FormatID(span.TraceID), rec.Header().Get(instana.FieldT))
 	assert.Equal(t, instana.FormatID(span.SpanID), rec.Header().Get(instana.FieldS))
+
+	// w3c trace context
+	traceparent := rec.Header().Get(w3ctrace.TraceParentHeader)
+	assert.Contains(t, traceparent, instana.FormatLongID(span.TraceIDHi, span.TraceID))
+	assert.Contains(t, traceparent, instana.FormatID(span.SpanID))
+
+	tracestate := rec.Header().Get(w3ctrace.TraceStateHeader)
+	assert.True(t, strings.HasPrefix(
+		tracestate,
+		"in="+instana.FormatID(span.TraceID)+";"+instana.FormatID(span.SpanID),
+	), tracestate)
 }
 
 func TestTracingHandlerFunc_SecretsFiltering(t *testing.T) {
