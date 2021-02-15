@@ -40,10 +40,18 @@ type SpanContext struct {
 func NewRootSpanContext() SpanContext {
 	spanID := randomID()
 
-	return SpanContext{
+	c := SpanContext{
 		TraceID: spanID,
 		SpanID:  spanID,
 	}
+
+	c.W3CContext = w3ctrace.New(w3ctrace.Parent{
+		Version:  w3ctrace.Version_Max,
+		TraceID:  FormatLongID(c.TraceIDHi, c.TraceID),
+		ParentID: FormatID(c.SpanID),
+	})
+
+	return c
 }
 
 // NewSpanContext initializes a new child span context from its parent. It will

@@ -19,6 +19,10 @@ func TestNewRootSpanContext(t *testing.T) {
 	assert.False(t, c.Sampled)
 	assert.False(t, c.Suppressed)
 	assert.Empty(t, c.Baggage)
+
+	assert.Equal(t, instana.FormatLongID(c.TraceIDHi, c.TraceID), c.W3CContext.Parent().TraceID)
+	assert.Equal(t, instana.FormatID(c.SpanID), c.W3CContext.Parent().ParentID)
+	assert.False(t, c.W3CContext.Parent().Flags.Sampled)
 }
 
 func TestNewSpanContext(t *testing.T) {
