@@ -167,7 +167,7 @@ func extractTraceContext(opaqueCarrier interface{}) (SpanContext, error) {
 }
 
 func addW3CTraceContext(h http.Header, sc SpanContext) {
-	traceID, spanID := FormatID(sc.TraceID), FormatID(sc.SpanID)
+	traceID, spanID := FormatLongID(sc.TraceIDHi, sc.TraceID), FormatID(sc.SpanID)
 	trCtx := sc.W3CContext
 
 	// check for an existing w3c trace

@@ -4,8 +4,6 @@
 package instana
 
 import (
-	"strings"
-
 	"github.com/instana/go-sensor/w3ctrace"
 )
 
@@ -71,27 +69,14 @@ func restoreFromW3CTraceContext(trCtx w3ctrace.Context) SpanContext {
 		return SpanContext{}
 	}
 
-	// we've got only have the 3rd-party context, which means that upstream is
-	// tracing, but not with Instana, so need to either start a new trace or
-	// try to pickup the existing one from `tracestate`
+	parent := trCtx.Parent()
 
-	st := trCtx.State()
-	vd, ok := st.Fetch(w3ctrace.VendorInstana)
-	if !ok {
-		return SpanContext{}
-	}
-
-	i := strings.Index(vd, ";")
-	if i < 0 {
-		return SpanContext{}
-	}
-
-	traceIDHi, traceIDLo, err := ParseLongID(vd[:i])
+	traceIDHi, traceIDLo, err := ParseLongID(parent.TraceID)
 	if err != nil {
 		return SpanContext{}
 	}
 
-	spanID, err := ParseID(vd[i+1:])
+	parentID, err := ParseID(parent.ParentID)
 	if err != nil {
 		return SpanContext{}
 	}
@@ -99,7 +84,8 @@ func restoreFromW3CTraceContext(trCtx w3ctrace.Context) SpanContext {
 	return SpanContext{
 		TraceIDHi:  traceIDHi,
 		TraceID:    traceIDLo,
-		SpanID:     spanID,
+		SpanID:     parentID,
+		Suppressed: !parent.Flags.Sampled,
 		W3CContext: trCtx,
 	}
 }
