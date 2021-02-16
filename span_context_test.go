@@ -122,6 +122,9 @@ func TestNewSpanContext_FromW3CTraceContext(t *testing.T) {
 			RawState:  "in=1234;5678,vendor1=data",
 		},
 		ForeignTrace: true,
+		Links: []instana.SpanReference{
+			{TraceID: "1234", SpanID: "5678"},
+		},
 	}, c)
 }
 

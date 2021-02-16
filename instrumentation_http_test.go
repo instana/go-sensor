@@ -51,6 +51,7 @@ func TestTracingHandlerFunc_Write(t *testing.T) {
 	assert.Empty(t, span.CorrelationID)
 	assert.False(t, span.ForeignTrace)
 	assert.Empty(t, span.W3CTraceID)
+	assert.Empty(t, span.Ancestor)
 
 	require.IsType(t, instana.HTTPSpanData{}, span.Data)
 	data := span.Data.(instana.HTTPSpanData)
@@ -104,8 +105,11 @@ func TestTracingHandlerFunc_WriteHeaders(t *testing.T) {
 	assert.Equal(t, 0, span.Ec)
 	assert.EqualValues(t, instana.EntrySpanKind, span.Kind)
 	assert.False(t, span.Synthetic)
+	assert.Empty(t, span.CorrelationType)
+	assert.Empty(t, span.CorrelationID)
 	assert.False(t, span.ForeignTrace)
 	assert.Empty(t, span.W3CTraceID)
+	assert.Empty(t, span.Ancestor)
 
 	require.IsType(t, instana.HTTPSpanData{}, span.Data)
 	data := span.Data.(instana.HTTPSpanData)
@@ -146,7 +150,7 @@ func TestTracingHandlerFunc_W3CTraceContext(t *testing.T) {
 
 	req := httptest.NewRequest(http.MethodGet, "/test", nil)
 	req.Header.Set(w3ctrace.TraceParentHeader, "00-00000000000000010000000000000002-0000000000000003-01")
-	req.Header.Set(w3ctrace.TraceStateHeader, "rojo=00f067aa0ba902b7")
+	req.Header.Set(w3ctrace.TraceStateHeader, "in=1234;5678,rojo=00f067aa0ba902b7")
 
 	h.ServeHTTP(rec, req)
 
@@ -168,6 +172,10 @@ func TestTracingHandlerFunc_W3CTraceContext(t *testing.T) {
 	assert.Empty(t, span.CorrelationID)
 	assert.True(t, span.ForeignTrace)
 	assert.Equal(t, "00000000000000010000000000000002", span.W3CTraceID)
+	assert.Equal(t, &instana.TraceReference{
+		TraceID:  "1234",
+		ParentID: "5678",
+	}, span.Ancestor)
 
 	require.IsType(t, instana.HTTPSpanData{}, span.Data)
 	data := span.Data.(instana.HTTPSpanData)

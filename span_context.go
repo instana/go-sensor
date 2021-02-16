@@ -4,6 +4,8 @@
 package instana
 
 import (
+	"strings"
+
 	"github.com/instana/go-sensor/w3ctrace"
 )
 
@@ -12,6 +14,13 @@ import (
 type EUMCorrelationData struct {
 	Type string
 	ID   string
+}
+
+// SpanReference is a reference to a span, possibly belonging to another trace, that is relevant
+// to the span context
+type SpanReference struct {
+	TraceID string
+	SpanID  string
 }
 
 // SpanContext holds the basic Span metadata.
@@ -24,6 +33,8 @@ type SpanContext struct {
 	SpanID int64
 	// An optional parent span ID, 0 if this is the root span context.
 	ParentID int64
+	// Optional links to traces relevant to this context, i.e. an indirect parent
+	Links []SpanReference
 	// Whether the trace is sampled.
 	Sampled bool
 	// Whether the trace is suppressed and should not be sent to the agent.
@@ -70,13 +81,26 @@ func NewSpanContext(parent SpanContext) SpanContext {
 	c.SpanID, c.ParentID = randomID(), parent.SpanID
 	c.ForeignTrace = foreignTrace
 
-	// update W3C trace context parent
+	// initialize W3C trace context if it's not set already
 	if c.W3CContext.IsZero() {
 		c.W3CContext = newW3CTraceContext(c)
-	} else {
-		w3cParent := c.W3CContext.Parent()
-		w3cParent.ParentID = FormatID(c.SpanID)
-		c.W3CContext.RawParent = w3cParent.String()
+		return c
+	}
+
+	// update W3C trace context parent
+	w3cParent := c.W3CContext.Parent()
+	w3cParent.ParentID = FormatID(c.SpanID)
+	c.W3CContext.RawParent = w3cParent.String()
+
+	// check if there is Instana state stored in the W3C tracestate header
+	w3cState := c.W3CContext.State()
+	if ancestor, ok := w3cState.Fetch(w3ctrace.VendorInstana); ok {
+		if ind := strings.IndexByte(ancestor, ';'); ind > -1 {
+			c.Links = append(c.Links, SpanReference{
+				TraceID: ancestor[:ind],
+				SpanID:  ancestor[ind+1:],
+			})
+		}
 	}
 
 	return c

@@ -117,6 +117,7 @@ type Span struct {
 	ParentID        int64
 	SpanID          int64
 	W3CTraceID      string
+	Ancestor        *TraceReference
 	Timestamp       uint64
 	Duration        uint64
 	Name            string
@@ -169,7 +170,20 @@ func newSpan(span *spanS) Span {
 		sp.W3CTraceID = longTraceID
 	}
 
+	if len(span.context.Links) > 0 {
+		ancestor := span.context.Links[0]
+		sp.Ancestor = &TraceReference{
+			TraceID:  ancestor.TraceID,
+			ParentID: ancestor.SpanID,
+		}
+	}
+
 	return sp
+}
+
+type TraceReference struct {
+	TraceID  string `json:"t"`
+	ParentID string `json:"p,omitempty"`
 }
 
 // MarshalJSON serializes span to JSON for sending it to Instana
@@ -180,25 +194,28 @@ func (sp Span) MarshalJSON() ([]byte, error) {
 	}
 
 	return json.Marshal(struct {
-		TraceID         string        `json:"t"`
-		ParentID        string        `json:"p,omitempty"`
-		SpanID          string        `json:"s"`
-		W3CTraceID      string        `json:"lt,omitempty"`
-		Timestamp       uint64        `json:"ts"`
-		Duration        uint64        `json:"d"`
-		Name            string        `json:"n"`
-		From            *fromS        `json:"f"`
-		Batch           *batchInfo    `json:"b,omitempty"`
-		Kind            int           `json:"k"`
-		Ec              int           `json:"ec,omitempty"`
-		Data            typedSpanData `json:"data"`
-		Synthetic       bool          `json:"sy,omitempty"`
-		CorrelationType string        `json:"crtp,omitempty"`
-		CorrelationID   string        `json:"crid,omitempty"`
-		ForeignTrace    bool          `json:"tp,omitempty"`
+		TraceReference
+
+		SpanID          string          `json:"s"`
+		W3CTraceID      string          `json:"lt,omitempty"`
+		Timestamp       uint64          `json:"ts"`
+		Duration        uint64          `json:"d"`
+		Name            string          `json:"n"`
+		From            *fromS          `json:"f"`
+		Batch           *batchInfo      `json:"b,omitempty"`
+		Kind            int             `json:"k"`
+		Ec              int             `json:"ec,omitempty"`
+		Data            typedSpanData   `json:"data"`
+		Synthetic       bool            `json:"sy,omitempty"`
+		CorrelationType string          `json:"crtp,omitempty"`
+		CorrelationID   string          `json:"crid,omitempty"`
+		ForeignTrace    bool            `json:"tp,omitempty"`
+		Ancestor        *TraceReference `json:"ia,omitempty"`
 	}{
-		FormatID(sp.TraceID),
-		parentID,
+		TraceReference{
+			FormatID(sp.TraceID),
+			parentID,
+		},
 		FormatID(sp.SpanID),
 		sp.W3CTraceID,
 		sp.Timestamp,
@@ -213,6 +230,7 @@ func (sp Span) MarshalJSON() ([]byte, error) {
 		sp.CorrelationType,
 		sp.CorrelationID,
 		sp.ForeignTrace,
+		sp.Ancestor,
 	})
 }
 
