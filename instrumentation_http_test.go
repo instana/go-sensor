@@ -49,6 +49,8 @@ func TestTracingHandlerFunc_Write(t *testing.T) {
 	assert.False(t, span.Synthetic)
 	assert.Empty(t, span.CorrelationType)
 	assert.Empty(t, span.CorrelationID)
+	assert.False(t, span.ForeignTrace)
+	assert.Empty(t, span.W3CTraceID)
 
 	require.IsType(t, instana.HTTPSpanData{}, span.Data)
 	data := span.Data.(instana.HTTPSpanData)
@@ -102,6 +104,8 @@ func TestTracingHandlerFunc_WriteHeaders(t *testing.T) {
 	assert.Equal(t, 0, span.Ec)
 	assert.EqualValues(t, instana.EntrySpanKind, span.Kind)
 	assert.False(t, span.Synthetic)
+	assert.False(t, span.ForeignTrace)
+	assert.Empty(t, span.W3CTraceID)
 
 	require.IsType(t, instana.HTTPSpanData{}, span.Data)
 	data := span.Data.(instana.HTTPSpanData)
@@ -163,6 +167,7 @@ func TestTracingHandlerFunc_W3CTraceContext(t *testing.T) {
 	assert.Empty(t, span.CorrelationType)
 	assert.Empty(t, span.CorrelationID)
 	assert.True(t, span.ForeignTrace)
+	assert.Equal(t, "00000000000000010000000000000002", span.W3CTraceID)
 
 	require.IsType(t, instana.HTTPSpanData{}, span.Data)
 	data := span.Data.(instana.HTTPSpanData)
