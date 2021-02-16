@@ -53,12 +53,7 @@ func FormatID(id int64) string {
 // FormatLongID converts a 128-bit Instana ID passed in two quad words to an
 // unsigned hex string suitable for context propagation.
 func FormatLongID(hi, lo int64) string {
-	loStr := FormatID(lo)
-	if hi == 0 {
-		return loStr
-	}
-
-	return FormatID(hi) + loStr
+	return FormatID(hi) + FormatID(lo)
 }
 
 func padHexString(s string, bitSize int) string {

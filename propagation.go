@@ -167,7 +167,7 @@ func extractTraceContext(opaqueCarrier interface{}) (SpanContext, error) {
 }
 
 func addW3CTraceContext(h http.Header, sc SpanContext) {
-	traceID, spanID := FormatID(sc.TraceID), FormatID(sc.SpanID)
+	traceID, spanID := FormatLongID(sc.TraceIDHi, sc.TraceID), FormatID(sc.SpanID)
 	trCtx := sc.W3CContext
 
 	// check for an existing w3c trace
@@ -183,21 +183,20 @@ func addW3CTraceContext(h http.Header, sc SpanContext) {
 		})
 	}
 
-	// update the traceparent parent ID if any of trace contexts enable tracing
+	// update the traceparent parent ID
 	p := trCtx.Parent()
-	if !sc.Suppressed || p.Flags.Sampled {
-		p.ParentID = spanID
-	}
-
+	p.ParentID = spanID
 	// sync the traceparent `sampled` flags with the X-Instana-L value
 	p.Flags.Sampled = !sc.Suppressed
 
+	trCtx.RawParent = p.String()
+
 	// participate in w3c trace context if tracing is enabled
 	if !sc.Suppressed {
-		trCtx.RawState = trCtx.State().Add(w3ctrace.VendorInstana, traceID+";"+spanID).String()
+		// propagate truncated trace ID downstream
+		trCtx.RawState = trCtx.State().Add(w3ctrace.VendorInstana, FormatID(sc.TraceID)+";"+spanID).String()
 	}
 
-	trCtx.RawParent = p.String()
 	w3ctrace.Inject(trCtx, h)
 }
 

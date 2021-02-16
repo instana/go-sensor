@@ -4,8 +4,6 @@
 package instana
 
 import (
-	"strings"
-
 	"github.com/instana/go-sensor/w3ctrace"
 )
 
@@ -34,6 +32,8 @@ type SpanContext struct {
 	Baggage map[string]string // initialized on first use
 	// The W3C trace context
 	W3CContext w3ctrace.Context
+	// Whether the used trace ID came from 3rd party, e.g. W3C Trace Context
+	ForeignTrace bool
 	// Correlation is the correlation data sent by the frontend EUM script
 	Correlation EUMCorrelationData
 }
@@ -42,18 +42,24 @@ type SpanContext struct {
 func NewRootSpanContext() SpanContext {
 	spanID := randomID()
 
-	return SpanContext{
+	c := SpanContext{
 		TraceID: spanID,
 		SpanID:  spanID,
 	}
+
+	c.W3CContext = newW3CTraceContext(c)
+
+	return c
 }
 
 // NewSpanContext initializes a new child span context from its parent. It will
 // ignore the parent context if it contains neither Instana trace and span IDs
 // nor a W3C trace context
 func NewSpanContext(parent SpanContext) SpanContext {
+	var foreignTrace bool
 	if parent.TraceIDHi == 0 && parent.TraceID == 0 && parent.SpanID == 0 {
 		parent = restoreFromW3CTraceContext(parent.W3CContext)
+		foreignTrace = true
 	}
 
 	if parent.TraceIDHi == 0 && parent.TraceID == 0 && parent.SpanID == 0 {
@@ -62,6 +68,16 @@ func NewSpanContext(parent SpanContext) SpanContext {
 
 	c := parent.Clone()
 	c.SpanID, c.ParentID = randomID(), parent.SpanID
+	c.ForeignTrace = foreignTrace
+
+	// update W3C trace context parent
+	if c.W3CContext.IsZero() {
+		c.W3CContext = newW3CTraceContext(c)
+	} else {
+		w3cParent := c.W3CContext.Parent()
+		w3cParent.ParentID = FormatID(c.SpanID)
+		c.W3CContext.RawParent = w3cParent.String()
+	}
 
 	return c
 }
@@ -71,27 +87,14 @@ func restoreFromW3CTraceContext(trCtx w3ctrace.Context) SpanContext {
 		return SpanContext{}
 	}
 
-	// we've got only have the 3rd-party context, which means that upstream is
-	// tracing, but not with Instana, so need to either start a new trace or
-	// try to pickup the existing one from `tracestate`
+	parent := trCtx.Parent()
 
-	st := trCtx.State()
-	vd, ok := st.Fetch(w3ctrace.VendorInstana)
-	if !ok {
-		return SpanContext{}
-	}
-
-	i := strings.Index(vd, ";")
-	if i < 0 {
-		return SpanContext{}
-	}
-
-	traceIDHi, traceIDLo, err := ParseLongID(vd[:i])
+	traceIDHi, traceIDLo, err := ParseLongID(parent.TraceID)
 	if err != nil {
 		return SpanContext{}
 	}
 
-	spanID, err := ParseID(vd[i+1:])
+	parentID, err := ParseID(parent.ParentID)
 	if err != nil {
 		return SpanContext{}
 	}
@@ -99,7 +102,8 @@ func restoreFromW3CTraceContext(trCtx w3ctrace.Context) SpanContext {
 	return SpanContext{
 		TraceIDHi:  traceIDHi,
 		TraceID:    traceIDLo,
-		SpanID:     spanID,
+		SpanID:     parentID,
+		Suppressed: !parent.Flags.Sampled,
 		W3CContext: trCtx,
 	}
 }
@@ -146,4 +150,15 @@ func (c SpanContext) Clone() SpanContext {
 	}
 
 	return res
+}
+
+func newW3CTraceContext(c SpanContext) w3ctrace.Context {
+	return w3ctrace.New(w3ctrace.Parent{
+		Version:  w3ctrace.Version_Max,
+		TraceID:  FormatLongID(c.TraceIDHi, c.TraceID),
+		ParentID: FormatID(c.SpanID),
+		Flags: w3ctrace.Flags{
+			Sampled: !c.Suppressed,
+		},
+	})
 }

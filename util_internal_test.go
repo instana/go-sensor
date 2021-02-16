@@ -80,29 +80,13 @@ func TestFormatLongID(t *testing.T) {
 		Hi, Lo   int64
 		Expected string
 	}{
-		"64-bit":  {0x0, 0x1234ab, "00000000001234ab"},
+		"64-bit":  {0x0, 0x1234ab, "000000000000000000000000001234ab"},
 		"128-bit": {0x1c, 0x1234ab, "000000000000001c00000000001234ab"},
 	}
 
 	for name, example := range examples {
 		t.Run(name, func(t *testing.T) {
 			assert.Equal(t, example.Expected, FormatLongID(example.Hi, example.Lo))
-		})
-	}
-}
-
-func TestParseFormatLongID(t *testing.T) {
-	examples := map[string]string{
-		"64-bit":  "1234abcd1234abcd",
-		"128-bit": "5678defa5678defa1234abcd1234abcd",
-	}
-
-	for name, id := range examples {
-		t.Run(name, func(t *testing.T) {
-			hi, lo, err := ParseLongID(id)
-			require.NoError(t, err)
-
-			assert.Equal(t, id, FormatLongID(hi, lo))
 		})
 	}
 }
