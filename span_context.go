@@ -94,7 +94,7 @@ func NewSpanContext(parent SpanContext) SpanContext {
 
 	// check if there is Instana state stored in the W3C tracestate header
 	w3cState := c.W3CContext.State()
-	if ancestor, ok := w3cState.Fetch(w3ctrace.VendorInstana); ok {
+	if ancestor, ok := w3cState.Fetch(w3ctrace.VendorInstana); ok && foreignTrace {
 		if ind := strings.IndexByte(ancestor, ';'); ind > -1 {
 			c.Links = append(c.Links, SpanReference{
 				TraceID: ancestor[:ind],
