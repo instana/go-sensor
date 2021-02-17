@@ -116,7 +116,6 @@ type Span struct {
 	TraceIDHi       int64
 	ParentID        int64
 	SpanID          int64
-	W3CTraceID      string
 	Ancestor        *TraceReference
 	Timestamp       uint64
 	Duration        uint64
@@ -162,14 +161,6 @@ func newSpan(span *spanS) Span {
 		delete(span.Tags, syntheticCallTag)
 	}
 
-	// populate W3C trace ID only if the original incoming value was 128-bits long
-	// we cannot rely on TraceIDHi here, as we might be using the 64-bit ID from
-	// X-Instana-T and still have traceparent with 128-bit value
-	longTraceID := span.context.W3CContext.Parent().TraceID
-	if len(longTraceID) == 32 && longTraceID[:16] != "0000000000000000" {
-		sp.W3CTraceID = longTraceID
-	}
-
 	if len(span.context.Links) > 0 {
 		ancestor := span.context.Links[0]
 		sp.Ancestor = &TraceReference{
@@ -193,11 +184,16 @@ func (sp Span) MarshalJSON() ([]byte, error) {
 		parentID = FormatID(sp.ParentID)
 	}
 
+	var longTraceID string
+	if sp.TraceIDHi != 0 {
+		longTraceID = FormatLongID(sp.TraceIDHi, sp.TraceID)
+	}
+
 	return json.Marshal(struct {
 		TraceReference
 
 		SpanID          string          `json:"s"`
-		W3CTraceID      string          `json:"lt,omitempty"`
+		LongTraceID     string          `json:"lt,omitempty"`
 		Timestamp       uint64          `json:"ts"`
 		Duration        uint64          `json:"d"`
 		Name            string          `json:"n"`
@@ -217,7 +213,7 @@ func (sp Span) MarshalJSON() ([]byte, error) {
 			parentID,
 		},
 		FormatID(sp.SpanID),
-		sp.W3CTraceID,
+		longTraceID,
 		sp.Timestamp,
 		sp.Duration,
 		sp.Name,
