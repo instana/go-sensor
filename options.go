@@ -20,6 +20,8 @@ type Options struct {
 	MaxBufferedProfiles         int
 	IncludeProfilerFrames       bool
 	Tracer                      TracerOptions
+
+	disableW3CTraceCorrelation bool
 }
 
 // DefaultOptions returns the default set of options to configure Instana sensor.
@@ -77,4 +79,6 @@ func (opts *Options) setDefaults() {
 	if collectableHeaders, ok := os.LookupEnv("INSTANA_EXTRA_HTTP_HEADERS"); ok {
 		opts.Tracer.CollectableHTTPHeaders = parseInstanaExtraHTTPHeaders(collectableHeaders)
 	}
+
+	opts.disableW3CTraceCorrelation = os.Getenv("INSTANA_DISABLE_W3C_TRACE_CORRELATION") != ""
 }

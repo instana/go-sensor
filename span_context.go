@@ -107,7 +107,7 @@ func NewSpanContext(parent SpanContext) SpanContext {
 }
 
 func restoreFromW3CTraceContext(trCtx w3ctrace.Context) SpanContext {
-	if trCtx.IsZero() {
+	if trCtx.IsZero() || sensor.options.disableW3CTraceCorrelation {
 		return SpanContext{}
 	}
 
