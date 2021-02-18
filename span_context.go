@@ -74,7 +74,14 @@ func NewSpanContext(parent SpanContext) SpanContext {
 	}
 
 	if parent.TraceIDHi == 0 && parent.TraceID == 0 && parent.SpanID == 0 {
-		return NewRootSpanContext()
+		c := NewRootSpanContext()
+
+		// preserve the W3C trace context even if it was not used
+		if !parent.W3CContext.IsZero() {
+			c.W3CContext = parent.W3CContext
+		}
+
+		return c
 	}
 
 	c := parent.Clone()
@@ -107,8 +114,14 @@ func NewSpanContext(parent SpanContext) SpanContext {
 }
 
 func restoreFromW3CTraceContext(trCtx w3ctrace.Context) SpanContext {
-	if trCtx.IsZero() || sensor.options.disableW3CTraceCorrelation {
+	if trCtx.IsZero() {
 		return SpanContext{}
+	}
+
+	if sensor.options.disableW3CTraceCorrelation {
+		return SpanContext{
+			W3CContext: trCtx,
+		}
 	}
 
 	parent := trCtx.Parent()
