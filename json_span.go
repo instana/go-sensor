@@ -185,7 +185,7 @@ func (sp Span) MarshalJSON() ([]byte, error) {
 	}
 
 	var longTraceID string
-	if sp.TraceIDHi != 0 {
+	if sp.TraceIDHi != 0 && sp.Kind == int(EntrySpanKind) {
 		longTraceID = FormatLongID(sp.TraceIDHi, sp.TraceID)
 	}
 
