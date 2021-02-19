@@ -331,26 +331,17 @@ func TestTracer_Extract_HTTPHeaders(t *testing.T) {
 				Baggage:    map[string]string{},
 			},
 		},
-		"w3c trace context, last vendor is instana": {
+		"tracing disabled, no trace context": {
 			Headers: map[string]string{
-				"x-instana-t": "10000000000001314",
-				"X-INSTANA-S": "2435",
-				"X-Instana-L": "1",
-				"traceparent": "00-4bf92f3577b34da6a3ce929d0e0e4736-0000000000002435-01",
-				"tracestate":  "in=10000000000001314;2435,rojo=00f067aa0ba902b7",
+				"Authorization": "Basic 123",
+				"X-Instana-L":   "0",
 			},
 			Expected: instana.SpanContext{
-				TraceIDHi: 0x1,
-				TraceID:   0x1314,
-				SpanID:    0x2435,
-				Baggage:   map[string]string{},
-				W3CContext: w3ctrace.Context{
-					RawParent: "00-4bf92f3577b34da6a3ce929d0e0e4736-0000000000002435-01",
-					RawState:  "in=10000000000001314;2435,rojo=00f067aa0ba902b7",
-				},
+				Suppressed: true,
+				Baggage:    map[string]string{},
 			},
 		},
-		"w3c trace context, last vendor not instana": {
+		"w3c trace context, with instana headers": {
 			Headers: map[string]string{
 				"x-instana-t": "10000000000001314",
 				"X-INSTANA-S": "2435",
@@ -445,31 +436,15 @@ func TestTracer_Extract_HTTPHeaders_WithEUMCorrelation(t *testing.T) {
 }
 
 func TestTracer_Extract_HTTPHeaders_NoContext(t *testing.T) {
-	examples := map[string]struct {
-		Headers  map[string]string
-		Expected instana.SpanContext
-	}{
-		"no w3c trace context": {
-			Headers: map[string]string{
-				"Authorization": "Basic 123",
-			},
-		},
+	recorder := instana.NewTestRecorder()
+	tracer := instana.NewTracerWithEverything(&instana.Options{}, recorder)
+
+	headers := http.Header{
+		"Authorization": {"Basic 123"},
 	}
 
-	for name, example := range examples {
-		t.Run(name, func(t *testing.T) {
-			recorder := instana.NewTestRecorder()
-			tracer := instana.NewTracerWithEverything(&instana.Options{}, recorder)
-
-			headers := http.Header{}
-			for k, v := range example.Headers {
-				headers.Set(k, v)
-			}
-
-			_, err := tracer.Extract(ot.HTTPHeaders, ot.HTTPHeadersCarrier(headers))
-			assert.Equal(t, ot.ErrSpanContextNotFound, err)
-		})
-	}
+	_, err := tracer.Extract(ot.HTTPHeaders, ot.HTTPHeadersCarrier(headers))
+	assert.Equal(t, ot.ErrSpanContextNotFound, err)
 }
 
 func TestTracer_Extract_HTTPHeaders_CorruptedContext(t *testing.T) {
@@ -478,13 +453,13 @@ func TestTracer_Extract_HTTPHeaders_CorruptedContext(t *testing.T) {
 			"X-INSTANA-S": {"1314"},
 			"X-Instana-L": {"1"},
 		},
+		"missing span id": {
+			"x-instana-t": {"1314"},
+			"X-Instana-L": {"1"},
+		},
 		"malformed trace id": {
 			"x-instana-t": {"wrong"},
 			"X-INSTANA-S": {"1314"},
-			"X-Instana-L": {"1"},
-		},
-		"missing span id": {
-			"x-instana-t": {"1314"},
 			"X-Instana-L": {"1"},
 		},
 		"malformed span id": {
@@ -630,6 +605,16 @@ func TestTracer_Extract_TextMap(t *testing.T) {
 				Baggage:    map[string]string{},
 			},
 		},
+		"tracing disabled, no instana context": {
+			Carrier: map[string]string{
+				"Authorization": "Basic 123",
+				"X-Instana-L":   "0",
+			},
+			Expected: instana.SpanContext{
+				Suppressed: true,
+				Baggage:    map[string]string{},
+			},
+		},
 	}
 
 	for name, example := range examples {
@@ -650,7 +635,7 @@ func TestTracer_Extract_TextMap_NoContext(t *testing.T) {
 	tracer := instana.NewTracerWithEverything(&instana.Options{}, recorder)
 
 	carrier := map[string]string{
-		"key1": "value1",
+		"key": "value",
 	}
 
 	_, err := tracer.Extract(ot.TextMap, ot.TextMapCarrier(carrier))
@@ -663,13 +648,13 @@ func TestTracer_Extract_TextMap_CorruptedContext(t *testing.T) {
 			"x-instana-s": "1314",
 			"x-instana-l": "1",
 		},
+		"missing span id": {
+			"x-instana-t": "1314",
+			"x-instana-l": "1",
+		},
 		"malformed trace id": {
 			"x-instana-t": "wrong",
 			"x-instana-s": "1314",
-			"x-instana-l": "1",
-		},
-		"missing span id": {
-			"x-instana-t": "1314",
 			"x-instana-l": "1",
 		},
 		"malformed span id": {

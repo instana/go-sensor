@@ -69,12 +69,13 @@ func NewRootSpanContext() SpanContext {
 func NewSpanContext(parent SpanContext) SpanContext {
 	var foreignTrace bool
 	if parent.TraceIDHi == 0 && parent.TraceID == 0 && parent.SpanID == 0 {
-		parent = restoreFromW3CTraceContext(parent.W3CContext)
+		parent = restoreFromW3CTraceContext(parent)
 		foreignTrace = true && !sensor.options.disableW3CTraceCorrelation
 	}
 
 	if parent.TraceIDHi == 0 && parent.TraceID == 0 && parent.SpanID == 0 {
 		c := NewRootSpanContext()
+		c.Suppressed = parent.Suppressed
 
 		// preserve the W3C trace context even if it was not used
 		if !parent.W3CContext.IsZero() {
@@ -116,33 +117,36 @@ func (sc SpanContext) IsZero() bool {
 	return sc.TraceIDHi == 0 && sc.TraceID == 0 && sc.SpanID == 0 && sc.W3CContext.IsZero() && !sc.Suppressed
 }
 
-func restoreFromW3CTraceContext(trCtx w3ctrace.Context) SpanContext {
-	if trCtx.IsZero() {
-		return SpanContext{}
+func restoreFromW3CTraceContext(parent SpanContext) SpanContext {
+	if parent.W3CContext.IsZero() {
+		return parent
 	}
+
+	traceparent := parent.W3CContext.Parent()
 
 	if sensor.options.disableW3CTraceCorrelation {
-		return restoreFromW3CTraceState(trCtx)
+		restored := restoreFromW3CTraceState(parent.W3CContext)
+		restored.Suppressed = parent.Suppressed || !traceparent.Flags.Sampled
+
+		return restored
 	}
 
-	parent := trCtx.Parent()
-
-	traceIDHi, traceIDLo, err := ParseLongID(parent.TraceID)
+	traceIDHi, traceIDLo, err := ParseLongID(traceparent.TraceID)
 	if err != nil {
-		return SpanContext{}
+		return parent
 	}
 
-	parentID, err := ParseID(parent.ParentID)
+	parentID, err := ParseID(traceparent.ParentID)
 	if err != nil {
-		return SpanContext{}
+		return parent
 	}
 
 	return SpanContext{
 		TraceIDHi:  traceIDHi,
 		TraceID:    traceIDLo,
 		SpanID:     parentID,
-		Suppressed: !parent.Flags.Sampled,
-		W3CContext: trCtx,
+		Suppressed: parent.Suppressed || !traceparent.Flags.Sampled,
+		W3CContext: parent.W3CContext,
 	}
 }
 
@@ -175,7 +179,7 @@ func restoreFromW3CTraceState(trCtx w3ctrace.Context) SpanContext {
 		return c
 	}
 
-	c.TraceIDHi, c.TraceID, c.SpanID = traceIDHi, traceIDLo, parentID
+	c.TraceIDHi, c.TraceID, c.SpanID, c.Suppressed = traceIDHi, traceIDLo, parentID, !trCtx.Parent().Flags.Sampled
 
 	return c
 }
