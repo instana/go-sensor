@@ -70,11 +70,18 @@ func NewSpanContext(parent SpanContext) SpanContext {
 	var foreignTrace bool
 	if parent.TraceIDHi == 0 && parent.TraceID == 0 && parent.SpanID == 0 {
 		parent = restoreFromW3CTraceContext(parent.W3CContext)
-		foreignTrace = true
+		foreignTrace = true && !sensor.options.disableW3CTraceCorrelation
 	}
 
 	if parent.TraceIDHi == 0 && parent.TraceID == 0 && parent.SpanID == 0 {
-		return NewRootSpanContext()
+		c := NewRootSpanContext()
+
+		// preserve the W3C trace context even if it was not used
+		if !parent.W3CContext.IsZero() {
+			c.W3CContext = parent.W3CContext
+		}
+
+		return c
 	}
 
 	c := parent.Clone()
@@ -93,13 +100,12 @@ func NewSpanContext(parent SpanContext) SpanContext {
 	c.W3CContext.RawParent = w3cParent.String()
 
 	// check if there is Instana state stored in the W3C tracestate header
-	w3cState := c.W3CContext.State()
-	if ancestor, ok := w3cState.Fetch(w3ctrace.VendorInstana); ok && foreignTrace {
-		if ind := strings.IndexByte(ancestor, ';'); ind > -1 {
-			c.Links = append(c.Links, SpanReference{
-				TraceID: ancestor[:ind],
-				SpanID:  ancestor[ind+1:],
-			})
+	if foreignTrace {
+		w3cState := c.W3CContext.State()
+		if ancestor, ok := w3cState.Fetch(w3ctrace.VendorInstana); ok {
+			if ref, ok := parseW3CInstanaState(ancestor); ok {
+				c.Links = append(c.Links, ref)
+			}
 		}
 	}
 
@@ -109,6 +115,10 @@ func NewSpanContext(parent SpanContext) SpanContext {
 func restoreFromW3CTraceContext(trCtx w3ctrace.Context) SpanContext {
 	if trCtx.IsZero() {
 		return SpanContext{}
+	}
+
+	if sensor.options.disableW3CTraceCorrelation {
+		return restoreFromW3CTraceState(trCtx)
 	}
 
 	parent := trCtx.Parent()
@@ -130,6 +140,40 @@ func restoreFromW3CTraceContext(trCtx w3ctrace.Context) SpanContext {
 		Suppressed: !parent.Flags.Sampled,
 		W3CContext: trCtx,
 	}
+}
+
+func restoreFromW3CTraceState(trCtx w3ctrace.Context) SpanContext {
+	if trCtx.IsZero() {
+		return SpanContext{}
+	}
+
+	c := SpanContext{
+		W3CContext: trCtx,
+	}
+
+	state, ok := trCtx.State().Fetch(w3ctrace.VendorInstana)
+	if !ok {
+		return c
+	}
+
+	ref, ok := parseW3CInstanaState(state)
+	if !ok {
+		return c
+	}
+
+	traceIDHi, traceIDLo, err := ParseLongID(ref.TraceID)
+	if err != nil {
+		return c
+	}
+
+	parentID, err := ParseID(ref.SpanID)
+	if err != nil {
+		return c
+	}
+
+	c.TraceIDHi, c.TraceID, c.SpanID = traceIDHi, traceIDLo, parentID
+
+	return c
 }
 
 // ForeachBaggageItem belongs to the opentracing.SpanContext interface
@@ -185,4 +229,16 @@ func newW3CTraceContext(c SpanContext) w3ctrace.Context {
 			Sampled: !c.Suppressed,
 		},
 	})
+}
+
+func parseW3CInstanaState(vendorData string) (ancestor SpanReference, ok bool) {
+	ind := strings.IndexByte(vendorData, ';')
+	if ind < 0 {
+		return SpanReference{}, false
+	}
+
+	return SpanReference{
+		TraceID: vendorData[:ind],
+		SpanID:  vendorData[ind+1:],
+	}, true
 }
