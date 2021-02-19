@@ -168,6 +168,34 @@ func TestSpanContext_WithBaggageItem(t *testing.T) {
 	}, c)
 }
 
+func TestSpanContext_IsZero(t *testing.T) {
+	examples := map[string]instana.SpanContext{
+		"with 64-bit trace ID":  {TraceID: 0x1},
+		"with 128-bit trace ID": {TraceIDHi: 0x1},
+		"with span ID":          {SpanID: 0x1},
+		"with w3c context": {
+			W3CContext: w3ctrace.New(w3ctrace.Parent{
+				Version:  w3ctrace.Version_Max,
+				TraceID:  "abcd",
+				ParentID: "1234",
+			}),
+		},
+		"with suppressed option": {
+			Suppressed: true,
+		},
+	}
+
+	for name, sc := range examples {
+		t.Run(name, func(t *testing.T) {
+			assert.False(t, sc.IsZero())
+		})
+	}
+
+	t.Run("zero value", func(t *testing.T) {
+		assert.True(t, instana.SpanContext{}.IsZero())
+	})
+}
+
 func TestSpanContext_Clone(t *testing.T) {
 	c := instana.SpanContext{
 		TraceIDHi:  10,
