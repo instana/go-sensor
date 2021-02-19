@@ -84,8 +84,27 @@ func injectTraceContext(sc SpanContext, opaqueCarrier interface{}) error {
 		addEUMHeaders(h, sc)
 	}
 
-	carrier.Set(exstfieldT, FormatID(sc.TraceID))
-	carrier.Set(exstfieldS, FormatID(sc.SpanID))
+	if !sc.Suppressed {
+		carrier.Set(exstfieldT, FormatID(sc.TraceID))
+		carrier.Set(exstfieldS, FormatID(sc.SpanID))
+	} else {
+		// remove trace context keys from the carrier
+		switch c := opaqueCarrier.(type) {
+		case ot.HTTPHeadersCarrier:
+			h := http.Header(c)
+			h.Del(exstfieldT)
+			h.Del(exstfieldS)
+		case ot.TextMapCarrier:
+			delete(c, exstfieldT)
+			delete(c, exstfieldS)
+		case interface{ RemoveAll() }:
+			// in case carrier has the RemoveAll() method that wipes all trace
+			// headers, for example the instasarama.ProducerMessagCarrier, we
+			// use it to remove the context of a suppressed trace
+			c.RemoveAll()
+		}
+	}
+
 	carrier.Set(exstfieldL, formatLevel(sc))
 
 	for k, v := range sc.Baggage {

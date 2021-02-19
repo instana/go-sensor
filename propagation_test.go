@@ -82,8 +82,6 @@ func TestTracer_Inject_HTTPHeaders(t *testing.T) {
 			},
 			Expected: http.Header{
 				"Authorization": {"Basic 123"},
-				"X-Instana-T":   {"0000000000002435"},
-				"X-Instana-S":   {"0000000000003546"},
 				"X-Instana-L":   {"0"},
 				"Traceparent":   {"00-00000000000000010000000000002435-0000000000003546-00"},
 				"Tracestate":    {""},
@@ -116,8 +114,6 @@ func TestTracer_Inject_HTTPHeaders_W3CTraceContext(t *testing.T) {
 				Suppressed: true,
 			},
 			Expected: http.Header{
-				"X-Instana-T":   {"0000000000002435"},
-				"X-Instana-S":   {"0000000000003546"},
 				"X-Instana-L":   {"0"},
 				"Traceparent":   {"00-00000000000000010000000000002435-0000000000003546-00"},
 				"Tracestate":    {""},
@@ -136,8 +132,6 @@ func TestTracer_Inject_HTTPHeaders_W3CTraceContext(t *testing.T) {
 				Suppressed: true,
 			},
 			Expected: http.Header{
-				"X-Instana-T":   {"0000000000002435"},
-				"X-Instana-S":   {"0000000000003546"},
 				"X-Instana-L":   {"0"},
 				"Traceparent":   {"00-4bf92f3577b34da6a3ce929d0e0e4736-0000000000003546-00"},
 				"Tracestate":    {"rojo=00f067aa0ba902b7"},
@@ -156,8 +150,6 @@ func TestTracer_Inject_HTTPHeaders_W3CTraceContext(t *testing.T) {
 				Suppressed: true,
 			},
 			Expected: http.Header{
-				"X-Instana-T":   {"0000000000002435"},
-				"X-Instana-S":   {"0000000000003546"},
 				"X-Instana-L":   {"0"},
 				"Traceparent":   {"00-4bf92f3577b34da6a3ce929d0e0e4736-0000000000003546-00"},
 				"Tracestate":    {"rojo=00f067aa0ba902b7"},
@@ -251,8 +243,8 @@ func TestTracer_Inject_HTTPHeaders_SuppressedTracing(t *testing.T) {
 
 	require.NoError(t, tracer.Inject(sc, ot.HTTPHeaders, ot.HTTPHeadersCarrier(headers)))
 
-	assert.Equal(t, "0000000000002435", headers.Get("X-Instana-T"))
-	assert.Equal(t, "0000000000003546", headers.Get("X-Instana-S"))
+	assert.Empty(t, headers.Get("X-Instana-T"))
+	assert.Empty(t, headers.Get("X-Instana-S"))
 	assert.Equal(t, "0", headers.Get("X-Instana-L"))
 	assert.Equal(t, "Basic 123", headers.Get("Authorization"))
 	assert.Equal(t, "intid;desc=0000000000002435", headers.Get("Server-Timing"))
@@ -561,8 +553,6 @@ func TestTracer_Inject_TextMap_SuppressedTracing(t *testing.T) {
 	require.NoError(t, tracer.Inject(sc, ot.TextMap, ot.TextMapCarrier(carrier)))
 
 	assert.Equal(t, map[string]string{
-		"x-instana-t": "0000000000002435",
-		"X-INSTANA-S": "0000000000003546",
 		"X-Instana-L": "0",
 		"key1":        "value1",
 	}, carrier)
@@ -673,4 +663,38 @@ func TestTracer_Extract_TextMap_CorruptedContext(t *testing.T) {
 			assert.Equal(t, ot.ErrSpanContextCorrupted, err)
 		})
 	}
+}
+
+type textMapWithRemoveAll struct {
+	ot.TextMapCarrier
+}
+
+func (c *textMapWithRemoveAll) RemoveAll() {
+	for k := range c.TextMapCarrier {
+		delete(c.TextMapCarrier, k)
+	}
+}
+
+func TestTracer_Inject_CarrierWithRemoveAll_SuppressedTrace(t *testing.T) {
+	recorder := instana.NewTestRecorder()
+	tracer := instana.NewTracerWithEverything(&instana.Options{}, recorder)
+
+	sc := instana.SpanContext{
+		TraceIDHi:  0x1,
+		TraceID:    0x2435,
+		SpanID:     0x3546,
+		Suppressed: true,
+	}
+
+	carrier := map[string]string{
+		"x-instana-t": "0000000000001314",
+		"X-INSTANA-S": "0000000000001314",
+		"X-Instana-L": "1",
+	}
+
+	require.NoError(t, tracer.Inject(sc, ot.TextMap, &textMapWithRemoveAll{carrier}))
+
+	assert.Equal(t, map[string]string{
+		"X-Instana-L": "0",
+	}, carrier)
 }
