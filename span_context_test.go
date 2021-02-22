@@ -50,24 +50,6 @@ func TestNewSpanContext(t *testing.T) {
 				RawState:  "vendor1=data",
 			},
 		},
-		"with w3c trace, last state from instana": {
-			TraceIDHi: 10,
-			TraceID:   1,
-			SpanID:    2,
-			W3CContext: w3ctrace.Context{
-				RawParent: "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01",
-				RawState:  "in=1234;5678,vendor1=data",
-			},
-		},
-		"with correlation data": {
-			TraceIDHi: 10,
-			TraceID:   1,
-			SpanID:    2,
-			Correlation: instana.EUMCorrelationData{
-				Type: "web",
-				ID:   "1",
-			},
-		},
 	}
 
 	for name, parent := range examples {
@@ -81,6 +63,7 @@ func TestNewSpanContext(t *testing.T) {
 			assert.Equal(t, parent.Suppressed, c.Suppressed)
 			assert.Equal(t, instana.FormatID(c.SpanID), c.W3CContext.Parent().ParentID)
 			assert.Equal(t, instana.EUMCorrelationData{}, c.Correlation)
+			assert.False(t, c.W3CContext.IsZero())
 			assert.Equal(t, parent.Baggage, c.Baggage)
 
 			assert.NotEqual(t, parent.SpanID, c.SpanID)
@@ -91,14 +74,31 @@ func TestNewSpanContext(t *testing.T) {
 }
 
 func TestNewSpanContext_EmptyParent(t *testing.T) {
-	c := instana.NewSpanContext(instana.SpanContext{})
+	examples := map[string]instana.SpanContext{
+		"zero value": instana.SpanContext{},
+		"suppressed": instana.SpanContext{Suppressed: true},
+		"with correlation data": instana.SpanContext{
+			Correlation: instana.EUMCorrelationData{
+				Type: "web",
+				ID:   "1",
+			},
+		},
+	}
 
-	assert.NotEmpty(t, c.TraceID)
-	assert.Equal(t, c.SpanID, c.TraceID)
-	assert.False(t, c.Sampled)
-	assert.False(t, c.Suppressed)
-	assert.Equal(t, instana.EUMCorrelationData{}, c.Correlation)
-	assert.Empty(t, c.Baggage)
+	for name, parent := range examples {
+		t.Run(name, func(t *testing.T) {
+			c := instana.NewSpanContext(parent)
+
+			assert.NotEmpty(t, c.TraceID)
+			assert.Equal(t, c.SpanID, c.TraceID)
+			assert.Empty(t, c.ParentID)
+			assert.False(t, c.Sampled)
+			assert.Equal(t, parent.Suppressed, c.Suppressed)
+			assert.Equal(t, instana.EUMCorrelationData{}, c.Correlation)
+			assert.False(t, c.W3CContext.IsZero())
+			assert.Empty(t, c.Baggage)
+		})
+	}
 }
 
 func TestNewSpanContext_FromW3CTraceContext(t *testing.T) {
@@ -166,6 +166,34 @@ func TestSpanContext_WithBaggageItem(t *testing.T) {
 			"key2": "value2",
 		},
 	}, c)
+}
+
+func TestSpanContext_IsZero(t *testing.T) {
+	examples := map[string]instana.SpanContext{
+		"with 64-bit trace ID":  {TraceID: 0x1},
+		"with 128-bit trace ID": {TraceIDHi: 0x1},
+		"with span ID":          {SpanID: 0x1},
+		"with w3c context": {
+			W3CContext: w3ctrace.New(w3ctrace.Parent{
+				Version:  w3ctrace.Version_Max,
+				TraceID:  "abcd",
+				ParentID: "1234",
+			}),
+		},
+		"with suppressed option": {
+			Suppressed: true,
+		},
+	}
+
+	for name, sc := range examples {
+		t.Run(name, func(t *testing.T) {
+			assert.False(t, sc.IsZero())
+		})
+	}
+
+	t.Run("zero value", func(t *testing.T) {
+		assert.True(t, instana.SpanContext{}.IsZero())
+	})
 }
 
 func TestSpanContext_Clone(t *testing.T) {

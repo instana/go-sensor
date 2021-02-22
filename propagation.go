@@ -84,8 +84,27 @@ func injectTraceContext(sc SpanContext, opaqueCarrier interface{}) error {
 		addEUMHeaders(h, sc)
 	}
 
-	carrier.Set(exstfieldT, FormatID(sc.TraceID))
-	carrier.Set(exstfieldS, FormatID(sc.SpanID))
+	if !sc.Suppressed {
+		carrier.Set(exstfieldT, FormatID(sc.TraceID))
+		carrier.Set(exstfieldS, FormatID(sc.SpanID))
+	} else {
+		// remove trace context keys from the carrier
+		switch c := opaqueCarrier.(type) {
+		case ot.HTTPHeadersCarrier:
+			h := http.Header(c)
+			h.Del(exstfieldT)
+			h.Del(exstfieldS)
+		case ot.TextMapCarrier:
+			delete(c, exstfieldT)
+			delete(c, exstfieldS)
+		case interface{ RemoveAll() }:
+			// in case carrier has the RemoveAll() method that wipes all trace
+			// headers, for example the instasarama.ProducerMessagCarrier, we
+			// use it to remove the context of a suppressed trace
+			c.RemoveAll()
+		}
+	}
+
 	carrier.Set(exstfieldL, formatLevel(sc))
 
 	for k, v := range sc.Baggage {
@@ -109,13 +128,20 @@ func extractTraceContext(opaqueCarrier interface{}) (SpanContext, error) {
 		pickupW3CTraceContext(http.Header(c), &spanContext)
 	}
 
-	var traceID, spanID string
 	err := carrier.ForeachKey(func(k, v string) error {
+		var err error
+
 		switch strings.ToLower(k) {
 		case FieldT:
-			traceID = v
+			spanContext.TraceIDHi, spanContext.TraceID, err = ParseLongID(v)
+			if err != nil {
+				return ot.ErrSpanContextCorrupted
+			}
 		case FieldS:
-			spanID = v
+			spanContext.SpanID, err = ParseID(v)
+			if err != nil {
+				return ot.ErrSpanContextCorrupted
+			}
 		case FieldL:
 			suppressed, corrData, err := parseLevel(v)
 			if err != nil {
@@ -123,6 +149,7 @@ func extractTraceContext(opaqueCarrier interface{}) (SpanContext, error) {
 				// use defaults
 				suppressed, corrData = false, EUMCorrelationData{}
 			}
+
 			spanContext.Suppressed = suppressed
 			if !spanContext.Suppressed {
 				spanContext.Correlation = corrData
@@ -140,26 +167,18 @@ func extractTraceContext(opaqueCarrier interface{}) (SpanContext, error) {
 		return spanContext, err
 	}
 
-	// For compatibility reasons X-Instana-{T,S} values if EUM has provided correlation ID
+	// reset the trace if a correlation ID has been provided
 	if spanContext.Correlation.ID != "" {
-		return spanContext, nil
-	}
-
-	if traceID == "" && spanID == "" {
-		if spanContext.W3CContext.IsZero() {
-			return spanContext, ot.ErrSpanContextNotFound
-		}
+		spanContext.TraceIDHi, spanContext.TraceID, spanContext.SpanID = 0, 0, 0
 
 		return spanContext, nil
 	}
 
-	spanContext.TraceIDHi, spanContext.TraceID, err = ParseLongID(traceID)
-	if err != nil {
-		return spanContext, ot.ErrSpanContextCorrupted
+	if spanContext.IsZero() {
+		return spanContext, ot.ErrSpanContextNotFound
 	}
 
-	spanContext.SpanID, err = ParseID(spanID)
-	if err != nil {
+	if !spanContext.Suppressed && (spanContext.SpanID == 0 != (spanContext.TraceIDHi == 0 && spanContext.TraceID == 0)) {
 		return spanContext, ot.ErrSpanContextCorrupted
 	}
 
