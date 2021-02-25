@@ -235,6 +235,7 @@ func (agent *agentS) fullRequestResponse(url string, method string, data interfa
 	var err error
 	var resp *http.Response
 	var req *http.Request
+
 	if data != nil {
 		j, err = json.Marshal(data)
 	}
@@ -277,7 +278,7 @@ func (agent *agentS) fullRequestResponse(url string, method string, data interfa
 		// this is the time where the entity is registering in the Instana
 		// backend and it will return 404 until it's done.
 		if !agent.fsm.fsm.Is("announced") {
-			agent.logger.Info(err, url)
+			agent.logger.Info("failed to send a request to ", url, ": ", err)
 		}
 	}
 
