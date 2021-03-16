@@ -122,8 +122,11 @@ func TracingHandlerFunc(sensor *Sensor, pathTemplate string, handler http.Handle
 		}
 
 		if wrapped.Status > 0 {
-			if wrapped.Status > http.StatusInternalServerError {
-				span.SetTag("http.error", http.StatusText(wrapped.Status))
+			if wrapped.Status >= http.StatusInternalServerError {
+				statusText := http.StatusText(wrapped.Status)
+
+				span.SetTag("http.error", statusText)
+				span.LogFields(otlog.Object("error", statusText))
 			}
 
 			span.SetTag("http.status", wrapped.Status)

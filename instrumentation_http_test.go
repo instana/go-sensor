@@ -262,7 +262,7 @@ func TestTracingHandlerFunc_Error(t *testing.T) {
 	require.Len(t, spans, 1)
 
 	span := spans[0]
-	assert.Equal(t, 0, span.Ec)
+	assert.Equal(t, 1, span.Ec)
 	assert.EqualValues(t, instana.EntrySpanKind, span.Kind)
 	assert.False(t, span.Synthetic)
 
@@ -274,6 +274,7 @@ func TestTracingHandlerFunc_Error(t *testing.T) {
 		Method: "GET",
 		Host:   "example.com",
 		Path:   "/test",
+		Error:  "Internal Server Error",
 	}, data.Tags)
 }
 
