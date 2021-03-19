@@ -8,6 +8,7 @@ import (
 	"net/http"
 
 	instana "github.com/instana/go-sensor"
+	"github.com/opentracing/opentracing-go"
 )
 
 // This example shows how to instrument an HTTP server with Instana tracing
@@ -19,7 +20,7 @@ func Example_tracingHandlerFunc() {
 		// Extract the parent span and use its tracer to initialize any child spans to trace the calls
 		// inside the handler, e.g. database queries, 3rd-party API requests, etc.
 		if parent, ok := instana.SpanFromContext(req.Context()); ok {
-			sp := parent.Tracer().StartSpan("index")
+			sp := parent.Tracer().StartSpan("index", opentracing.ChildOf(parent.Context()))
 			defer sp.Finish()
 		}
 
