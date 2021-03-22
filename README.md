@@ -337,7 +337,7 @@ You can find the complete example in the [Examples section][godoc] of package do
 
 ## OpenTracing
 
-Instana tracer provides an interface compatible with [`github.com/opentracing/opentracing-go`](https://github.com/opentracing/opentracing-go) and thus can be used as a global tracer. However, this approach is not recommended. The Go OpenTracing library only offers a low-level interface to create and maintain spans, which means that most of the co
+Instana tracer provides an interface compatible with [`github.com/opentracing/opentracing-go`](https://github.com/opentracing/opentracing-go) and thus can be used as a global tracer. However, the recommended approach is to use the Instana wrapper packages/functions [provided](./instrumentation) in the library. They set up a lot of semantic information which helps Instana get the best picture of the application possible. Sending proper tags is especially important when it comes to correlating calls to infrastructure and since they are strings mostly, there is a large room for making a mistake.
 
 In case you want to integrate Instana into an app that is already instrumented with OpenTracing, register an instance of Instana tracer as a global tracer at the beginning of your `main()` function:
 
