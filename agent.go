@@ -85,6 +85,7 @@ type agentS struct {
 	logger   LeveledLogger
 }
 
+//go:norace
 func newAgent(serviceName, host string, port int, logger LeveledLogger) *agentS {
 	if logger == nil {
 		logger = defaultLogger
