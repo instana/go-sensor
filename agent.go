@@ -11,6 +11,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/instana/go-sensor/acceptor"
@@ -79,13 +80,14 @@ type agentS struct {
 	host string
 	port string
 
-	fsm      *fsmS
+	mu  sync.RWMutex
+	fsm *fsmS
+
 	client   *http.Client
 	snapshot *SnapshotCollector
 	logger   LeveledLogger
 }
 
-//go:norace
 func newAgent(serviceName, host string, port int, logger LeveledLogger) *agentS {
 	if logger == nil {
 		logger = defaultLogger
@@ -104,13 +106,19 @@ func newAgent(serviceName, host string, port int, logger LeveledLogger) *agentS 
 		},
 		logger: logger,
 	}
+
+	agent.mu.Lock()
 	agent.fsm = newFSM(agent)
+	agent.mu.Unlock()
 
 	return agent
 }
 
 // Ready returns whether the agent has finished the announcement and is ready to send data
 func (agent *agentS) Ready() bool {
+	agent.mu.RLock()
+	defer agent.mu.RUnlock()
+
 	return agent.fsm.fsm.Current() == "ready"
 }
 
@@ -278,9 +286,11 @@ func (agent *agentS) fullRequestResponse(url string, method string, data interfa
 		// Ignore errors while in announced stated (before ready) as
 		// this is the time where the entity is registering in the Instana
 		// backend and it will return 404 until it's done.
+		agent.mu.RLock()
 		if !agent.fsm.fsm.Is("announced") {
 			agent.logger.Info("failed to send a request to ", url, ": ", err)
 		}
+		agent.mu.RUnlock()
 	}
 
 	return ret, err
@@ -306,5 +316,7 @@ func (agent *agentS) setHost(host string) {
 }
 
 func (agent *agentS) reset() {
+	agent.mu.Lock()
 	agent.fsm.reset()
+	agent.mu.Unlock()
 }
