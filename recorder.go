@@ -35,7 +35,7 @@ func NewRecorder() *Recorder {
 	ticker := time.NewTicker(1 * time.Second)
 	go func() {
 		for range ticker.C {
-			if sensor.agent.Ready() {
+			if sensor.Agent().Ready() {
 				go r.Flush(context.Background())
 			}
 		}
@@ -57,7 +57,7 @@ func NewTestRecorder() *Recorder {
 func (r *Recorder) RecordSpan(span *spanS) {
 	// If we're not announced and not in test mode then just
 	// return
-	if !r.testMode && !sensor.agent.Ready() {
+	if !r.testMode && !sensor.Agent().Ready() {
 		return
 	}
 
@@ -70,7 +70,7 @@ func (r *Recorder) RecordSpan(span *spanS) {
 
 	r.spans = append(r.spans, newSpan(span))
 
-	if r.testMode || !sensor.agent.Ready() {
+	if r.testMode || !sensor.Agent().Ready() {
 		return
 	}
 
@@ -109,7 +109,7 @@ func (r *Recorder) Flush(ctx context.Context) error {
 		return nil
 	}
 
-	if err := sensor.agent.SendSpans(spansToSend); err != nil {
+	if err := sensor.Agent().SendSpans(spansToSend); err != nil {
 		r.spans = append(r.spans, spansToSend...)
 		return fmt.Errorf("failed to send collected spans to the agent: %s", err)
 	}
