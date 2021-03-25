@@ -135,7 +135,13 @@ func (r *sensorS) setAgent(agent agentClient) {
 	r.agent = agent
 }
 
+// Agent returns the agent client used by the global sensor. It will return a noopAgent that is never ready
+// until both the global sensor and its agent are initialized
 func (r *sensorS) Agent() agentClient {
+	if r == nil {
+		return noopAgent{}
+	}
+
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
