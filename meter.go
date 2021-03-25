@@ -36,20 +36,18 @@ func newMeter(logger LeveledLogger) *meterS {
 }
 
 func (m *meterS) Run(collectInterval time.Duration) {
-	go func() {
-		ticker := time.NewTicker(collectInterval)
-		defer ticker.Stop()
-		for {
-			select {
-			case <-m.done:
-				return
-			case <-ticker.C:
-				if sensor.Agent().Ready() {
-					go sensor.Agent().SendMetrics(m.collectMetrics())
-				}
+	ticker := time.NewTicker(collectInterval)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-m.done:
+			return
+		case <-ticker.C:
+			if sensor.Agent().Ready() {
+				go sensor.Agent().SendMetrics(m.collectMetrics())
 			}
 		}
-	}()
+	}
 }
 
 func (m *meterS) Stop() {

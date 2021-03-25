@@ -26,12 +26,17 @@ func NewTracer() *tracerS {
 
 // NewTracerWithOptions initializes and configures a new tracer that collects and sends spans to the agent
 func NewTracerWithOptions(options *Options) *tracerS {
-	return NewTracerWithEverything(options, NewRecorder())
+	return NewTracerWithEverything(options, nil)
 }
 
-// NewTracerWithEverything initializes and configures a new tracer
+// NewTracerWithEverything initializes and configures a new tracer. It uses instana.DefaultOptions() if nil
+// is provided
 func NewTracerWithEverything(options *Options, recorder SpanRecorder) *tracerS {
 	InitSensor(options)
+
+	if recorder == nil {
+		recorder = NewRecorder()
+	}
 
 	tracer := &tracerS{
 		recorder: recorder,
