@@ -37,6 +37,16 @@ type agentClient interface {
 	Flush(context.Context) error
 }
 
+// zero value for sensorS.Agent()
+type noopAgent struct{}
+
+func (noopAgent) Ready() bool                                       { return false }
+func (noopAgent) SendMetrics(data acceptor.Metrics) error           { return nil }
+func (noopAgent) SendEvent(event *EventData) error                  { return nil }
+func (noopAgent) SendSpans(spans []Span) error                      { return nil }
+func (noopAgent) SendProfiles(profiles []autoprofile.Profile) error { return nil }
+func (noopAgent) Flush(context.Context) error                       { return nil }
+
 type sensorS struct {
 	meter       *meterS
 	logger      LeveledLogger
@@ -108,7 +118,7 @@ func newSensor(options *Options) *sensorS {
 	}
 
 	s.setAgent(agent)
-	s.meter = newMeter(s.Agent(), s.logger)
+	s.meter = newMeter(s.logger)
 
 	return s
 }
@@ -135,6 +145,10 @@ func (r *sensorS) setAgent(agent agentClient) {
 func (r *sensorS) Agent() agentClient {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
+
+	if r.agent == nil {
+		return noopAgent{}
+	}
 
 	return r.agent
 }

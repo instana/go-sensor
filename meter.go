@@ -22,19 +22,13 @@ type MetricsS acceptor.Metrics
 // EntityData struct to hold snapshot data
 type EntityData acceptor.GoProcessData
 
-type metricSender interface {
-	Ready() bool
-	SendMetrics(acceptor.Metrics) error
-}
-
 type meterS struct {
 	numGC uint32
 
 	logger LeveledLogger
-	agent  metricSender
 }
 
-func newMeter(agent metricSender, logger LeveledLogger) *meterS {
+func newMeter(logger LeveledLogger) *meterS {
 	if logger == nil {
 		logger = defaultLogger
 	}
@@ -43,17 +37,16 @@ func newMeter(agent metricSender, logger LeveledLogger) *meterS {
 
 	meter := &meterS{
 		logger: logger,
-		agent:  agent,
 	}
 
 	ticker := time.NewTicker(1 * time.Second)
 	go func() {
 		for range ticker.C {
-			if !meter.agent.Ready() {
+			if !sensor.Agent().Ready() {
 				continue
 			}
 
-			go meter.agent.SendMetrics(meter.collectMetrics())
+			go sensor.Agent().SendMetrics(meter.collectMetrics())
 		}
 	}()
 
