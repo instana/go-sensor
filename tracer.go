@@ -29,8 +29,13 @@ func NewTracerWithOptions(options *Options) *tracerS {
 	return NewTracerWithEverything(options, NewRecorder())
 }
 
-// NewTracerWithEverything initializes and configures a new tracer
+// NewTracerWithEverything initializes and configures a new tracer. It uses instana.DefaultOptions() if nil
+// is provided
 func NewTracerWithEverything(options *Options, recorder SpanRecorder) *tracerS {
+	if options == nil {
+		options = DefaultOptions()
+	}
+
 	InitSensor(options)
 
 	tracer := &tracerS{

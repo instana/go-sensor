@@ -64,11 +64,7 @@ var (
 )
 
 func newSensor(options *Options) *sensorS {
-	if options == nil {
-		options = DefaultOptions()
-	} else {
-		options.setDefaults()
-	}
+	options.setDefaults()
 
 	s := &sensorS{
 		options:     options,
@@ -155,6 +151,10 @@ func (r *sensorS) Agent() agentClient {
 func InitSensor(options *Options) {
 	if sensor != nil {
 		return
+	}
+
+	if options == nil {
+		options = DefaultOptions()
 	}
 
 	sensor = newSensor(options)
