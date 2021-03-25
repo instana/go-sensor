@@ -24,20 +24,12 @@ type EntityData acceptor.GoProcessData
 
 type meterS struct {
 	numGC uint32
-
-	logger LeveledLogger
 }
 
 func newMeter(logger LeveledLogger) *meterS {
-	if logger == nil {
-		logger = defaultLogger
-	}
+	meter := &meterS{}
 
 	logger.Debug("initializing meter")
-
-	meter := &meterS{
-		logger: logger,
-	}
 
 	ticker := time.NewTicker(1 * time.Second)
 	go func() {
@@ -51,10 +43,6 @@ func newMeter(logger LeveledLogger) *meterS {
 	}()
 
 	return meter
-}
-
-func (m *meterS) setLogger(l LeveledLogger) {
-	m.logger = l
 }
 
 func (m *meterS) collectMemoryMetrics() acceptor.MemoryStats {

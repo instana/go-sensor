@@ -129,10 +129,6 @@ func (r *sensorS) setLogger(l LeveledLogger) {
 	if agent, ok := r.Agent().(*agentS); ok && agent != nil {
 		agent.setLogger(r.logger)
 	}
-
-	if r.meter != nil {
-		r.meter.setLogger(r.logger)
-	}
 }
 
 func (r *sensorS) setAgent(agent agentClient) {
