@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/instana/go-sensor/acceptor"
@@ -38,10 +39,12 @@ type agentClient interface {
 
 type sensorS struct {
 	meter       *meterS
-	agent       agentClient
 	logger      LeveledLogger
 	options     *Options
 	serviceName string
+
+	mu    sync.RWMutex
+	agent agentClient
 }
 
 var (
@@ -77,6 +80,7 @@ func newSensor(options *Options) *sensorS {
 		setLogLevel(l, options.LogLevel)
 	}
 
+	var agent agentClient
 	if agentEndpoint := os.Getenv("INSTANA_ENDPOINT_URL"); agentEndpoint != "" {
 		s.logger.Debug("INSTANA_ENDPOINT_URL= is set, switching to the serverless mode")
 
@@ -96,14 +100,15 @@ func newSensor(options *Options) *sensorS {
 			}
 		}
 
-		s.agent = newServerlessAgent(s.serviceName, agentEndpoint, os.Getenv("INSTANA_AGENT_KEY"), client, s.logger)
+		agent = newServerlessAgent(s.serviceName, agentEndpoint, os.Getenv("INSTANA_AGENT_KEY"), client, s.logger)
 	}
 
-	if s.agent == nil {
-		s.agent = newAgent(s.serviceName, s.options.AgentHost, s.options.AgentPort, s.logger)
+	if agent == nil {
+		agent = newAgent(s.serviceName, s.options.AgentHost, s.options.AgentPort, s.logger)
 	}
 
-	s.meter = newMeter(s.agent, s.logger)
+	s.setAgent(agent)
+	s.meter = newMeter(s.Agent(), s.logger)
 
 	return s
 }
@@ -111,13 +116,27 @@ func newSensor(options *Options) *sensorS {
 func (r *sensorS) setLogger(l LeveledLogger) {
 	r.logger = l
 
-	if agent, ok := r.agent.(*agentS); ok && agent != nil {
+	if agent, ok := r.Agent().(*agentS); ok && agent != nil {
 		agent.setLogger(r.logger)
 	}
 
 	if r.meter != nil {
 		r.meter.setLogger(r.logger)
 	}
+}
+
+func (r *sensorS) setAgent(agent agentClient) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	r.agent = agent
+}
+
+func (r *sensorS) Agent() agentClient {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	return r.agent
 }
 
 // InitSensor intializes the sensor (without tracing) to begin collecting
@@ -137,13 +156,13 @@ func InitSensor(options *Options) {
 	})
 
 	autoprofile.SetSendProfilesFunc(func(profiles []autoprofile.Profile) error {
-		if !sensor.agent.Ready() {
+		if !sensor.Agent().Ready() {
 			return errors.New("sender not ready")
 		}
 
 		sensor.logger.Debug("sending profiles to agent")
 
-		return sensor.agent.SendProfiles(profiles)
+		return sensor.Agent().SendProfiles(profiles)
 	})
 
 	if _, ok := os.LookupEnv("INSTANA_AUTO_PROFILE"); ok || options.EnableAutoProfile {

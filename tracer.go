@@ -127,5 +127,5 @@ func (r *tracerS) Flush(ctx context.Context) error {
 		return err
 	}
 
-	return sensor.agent.Flush(ctx)
+	return sensor.Agent().Flush(ctx)
 }
