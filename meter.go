@@ -24,25 +24,36 @@ type EntityData acceptor.GoProcessData
 
 type meterS struct {
 	numGC uint32
+	done  chan struct{}
 }
 
 func newMeter(logger LeveledLogger) *meterS {
-	meter := &meterS{}
-
 	logger.Debug("initializing meter")
 
-	ticker := time.NewTicker(1 * time.Second)
-	go func() {
-		for range ticker.C {
-			if !sensor.Agent().Ready() {
-				continue
-			}
+	return &meterS{
+		done: make(chan struct{}, 1),
+	}
+}
 
-			go sensor.Agent().SendMetrics(meter.collectMetrics())
+func (m *meterS) Run(collectInterval time.Duration) {
+	go func() {
+		ticker := time.NewTicker(collectInterval)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-m.done:
+				return
+			case <-ticker.C:
+				if sensor.Agent().Ready() {
+					go sensor.Agent().SendMetrics(m.collectMetrics())
+				}
+			}
 		}
 	}()
+}
 
-	return meter
+func (m *meterS) Stop() {
+	m.done <- struct{}{}
 }
 
 func (m *meterS) collectMemoryMetrics() acceptor.MemoryStats {

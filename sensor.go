@@ -119,6 +119,7 @@ func newSensor(options *Options) *sensorS {
 
 	s.setAgent(agent)
 	s.meter = newMeter(s.logger)
+	go s.meter.Run(1 * time.Second)
 
 	return s
 }
