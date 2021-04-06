@@ -401,11 +401,11 @@ To enable AutoProfile™ for an app without code changes, set `INSTANA_AUTO_PROF
 
 Following examples are included in the `example` folder:
 
-* [Greeter](./http-database-greeter) - an instrumented HTTP server that queries a database
-* [Doubler](./kafka-producer-consumer) - an instrumented Kafka processor, that counsumes and produces messages
-* [event/](./example/event/) - Demonstrates usage of the Events API
-* [autoprofile/](./example/autoprofile/) - Demonstrates usage of the AutoProfile™
-* [OpenTracing](./example/opentracing/) - an example of usage of Instana tracer in an app instrumented with OpentTracing
+* [Greeter](./example/http-database-greeter) - an instrumented HTTP server that queries a database
+* [Doubler](./example/kafka-producer-consumer) - an instrumented Kafka processor, that consumes and produces messages
+* [Event](./example/event) - Demonstrates usage of the Events API
+* [Autoprofile](./example/autoprofile) - Demonstrates usage of the AutoProfile™
+* [OpenTracing](./example/opentracing) - an example of usage of Instana tracer in an app instrumented with OpenTracing
 
 For more examples please consult the [godoc][godoc].
 
