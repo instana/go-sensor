@@ -54,12 +54,12 @@ func TestPartitionConsumer_Messages(t *testing.T) {
 	var collected []*sarama.ConsumerMessage
 	timeout := time.After(1 * time.Second)
 
-CONSUMER_LOOP:
+ConsumerLoop:
 	for {
 		select {
 		case msg, ok := <-wrapped.Messages():
 			if !ok {
-				break CONSUMER_LOOP
+				break ConsumerLoop
 			}
 			collected = append(collected, msg)
 		case <-timeout:
