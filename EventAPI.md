@@ -6,7 +6,7 @@ Events are a versatile way to broaden the knowledge base that Instana has to con
 
 # Example: A High Latency Service Event
 
-Suppose that we have a remote point of presence monitoring a specific public microservice (_games_) in Eastern Asia that is critical to our infrastructure for that local area.  When that monitor detects slow response times to it's queries, it reports a custom high latency event to Instana.
+Suppose that we have a remote point of presence monitoring a specific public microservice (_games_) in Eastern Asia that is critical to our infrastructure for that local area.  When that monitor detects slow response times to its queries, it reports a custom high latency event to Instana.
 
 The following example shows how such Go code would send a _critical_ event on the service _games_.
 
