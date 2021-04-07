@@ -234,7 +234,7 @@ http.HandleFunc("/", instana.TracingHandlerFunc(sensor, "/", func(w http.Respons
 }))
 ```
 
-In case your handler is implemented as a http.Handler, pass its `ServeHTTP` method instead:
+In case your handler is implemented as a `http.Handler`, pass its `ServeHTTP` method instead:
 
 ```go
 h := http.FileServer(http.Dir("./"))
