@@ -17,13 +17,13 @@ import (
 // CopierFrom returns an instrumented cloud.google.com/go/storage.Copier.
 //
 // See https://pkg.go.dev/cloud.google.com/go/storage?tab=doc#ObjectHandle.CopierFrom for further details on wrapped method.
-func (dst *ObjectHandle) CopierFrom(src *ObjectHandle) *Copier {
+func (o *ObjectHandle) CopierFrom(src *ObjectHandle) *Copier {
 	return &Copier{
-		Copier:            dst.ObjectHandle.CopierFrom(src.ObjectHandle),
+		Copier:            o.ObjectHandle.CopierFrom(src.ObjectHandle),
 		SourceBucket:      src.Bucket,
 		SourceName:        src.Name,
-		DestinationBucket: dst.Bucket,
-		DestinationName:   dst.Name,
+		DestinationBucket: o.Bucket,
+		DestinationName:   o.Name,
 	}
 }
 
@@ -57,7 +57,7 @@ func (c *Copier) Run(ctx context.Context) (attrs *storage.ObjectAttrs, err error
 // ComposerFrom returns an instrumented cloud.google.com/go/storage.Composer.
 //
 // See https://pkg.go.dev/cloud.google.com/go/storage?tab=doc#ObjectHandle.ComposerFrom for further details on wrapped method.
-func (dst *ObjectHandle) ComposerFrom(srcs ...*ObjectHandle) *Composer {
+func (o *ObjectHandle) ComposerFrom(srcs ...*ObjectHandle) *Composer {
 	srcsCopy := make([]*storage.ObjectHandle, len(srcs))
 	sourceObjects := make([]string, len(srcs))
 	for i := range srcs {
@@ -66,9 +66,9 @@ func (dst *ObjectHandle) ComposerFrom(srcs ...*ObjectHandle) *Composer {
 	}
 
 	return &Composer{
-		Composer:          dst.ObjectHandle.ComposerFrom(srcsCopy...),
-		DestinationBucket: dst.Bucket,
-		DestinationName:   dst.Name,
+		Composer:          o.ObjectHandle.ComposerFrom(srcsCopy...),
+		DestinationBucket: o.Bucket,
+		DestinationName:   o.Name,
 		SourceObjects:     sourceObjects,
 	}
 }
