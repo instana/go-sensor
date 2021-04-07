@@ -16,7 +16,7 @@ import (
 
 // CopierFrom returns an instrumented cloud.google.com/go/storage.Copier.
 //
-// See https://pkg.go.dev/cloud.google.com/go/storage?tab=doc#ObjectHandle.CopierFrom for furter details on wrapped method.
+// See https://pkg.go.dev/cloud.google.com/go/storage?tab=doc#ObjectHandle.CopierFrom for further details on wrapped method.
 func (dst *ObjectHandle) CopierFrom(src *ObjectHandle) *Copier {
 	return &Copier{
 		Copier:            dst.ObjectHandle.CopierFrom(src.ObjectHandle),
@@ -30,7 +30,7 @@ func (dst *ObjectHandle) CopierFrom(src *ObjectHandle) *Copier {
 // Copier is an instrumented wrapper for cloud.google.com/go/storage.Copier
 // that traces calls made to Google Cloud Storage API.
 //
-// See https://pkg.go.dev/cloud.google.com/go/storage?tab=doc#Copier for furter details on wrapped type.
+// See https://pkg.go.dev/cloud.google.com/go/storage?tab=doc#Copier for further details on wrapped type.
 type Copier struct {
 	*storage.Copier
 	SourceBucket, SourceName           string
@@ -39,7 +39,7 @@ type Copier struct {
 
 // Run calls and traces the Run() method of the wrapped Copier.
 //
-// See https://pkg.go.dev/cloud.google.com/go/storage?tab=doc#Copier.Run for furter details on wrapped method.
+// See https://pkg.go.dev/cloud.google.com/go/storage?tab=doc#Copier.Run for further details on wrapped method.
 func (c *Copier) Run(ctx context.Context) (attrs *storage.ObjectAttrs, err error) {
 	ctx = internal.StartExitSpan(ctx, "gcs", ot.Tags{
 		"gcs.op":                "objects.copy",
@@ -56,7 +56,7 @@ func (c *Copier) Run(ctx context.Context) (attrs *storage.ObjectAttrs, err error
 
 // ComposerFrom returns an instrumented cloud.google.com/go/storage.Composer.
 //
-// See https://pkg.go.dev/cloud.google.com/go/storage?tab=doc#ObjectHandle.ComposerFrom for furter details on wrapped method.
+// See https://pkg.go.dev/cloud.google.com/go/storage?tab=doc#ObjectHandle.ComposerFrom for further details on wrapped method.
 func (dst *ObjectHandle) ComposerFrom(srcs ...*ObjectHandle) *Composer {
 	srcsCopy := make([]*storage.ObjectHandle, len(srcs))
 	sourceObjects := make([]string, len(srcs))
@@ -76,7 +76,7 @@ func (dst *ObjectHandle) ComposerFrom(srcs ...*ObjectHandle) *Composer {
 // Composer is an instrumented wrapper for cloud.google.com/go/storage.Composer.
 // that traces calls made to Google Cloud Storage API
 //
-// See https://pkg.go.dev/cloud.google.com/go/storage?tab=doc#Composer for furter details on wrapped type.
+// See https://pkg.go.dev/cloud.google.com/go/storage?tab=doc#Composer for further details on wrapped type.
 type Composer struct {
 	*storage.Composer
 	DestinationBucket, DestinationName string
@@ -85,7 +85,7 @@ type Composer struct {
 
 // Run calls and traces the Run() method of the wrapped cloud.google.com/go/storage.Composer.
 //
-// See https://pkg.go.dev/cloud.google.com/go/storage?tab=doc#Composer.Run for furter details on wrapped method.
+// See https://pkg.go.dev/cloud.google.com/go/storage?tab=doc#Composer.Run for further details on wrapped method.
 func (c *Composer) Run(ctx context.Context) (attrs *storage.ObjectAttrs, err error) {
 	ctx = internal.StartExitSpan(ctx, "gcs", ot.Tags{
 		"gcs.op":                "objects.compose",

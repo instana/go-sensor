@@ -17,7 +17,7 @@ import (
 // BucketHandle is an instrumented wrapper for cloud.google.com/go/storage.BucketHandle
 // that traces calls made to Google Cloud Storage API.
 //
-// See https://pkg.go.dev/cloud.google.com/go/storage?tab=doc#BucketHandle for furter details on wrapped type.
+// See https://pkg.go.dev/cloud.google.com/go/storage?tab=doc#BucketHandle for further details on wrapped type.
 type BucketHandle struct {
 	*storage.BucketHandle
 	Name string
@@ -25,7 +25,7 @@ type BucketHandle struct {
 
 // Bucket returns an instrumented cloud.google.com/go/storage.BucketHandle.
 //
-// See https://pkg.go.dev/cloud.google.com/go/storage?tab=doc#Client.Bucket for furter details on wrapped method.
+// See https://pkg.go.dev/cloud.google.com/go/storage?tab=doc#Client.Bucket for further details on wrapped method.
 func (c *Client) Bucket(name string) *BucketHandle {
 	return &BucketHandle{
 		BucketHandle: c.Client.Bucket(name),
@@ -35,7 +35,7 @@ func (c *Client) Bucket(name string) *BucketHandle {
 
 // Create calls and traces the Create() method of the wrapped cloud.google.com/go/storage.BucketHandle.
 //
-// See https://pkg.go.dev/cloud.google.com/go/storage?tab=doc#BucketHandle.Create for furter details on wrapped method.
+// See https://pkg.go.dev/cloud.google.com/go/storage?tab=doc#BucketHandle.Create for further details on wrapped method.
 func (b *BucketHandle) Create(ctx context.Context, projectID string, attrs *storage.BucketAttrs) (err error) {
 	ctx = internal.StartExitSpan(ctx, "gcs", ot.Tags{
 		"gcs.op":        "buckets.insert",
@@ -50,7 +50,7 @@ func (b *BucketHandle) Create(ctx context.Context, projectID string, attrs *stor
 
 // Delete calls and traces the Delete() method of the wrapped cloud.google.com/go/storage.BucketHandle.
 //
-// See https://pkg.go.dev/cloud.google.com/go/storage?tab=doc#BucketHandle.Delete for furter details on wrapped method.
+// See https://pkg.go.dev/cloud.google.com/go/storage?tab=doc#BucketHandle.Delete for further details on wrapped method.
 func (b *BucketHandle) Delete(ctx context.Context) (err error) {
 	ctx = internal.StartExitSpan(ctx, "gcs", ot.Tags{
 		"gcs.op":     "buckets.delete",
@@ -64,7 +64,7 @@ func (b *BucketHandle) Delete(ctx context.Context) (err error) {
 
 // ACL returns an instrumented cloud.google.com/go/storage.ACLHandle.
 //
-// See https://pkg.go.dev/cloud.google.com/go/storage?tab=doc#BucketHandle.ACL for furter details on wrapped method.
+// See https://pkg.go.dev/cloud.google.com/go/storage?tab=doc#BucketHandle.ACL for further details on wrapped method.
 func (b *BucketHandle) ACL() *ACLHandle {
 	return &ACLHandle{
 		ACLHandle: b.BucketHandle.ACL(),
@@ -75,7 +75,7 @@ func (b *BucketHandle) ACL() *ACLHandle {
 // DefaultObjectACL returns an instrumented cloud.google.com/go/storage.ACLHandle, which provides
 // access to the bucket's default object ACLs.
 //
-// See https://pkg.go.dev/cloud.google.com/go/storage?tab=doc#BucketHandle.DefaultObjectACL for furter details on wrapped method.
+// See https://pkg.go.dev/cloud.google.com/go/storage?tab=doc#BucketHandle.DefaultObjectACL for further details on wrapped method.
 func (b *BucketHandle) DefaultObjectACL() *ACLHandle {
 	return &ACLHandle{
 		ACLHandle: b.BucketHandle.DefaultObjectACL(),
@@ -87,7 +87,7 @@ func (b *BucketHandle) DefaultObjectACL() *ACLHandle {
 // Object returns an instrumented cloud.google.com/go/storage.ObjectHandle, which provides operations
 // on the named object.
 //
-// See https://pkg.go.dev/cloud.google.com/go/storage?tab=doc#BucketHandle.Object for furter details on wrapped method.
+// See https://pkg.go.dev/cloud.google.com/go/storage?tab=doc#BucketHandle.Object for further details on wrapped method.
 func (b *BucketHandle) Object(name string) *ObjectHandle {
 	return &ObjectHandle{
 		ObjectHandle: b.BucketHandle.Object(name),
@@ -98,7 +98,7 @@ func (b *BucketHandle) Object(name string) *ObjectHandle {
 
 // Attrs calls and traces the Attrs() method of the wrapped cloud.google.com/go/storage.BucketHandle.
 //
-// See https://pkg.go.dev/cloud.google.com/go/storage?tab=doc#BucketHandle.Attrs for furter details on wrapped method.
+// See https://pkg.go.dev/cloud.google.com/go/storage?tab=doc#BucketHandle.Attrs for further details on wrapped method.
 func (b *BucketHandle) Attrs(ctx context.Context) (attrs *storage.BucketAttrs, err error) {
 	ctx = internal.StartExitSpan(ctx, "gcs", ot.Tags{
 		"gcs.op":     "buckets.get",
@@ -112,7 +112,7 @@ func (b *BucketHandle) Attrs(ctx context.Context) (attrs *storage.BucketAttrs, e
 
 // Update calls and traces the Update() method of the wrapped cloud.google.com/go/storage.BucketHandle.
 //
-// See https://pkg.go.dev/cloud.google.com/go/storage?tab=doc#BucketHandle.Update for furter details on wrapped method.
+// See https://pkg.go.dev/cloud.google.com/go/storage?tab=doc#BucketHandle.Update for further details on wrapped method.
 func (b *BucketHandle) Update(ctx context.Context, uattrs storage.BucketAttrsToUpdate) (attrs *storage.BucketAttrs, err error) {
 	ctx = internal.StartExitSpan(ctx, "gcs", ot.Tags{
 		"gcs.op":     "buckets.patch",
@@ -126,7 +126,7 @@ func (b *BucketHandle) Update(ctx context.Context, uattrs storage.BucketAttrsToU
 
 // If returns an instrumented cloud.google.com/go/storage.BucketHandle that applies a set of preconditions.
 //
-// See https://pkg.go.dev/cloud.google.com/go/storage?tab=doc#BucketHandle.If for furter details on wrapped method.
+// See https://pkg.go.dev/cloud.google.com/go/storage?tab=doc#BucketHandle.If for further details on wrapped method.
 func (b *BucketHandle) If(conds storage.BucketConditions) *BucketHandle {
 	return &BucketHandle{
 		BucketHandle: b.BucketHandle.If(conds),
@@ -137,7 +137,7 @@ func (b *BucketHandle) If(conds storage.BucketConditions) *BucketHandle {
 // UserProject returns an instrumented cloud.google.com/go/storage.BucketHandle that passes the project ID as the user
 // project for all subsequent calls.
 //
-// See https://pkg.go.dev/cloud.google.com/go/storage?tab=doc#BucketHandle.UserProject for furter details on wrapped method.
+// See https://pkg.go.dev/cloud.google.com/go/storage?tab=doc#BucketHandle.UserProject for further details on wrapped method.
 func (b *BucketHandle) UserProject(projectID string) *BucketHandle {
 	return &BucketHandle{
 		BucketHandle: b.BucketHandle.UserProject(projectID),
@@ -147,7 +147,7 @@ func (b *BucketHandle) UserProject(projectID string) *BucketHandle {
 
 // LockRetentionPolicy calls and traces the LockRetentionPolicy() method of the wrapped cloud.google.com/go/storage.BucketHandle.
 //
-// See https://pkg.go.dev/cloud.google.com/go/storage?tab=doc#BucketHandle.LockRetentionPolicy for furter details on wrapped method.
+// See https://pkg.go.dev/cloud.google.com/go/storage?tab=doc#BucketHandle.LockRetentionPolicy for further details on wrapped method.
 func (b *BucketHandle) LockRetentionPolicy(ctx context.Context) (err error) {
 	ctx = internal.StartExitSpan(ctx, "gcs", ot.Tags{
 		"gcs.op":     "buckets.lockRetentionPolicy",
@@ -162,7 +162,7 @@ func (b *BucketHandle) LockRetentionPolicy(ctx context.Context) (err error) {
 // Objects returns an instrumented object iterator that traces and proxies requests to
 // the underlying cloud.google.com/go/storage.ObjectIterator.
 //
-// See https://pkg.go.dev/cloud.google.com/go/storage?tab=doc#BucketHandle.Objects for furter details on wrapped method.
+// See https://pkg.go.dev/cloud.google.com/go/storage?tab=doc#BucketHandle.Objects for further details on wrapped method.
 func (b *BucketHandle) Objects(ctx context.Context, q *storage.Query) *ObjectIterator {
 	return &ObjectIterator{
 		ObjectIterator: b.BucketHandle.Objects(ctx, q),
@@ -174,7 +174,7 @@ func (b *BucketHandle) Objects(ctx context.Context, q *storage.Query) *ObjectIte
 // ObjectIterator is an instrumented wrapper for cloud.google.com/go/storage.ObjectIterator
 // that traces calls made to Google Cloud Storage API.
 //
-// See https://pkg.go.dev/cloud.google.com/go/storage?tab=doc#ObjectIterator for furter details on wrapped type.
+// See https://pkg.go.dev/cloud.google.com/go/storage?tab=doc#ObjectIterator for further details on wrapped type.
 type ObjectIterator struct {
 	*storage.ObjectIterator
 	Bucket string
@@ -184,7 +184,7 @@ type ObjectIterator struct {
 // Next calls the Next() method of the wrapped iterator and creates a span for each call
 // that results in an API request.
 //
-// See https://pkg.go.dev/cloud.google.com/go/storage?tab=doc#ObjectIterator.Next for furter details on wrapped method.
+// See https://pkg.go.dev/cloud.google.com/go/storage?tab=doc#ObjectIterator.Next for further details on wrapped method.
 func (it *ObjectIterator) Next() (attrs *storage.ObjectAttrs, err error) {
 	// don't trace calls returning buffered data
 	if it.ObjectIterator.PageInfo().Remaining() > 0 {
@@ -213,7 +213,7 @@ func (it *ObjectIterator) Next() (attrs *storage.ObjectAttrs, err error) {
 // Buckets returns an instrumented bucket iterator that traces and proxies requests to
 // the underlying cloud.google.com/go/storage.BucketIterator.
 //
-// See https://pkg.go.dev/cloud.google.com/go/storage?tab=doc#Client.Buckets for furter details on wrapped method.
+// See https://pkg.go.dev/cloud.google.com/go/storage?tab=doc#Client.Buckets for further details on wrapped method.
 func (c *Client) Buckets(ctx context.Context, projectID string) *BucketIterator {
 	return &BucketIterator{
 		BucketIterator: c.Client.Buckets(ctx, projectID),
@@ -224,7 +224,7 @@ func (c *Client) Buckets(ctx context.Context, projectID string) *BucketIterator 
 
 // BucketIterator is an instrumented wrapper for cloud.google.com/go/storage.BucketIterator.
 //
-// See https://pkg.go.dev/cloud.google.com/go/storage?tab=doc#BucketIterator for furter details on wrapped type.
+// See https://pkg.go.dev/cloud.google.com/go/storage?tab=doc#BucketIterator for further details on wrapped type.
 type BucketIterator struct {
 	*storage.BucketIterator
 	projectID string
@@ -234,7 +234,7 @@ type BucketIterator struct {
 // Next calls the Next() method of the wrapped iterator and creates a span for each call
 // that results in an API request.
 //
-// See https://pkg.go.dev/cloud.google.com/go/storage?tab=doc#BucketIterator.Next for furter details on wrapped method.
+// See https://pkg.go.dev/cloud.google.com/go/storage?tab=doc#BucketIterator.Next for further details on wrapped method.
 func (it *BucketIterator) Next() (attrs *storage.BucketAttrs, err error) {
 	// don't trace calls returning buffered data
 	if it.BucketIterator.PageInfo().Remaining() > 0 {
