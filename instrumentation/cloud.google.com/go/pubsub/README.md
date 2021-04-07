@@ -17,7 +17,7 @@ $ go get github.com/instana/go-sensor/instrumentation/cloud.google.com/go/pubsub
 Usage
 -----
 
-This module is a drop-in replacement for `cloud.google.com/go/pubsub` in a common publisher/subscriber use cases. It provides
+This module is a drop-in replacement for `cloud.google.com/go/pubsub` in common publisher/subscriber use cases. It provides
 type aliases for `pubsub.Message`, `pubsub.PublishResult` and `pubsub.Subscription`, however if your code performs any
 configuration calls to the Pub/Sub API, such as [updating the topic configuration](https://pkg.go.dev/cloud.google.com/go/pubsub#example-Topic.Update) or [creating subscriptions](https://pkg.go.dev/cloud.google.com/go/pubsub#example-Client.CreateSubscription), you might need add the named import for `cloud.google.com/go/pubsub` as well.
 
