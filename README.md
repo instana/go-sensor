@@ -200,7 +200,7 @@ func MyFunc(ctx context.Context) {
 
 ### Secrets Filtering
 
-Certain instrumentation provided by the Go sensor package, e.g. the [HTTP servers and clients](#http-servers-and-clients) wrappers, collect data that may contain sensitive information, such as passwords, keys and secrets. To avoid leaking these values the Go sensor replaces them with `<redacted>` before sending to the agent. The list of parameter name matchers is defined in `com.instana.secrets` section of the [Host Agent Configuration file](https://www.instana.com/docs/setup_and_manage/host_agent/configuration/#secrets) and will be sent to the in-app tracer during the announcement phase (requires agent Go trace plugin `com.instana.sensor-golang-trace` v1.3.0 and above).
+Certain instrumentation modules provided by the Go sensor package, e.g. the [HTTP servers and clients](#http-servers-and-clients) wrappers, collect data that may contain sensitive information, such as passwords, keys and secrets. To avoid leaking these values the Go sensor replaces them with `<redacted>` before sending to the agent. The list of parameter name matchers is defined in `com.instana.secrets` section of the [Host Agent Configuration file](https://www.instana.com/docs/setup_and_manage/host_agent/configuration/#secrets) and will be sent to the in-app tracer during the announcement phase (requires agent Go trace plugin `com.instana.sensor-golang-trace` v1.3.0 and above).
 
 The default setting for the secret's matcher is `contains-ignore-case` with following list of terms: `key`, `password`, `secret`. This would redact the value of a parameter which name _contains_ any of these strings ignoring the case.
 
