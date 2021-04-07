@@ -58,7 +58,7 @@ before passing it to the wrapped producer.
 ### Instrumenting `sarama.AsyncProducer`
 
 Similarly to `sarama.SyncProducer`, `instasarama` provides wrappers for constructor methods of `sarama.AsyncProducer` and expects
-the parent span context to be injected into message headers using using `instasarama.ProducerMessageWithSpan()`.
+the parent span context to be injected into message headers using `instasarama.ProducerMessageWithSpan()`.
 
 For more detailed example code please consult the [package documentation][godoc] or [example_async_producer_test.go](./example_async_producer_test.go).
 

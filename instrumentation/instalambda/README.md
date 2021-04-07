@@ -51,7 +51,7 @@ func main() {
 ### Instrumenting a handler function
 
 To instrument a handler function passed to `lambda.Start()` or `lambda.StartWithContext()` first create an instrumented
-handler from it using [`instalambda.NewHandler()`][instalambda.NewHandler] and than pass it to `lambda.StartHandler()`:
+handler from it using [`instalambda.NewHandler()`][instalambda.NewHandler] and then pass it to `lambda.StartHandler()`:
 
 ```go
 func handle() {
