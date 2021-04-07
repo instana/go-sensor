@@ -18,7 +18,11 @@ $ go get github.com/instana/go-sensor/instrumentation/instasarama
 Usage
 -----
 
-For detailed usage example see [the documentation][godoc] or [`example_test.go`](./example_test.go).
+For detailed usage examples see [the documentation][godoc] or the following links:
+- [Async producer example](./example_async_producer_test.go)
+- [Sync producer example](./example_sync_producer_test.go)
+- [Consumer_group example](./example_consumer_group_test.go)
+- [Consumer_example](./example_consumer_group_test.go)
 
 This instrumentation requires an instance of `instana.Sensor` to initialize spans and handle the trace context propagation.
 You can create a new instance of Instana sensor using `instana.NewSensor()`.
