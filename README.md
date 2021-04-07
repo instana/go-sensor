@@ -97,7 +97,7 @@ Services running in serverless environments don't use host agent to send metrics
 | `INSTANA_TAGS`               | none                                       | A comma-separated list of tags with optional values to associate with the ECS task       |
 | `INSTANA_ZONE`               | `<Current AWS availability zone>`          | A custom Instana zone name for this service                                              |
 
-Please refer to [Insana documentation](https://www.instana.com/docs/reference/environment_variables/#serverless-monitoring) for more detailed description of these variables and their value format.
+Please refer to [Instana documentation](https://www.instana.com/docs/reference/environment_variables/#serverless-monitoring) for more detailed description of these variables and their value format.
 
 ### Using Instana to gather process metrics only
 
@@ -117,12 +117,12 @@ To create an instance of the Instana sensor just request a new instance using th
 var sensor = instana.NewSensor("my-service")
 ```
 
-A full example can be found under the examples folder in [example/http-database-greeter/](./example/http-database-greeter/).
+A full example can be found under the examples folder in [example/http-database-greeter/](./example/http-database-greeter).
 
 ### Setting the sensor log output
 
 The Go sensor uses a leveled logger to log internal errors and diagnostic information. The default `logger.Logger` uses `log.Logger`
-configured with `log.Lstdflags` as a backend and writes messages to `os.Stderr`. By default this logger only prints out the `ERROR` level
+configured with `log.Lstdflags` as a backend and writes messages to `os.Stderr`. By default, this logger only prints out the `ERROR` level
 messages unless the environment variable `INSTANA_DEBUG` is set.
 
 To change the min log level in runtime it is recommended to configure and inject an instance of `instana.LeveledLogger` instead of using
@@ -140,7 +140,7 @@ l.SetLevel(logger.WarnLevel)
 The `logger.LeveledLogger` interface is implemented by such popular logging libraries as [`github.com/sirupsen/logrus`](https://github.com/sirupsen/logrus) and [`go.uber.org/zap`](https://go.uber.org/zap), so they can be used as a replacement.
 
 **Note**: the value of `INSTANA_DEBUG` environment variable does not affect custom loggers. You'd need to explicitly check whether it's set
-and enable the debug logging while onfiguring your logger:
+and enable the debug logging while configuring your logger:
 
 ```go
 import (
@@ -200,7 +200,7 @@ func MyFunc(ctx context.Context) {
 
 ### Secrets Filtering
 
-Certain instrumentations provided by the Go sensor package, e.g. the [HTTP servers and clients](#http-servers-and-clients) wrappers, collect data that may contain sensitive information, such as passwords, keys and secrets. To avoid leaking these values the Go sensor replaces them with `<redacted>` before sending to the agent. The list of parameter name matchers is defined in `com.instana.secrets` section of the [Host Agent Configuration file](https://www.instana.com/docs/setup_and_manage/host_agent/configuration/#secrets) and will be sent to the in-app tracer during the announcement phase (requires agent Go trace plugin `com.instana.sensor-golang-trace` v1.3.0 and above).
+Certain instrumentation modules provided by the Go sensor package, e.g. the [HTTP servers and clients](#http-servers-and-clients) wrappers, collect data that may contain sensitive information, such as passwords, keys and secrets. To avoid leaking these values the Go sensor replaces them with `<redacted>` before sending to the agent. The list of parameter name matchers is defined in `com.instana.secrets` section of the [Host Agent Configuration file](https://www.instana.com/docs/setup_and_manage/host_agent/configuration/#secrets) and will be sent to the in-app tracer during the announcement phase (requires agent Go trace plugin `com.instana.sensor-golang-trace` v1.3.0 and above).
 
 The default setting for the secrets matcher is `contains-ignore-case` with following list of terms: `key`, `password`, `secret`. This would redact the value of a parameter which name _contains_ any of these strings ignoring the case.
 
@@ -234,7 +234,7 @@ http.HandleFunc("/", instana.TracingHandlerFunc(sensor, "/", func(w http.Respons
 }))
 ```
 
-In case your handler is implemented as an http.Handler, pass its `ServeHTTP` method instead:
+In case your handler is implemented as a `http.Handler`, pass its `ServeHTTP` method instead:
 
 ```go
 h := http.FileServer(http.Dir("./"))
@@ -282,7 +282,7 @@ com.instana.tracing:
     - 'x-loadtest-id'
 ```
 
-By default the HTTP instrumentation does not collect any headers.
+By default, the HTTP instrumentation does not collect any headers.
 
 ### Database Calls
 
@@ -294,7 +294,7 @@ To instrument a database driver, register it using `instana.InstrumentSQLDriver(
 
 ```go
 // Create a new instana.Sensor instance
-sensor := instana.NewSensor("my-daatabase-app")
+sensor := instana.NewSensor("my-database-app")
 
 // Instrument the driver
 instana.InstrumentSQLDriver(sensor, "postgres", &pq.Driver{})
@@ -315,7 +315,7 @@ To instrument a `driver.Connector` instance, wrap it using `instana.WrapSQLConne
 
 ```go
 // Create a new instana.Sensor instance
-sensor := instana.NewSensor("my-daatabase-app")
+sensor := instana.NewSensor("my-database-app")
 
 // Initialize a new connector
 connector, err := mysql.NewConnector(cfg)
@@ -401,11 +401,11 @@ To enable AutoProfile™ for an app without code changes, set `INSTANA_AUTO_PROF
 
 Following examples are included in the `example` folder:
 
-* [Greeter](./http-database-greeter) - an instrumented HTTP server that queries a database
-* [Doubler](./kafka-producer-consumer) - an instrumented Kafka processor, that counsumes and produces messages
-* [event/](./example/event/) - Demonstrates usage of the Events API
-* [autoprofile/](./example/autoprofile/) - Demonstrates usage of the AutoProfile™
-* [OpenTracing](./example/opentracing/) - an example of usage of Instana tracer in an app instrumented with OpentTracing
+* [Greeter](./example/http-database-greeter) - an instrumented HTTP server that queries a database
+* [Doubler](./example/kafka-producer-consumer) - an instrumented Kafka processor, that consumes and produces messages
+* [Event](./example/event) - Demonstrates usage of the Events API
+* [Autoprofile](./example/autoprofile) - Demonstrates usage of the AutoProfile™
+* [OpenTracing](./example/opentracing) - an example of usage of Instana tracer in an app instrumented with OpenTracing
 
 For more examples please consult the [godoc][godoc].
 
