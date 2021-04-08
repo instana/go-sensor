@@ -1,6 +1,6 @@
 module grpc-example
 
-go 1.16
+go 1.15
 
 require (
 	github.com/instana/go-sensor v1.27.5
