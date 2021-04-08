@@ -1,19 +1,22 @@
 // (c) Copyright IBM Corp. 2021
 // (c) Copyright Instana Inc. 2016
 
+// +build go1.10
+
 package main
 
 import (
 	"context"
-	instana "github.com/instana/go-sensor"
-	"github.com/instana/go-sensor/instrumentation/instagrpc"
-	"google.golang.org/grpc"
 	"grpc-example/client"
 	"grpc-example/pb"
 	"grpc-example/server"
 	"log"
 	"net"
 	"time"
+
+	instana "github.com/instana/go-sensor"
+	"github.com/instana/go-sensor/instrumentation/instagrpc"
+	"google.golang.org/grpc"
 )
 
 const (
