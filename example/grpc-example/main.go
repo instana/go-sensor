@@ -5,6 +5,8 @@ package main
 
 import (
 	"context"
+	instana "github.com/instana/go-sensor"
+	"github.com/instana/go-sensor/instrumentation/instagrpc"
 	"google.golang.org/grpc"
 	"grpc-example/client"
 	"grpc-example/pb"
@@ -21,12 +23,23 @@ const (
 )
 
 func main() {
+
+	// Initialize server sensor to instrument request handlers
+	sensor := instana.NewSensor("grpc-server")
+
 	lis, err := net.Listen("tcp", port)
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
 
-	srv := grpc.NewServer()
+	// To instrument server calls add instagrpc.UnaryServerInterceptor(sensor) and
+	// instagrpc.StreamServerInterceptor(sensor) to the list of server options when
+	// initializing the server
+	srv := grpc.NewServer(
+		grpc.UnaryInterceptor(instagrpc.UnaryServerInterceptor(sensor)),
+		grpc.StreamInterceptor(instagrpc.StreamServerInterceptor(sensor)),
+	)
+
 	pb.RegisterEchoServiceServer(srv, &server.Service{})
 
 	go func() {
@@ -36,19 +49,20 @@ func main() {
 		}
 	}()
 
-	ticker := time.NewTicker(1 * time.Second)
-	defer ticker.Stop()
+	go func() {
+		ticker := time.NewTicker(1 * time.Second)
+		defer ticker.Stop()
 
-	go func(tck *time.Ticker) {
+		c := client.NewClient("grpc-client")
 		for {
 			select {
-			case <-tck.C:
+			case <-ticker.C:
 				log.Println("Call server...")
-				response := client.Call(context.Background(), address+port, testMessage)
+				response := c.Call(context.Background(), address+port, testMessage)
 				log.Printf("Response << %s", response)
 			}
 		}
-	}(ticker)
+	}()
 
 	select {}
 }
