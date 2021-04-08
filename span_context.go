@@ -185,8 +185,8 @@ func restoreFromW3CTraceState(trCtx w3ctrace.Context) SpanContext {
 }
 
 // ForeachBaggageItem belongs to the opentracing.SpanContext interface
-func (c SpanContext) ForeachBaggageItem(handler func(k, v string) bool) {
-	for k, v := range c.Baggage {
+func (sc SpanContext) ForeachBaggageItem(handler func(k, v string) bool) {
+	for k, v := range sc.Baggage {
 		if !handler(k, v) {
 			break
 		}
@@ -195,8 +195,8 @@ func (c SpanContext) ForeachBaggageItem(handler func(k, v string) bool) {
 
 // WithBaggageItem returns an entirely new SpanContext with the
 // given key:value baggage pair set.
-func (c SpanContext) WithBaggageItem(key, val string) SpanContext {
-	res := c.Clone()
+func (sc SpanContext) WithBaggageItem(key, val string) SpanContext {
+	res := sc.Clone()
 
 	if res.Baggage == nil {
 		res.Baggage = make(map[string]string, 1)
@@ -207,20 +207,20 @@ func (c SpanContext) WithBaggageItem(key, val string) SpanContext {
 }
 
 // Clone returns a deep copy of a SpanContext
-func (c SpanContext) Clone() SpanContext {
+func (sc SpanContext) Clone() SpanContext {
 	res := SpanContext{
-		TraceIDHi:  c.TraceIDHi,
-		TraceID:    c.TraceID,
-		SpanID:     c.SpanID,
-		ParentID:   c.ParentID,
-		Sampled:    c.Sampled,
-		Suppressed: c.Suppressed,
-		W3CContext: c.W3CContext,
+		TraceIDHi:  sc.TraceIDHi,
+		TraceID:    sc.TraceID,
+		SpanID:     sc.SpanID,
+		ParentID:   sc.ParentID,
+		Sampled:    sc.Sampled,
+		Suppressed: sc.Suppressed,
+		W3CContext: sc.W3CContext,
 	}
 
-	if c.Baggage != nil {
-		res.Baggage = make(map[string]string, len(c.Baggage))
-		for k, v := range c.Baggage {
+	if sc.Baggage != nil {
+		res.Baggage = make(map[string]string, len(sc.Baggage))
+		for k, v := range sc.Baggage {
 			res.Baggage[k] = v
 		}
 	}

@@ -17,7 +17,7 @@ import (
 // Subscription is an instrumented wrapper for cloud.google.com/go/pubsub.Subscription that traces Receive() calls
 // and ensures Instana trace propagation across the Pub/Sub producers and consumers.
 //
-// See https://pkg.go.dev/cloud.google.com/go/pubsub?tab=doc#Subscription for furter details on wrapped type.
+// See https://pkg.go.dev/cloud.google.com/go/pubsub?tab=doc#Subscription for further details on wrapped type.
 type Subscription struct {
 	*pubsub.Subscription
 
@@ -29,7 +29,7 @@ type Subscription struct {
 // Receive wraps the Receive() call of the underlying cloud.google.com/go/pubsub.Subscription starting a new
 // entry span using the provided instana.Sensor and ensuring the trace continuation.
 //
-// See https://pkg.go.dev/cloud.google.com/go/pubsub?tab=doc#Subscription.Receive for furter details on wrapped method.
+// See https://pkg.go.dev/cloud.google.com/go/pubsub?tab=doc#Subscription.Receive for further details on wrapped method.
 func (sub *Subscription) Receive(ctx context.Context, f func(context.Context, *pubsub.Message)) error {
 	return sub.Subscription.Receive(ctx, func(mCtx context.Context, msg *pubsub.Message) {
 		opts := []opentracing.StartSpanOption{
@@ -55,7 +55,7 @@ func (sub *Subscription) Receive(ctx context.Context, f func(context.Context, *p
 // SubscriptionIterator is a wrapper for cloud.google.com/go/pubsub.SubscriptionIterator that retrieves and instruments
 // subscriptions in a project.
 //
-// See https://pkg.go.dev/cloud.google.com/go/pubsub?tab=doc#SubscriptionIterator for furter details on wrapped type.
+// See https://pkg.go.dev/cloud.google.com/go/pubsub?tab=doc#SubscriptionIterator for further details on wrapped type.
 type SubscriptionIterator struct {
 	*pubsub.SubscriptionIterator
 
@@ -66,7 +66,7 @@ type SubscriptionIterator struct {
 
 // Next fetches the next subscription in project via the wrapped SubscriptionIterator and returns its wrapped version.
 //
-// See https://pkg.go.dev/cloud.google.com/go/pubsub?tab=doc#SubscriptionIterator.Next for furter details on wrapped method.
+// See https://pkg.go.dev/cloud.google.com/go/pubsub?tab=doc#SubscriptionIterator.Next for further details on wrapped method.
 func (it *SubscriptionIterator) Next() (*Subscription, error) {
 	sub, err := it.SubscriptionIterator.Next()
 	return &Subscription{sub, it.projectID, it.sensor}, err

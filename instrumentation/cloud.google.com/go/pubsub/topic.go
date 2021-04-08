@@ -18,7 +18,7 @@ import (
 // Topic is an instrumented wrapper for cloud.google.com/go/pubsub.Topic that traces Publish() calls
 // and ensures Instana trace propagation across the Pub/Sub producers and consumers.
 //
-// See https://pkg.go.dev/cloud.google.com/go/pubsub?tab=doc#Topic for furter details on wrapped type.
+// See https://pkg.go.dev/cloud.google.com/go/pubsub?tab=doc#Topic for further details on wrapped type.
 type Topic struct {
 	*pubsub.Topic
 
@@ -31,7 +31,7 @@ type Topic struct {
 // The exit span created for this operation will be finished only after the message was submitted to
 // the server.
 //
-// See https://pkg.go.dev/cloud.google.com/go/pubsub?tab=doc#Topic.Publish for furter details on wrapped method.
+// See https://pkg.go.dev/cloud.google.com/go/pubsub?tab=doc#Topic.Publish for further details on wrapped method.
 func (top *Topic) Publish(ctx context.Context, msg *pubsub.Message) *pubsub.PublishResult {
 	parent, ok := instana.SpanFromContext(ctx)
 	if !ok {
@@ -70,7 +70,7 @@ func (top *Topic) Publish(ctx context.Context, msg *pubsub.Message) *pubsub.Publ
 
 // Subscriptions calls Subscriptions() of underlying Topic and wraps the returned subscription iterator.
 //
-// See https://pkg.go.dev/cloud.google.com/go/pubsub?tab=doc#Topic.Subscriptions for furter details on wrapped method.
+// See https://pkg.go.dev/cloud.google.com/go/pubsub?tab=doc#Topic.Subscriptions for further details on wrapped method.
 func (top *Topic) Subscriptions(ctx context.Context) *SubscriptionIterator {
 	return &SubscriptionIterator{top.Topic.Subscriptions(ctx), top.projectID, top.sensor}
 }
@@ -78,7 +78,7 @@ func (top *Topic) Subscriptions(ctx context.Context) *SubscriptionIterator {
 // TopicIterator is a wrapper for cloud.google.com/go/pubsub.TopicIterator that retrieves and instruments
 // topics in a project.
 //
-// See https://pkg.go.dev/cloud.google.com/go/pubsub?tab=doc#TopicIterator for furter details on wrapped type.
+// See https://pkg.go.dev/cloud.google.com/go/pubsub?tab=doc#TopicIterator for further details on wrapped type.
 type TopicIterator struct {
 	*pubsub.TopicIterator
 
@@ -89,7 +89,7 @@ type TopicIterator struct {
 
 // Next fetches the next topic in project via the wrapped TopicIterator and returns its wrapped version.
 //
-// See https://pkg.go.dev/cloud.google.com/go/pubsub?tab=doc#TopicIterator.Next for furter details on wrapped method.
+// See https://pkg.go.dev/cloud.google.com/go/pubsub?tab=doc#TopicIterator.Next for further details on wrapped method.
 func (it *TopicIterator) Next() (*Topic, error) {
 	top, err := it.TopicIterator.Next()
 	return &Topic{top, it.projectID, it.sensor}, err

@@ -6,5 +6,4 @@ require (
 	github.com/instana/testify v1.6.2-0.20200721153833-94b1851f4d65
 	github.com/looplab/fsm v0.1.0
 	github.com/opentracing/opentracing-go v1.1.0
-	golang.org/x/net v0.0.0-20190724013045-ca1201d0de80
 )

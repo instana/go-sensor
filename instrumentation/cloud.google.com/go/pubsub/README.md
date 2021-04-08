@@ -21,7 +21,7 @@ This module is a drop-in replacement for `cloud.google.com/go/pubsub` in common 
 type aliases for `pubsub.Message`, `pubsub.PublishResult` and `pubsub.Subscription`, however if your code performs any
 configuration calls to the Pub/Sub API, such as [updating the topic configuration](https://pkg.go.dev/cloud.google.com/go/pubsub#example-Topic.Update) or [creating subscriptions](https://pkg.go.dev/cloud.google.com/go/pubsub#example-Client.CreateSubscription), you might need add the named import for `cloud.google.com/go/pubsub` as well.
 
-The instrumentation is implemented as a thin wrapper around service object methods and does not change their behavior. Thus
+The instrumentation is implemented as a thin wrapper around service object methods and does not change their behavior. Thus,
 any limitations/usage patterns/recommendations for the original method also apply to the wrapped one.
 
 In most cases it is enough to change the import path from `cloud.google.com/go/pubsub` to `github.com/instana/go-sensor/instrumentation/cloud.google.com/go/pubsub` and add an instance of [`instana.Sensor`][instana.Sensor] to the list of [`pubsub.NewClient()`][pubsub.NewClient] arguments to start tracing your communication over Google Cloud Pub/Sub with Instana.

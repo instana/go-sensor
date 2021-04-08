@@ -17,10 +17,10 @@ $ go get github.com/instana/go-sensor/instrumentation/cloud.google.com/go/storag
 Usage
 -----
 
-This module is a drop-in replacement for `cloud.google.com/go/storage`. However if your code references any value types,
+This module is a drop-in replacement for `cloud.google.com/go/storage`. However, if your code references any value types,
 e.g. `cloud.google.com/go/storage.ObjectAttrs`, you might need to add a named import for the original library as well.
 
-The instrumentation is implemented as a thin wrapper around service object methods and does not change their behavior. Thus
+The instrumentation is implemented as a thin wrapper around service object methods and does not change their behavior. Thus,
 any limitations/usage patterns/recommendations for the original method also apply to the wrapped one.
 
 In most cases changing the import path of `cloud.google.com/go/storage` should be enough:

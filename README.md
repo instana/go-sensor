@@ -86,7 +86,7 @@ To use Instana Go sensor for monitoring a service running in a serverless enviro
 * [Configuring AWS Lambda functions](https://www.instana.com/docs/ecosystem/aws-lambda/go)
 * [Configuring Google Cloud Run services](https://www.instana.com/docs/ecosystem/google-cloud-run/#configure-your-cloud-run-service)
 
-Services running in serverless environments don't use host agent to send metrics and trace data to Instana backend, therefore the usual way of configuring the in-app sensor via [`configuration.yaml`](https://www.instana.com/docs/setup_and_manage/host_agent/configuration/#agent-configuration-file) file is not applicable. Instead there is a set of environment variables that can optionally be configured in service task definition:
+Services running in serverless environments don't use host agent to send metrics and trace data to Instana backend, therefore the usual way of configuring the in-app sensor via [`configuration.yaml`](https://www.instana.com/docs/setup_and_manage/host_agent/configuration/#agent-configuration-file) file is not applicable. Instead, there is a set of environment variables that can optionally be configured in service task definition:
 
 | Environment variable         | Default value                              | Description                                                                              |
 |------------------------------|--------------------------------------------|------------------------------------------------------------------------------------------|

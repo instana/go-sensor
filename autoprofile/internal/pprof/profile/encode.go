@@ -382,16 +382,16 @@ var mappingDecoder = []decoder{
 	func(b *buffer, m message) error { return decodeBool(b, &m.(*Mapping).HasInlineFrames) }, // optional bool has_inline_frames = 10
 }
 
-func (p *Location) decoder() []decoder {
+func (loc *Location) decoder() []decoder {
 	return locationDecoder
 }
 
-func (p *Location) encode(b *buffer) {
-	encodeUint64Opt(b, 1, p.ID)
-	encodeUint64Opt(b, 2, p.mappingIDX)
-	encodeUint64Opt(b, 3, p.Address)
-	for i := range p.Line {
-		encodeMessage(b, 4, &p.Line[i])
+func (loc *Location) encode(b *buffer) {
+	encodeUint64Opt(b, 1, loc.ID)
+	encodeUint64Opt(b, 2, loc.mappingIDX)
+	encodeUint64Opt(b, 3, loc.Address)
+	for i := range loc.Line {
+		encodeMessage(b, 4, &loc.Line[i])
 	}
 }
 

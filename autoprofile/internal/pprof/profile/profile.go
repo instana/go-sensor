@@ -467,7 +467,7 @@ func (p *Profile) Merge(pb *Profile, r float64) error {
 	if r != 1.0 {
 		for _, s := range pb.Sample {
 			for i, v := range s.Value {
-				s.Value[i] = int64((float64(v) * r))
+				s.Value[i] = int64(float64(v) * r)
 			}
 		}
 	}

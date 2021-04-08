@@ -17,7 +17,7 @@ $ go get github.com/instana/go-sensor/instrumentation/cloud.google.com/go/iam
 Usage
 -----
 
-Currently this module is meant to be used together with [the Google Cloud Storage instrumentation](../storage) and
+Currently, this module is meant to be used together with [the Google Cloud Storage instrumentation](../storage) and
 limited to the Buckets IAM only.
 
 [godoc]: https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/cloud.google.com/go/iam

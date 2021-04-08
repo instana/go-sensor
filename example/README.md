@@ -4,10 +4,10 @@ Examples
 This folder contains examples of instrumenting the common use-cases with `github.com/instana/go-sensor`
 
 * [Greeter](./http-database-greeter) - an instrumented HTTP server that queries a database
-* [Doubler](./kafka-producer-consumer) - an instrumented Kafka processor, that counsumes and produces messages
-* [event/](./example/event/) - Demonstrates usage of the Events API
-* [autoprofile/](./example/autoprofile/) - Demonstrates usage of the AutoProfile™
-* [OpenTracing](./example/opentracing/) - an example of usage of Instana tracer in an app instrumented with OpentTracing
+* [Doubler](./kafka-producer-consumer) - an instrumented Kafka processor, that consumes and produces messages
+* [Event](./event) - Demonstrates usage of the Events API
+* [Autoprofile](./autoprofile) - Demonstrates usage of the AutoProfile™
+* [OpenTracing](./opentracing) - an example of usage of Instana tracer in an app instrumented with OpenTracing
 
 For more up-to-date instrumentation code examples please consult the respective package documentation page:
 
