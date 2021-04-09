@@ -85,7 +85,4 @@ workflows:
           name: "go1.9"
           go_version: "1.9"
           vendor_deps: "yes"
-          exclude_dirs: "./instrumentation/cloud.google.com/go ./example/http-database-greeter"
-          steps:
-            name: Remove submodules that depend on non compatible with go1.9 packages
-            command: ls -la #rm -r ./example/http-database-greeter
+          exclude_dirs: "./instrumentation/cloud.google.com/go ./example/http-database-greeter ./example/grpc-example"
