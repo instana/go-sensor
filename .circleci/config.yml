@@ -85,4 +85,4 @@ workflows:
           name: "go1.9"
           go_version: "1.9"
           vendor_deps: "yes"
-          exclude_dirs: "./instrumentation/cloud.google.com/go ./example/http-database-greeter ./example/grpc-example"
+          exclude_dirs: "./instrumentation/cloud.google.com/go ./example/http-database-greeter ./example/grpc-example ./example/grpc-example/pb"
