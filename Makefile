@@ -1,7 +1,4 @@
 MODULES = $(filter-out $(EXCLUDE_DIRS), $(shell find . -name go.mod -exec dirname {} \;))
-# print filtered-out modules, for easy debugging
-$(info MODULES are: $(MODULES))
-
 LINTER ?= $(shell go env GOPATH)/bin/golangci-lint
 
 # The list of Go build tags as they are specified in respective integration test files
@@ -25,7 +22,7 @@ endif
 test: $(MODULES)
 
 $(MODULES):
-	cd $@ && pwd && go get -d -t ./... && go test $(GOFLAGS) ./...
+	cd $@ && go get -d -t ./... && go test $(GOFLAGS) ./...
 ifeq ($(RUN_LINTER),yes)
 	cd $@ && $(LINTER) run
 endif
