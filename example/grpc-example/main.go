@@ -5,12 +5,13 @@ package main
 
 import (
 	"context"
-	"grpc-example/client"
-	"grpc-example/pb"
-	"grpc-example/server"
 	"log"
 	"net"
 	"time"
+
+	"github.com/instana/go-sensor/example/grpc-example/client"
+	"github.com/instana/go-sensor/example/grpc-example/pb"
+	"github.com/instana/go-sensor/example/grpc-example/server"
 
 	instana "github.com/instana/go-sensor"
 	"github.com/instana/go-sensor/instrumentation/instagrpc"

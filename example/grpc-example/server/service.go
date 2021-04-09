@@ -2,9 +2,10 @@ package server
 
 import (
 	"context"
-	instana "github.com/instana/go-sensor"
-	"grpc-example/pb"
 	"log"
+
+	instana "github.com/instana/go-sensor"
+	"github.com/instana/go-sensor/example/grpc-example/pb"
 )
 
 // Service is used to implement pb.EchoService

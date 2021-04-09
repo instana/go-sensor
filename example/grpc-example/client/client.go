@@ -5,12 +5,13 @@ package client
 
 import (
 	"context"
+	"log"
+
 	instana "github.com/instana/go-sensor"
+	"github.com/instana/go-sensor/example/grpc-example/pb"
 	"github.com/instana/go-sensor/instrumentation/instagrpc"
 	"github.com/opentracing/opentracing-go/ext"
 	"google.golang.org/grpc"
-	"grpc-example/pb"
-	"log"
 )
 
 type Client struct {
