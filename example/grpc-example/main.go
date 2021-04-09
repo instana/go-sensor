@@ -11,7 +11,6 @@ import (
 	"net"
 	"time"
 
-	"github.com/instana/go-sensor/example/grpc-example/client"
 	"github.com/instana/go-sensor/example/grpc-example/pb"
 	"github.com/instana/go-sensor/example/grpc-example/server"
 
@@ -57,7 +56,7 @@ func main() {
 		ticker := time.NewTicker(1 * time.Second)
 		defer ticker.Stop()
 
-		c := client.NewClient("grpc-client")
+		c := NewClient("grpc-client")
 		for {
 			select {
 			case <-ticker.C:
