@@ -25,6 +25,7 @@ endif
 test: $(MODULES)
 
 $(MODULES):
+    go list ./...
 	cd $@ && pwd && go get -d -t ./... && go test $(GOFLAGS) ./...
 ifeq ($(RUN_LINTER),yes)
 	cd $@ && $(LINTER) run
