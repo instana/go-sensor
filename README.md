@@ -406,6 +406,7 @@ Following examples are included in the `example` folder:
 * [Event](./example/event) - Demonstrates usage of the Events API
 * [Autoprofile](./example/autoprofile) - Demonstrates usage of the AutoProfile™
 * [OpenTracing](./example/opentracing) - an example of usage of Instana tracer in an app instrumented with OpenTracing
+* [gRPC](./example/grpc-example) - an example of usage of Instana tracer in an app instrumented with gRPC
 
 For more examples please consult the [godoc][godoc].
 
