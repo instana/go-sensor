@@ -33,22 +33,19 @@ func main() {
 	flag.Parse()
 
 	// initialize server sensor to instrument request handlers
-	serverSensor := instana.NewSensor("grpc-server")
+	sensor := instana.NewSensor("grpc-client-server")
 
 	// to instrument server calls add instagrpc.UnaryServerInterceptor(sensor) and
 	// instagrpc.StreamServerInterceptor(sensor) to the list of server options when
 	// initializing the server
 	srv := grpc.NewServer(
-		grpc.UnaryInterceptor(instagrpc.UnaryServerInterceptor(serverSensor)),
-		grpc.StreamInterceptor(instagrpc.StreamServerInterceptor(serverSensor)),
+		grpc.UnaryInterceptor(instagrpc.UnaryServerInterceptor(sensor)),
+		grpc.StreamInterceptor(instagrpc.StreamServerInterceptor(sensor)),
 	)
 
 	pb.RegisterEchoServiceServer(srv, &Service{})
 
 	go startServer(srv, *address+*port)
-
-	// create a new sensor for a client
-	clientSensor := instana.NewSensor("grpc-client")
 
 	conn, err := grpc.Dial(
 		*address+*port,
@@ -57,8 +54,8 @@ func main() {
 		// To instrument client calls add instagrpc.UnaryClientInterceptor(sensor) and
 		// instagrpc.StringClientInterceptor(sensor) to the DialOption list while dialing
 		// the GRPC server.
-		grpc.WithUnaryInterceptor(instagrpc.UnaryClientInterceptor(clientSensor)),
-		grpc.WithStreamInterceptor(instagrpc.StreamClientInterceptor(clientSensor)),
+		grpc.WithUnaryInterceptor(instagrpc.UnaryClientInterceptor(sensor)),
+		grpc.WithStreamInterceptor(instagrpc.StreamClientInterceptor(sensor)),
 	)
 	if err != nil {
 		log.Fatalf("did not connect: %v", err)
@@ -71,7 +68,7 @@ func main() {
 	// The call should always start with an entry span (https://www.instana.com/docs/tracing/custom-best-practices/#start-new-traces-with-entry-spans)
 	// Normally this would be your HTTP/GRPC/message queue request span, but here we need to
 	// create it explicitly.
-	sp := clientSensor.Tracer().
+	sp := sensor.Tracer().
 		StartSpan("client-call").
 		SetTag(string(ext.SpanKind), "entry")
 
