@@ -1,0 +1,22 @@
+// (c) Copyright IBM Corp. 2021
+// (c) Copyright Instana Inc. 2016
+
+syntax = "proto3";
+
+option go_package = "github.com/instana/go-sensor/example/grpc-client-server/pb";
+
+// The echo service definition.
+service EchoService {
+  // Sends a request
+  rpc Echo (EchoRequest) returns (EchoReply) {}
+}
+
+// The request message containing
+message EchoRequest {
+  string message = 1;
+}
+
+// The response message
+message EchoReply {
+  string message = 1;
+}

@@ -8,6 +8,7 @@ This folder contains examples of instrumenting the common use-cases with `github
 * [Event](./event) - Demonstrates usage of the Events API
 * [Autoprofile](./autoprofile) - Demonstrates usage of the AutoProfile™
 * [OpenTracing](./opentracing) - an example of usage of Instana tracer in an app instrumented with OpenTracing
+* [gRPC](./grpc-client-server) - an example of usage of Instana tracer in an app instrumented with gRPC
 
 For more up-to-date instrumentation code examples please consult the respective package documentation page:
 

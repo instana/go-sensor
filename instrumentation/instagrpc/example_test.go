@@ -97,7 +97,7 @@ func Example() {
 
 	c := grpc_testing.NewTestServiceClient(conn)
 
-	// The call should always start with an entry span (https://docs.instana.io/quick_start/custom_tracing/#always-start-new-traces-with-entry-spans)
+	// The call should always start with an entry span (https://www.instana.com/docs/tracing/custom-best-practices/#start-new-traces-with-entry-spans)
 	// Normally this would be your HTTP/GRPC/message queue request span, but here we need to
 	// create it explicitly.
 	sp := sensor.Tracer().StartSpan("client-call")
