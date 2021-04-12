@@ -24,7 +24,7 @@ In case when the port is already in use, please choose another one. Also, some o
 ```
 
 # How to modify a proto definitions for an example
-Proto definitions are in `pb` folder. To generate corresponding go files, `protoc` is required. [Here](https://grpc.io/docs/protoc-installation) is how to install it. Then, in `pb` folder run the following command:
+Proto definitions are in `pb` folder. To generate corresponding go files, `protoc` is required. [Here](https://grpc.io/docs/protoc-installation) is how to install it. Then, in the `pb` folder run the following command:
 ```bash
 protoc --go_out=. --go_opt=paths=source_relative --go-grpc_out=. --go-grpc_opt=paths=source_relative serviceexample.proto
 ```
