@@ -7,9 +7,9 @@ package main
 
 import (
 	"context"
+	"flag"
 	"log"
 	"net"
-	"time"
 
 	"github.com/opentracing/opentracing-go/ext"
 
@@ -21,16 +21,25 @@ import (
 )
 
 const (
-	port        = ":43210"
-	address     = "localhost"
-	testMessage = "Hi!"
+	defaultPort    = ":43210"
+	defaultAddress = "localhost"
+	testMessage    = "Hi!"
 )
 
 func main() {
-	// Initialize server sensor to instrument request handlers
+	// `port` will be used by an example
+	port := flag.String("defaultPort", defaultPort, "defaultPort to use by an example")
+	// `address` will be used by an example
+	address := flag.String("address", defaultAddress, "address to use by an example")
+	// how many requests to send
+	nRequestsToSend := flag.Int("n", 10, "how many requests to send")
+
+	flag.Parse()
+
+	// initialize server sensor to instrument request handlers
 	sensor := instana.NewSensor("grpc-server")
 
-	// To instrument server calls add instagrpc.UnaryServerInterceptor(sensor) and
+	// to instrument server calls add instagrpc.UnaryServerInterceptor(sensor) and
 	// instagrpc.StreamServerInterceptor(sensor) to the list of server options when
 	// initializing the server
 	srv := grpc.NewServer(
@@ -38,26 +47,31 @@ func main() {
 		grpc.StreamInterceptor(instagrpc.StreamServerInterceptor(sensor)),
 	)
 
+	// register an implementation of the service
 	pb.RegisterEchoServiceServer(srv, &Service{})
 
-	go startServer(srv)
+	// start the server and listen to the incoming requests
+	go startServer(srv, *address+*port)
 
+	// create a channel to signal when all requests are send
+	done := make(chan struct{})
+
+	// start goroutine
 	go func() {
-		ticker := time.NewTicker(1 * time.Second)
-		defer ticker.Stop()
-
+		// create a new sensor for a client
 		sensor := instana.NewSensor("grpc-client")
-		for {
-			select {
-			case <-ticker.C:
-				log.Println("Call server...")
-				response := Call(context.Background(), sensor, address+port, testMessage)
-				log.Printf("Response << %s", response)
-			}
+
+		for i := 1; i <= *nRequestsToSend; i++ {
+			log.Println("\n", "Send request #", i)
+			// init the client with Instana gRPC instrumentation and call the service
+			response := Call(context.Background(), sensor, *address+*port, testMessage)
+			log.Printf("Response << %s", response)
 		}
+
+		done <- struct{}{}
 	}()
 
-	select {}
+	<-done
 }
 
 // Call send pb.EchoRequest request with "message" to the "address" using generated grpc pb.EchoServiceClient client
@@ -79,6 +93,7 @@ func Call(ctx context.Context, sensor *instana.Sensor, address, message string) 
 
 	defer conn.Close()
 
+	// create a new service client
 	client := pb.NewEchoServiceClient(conn)
 
 	// The call should always start with an entry span (https://www.instana.com/docs/tracing/custom-best-practices/#start-new-traces-with-entry-spans)
@@ -88,6 +103,7 @@ func Call(ctx context.Context, sensor *instana.Sensor, address, message string) 
 		StartSpan("client-call").
 		SetTag(string(ext.SpanKind), "entry")
 
+	// call the service
 	r, err := client.Echo(
 		// Create a context that holds the parent entry span and pass it to the GRPC call
 		instana.ContextWithSpan(ctx, sp),
@@ -120,8 +136,8 @@ func (s *Service) Echo(ctx context.Context, in *pb.EchoRequest) (*pb.EchoReply, 
 	return &pb.EchoReply{Message: in.GetMessage()}, nil
 }
 
-func startServer(srv *grpc.Server) {
-	lis, err := net.Listen("tcp", port)
+func startServer(srv *grpc.Server, address string) {
+	lis, err := net.Listen("tcp", address)
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
