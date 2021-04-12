@@ -106,7 +106,7 @@ type Service struct {
 	pb.UnimplementedEchoServiceServer
 }
 
-// Service implements pb.EchoService
+// Echo implements pb.EchoService
 func (s *Service) Echo(ctx context.Context, in *pb.EchoRequest) (*pb.EchoReply, error) {
 	log.Printf("Request << %s", in.GetMessage())
 
