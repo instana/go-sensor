@@ -27,65 +27,38 @@ const (
 )
 
 func main() {
-	// `port` will be used by an example
 	port := flag.String("defaultPort", defaultPort, "defaultPort to use by an example")
-	// `address` will be used by an example
 	address := flag.String("address", defaultAddress, "address to use by an example")
-	// how many requests to send
-	nRequestsToSend := flag.Int("n", 10, "how many requests to send")
 
 	flag.Parse()
 
 	// initialize server sensor to instrument request handlers
-	sensor := instana.NewSensor("grpc-server")
+	serverSensor := instana.NewSensor("grpc-server")
 
 	// to instrument server calls add instagrpc.UnaryServerInterceptor(sensor) and
 	// instagrpc.StreamServerInterceptor(sensor) to the list of server options when
 	// initializing the server
 	srv := grpc.NewServer(
-		grpc.UnaryInterceptor(instagrpc.UnaryServerInterceptor(sensor)),
-		grpc.StreamInterceptor(instagrpc.StreamServerInterceptor(sensor)),
+		grpc.UnaryInterceptor(instagrpc.UnaryServerInterceptor(serverSensor)),
+		grpc.StreamInterceptor(instagrpc.StreamServerInterceptor(serverSensor)),
 	)
 
-	// register an implementation of the service
 	pb.RegisterEchoServiceServer(srv, &Service{})
 
-	// start the server and listen to the incoming requests
 	go startServer(srv, *address+*port)
 
-	// create a channel to signal when all requests are send
-	done := make(chan struct{})
+	// create a new sensor for a client
+	clientSensor := instana.NewSensor("grpc-client")
 
-	// start goroutine
-	go func() {
-		// create a new sensor for a client
-		sensor := instana.NewSensor("grpc-client")
-
-		for i := 1; i <= *nRequestsToSend; i++ {
-			log.Println("\n", "Send request #", i)
-			// init the client with Instana gRPC instrumentation and call the service
-			response := Call(context.Background(), sensor, *address+*port, testMessage)
-			log.Printf("Response << %s", response)
-		}
-
-		done <- struct{}{}
-	}()
-
-	<-done
-}
-
-// Call send pb.EchoRequest request with "message" to the "address" using generated grpc pb.EchoServiceClient client
-// and returns the message from the response
-func Call(ctx context.Context, sensor *instana.Sensor, address, message string) string {
 	conn, err := grpc.Dial(
-		address,
+		*address+*port,
 		grpc.WithInsecure(),
 		grpc.WithBlock(),
 		// To instrument client calls add instagrpc.UnaryClientInterceptor(sensor) and
 		// instagrpc.StringClientInterceptor(sensor) to the DialOption list while dialing
 		// the GRPC server.
-		grpc.WithUnaryInterceptor(instagrpc.UnaryClientInterceptor(sensor)),
-		grpc.WithStreamInterceptor(instagrpc.StreamClientInterceptor(sensor)),
+		grpc.WithUnaryInterceptor(instagrpc.UnaryClientInterceptor(clientSensor)),
+		grpc.WithStreamInterceptor(instagrpc.StreamClientInterceptor(clientSensor)),
 	)
 	if err != nil {
 		log.Fatalf("did not connect: %v", err)
@@ -93,28 +66,29 @@ func Call(ctx context.Context, sensor *instana.Sensor, address, message string) 
 
 	defer conn.Close()
 
-	// create a new service client
 	client := pb.NewEchoServiceClient(conn)
 
 	// The call should always start with an entry span (https://www.instana.com/docs/tracing/custom-best-practices/#start-new-traces-with-entry-spans)
 	// Normally this would be your HTTP/GRPC/message queue request span, but here we need to
 	// create it explicitly.
-	sp := sensor.Tracer().
+	sp := clientSensor.Tracer().
 		StartSpan("client-call").
 		SetTag(string(ext.SpanKind), "entry")
 
-	// call the service
+	log.Println("Send request")
+
+	// call the service using context with a span
 	r, err := client.Echo(
 		// Create a context that holds the parent entry span and pass it to the GRPC call
-		instana.ContextWithSpan(ctx, sp),
-		&pb.EchoRequest{Message: message},
+		instana.ContextWithSpan(context.Background(), sp),
+		&pb.EchoRequest{Message: testMessage},
 	)
 
 	if err != nil {
 		log.Fatalf("error while echoing: %v", err)
 	}
 
-	return r.Message
+	log.Printf("Response << %s", r.GetMessage())
 }
 
 // Service is used to implement pb.EchoService
@@ -126,6 +100,8 @@ type Service struct {
 func (s *Service) Echo(ctx context.Context, in *pb.EchoRequest) (*pb.EchoReply, error) {
 	log.Printf("Request << %s", in.GetMessage())
 
+	// This step is not required for a minimal instrumentation.
+	//
 	// Extract the parent span and use its tracer to initialize any child spans to trace the calls
 	// inside the handler, e.g. database queries, 3rd-party API requests, etc.
 	if parent, ok := instana.SpanFromContext(ctx); ok {
