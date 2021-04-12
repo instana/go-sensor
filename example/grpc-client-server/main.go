@@ -13,7 +13,7 @@ import (
 
 	"github.com/opentracing/opentracing-go/ext"
 
-	"github.com/instana/go-sensor/example/grpc-example/pb"
+	"github.com/instana/go-sensor/example/grpc-client-server/pb"
 
 	instana "github.com/instana/go-sensor"
 	"github.com/instana/go-sensor/instrumentation/instagrpc"

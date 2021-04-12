@@ -1,4 +1,4 @@
-module github.com/instana/go-sensor/example/grpc-example
+module github.com/instana/go-sensor/example/grpc-client-server
 
 go 1.15
 

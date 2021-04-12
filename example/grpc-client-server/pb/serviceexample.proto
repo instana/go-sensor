@@ -3,7 +3,7 @@
 
 syntax = "proto3";
 
-option go_package = "github.com/instana/go-sensor/example/grpc-example/pb";
+option go_package = "github.com/instana/go-sensor/example/grpc-client-server/pb";
 
 // The echo service definition.
 service EchoService {
