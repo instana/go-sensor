@@ -1,7 +1,7 @@
 A gRPC Server/Client Example 
 ==========================
 
-An example of usage of Instana tracer in an app instrumented with gRPC. It demonstrates how to use `https://github.com/instana/go-sensor/tree/master/instrumentation/instagrpc`.
+An example of usage of Instana tracer in the app instrumented with gRPC. It demonstrates how to use `https://github.com/instana/go-sensor/tree/master/instrumentation/instagrpc`.
 
 Usage
 -----
