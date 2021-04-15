@@ -160,6 +160,76 @@ func TestNewHandler_APIGatewayV2Event(t *testing.T) {
 	}, span.Data)
 }
 
+func TestNewHandler_APIGatewayV2Event_WithW3Context(t *testing.T) {
+	testDataFileNames := []string{
+		"testdata/apigw_v2_event.json",
+		"testdata/apigw_v2_event_with_w3context.json",
+	}
+
+	for _, fileName := range testDataFileNames {
+		recorder := instana.NewTestRecorder()
+		sensor := instana.NewSensorWithTracer(instana.NewTracerWithEverything(instana.DefaultOptions(), recorder))
+
+		payload, err := ioutil.ReadFile(fileName)
+		require.NoError(t, err)
+
+		h := instalambda.NewHandler(func(ctx context.Context, evt *events.APIGatewayV2HTTPRequest) (events.APIGatewayV2HTTPResponse, error) {
+			_, ok := instana.SpanFromContext(ctx)
+			assert.True(t, ok)
+
+			return events.APIGatewayV2HTTPResponse{
+				StatusCode: http.StatusOK,
+				Body:       "OK",
+			}, nil
+		}, sensor)
+
+		lambdacontext.FunctionName = "test-function"
+		lambdacontext.FunctionVersion = "42"
+
+		ctx := lambdacontext.NewContext(context.Background(), &lambdacontext.LambdaContext{
+			AwsRequestID:       "req1",
+			InvokedFunctionArn: "aws:test-function",
+		})
+
+		resp, err := h.Invoke(ctx, payload)
+		require.NoError(t, err)
+
+		assert.JSONEq(t, `{"statusCode":200,"headers":null,"multiValueHeaders":null,"body":"OK","cookies":null}`, string(resp))
+
+		spans := recorder.GetQueuedSpans()
+		require.Len(t, spans, 1)
+
+		span := spans[0]
+
+		assert.EqualValues(t, 0x1234, span.TraceID)
+		assert.EqualValues(t, 0x4567, span.ParentID)
+		assert.NotEqual(t, span.ParentID, span.SpanID)
+
+		require.Equal(t, "aws.lambda.entry", span.Name)
+		assert.EqualValues(t, instana.EntrySpanKind, span.Kind)
+
+		assert.Equal(t, instana.AWSLambdaSpanData{
+			Snapshot: instana.AWSLambdaSpanTags{
+				ARN:     "aws:test-function:42",
+				Runtime: "go",
+				Name:    "test-function",
+				Version: "42",
+				Trigger: "aws:api.gateway",
+			},
+			HTTP: &instana.HTTPSpanTags{
+				URL:          "/my/path",
+				Method:       "POST",
+				PathTemplate: "/my/{resource}",
+				Params:       "q=term&secret=%3Credacted%3E",
+				Headers: map[string]string{
+					"X-Custom-Header-1": "value1",
+					"X-Custom-Header-2": "value2",
+				},
+			},
+		}, span.Data)
+	}
+}
+
 func TestNewHandler_ALBEvent(t *testing.T) {
 	recorder := instana.NewTestRecorder()
 	sensor := instana.NewSensorWithTracer(instana.NewTracerWithEverything(instana.DefaultOptions(), recorder))
