@@ -6,8 +6,10 @@ github.com/cpuguy83/go-md2man/v2 v2.0.0/go.mod h1:maD7wRr/U5Z6m/iR4s+kqSMx2CaBsr
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
-github.com/instana/go-sensor v1.24.0 h1:l7nbiP5dNetEJzyAVsoNkvx6Qog0Unlj73SLvJy44QA=
-github.com/instana/go-sensor v1.24.0/go.mod h1:NLjidxcrwKsltnGHG8+liP2r7xq+AJSiYwHomsvaoDo=
+github.com/instana/go-sensor v1.27.0 h1:A/aCr0J3fY3hI3bc5nvcfcG/Rto8igMVEKUicwPsrJo=
+github.com/instana/go-sensor v1.27.0/go.mod h1:NLjidxcrwKsltnGHG8+liP2r7xq+AJSiYwHomsvaoDo=
+github.com/instana/go-sensor v1.27.5 h1:hHd+rY+q1dGDCm90siE+cu9Aa9Yf5LkN8CQ+bh3w91Q=
+github.com/instana/go-sensor v1.27.5/go.mod h1:NLjidxcrwKsltnGHG8+liP2r7xq+AJSiYwHomsvaoDo=
 github.com/instana/testify v1.6.2-0.20200721153833-94b1851f4d65 h1:T25FL3WEzgmKB0m6XCJNZ65nw09/QIp3T1yXr487D+A=
 github.com/instana/testify v1.6.2-0.20200721153833-94b1851f4d65/go.mod h1:nYhEREG/B7HUY7P+LKOrqy53TpIqmJ9JyUShcaEKtGw=
 github.com/looplab/fsm v0.1.0 h1:Qte7Zdn/5hBNbXzP7yxVU4OIFHWXBovyTT2LaBTyC20=
