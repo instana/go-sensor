@@ -35,261 +35,219 @@ func TestMain(m *testing.M) {
 }
 
 func TestNewHandler_APIGatewayEvent(t *testing.T) {
-	recorder := instana.NewTestRecorder()
-	sensor := instana.NewSensorWithTracer(instana.NewTracerWithEverything(instana.DefaultOptions(), recorder))
+	testCases := map[string]string{
+		"ApiGWVEvent":              "testdata/apigw_event.json",
+		"ApiGWVEventWithW3Context": "testdata/apigw_event_with_w3context.json",
+	}
 
-	payload, err := ioutil.ReadFile("testdata/apigw_event.json")
-	require.NoError(t, err)
+	for tc, fileName := range testCases {
+		t.Run(tc, func(t *testing.T) {
 
-	h := instalambda.NewHandler(func(ctx context.Context, evt *events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
-		_, ok := instana.SpanFromContext(ctx)
-		assert.True(t, ok)
+			recorder := instana.NewTestRecorder()
+			sensor := instana.NewSensorWithTracer(instana.NewTracerWithEverything(instana.DefaultOptions(), recorder))
 
-		return events.APIGatewayProxyResponse{
-			StatusCode: http.StatusOK,
-			Body:       "OK",
-		}, nil
-	}, sensor)
+			payload, err := ioutil.ReadFile(fileName)
+			require.NoError(t, err)
 
-	lambdacontext.FunctionName = "test-function"
-	lambdacontext.FunctionVersion = "42"
+			h := instalambda.NewHandler(func(ctx context.Context, evt *events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+				_, ok := instana.SpanFromContext(ctx)
+				assert.True(t, ok)
 
-	ctx := lambdacontext.NewContext(context.Background(), &lambdacontext.LambdaContext{
-		AwsRequestID:       "req1",
-		InvokedFunctionArn: "aws:test-function",
-	})
+				return events.APIGatewayProxyResponse{
+					StatusCode: http.StatusOK,
+					Body:       "OK",
+				}, nil
+			}, sensor)
 
-	resp, err := h.Invoke(ctx, payload)
-	require.NoError(t, err)
+			lambdacontext.FunctionName = "test-function"
+			lambdacontext.FunctionVersion = "42"
 
-	assert.JSONEq(t, `{"statusCode":200,"headers":null,"multiValueHeaders":null,"body":"OK"}`, string(resp))
+			ctx := lambdacontext.NewContext(context.Background(), &lambdacontext.LambdaContext{
+				AwsRequestID:       "req1",
+				InvokedFunctionArn: "aws:test-function",
+			})
 
-	spans := recorder.GetQueuedSpans()
-	require.Len(t, spans, 1)
+			resp, err := h.Invoke(ctx, payload)
+			require.NoError(t, err)
 
-	span := spans[0]
+			assert.JSONEq(t, `{"statusCode":200,"headers":null,"multiValueHeaders":null,"body":"OK"}`, string(resp))
 
-	assert.EqualValues(t, 0x1234, span.TraceID)
-	assert.EqualValues(t, 0x4567, span.ParentID)
-	assert.NotEqual(t, span.ParentID, span.SpanID)
+			spans := recorder.GetQueuedSpans()
+			require.Len(t, spans, 1)
 
-	require.Equal(t, "aws.lambda.entry", span.Name)
-	assert.EqualValues(t, instana.EntrySpanKind, span.Kind)
+			span := spans[0]
 
-	assert.Equal(t, instana.AWSLambdaSpanData{
-		Snapshot: instana.AWSLambdaSpanTags{
-			ARN:     "aws:test-function:42",
-			Runtime: "go",
-			Name:    "test-function",
-			Version: "42",
-			Trigger: "aws:api.gateway",
-		},
-		HTTP: &instana.HTTPSpanTags{
-			URL:          "/",
-			Method:       "GET",
-			PathTemplate: "/",
-			Params:       "multisecret=%3Credacted%3E&multisecret=%3Credacted%3E&q=term&secret=%3Credacted%3E&value=1&value=2",
-			Headers: map[string]string{
-				"X-Custom-Header-1": "value1",
-				"X-Custom-Header-2": "value2",
-			},
-		},
-	}, span.Data)
-}
+			assert.EqualValues(t, 0x1234, span.TraceID)
+			assert.EqualValues(t, 0x4567, span.ParentID)
+			assert.NotEqual(t, span.ParentID, span.SpanID)
 
-func TestNewHandler_APIGatewayV2Event(t *testing.T) {
-	recorder := instana.NewTestRecorder()
-	sensor := instana.NewSensorWithTracer(instana.NewTracerWithEverything(instana.DefaultOptions(), recorder))
+			require.Equal(t, "aws.lambda.entry", span.Name)
+			assert.EqualValues(t, instana.EntrySpanKind, span.Kind)
 
-	payload, err := ioutil.ReadFile("testdata/apigw_v2_event.json")
-	require.NoError(t, err)
-
-	h := instalambda.NewHandler(func(ctx context.Context, evt *events.APIGatewayV2HTTPRequest) (events.APIGatewayV2HTTPResponse, error) {
-		_, ok := instana.SpanFromContext(ctx)
-		assert.True(t, ok)
-
-		return events.APIGatewayV2HTTPResponse{
-			StatusCode: http.StatusOK,
-			Body:       "OK",
-		}, nil
-	}, sensor)
-
-	lambdacontext.FunctionName = "test-function"
-	lambdacontext.FunctionVersion = "42"
-
-	ctx := lambdacontext.NewContext(context.Background(), &lambdacontext.LambdaContext{
-		AwsRequestID:       "req1",
-		InvokedFunctionArn: "aws:test-function",
-	})
-
-	resp, err := h.Invoke(ctx, payload)
-	require.NoError(t, err)
-
-	assert.JSONEq(t, `{"statusCode":200,"headers":null,"multiValueHeaders":null,"body":"OK","cookies":null}`, string(resp))
-
-	spans := recorder.GetQueuedSpans()
-	require.Len(t, spans, 1)
-
-	span := spans[0]
-
-	assert.EqualValues(t, 0x1234, span.TraceID)
-	assert.EqualValues(t, 0x4567, span.ParentID)
-	assert.NotEqual(t, span.ParentID, span.SpanID)
-
-	require.Equal(t, "aws.lambda.entry", span.Name)
-	assert.EqualValues(t, instana.EntrySpanKind, span.Kind)
-
-	assert.Equal(t, instana.AWSLambdaSpanData{
-		Snapshot: instana.AWSLambdaSpanTags{
-			ARN:     "aws:test-function:42",
-			Runtime: "go",
-			Name:    "test-function",
-			Version: "42",
-			Trigger: "aws:api.gateway",
-		},
-		HTTP: &instana.HTTPSpanTags{
-			URL:          "/my/path",
-			Method:       "POST",
-			PathTemplate: "/my/{resource}",
-			Params:       "q=term&secret=%3Credacted%3E",
-			Headers: map[string]string{
-				"X-Custom-Header-1": "value1",
-				"X-Custom-Header-2": "value2",
-			},
-		},
-	}, span.Data)
+			assert.Equal(t, instana.AWSLambdaSpanData{
+				Snapshot: instana.AWSLambdaSpanTags{
+					ARN:     "aws:test-function:42",
+					Runtime: "go",
+					Name:    "test-function",
+					Version: "42",
+					Trigger: "aws:api.gateway",
+				},
+				HTTP: &instana.HTTPSpanTags{
+					URL:          "/",
+					Method:       "GET",
+					PathTemplate: "/",
+					Params:       "multisecret=%3Credacted%3E&multisecret=%3Credacted%3E&q=term&secret=%3Credacted%3E&value=1&value=2",
+					Headers: map[string]string{
+						"X-Custom-Header-1": "value1",
+						"X-Custom-Header-2": "value2",
+					},
+				},
+			}, span.Data)
+		})
+	}
 }
 
 func TestNewHandler_APIGatewayV2Event_WithW3Context(t *testing.T) {
-	testDataFileNames := []string{
-		"testdata/apigw_v2_event.json",
-		"testdata/apigw_v2_event_with_w3context.json",
+	testCases := map[string]string{
+		"ApiGWV2Event":              "testdata/apigw_v2_event.json",
+		"ApiGWV2EventWithW3Context": "testdata/apigw_v2_event_with_w3context.json",
 	}
 
-	for _, fileName := range testDataFileNames {
-		recorder := instana.NewTestRecorder()
-		sensor := instana.NewSensorWithTracer(instana.NewTracerWithEverything(instana.DefaultOptions(), recorder))
+	for tc, fileName := range testCases {
+		t.Run(tc, func(t *testing.T) {
+			recorder := instana.NewTestRecorder()
+			sensor := instana.NewSensorWithTracer(instana.NewTracerWithEverything(instana.DefaultOptions(), recorder))
 
-		payload, err := ioutil.ReadFile(fileName)
-		require.NoError(t, err)
+			payload, err := ioutil.ReadFile(fileName)
+			require.NoError(t, err)
 
-		h := instalambda.NewHandler(func(ctx context.Context, evt *events.APIGatewayV2HTTPRequest) (events.APIGatewayV2HTTPResponse, error) {
-			_, ok := instana.SpanFromContext(ctx)
-			assert.True(t, ok)
+			h := instalambda.NewHandler(func(ctx context.Context, evt *events.APIGatewayV2HTTPRequest) (events.APIGatewayV2HTTPResponse, error) {
+				_, ok := instana.SpanFromContext(ctx)
+				assert.True(t, ok)
 
-			return events.APIGatewayV2HTTPResponse{
-				StatusCode: http.StatusOK,
-				Body:       "OK",
-			}, nil
-		}, sensor)
+				return events.APIGatewayV2HTTPResponse{
+					StatusCode: http.StatusOK,
+					Body:       "OK",
+				}, nil
+			}, sensor)
 
-		lambdacontext.FunctionName = "test-function"
-		lambdacontext.FunctionVersion = "42"
+			lambdacontext.FunctionName = "test-function"
+			lambdacontext.FunctionVersion = "42"
 
-		ctx := lambdacontext.NewContext(context.Background(), &lambdacontext.LambdaContext{
-			AwsRequestID:       "req1",
-			InvokedFunctionArn: "aws:test-function",
-		})
+			ctx := lambdacontext.NewContext(context.Background(), &lambdacontext.LambdaContext{
+				AwsRequestID:       "req1",
+				InvokedFunctionArn: "aws:test-function",
+			})
 
-		resp, err := h.Invoke(ctx, payload)
-		require.NoError(t, err)
+			resp, err := h.Invoke(ctx, payload)
+			require.NoError(t, err)
 
-		assert.JSONEq(t, `{"statusCode":200,"headers":null,"multiValueHeaders":null,"body":"OK","cookies":null}`, string(resp))
+			assert.JSONEq(t, `{"statusCode":200,"headers":null,"multiValueHeaders":null,"body":"OK","cookies":null}`, string(resp))
 
-		spans := recorder.GetQueuedSpans()
-		require.Len(t, spans, 1)
+			spans := recorder.GetQueuedSpans()
+			require.Len(t, spans, 1)
 
-		span := spans[0]
+			span := spans[0]
 
-		assert.EqualValues(t, 0x1234, span.TraceID)
-		assert.EqualValues(t, 0x4567, span.ParentID)
-		assert.NotEqual(t, span.ParentID, span.SpanID)
+			assert.EqualValues(t, 0x1234, span.TraceID)
+			assert.EqualValues(t, 0x4567, span.ParentID)
+			assert.NotEqual(t, span.ParentID, span.SpanID)
 
-		require.Equal(t, "aws.lambda.entry", span.Name)
-		assert.EqualValues(t, instana.EntrySpanKind, span.Kind)
+			require.Equal(t, "aws.lambda.entry", span.Name)
+			assert.EqualValues(t, instana.EntrySpanKind, span.Kind)
 
-		assert.Equal(t, instana.AWSLambdaSpanData{
-			Snapshot: instana.AWSLambdaSpanTags{
-				ARN:     "aws:test-function:42",
-				Runtime: "go",
-				Name:    "test-function",
-				Version: "42",
-				Trigger: "aws:api.gateway",
-			},
-			HTTP: &instana.HTTPSpanTags{
-				URL:          "/my/path",
-				Method:       "POST",
-				PathTemplate: "/my/{resource}",
-				Params:       "q=term&secret=%3Credacted%3E",
-				Headers: map[string]string{
-					"X-Custom-Header-1": "value1",
-					"X-Custom-Header-2": "value2",
+			assert.Equal(t, instana.AWSLambdaSpanData{
+				Snapshot: instana.AWSLambdaSpanTags{
+					ARN:     "aws:test-function:42",
+					Runtime: "go",
+					Name:    "test-function",
+					Version: "42",
+					Trigger: "aws:api.gateway",
 				},
-			},
-		}, span.Data)
+				HTTP: &instana.HTTPSpanTags{
+					URL:          "/my/path",
+					Method:       "POST",
+					PathTemplate: "/my/{resource}",
+					Params:       "q=term&secret=%3Credacted%3E",
+					Headers: map[string]string{
+						"X-Custom-Header-1": "value1",
+						"X-Custom-Header-2": "value2",
+					},
+				},
+			}, span.Data)
+		})
 	}
 }
 
 func TestNewHandler_ALBEvent(t *testing.T) {
-	recorder := instana.NewTestRecorder()
-	sensor := instana.NewSensorWithTracer(instana.NewTracerWithEverything(instana.DefaultOptions(), recorder))
+	testCases := map[string]string{
+		"ALBEvent":         "testdata/alb_event.json",
+		"ALBWithW3Context": "testdata/alb_event_with_w3context.json",
+	}
 
-	payload, err := ioutil.ReadFile("testdata/alb_event.json")
-	require.NoError(t, err)
+	for tc, fileName := range testCases {
+		t.Run(tc, func(t *testing.T) {
+			recorder := instana.NewTestRecorder()
+			sensor := instana.NewSensorWithTracer(instana.NewTracerWithEverything(instana.DefaultOptions(), recorder))
 
-	h := instalambda.NewHandler(func(ctx context.Context, evt *events.ALBTargetGroupRequest) (events.ALBTargetGroupResponse, error) {
-		_, ok := instana.SpanFromContext(ctx)
-		assert.True(t, ok)
+			payload, err := ioutil.ReadFile(fileName)
+			require.NoError(t, err)
 
-		return events.ALBTargetGroupResponse{
-			StatusCode: http.StatusOK,
-			Body:       "OK",
-		}, nil
-	}, sensor)
+			h := instalambda.NewHandler(func(ctx context.Context, evt *events.ALBTargetGroupRequest) (events.ALBTargetGroupResponse, error) {
+				_, ok := instana.SpanFromContext(ctx)
+				assert.True(t, ok)
 
-	lambdacontext.FunctionName = "test-function"
-	lambdacontext.FunctionVersion = "42"
+				return events.ALBTargetGroupResponse{
+					StatusCode: http.StatusOK,
+					Body:       "OK",
+				}, nil
+			}, sensor)
 
-	ctx := lambdacontext.NewContext(context.Background(), &lambdacontext.LambdaContext{
-		AwsRequestID:       "req1",
-		InvokedFunctionArn: "aws:test-function",
-	})
+			lambdacontext.FunctionName = "test-function"
+			lambdacontext.FunctionVersion = "42"
 
-	resp, err := h.Invoke(ctx, payload)
-	require.NoError(t, err)
+			ctx := lambdacontext.NewContext(context.Background(), &lambdacontext.LambdaContext{
+				AwsRequestID:       "req1",
+				InvokedFunctionArn: "aws:test-function",
+			})
 
-	assert.JSONEq(t, `{"statusCode":200,"statusDescription":"","headers":null,"multiValueHeaders":null,"body":"OK","isBase64Encoded":false}`, string(resp))
+			resp, err := h.Invoke(ctx, payload)
+			require.NoError(t, err)
 
-	spans := recorder.GetQueuedSpans()
-	require.Len(t, spans, 1)
+			assert.JSONEq(t, `{"statusCode":200,"statusDescription":"","headers":null,"multiValueHeaders":null,"body":"OK","isBase64Encoded":false}`, string(resp))
 
-	span := spans[0]
+			spans := recorder.GetQueuedSpans()
+			require.Len(t, spans, 1)
 
-	assert.EqualValues(t, 0x1234, span.TraceID)
-	assert.EqualValues(t, 0x4567, span.ParentID)
-	assert.NotEqual(t, span.ParentID, span.SpanID)
+			span := spans[0]
 
-	require.Equal(t, "aws.lambda.entry", span.Name)
-	assert.EqualValues(t, instana.EntrySpanKind, span.Kind)
+			assert.EqualValues(t, 0x1234, span.TraceID)
+			assert.EqualValues(t, 0x4567, span.ParentID)
+			assert.NotEqual(t, span.ParentID, span.SpanID)
 
-	assert.Equal(t, instana.AWSLambdaSpanData{
-		Snapshot: instana.AWSLambdaSpanTags{
-			ARN:     "aws:test-function:42",
-			Runtime: "go",
-			Name:    "test-function",
-			Version: "42",
-			Trigger: "aws:application.load.balancer",
-		},
-		HTTP: &instana.HTTPSpanTags{
-			URL:    "/lambda",
-			Method: "GET",
-			Params: "multikey=%3Credacted%3E&multikey=%3Credacted%3E&multisecret=%3Credacted%3E&multisecret=%3Credacted%3E&query=1234ABCD&secret=%3Credacted%3E",
-			Headers: map[string]string{
-				"X-Custom-Header-1": "value1",
-				"X-Custom-Header-2": "value2",
-			},
-		},
-	}, span.Data)
+			require.Equal(t, "aws.lambda.entry", span.Name)
+			assert.EqualValues(t, instana.EntrySpanKind, span.Kind)
+
+			assert.Equal(t, instana.AWSLambdaSpanData{
+				Snapshot: instana.AWSLambdaSpanTags{
+					ARN:     "aws:test-function:42",
+					Runtime: "go",
+					Name:    "test-function",
+					Version: "42",
+					Trigger: "aws:application.load.balancer",
+				},
+				HTTP: &instana.HTTPSpanTags{
+					URL:    "/lambda",
+					Method: "GET",
+					Params: "multikey=%3Credacted%3E&multikey=%3Credacted%3E&multisecret=%3Credacted%3E&multisecret=%3Credacted%3E&query=1234ABCD&secret=%3Credacted%3E",
+					Headers: map[string]string{
+						"X-Custom-Header-1": "value1",
+						"X-Custom-Header-2": "value2",
+					},
+				},
+			}, span.Data)
+		})
+	}
 }
 
 func TestNewHandler_CloudWatchEvent(t *testing.T) {
