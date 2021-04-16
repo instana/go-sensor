@@ -176,6 +176,10 @@ func filterCustomSpanTags(tags map[string]interface{}, st RegisteredSpanType) ma
 	customTags := make(map[string]interface{})
 
 	for k, v := range tags {
+		if k == string(ext.SpanKind) {
+			continue
+		}
+
 		if _, ok := knownTags[k]; ok {
 			continue
 		}
