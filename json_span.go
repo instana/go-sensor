@@ -166,11 +166,33 @@ type batchInfo struct {
 	Size int `json:"s"`
 }
 
+// CustomSpanData holds user-defined span tags
+type CustomSpanData struct {
+	Tags map[string]interface{} `json:"tags,omitempty"`
+}
+
+func filterCustomSpanTags(tags map[string]interface{}, st RegisteredSpanType) map[string]interface{} {
+	knownTags := st.TagsNames()
+	customTags := make(map[string]interface{})
+
+	for k, v := range tags {
+		if _, ok := knownTags[k]; ok {
+			continue
+		}
+
+		customTags[k] = v
+	}
+
+	return customTags
+}
+
 // SpanData contains fields to be sent in the `data` section of an OT span document. These fields are
 // common for all span types.
 type SpanData struct {
-	Service string `json:"service,omitempty"`
-	st      RegisteredSpanType
+	Service string          `json:"service,omitempty"`
+	Custom  *CustomSpanData `json:"custom,omitempty"`
+
+	st RegisteredSpanType
 }
 
 // NewSpanData initializes a new span data from tracer span
@@ -178,6 +200,10 @@ func NewSpanData(span *spanS, st RegisteredSpanType) SpanData {
 	data := SpanData{
 		Service: span.Service,
 		st:      st,
+	}
+
+	if customTags := filterCustomSpanTags(span.Tags, st); len(customTags) > 0 {
+		data.Custom = &CustomSpanData{Tags: customTags}
 	}
 
 	return data

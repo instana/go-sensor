@@ -74,3 +74,35 @@ func TestNewSDKSpanData(t *testing.T) {
 		},
 	}, data.Tags)
 }
+
+func TestSpanData_CustomTags(t *testing.T) {
+	recorder := instana.NewTestRecorder()
+	tracer := instana.NewTracerWithEverything(&instana.Options{}, recorder)
+
+	sp := tracer.StartSpan("g.http", opentracing.Tags{
+		"http.host":   "localhost",
+		"http.path":   "/",
+		"custom.tag":  "42",
+		"another.tag": true,
+	})
+	sp.Finish()
+
+	spans := recorder.GetQueuedSpans()
+	require.Len(t, spans, 1)
+
+	span := spans[0]
+	require.IsType(t, instana.HTTPSpanData{}, span.Data)
+
+	data := span.Data.(instana.HTTPSpanData)
+
+	assert.Equal(t, instana.HTTPSpanTags{
+		Host: "localhost",
+		Path: "/",
+	}, data.Tags)
+	assert.Equal(t, &instana.CustomSpanData{
+		Tags: map[string]interface{}{
+			"custom.tag":  "42",
+			"another.tag": true,
+		},
+	}, data.Custom)
+}
