@@ -516,28 +516,13 @@ func TestNewHandler_PreferInstanaHeadersToW3ContextHeaders(t *testing.T) {
 			payload, err := ioutil.ReadFile(fileName)
 			require.NoError(t, err)
 
-			h := instalambda.NewHandler(func(ctx context.Context, evt *events.APIGatewayV2HTTPRequest) (events.APIGatewayV2HTTPResponse, error) {
+			h := instalambda.NewHandler(func(ctx context.Context, evt *events.APIGatewayV2HTTPRequest) {
 				_, ok := instana.SpanFromContext(ctx)
 				assert.True(t, ok)
-
-				return events.APIGatewayV2HTTPResponse{
-					StatusCode: http.StatusOK,
-					Body:       "OK",
-				}, nil
 			}, sensor)
 
-			lambdacontext.FunctionName = "test-function"
-			lambdacontext.FunctionVersion = "42"
-
-			ctx := lambdacontext.NewContext(context.Background(), &lambdacontext.LambdaContext{
-				AwsRequestID:       "req1",
-				InvokedFunctionArn: "aws:test-function",
-			})
-
-			resp, err := h.Invoke(ctx, payload)
+			_, err = h.Invoke(lambdacontext.NewContext(context.Background(), &lambdacontext.LambdaContext{}), payload)
 			require.NoError(t, err)
-
-			assert.JSONEq(t, `{"statusCode":200,"headers":null,"multiValueHeaders":null,"body":"OK","cookies":null}`, string(resp))
 
 			spans := recorder.GetQueuedSpans()
 			require.Len(t, spans, 1)
