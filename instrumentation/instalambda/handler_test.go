@@ -36,8 +36,8 @@ func TestMain(m *testing.M) {
 
 func TestNewHandler_APIGatewayEvent(t *testing.T) {
 	testCases := map[string]string{
-		"ApiGWVEvent":              "testdata/apigw_event.json",
-		"ApiGWVEventWithW3Context": "testdata/apigw_event_with_w3context.json",
+		"API_GW_Event":              "testdata/apigw_event.json",
+		"API_GW_EventWithW3Context": "testdata/apigw_event_with_w3context.json",
 	}
 
 	for tc, fileName := range testCases {
@@ -109,8 +109,8 @@ func TestNewHandler_APIGatewayEvent(t *testing.T) {
 
 func TestNewHandler_APIGatewayV2Event_WithW3Context(t *testing.T) {
 	testCases := map[string]string{
-		"ApiGWV2Event":              "testdata/apigw_v2_event.json",
-		"ApiGWV2EventWithW3Context": "testdata/apigw_v2_event_with_w3context.json",
+		"API_GW_V2_Event":              "testdata/apigw_v2_event.json",
+		"API_GW_V2_EventWithW3Context": "testdata/apigw_v2_event_with_w3context.json",
 	}
 
 	for tc, fileName := range testCases {
@@ -181,8 +181,8 @@ func TestNewHandler_APIGatewayV2Event_WithW3Context(t *testing.T) {
 
 func TestNewHandler_ALBEvent(t *testing.T) {
 	testCases := map[string]string{
-		"ALBEvent":         "testdata/alb_event.json",
-		"ALBWithW3Context": "testdata/alb_event_with_w3context.json",
+		"ALB_Event":               "testdata/alb_event.json",
+		"ALB_Event_WithW3Context": "testdata/alb_event_with_w3context.json",
 	}
 
 	for tc, fileName := range testCases {
@@ -499,4 +499,54 @@ func TestNewHandler_SQSEvent(t *testing.T) {
 			},
 		},
 	}, span.Data)
+}
+
+func TestNewHandler_PreferInstanaHeadersToW3ContextHeaders(t *testing.T) {
+	testCases := map[string]string{
+		"API_GW_Event":    "testdata/apigw_v2_event_with_instana_headers_and_w3context.json",
+		"API_GW_V2_Event": "testdata/apigw_event_with_instana_headers_and_w3context.json",
+		"ALBEvent":        "testdata/alb_event_with_instana_headers_and_w3context.json",
+	}
+
+	for tc, fileName := range testCases {
+		t.Run(tc, func(t *testing.T) {
+			recorder := instana.NewTestRecorder()
+			sensor := instana.NewSensorWithTracer(instana.NewTracerWithEverything(instana.DefaultOptions(), recorder))
+
+			payload, err := ioutil.ReadFile(fileName)
+			require.NoError(t, err)
+
+			h := instalambda.NewHandler(func(ctx context.Context, evt *events.APIGatewayV2HTTPRequest) (events.APIGatewayV2HTTPResponse, error) {
+				_, ok := instana.SpanFromContext(ctx)
+				assert.True(t, ok)
+
+				return events.APIGatewayV2HTTPResponse{
+					StatusCode: http.StatusOK,
+					Body:       "OK",
+				}, nil
+			}, sensor)
+
+			lambdacontext.FunctionName = "test-function"
+			lambdacontext.FunctionVersion = "42"
+
+			ctx := lambdacontext.NewContext(context.Background(), &lambdacontext.LambdaContext{
+				AwsRequestID:       "req1",
+				InvokedFunctionArn: "aws:test-function",
+			})
+
+			resp, err := h.Invoke(ctx, payload)
+			require.NoError(t, err)
+
+			assert.JSONEq(t, `{"statusCode":200,"headers":null,"multiValueHeaders":null,"body":"OK","cookies":null}`, string(resp))
+
+			spans := recorder.GetQueuedSpans()
+			require.Len(t, spans, 1)
+
+			span := spans[0]
+
+			assert.EqualValues(t, 0x1234, span.TraceID)
+			assert.EqualValues(t, 0x4567, span.ParentID)
+			assert.NotEqual(t, span.ParentID, span.SpanID)
+		})
+	}
 }
