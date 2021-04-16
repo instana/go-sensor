@@ -171,16 +171,16 @@ type batchInfo struct {
 type SpanData struct {
 	Service string `json:"service,omitempty"`
 	st      RegisteredSpanType
-	sk      interface{}
 }
 
 // NewSpanData initializes a new span data from tracer span
 func NewSpanData(span *spanS, st RegisteredSpanType) SpanData {
-	return SpanData{
+	data := SpanData{
 		Service: span.Service,
 		st:      st,
-		sk:      span.Tags[string(ext.SpanKind)],
 	}
+
+	return data
 }
 
 // Type returns the registered span type suitable for use as the value of `n` field.
@@ -188,38 +188,51 @@ func (d SpanData) Type() RegisteredSpanType {
 	return d.st
 }
 
-// Kind returns the kind of the span. It handles the github.com/opentracing/opentracing-go/ext.SpanKindEnum
-// values as well as generic "entry" and "exit"
-func (d SpanData) Kind() SpanKind {
-	switch d.sk {
-	case ext.SpanKindRPCServerEnum, string(ext.SpanKindRPCServerEnum),
-		ext.SpanKindConsumerEnum, string(ext.SpanKindConsumerEnum),
-		"entry":
-		return EntrySpanKind
-	case ext.SpanKindRPCClientEnum, string(ext.SpanKindRPCClientEnum),
-		ext.SpanKindProducerEnum, string(ext.SpanKindProducerEnum),
-		"exit":
-		return ExitSpanKind
-	default:
-		return IntermediateSpanKind
-	}
-}
-
 // SDKSpanData represents the `data` section of an SDK span sent within an OT span document
 type SDKSpanData struct {
-	SpanData
-	Tags SDKSpanTags `json:"sdk"`
+	// Deprecated
+	SpanData `json:"-"`
+
+	Service string      `json:"service,omitempty"`
+	Tags    SDKSpanTags `json:"sdk"`
+
+	sk SpanKind
 }
 
 // NewSDKSpanData initializes a new SDK span data from a tracer span
 func NewSDKSpanData(span *spanS) SDKSpanData {
-	d := NewSpanData(span, SDKSpanType)
+	sk := IntermediateSpanKind
+
+	switch span.Tags[string(ext.SpanKind)] {
+	case ext.SpanKindRPCServerEnum, string(ext.SpanKindRPCServerEnum),
+		ext.SpanKindConsumerEnum, string(ext.SpanKindConsumerEnum),
+		"entry":
+		sk = EntrySpanKind
+	case ext.SpanKindRPCClientEnum, string(ext.SpanKindRPCClientEnum),
+		ext.SpanKindProducerEnum, string(ext.SpanKindProducerEnum),
+		"exit":
+		sk = ExitSpanKind
+	}
+
 	return SDKSpanData{
-		SpanData: d,
-		Tags:     NewSDKSpanTags(span, d.Kind().String()),
+		Service: span.Service,
+		Tags:    NewSDKSpanTags(span, sk.String()),
+		sk:      sk,
 	}
 }
 
+// Type returns the registered span type suitable for use as the value of `n` field.
+func (d SDKSpanData) Type() RegisteredSpanType {
+	return SDKSpanType
+}
+
+// Kind returns the kind of the span. It handles the github.com/opentracing/opentracing-go/ext.SpanKindEnum
+// values as well as generic "entry" and "exit"
+func (d SDKSpanData) Kind() SpanKind {
+	return d.sk
+}
+
+// KnownTags returns the list of known tags for this span type
 // SDKSpanTags contains fields within the `data.sdk` section of an OT span document
 type SDKSpanTags struct {
 	Name      string                 `json:"name"`
