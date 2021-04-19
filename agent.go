@@ -280,7 +280,7 @@ func (agent *agentS) fullRequestResponse(url string, method string, data interfa
 					}
 				}
 
-				io.Copy(ioutil.Discard, resp.Body)
+				io.CopyN(ioutil.Discard, resp.Body, 256 << 10)
 			}
 		}
 	}
