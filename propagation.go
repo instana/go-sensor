@@ -178,7 +178,13 @@ func extractTraceContext(opaqueCarrier interface{}) (SpanContext, error) {
 		return spanContext, ot.ErrSpanContextNotFound
 	}
 
-	if !spanContext.Suppressed && (spanContext.SpanID == 0 != (spanContext.TraceIDHi == 0 && spanContext.TraceID == 0)) {
+	// when the context is not suppressed
+	// and instana headers either can not be parsed or present partially
+	// and w3 context is not there
+	if !spanContext.Suppressed &&
+		(spanContext.SpanID == 0 != (spanContext.TraceIDHi == 0 && spanContext.TraceID == 0)) &&
+		spanContext.W3CContext.IsZero() {
+
 		return spanContext, ot.ErrSpanContextCorrupted
 	}
 
