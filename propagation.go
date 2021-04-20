@@ -190,17 +190,17 @@ func extractTraceContext(opaqueCarrier interface{}) (SpanContext, error) {
 	// When the context is not suppressed and one of Instana ID headers set.
 	if !spanContext.Suppressed &&
 		(spanContext.SpanID == 0 != (spanContext.TraceIDHi == 0 && spanContext.TraceID == 0)) {
-		sensor.logger.Debug("only one Instana header present",
+		sensor.logger.Debug("only one of Instana ID headers present",
 			" SpanID=", spanContext.SpanID,
 			" TraceID=", spanContext.TraceID,
 			" TraceIDHi=", spanContext.TraceIDHi)
 
-		// check if w3 context was found
+		// Check if w3 context was found
 		if spanContext.W3CContext.IsZero() {
 			return spanContext, ot.ErrSpanContextCorrupted
 		}
 
-		// reset the trace IDs
+		// Reset the trace IDs
 		resetSpanContextIDs(&spanContext)
 	}
 
