@@ -178,7 +178,7 @@ func extractTraceContext(opaqueCarrier interface{}) (SpanContext, error) {
 
 	// reset the trace IDs if a correlation ID has been provided
 	if spanContext.Correlation.ID != "" {
-		resetSpanContextIDs(&spanContext)
+		spanContext.TraceIDHi, spanContext.TraceID, spanContext.SpanID = 0, 0, 0
 
 		return spanContext, nil
 	}
@@ -198,18 +198,15 @@ func extractTraceContext(opaqueCarrier interface{}) (SpanContext, error) {
 		if spanContext.W3CContext.IsZero() {
 			return spanContext, ot.ErrSpanContextCorrupted
 		} else {
-			// Reset the trace IDs and return spanContext
-			resetSpanContextIDs(&spanContext)
-			return spanContext, nil
+			// Return SpanContext with w3 context, ignore other values
+			return SpanContext{
+				W3CContext: spanContext.W3CContext,
+			}, nil
 		}
 
 	}
 
 	return spanContext, nil
-}
-
-func resetSpanContextIDs(spanContext *SpanContext) {
-	spanContext.TraceIDHi, spanContext.TraceID, spanContext.SpanID = 0, 0, 0
 }
 
 func addW3CTraceContext(h http.Header, sc SpanContext) {
