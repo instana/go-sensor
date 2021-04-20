@@ -194,16 +194,15 @@ func extractTraceContext(opaqueCarrier interface{}) (SpanContext, error) {
 			" SpanID=", FormatID(spanContext.SpanID),
 			" TraceID=", FormatLongID(spanContext.TraceIDHi, spanContext.TraceID))
 
-		// Check if w3 context was found or not
-		if spanContext.W3CContext.IsZero() {
-			return spanContext, ot.ErrSpanContextCorrupted
-		} else {
+		// Check if w3 context was found
+		if !spanContext.W3CContext.IsZero() {
 			// Return SpanContext with w3 context, ignore other values
 			return SpanContext{
 				W3CContext: spanContext.W3CContext,
 			}, nil
 		}
 
+		return spanContext, ot.ErrSpanContextCorrupted
 	}
 
 	return spanContext, nil
