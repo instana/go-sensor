@@ -8,6 +8,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"strconv"
@@ -278,6 +279,8 @@ func (agent *agentS) fullRequestResponse(url string, method string, data interfa
 						ret = resp.Header.Get(header)
 					}
 				}
+
+				io.CopyN(ioutil.Discard, resp.Body, 256 << 10)
 			}
 		}
 	}
