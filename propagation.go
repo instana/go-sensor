@@ -140,13 +140,13 @@ func extractTraceContext(opaqueCarrier interface{}) (SpanContext, error) {
 		case FieldT:
 			spanContext.TraceIDHi, spanContext.TraceID, err = ParseLongID(v)
 			if err != nil {
-				sensor.logger.Debug("extract trace context ", FieldT, ": ", err)
+				sensor.logger.Debug("extract trace context ", FieldT, "=", v, " : ", err)
 				return ot.ErrSpanContextCorrupted
 			}
 		case FieldS:
 			spanContext.SpanID, err = ParseID(v)
 			if err != nil {
-				sensor.logger.Debug("extract trace context ", FieldS, ": ", err)
+				sensor.logger.Debug("extract trace context ", FieldT, "=", v, " : ", err)
 				return ot.ErrSpanContextCorrupted
 			}
 		case FieldL:
@@ -190,18 +190,20 @@ func extractTraceContext(opaqueCarrier interface{}) (SpanContext, error) {
 	// When the context is not suppressed and one of Instana ID headers set.
 	if !spanContext.Suppressed &&
 		(spanContext.SpanID == 0 != (spanContext.TraceIDHi == 0 && spanContext.TraceID == 0)) {
-		sensor.logger.Debug("only one of Instana ID headers present",
-			" SpanID=", spanContext.SpanID,
-			" TraceID=", spanContext.TraceID,
-			" TraceIDHi=", spanContext.TraceIDHi)
+		sensor.logger.Debug("broken Instana trace context:",
+			" SpanID=", FormatID(spanContext.SpanID),
+			" TraceID=", FormatID(spanContext.TraceID),
+			" TraceIDHi=", FormatID(spanContext.TraceIDHi))
 
-		// Check if w3 context was found
+		// Check if w3 context was found or not
 		if spanContext.W3CContext.IsZero() {
 			return spanContext, ot.ErrSpanContextCorrupted
+		} else {
+			// Reset the trace IDs and return spanContext
+			resetSpanContextIDs(&spanContext)
+			return spanContext, nil
 		}
 
-		// Reset the trace IDs
-		resetSpanContextIDs(&spanContext)
 	}
 
 	return spanContext, nil
