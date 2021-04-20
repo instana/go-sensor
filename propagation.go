@@ -192,8 +192,7 @@ func extractTraceContext(opaqueCarrier interface{}) (SpanContext, error) {
 		(spanContext.SpanID == 0 != (spanContext.TraceIDHi == 0 && spanContext.TraceID == 0)) {
 		sensor.logger.Debug("broken Instana trace context:",
 			" SpanID=", FormatID(spanContext.SpanID),
-			" TraceID=", FormatID(spanContext.TraceID),
-			" TraceIDHi=", FormatID(spanContext.TraceIDHi))
+			" TraceID=", FormatLongID(spanContext.TraceIDHi, spanContext.TraceID))
 
 		// Check if w3 context was found or not
 		if spanContext.W3CContext.IsZero() {
