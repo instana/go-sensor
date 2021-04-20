@@ -115,7 +115,7 @@ func injectTraceContext(sc SpanContext, opaqueCarrier interface{}) error {
 }
 
 // This method searches for Instana headers (FieldT, FieldS, FieldL and header with name prefixed with FieldB)
-// and try to parse their values. It also tries to extract w3 context and assign it inside returned object. W3 context
+// and try to parse their values. It also tries to extract W3C context and assign it inside returned object. W3C context
 // will be propagated further and can be used as a fallback.
 func extractTraceContext(opaqueCarrier interface{}) (SpanContext, error) {
 	spanContext := SpanContext{
