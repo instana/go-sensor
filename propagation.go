@@ -150,7 +150,7 @@ func extractTraceContext(opaqueCarrier interface{}) (SpanContext, error) {
 				return ot.ErrSpanContextCorrupted
 			}
 		case FieldL:
-			// When FieldL is presented and equal to "0", then spanContext is suppressed.
+			// When FieldL is present and equals to "0", then spanContext is suppressed.
 			// In addition to that non-empty correlation data may be extracted.
 			suppressed, corrData, err := parseLevel(v)
 			if err != nil {
