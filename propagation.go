@@ -140,13 +140,11 @@ func extractTraceContext(opaqueCarrier interface{}) (SpanContext, error) {
 		case FieldT:
 			spanContext.TraceIDHi, spanContext.TraceID, err = ParseLongID(v)
 			if err != nil {
-				sensor.logger.Debug("extract trace context ", FieldT, "=", v, " : ", err)
 				return ot.ErrSpanContextCorrupted
 			}
 		case FieldS:
 			spanContext.SpanID, err = ParseID(v)
 			if err != nil {
-				sensor.logger.Debug("extract trace context ", FieldT, "=", v, " : ", err)
 				return ot.ErrSpanContextCorrupted
 			}
 		case FieldL:
