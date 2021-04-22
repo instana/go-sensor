@@ -110,7 +110,11 @@ func (r *Recorder) Flush(ctx context.Context) error {
 	}
 
 	if err := sensor.Agent().SendSpans(spansToSend); err != nil {
+		r.Lock()
+		defer r.Unlock()
+
 		r.spans = append(r.spans, spansToSend...)
+
 		return fmt.Errorf("failed to send collected spans to the agent: %s", err)
 	}
 
