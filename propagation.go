@@ -114,6 +114,9 @@ func injectTraceContext(sc SpanContext, opaqueCarrier interface{}) error {
 	return nil
 }
 
+// This method searches for Instana headers (FieldT, FieldS, FieldL and header with name prefixed with FieldB)
+// and try to parse their values. It also tries to extract W3C context and assign it inside returned object. W3C context
+// will be propagated further and can be used as a fallback.
 func extractTraceContext(opaqueCarrier interface{}) (SpanContext, error) {
 	spanContext := SpanContext{
 		Baggage: make(map[string]string),
@@ -128,6 +131,8 @@ func extractTraceContext(opaqueCarrier interface{}) (SpanContext, error) {
 		pickupW3CTraceContext(http.Header(c), &spanContext)
 	}
 
+	// Iterate over the headers, look for Instana headers and try to parse them.
+	// In case of error interrupt, iteration and return it.
 	err := carrier.ForeachKey(func(k, v string) error {
 		var err error
 
@@ -143,6 +148,8 @@ func extractTraceContext(opaqueCarrier interface{}) (SpanContext, error) {
 				return ot.ErrSpanContextCorrupted
 			}
 		case FieldL:
+			// When FieldL is present and equals to "0", then spanContext is suppressed.
+			// In addition to that non-empty correlation data may be extracted.
 			suppressed, corrData, err := parseLevel(v)
 			if err != nil {
 				sensor.logger.Info("failed to parse ", k, ": ", err, " (", v, ")")
@@ -167,7 +174,7 @@ func extractTraceContext(opaqueCarrier interface{}) (SpanContext, error) {
 		return spanContext, err
 	}
 
-	// reset the trace if a correlation ID has been provided
+	// reset the trace IDs if a correlation ID has been provided
 	if spanContext.Correlation.ID != "" {
 		spanContext.TraceIDHi, spanContext.TraceID, spanContext.SpanID = 0, 0, 0
 
@@ -178,7 +185,21 @@ func extractTraceContext(opaqueCarrier interface{}) (SpanContext, error) {
 		return spanContext, ot.ErrSpanContextNotFound
 	}
 
-	if !spanContext.Suppressed && (spanContext.SpanID == 0 != (spanContext.TraceIDHi == 0 && spanContext.TraceID == 0)) {
+	// When the context is not suppressed and one of Instana ID headers set.
+	if !spanContext.Suppressed &&
+		(spanContext.SpanID == 0 != (spanContext.TraceIDHi == 0 && spanContext.TraceID == 0)) {
+		sensor.logger.Debug("broken Instana trace context:",
+			" SpanID=", FormatID(spanContext.SpanID),
+			" TraceID=", FormatLongID(spanContext.TraceIDHi, spanContext.TraceID))
+
+		// Check if w3 context was found
+		if !spanContext.W3CContext.IsZero() {
+			// Return SpanContext with w3 context, ignore other values
+			return SpanContext{
+				W3CContext: spanContext.W3CContext,
+			}, nil
+		}
+
 		return spanContext, ot.ErrSpanContextCorrupted
 	}
 
