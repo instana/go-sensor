@@ -110,7 +110,13 @@ func (r *Recorder) Flush(ctx context.Context) error {
 	}
 
 	if err := sensor.Agent().SendSpans(spansToSend); err != nil {
-		r.spans = append(r.spans, spansToSend...)
+		r.Lock()
+		defer r.Unlock()
+
+		// put failed spans in front of the queue to make sure they are evicted first
+		// whenever the queue length exceeds options.MaxBufferedSpans
+		r.spans = append(spansToSend, r.spans...)
+
 		return fmt.Errorf("failed to send collected spans to the agent: %s", err)
 	}
 
