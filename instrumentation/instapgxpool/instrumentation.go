@@ -1,3 +1,7 @@
+// (c) Copyright IBM Corp. 2021
+// (c) Copyright Instana Inc. 2020
+// (c) Copyright clevabit GmbH 2021
+
 package instapgxpool
 
 import (
