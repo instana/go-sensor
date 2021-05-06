@@ -535,3 +535,111 @@ func TestNewHandler_PreferInstanaHeadersToW3ContextHeaders(t *testing.T) {
 		})
 	}
 }
+
+func TestNewHandler_DirectInvoke(t *testing.T) {
+	recorder := instana.NewTestRecorder()
+	sensor := instana.NewSensorWithTracer(instana.NewTracerWithEverything(instana.DefaultOptions(), recorder))
+
+	h := instalambda.NewHandler(func(ctx context.Context, evt interface{}) error {
+		_, ok := instana.SpanFromContext(ctx)
+		assert.True(t, ok)
+
+		return nil
+	}, sensor)
+
+	lambdacontext.FunctionName = "test-function"
+	lambdacontext.FunctionVersion = "42"
+
+	ctx := lambdacontext.NewContext(context.Background(), &lambdacontext.LambdaContext{
+		AwsRequestID:       "req1",
+		InvokedFunctionArn: "aws:test-function",
+		ClientContext: lambdacontext.ClientContext{
+			Client: lambdacontext.ClientApplication{},
+			Env:    nil,
+			Custom: map[string]string{
+				"X-INSTAnA-T": "0000000000001234",
+				"X-INsTANA-S": "0000000000004567",
+				"X-INSTaNA-L": "1",
+			},
+		},
+	})
+
+	_, err := h.Invoke(ctx, []byte("{}"))
+	require.NoError(t, err)
+
+	spans := recorder.GetQueuedSpans()
+	require.Len(t, spans, 1)
+
+	span := spans[0]
+
+	assert.EqualValues(t, 0x1234, span.TraceID)
+	assert.EqualValues(t, 0x4567, span.ParentID)
+	assert.NotEqual(t, span.ParentID, span.SpanID)
+
+	require.Equal(t, "aws.lambda.entry", span.Name)
+	assert.EqualValues(t, instana.EntrySpanKind, span.Kind)
+
+	assert.Equal(t, instana.AWSLambdaSpanData{
+		Snapshot: instana.AWSLambdaSpanTags{
+			ARN:     "aws:test-function:42",
+			Runtime: "go",
+			Name:    "test-function",
+			Version: "42",
+			Trigger: "aws:sdk.invoke",
+		},
+	}, span.Data)
+}
+
+func TestNewHandler_DirectInvoke_WithIncompleteSetOfInstanaHeaders(t *testing.T) {
+	recorder := instana.NewTestRecorder()
+	sensor := instana.NewSensorWithTracer(instana.NewTracerWithEverything(instana.DefaultOptions(), recorder))
+
+	h := instalambda.NewHandler(func(ctx context.Context, evt interface{}) error {
+		_, ok := instana.SpanFromContext(ctx)
+		assert.True(t, ok)
+
+		return nil
+	}, sensor)
+
+	lambdacontext.FunctionName = "test-function"
+	lambdacontext.FunctionVersion = "42"
+
+	ctx := lambdacontext.NewContext(context.Background(), &lambdacontext.LambdaContext{
+		AwsRequestID:       "req1",
+		InvokedFunctionArn: "aws:test-function",
+		ClientContext: lambdacontext.ClientContext{
+			Client: lambdacontext.ClientApplication{},
+			Env:    nil,
+			Custom: map[string]string{
+				"WRONG_HEADER_NAME": "0000000000001234",
+				"X-INsTANA-S":       "0000000000004567",
+				"X-INSTaNA-L":       "1",
+			},
+		},
+	})
+
+	_, err := h.Invoke(ctx, []byte("{}"))
+	require.NoError(t, err)
+
+	spans := recorder.GetQueuedSpans()
+	require.Len(t, spans, 1)
+
+	span := spans[0]
+
+	assert.NotEqual(t, 0x1234, span.TraceID)
+	assert.NotEqual(t, 0x4567, span.ParentID)
+	assert.NotEqual(t, span.ParentID, span.SpanID)
+
+	require.Equal(t, "aws.lambda.entry", span.Name)
+	assert.EqualValues(t, instana.EntrySpanKind, span.Kind)
+
+	assert.Equal(t, instana.AWSLambdaSpanData{
+		Snapshot: instana.AWSLambdaSpanTags{
+			ARN:     "aws:test-function:42",
+			Runtime: "go",
+			Name:    "test-function",
+			Version: "42",
+			Trigger: "",
+		},
+	}, span.Data)
+}

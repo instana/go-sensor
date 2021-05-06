@@ -5,11 +5,21 @@ package instalambda
 
 import (
 	"encoding/json"
+	"strings"
+
+	"github.com/aws/aws-lambda-go/lambdacontext"
 )
 
 type triggerEventType uint8
 
 const (
+	// FieldT is the trace ID attribute key in a custom client context
+	fieldT = "X-INSTANA-T"
+	// FieldS is the span ID attribute key in a custom client context
+	fieldS = "X-INSTANA-S"
+	// FieldL is the trace level attribute key in a custom client context
+	fieldL = "X-INSTANA-L"
+
 	unknownEventType triggerEventType = iota
 	apiGatewayEventType
 	apiGatewayV2EventType
@@ -18,9 +28,10 @@ const (
 	cloudWatchLogsEventType
 	s3EventType
 	sqsEventType
+	sdkInvokeRequestType
 )
 
-func detectTriggerEventType(payload []byte) triggerEventType {
+func detectTriggerEventType(payload []byte, lcc lambdacontext.ClientContext) triggerEventType {
 	var v struct {
 		// API Gateway fields
 		Resource   string `json:"resource"`
@@ -53,6 +64,8 @@ func detectTriggerEventType(payload []byte) triggerEventType {
 	}
 
 	switch {
+	case areInstanaHeadersInTheCustomContext(lcc):
+		return sdkInvokeRequestType
 	case v.Resource != "" && v.Path != "" && v.HTTPMethod != "" && v.RequestContext.ELB == nil:
 		return apiGatewayEventType
 	case v.Version == "2.0" && v.RequestContext.ApiID != "" && v.RequestContext.Stage != "" && len(v.RequestContext.HTTP) > 0:
@@ -70,4 +83,30 @@ func detectTriggerEventType(payload []byte) triggerEventType {
 	default:
 		return unknownEventType
 	}
+}
+
+func areInstanaHeadersInTheCustomContext(lcc lambdacontext.ClientContext) bool {
+	if lcc.Custom == nil {
+		return false
+	}
+
+	normalizedCustomKeys := make(map[string]string, len(lcc.Custom))
+
+	for k := range lcc.Custom {
+		normalizedCustomKeys[strings.ToUpper(k)] = k
+	}
+
+	if _, ok := normalizedCustomKeys[fieldS]; !ok {
+		return false
+	}
+
+	if _, ok := normalizedCustomKeys[fieldT]; !ok {
+		return false
+	}
+
+	if _, ok := normalizedCustomKeys[fieldL]; !ok {
+		return false
+	}
+
+	return true
 }
