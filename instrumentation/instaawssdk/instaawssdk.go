@@ -6,8 +6,16 @@
 package instaawssdk
 
 import (
+	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"fmt"
+
+	"github.com/aws/aws-lambda-go/lambdacontext"
+
+	otlog "github.com/opentracing/opentracing-go/log"
+
+	"github.com/aws/aws-sdk-go/service/lambda"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/request"
@@ -33,6 +41,8 @@ func InstrumentSession(sess *session.Session, sensor *instana.Sensor) {
 			StartSQSSpan(req, sensor)
 		case dynamodb.ServiceName:
 			StartDynamoDBSpan(req, sensor)
+		case lambda.ServiceName:
+			StartInvokeSpan(req, sensor)
 		}
 	})
 
@@ -58,6 +68,8 @@ func InstrumentSession(sess *session.Session, sensor *instana.Sensor) {
 			}
 		case dynamodb.ServiceName:
 			FinalizeDynamoDBSpan(req)
+		case lambda.ServiceName:
+			FinalizeInvokeSpan(req)
 		}
 	})
 }
@@ -96,5 +108,41 @@ func injectTraceContext(sp opentracing.Span, req *request.Request) {
 			opentracing.TextMap,
 			SNSMessageAttributesCarrier(params.MessageAttributes),
 		)
+	case lambda.InvokeInput:
+		lc := lambdacontext.ClientContext{}
+
+		if params.ClientContext != nil {
+			res, err := base64.StdEncoding.DecodeString(*params.ClientContext)
+			if err != nil {
+				sp.LogFields(otlog.Error(req.Error))
+
+				return
+			}
+
+			err = json.Unmarshal(res, &lc)
+			if err != nil {
+				sp.LogFields(otlog.Error(req.Error))
+
+				return
+			}
+		}
+
+		if lc.Custom == nil {
+			lc.Custom = make(map[string]string)
+		}
+
+		sp.Tracer().Inject(
+			sp.Context(),
+			opentracing.TextMap,
+			opentracing.TextMapCarrier(lc.Custom),
+		)
+
+		s, err := encodeToBase64(lc)
+		if err != nil {
+			sp.LogFields(otlog.Error(req.Error))
+
+			return
+		}
+		params.ClientContext = &s
 	}
 }
