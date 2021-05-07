@@ -11,6 +11,8 @@ Following services are currently instrumented:
 * [S3](https://docs.aws.amazon.com/sdk-for-go/api/service/s3/)
 * [SNS](https://docs.aws.amazon.com/sdk-for-go/api/service/sns/)
 * [SQS](https://docs.aws.amazon.com/sdk-for-go/api/service/sqs/)
+* [Lambda](https://docs.aws.amazon.com/sdk-for-go/api/service/lambda/) 
+  - Read about usage and limitations [here](https://github.com/instana/go-sensor/tree/master/instrumentation/instaawssdk#instrumenting-lambda)
 
 Installation
 ------------
@@ -51,6 +53,7 @@ Usually these method names end with `WithContext` suffix, e.g.
 * `(*s3.Client).CreateBucketWithContext()`
 * `(*sns.Client).PublishWithContext()`
 * `(*sqs.Client).ReceiveMessagesWithContext()`
+* `(*lambda.Lambda).InvokeWithContext()`
 * etc.
 
 ### Instrumenting SQS consumers
@@ -71,6 +74,42 @@ func handleMessage(ctx context.Context, msg *sqs.Message) {
     // ...
 }
 ```
+
+### Instrumenting lambda
+
+If a session is instrumented, it will propagate tracing context automatically using values from the `ctx`.
+
+Example:
+```go
+sensor := instana.NewSensor("my-new-sensor")
+sess, _ := session.NewSession()
+instaawssdk.InstrumentSession(sess, sensor)
+svc := sdk.New(sess)
+input := &sdk.InvokeInput{
+    FunctionName: "my-lambda-function-name",
+    // this field is optional
+    // IMPORTANT type `Event` is not supported by the instrumentation
+    InvocationType: aws.String("RequestResponse"), 
+    Payload: []byte("{}"),
+}
+
+// invoke with context, otherwise, you will need to set context manually to propagate tracing data
+svc.InvokeWithContext(ctx, input)
+```
+
+Tracing context propagated inside a `ClientContext.Custom` field in the `InvokeInput` object. Reserved keys are:
+- `X-INSTANA-T`
+- `X-INSTANA-S`
+- `X-INSTANA-L`
+- `TRACEPARENT`
+- `TRACESTATE`
+
+To avoid a collision, do not set them in your application code.
+
+Known limitation:
+- Current instrumentation does not support asynchronous lambda invocation.
+- If the length of base64 encoded `ClientContext` will exceed 3582 bytes, tracing headers will be not propagated.
+- Deprecated methods like `InvokeAsync`, `InvokeAsyncWithContext` etc. are not supported.
 
 [godoc]: https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instaawssdk
 [Sensor]: https://pkg.go.dev/github.com/instana/go-sensor?tab=doc#Sensor
