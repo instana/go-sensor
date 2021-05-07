@@ -28,6 +28,8 @@ import (
 
 var errMethodNotInstrumented = errors.New("method not instrumented")
 
+const maxClientContextLen = 3582
+
 // InstrumentSession instruments github.com/aws/aws-sdk-go/aws/session.Session by
 // injecting handlers to create and finalize Instana spans
 func InstrumentSession(sess *session.Session, sensor *instana.Sensor) {
@@ -141,6 +143,9 @@ func injectTraceContext(sp opentracing.Span, req *request.Request) {
 
 			return
 		}
-		params.ClientContext = &s
+
+		if len(s) <= maxClientContextLen {
+			params.ClientContext = &s
+		}
 	}
 }
