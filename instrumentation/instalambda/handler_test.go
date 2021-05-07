@@ -536,58 +536,108 @@ func TestNewHandler_PreferInstanaHeadersToW3ContextHeaders(t *testing.T) {
 	}
 }
 
-func TestNewHandler_DirectInvoke(t *testing.T) {
-	recorder := instana.NewTestRecorder()
-	sensor := instana.NewSensorWithTracer(instana.NewTracerWithEverything(instana.DefaultOptions(), recorder))
-
-	h := instalambda.NewHandler(func(ctx context.Context, evt interface{}) error {
-		_, ok := instana.SpanFromContext(ctx)
-		assert.True(t, ok)
-
-		return nil
-	}, sensor)
-
-	lambdacontext.FunctionName = "test-function"
-	lambdacontext.FunctionVersion = "42"
-
-	ctx := lambdacontext.NewContext(context.Background(), &lambdacontext.LambdaContext{
-		AwsRequestID:       "req1",
-		InvokedFunctionArn: "aws:test-function",
-		ClientContext: lambdacontext.ClientContext{
-			Client: lambdacontext.ClientApplication{},
-			Env:    nil,
-			Custom: map[string]string{
-				"X-INSTAnA-T": "0000000000001234",
-				"X-INsTANA-S": "0000000000004567",
-				"X-INSTaNA-L": "1",
+func TestNewHandler_Invoke_Success(t *testing.T) {
+	testCases := map[string]*lambdacontext.LambdaContext{
+		"Invoke_WithInstanaHeadersOnly": {
+			AwsRequestID:       "req1",
+			InvokedFunctionArn: "aws:test-function",
+			ClientContext: lambdacontext.ClientContext{
+				Client: lambdacontext.ClientApplication{},
+				Env:    nil,
+				Custom: map[string]string{
+					"X-INSTAnA-T": "0000000000001234",
+					"X-INsTANA-S": "0000000000004567",
+					"X-INSTaNA-L": "1",
+				},
 			},
 		},
-	})
-
-	_, err := h.Invoke(ctx, []byte("{}"))
-	require.NoError(t, err)
-
-	spans := recorder.GetQueuedSpans()
-	require.Len(t, spans, 1)
-
-	span := spans[0]
-
-	assert.EqualValues(t, 0x1234, span.TraceID)
-	assert.EqualValues(t, 0x4567, span.ParentID)
-	assert.NotEqual(t, span.ParentID, span.SpanID)
-
-	require.Equal(t, "aws.lambda.entry", span.Name)
-	assert.EqualValues(t, instana.EntrySpanKind, span.Kind)
-
-	assert.Equal(t, instana.AWSLambdaSpanData{
-		Snapshot: instana.AWSLambdaSpanTags{
-			ARN:     "aws:test-function:42",
-			Runtime: "go",
-			Name:    "test-function",
-			Version: "42",
-			Trigger: "aws:sdk.invoke",
+		"Invoke_WithIncompleteSetOfInstanaHeaders_And_WithW3CContext": {
+			AwsRequestID:       "req1",
+			InvokedFunctionArn: "aws:test-function",
+			ClientContext: lambdacontext.ClientContext{
+				Client: lambdacontext.ClientApplication{},
+				Env:    nil,
+				Custom: map[string]string{
+					"WRONG_HEADER_NAME": "0000000000001111",
+					"X-INsTANA-S":       "0000000000002222",
+					"X-INSTaNA-L":       "1",
+					"traceparent":       "00-00000000000000000000000000001234-0000000000004567-01",
+					"tracestate":        "in=1314;2435,rojo=0000000000004567",
+				},
+			},
 		},
-	}, span.Data)
+		"Invoke_WithInstanaHeaders_And_WithW3CContext": {
+			AwsRequestID:       "req1",
+			InvokedFunctionArn: "aws:test-function",
+			ClientContext: lambdacontext.ClientContext{
+				Client: lambdacontext.ClientApplication{},
+				Env:    nil,
+				Custom: map[string]string{
+					"X-INSTAnA-T": "0000000000001234",
+					"X-INsTANA-S": "0000000000004567",
+					"X-INSTaNA-L": "1",
+					"traceparent": "00-00000000000000000000000000001111-0000000000002222-01",
+					"tracestate":  "in=1314;2435,rojo=0000000000002222",
+				},
+			},
+		},
+		"Invoke_WithW3CContextOnly": {
+			AwsRequestID:       "req1",
+			InvokedFunctionArn: "aws:test-function",
+			ClientContext: lambdacontext.ClientContext{
+				Client: lambdacontext.ClientApplication{},
+				Env:    nil,
+				Custom: map[string]string{
+					"traceparent": "00-00000000000000000000000000001234-0000000000004567-01",
+					"tracestate":  "in=1314;2435,rojo=0000000000004567",
+				},
+			},
+		},
+	}
+
+	for tc, lc := range testCases {
+		t.Run(tc, func(t *testing.T) {
+			recorder := instana.NewTestRecorder()
+			sensor := instana.NewSensorWithTracer(instana.NewTracerWithEverything(instana.DefaultOptions(), recorder))
+
+			h := instalambda.NewHandler(func(ctx context.Context, evt interface{}) error {
+				_, ok := instana.SpanFromContext(ctx)
+				assert.True(t, ok)
+
+				return nil
+			}, sensor)
+
+			lambdacontext.FunctionName = "test-function"
+			lambdacontext.FunctionVersion = "42"
+
+			ctx := lambdacontext.NewContext(context.Background(), lc)
+
+			_, err := h.Invoke(ctx, []byte("{}"))
+			require.NoError(t, err)
+
+			spans := recorder.GetQueuedSpans()
+			require.Len(t, spans, 1)
+
+			span := spans[0]
+
+			assert.EqualValues(t, 0x1234, span.TraceID)
+			assert.EqualValues(t, 0x4567, span.ParentID)
+			assert.NotEqual(t, span.ParentID, span.SpanID)
+
+			require.Equal(t, "aws.lambda.entry", span.Name)
+			assert.EqualValues(t, instana.EntrySpanKind, span.Kind)
+
+			assert.Equal(t, instana.AWSLambdaSpanData{
+				Snapshot: instana.AWSLambdaSpanTags{
+					ARN:     "aws:test-function:42",
+					Runtime: "go",
+					Name:    "test-function",
+					Version: "42",
+					Trigger: "aws:sdk.invoke",
+				},
+			}, span.Data)
+		})
+	}
 }
 
 func TestNewHandler_DirectInvoke_WithIncompleteSetOfInstanaHeaders(t *testing.T) {
