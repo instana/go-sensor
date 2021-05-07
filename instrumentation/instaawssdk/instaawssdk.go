@@ -11,8 +11,6 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/aws/aws-lambda-go/lambdacontext"
-
 	otlog "github.com/opentracing/opentracing-go/log"
 
 	"github.com/aws/aws-sdk-go/service/lambda"
@@ -109,7 +107,7 @@ func injectTraceContext(sp opentracing.Span, req *request.Request) {
 			SNSMessageAttributesCarrier(params.MessageAttributes),
 		)
 	case lambda.InvokeInput:
-		lc := lambdacontext.ClientContext{}
+		lc := LambdaClientContext{}
 
 		if params.ClientContext != nil {
 			res, err := base64.StdEncoding.DecodeString(*params.ClientContext)
