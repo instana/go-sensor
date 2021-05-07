@@ -108,7 +108,7 @@ func injectTraceContext(sp opentracing.Span, req *request.Request) {
 			opentracing.TextMap,
 			SNSMessageAttributesCarrier(params.MessageAttributes),
 		)
-	case lambda.InvokeInput:
+	case *lambda.InvokeInput:
 		lc := LambdaClientContext{}
 
 		if params.ClientContext != nil {
