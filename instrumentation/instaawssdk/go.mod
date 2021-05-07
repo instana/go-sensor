@@ -3,7 +3,6 @@ module github.com/instana/go-sensor/instrumentation/instaawssdk
 go 1.9
 
 require (
-	github.com/aws/aws-lambda-go v1.23.0
 	github.com/aws/aws-sdk-go v1.8.0
 	github.com/go-ini/ini v1.62.0 // indirect
 	github.com/instana/go-sensor v1.28.2-0.20210506094344-996653fa59f5
