@@ -20,6 +20,11 @@ const (
 	// FieldL is the trace level attribute key in a custom client context
 	fieldL = "X-INSTANA-L"
 
+	// traceParentHeader is the W3C trace parent header name as defined by https://www.w3.org/TR/trace-context/
+	traceParentHeader = "TRACEPARENT"
+	// TraceStateHeader is the W3C trace state header name as defined by https://www.w3.org/TR/trace-context/
+	traceStateHeader = "TRACESTATE"
+
 	unknownEventType triggerEventType = iota
 	apiGatewayEventType
 	apiGatewayV2EventType
@@ -64,7 +69,7 @@ func detectTriggerEventType(payload []byte, lcc lambdacontext.ClientContext) tri
 	}
 
 	switch {
-	case areInstanaHeadersInTheCustomContext(lcc):
+	case areTracingHeadersInTheCustomContext(lcc):
 		return sdkInvokeRequestType
 	case v.Resource != "" && v.Path != "" && v.HTTPMethod != "" && v.RequestContext.ELB == nil:
 		return apiGatewayEventType
@@ -85,7 +90,7 @@ func detectTriggerEventType(payload []byte, lcc lambdacontext.ClientContext) tri
 	}
 }
 
-func areInstanaHeadersInTheCustomContext(lcc lambdacontext.ClientContext) bool {
+func areTracingHeadersInTheCustomContext(lcc lambdacontext.ClientContext) bool {
 	if lcc.Custom == nil {
 		return false
 	}
@@ -96,17 +101,12 @@ func areInstanaHeadersInTheCustomContext(lcc lambdacontext.ClientContext) bool {
 		normalizedCustomKeys[strings.ToUpper(k)] = k
 	}
 
-	if _, ok := normalizedCustomKeys[fieldS]; !ok {
-		return false
-	}
+	_, okS := normalizedCustomKeys[fieldS]
+	_, okT := normalizedCustomKeys[fieldT]
+	_, okL := normalizedCustomKeys[fieldL]
 
-	if _, ok := normalizedCustomKeys[fieldT]; !ok {
-		return false
-	}
+	_, okW3CTParent := normalizedCustomKeys[traceParentHeader]
+	_, okW3CTState := normalizedCustomKeys[traceStateHeader]
 
-	if _, ok := normalizedCustomKeys[fieldL]; !ok {
-		return false
-	}
-
-	return true
+	return (okS && okT && okL) || (okW3CTParent && okW3CTState)
 }
