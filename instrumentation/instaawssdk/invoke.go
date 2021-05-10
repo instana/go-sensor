@@ -16,9 +16,14 @@ import (
 
 func StartInvokeSpan(req *request.Request, sensor *instana.Sensor) {
 	tags := opentracing.Tags{}
-	if ii, ok := req.Params.(lambda.InvokeInput); ok {
-		tags["invoke.function"] = *ii.FunctionName
-		tags["invoke.type"] = *ii.InvocationType
+	if ii, ok := req.Params.(*lambda.InvokeInput); ok {
+		if ii.FunctionName != nil {
+			tags["invoke.function"] = *ii.FunctionName
+		}
+
+		if ii.InvocationType != nil {
+			tags["invoke.type"] = *ii.InvocationType
+		}
 	}
 
 	parent, ok := instana.SpanFromContext(req.Context())

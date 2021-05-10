@@ -150,7 +150,7 @@ func newInvokeRequest(funcName string) *request.Request {
 	}
 
 	invokeType := lambda.InvocationTypeRequestResponse
-	return svc.NewRequest(op, lambda.InvokeInput{
+	return svc.NewRequest(op, &lambda.InvokeInput{
 		FunctionName:   &funcName,
 		InvocationType: &invokeType,
 	}, nil)
