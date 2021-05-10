@@ -11,18 +11,38 @@ import (
 	"net/url"
 	"regexp"
 	"strings"
+	"sync"
 
 	ot "github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
 	otlog "github.com/opentracing/opentracing-go/log"
 )
 
+var (
+	sqlDriverRegistrationMu sync.Mutex
+)
+
 // InstrumentSQLDriver instruments provided database driver for  use with `sql.Open()`.
+// This method will ignore any attempt to register the driver with the same name again.
+//
 // The instrumented version is registered with `_with_instana` suffix, e.g.
 // if `postgres` provided as a name, the instrumented version is registered as
 // `postgres_with_instana`.
 func InstrumentSQLDriver(sensor *Sensor, name string, driver driver.Driver) {
-	sql.Register(name+"_with_instana", &wrappedSQLDriver{
+	sqlDriverRegistrationMu.Lock()
+	defer sqlDriverRegistrationMu.Unlock()
+
+	instrumentedName := name + "_with_instana"
+
+	// Check if the instrumented version of a driver has already been registered
+	// with database/sql and ignore the second attempt to avoid panicking
+	for _, drv := range sql.Drivers() {
+		if drv == instrumentedName {
+			return
+		}
+	}
+
+	sql.Register(instrumentedName, &wrappedSQLDriver{
 		Driver: driver,
 		sensor: sensor,
 	})

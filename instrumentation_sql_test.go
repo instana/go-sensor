@@ -17,6 +17,18 @@ import (
 	"github.com/opentracing/opentracing-go/ext"
 )
 
+func TestInstrumentSQLDriver(t *testing.T) {
+	recorder := instana.NewTestRecorder()
+	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{
+		Service: "go-sensor-test",
+	}, recorder))
+
+	instana.InstrumentSQLDriver(s, "test_register_driver", sqlDriver{})
+	assert.NotPanics(t, func() {
+		instana.InstrumentSQLDriver(s, "test_register_driver", sqlDriver{})
+	})
+}
+
 func TestOpenSQLDB(t *testing.T) {
 	recorder := instana.NewTestRecorder()
 	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{
