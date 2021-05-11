@@ -50,8 +50,8 @@ func TestStartInvokeSpan_WithActiveSpan(t *testing.T) {
 	assert.Equal(t, "aws.sdk.invoke", invokeSpan.Name)
 	assert.Empty(t, invokeSpan.Ec)
 
-	assert.IsType(t, instana.AWSInvokeSpanData{}, invokeSpan.Data)
-	data := invokeSpan.Data.(instana.AWSInvokeSpanData)
+	assert.IsType(t, instana.AWSSDKInvokeSpanData{}, invokeSpan.Data)
+	data := invokeSpan.Data.(instana.AWSSDKInvokeSpanData)
 
 	assert.Equal(t, instana.AWSInvokeSpanTags{
 		FunctionName:   funcName,
@@ -97,8 +97,8 @@ func TestFinalizeInvoke_NoError(t *testing.T) {
 
 	invokeSpan := spans[0]
 
-	assert.IsType(t, instana.AWSInvokeSpanData{}, invokeSpan.Data)
-	data := invokeSpan.Data.(instana.AWSInvokeSpanData)
+	assert.IsType(t, instana.AWSSDKInvokeSpanData{}, invokeSpan.Data)
+	data := invokeSpan.Data.(instana.AWSSDKInvokeSpanData)
 
 	assert.Equal(t, instana.AWSInvokeSpanTags{
 		FunctionName:   funcName,
@@ -130,8 +130,8 @@ func TestFinalizeInvokeSpan_WithError(t *testing.T) {
 
 	invokeSpan := spans[0]
 
-	assert.IsType(t, instana.AWSInvokeSpanData{}, invokeSpan.Data)
-	data := invokeSpan.Data.(instana.AWSInvokeSpanData)
+	assert.IsType(t, instana.AWSSDKInvokeSpanData{}, invokeSpan.Data)
+	data := invokeSpan.Data.(instana.AWSSDKInvokeSpanData)
 
 	assert.Equal(t, instana.AWSInvokeSpanTags{
 		FunctionName:   funcName,
