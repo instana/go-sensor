@@ -31,7 +31,7 @@ func StartInvokeSpan(req *request.Request, sensor *instana.Sensor) {
 		return
 	}
 
-	sp := sensor.Tracer().StartSpan("invoke",
+	sp := sensor.Tracer().StartSpan("aws.sdk.invoke",
 		ext.SpanKindRPCClient,
 		opentracing.ChildOf(parent.Context()),
 		tags,

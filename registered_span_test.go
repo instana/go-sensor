@@ -59,8 +59,8 @@ func TestRegisteredSpanType_ExtractData(t *testing.T) {
 			Expected:  instana.AWSDynamoDBSpanData{},
 		},
 		"aws invoke": {
-			Operation: "invoke",
-			Expected:  instana.AWSInvokeSpanData{},
+			Operation: "aws.sdk.invoke",
+			Expected:  instana.AWSSDKInvokeSpanData{},
 		},
 	}
 
