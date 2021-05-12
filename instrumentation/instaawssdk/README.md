@@ -106,7 +106,7 @@ Tracing context propagated inside a `ClientContext.Custom` field in the `InvokeI
 
 To avoid a collision, do not set them in your application code.
 
-Known limitation:
+Known limitations:
 - Current instrumentation does not support asynchronous lambda invocation.
 - If the length of base64 encoded `ClientContext` will exceed 3582 bytes, tracing headers will be not propagated.
 - Deprecated methods like `InvokeAsync`, `InvokeAsyncWithContext` etc. are not supported.
