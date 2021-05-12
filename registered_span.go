@@ -182,9 +182,9 @@ func (st RegisteredSpanType) TagsNames() map[string]struct{} {
 		}
 	case AWSLambdaInvokeSpanType:
 		return map[string]struct{}{
-			"invoke.function": yes,
-			"invoke.type":     yes,
-			"invoke.error":    yes,
+			"function": yes,
+			"type":     yes,
+			"error":    yes,
 		}
 	default:
 		return nil
@@ -1078,11 +1078,11 @@ func newAWSDInvokeSpanTags(span *spanS) AWSInvokeSpanTags {
 	var tags AWSInvokeSpanTags
 	for k, v := range span.Tags {
 		switch k {
-		case "invoke.function":
+		case "function":
 			readStringTag(&tags.FunctionName, v)
-		case "invoke.type":
+		case "type":
 			readStringTag(&tags.InvocationType, v)
-		case "invoke.error":
+		case "error":
 			readStringTag(&tags.Error, v)
 		}
 	}
