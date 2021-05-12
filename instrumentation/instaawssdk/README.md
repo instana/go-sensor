@@ -101,8 +101,6 @@ Tracing context propagated inside a `ClientContext.Custom` field in the `InvokeI
 - `X-INSTANA-T`
 - `X-INSTANA-S`
 - `X-INSTANA-L`
-- `TRACEPARENT`
-- `TRACESTATE`
 
 To avoid collisions, it is recommended to avoid setting them in your application code.
 

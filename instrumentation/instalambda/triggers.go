@@ -5,7 +5,6 @@ package instalambda
 
 import (
 	"encoding/json"
-	"strings"
 
 	"github.com/aws/aws-lambda-go/lambdacontext"
 )
@@ -19,11 +18,6 @@ const (
 	fieldS = "X-INSTANA-S"
 	// FieldL is the trace level attribute key in a custom client context
 	fieldL = "X-INSTANA-L"
-
-	// traceParentHeader is the W3C trace parent header name as defined by https://www.w3.org/TR/trace-context/
-	traceParentHeader = "TRACEPARENT"
-	// TraceStateHeader is the W3C trace state header name as defined by https://www.w3.org/TR/trace-context/
-	traceStateHeader = "TRACESTATE"
 
 	unknownEventType triggerEventType = iota
 	apiGatewayEventType
@@ -95,18 +89,9 @@ func areTracingHeadersInTheCustomContext(lcc lambdacontext.ClientContext) bool {
 		return false
 	}
 
-	normalizedCustomKeys := make(map[string]string, len(lcc.Custom))
+	_, okS := lcc.Custom[fieldS]
+	_, okT := lcc.Custom[fieldT]
+	_, okL := lcc.Custom[fieldL]
 
-	for k := range lcc.Custom {
-		normalizedCustomKeys[strings.ToUpper(k)] = k
-	}
-
-	_, okS := normalizedCustomKeys[fieldS]
-	_, okT := normalizedCustomKeys[fieldT]
-	_, okL := normalizedCustomKeys[fieldL]
-
-	_, okW3CTParent := normalizedCustomKeys[traceParentHeader]
-	_, okW3CTState := normalizedCustomKeys[traceStateHeader]
-
-	return (okS && okT && okL) || (okW3CTParent && okW3CTState)
+	return okS && okT && okL
 }

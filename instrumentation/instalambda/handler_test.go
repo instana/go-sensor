@@ -545,51 +545,9 @@ func TestNewHandler_Invoke_Success(t *testing.T) {
 				Client: lambdacontext.ClientApplication{},
 				Env:    nil,
 				Custom: map[string]string{
-					"X-INSTAnA-T": "0000000000001234",
-					"X-INsTANA-S": "0000000000004567",
-					"X-INSTaNA-L": "1",
-				},
-			},
-		},
-		"Invoke_WithIncompleteSetOfInstanaHeaders_And_WithW3CContext": {
-			AwsRequestID:       "req1",
-			InvokedFunctionArn: "aws:test-function",
-			ClientContext: lambdacontext.ClientContext{
-				Client: lambdacontext.ClientApplication{},
-				Env:    nil,
-				Custom: map[string]string{
-					"WRONG_HEADER_NAME": "0000000000001111",
-					"X-INsTANA-S":       "0000000000002222",
-					"X-INSTaNA-L":       "1",
-					"traceparent":       "00-00000000000000000000000000001234-0000000000004567-01",
-					"tracestate":        "in=1314;2435,rojo=0000000000004567",
-				},
-			},
-		},
-		"Invoke_WithInstanaHeaders_And_WithW3CContext": {
-			AwsRequestID:       "req1",
-			InvokedFunctionArn: "aws:test-function",
-			ClientContext: lambdacontext.ClientContext{
-				Client: lambdacontext.ClientApplication{},
-				Env:    nil,
-				Custom: map[string]string{
-					"X-INSTAnA-T": "0000000000001234",
-					"X-INsTANA-S": "0000000000004567",
-					"X-INSTaNA-L": "1",
-					"traceparent": "00-00000000000000000000000000001111-0000000000002222-01",
-					"tracestate":  "in=1314;2435,rojo=0000000000002222",
-				},
-			},
-		},
-		"Invoke_WithW3CContextOnly": {
-			AwsRequestID:       "req1",
-			InvokedFunctionArn: "aws:test-function",
-			ClientContext: lambdacontext.ClientContext{
-				Client: lambdacontext.ClientApplication{},
-				Env:    nil,
-				Custom: map[string]string{
-					"traceparent": "00-00000000000000000000000000001234-0000000000004567-01",
-					"tracestate":  "in=1314;2435,rojo=0000000000004567",
+					"X-INSTANA-T": "0000000000001234",
+					"X-INSTANA-S": "0000000000004567",
+					"X-INSTANA-L": "1",
 				},
 			},
 		},
