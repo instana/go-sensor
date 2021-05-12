@@ -83,8 +83,8 @@ func TestFinalizeInvoke_NoError(t *testing.T) {
 	)
 
 	sp := sensor.Tracer().StartSpan("aws.lambda.invoke", opentracing.Tags{
-		"invoke.function": funcName,
-		"invoke.type":     lambda.InvocationTypeRequestResponse,
+		"function": funcName,
+		"type":     lambda.InvocationTypeRequestResponse,
 	})
 
 	req := newInvokeRequest(funcName)
@@ -115,8 +115,8 @@ func TestFinalizeInvokeLambdaSpan_WithError(t *testing.T) {
 	)
 
 	sp := sensor.Tracer().StartSpan("aws.lambda.invoke", opentracing.Tags{
-		"invoke.function": funcName,
-		"invoke.type":     lambda.InvocationTypeRequestResponse,
+		"function": funcName,
+		"type":     lambda.InvocationTypeRequestResponse,
 	})
 
 	req := newInvokeRequest(funcName)

@@ -23,11 +23,11 @@ func StartInvokeLambdaSpan(req *request.Request, sensor *instana.Sensor) {
 
 	if ii, ok := req.Params.(*lambda.InvokeInput); ok {
 		if ii.FunctionName != nil {
-			sp.SetTag("invoke.function", *ii.FunctionName)
+			sp.SetTag("function", *ii.FunctionName)
 		}
 
 		if ii.InvocationType != nil {
-			sp.SetTag("invoke.type", *ii.InvocationType)
+			sp.SetTag("type", *ii.InvocationType)
 		}
 	}
 

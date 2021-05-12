@@ -5,7 +5,7 @@ go 1.9
 require (
 	github.com/aws/aws-sdk-go v1.8.0
 	github.com/go-ini/ini v1.62.0 // indirect
-	github.com/instana/go-sensor v1.28.2-0.20210512102834-62f182ac1e6e
+	github.com/instana/go-sensor v1.28.2-0.20210512125541-0603d6ed0d98
 	github.com/instana/testify v1.6.2-0.20200721153833-94b1851f4d65
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/kr/pretty v0.1.0 // indirect

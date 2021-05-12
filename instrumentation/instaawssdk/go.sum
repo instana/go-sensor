@@ -14,6 +14,8 @@ github.com/instana/go-sensor v1.28.2-0.20210512101643-4702940b7512 h1:W8LJ3aqy2Q
 github.com/instana/go-sensor v1.28.2-0.20210512101643-4702940b7512/go.mod h1:Uh9j3eF2mBw/FLk2MxISmVDIj8mtJBFRj2S19M6CVyQ=
 github.com/instana/go-sensor v1.28.2-0.20210512102834-62f182ac1e6e h1:1AgH3cWUL1aIPZ5QGmOPlh+ZV3WXeCH0VwVNS1mCdiY=
 github.com/instana/go-sensor v1.28.2-0.20210512102834-62f182ac1e6e/go.mod h1:Uh9j3eF2mBw/FLk2MxISmVDIj8mtJBFRj2S19M6CVyQ=
+github.com/instana/go-sensor v1.28.2-0.20210512125541-0603d6ed0d98 h1:5SEGKOsaomy+2c/HipcZ5es7FvWgu2DYTRmnaifiL0c=
+github.com/instana/go-sensor v1.28.2-0.20210512125541-0603d6ed0d98/go.mod h1:Uh9j3eF2mBw/FLk2MxISmVDIj8mtJBFRj2S19M6CVyQ=
 github.com/instana/testify v1.6.2-0.20200721153833-94b1851f4d65 h1:T25FL3WEzgmKB0m6XCJNZ65nw09/QIp3T1yXr487D+A=
 github.com/instana/testify v1.6.2-0.20200721153833-94b1851f4d65/go.mod h1:nYhEREG/B7HUY7P+LKOrqy53TpIqmJ9JyUShcaEKtGw=
 github.com/jmespath/go-jmespath v0.4.0 h1:BEgLn5cpjn8UN1mAw4NjwDrS35OdebyEtFe+9YPoQUg=
