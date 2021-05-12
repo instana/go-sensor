@@ -75,7 +75,7 @@ func handleMessage(ctx context.Context, msg *sqs.Message) {
 }
 ```
 
-### Instrumenting lambda
+### Instrumenting calls to AWS Lambda 
 
 If a session is instrumented, it will propagate tracing context automatically using values from the `ctx`.
 
