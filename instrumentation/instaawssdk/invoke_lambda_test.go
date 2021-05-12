@@ -17,7 +17,7 @@ import (
 	"github.com/instana/testify/require"
 )
 
-func TestStartInvokeSpan_WithActiveSpan(t *testing.T) {
+func TestStartInvokeLambdaSpan_WithActiveSpan(t *testing.T) {
 	const funcName = "test-function"
 	recorder := instana.NewTestRecorder()
 	sensor := instana.NewSensorWithTracer(
@@ -29,7 +29,7 @@ func TestStartInvokeSpan_WithActiveSpan(t *testing.T) {
 	req := newInvokeRequest(funcName)
 	req.SetContext(instana.ContextWithSpan(req.Context(), parentSp))
 
-	instaawssdk.StartInvokeSpan(req, sensor)
+	instaawssdk.StartInvokeLambdaSpan(req, sensor)
 
 	sp, ok := instana.SpanFromContext(req.Context())
 	require.True(t, ok)
@@ -59,7 +59,7 @@ func TestStartInvokeSpan_WithActiveSpan(t *testing.T) {
 	}, data.Tags)
 }
 
-func TestStartInvokeSpan_NoActiveSpan(t *testing.T) {
+func TestStartInvokeLambdaSpan_NoActiveSpan(t *testing.T) {
 	const funcName = "test-function"
 
 	recorder := instana.NewTestRecorder()
@@ -68,7 +68,7 @@ func TestStartInvokeSpan_NoActiveSpan(t *testing.T) {
 	)
 
 	req := newInvokeRequest(funcName)
-	instaawssdk.StartInvokeSpan(req, sensor)
+	instaawssdk.StartInvokeLambdaSpan(req, sensor)
 
 	_, ok := instana.SpanFromContext(req.Context())
 	require.False(t, ok)
@@ -90,7 +90,7 @@ func TestFinalizeInvoke_NoError(t *testing.T) {
 	req := newInvokeRequest(funcName)
 	req.SetContext(instana.ContextWithSpan(req.Context(), sp))
 
-	instaawssdk.FinalizeInvokeSpan(req)
+	instaawssdk.FinalizeInvokeLambdaSpan(req)
 
 	spans := recorder.GetQueuedSpans()
 	require.Len(t, spans, 1)
@@ -106,7 +106,7 @@ func TestFinalizeInvoke_NoError(t *testing.T) {
 	}, data.Tags)
 }
 
-func TestFinalizeInvokeSpan_WithError(t *testing.T) {
+func TestFinalizeInvokeLambdaSpan_WithError(t *testing.T) {
 	const funcName = "test-function"
 
 	recorder := instana.NewTestRecorder()
@@ -123,7 +123,7 @@ func TestFinalizeInvokeSpan_WithError(t *testing.T) {
 	req.Error = awserr.New("42", "test error", errors.New("an error occurred"))
 	req.SetContext(instana.ContextWithSpan(req.Context(), sp))
 
-	instaawssdk.FinalizeInvokeSpan(req)
+	instaawssdk.FinalizeInvokeLambdaSpan(req)
 
 	spans := recorder.GetQueuedSpans()
 	require.Len(t, spans, 1)

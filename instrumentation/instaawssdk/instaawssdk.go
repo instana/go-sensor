@@ -42,7 +42,7 @@ func InstrumentSession(sess *session.Session, sensor *instana.Sensor) {
 		case dynamodb.ServiceName:
 			StartDynamoDBSpan(req, sensor)
 		case lambda.ServiceName:
-			StartInvokeSpan(req, sensor)
+			StartInvokeLambdaSpan(req, sensor)
 		}
 	})
 
@@ -69,7 +69,7 @@ func InstrumentSession(sess *session.Session, sensor *instana.Sensor) {
 		case dynamodb.ServiceName:
 			FinalizeDynamoDBSpan(req)
 		case lambda.ServiceName:
-			FinalizeInvokeSpan(req)
+			FinalizeInvokeLambdaSpan(req)
 		}
 	})
 }

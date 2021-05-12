@@ -14,7 +14,7 @@ import (
 	"github.com/opentracing/opentracing-go/ext"
 )
 
-func StartInvokeSpan(req *request.Request, sensor *instana.Sensor) {
+func StartInvokeLambdaSpan(req *request.Request, sensor *instana.Sensor) {
 	tags := opentracing.Tags{}
 	if ii, ok := req.Params.(*lambda.InvokeInput); ok {
 		if ii.FunctionName != nil {
@@ -41,7 +41,7 @@ func StartInvokeSpan(req *request.Request, sensor *instana.Sensor) {
 	injectTraceContext(sp, req)
 }
 
-func FinalizeInvokeSpan(req *request.Request) {
+func FinalizeInvokeLambdaSpan(req *request.Request) {
 	sp, ok := instana.SpanFromContext(req.Context())
 	if !ok {
 		return
