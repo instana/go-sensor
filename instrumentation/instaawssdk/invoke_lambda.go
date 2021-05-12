@@ -1,10 +1,6 @@
 package instaawssdk
 
 import (
-	"bytes"
-	"encoding/base64"
-	"encoding/json"
-
 	otlog "github.com/opentracing/opentracing-go/log"
 
 	"github.com/aws/aws-sdk-go/aws/request"
@@ -52,15 +48,4 @@ func FinalizeInvokeLambdaSpan(req *request.Request) {
 		sp.LogFields(otlog.Error(req.Error))
 		sp.SetTag("invoke.error", req.Error.Error())
 	}
-}
-
-func encodeToBase64(v interface{}) (string, error) {
-	var buf bytes.Buffer
-	encoder := base64.NewEncoder(base64.StdEncoding, &buf)
-	err := json.NewEncoder(encoder).Encode(v)
-	if err != nil {
-		return "", err
-	}
-	encoder.Close()
-	return buf.String(), nil
 }

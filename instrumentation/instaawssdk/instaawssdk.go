@@ -137,7 +137,7 @@ func injectTraceContext(sp opentracing.Span, req *request.Request) {
 			opentracing.TextMapCarrier(lc.Custom),
 		)
 
-		s, err := encodeToBase64(lc)
+		s, err := lc.Base64Json()
 		if err != nil {
 			sp.LogFields(otlog.Error(req.Error))
 
