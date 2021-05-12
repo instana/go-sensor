@@ -1,27 +1,16 @@
 package instaawssdk
 
 import (
+	"github.com/aws/aws-sdk-go/service/lambda"
 	otlog "github.com/opentracing/opentracing-go/log"
 
 	"github.com/aws/aws-sdk-go/aws/request"
-	"github.com/aws/aws-sdk-go/service/lambda"
 	instana "github.com/instana/go-sensor"
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
 )
 
 func StartInvokeLambdaSpan(req *request.Request, sensor *instana.Sensor) {
-	tags := opentracing.Tags{}
-	if ii, ok := req.Params.(*lambda.InvokeInput); ok {
-		if ii.FunctionName != nil {
-			tags["invoke.function"] = *ii.FunctionName
-		}
-
-		if ii.InvocationType != nil {
-			tags["invoke.type"] = *ii.InvocationType
-		}
-	}
-
 	parent, ok := instana.SpanFromContext(req.Context())
 	if !ok {
 		return
@@ -30,8 +19,17 @@ func StartInvokeLambdaSpan(req *request.Request, sensor *instana.Sensor) {
 	sp := sensor.Tracer().StartSpan("aws.sdk.invoke",
 		ext.SpanKindRPCClient,
 		opentracing.ChildOf(parent.Context()),
-		tags,
 	)
+
+	if ii, ok := req.Params.(*lambda.InvokeInput); ok {
+		if ii.FunctionName != nil {
+			sp.SetTag("invoke.function", *ii.FunctionName)
+		}
+
+		if ii.InvocationType != nil {
+			sp.SetTag("invoke.type", *ii.InvocationType)
+		}
+	}
 
 	req.SetContext(instana.ContextWithSpan(req.Context(), sp))
 	injectTraceContext(sp, req)
