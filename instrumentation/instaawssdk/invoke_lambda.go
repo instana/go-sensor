@@ -44,6 +44,6 @@ func FinalizeInvokeLambdaSpan(req *request.Request) {
 
 	if req.Error != nil {
 		sp.LogFields(otlog.Error(req.Error))
-		sp.SetTag("invoke.error", req.Error.Error())
+		sp.SetTag("error", req.Error.Error())
 	}
 }
