@@ -104,7 +104,7 @@ Tracing context propagated inside a `ClientContext.Custom` field in the `InvokeI
 - `TRACEPARENT`
 - `TRACESTATE`
 
-To avoid a collision, do not set them in your application code.
+To avoid collisions, it is recommended to avoid setting them in your application code.
 
 Known limitations:
 - Current instrumentation does not support asynchronous lambda invocation.
