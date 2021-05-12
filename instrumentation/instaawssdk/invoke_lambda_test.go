@@ -50,8 +50,8 @@ func TestStartInvokeLambdaSpan_WithActiveSpan(t *testing.T) {
 	assert.Equal(t, "aws.lambda.invoke", invokeSpan.Name)
 	assert.Empty(t, invokeSpan.Ec)
 
-	assert.IsType(t, instana.AWSSDKInvokeSpanData{}, invokeSpan.Data)
-	data := invokeSpan.Data.(instana.AWSSDKInvokeSpanData)
+	assert.IsType(t, instana.AWSLambdaInvokeSpanData{}, invokeSpan.Data)
+	data := invokeSpan.Data.(instana.AWSLambdaInvokeSpanData)
 
 	assert.Equal(t, instana.AWSInvokeSpanTags{
 		FunctionName:   funcName,
@@ -97,8 +97,8 @@ func TestFinalizeInvoke_NoError(t *testing.T) {
 
 	invokeSpan := spans[0]
 
-	assert.IsType(t, instana.AWSSDKInvokeSpanData{}, invokeSpan.Data)
-	data := invokeSpan.Data.(instana.AWSSDKInvokeSpanData)
+	assert.IsType(t, instana.AWSLambdaInvokeSpanData{}, invokeSpan.Data)
+	data := invokeSpan.Data.(instana.AWSLambdaInvokeSpanData)
 
 	assert.Equal(t, instana.AWSInvokeSpanTags{
 		FunctionName:   funcName,
@@ -130,8 +130,8 @@ func TestFinalizeInvokeLambdaSpan_WithError(t *testing.T) {
 
 	invokeSpan := spans[0]
 
-	assert.IsType(t, instana.AWSSDKInvokeSpanData{}, invokeSpan.Data)
-	data := invokeSpan.Data.(instana.AWSSDKInvokeSpanData)
+	assert.IsType(t, instana.AWSLambdaInvokeSpanData{}, invokeSpan.Data)
+	data := invokeSpan.Data.(instana.AWSLambdaInvokeSpanData)
 
 	assert.Equal(t, instana.AWSInvokeSpanTags{
 		FunctionName:   funcName,
