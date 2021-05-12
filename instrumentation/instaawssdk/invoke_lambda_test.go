@@ -47,7 +47,7 @@ func TestStartInvokeLambdaSpan_WithActiveSpan(t *testing.T) {
 	assert.NotEqual(t, testingSpan.SpanID, invokeSpan.SpanID)
 	assert.NotEmpty(t, invokeSpan.SpanID)
 
-	assert.Equal(t, "aws.sdk.invoke", invokeSpan.Name)
+	assert.Equal(t, "aws.lambda.invoke", invokeSpan.Name)
 	assert.Empty(t, invokeSpan.Ec)
 
 	assert.IsType(t, instana.AWSSDKInvokeSpanData{}, invokeSpan.Data)
@@ -82,7 +82,7 @@ func TestFinalizeInvoke_NoError(t *testing.T) {
 		instana.NewTracerWithEverything(instana.DefaultOptions(), recorder),
 	)
 
-	sp := sensor.Tracer().StartSpan("aws.sdk.invoke", opentracing.Tags{
+	sp := sensor.Tracer().StartSpan("aws.lambda.invoke", opentracing.Tags{
 		"invoke.function": funcName,
 		"invoke.type":     lambda.InvocationTypeRequestResponse,
 	})
@@ -114,7 +114,7 @@ func TestFinalizeInvokeLambdaSpan_WithError(t *testing.T) {
 		instana.NewTracerWithEverything(instana.DefaultOptions(), recorder),
 	)
 
-	sp := sensor.Tracer().StartSpan("aws.sdk.invoke", opentracing.Tags{
+	sp := sensor.Tracer().StartSpan("aws.lambda.invoke", opentracing.Tags{
 		"invoke.function": funcName,
 		"invoke.type":     lambda.InvocationTypeRequestResponse,
 	})

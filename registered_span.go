@@ -42,8 +42,8 @@ const (
 	AWSSNSSpanType = RegisteredSpanType("sns")
 	// AWS DynamoDB client span
 	AWSDynamoDBSpanType = RegisteredSpanType("dynamodb")
-	// AWS SDK Lambda invoke span
-	AWSSDKInvokeSpanType = RegisteredSpanType("aws.sdk.invoke")
+	// AWS Lambda invoke span
+	AWSLambdaInvokeSpanType = RegisteredSpanType("aws.lambda.invoke")
 )
 
 // RegisteredSpanType represents the span type supported by Instana
@@ -72,8 +72,8 @@ func (st RegisteredSpanType) ExtractData(span *spanS) typedSpanData {
 		return NewAWSSNSSpanData(span)
 	case AWSDynamoDBSpanType:
 		return NewAWSDynamoDBSpanData(span)
-	case AWSSDKInvokeSpanType:
-		return newAWSSDKInvokeSpanData(span)
+	case AWSLambdaInvokeSpanType:
+		return newAWSLambdaInvokeSpanData(span)
 	default:
 		return NewSDKSpanData(span)
 	}
@@ -180,7 +180,7 @@ func (st RegisteredSpanType) TagsNames() map[string]struct{} {
 			"dynamodb.op":    yes,
 			"dynamodb.error": yes,
 		}
-	case AWSSDKInvokeSpanType:
+	case AWSLambdaInvokeSpanType:
 		return map[string]struct{}{
 			"invoke.function": yes,
 			"invoke.type":     yes,
@@ -1090,25 +1090,25 @@ func newAWSDInvokeSpanTags(span *spanS) AWSInvokeSpanTags {
 	return tags
 }
 
-type AWSSDKInvokeSpanData struct {
+type AWSLambdaInvokeSpanData struct {
 	SpanData
-	Tags AWSInvokeSpanTags `json:"aws.sdk.invoke"`
+	Tags AWSInvokeSpanTags `json:"aws.lambda.invoke"`
 }
 
 // Kind returns the span kind for a AWS SDK Invoke span
-func (d AWSSDKInvokeSpanData) Kind() SpanKind {
+func (d AWSLambdaInvokeSpanData) Kind() SpanKind {
 	return ExitSpanKind
 }
 
 // Type returns the span type for an AWS SDK Invoke span
-func (d AWSSDKInvokeSpanData) Type() RegisteredSpanType {
-	return AWSSDKInvokeSpanType
+func (d AWSLambdaInvokeSpanData) Type() RegisteredSpanType {
+	return AWSLambdaInvokeSpanType
 }
 
-// newAWSInvokeSpanData initializes a new AWS Invoke span data from tracer span
-func newAWSSDKInvokeSpanData(span *spanS) AWSSDKInvokeSpanData {
-	data := AWSSDKInvokeSpanData{
-		SpanData: NewSpanData(span, AWSSDKInvokeSpanType),
+// newAWSLambdaInvokeSpanData initializes a new AWS Invoke span data from tracer span
+func newAWSLambdaInvokeSpanData(span *spanS) AWSLambdaInvokeSpanData {
+	data := AWSLambdaInvokeSpanData{
+		SpanData: NewSpanData(span, AWSLambdaInvokeSpanType),
 		Tags:     newAWSDInvokeSpanTags(span),
 	}
 
