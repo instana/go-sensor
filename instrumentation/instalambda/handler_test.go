@@ -647,7 +647,7 @@ func TestNewHandler_DirectInvoke_WithIncompleteSetOfInstanaHeaders(t *testing.T)
 			Runtime: "go",
 			Name:    "test-function",
 			Version: "42",
-			Trigger: "",
+			Trigger: "aws:lambda.invoke",
 		},
 	}, span.Data)
 }
