@@ -63,8 +63,6 @@ func detectTriggerEventType(payload []byte, lcc lambdacontext.ClientContext) tri
 	}
 
 	switch {
-	case areTracingHeadersInTheCustomContext(lcc):
-		return sdkInvokeRequestType
 	case v.Resource != "" && v.Path != "" && v.HTTPMethod != "" && v.RequestContext.ELB == nil:
 		return apiGatewayEventType
 	case v.Version == "2.0" && v.RequestContext.ApiID != "" && v.RequestContext.Stage != "" && len(v.RequestContext.HTTP) > 0:
@@ -80,18 +78,6 @@ func detectTriggerEventType(payload []byte, lcc lambdacontext.ClientContext) tri
 	case len(v.Records) > 0 && v.Records[0].Source == "aws:sqs":
 		return sqsEventType
 	default:
-		return unknownEventType
+		return sdkInvokeRequestType
 	}
-}
-
-func areTracingHeadersInTheCustomContext(lcc lambdacontext.ClientContext) bool {
-	if lcc.Custom == nil {
-		return false
-	}
-
-	_, okS := lcc.Custom[fieldS]
-	_, okT := lcc.Custom[fieldT]
-	_, okL := lcc.Custom[fieldL]
-
-	return okS && okT && okL
 }
