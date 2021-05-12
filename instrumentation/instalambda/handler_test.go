@@ -536,7 +536,7 @@ func TestNewHandler_PreferInstanaHeadersToW3ContextHeaders(t *testing.T) {
 	}
 }
 
-func TestNewHandler_Invoke_Success(t *testing.T) {
+func TestNewHandler_InvokeLambda_Success(t *testing.T) {
 	testCases := map[string]*lambdacontext.LambdaContext{
 		"Invoke_WithInstanaHeadersOnly": {
 			AwsRequestID:       "req1",
@@ -598,7 +598,7 @@ func TestNewHandler_Invoke_Success(t *testing.T) {
 	}
 }
 
-func TestNewHandler_DirectInvoke_WithIncompleteSetOfInstanaHeaders(t *testing.T) {
+func TestNewHandler_InvokeLambda_WithIncompleteSetOfInstanaHeaders(t *testing.T) {
 	recorder := instana.NewTestRecorder()
 	sensor := instana.NewSensorWithTracer(instana.NewTracerWithEverything(instana.DefaultOptions(), recorder))
 
@@ -620,8 +620,8 @@ func TestNewHandler_DirectInvoke_WithIncompleteSetOfInstanaHeaders(t *testing.T)
 			Env:    nil,
 			Custom: map[string]string{
 				"WRONG_HEADER_NAME": "0000000000001234",
-				"X-INsTANA-S":       "0000000000004567",
-				"X-INSTaNA-L":       "1",
+				"X-INSTANA-S":       "0000000000004567",
+				"X-INSTANA-L":       "1",
 			},
 		},
 	})
