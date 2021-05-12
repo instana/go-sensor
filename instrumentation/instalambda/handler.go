@@ -159,7 +159,7 @@ func (h *wrappedHandler) triggerEventSpanOptions(payload []byte, lcc lambdaconte
 		return []opentracing.StartSpanOption{h.extractSQSTriggerTags(v)}
 	case sdkInvokeRequestType:
 		tags := opentracing.Tags{
-			"lambda.trigger": "aws:sdk.invoke",
+			"lambda.trigger": "aws:lambda.invoke",
 		}
 
 		opts := []opentracing.StartSpanOption{tags}

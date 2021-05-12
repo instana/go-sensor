@@ -633,7 +633,7 @@ func TestNewHandler_Invoke_Success(t *testing.T) {
 					Runtime: "go",
 					Name:    "test-function",
 					Version: "42",
-					Trigger: "aws:sdk.invoke",
+					Trigger: "aws:lambda.invoke",
 				},
 			}, span.Data)
 		})
