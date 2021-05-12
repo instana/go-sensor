@@ -7,7 +7,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws/request"
 	instana "github.com/instana/go-sensor"
 	"github.com/opentracing/opentracing-go"
-	"github.com/opentracing/opentracing-go/ext"
 )
 
 func StartInvokeLambdaSpan(req *request.Request, sensor *instana.Sensor) {
@@ -17,7 +16,6 @@ func StartInvokeLambdaSpan(req *request.Request, sensor *instana.Sensor) {
 	}
 
 	sp := sensor.Tracer().StartSpan("aws.lambda.invoke",
-		ext.SpanKindRPCClient,
 		opentracing.ChildOf(parent.Context()),
 	)
 
