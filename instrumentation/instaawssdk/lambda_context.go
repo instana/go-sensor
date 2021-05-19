@@ -19,7 +19,7 @@ type LambdaClientContext struct {
 	Custom map[string]string `json:"custom"`
 }
 
-func (lc *LambdaClientContext) Base64Json() (string, error) {
+func (lc *LambdaClientContext) Base64JSON() (string, error) {
 	var buf bytes.Buffer
 	encoder := base64.NewEncoder(base64.StdEncoding, &buf)
 
