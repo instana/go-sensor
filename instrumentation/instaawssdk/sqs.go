@@ -41,7 +41,7 @@ func StartSQSSpan(req *request.Request, sensor *instana.Sensor) {
 	)
 
 	req.SetContext(instana.ContextWithSpan(req.Context(), sp))
-	injectTraceContext(sp, req)
+	injectTraceContext(sensor.Logger(), sp, req)
 }
 
 // FinalizeSQSSpan retrieves tags from completed request.Request and adds them

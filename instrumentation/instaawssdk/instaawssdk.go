@@ -9,6 +9,8 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/aws/aws-sdk-go/service/lambda"
+
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -22,6 +24,8 @@ import (
 
 var errMethodNotInstrumented = errors.New("method not instrumented")
 
+const maxClientContextLen = 3582
+
 // InstrumentSession instruments github.com/aws/aws-sdk-go/aws/session.Session by
 // injecting handlers to create and finalize Instana spans
 func InstrumentSession(sess *session.Session, sensor *instana.Sensor) {
@@ -33,6 +37,8 @@ func InstrumentSession(sess *session.Session, sensor *instana.Sensor) {
 			StartSQSSpan(req, sensor)
 		case dynamodb.ServiceName:
 			StartDynamoDBSpan(req, sensor)
+		case lambda.ServiceName:
+			StartInvokeLambdaSpan(req, sensor)
 		}
 	})
 
@@ -58,11 +64,13 @@ func InstrumentSession(sess *session.Session, sensor *instana.Sensor) {
 			}
 		case dynamodb.ServiceName:
 			FinalizeDynamoDBSpan(req)
+		case lambda.ServiceName:
+			FinalizeInvokeLambdaSpan(req)
 		}
 	})
 }
 
-func injectTraceContext(sp opentracing.Span, req *request.Request) {
+func injectTraceContext(logger instana.LeveledLogger, sp opentracing.Span, req *request.Request) {
 	switch params := req.Params.(type) {
 	case *sqs.SendMessageInput:
 		if params.MessageAttributes == nil {
@@ -96,5 +104,38 @@ func injectTraceContext(sp opentracing.Span, req *request.Request) {
 			opentracing.TextMap,
 			SNSMessageAttributesCarrier(params.MessageAttributes),
 		)
+	case *lambda.InvokeInput:
+		var err error
+		lc := LambdaClientContext{}
+
+		if params.ClientContext != nil {
+			lc, err = NewLambdaClientContextFromBase64EncodedJSON(*params.ClientContext)
+			if err != nil {
+				logger.Error("lambdaClientContext decode:", err)
+
+				return
+			}
+		}
+
+		if lc.Custom == nil {
+			lc.Custom = make(map[string]string)
+		}
+
+		sp.Tracer().Inject(
+			sp.Context(),
+			opentracing.TextMap,
+			opentracing.TextMapCarrier(lc.Custom),
+		)
+
+		s, err := lc.Base64JSON()
+		if err != nil {
+			logger.Error("lambdaClientContext encode:", err)
+
+			return
+		}
+
+		if len(s) <= maxClientContextLen {
+			params.ClientContext = &s
+		}
 	}
 }
