@@ -70,7 +70,7 @@ func InstrumentSession(sess *session.Session, sensor *instana.Sensor) {
 	})
 }
 
-func injectTraceContext(logger instana.LeveledLogger, sp opentracing.Span, req *request.Request) {
+func injectTraceContext(sp opentracing.Span, req *request.Request, logger instana.LeveledLogger) {
 	switch params := req.Params.(type) {
 	case *sqs.SendMessageInput:
 		if params.MessageAttributes == nil {

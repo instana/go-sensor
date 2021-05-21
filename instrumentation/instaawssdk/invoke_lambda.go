@@ -33,7 +33,7 @@ func StartInvokeLambdaSpan(req *request.Request, sensor *instana.Sensor) {
 	}
 
 	req.SetContext(instana.ContextWithSpan(req.Context(), sp))
-	injectTraceContext(sensor.Logger(), sp, req)
+	injectTraceContext(sp, req, sensor.Logger())
 }
 
 // FinalizeInvokeLambdaSpan retrieves error from completed request.Request if any and adds it
