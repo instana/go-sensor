@@ -53,7 +53,7 @@ func (h *wrappedHandler) Invoke(ctx context.Context, payload []byte) ([]byte, er
 		"lambda.arn":     lc.InvokedFunctionArn + ":" + lambdacontext.FunctionVersion,
 		"lambda.name":    lambdacontext.FunctionName,
 		"lambda.version": lambdacontext.FunctionVersion,
-	}}, h.triggerEventSpanOptions(payload)...)
+	}}, h.triggerEventSpanOptions(payload, lc.ClientContext)...)
 	sp := h.sensor.Tracer().StartSpan("aws.lambda.entry", opts...)
 
 	resp, err := h.Handler.Invoke(instana.ContextWithSpan(ctx, sp), payload)
@@ -84,7 +84,7 @@ func (h *wrappedHandler) Invoke(ctx context.Context, payload []byte) ([]byte, er
 	return resp, err
 }
 
-func (h *wrappedHandler) triggerEventSpanOptions(payload []byte) []opentracing.StartSpanOption {
+func (h *wrappedHandler) triggerEventSpanOptions(payload []byte, lcc lambdacontext.ClientContext) []opentracing.StartSpanOption {
 	switch detectTriggerEventType(payload) {
 	case apiGatewayEventType:
 		var v events.APIGatewayProxyRequest
@@ -157,6 +157,17 @@ func (h *wrappedHandler) triggerEventSpanOptions(payload []byte) []opentracing.S
 		}
 
 		return []opentracing.StartSpanOption{h.extractSQSTriggerTags(v)}
+	case invokeRequestType:
+		tags := opentracing.Tags{
+			"lambda.trigger": "aws:lambda.invoke",
+		}
+
+		opts := []opentracing.StartSpanOption{tags}
+		if parentCtx, ok := h.extractParentContext(lcc.Custom); ok {
+			opts = append(opts, opentracing.ChildOf(parentCtx))
+		}
+		return opts
+
 	default:
 		h.sensor.Logger().Info("unsupported AWS Lambda trigger event type, the entry span will include generic tags only")
 		return []opentracing.StartSpanOption{opentracing.Tags{}}
