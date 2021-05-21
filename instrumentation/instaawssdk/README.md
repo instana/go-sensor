@@ -98,9 +98,9 @@ svc.InvokeWithContext(ctx, input)
 ```
 
 Tracing context propagated inside a `ClientContext.Custom` field in the `InvokeInput` object. Reserved keys are:
-- `X-INSTANA-T`
-- `X-INSTANA-S`
-- `X-INSTANA-L`
+- `x-instana-t`
+- `x-instana-s`
+- `x-instana-l`
 
 To avoid collisions, it is recommended to avoid setting them in your application code.
 
