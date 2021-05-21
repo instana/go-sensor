@@ -58,6 +58,10 @@ func TestRegisteredSpanType_ExtractData(t *testing.T) {
 			Operation: "dynamodb",
 			Expected:  instana.AWSDynamoDBSpanData{},
 		},
+		"aws invoke": {
+			Operation: "aws.lambda.invoke",
+			Expected:  instana.AWSLambdaInvokeSpanData{},
+		},
 	}
 
 	for name, example := range examples {
