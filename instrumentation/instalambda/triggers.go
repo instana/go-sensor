@@ -18,6 +18,7 @@ const (
 	cloudWatchLogsEventType
 	s3EventType
 	sqsEventType
+	invokeRequestType
 )
 
 func detectTriggerEventType(payload []byte) triggerEventType {
@@ -68,6 +69,6 @@ func detectTriggerEventType(payload []byte) triggerEventType {
 	case len(v.Records) > 0 && v.Records[0].Source == "aws:sqs":
 		return sqsEventType
 	default:
-		return unknownEventType
+		return invokeRequestType
 	}
 }
