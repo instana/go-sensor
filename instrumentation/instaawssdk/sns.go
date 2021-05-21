@@ -35,7 +35,7 @@ func StartSNSSpan(req *request.Request, sensor *instana.Sensor) {
 	)
 
 	req.SetContext(instana.ContextWithSpan(req.Context(), sp))
-	injectTraceContext(sp, req)
+	injectTraceContext(sp, req, sensor.Logger())
 }
 
 // FinalizeSNSSpan retrieves tags from completed request.Request and adds them
