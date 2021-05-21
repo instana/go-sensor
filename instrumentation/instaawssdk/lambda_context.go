@@ -39,7 +39,7 @@ func (lc *LambdaClientContext) Base64JSON() (string, error) {
 	return buf.String(), nil
 }
 
-// NewLambdaClientContextFromBase64EncodedJSON creates LambdaClientContext from the base64 encoded JSON or
+// NewLambdaClientContextFromBase64EncodedJSON creates LambdaClientContext from the base64 encoded JSON or returns
 // error if there is decoding error.
 func NewLambdaClientContextFromBase64EncodedJSON(data string) (LambdaClientContext, error) {
 	reader := strings.NewReader(data)
