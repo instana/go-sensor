@@ -42,6 +42,8 @@ const (
 	AWSSNSSpanType = RegisteredSpanType("sns")
 	// AWS DynamoDB client span
 	AWSDynamoDBSpanType = RegisteredSpanType("dynamodb")
+	// AWS Lambda invoke span
+	AWSLambdaInvokeSpanType = RegisteredSpanType("aws.lambda.invoke")
 )
 
 // RegisteredSpanType represents the span type supported by Instana
@@ -70,6 +72,8 @@ func (st RegisteredSpanType) ExtractData(span *spanS) typedSpanData {
 		return NewAWSSNSSpanData(span)
 	case AWSDynamoDBSpanType:
 		return NewAWSDynamoDBSpanData(span)
+	case AWSLambdaInvokeSpanType:
+		return newAWSLambdaInvokeSpanData(span)
 	default:
 		return NewSDKSpanData(span)
 	}
@@ -175,6 +179,12 @@ func (st RegisteredSpanType) TagsNames() map[string]struct{} {
 			"dynamodb.table": yes,
 			"dynamodb.op":    yes,
 			"dynamodb.error": yes,
+		}
+	case AWSLambdaInvokeSpanType:
+		return map[string]struct{}{
+			"function": yes,
+			"type":     yes,
+			"error":    yes,
 		}
 	default:
 		return nil
@@ -1053,4 +1063,56 @@ func NewAWSDynamoDBSpanTags(span *spanS) AWSDynamoDBSpanTags {
 	}
 
 	return tags
+}
+
+// AWSInvokeSpanTags contains fields within the `aws.lambda.invoke` section of an OT span document
+type AWSInvokeSpanTags struct {
+	// FunctionName is a name of the function which is invoked
+	FunctionName string `json:"function"`
+	// InvocationType if equal to `Event`, means it is an async invocation
+	InvocationType string `json:"type"`
+	// Error is an optional error returned by AWS API
+	Error string `json:"error,omitempty"`
+}
+
+func newAWSDInvokeSpanTags(span *spanS) AWSInvokeSpanTags {
+	var tags AWSInvokeSpanTags
+	for k, v := range span.Tags {
+		switch k {
+		case "function":
+			readStringTag(&tags.FunctionName, v)
+		case "type":
+			readStringTag(&tags.InvocationType, v)
+		case "error":
+			readStringTag(&tags.Error, v)
+		}
+	}
+
+	return tags
+}
+
+// AWSLambdaInvokeSpanData represents the `data` section of a AWS Invoke span sent within an OT span document
+type AWSLambdaInvokeSpanData struct {
+	SpanData
+	Tags AWSInvokeSpanTags `json:"aws.lambda.invoke"`
+}
+
+// Kind returns the span kind for a AWS SDK Invoke span
+func (d AWSLambdaInvokeSpanData) Kind() SpanKind {
+	return ExitSpanKind
+}
+
+// Type returns the span type for an AWS SDK Invoke span
+func (d AWSLambdaInvokeSpanData) Type() RegisteredSpanType {
+	return AWSLambdaInvokeSpanType
+}
+
+// newAWSLambdaInvokeSpanData initializes a new AWS Invoke span data from tracer span
+func newAWSLambdaInvokeSpanData(span *spanS) AWSLambdaInvokeSpanData {
+	data := AWSLambdaInvokeSpanData{
+		SpanData: NewSpanData(span, AWSLambdaInvokeSpanType),
+		Tags:     newAWSDInvokeSpanTags(span),
+	}
+
+	return data
 }
