@@ -77,12 +77,6 @@ func TracingHandlerFunc(sensor *Sensor, pathTemplate string, handler http.Handle
 		}
 
 		collectedHeaders := make(map[string]string)
-		// make sure collected headers are sent in case of panic/error
-		defer func() {
-			if len(collectedHeaders) > 0 {
-				span.SetTag("http.header", collectedHeaders)
-			}
-		}()
 
 		// collect request headers
 		for _, h := range collectableHTTPHeaders {
@@ -92,6 +86,11 @@ func TracingHandlerFunc(sensor *Sensor, pathTemplate string, handler http.Handle
 		}
 
 		defer func() {
+			// make sure collected headers are sent in case of panic/error
+			if len(collectedHeaders) > 0 {
+				span.SetTag("http.header", collectedHeaders)
+			}
+
 			// Be sure to capture any kind of panic/error
 			if err := recover(); err != nil {
 				if e, ok := err.(error); ok {
@@ -216,6 +215,10 @@ func RoundTripper(sensor *Sensor, original http.RoundTripper) http.RoundTripper 
 type statusCodeRecorder struct {
 	http.ResponseWriter
 	Status int
+}
+
+func (rec *statusCodeRecorder) SetStatus(status int) {
+	rec.Status = status
 }
 
 func (rec *statusCodeRecorder) WriteHeader(status int) {
