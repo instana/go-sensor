@@ -1,7 +1,6 @@
 package instagin
 
 import (
-	"net/http"
 	"reflect"
 
 	"github.com/gin-gonic/gin"
@@ -22,14 +21,25 @@ type statusWriter interface {
 
 var middleware = func(sensor *instana.Sensor) gin.HandlerFunc {
 	return func(gc *gin.Context) {
-		instana.TracingHandlerFunc(sensor, "", func(writer http.ResponseWriter, request *http.Request) {
-			gc.Request = request
-			gc.Next()
+		htspan := instana.NewHttpSpan(gc.Request, sensor, "")
 
-			if v, ok := writer.(statusWriter); ok {
-				v.SetStatus(gc.Writer.Status())
+		defer htspan.Finish()
+		defer func() {
+			// Be sure to capture any kind of panic/error
+			if err := recover(); err != nil {
+				htspan.CollectPanicInformation(err)
+
+				// re-throw the panic
+				panic(err)
 			}
-		})(gc.Writer, gc.Request)
+		}()
+
+		htspan.Inject(gc.Writer)
+
+		gc.Next()
+
+		htspan.CollectResponseHeaders(gc.Writer)
+		htspan.CollectResponseStatus(gc.Writer)
 	}
 }
 
