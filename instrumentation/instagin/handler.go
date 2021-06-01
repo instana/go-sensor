@@ -7,43 +7,46 @@ import (
 	instana "github.com/instana/go-sensor"
 )
 
+// AddMiddleware adds Middleware to the gin Handlers list. Unlike method Use from the current gin API, it adds
+// to the beginning of the list. It will allows to trace all the default handlers added during gin.Default() call.
 func AddMiddleware(sensor *instana.Sensor, engine *gin.Engine) {
 	f := middleware(sensor)
-	engine.Handlers = append([]gin.HandlerFunc{f}, findAndRemove(f, engine.Handlers)...)
+	engine.Handlers = append([]gin.HandlerFunc{f}, tryFindAndRemove(f, engine.Handlers)...)
 
-	// to trigger engine.rebuild404Handlers and engine.rebuild405Handlers
+	// trigger engine.rebuild404Handlers and engine.rebuild405Handlers
 	engine.Use()
 }
 
-type statusWriter interface {
-	SetStatus(status int)
-}
-
+// middleware wraps gin's handlers execution. Adds tracing context and handles entry span.
 var middleware = func(sensor *instana.Sensor) gin.HandlerFunc {
 	return func(gc *gin.Context) {
-		htspan := instana.NewHttpSpan(gc.Request, sensor, "")
+		httpSpan := instana.NewHttpEntrySpan(gc.Request, sensor, "")
 
-		defer htspan.Finish()
+		// ensure that Finish() is a last call
+		defer httpSpan.Finish()
 		defer func() {
 			// Be sure to capture any kind of panic/error
 			if err := recover(); err != nil {
-				htspan.CollectPanicInformation(err)
+				httpSpan.CollectPanicInformation(err)
 
 				// re-throw the panic
 				panic(err)
 			}
 		}()
 
-		htspan.Inject(gc.Writer)
+		httpSpan.Inject(gc.Writer)
+		gc.Request = httpSpan.RequestWithContext(gc.Request)
 
 		gc.Next()
 
-		htspan.CollectResponseHeaders(gc.Writer)
-		htspan.CollectResponseStatus(gc.Writer)
+		httpSpan.CollectResponseHeaders(gc.Writer)
+		httpSpan.CollectResponseStatus(gc.Writer.Status())
 	}
 }
 
-func findAndRemove(handler gin.HandlerFunc, handlers []gin.HandlerFunc) []gin.HandlerFunc {
+// tryFindAndRemove tries to find a previously registered middleware and remove it from the handlers list.
+// This function not necessarily is able to find duplicates. See documentation for a Pointer() method.
+func tryFindAndRemove(handler gin.HandlerFunc, handlers []gin.HandlerFunc) []gin.HandlerFunc {
 	for k := range handlers {
 		if reflect.ValueOf(handler).Pointer() == reflect.ValueOf(handlers[k]).Pointer() {
 			return append(handlers[:k], handlers[k+1:]...)
