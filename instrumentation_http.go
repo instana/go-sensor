@@ -24,13 +24,14 @@ import (
 // if found in request.
 func TracingHandlerFunc(sensor *Sensor, pathTemplate string, handler http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
-		htspan := NewHttpSpan(req, sensor, pathTemplate)
+		httpSpan := NewHttpEntrySpan(req, sensor, pathTemplate)
 
-		defer htspan.Finish()
+		// ensure that Finish() is a last call
+		defer httpSpan.Finish()
 		defer func() {
 			// Be sure to capture any kind of panic/error
 			if err := recover(); err != nil {
-				htspan.CollectPanicInformation(err)
+				httpSpan.CollectPanicInformation(err)
 
 				// re-throw the panic
 				panic(err)
@@ -39,12 +40,12 @@ func TracingHandlerFunc(sensor *Sensor, pathTemplate string, handler http.Handle
 
 		wrapped := &statusCodeRecorder{ResponseWriter: w}
 
-		htspan.Inject(wrapped)
+		httpSpan.Inject(wrapped)
 
-		handler(wrapped, htspan.RequestWithContext(req))
+		handler(wrapped, httpSpan.RequestWithContext(req))
 
-		htspan.CollectResponseHeaders(wrapped)
-		htspan.CollectResponseStatus(wrapped)
+		httpSpan.CollectResponseHeaders(wrapped)
+		httpSpan.CollectResponseStatus(wrapped.Status())
 	}
 }
 
