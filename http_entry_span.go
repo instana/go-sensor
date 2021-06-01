@@ -8,20 +8,18 @@ import (
 	otlog "github.com/opentracing/opentracing-go/log"
 )
 
-type StatusReader interface {
-	Status() int
-}
-
-type HttpSpan struct {
+// HttpEntrySpan is a wrapper for an ot.Span. It can be used to init span for incoming HTTP requests.
+// HttpEntrySpan has methods to collect meta information from the request and response objects.
+type HttpEntrySpan struct {
 	span                   ot.Span
-	tracer                 ot.Tracer
 	collectableHTTPHeaders []string
 	secrets                Matcher
 	collectedHeaders       map[string]string
 }
 
-func NewHttpSpan(req *http.Request, sensor *Sensor, pathTemplate string) *HttpSpan {
-	s := &HttpSpan{
+// NewHttpEntrySpan returns instance of *HttpEntrySpan with tags created from the *http.Request and pathTemplate.
+func NewHttpEntrySpan(req *http.Request, sensor *Sensor, pathTemplate string) *HttpEntrySpan {
+	s := &HttpEntrySpan{
 		collectedHeaders: map[string]string{},
 	}
 
@@ -30,7 +28,8 @@ func NewHttpSpan(req *http.Request, sensor *Sensor, pathTemplate string) *HttpSp
 	return s
 }
 
-func (ht *HttpSpan) CollectPanicInformation(err interface{}) {
+// CollectPanicInformation collects data from the recovered value (function recover()) in case of the panic.
+func (ht *HttpEntrySpan) CollectPanicInformation(err interface{}) {
 	if e, ok := err.(error); ok {
 		ht.span.SetTag("http.error", e.Error())
 		ht.span.LogFields(otlog.Error(e))
@@ -42,8 +41,8 @@ func (ht *HttpSpan) CollectPanicInformation(err interface{}) {
 	ht.span.SetTag(string(ext.HTTPStatusCode), http.StatusInternalServerError)
 }
 
-func (ht *HttpSpan) CollectResponseHeaders(w http.ResponseWriter) {
-	// collect response headers
+// CollectResponseHeaders collects response headers.
+func (ht *HttpEntrySpan) CollectResponseHeaders(w http.ResponseWriter) {
 	for _, h := range ht.collectableHTTPHeaders {
 		if v := w.Header().Get(h); v != "" {
 			ht.collectedHeaders[h] = v
@@ -51,43 +50,40 @@ func (ht *HttpSpan) CollectResponseHeaders(w http.ResponseWriter) {
 	}
 }
 
-func (ht *HttpSpan) CollectResponseStatus(r StatusReader) {
-	if r.Status() > 0 {
-		if r.Status() >= http.StatusInternalServerError {
-			statusText := http.StatusText(r.Status())
+// CollectResponseStatus sets the status. It stores error status text in case of error.
+func (ht *HttpEntrySpan) CollectResponseStatus(status int) {
+	if status > 0 {
+		if status >= http.StatusInternalServerError {
+			statusText := http.StatusText(status)
 
 			ht.span.SetTag("http.error", statusText)
 			ht.span.LogFields(otlog.Object("error", statusText))
 		}
 
-		ht.span.SetTag("http.status", r.Status())
+		ht.span.SetTag("http.status", status)
 	}
 }
 
-func (ht *HttpSpan) collectRequestHeadersAndParams(req *http.Request) {
-	params := collectHTTPParams(req, ht.secrets)
-	if len(params) > 0 {
-		ht.span.SetTag("http.params", params.Encode())
-	}
-
-	// collect request headers
-	for _, h := range ht.collectableHTTPHeaders {
-		if v := req.Header.Get(h); v != "" {
-			ht.collectedHeaders[h] = v
-		}
-	}
+// Inject tracing context into the ResponseWriter.
+func (ht *HttpEntrySpan) Inject(w http.ResponseWriter) error {
+	return ht.span.Tracer().Inject(ht.span.Context(), ot.HTTPHeaders, ot.HTTPHeadersCarrier(w.Header()))
 }
 
-func (ht *HttpSpan) Finish() {
+// RequestWithContext returns *http.Request with context that contains the span.
+func (ht *HttpEntrySpan) RequestWithContext(req *http.Request) *http.Request {
+	originalCtx := req.Context()
+	ctxWithSpan := ContextWithSpan(originalCtx, ht.span)
+
+	return req.WithContext(ctxWithSpan)
+}
+
+// Finish writes collected headers and calls Finish() on the wrapped span. Must be the last call made to any span instance.
+func (ht *HttpEntrySpan) Finish() {
 	ht.writeHeaders()
 	ht.span.Finish()
 }
 
-func (ht *HttpSpan) Inject(w http.ResponseWriter) error {
-	return ht.tracer.Inject(ht.span.Context(), ot.HTTPHeaders, ot.HTTPHeadersCarrier(w.Header()))
-}
-
-func (ht *HttpSpan) initHttpSpan(req *http.Request, sensor *Sensor, pathTemplate string) {
+func (ht *HttpEntrySpan) initHttpSpan(req *http.Request, sensor *Sensor, pathTemplate string) {
 	opts := []ot.StartSpanOption{
 		ext.SpanKindRPCServer,
 		ot.Tags{
@@ -130,21 +126,24 @@ func (ht *HttpSpan) initHttpSpan(req *http.Request, sensor *Sensor, pathTemplate
 		opts = append(opts, ot.Tag{Key: "http.path_tpl", Value: pathTemplate})
 	}
 
-	span := tracer.StartSpan("g.http", opts...)
-
-	ht.tracer = tracer
-	ht.span = span
+	ht.span = tracer.StartSpan("g.http", opts...)
 }
 
-func (ht *HttpSpan) writeHeaders() {
-	if len(ht.collectedHeaders) > 0 {
-		ht.span.SetTag("http.header", ht.collectedHeaders)
+func (ht *HttpEntrySpan) collectRequestHeadersAndParams(req *http.Request) {
+	params := collectHTTPParams(req, ht.secrets)
+	if len(params) > 0 {
+		ht.span.SetTag("http.params", params.Encode())
+	}
+
+	for _, h := range ht.collectableHTTPHeaders {
+		if v := req.Header.Get(h); v != "" {
+			ht.collectedHeaders[h] = v
+		}
 	}
 }
 
-func (ht *HttpSpan) RequestWithContext(req *http.Request) *http.Request {
-	originalCtx := req.Context()
-	ctxWithSpan := ContextWithSpan(originalCtx, ht.span)
-
-	return req.WithContext(ctxWithSpan)
+func (ht *HttpEntrySpan) writeHeaders() {
+	if len(ht.collectedHeaders) > 0 {
+		ht.span.SetTag("http.header", ht.collectedHeaders)
+	}
 }
