@@ -18,6 +18,27 @@ import (
 	"github.com/instana/testify/require"
 )
 
+func BenchmarkTracingHandlerFunc(b *testing.B) {
+	recorder := instana.NewTestRecorder()
+	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{
+		Service: "go-sensor-test",
+	}, recorder))
+
+	h := instana.TracingHandlerFunc(s, "/{action}", func(w http.ResponseWriter, req *http.Request) {
+		fmt.Fprintln(w, "Ok")
+	})
+
+	req := httptest.NewRequest(http.MethodGet, "/test?q=term", nil)
+
+	rec := httptest.NewRecorder()
+
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		h.ServeHTTP(rec, req)
+	}
+}
+
 func TestTracingHandlerFunc_Write(t *testing.T) {
 	recorder := instana.NewTestRecorder()
 	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{
