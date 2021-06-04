@@ -24,14 +24,85 @@ import (
 // if found in request.
 func TracingHandlerFunc(sensor *Sensor, pathTemplate string, handler http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
-		httpSpan := NewHttpEntrySpan(req, sensor, pathTemplate)
+		ctx := req.Context()
 
-		// ensure that Finish() is a last call
-		defer httpSpan.Finish()
+		opts := []ot.StartSpanOption{
+			ext.SpanKindRPCServer,
+			ot.Tags{
+				"http.host":     req.Host,
+				"http.method":   req.Method,
+				"http.protocol": req.URL.Scheme,
+				"http.path":     req.URL.Path,
+			},
+		}
+
+		tracer := sensor.Tracer()
+		if ps, ok := SpanFromContext(req.Context()); ok {
+			tracer = ps.Tracer()
+			opts = append(opts, ot.ChildOf(ps.Context()))
+		}
+
+		wireContext, err := tracer.Extract(ot.HTTPHeaders, ot.HTTPHeadersCarrier(req.Header))
+		switch err {
+		case nil:
+			opts = append(opts, ext.RPCServerOption(wireContext))
+		case ot.ErrSpanContextNotFound:
+			sensor.Logger().Debug("no span context provided with ", req.Method, " ", req.URL.Path)
+		case ot.ErrUnsupportedFormat:
+			sensor.Logger().Info("unsupported span context format provided with ", req.Method, " ", req.URL.Path)
+		default:
+			sensor.Logger().Warn("failed to extract span context from the request:", err)
+		}
+
+		if req.Header.Get(FieldSynthetic) == "1" {
+			opts = append(opts, syntheticCall())
+		}
+
+		if pathTemplate != "" && req.URL.Path != pathTemplate {
+			opts = append(opts, ot.Tag{Key: "http.path_tpl", Value: pathTemplate})
+		}
+
+		span := tracer.StartSpan("g.http", opts...)
+		defer span.Finish()
+
+		var collectableHTTPHeaders []string
+		if t, ok := tracer.(Tracer); ok {
+			opts := t.Options()
+			collectableHTTPHeaders = opts.CollectableHTTPHeaders
+
+			params := collectHTTPParams(req, opts.Secrets)
+			if len(params) > 0 {
+				span.SetTag("http.params", params.Encode())
+			}
+		}
+
+		collectedHeaders := make(map[string]string)
+		// make sure collected headers are sent in case of panic/error
+		defer func() {
+			if len(collectedHeaders) > 0 {
+				span.SetTag("http.header", collectedHeaders)
+			}
+		}()
+
+		// collect request headers
+		for _, h := range collectableHTTPHeaders {
+			if v := req.Header.Get(h); v != "" {
+				collectedHeaders[h] = v
+			}
+		}
+
 		defer func() {
 			// Be sure to capture any kind of panic/error
 			if err := recover(); err != nil {
-				httpSpan.CollectPanicInformation(err)
+				if e, ok := err.(error); ok {
+					span.SetTag("http.error", e.Error())
+					span.LogFields(otlog.Error(e))
+				} else {
+					span.SetTag("http.error", err)
+					span.LogFields(otlog.Object("error", err))
+				}
+
+				span.SetTag(string(ext.HTTPStatusCode), http.StatusInternalServerError)
 
 				// re-throw the panic
 				panic(err)
@@ -39,13 +110,27 @@ func TracingHandlerFunc(sensor *Sensor, pathTemplate string, handler http.Handle
 		}()
 
 		wrapped := &statusCodeRecorder{ResponseWriter: w}
+		tracer.Inject(span.Context(), ot.HTTPHeaders, ot.HTTPHeadersCarrier(wrapped.Header()))
 
-		httpSpan.Inject(wrapped)
+		handler(wrapped, req.WithContext(ContextWithSpan(ctx, span)))
 
-		handler(wrapped, httpSpan.RequestWithContext(req))
+		// collect response headers
+		for _, h := range collectableHTTPHeaders {
+			if v := wrapped.Header().Get(h); v != "" {
+				collectedHeaders[h] = v
+			}
+		}
 
-		httpSpan.CollectResponseHeaders(wrapped)
-		httpSpan.CollectResponseStatus(wrapped.Status())
+		if wrapped.Status > 0 {
+			if wrapped.Status >= http.StatusInternalServerError {
+				statusText := http.StatusText(wrapped.Status)
+
+				span.SetTag("http.error", statusText)
+				span.LogFields(otlog.Object("error", statusText))
+			}
+
+			span.SetTag("http.status", wrapped.Status)
+		}
 	}
 }
 
@@ -130,21 +215,21 @@ func RoundTripper(sensor *Sensor, original http.RoundTripper) http.RoundTripper 
 // wrapper over http.ResponseWriter to spy the returned status code
 type statusCodeRecorder struct {
 	http.ResponseWriter
-	status int
+	Status int
 }
 
-func (rec *statusCodeRecorder) Status() int {
-	return rec.status
+func (rec *statusCodeRecorder) SetStatus(status int) {
+	rec.Status = status
 }
 
 func (rec *statusCodeRecorder) WriteHeader(status int) {
-	rec.status = status
+	rec.Status = status
 	rec.ResponseWriter.WriteHeader(status)
 }
 
 func (rec *statusCodeRecorder) Write(b []byte) (int, error) {
-	if rec.status == 0 {
-		rec.status = http.StatusOK
+	if rec.Status == 0 {
+		rec.Status = http.StatusOK
 	}
 
 	return rec.ResponseWriter.Write(b)

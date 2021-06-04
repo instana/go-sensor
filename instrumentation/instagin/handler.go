@@ -6,6 +6,7 @@
 package instagin
 
 import (
+	"net/http"
 	"reflect"
 
 	"github.com/gin-gonic/gin"
@@ -22,30 +23,22 @@ func AddMiddleware(sensor *instana.Sensor, engine *gin.Engine) {
 	engine.Use()
 }
 
+type statusWriter interface {
+	SetStatus(status int)
+}
+
 // middleware wraps gin's handlers execution. Adds tracing context and handles entry span.
 var middleware = func(sensor *instana.Sensor) gin.HandlerFunc {
 	return func(gc *gin.Context) {
-		httpSpan := instana.NewHttpEntrySpan(gc.Request, sensor, "")
+		instana.TracingHandlerFunc(sensor, "", func(writer http.ResponseWriter, request *http.Request) {
+			gc.Request = request
+			gc.Next()
 
-		// ensure that Finish() is a last call
-		defer httpSpan.Finish()
-		defer func() {
-			// Be sure to capture any kind of panic/error
-			if err := recover(); err != nil {
-				httpSpan.CollectPanicInformation(err)
-
-				// re-throw the panic
-				panic(err)
+			// set status from gc.Writer to instana.statusCodeRecorder which is used by instana.TracingHandlerFunc
+			if v, ok := writer.(statusWriter); ok {
+				v.SetStatus(gc.Writer.Status())
 			}
-		}()
-
-		httpSpan.Inject(gc.Writer)
-		gc.Request = httpSpan.RequestWithContext(gc.Request)
-
-		gc.Next()
-
-		httpSpan.CollectResponseHeaders(gc.Writer)
-		httpSpan.CollectResponseStatus(gc.Writer.Status())
+		})(gc.Writer, gc.Request)
 	}
 }
 
