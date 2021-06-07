@@ -21,7 +21,7 @@ In case when the port is already in use, please choose another one.
         port to use by an example (default "8881")
 ```
 
-There will be two endpoints exposed.
+There will be two endpoints exposed:
 
 ```
 GET    /myendpoint               
