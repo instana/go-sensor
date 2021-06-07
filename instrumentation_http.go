@@ -223,13 +223,13 @@ func (rec *statusCodeRecorder) SetStatus(status int) {
 }
 
 func (rec *statusCodeRecorder) WriteHeader(status int) {
-	rec.Status = status
+	rec.SetStatus(status)
 	rec.ResponseWriter.WriteHeader(status)
 }
 
 func (rec *statusCodeRecorder) Write(b []byte) (int, error) {
 	if rec.Status == 0 {
-		rec.Status = http.StatusOK
+		rec.SetStatus(http.StatusOK)
 	}
 
 	return rec.ResponseWriter.Write(b)
