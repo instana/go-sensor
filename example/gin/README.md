@@ -9,16 +9,14 @@ Usage
 To start an example locally on `localhost:8881` run:
 
 ```bash
-go run main.go
+go run main.go -l localhost:8881
 ```
 
 In case when the port is already in use, please choose another one.
 
 ```
-  -address string
-        address to use by an example (default "localhost")
-  -port string
-        port to use by an example (default "8881")
+  -l string
+        Server listen address
 ```
 
 There will be two endpoints exposed:

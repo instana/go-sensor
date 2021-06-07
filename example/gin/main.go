@@ -7,22 +7,24 @@ package main
 
 import (
 	"flag"
+	"os"
 
 	"github.com/gin-gonic/gin"
 	instana "github.com/instana/go-sensor"
 	"github.com/instana/go-sensor/instrumentation/instagin"
 )
 
-const (
-	defaultPort    = "8881"
-	defaultAddress = "localhost"
-)
+var listenAddr string
 
 func main() {
-	port := flag.String("port", defaultPort, "port to use by an example")
-	address := flag.String("address", defaultAddress, "address to use by an example")
-
+	flag.StringVar(&listenAddr, "l", os.Getenv("LISTEN_ADDR"), "Server listen address")
 	flag.Parse()
+
+	if listenAddr == "" {
+		flag.Usage()
+		os.Exit(2)
+	}
+
 	engine := gin.Default()
 
 	// create a sensor
@@ -48,5 +50,5 @@ func main() {
 		})
 	}
 
-	engine.Run(*address + ":" + *port)
+	engine.Run(listenAddr)
 }
