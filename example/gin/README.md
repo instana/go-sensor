@@ -1,7 +1,7 @@
 An Instrumented Server gin Example
 ==========================
 
-An example of usage of Instana tracer in the instrumented gin application. It demonstrates how to use `https://github.com/instana/go-sensor/tree/master/instrumentation/instagin`.
+An example of usage of Instana tracer to instrumenta a Gin application with `https://github.com/instana/go-sensor/tree/master/instrumentation/instagin`.
 
 Usage
 -----
