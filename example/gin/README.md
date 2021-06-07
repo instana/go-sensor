@@ -6,7 +6,7 @@ An example of usage of Instana tracer to instrumenta a Gin application with `htt
 Usage
 -----
 
-To start an example locally on `localhost:8881`.
+To start an example locally on `localhost:8881` run:
 
 ```bash
 go run main.go
