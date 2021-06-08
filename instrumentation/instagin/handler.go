@@ -27,7 +27,7 @@ type statusWriter interface {
 }
 
 // middleware wraps gin's handlers execution. Adds tracing context and handles entry span.
-var middleware = func(sensor *instana.Sensor) gin.HandlerFunc {
+func middleware(sensor *instana.Sensor) gin.HandlerFunc {
 	return func(gc *gin.Context) {
 		instana.TracingHandlerFunc(sensor, gc.FullPath(), func(writer http.ResponseWriter, request *http.Request) {
 			gc.Request = request
