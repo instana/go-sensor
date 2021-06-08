@@ -28,6 +28,13 @@ func TestMain(m *testing.M) {
 	gin.SetMode(gin.TestMode)
 	gin.DefaultWriter = ioutil.Discard
 
+	instana.InitSensor(&instana.Options{
+		Service: "gin-test",
+		Tracer: instana.TracerOptions{
+			CollectableHTTPHeaders: []string{"x-custom-header-1", "x-custom-header-2"},
+		},
+	})
+
 	os.Exit(m.Run())
 }
 
@@ -57,11 +64,7 @@ func TestPropagation(t *testing.T) {
 	spanIDHeader := "0000000000004567"
 
 	recorder := instana.NewTestRecorder()
-	tracer := instana.NewTracerWithEverything(
-		&instana.Options{Tracer: instana.TracerOptions{
-			CollectableHTTPHeaders: []string{"x-custom-header-1", "x-custom-header-2"},
-		},
-		}, recorder)
+	tracer := instana.NewTracerWithEverything(nil, recorder)
 
 	sensor := instana.NewSensorWithTracer(tracer)
 
