@@ -6,7 +6,10 @@
 package instagin_test
 
 import (
+	"io/ioutil"
+	"net/http"
 	"net/http/httptest"
+	"os"
 	"reflect"
 	"testing"
 
@@ -20,6 +23,13 @@ import (
 	instana "github.com/instana/go-sensor"
 	"github.com/instana/go-sensor/instrumentation/instagin"
 )
+
+func TestMain(m *testing.M) {
+	gin.SetMode(gin.TestMode)
+	gin.DefaultWriter = ioutil.Discard
+
+	os.Exit(m.Run())
+}
 
 func TestAddMiddleware(t *testing.T) {
 	const expectedHandlersAmount = 3
@@ -42,31 +52,16 @@ func TestAddMiddleware(t *testing.T) {
 	assert.Equal(t, handlerN2Pointer, reflect.ValueOf(engine.Handlers[2]).Pointer())
 }
 
-func TestResponseHeadersCollecting(t *testing.T) {
-	engine := getInstrumentedEngine()
-
-	engine.GET("/foo", func(c *gin.Context) {
-		c.JSON(200, gin.H{})
-	})
-
-	req := httptest.NewRequest("GET", "/foo", nil)
-	w := httptest.NewRecorder()
-
-	engine.ServeHTTP(w, req)
-
-	assert.NotEmpty(t, w.Header().Get("X-Instana-T"))
-	assert.NotEmpty(t, w.Header().Get("X-Instana-S"))
-	assert.NotEmpty(t, w.Header().Get("X-Instana-L"))
-	assert.NotEmpty(t, w.Header().Get("Traceparent"))
-	assert.NotEmpty(t, w.Header().Get("Tracestate"))
-}
-
 func TestPropagation(t *testing.T) {
 	traceIDHeader := "0000000000001234"
 	spanIDHeader := "0000000000004567"
 
 	recorder := instana.NewTestRecorder()
-	tracer := instana.NewTracerWithEverything(nil, recorder)
+	tracer := instana.NewTracerWithEverything(
+		&instana.Options{Tracer: instana.TracerOptions{
+			CollectableHTTPHeaders: []string{"x-custom-header-1", "x-custom-header-2"},
+		},
+		}, recorder)
 
 	sensor := instana.NewSensorWithTracer(tracer)
 
@@ -80,18 +75,27 @@ func TestPropagation(t *testing.T) {
 		sp := parent.Tracer().StartSpan("sub-call", opentracing.ChildOf(parent.Context()))
 		sp.Finish()
 
+		c.Header("x-custom-header-2", "response")
 		c.JSON(200, gin.H{})
 	})
 
-	req := httptest.NewRequest("GET", "https://example.com/foo", nil)
+	req := httptest.NewRequest("GET", "https://example.com/foo?SECRET_VALUE=%3Credacted%3E&myPassword=%3Credacted%3E&q=term&sensitive_key=%3Credacted%3E", nil)
 
 	req.Header.Add(instana.FieldT, traceIDHeader)
 	req.Header.Add(instana.FieldS, spanIDHeader)
 	req.Header.Add(instana.FieldL, "1")
+	req.Header.Set("X-Custom-Header-1", "request")
 
 	w := httptest.NewRecorder()
 
 	engine.ServeHTTP(w, req)
+
+	// Response headers assertions
+	assert.NotEmpty(t, w.Header().Get("X-Instana-T"))
+	assert.NotEmpty(t, w.Header().Get("X-Instana-S"))
+	assert.NotEmpty(t, w.Header().Get("X-Instana-L"))
+	assert.NotEmpty(t, w.Header().Get("Traceparent"))
+	assert.NotEmpty(t, w.Header().Get("Tracestate"))
 
 	spans := recorder.GetQueuedSpans()
 	require.Len(t, spans, 2)
@@ -106,6 +110,24 @@ func TestPropagation(t *testing.T) {
 
 	assert.Equal(t, traceIDHeader, instana.FormatID(entrySpan.TraceID))
 	assert.Equal(t, spanIDHeader, instana.FormatID(entrySpan.ParentID))
+
+	// ensure that entry span contains all necessary data
+	require.IsType(t, instana.HTTPSpanData{}, entrySpan.Data)
+	entrySpanData := entrySpan.Data.(instana.HTTPSpanData)
+
+	assert.Equal(t, instana.HTTPSpanTags{
+		Method:   "GET",
+		Status:   http.StatusOK,
+		Path:     "/foo",
+		URL:      "",
+		Host:     "example.com",
+		Protocol: "https",
+		Params:   "SECRET_VALUE=%3Credacted%3E&myPassword=%3Credacted%3E&q=term&sensitive_key=%3Credacted%3E",
+		Headers: map[string]string{
+			"x-custom-header-1": "request",
+			"x-custom-header-2": "response",
+		},
+	}, entrySpanData.Tags)
 }
 
 func getInstrumentedEngine() *gin.Engine {
