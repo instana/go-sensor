@@ -12,7 +12,7 @@ import (
 	instana "github.com/instana/go-sensor"
 )
 
-// AddMiddleware adds Middleware to the gin Handlers list. Unlike method Use from the current gin API, it adds
+// AddMiddleware adds the tracing middleware to the list of Gin handlers. Unlike the gin.Use method, it puts the middleware
 // to the beginning of the list. It will allows to trace all the default handlers added during gin.Default() call.
 func AddMiddleware(sensor *instana.Sensor, engine *gin.Engine) {
 	f := middleware(sensor)
