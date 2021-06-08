@@ -42,13 +42,11 @@ func main() {
 	// use group: v1
 	v1 := engine.Group("/v1")
 
-	{
-		v1.GET("/myendpoint", func(c *gin.Context) {
-			c.JSON(200, gin.H{
-				"message": "pong",
-			})
+	v1.GET("/myendpoint", func(c *gin.Context) {
+		c.JSON(200, gin.H{
+			"message": "pong",
 		})
-	}
+	})
 
 	engine.Run(listenAddr)
 }
