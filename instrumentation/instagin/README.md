@@ -1,7 +1,7 @@
 Instana instrumentation for gin framework
 =============================================
 
-This module contains middleware to instrument gin framework applications.
+This module contains middleware to instrument HTTP services written with [github.com/gin-gonic/gin](https://github.com/gin-gonic/gin).
 
 [![GoDoc](https://img.shields.io/static/v1?label=godoc&message=reference&color=blue)][godoc]
 
