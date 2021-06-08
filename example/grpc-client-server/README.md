@@ -9,14 +9,12 @@ Usage
 To start an example locally on `localhost:43210` and send 10 requests, run:
 
 ```bash
-go run main.go
+go run main.go -l localhost:43210
 ```
 
-In case when the port is already in use, please choose another one. Also, some other options can be specified.
+In case when the port is already in use, please choose another one.
 
 ```bash
--address string
-    address to use by an example (default "localhost")
--defaultPort string
-    defaultPort to use by an example (default ":43210")
+  -l string
+        Server listen address
 ```

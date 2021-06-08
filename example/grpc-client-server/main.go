@@ -10,6 +10,7 @@ import (
 	"flag"
 	"log"
 	"net"
+	"os"
 
 	"github.com/opentracing/opentracing-go/ext"
 
@@ -21,16 +22,19 @@ import (
 )
 
 const (
-	defaultPort    = ":43210"
-	defaultAddress = "localhost"
-	testMessage    = "Hi!"
+	testMessage = "Hi!"
 )
 
-func main() {
-	port := flag.String("defaultPort", defaultPort, "defaultPort to use by an example")
-	address := flag.String("address", defaultAddress, "address to use by an example")
+var listenAddr string
 
+func main() {
+	flag.StringVar(&listenAddr, "l", os.Getenv("LISTEN_ADDR"), "Server listen address")
 	flag.Parse()
+
+	if listenAddr == "" {
+		flag.Usage()
+		os.Exit(2)
+	}
 
 	// initialize server sensor to instrument request handlers
 	sensor := instana.NewSensor("grpc-client-server")
@@ -45,10 +49,10 @@ func main() {
 
 	pb.RegisterEchoServiceServer(srv, &Service{})
 
-	go startServer(srv, *address+*port)
+	go startServer(srv, listenAddr)
 
 	conn, err := grpc.Dial(
-		*address+*port,
+		listenAddr,
 		grpc.WithInsecure(),
 		grpc.WithBlock(),
 		// To instrument client calls add instagrpc.UnaryClientInterceptor(sensor) and
