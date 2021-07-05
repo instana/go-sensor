@@ -84,7 +84,6 @@ func TestTracer_Inject_HTTPHeaders(t *testing.T) {
 				"Authorization": {"Basic 123"},
 				"X-Instana-L":   {"0"},
 				"Traceparent":   {"00-00000000000000010000000000002435-0000000000003546-00"},
-				"Tracestate":    {""},
 				"Server-Timing": {"intid;desc=0000000000002435"},
 			},
 		},
@@ -116,7 +115,6 @@ func TestTracer_Inject_HTTPHeaders_W3CTraceContext(t *testing.T) {
 			Expected: http.Header{
 				"X-Instana-L":   {"0"},
 				"Traceparent":   {"00-00000000000000010000000000002435-0000000000003546-00"},
-				"Tracestate":    {""},
 				"Server-Timing": {"intid;desc=0000000000002435"},
 			},
 		},

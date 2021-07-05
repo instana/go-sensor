@@ -82,7 +82,9 @@ func Inject(trCtx Context, headers http.Header) {
 	}
 
 	headers.Set(TraceParentHeader, trCtx.RawParent)
-	headers.Set(TraceStateHeader, trCtx.RawState)
+	if trCtx.RawState != "" {
+		headers.Set(TraceStateHeader, trCtx.RawState)
+	}
 }
 
 // State parses RawState and returns the corresponding list.
