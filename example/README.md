@@ -9,6 +9,7 @@ This folder contains examples of instrumenting the common use-cases with `github
 * [Autoprofile](./autoprofile) - Demonstrates usage of the AutoProfile™
 * [OpenTracing](./opentracing) - an example of usage of Instana tracer in an app instrumented with OpenTracing
 * [gRPC](./grpc-client-server) - an example of usage of Instana tracer in an app instrumented with gRPC
+* [Gin](./gin) - an example of usage of Instana tracer to instrument a Gin application
 
 For more up-to-date instrumentation code examples please consult the respective package documentation page:
 

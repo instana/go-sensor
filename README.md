@@ -407,6 +407,7 @@ Following examples are included in the `example` folder:
 * [Autoprofile](./example/autoprofile) - Demonstrates usage of the AutoProfile™
 * [OpenTracing](./example/opentracing) - an example of usage of Instana tracer in an app instrumented with OpenTracing
 * [gRPC](./example/grpc-client-server) - an example of usage of Instana tracer in an app instrumented with gRPC
+* [Gin](./example/gin) - an example of usage of Instana tracer to instrument a Gin application
 
 For more examples please consult the [godoc][godoc].
 
