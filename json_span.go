@@ -194,7 +194,7 @@ func filterCustomSpanTags(tags map[string]interface{}, st RegisteredSpanType) ma
 // common for all span types.
 type SpanData struct {
 	Service string          `json:"service,omitempty"`
-	Custom  *CustomSpanData `json:"custom,omitempty"`
+	Custom  *CustomSpanData `json:"sdk.custom,omitempty"`
 
 	st RegisteredSpanType
 }
