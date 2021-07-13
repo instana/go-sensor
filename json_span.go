@@ -195,6 +195,7 @@ func filterCustomSpanTags(tags map[string]interface{}, st RegisteredSpanType) ma
 type SpanData struct {
 	Service string          `json:"service,omitempty"`
 	Custom  *CustomSpanData `json:"sdk.custom,omitempty"`
+	Log     *LogSpanTags    `json:"log,omitempty"`
 
 	st RegisteredSpanType
 }
@@ -208,6 +209,16 @@ func NewSpanData(span *spanS, st RegisteredSpanType) SpanData {
 
 	if customTags := filterCustomSpanTags(span.Tags, st); len(customTags) > 0 {
 		data.Custom = &CustomSpanData{Tags: customTags}
+	}
+
+	if len(span.Logs) > 0 {
+		if d, err := json.Marshal(span.Logs); err == nil {
+			data.Log = &LogSpanTags{
+				Message: string(d),
+				Level:   "INFO",
+				Logger:  "OpenTracing",
+			}
+		}
 	}
 
 	return data
