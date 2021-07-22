@@ -44,6 +44,8 @@ const (
 	AWSDynamoDBSpanType = RegisteredSpanType("dynamodb")
 	// AWS Lambda invoke span
 	AWSLambdaInvokeSpanType = RegisteredSpanType("aws.lambda.invoke")
+	// Logging span
+	LogSpanType = RegisteredSpanType("log.go")
 )
 
 // RegisteredSpanType represents the span type supported by Instana
@@ -74,6 +76,8 @@ func (st RegisteredSpanType) ExtractData(span *spanS) typedSpanData {
 		return NewAWSDynamoDBSpanData(span)
 	case AWSLambdaInvokeSpanType:
 		return newAWSLambdaInvokeSpanData(span)
+	case LogSpanType:
+		return newLogSpanData(span)
 	default:
 		return NewSDKSpanData(span)
 	}
@@ -185,6 +189,13 @@ func (st RegisteredSpanType) TagsNames() map[string]struct{} {
 			"function": yes,
 			"type":     yes,
 			"error":    yes,
+		}
+	case LogSpanType:
+		return map[string]struct{}{
+			"log.message":    yes,
+			"log.level":      yes,
+			"log.parameters": yes,
+			"log.logger":     yes,
 		}
 	default:
 		return nil
@@ -1115,4 +1126,53 @@ func newAWSLambdaInvokeSpanData(span *spanS) AWSLambdaInvokeSpanData {
 	}
 
 	return data
+}
+
+// LogSpanData represents the `data` section of a logging span
+type LogSpanData struct {
+	SpanData
+	Tags LogSpanTags `json:"log"`
+}
+
+// newLogSpanData initializes a new logging span data from tracer span
+func newLogSpanData(span *spanS) LogSpanData {
+	return LogSpanData{
+		SpanData: NewSpanData(span, LogSpanType),
+		Tags:     newLogSpanTags(span),
+	}
+}
+
+// Kind returns the span kind for a logging span
+func (d LogSpanData) Kind() SpanKind {
+	return ExitSpanKind
+}
+
+// LogSpanTags contains fields within the `data.log` section of an OT span document
+type LogSpanTags struct {
+	// Message is a string to log
+	Message string `json:"message"`
+	// Level is an optional log level for this record, e.g. INFO
+	Level string `json:"level,omitempty"`
+	// Logger is an optional logger name
+	Logger string `json:"logger,omitempty"`
+	// Error is an optional error string (if any)
+	Error string `json:"parameters,omitempty"`
+}
+
+func newLogSpanTags(span *spanS) LogSpanTags {
+	var tags LogSpanTags
+	for k, v := range span.Tags {
+		switch k {
+		case "log.message":
+			readStringTag(&tags.Message, v)
+		case "log.level":
+			readStringTag(&tags.Level, v)
+		case "log.parameters":
+			readStringTag(&tags.Error, v)
+		case "log.logger":
+			readStringTag(&tags.Logger, v)
+		}
+	}
+
+	return tags
 }

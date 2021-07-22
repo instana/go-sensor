@@ -62,6 +62,10 @@ func TestRegisteredSpanType_ExtractData(t *testing.T) {
 			Operation: "aws.lambda.invoke",
 			Expected:  instana.AWSLambdaInvokeSpanData{},
 		},
+		"logger": {
+			Operation: "log.go",
+			Expected:  instana.LogSpanData{},
+		},
 	}
 
 	for name, example := range examples {
