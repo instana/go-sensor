@@ -19,7 +19,7 @@ ifeq ($(VENDOR_DEPS),yes)
 test: $(MODULES_VENDOR)
 endif
 
-test: $(MODULES)
+test: $(MODULES) legal
 
 $(MODULES):
 	cd $@ && go get -d -t ./... && go test $(GOFLAGS) ./...
@@ -48,4 +48,8 @@ $(VENDOR_GO):
 install:
 	cd .git/hooks && ln -fs ../../.githooks/* .
 
-.PHONY: test vendor $(MODULES) $(INTEGRATION_TESTS)
+# Make sure there is a copyright at the first line of each .go file
+legal:
+	awk 'FNR==1 { if (tolower($$0) !~ "^//.+copyright") { print FILENAME" does not contain copyright header"; rc=1 } }; END { exit rc }' $$(find . -name '*.go' -type f | grep -v "/vendor/")
+
+.PHONY: test vendor install legal $(MODULES) $(INTEGRATION_TESTS)
