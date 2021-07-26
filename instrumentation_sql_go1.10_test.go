@@ -74,9 +74,9 @@ func TestWrapSQLConnector_Exec_Error(t *testing.T) {
 	assert.Error(t, err)
 
 	spans := recorder.GetQueuedSpans()
-	require.Len(t, spans, 1)
+	require.Len(t, spans, 2)
 
-	span := spans[0]
+	span, logSpan := spans[0], spans[1]
 	assert.Equal(t, 1, span.Ec)
 	assert.EqualValues(t, instana.ExitSpanKind, span.Kind)
 
@@ -96,6 +96,22 @@ func TestWrapSQLConnector_Exec_Error(t *testing.T) {
 		}
 	}
 	assert.Contains(t, collected["error"], dbErr)
+
+	assert.Equal(t, span.TraceID, logSpan.TraceID)
+	assert.Equal(t, span.SpanID, logSpan.ParentID)
+	assert.Equal(t, "log.go", logSpan.Name)
+
+	// assert that log message has been recorded within the span interval
+	assert.GreaterOrEqual(t, logSpan.Timestamp, span.Timestamp)
+	assert.LessOrEqual(t, logSpan.Duration, span.Duration)
+
+	require.IsType(t, instana.LogSpanData{}, logSpan.Data)
+	logData := logSpan.Data.(instana.LogSpanData)
+
+	assert.Equal(t, instana.LogSpanTags{
+		Level:   "ERROR",
+		Message: `error: "something went wrong"`,
+	}, logData.Tags)
 }
 
 func TestWrapSQLConnector_Query(t *testing.T) {
@@ -153,9 +169,9 @@ func TestWrapSQLConnector_Query_Error(t *testing.T) {
 	assert.Error(t, err)
 
 	spans := recorder.GetQueuedSpans()
-	require.Len(t, spans, 1)
+	require.Len(t, spans, 2)
 
-	span := spans[0]
+	span, logSpan := spans[0], spans[1]
 	assert.Equal(t, 1, span.Ec)
 	assert.EqualValues(t, instana.ExitSpanKind, span.Kind)
 
@@ -175,6 +191,22 @@ func TestWrapSQLConnector_Query_Error(t *testing.T) {
 		}
 	}
 	assert.Contains(t, collected["error"], dbErr)
+
+	assert.Equal(t, span.TraceID, logSpan.TraceID)
+	assert.Equal(t, span.SpanID, logSpan.ParentID)
+	assert.Equal(t, "log.go", logSpan.Name)
+
+	// assert that log message has been recorded within the span interval
+	assert.GreaterOrEqual(t, logSpan.Timestamp, span.Timestamp)
+	assert.LessOrEqual(t, logSpan.Duration, span.Duration)
+
+	require.IsType(t, instana.LogSpanData{}, logSpan.Data)
+	logData := logSpan.Data.(instana.LogSpanData)
+
+	assert.Equal(t, instana.LogSpanTags{
+		Level:   "ERROR",
+		Message: `error: "something went wrong"`,
+	}, logData.Tags)
 }
 
 type sqlConnector struct{ Error error }

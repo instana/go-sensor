@@ -4,6 +4,7 @@
 package instana
 
 import (
+	"strings"
 	"sync"
 	"time"
 
@@ -72,6 +73,7 @@ func (r *spanS) FinishWithOptions(opts ot.FinishOptions) {
 	r.Duration = duration
 	if !r.context.Suppressed {
 		r.tracer.recorder.RecordSpan(r)
+		r.sendOpenTracingLogRecords()
 	}
 }
 
@@ -112,7 +114,7 @@ func (r *spanS) LogFields(fields ...otlog.Field) {
 
 	for _, v := range fields {
 		// If this tag indicates an error, increase the error count
-		if v.Key() == "error" || v.Key() == "error.object" {
+		if isErrorLogField(v) {
 			r.ErrorCount++
 		}
 	}
@@ -180,4 +182,46 @@ func (r *spanS) SetTag(key string, value interface{}) ot.Span {
 
 func (r *spanS) Tracer() ot.Tracer {
 	return r.tracer
+}
+
+// sendOpenTracingLogRecords converts OpenTracing log records that contain errors
+// to Instana log spans and sends them to the agent
+func (r *spanS) sendOpenTracingLogRecords() {
+	for _, lr := range r.Logs {
+		var errorFields []otlog.Field
+		for _, lf := range lr.Fields {
+			if isErrorLogField(lf) {
+				errorFields = append(errorFields, lf)
+			}
+		}
+
+		if len(errorFields) == 0 {
+			continue
+		}
+
+		var buf strings.Builder
+
+		enc := newOpenTracingLogEncoder(&buf)
+		for _, errF := range errorFields {
+			errF.Marshal(enc)
+		}
+
+		r.tracer.StartSpan(
+			"log.go",
+			ot.ChildOf(r.context),
+			ot.StartTime(lr.Timestamp),
+			ot.Tags{
+				"log.level":   "ERROR",
+				"log.message": buf.String(),
+			},
+		).FinishWithOptions(
+			ot.FinishOptions{
+				FinishTime: lr.Timestamp,
+			},
+		)
+	}
+}
+
+func isErrorLogField(lf otlog.Field) bool {
+	return lf.Key() == "error" || lf.Key() == "error.object"
 }

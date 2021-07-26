@@ -63,9 +63,9 @@ func TestWithTracingSpan_PanicHandling(t *testing.T) {
 	})
 
 	spans := recorder.GetQueuedSpans()
-	require.Len(t, spans, 1)
+	require.Len(t, spans, 2)
 
-	span := spans[0]
+	span, logSpan := spans[0], spans[1]
 	assert.Empty(t, span.ParentID)
 	assert.Equal(t, 1, span.Ec)
 
@@ -90,6 +90,22 @@ func TestWithTracingSpan_PanicHandling(t *testing.T) {
 	for _, v := range logRecords {
 		assert.Equal(t, map[string]interface{}{"error": "something went wrong"}, v)
 	}
+
+	assert.Equal(t, span.TraceID, logSpan.TraceID)
+	assert.Equal(t, span.SpanID, logSpan.ParentID)
+	assert.Equal(t, "log.go", logSpan.Name)
+
+	// assert that log message has been recorded within the span interval
+	assert.GreaterOrEqual(t, logSpan.Timestamp, span.Timestamp)
+	assert.LessOrEqual(t, logSpan.Duration, span.Duration)
+
+	require.IsType(t, instana.LogSpanData{}, logSpan.Data)
+	logData := logSpan.Data.(instana.LogSpanData)
+
+	assert.Equal(t, instana.LogSpanTags{
+		Level:   "ERROR",
+		Message: `error: "something went wrong"`,
+	}, logData.Tags)
 }
 
 func TestWithTracingSpan_WithActiveParentSpan(t *testing.T) {
