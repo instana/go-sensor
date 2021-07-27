@@ -289,7 +289,7 @@ func TestSpanErrorLogFields(t *testing.T) {
 
 		assert.Equal(t, instana.LogSpanTags{
 			Level:   "ERROR",
-			Message: `error: "simulated error"`,
+			Message: `error: "simulated error" function: "TestspanErrorLogFields"`,
 		}, logData.Tags, fmt.Sprintf("log span %d", i))
 	}
 }

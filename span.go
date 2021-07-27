@@ -4,6 +4,7 @@
 package instana
 
 import (
+	"bytes"
 	"strings"
 	"sync"
 	"time"
@@ -188,38 +189,37 @@ func (r *spanS) Tracer() ot.Tracer {
 // to Instana log spans and sends them to the agent
 func (r *spanS) sendOpenTracingLogRecords() {
 	for _, lr := range r.Logs {
-		var errorFields []otlog.Field
 		for _, lf := range lr.Fields {
 			if isErrorLogField(lf) {
-				errorFields = append(errorFields, lf)
+				r.sendOpenTracingLogRecord(lr)
+				break
 			}
 		}
-
-		if len(errorFields) == 0 {
-			continue
-		}
-
-		var buf strings.Builder
-
-		enc := newOpenTracingLogEncoder(&buf)
-		for _, errF := range errorFields {
-			errF.Marshal(enc)
-		}
-
-		r.tracer.StartSpan(
-			"log.go",
-			ot.ChildOf(r.context),
-			ot.StartTime(lr.Timestamp),
-			ot.Tags{
-				"log.level":   "ERROR",
-				"log.message": buf.String(),
-			},
-		).FinishWithOptions(
-			ot.FinishOptions{
-				FinishTime: lr.Timestamp,
-			},
-		)
 	}
+}
+
+func (r *spanS) sendOpenTracingLogRecord(lr ot.LogRecord) {
+	buf := bytes.NewBuffer(nil)
+
+	enc := newOpenTracingLogEncoder(buf)
+	for _, lf := range lr.Fields {
+		lf.Marshal(enc)
+		buf.WriteByte(' ')
+	}
+
+	r.tracer.StartSpan(
+		"log.go",
+		ot.ChildOf(r.context),
+		ot.StartTime(lr.Timestamp),
+		ot.Tags{
+			"log.level":   "ERROR",
+			"log.message": strings.TrimSpace(buf.String()),
+		},
+	).FinishWithOptions(
+		ot.FinishOptions{
+			FinishTime: lr.Timestamp,
+		},
+	)
 }
 
 func isErrorLogField(lf otlog.Field) bool {
