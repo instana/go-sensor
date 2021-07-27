@@ -75,21 +75,13 @@ func TestWithTracingSpan_PanicHandling(t *testing.T) {
 	assert.Equal(t, "test-span", data.Tags.Name)
 	assert.Equal(t, "entry", data.Tags.Type)
 
-	assert.Len(t, data.Tags.Custom, 2)
+	assert.Len(t, data.Tags.Custom, 1)
 	assert.Equal(t, ot.Tags{
 		"http.method":   "GET",
 		"http.url":      "/test",
 		"peer.hostname": "example.com",
 		"span.kind":     ext.SpanKindRPCServerEnum,
 	}, data.Tags.Custom["tags"])
-
-	require.IsType(t, map[uint64]map[string]interface{}{}, data.Tags.Custom["logs"])
-	logRecords := data.Tags.Custom["logs"].(map[uint64]map[string]interface{})
-
-	assert.Len(t, logRecords, 1)
-	for _, v := range logRecords {
-		assert.Equal(t, map[string]interface{}{"error": "something went wrong"}, v)
-	}
 
 	assert.Equal(t, span.TraceID, logSpan.TraceID)
 	assert.Equal(t, span.SpanID, logSpan.ParentID)

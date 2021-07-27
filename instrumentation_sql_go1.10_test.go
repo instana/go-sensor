@@ -65,9 +65,8 @@ func TestWrapSQLConnector_Exec_Error(t *testing.T) {
 		Service: "go-sensor-test",
 	}, recorder))
 
-	dbErr := errors.New("something went wrong")
 	db := sql.OpenDB(instana.WrapSQLConnector(s, "connection string", sqlConnector{
-		Error: dbErr,
+		Error: errors.New("something went wrong"),
 	}))
 
 	_, err := db.Exec("TEST QUERY")
@@ -81,21 +80,6 @@ func TestWrapSQLConnector_Exec_Error(t *testing.T) {
 	assert.EqualValues(t, instana.ExitSpanKind, span.Kind)
 
 	require.IsType(t, instana.SDKSpanData{}, span.Data)
-	data := span.Data.(instana.SDKSpanData)
-
-	require.IsType(t, map[uint64]map[string]interface{}{}, data.Tags.Custom["logs"])
-	logs := data.Tags.Custom["logs"].(map[uint64]map[string]interface{})
-
-	collected := make(map[string][]interface{})
-	for _, l := range logs {
-		for k, v := range l {
-			if k == "error.object" {
-				k = "error"
-			}
-			collected[k] = append(collected[k], v)
-		}
-	}
-	assert.Contains(t, collected["error"], dbErr)
 
 	assert.Equal(t, span.TraceID, logSpan.TraceID)
 	assert.Equal(t, span.SpanID, logSpan.ParentID)
@@ -176,21 +160,6 @@ func TestWrapSQLConnector_Query_Error(t *testing.T) {
 	assert.EqualValues(t, instana.ExitSpanKind, span.Kind)
 
 	require.IsType(t, instana.SDKSpanData{}, span.Data)
-	data := span.Data.(instana.SDKSpanData)
-
-	require.IsType(t, map[uint64]map[string]interface{}{}, data.Tags.Custom["logs"])
-	logs := data.Tags.Custom["logs"].(map[uint64]map[string]interface{})
-
-	collected := make(map[string][]interface{})
-	for _, l := range logs {
-		for k, v := range l {
-			if k == "error.object" {
-				k = "error"
-			}
-			collected[k] = append(collected[k], v)
-		}
-	}
-	assert.Contains(t, collected["error"], dbErr)
 
 	assert.Equal(t, span.TraceID, logSpan.TraceID)
 	assert.Equal(t, span.SpanID, logSpan.ParentID)

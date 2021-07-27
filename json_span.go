@@ -284,10 +284,6 @@ func NewSDKSpanTags(span *spanS, spanType string) SDKSpanTags {
 		tags.Custom["tags"] = span.Tags
 	}
 
-	if logs := collectTracerSpanLogs(span); len(logs) > 0 {
-		tags.Custom["logs"] = logs
-	}
-
 	if len(span.context.Baggage) != 0 {
 		tags.Custom["baggage"] = span.context.Baggage
 	}
@@ -329,19 +325,4 @@ func readIntTag(dst *int, tag interface{}) {
 	case uint64:
 		*dst = int(n)
 	}
-}
-
-func collectTracerSpanLogs(span *spanS) map[uint64]map[string]interface{} {
-	logs := make(map[uint64]map[string]interface{})
-	for _, l := range span.Logs {
-		if _, ok := logs[uint64(l.Timestamp.UnixNano())/uint64(time.Millisecond)]; !ok {
-			logs[uint64(l.Timestamp.UnixNano())/uint64(time.Millisecond)] = make(map[string]interface{})
-		}
-
-		for _, f := range l.Fields {
-			logs[uint64(l.Timestamp.UnixNano())/uint64(time.Millisecond)][f.Key()] = f.Value()
-		}
-	}
-
-	return logs
 }
