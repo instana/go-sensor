@@ -280,9 +280,9 @@ func TestTracingHandlerFunc_Error(t *testing.T) {
 	assert.Equal(t, http.StatusInternalServerError, rec.Code)
 
 	spans := recorder.GetQueuedSpans()
-	require.Len(t, spans, 1)
+	require.Len(t, spans, 2)
 
-	span := spans[0]
+	span, logSpan := spans[0], spans[1]
 	assert.Equal(t, 1, span.Ec)
 	assert.EqualValues(t, instana.EntrySpanKind, span.Kind)
 	assert.False(t, span.Synthetic)
@@ -297,6 +297,22 @@ func TestTracingHandlerFunc_Error(t *testing.T) {
 		Path:   "/test",
 		Error:  "Internal Server Error",
 	}, data.Tags)
+
+	assert.Equal(t, span.TraceID, logSpan.TraceID)
+	assert.Equal(t, span.SpanID, logSpan.ParentID)
+	assert.Equal(t, "log.go", logSpan.Name)
+
+	// assert that log message has been recorded within the span interval
+	assert.GreaterOrEqual(t, logSpan.Timestamp, span.Timestamp)
+	assert.LessOrEqual(t, logSpan.Duration, span.Duration)
+
+	require.IsType(t, instana.LogSpanData{}, logSpan.Data)
+	logData := logSpan.Data.(instana.LogSpanData)
+
+	assert.Equal(t, instana.LogSpanTags{
+		Level:   "ERROR",
+		Message: `error: "Internal Server Error"`,
+	}, logData.Tags)
 }
 
 func TestTracingHandlerFunc_SyntheticCall(t *testing.T) {
@@ -358,9 +374,9 @@ func TestTracingHandlerFunc_PanicHandling(t *testing.T) {
 	})
 
 	spans := recorder.GetQueuedSpans()
-	require.Len(t, spans, 1)
+	require.Len(t, spans, 2)
 
-	span := spans[0]
+	span, logSpan := spans[0], spans[1]
 	assert.Equal(t, 1, span.Ec)
 	assert.EqualValues(t, instana.EntrySpanKind, span.Kind)
 	assert.False(t, span.Synthetic)
@@ -376,6 +392,22 @@ func TestTracingHandlerFunc_PanicHandling(t *testing.T) {
 		Params: "q=term",
 		Error:  "something went wrong",
 	}, data.Tags)
+
+	assert.Equal(t, span.TraceID, logSpan.TraceID)
+	assert.Equal(t, span.SpanID, logSpan.ParentID)
+	assert.Equal(t, "log.go", logSpan.Name)
+
+	// assert that log message has been recorded within the span interval
+	assert.GreaterOrEqual(t, logSpan.Timestamp, span.Timestamp)
+	assert.LessOrEqual(t, logSpan.Duration, span.Duration)
+
+	require.IsType(t, instana.LogSpanData{}, logSpan.Data)
+	logData := logSpan.Data.(instana.LogSpanData)
+
+	assert.Equal(t, instana.LogSpanTags{
+		Level:   "ERROR",
+		Message: `error: "something went wrong"`,
+	}, logData.Tags)
 }
 
 func TestRoundTripper(t *testing.T) {
@@ -476,9 +508,9 @@ func TestRoundTripper_Error(t *testing.T) {
 	assert.Error(t, err)
 
 	spans := recorder.GetQueuedSpans()
-	require.Len(t, spans, 1)
+	require.Len(t, spans, 2)
 
-	span := spans[0]
+	span, logSpan := spans[0], spans[1]
 	assert.Equal(t, 1, span.Ec)
 	assert.EqualValues(t, instana.ExitSpanKind, span.Kind)
 
@@ -491,6 +523,22 @@ func TestRoundTripper_Error(t *testing.T) {
 		Params: "key=%3Credacted%3E&q=term",
 		Error:  "something went wrong",
 	}, data.Tags)
+
+	assert.Equal(t, span.TraceID, logSpan.TraceID)
+	assert.Equal(t, span.SpanID, logSpan.ParentID)
+	assert.Equal(t, "log.go", logSpan.Name)
+
+	// assert that log message has been recorded within the span interval
+	assert.GreaterOrEqual(t, logSpan.Timestamp, span.Timestamp)
+	assert.LessOrEqual(t, logSpan.Duration, span.Duration)
+
+	require.IsType(t, instana.LogSpanData{}, logSpan.Data)
+	logData := logSpan.Data.(instana.LogSpanData)
+
+	assert.Equal(t, instana.LogSpanTags{
+		Level:   "ERROR",
+		Message: `error: "something went wrong"`,
+	}, logData.Tags)
 }
 
 func TestRoundTripper_DefaultTransport(t *testing.T) {

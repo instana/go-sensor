@@ -63,9 +63,9 @@ func TestWithTracingSpan_PanicHandling(t *testing.T) {
 	})
 
 	spans := recorder.GetQueuedSpans()
-	require.Len(t, spans, 1)
+	require.Len(t, spans, 2)
 
-	span := spans[0]
+	span, logSpan := spans[0], spans[1]
 	assert.Empty(t, span.ParentID)
 	assert.Equal(t, 1, span.Ec)
 
@@ -75,7 +75,7 @@ func TestWithTracingSpan_PanicHandling(t *testing.T) {
 	assert.Equal(t, "test-span", data.Tags.Name)
 	assert.Equal(t, "entry", data.Tags.Type)
 
-	assert.Len(t, data.Tags.Custom, 2)
+	assert.Len(t, data.Tags.Custom, 1)
 	assert.Equal(t, ot.Tags{
 		"http.method":   "GET",
 		"http.url":      "/test",
@@ -83,13 +83,21 @@ func TestWithTracingSpan_PanicHandling(t *testing.T) {
 		"span.kind":     ext.SpanKindRPCServerEnum,
 	}, data.Tags.Custom["tags"])
 
-	require.IsType(t, map[uint64]map[string]interface{}{}, data.Tags.Custom["logs"])
-	logRecords := data.Tags.Custom["logs"].(map[uint64]map[string]interface{})
+	assert.Equal(t, span.TraceID, logSpan.TraceID)
+	assert.Equal(t, span.SpanID, logSpan.ParentID)
+	assert.Equal(t, "log.go", logSpan.Name)
 
-	assert.Len(t, logRecords, 1)
-	for _, v := range logRecords {
-		assert.Equal(t, map[string]interface{}{"error": "something went wrong"}, v)
-	}
+	// assert that log message has been recorded within the span interval
+	assert.GreaterOrEqual(t, logSpan.Timestamp, span.Timestamp)
+	assert.LessOrEqual(t, logSpan.Duration, span.Duration)
+
+	require.IsType(t, instana.LogSpanData{}, logSpan.Data)
+	logData := logSpan.Data.(instana.LogSpanData)
+
+	assert.Equal(t, instana.LogSpanTags{
+		Level:   "ERROR",
+		Message: `error: "something went wrong"`,
+	}, logData.Tags)
 }
 
 func TestWithTracingSpan_WithActiveParentSpan(t *testing.T) {

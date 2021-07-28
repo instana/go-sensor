@@ -65,37 +65,37 @@ func TestWrapSQLConnector_Exec_Error(t *testing.T) {
 		Service: "go-sensor-test",
 	}, recorder))
 
-	dbErr := errors.New("something went wrong")
 	db := sql.OpenDB(instana.WrapSQLConnector(s, "connection string", sqlConnector{
-		Error: dbErr,
+		Error: errors.New("something went wrong"),
 	}))
 
 	_, err := db.Exec("TEST QUERY")
 	assert.Error(t, err)
 
 	spans := recorder.GetQueuedSpans()
-	require.Len(t, spans, 1)
+	require.Len(t, spans, 2)
 
-	span := spans[0]
+	span, logSpan := spans[0], spans[1]
 	assert.Equal(t, 1, span.Ec)
 	assert.EqualValues(t, instana.ExitSpanKind, span.Kind)
 
 	require.IsType(t, instana.SDKSpanData{}, span.Data)
-	data := span.Data.(instana.SDKSpanData)
 
-	require.IsType(t, map[uint64]map[string]interface{}{}, data.Tags.Custom["logs"])
-	logs := data.Tags.Custom["logs"].(map[uint64]map[string]interface{})
+	assert.Equal(t, span.TraceID, logSpan.TraceID)
+	assert.Equal(t, span.SpanID, logSpan.ParentID)
+	assert.Equal(t, "log.go", logSpan.Name)
 
-	collected := make(map[string][]interface{})
-	for _, l := range logs {
-		for k, v := range l {
-			if k == "error.object" {
-				k = "error"
-			}
-			collected[k] = append(collected[k], v)
-		}
-	}
-	assert.Contains(t, collected["error"], dbErr)
+	// assert that log message has been recorded within the span interval
+	assert.GreaterOrEqual(t, logSpan.Timestamp, span.Timestamp)
+	assert.LessOrEqual(t, logSpan.Duration, span.Duration)
+
+	require.IsType(t, instana.LogSpanData{}, logSpan.Data)
+	logData := logSpan.Data.(instana.LogSpanData)
+
+	assert.Equal(t, instana.LogSpanTags{
+		Level:   "ERROR",
+		Message: `error: "something went wrong"`,
+	}, logData.Tags)
 }
 
 func TestWrapSQLConnector_Query(t *testing.T) {
@@ -153,28 +153,29 @@ func TestWrapSQLConnector_Query_Error(t *testing.T) {
 	assert.Error(t, err)
 
 	spans := recorder.GetQueuedSpans()
-	require.Len(t, spans, 1)
+	require.Len(t, spans, 2)
 
-	span := spans[0]
+	span, logSpan := spans[0], spans[1]
 	assert.Equal(t, 1, span.Ec)
 	assert.EqualValues(t, instana.ExitSpanKind, span.Kind)
 
 	require.IsType(t, instana.SDKSpanData{}, span.Data)
-	data := span.Data.(instana.SDKSpanData)
 
-	require.IsType(t, map[uint64]map[string]interface{}{}, data.Tags.Custom["logs"])
-	logs := data.Tags.Custom["logs"].(map[uint64]map[string]interface{})
+	assert.Equal(t, span.TraceID, logSpan.TraceID)
+	assert.Equal(t, span.SpanID, logSpan.ParentID)
+	assert.Equal(t, "log.go", logSpan.Name)
 
-	collected := make(map[string][]interface{})
-	for _, l := range logs {
-		for k, v := range l {
-			if k == "error.object" {
-				k = "error"
-			}
-			collected[k] = append(collected[k], v)
-		}
-	}
-	assert.Contains(t, collected["error"], dbErr)
+	// assert that log message has been recorded within the span interval
+	assert.GreaterOrEqual(t, logSpan.Timestamp, span.Timestamp)
+	assert.LessOrEqual(t, logSpan.Duration, span.Duration)
+
+	require.IsType(t, instana.LogSpanData{}, logSpan.Data)
+	logData := logSpan.Data.(instana.LogSpanData)
+
+	assert.Equal(t, instana.LogSpanTags{
+		Level:   "ERROR",
+		Message: `error: "something went wrong"`,
+	}, logData.Tags)
 }
 
 type sqlConnector struct{ Error error }

@@ -5,6 +5,7 @@ package instana_test
 
 import (
 	"errors"
+	"fmt"
 	"testing"
 	"time"
 
@@ -118,72 +119,6 @@ func TestSpanTags(t *testing.T) {
 	assert.Equal(t, ot.Tags{"foo": "bar"}, data.Tags.Custom["tags"])
 }
 
-func TestSpanLogFields(t *testing.T) {
-	const op = "test"
-	recorder := instana.NewTestRecorder()
-	tracer := instana.NewTracerWithEverything(&instana.Options{}, recorder)
-
-	sp := tracer.StartSpan(op)
-	sp.LogFields(
-		log.String("event", "soft error"),
-		log.String("type", "cache timeout"),
-		log.Int("waited.millis", 1500),
-	)
-	sp.Finish()
-
-	spans := recorder.GetQueuedSpans()
-	require.Len(t, spans, 1)
-	span := spans[0]
-
-	require.IsType(t, instana.SDKSpanData{}, span.Data)
-	data := span.Data.(instana.SDKSpanData)
-
-	require.IsType(t, map[uint64]map[string]interface{}{}, data.Tags.Custom["logs"])
-	logRecords := data.Tags.Custom["logs"].(map[uint64]map[string]interface{})
-
-	require.Len(t, logRecords, 1)
-	for _, v := range logRecords {
-		assert.Equal(t, map[string]interface{}{
-			"event":         "soft error",
-			"type":          "cache timeout",
-			"waited.millis": 1500,
-		}, v)
-	}
-}
-
-func TestSpanLogKVs(t *testing.T) {
-	const op = "test"
-	recorder := instana.NewTestRecorder()
-	tracer := instana.NewTracerWithEverything(&instana.Options{}, recorder)
-
-	sp := tracer.StartSpan(op)
-	sp.LogKV(
-		"event", "soft error",
-		"type", "cache timeout",
-		"waited.millis", 1500,
-	)
-	sp.Finish()
-
-	spans := recorder.GetQueuedSpans()
-	require.Len(t, spans, 1)
-	span := spans[0]
-
-	require.IsType(t, instana.SDKSpanData{}, span.Data)
-	data := span.Data.(instana.SDKSpanData)
-
-	require.IsType(t, map[uint64]map[string]interface{}{}, data.Tags.Custom["logs"])
-	logRecords := data.Tags.Custom["logs"].(map[uint64]map[string]interface{})
-
-	require.Len(t, logRecords, 1)
-	for _, v := range logRecords {
-		assert.Equal(t, map[string]interface{}{
-			"event":         "soft error",
-			"type":          "cache timeout",
-			"waited.millis": 1500,
-		}, v)
-	}
-}
-
 func TestOTLogError(t *testing.T) {
 	recorder := instana.NewTestRecorder()
 	tracer := instana.NewTracerWithEverything(&instana.Options{}, recorder)
@@ -215,21 +150,26 @@ func TestSpanErrorLogKV(t *testing.T) {
 	sp.Finish()
 
 	spans := recorder.GetQueuedSpans()
-	require.Len(t, spans, 1)
+	require.Len(t, spans, 2)
 
-	span := spans[0]
+	span, logSpan := spans[0], spans[1]
 	assert.Equal(t, 1, span.Ec)
 
-	require.IsType(t, instana.SDKSpanData{}, span.Data)
-	data := span.Data.(instana.SDKSpanData)
+	assert.Equal(t, span.TraceID, logSpan.TraceID)
+	assert.Equal(t, span.SpanID, logSpan.ParentID)
+	assert.Equal(t, "log.go", logSpan.Name)
 
-	require.IsType(t, map[uint64]map[string]interface{}{}, data.Tags.Custom["logs"])
-	logRecords := data.Tags.Custom["logs"].(map[uint64]map[string]interface{})
+	// assert that log message has been recorded within the span interval
+	assert.GreaterOrEqual(t, logSpan.Timestamp, span.Timestamp)
+	assert.LessOrEqual(t, logSpan.Duration, span.Duration)
 
-	require.Len(t, logRecords, 1)
-	for _, v := range logRecords {
-		assert.Equal(t, map[string]interface{}{"error": "simulated error"}, v)
-	}
+	require.IsType(t, instana.LogSpanData{}, logSpan.Data)
+	logData := logSpan.Data.(instana.LogSpanData)
+
+	assert.Equal(t, instana.LogSpanTags{
+		Level:   "ERROR",
+		Message: `error: "simulated error"`,
+	}, logData.Tags)
 }
 
 func TestSpanErrorLogFields(t *testing.T) {
@@ -244,18 +184,29 @@ func TestSpanErrorLogFields(t *testing.T) {
 	sp.Finish()
 
 	spans := recorder.GetQueuedSpans()
-	require.Len(t, spans, 1)
+	require.Len(t, spans, 3)
 
-	span := spans[0]
+	span, logSpans := spans[0], spans[1:]
 	assert.Equal(t, 2, span.Ec)
 
-	require.IsType(t, instana.SDKSpanData{}, span.Data)
-	data := span.Data.(instana.SDKSpanData)
+	require.Len(t, logSpans, 2)
+	for i, logSpan := range logSpans {
+		assert.Equal(t, span.TraceID, logSpan.TraceID, fmt.Sprintf("log span %d", i))
+		assert.Equal(t, span.SpanID, logSpan.ParentID, fmt.Sprintf("log span %d", i))
+		assert.Equal(t, "log.go", logSpan.Name, fmt.Sprintf("log span %d", i))
 
-	require.IsType(t, map[uint64]map[string]interface{}{}, data.Tags.Custom["logs"])
-	logRecords := data.Tags.Custom["logs"].(map[uint64]map[string]interface{})
+		// assert that log message has been recorded within the span interval
+		assert.GreaterOrEqual(t, logSpan.Timestamp, span.Timestamp, fmt.Sprintf("log span %d", i))
+		assert.LessOrEqual(t, logSpan.Duration, span.Duration, fmt.Sprintf("log span %d", i))
 
-	assert.Len(t, logRecords, 1)
+		require.IsType(t, instana.LogSpanData{}, logSpan.Data, fmt.Sprintf("log span %d", i))
+		logData := logSpan.Data.(instana.LogSpanData)
+
+		assert.Equal(t, instana.LogSpanTags{
+			Level:   "ERROR",
+			Message: `error: "simulated error" function: "TestspanErrorLogFields"`,
+		}, logData.Tags, fmt.Sprintf("log span %d", i))
+	}
 }
 
 func TestSpan_Suppressed_StartSpanOption(t *testing.T) {
