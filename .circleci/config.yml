@@ -80,9 +80,9 @@ workflows:
           name: "go1.10"
           go_version: "1.10"
           vendor_deps: "yes"
-          exclude_dirs: "./instrumentation/cloud.google.com/go ./example/gin ./instrumentation/instagin"
+          exclude_dirs: "./instrumentation/cloud.google.com/go ./example/gin ./instrumentation/instagin ./instrumentation/instagorillamux"
       - build:
           name: "go1.9"
           go_version: "1.9"
           vendor_deps: "yes"
-          exclude_dirs: "./instrumentation/cloud.google.com/go ./instrumentation/instagin ./example/http-database-greeter ./example/grpc-client-server ./example/grpc-client-server/pb ./example/gin"
+          exclude_dirs: "./instrumentation/cloud.google.com/go ./instrumentation/instagin ./example/http-database-greeter ./example/grpc-client-server ./example/grpc-client-server/pb ./example/gin ./example/gorillamux "
