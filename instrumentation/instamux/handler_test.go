@@ -3,7 +3,7 @@
 
 // +build go1.12
 
-package instagorillamux_test
+package instamux_test
 
 import (
 	"net/http"
@@ -17,7 +17,7 @@ import (
 	"github.com/instana/testify/assert"
 
 	instana "github.com/instana/go-sensor"
-	"github.com/instana/go-sensor/instrumentation/instagorillamux"
+	"github.com/instana/go-sensor/instrumentation/instamux"
 
 	"github.com/gorilla/mux"
 )
@@ -52,7 +52,7 @@ func TestPropagation(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 	})
 
-	instagorillamux.AddMiddleware(sensor, r)
+	instamux.AddMiddleware(sensor, r)
 
 	req := httptest.NewRequest("GET", "https://example.com/foo/1?SECRET_VALUE=%3Credacted%3E&myPassword=%3Credacted%3E&q=term&sensitive_key=%3Credacted%3E", nil)
 

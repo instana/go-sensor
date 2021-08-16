@@ -3,7 +3,7 @@
 
 // +build go1.12
 
-package instagorillamux
+package instamux
 
 import (
 	"net/http"

@@ -1,7 +1,7 @@
 An Instrumented Server gorilla mux Example
 ==========================
 
-An example of usage of Instana tracer to instrument a gorilla mux application with `https://github.com/instana/go-sensor/tree/master/instrumentation/instagorillamux`.
+An example of usage of Instana tracer to instrument a gorilla mux application with `https://github.com/instana/go-sensor/tree/master/instrumentation/instamux`.
 
 Usage
 -----

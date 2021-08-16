@@ -11,10 +11,9 @@ import (
 	"net/http"
 	"os"
 
-	instana "github.com/instana/go-sensor"
-
 	"github.com/gorilla/mux"
-	"github.com/instana/go-sensor/instrumentation/instagorillamux"
+	instana "github.com/instana/go-sensor"
+	"github.com/instana/go-sensor/instrumentation/instamux"
 )
 
 var listenAddr string
@@ -35,7 +34,7 @@ func main() {
 	r := mux.NewRouter()
 
 	// instrument your router by adding a middleware
-	instagorillamux.AddMiddleware(sensor, r)
+	instamux.AddMiddleware(sensor, r)
 
 	r.HandleFunc("/foo", func(writer http.ResponseWriter, request *http.Request) {})
 

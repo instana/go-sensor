@@ -1,4 +1,4 @@
-module github.com/instana/go-sensor/instrumentation/instagorillamux
+module github.com/instana/go-sensor/instrumentation/instamux
 
 go 1.12
 

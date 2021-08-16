@@ -12,7 +12,7 @@ Installation
 To add the module to your `go.mod` file run the following command in your project directory:
 
 ```bash
-$ go get github.com/instana/go-sensor/instrumentation/instagorillamux
+$ go get github.com/instana/go-sensor/instrumentation/instamux
 ```
 
 Usage
@@ -26,7 +26,7 @@ sensor := instana.NewSensor("my-web-server")
 r := mux.NewRouter()
 
 // Instrument your router by adding a middleware
-instagorillamux.AddMiddleware(sensor, r)
+instamux.AddMiddleware(sensor, r)
 
 // Define handlers
 r.HandleFunc("/foo", func(writer http.ResponseWriter, request *http.Request) {})
@@ -36,5 +36,5 @@ r.HandleFunc("/foo", func(writer http.ResponseWriter, request *http.Request) {})
 
 
 
-[godoc]: https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instagorillamux
+[godoc]: https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instamux
 [fullExample]: https://github.com/instana/go-sensor/blob/master/example/gorillamux/main.go
