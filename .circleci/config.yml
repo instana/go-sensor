@@ -76,6 +76,7 @@ workflows:
           name: "go1.11"
           go_version: "1.11"
           go111module: "on"
+          exclude_dirs: "./example/gorillamux ./instrumentation/instagorillamux"
       - build:
           name: "go1.10"
           go_version: "1.10"
