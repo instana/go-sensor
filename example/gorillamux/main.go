@@ -28,14 +28,16 @@ func main() {
 		os.Exit(2)
 	}
 
-	r := mux.NewRouter()
-	r.HandleFunc("/foo", func(writer http.ResponseWriter, request *http.Request) {})
-
 	// create a sensor
-	sensor := instana.NewSensor("gorillamux-sensor")
+	sensor := instana.NewSensor("my-web-server")
 
-	// add middleware
+	// create router
+	r := mux.NewRouter()
+
+	// instrument your router by adding a middleware
 	instagorillamux.AddMiddleware(sensor, r)
+
+	r.HandleFunc("/foo", func(writer http.ResponseWriter, request *http.Request) {})
 
 	log.Fatal(http.ListenAndServe(listenAddr, r))
 }

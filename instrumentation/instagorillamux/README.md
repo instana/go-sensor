@@ -19,10 +19,10 @@ Usage
 -----
 
 ```go
-// create router
 // Create a sensor
 sensor := instana.NewSensor("my-web-server")
 
+// Create router
 r := mux.NewRouter()
 
 // Instrument your router by adding a middleware
