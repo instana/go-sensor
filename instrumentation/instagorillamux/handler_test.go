@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
-	"reflect"
 	"testing"
 
 	"github.com/instana/testify/require"
@@ -34,18 +33,6 @@ func TestMain(m *testing.M) {
 	os.Exit(m.Run())
 }
 
-func TestAddMiddleware(t *testing.T) {
-	r := mux.NewRouter()
-	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		return
-	})
-	sensor := instana.NewSensor("gorillamux-test")
-
-	assert.Equal(t, 0, getNumberOfMiddlewares(r))
-	instagorillamux.AddMiddleware(sensor, r)
-	assert.Equal(t, 1, getNumberOfMiddlewares(r))
-}
-
 func TestPropagation(t *testing.T) {
 	traceIDHeader := "0000000000001234"
 	spanIDHeader := "0000000000004567"
@@ -65,7 +52,6 @@ func TestPropagation(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 	})
 
-	assert.Equal(t, 0, getNumberOfMiddlewares(r))
 	instagorillamux.AddMiddleware(sensor, r)
 
 	req := httptest.NewRequest("GET", "https://example.com/foo/1?SECRET_VALUE=%3Credacted%3E&myPassword=%3Credacted%3E&q=term&sensitive_key=%3Credacted%3E", nil)
@@ -118,8 +104,4 @@ func TestPropagation(t *testing.T) {
 			"x-custom-header-2": "response",
 		},
 	}, entrySpanData.Tags)
-}
-
-func getNumberOfMiddlewares(r *mux.Router) int {
-	return reflect.ValueOf(r).Elem().FieldByName("middlewares").Len()
 }
