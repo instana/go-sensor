@@ -1,0 +1,47 @@
+name: Bug Report
+description: File a bug report
+title: "[Bug]: "
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for taking the time to fill out this report. Remember that these issues are public and if you need to discuss implementation specific issues securely, please [use our support portal](https://support.instana.com/hc/en-us).
+  - type: textarea
+    id: problem-description
+    attributes:
+      label: Problem Description
+      description: What was the issue that caused you to file this bug?
+    validations:
+      required: true
+  - type: textarea
+    id: mcve
+    attributes:
+      label: Minimal, Complete, Verifiable, Example
+      description: Can you provide steps needed to reproduce this issue outside of your application?
+    validations:
+      required: false
+  - type: input
+    id: go-version
+    attributes:
+      label: Go Version
+      description: What version of Go was the application compiled with when it encountered this bug?
+      placeholder: go1.x
+    validations:
+      required: true
+  - type: textarea
+    id: gomod
+    attributes:
+      label: go.mod
+      description: Please paste the contents of the go.mod for the application that was affected by this bug.
+      render: shell
+    validations:
+      required: true
+  - type: textarea
+    id: goenv
+    attributes:
+      label: go env
+      description: Please paste the output of `go env` from the machine that has been used to build the application.
+      render: shell
+    validations:
+      required: true
