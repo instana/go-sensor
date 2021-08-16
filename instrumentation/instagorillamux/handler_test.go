@@ -1,8 +1,14 @@
+// (c) Copyright IBM Corp. 2021
+// (c) Copyright Instana Inc. 2016
+
+// +build go1.11
+
 package instagorillamux_test
 
 import (
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"reflect"
 	"testing"
 
@@ -17,20 +23,27 @@ import (
 	"github.com/gorilla/mux"
 )
 
+func TestMain(m *testing.M) {
+	instana.InitSensor(&instana.Options{
+		Service: "gorillamux-test",
+		Tracer: instana.TracerOptions{
+			CollectableHTTPHeaders: []string{"x-custom-header-1", "x-custom-header-2"},
+		},
+	})
+
+	os.Exit(m.Run())
+}
+
 func TestAddMiddleware(t *testing.T) {
 	r := mux.NewRouter()
 	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		return
 	})
-	sensor := instana.NewSensor("gin-test")
+	sensor := instana.NewSensor("gorillamux-test")
 
 	assert.Equal(t, 0, getNumberOfMiddlewares(r))
 	instagorillamux.AddMiddleware(sensor, r)
 	assert.Equal(t, 1, getNumberOfMiddlewares(r))
-}
-
-func getNumberOfMiddlewares(r *mux.Router) int {
-	return reflect.ValueOf(r).Elem().FieldByName("middlewares").Len()
 }
 
 func TestPropagation(t *testing.T) {
@@ -38,16 +51,11 @@ func TestPropagation(t *testing.T) {
 	spanIDHeader := "0000000000004567"
 
 	recorder := instana.NewTestRecorder()
-	tracer := instana.NewTracerWithEverything(&instana.Options{
-		Service: "gorilla-mux-test",
-		Tracer: instana.TracerOptions{
-			CollectableHTTPHeaders: []string{"x-custom-header-1", "x-custom-header-2"},
-		},
-	}, recorder)
+	tracer := instana.NewTracerWithEverything(nil, recorder)
 	sensor := instana.NewSensorWithTracer(tracer)
 
 	r := mux.NewRouter()
-	r.HandleFunc("/foo", func(w http.ResponseWriter, r *http.Request) {
+	r.HandleFunc("/foo/{id}", func(w http.ResponseWriter, r *http.Request) {
 		parent, ok := instana.SpanFromContext(r.Context())
 		assert.True(t, ok)
 
@@ -60,7 +68,7 @@ func TestPropagation(t *testing.T) {
 	assert.Equal(t, 0, getNumberOfMiddlewares(r))
 	instagorillamux.AddMiddleware(sensor, r)
 
-	req := httptest.NewRequest("GET", "https://example.com/foo?SECRET_VALUE=%3Credacted%3E&myPassword=%3Credacted%3E&q=term&sensitive_key=%3Credacted%3E", nil)
+	req := httptest.NewRequest("GET", "https://example.com/foo/1?SECRET_VALUE=%3Credacted%3E&myPassword=%3Credacted%3E&q=term&sensitive_key=%3Credacted%3E", nil)
 
 	req.Header.Add(instana.FieldT, traceIDHeader)
 	req.Header.Add(instana.FieldS, spanIDHeader)
@@ -97,16 +105,21 @@ func TestPropagation(t *testing.T) {
 	entrySpanData := entrySpan.Data.(instana.HTTPSpanData)
 
 	assert.Equal(t, instana.HTTPSpanTags{
-		Method:   "GET",
-		Status:   http.StatusOK,
-		Path:     "/foo",
-		URL:      "",
-		Host:     "example.com",
-		Protocol: "https",
-		Params:   "SECRET_VALUE=%3Credacted%3E&myPassword=%3Credacted%3E&q=term&sensitive_key=%3Credacted%3E",
+		Method:       "GET",
+		Status:       http.StatusOK,
+		Path:         "/foo/1",
+		PathTemplate: "/foo/{id}",
+		URL:          "",
+		Host:         "example.com",
+		Protocol:     "https",
+		Params:       "SECRET_VALUE=%3Credacted%3E&myPassword=%3Credacted%3E&q=term&sensitive_key=%3Credacted%3E",
 		Headers: map[string]string{
 			"x-custom-header-1": "request",
 			"x-custom-header-2": "response",
 		},
 	}, entrySpanData.Tags)
+}
+
+func getNumberOfMiddlewares(r *mux.Router) int {
+	return reflect.ValueOf(r).Elem().FieldByName("middlewares").Len()
 }
