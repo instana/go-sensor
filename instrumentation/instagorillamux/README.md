@@ -20,16 +20,16 @@ Usage
 
 ```go
 // create router
+// Create a sensor
+sensor := instana.NewSensor("my-web-server")
+
 r := mux.NewRouter()
 
-// define handler
-r.HandleFunc("/foo", func(writer http.ResponseWriter, request *http.Request) {})
-
-// create a sensor
-sensor := instana.NewSensor("gorillamux-sensor")
-
-// add middleware
+// Instrument your router by adding a middleware
 instagorillamux.AddMiddleware(sensor, r)
+
+// Define handlers
+r.HandleFunc("/foo", func(writer http.ResponseWriter, request *http.Request) {})
 ...
 ```
 [Full example][fullExample]
