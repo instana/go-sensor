@@ -38,10 +38,10 @@ body:
     validations:
       required: true
   - type: textarea
-    id: go-version
+    id: goenv
     attributes:
-      label: Go Version
-      description: What version of Go was the application compiled with when it encountered this bug?
+      label: go env
+      description: Please paste the output of `go env` from the machine that has been used to build the application.
       render: shell
     validations:
       required: true
