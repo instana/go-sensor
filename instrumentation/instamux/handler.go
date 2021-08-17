@@ -17,6 +17,7 @@ func AddMiddleware(sensor *instana.Sensor, router *mux.Router) {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			pathTemplate, err := mux.CurrentRoute(r).GetPathTemplate()
 			if err != nil {
+				sensor.Logger().Debug("can not get path template from the route: ", err.Error())
 				pathTemplate = ""
 			}
 
