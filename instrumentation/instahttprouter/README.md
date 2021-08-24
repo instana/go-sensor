@@ -36,4 +36,6 @@ r.HandlerFunc(http.MethodDelete, "/foo/:id", func(writer http.ResponseWriter, re
 // ...
 ```
 
+[Full example](../../example/httprouter/main.go)
+
 [godoc]: https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instahttprouter

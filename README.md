@@ -409,6 +409,7 @@ Following examples are included in the `example` folder:
 * [gRPC](./example/grpc-client-server) - an example of usage of Instana tracer in an app instrumented with gRPC
 * [Gin](./example/gin) - an example of usage of Instana tracer to instrument a Gin application
 * [Gorilla mux](./example/gorillamux) - an example of usage of Instana tracer to instrument a Gorilla mux router
+* [httprouter](./example/httprouter) - an example of usage of Instana tracer instrumenting a [`github.com/julienschmidt/httprouter`](https://github.com/julienschmidt/httprouter) router
 
 For more examples please consult the [godoc][godoc].
 
