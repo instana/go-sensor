@@ -25,7 +25,7 @@ func TestSpanContextFromSQSMessage(t *testing.T) {
 	)
 
 	examples := map[string]*sqs.Message{
-		"standard keys": &sqs.Message{
+		"standard keys": {
 			MessageAttributes: map[string]*sqs.MessageAttributeValue{
 				"Custom": {
 					DataType:    aws.String("String"),
@@ -45,7 +45,7 @@ func TestSpanContextFromSQSMessage(t *testing.T) {
 				},
 			},
 		},
-		"legacy keys": &sqs.Message{
+		"legacy keys": {
 			MessageAttributes: map[string]*sqs.MessageAttributeValue{
 				"Custom": {
 					DataType:    aws.String("String"),
