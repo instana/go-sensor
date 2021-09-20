@@ -104,6 +104,7 @@ func newSpan(span *spanS) Span {
 	return sp
 }
 
+// TraceReference is used to reference a parent span
 type TraceReference struct {
 	TraceID  string `json:"t"`
 	ParentID string `json:"p,omitempty"`
@@ -262,7 +263,6 @@ func (d SDKSpanData) Kind() SpanKind {
 	return d.sk
 }
 
-// KnownTags returns the list of known tags for this span type
 // SDKSpanTags contains fields within the `data.sdk` section of an OT span document
 type SDKSpanTags struct {
 	Name      string                 `json:"name"`

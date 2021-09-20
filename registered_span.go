@@ -379,6 +379,7 @@ func NewKafkaSpanData(span *spanS) KafkaSpanData {
 	return data
 }
 
+// Kind returns instana.ExitSpanKind for producer spans and instana.EntrySpanKind otherwise
 func (d KafkaSpanData) Kind() SpanKind {
 	if d.producerSpan {
 		return ExitSpanKind

@@ -16,6 +16,8 @@ import (
 	"github.com/instana/go-sensor/process"
 )
 
+// ErrAgentNotReady is an error returned for an attempt to communicate with an agent before the client
+// announcement process is done
 var ErrAgentNotReady = errors.New("agent not ready")
 
 type containerSnapshot struct {
