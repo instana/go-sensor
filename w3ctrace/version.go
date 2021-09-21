@@ -12,11 +12,11 @@ import (
 type Version uint8
 
 const (
-	// Invalid W3C Trace Context version
+	// Version_Invalid represend an invalid  W3C Trace Context version
 	Version_Invalid Version = iota
-	// Supported versions of W3C Trace Context headers
+	// Version_0 represent the W3C Trace Context version 00
 	Version_0
-	// The latest supported version of W3C Trace Context
+	// Version_Max is the latest version of W3C Trace Context supported by this package
 	Version_Max = Version_0
 )
 

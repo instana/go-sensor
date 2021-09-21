@@ -476,7 +476,7 @@ func TestFinalizeSQSSpan_WithError(t *testing.T) {
 
 func TestTraceSQSMessage_WithTraceContext(t *testing.T) {
 	examples := map[string]*sqs.Message{
-		"standard keys": &sqs.Message{
+		"standard keys": {
 			Body: aws.String("message body"),
 			MessageAttributes: map[string]*sqs.MessageAttributeValue{
 				"X_INSTANA_T": {
@@ -493,7 +493,7 @@ func TestTraceSQSMessage_WithTraceContext(t *testing.T) {
 				},
 			},
 		},
-		"legacy keys": &sqs.Message{
+		"legacy keys": {
 			Body: aws.String("message body"),
 			MessageAttributes: map[string]*sqs.MessageAttributeValue{
 				"X_INSTANA_ST": {
@@ -510,7 +510,7 @@ func TestTraceSQSMessage_WithTraceContext(t *testing.T) {
 				},
 			},
 		},
-		"sns notification": &sqs.Message{
+		"sns notification": {
 			Body: aws.String(`{
   "Type" : "Notification",
   "MessageId" : "id1",

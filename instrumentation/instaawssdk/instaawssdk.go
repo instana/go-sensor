@@ -2,7 +2,6 @@
 // (c) Copyright Instana Inc. 2021
 
 // Package instaawssdk instruments github.com/aws/aws-sdk-go
-
 package instaawssdk
 
 import (

@@ -113,6 +113,7 @@ func NewSpanContext(parent SpanContext) SpanContext {
 	return c
 }
 
+// IsZero returns true if an instance of SpanContext is a zero-value
 func (sc SpanContext) IsZero() bool {
 	return sc.TraceIDHi == 0 && sc.TraceID == 0 && sc.SpanID == 0 && sc.W3CContext.IsZero() && !sc.Suppressed
 }

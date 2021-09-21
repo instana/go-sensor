@@ -75,9 +75,9 @@ func TestNewSpanContext(t *testing.T) {
 
 func TestNewSpanContext_EmptyParent(t *testing.T) {
 	examples := map[string]instana.SpanContext{
-		"zero value": instana.SpanContext{},
-		"suppressed": instana.SpanContext{Suppressed: true},
-		"with correlation data": instana.SpanContext{
+		"zero value": {},
+		"suppressed": {Suppressed: true},
+		"with correlation data": {
 			Correlation: instana.EUMCorrelationData{
 				Type: "web",
 				ID:   "1",

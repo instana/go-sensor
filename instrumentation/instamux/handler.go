@@ -12,6 +12,7 @@ import (
 	instana "github.com/instana/go-sensor"
 )
 
+// AddMiddleware instruments the mux.Router instance with Instana
 func AddMiddleware(sensor *instana.Sensor, router *mux.Router) {
 	router.Use(func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
