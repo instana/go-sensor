@@ -12,14 +12,17 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-// AddMiddleware adds the tracing middleware to the list of Echo handlers.
-func AddMiddleware(sensor *instana.Sensor, engine *echo.Echo) {
-	f := middleware(sensor)
-	engine.Use(f)
+// New returns an instrumented Echo.
+func New(sensor *instana.Sensor) *echo.Echo {
+	engine := echo.New()
+	engine.Use(Middleware(sensor))
+
+	return engine
 }
 
-// middleware wraps Echo's handlers execution. Adds tracing context and handles entry span.
-func middleware(sensor *instana.Sensor) echo.MiddlewareFunc {
+// Middleware wraps Echo's handlers execution. Adds tracing context and handles entry span.
+// It should be added as a first Middleware to the Echo, before defining handlers.
+func Middleware(sensor *instana.Sensor) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
 			var err error

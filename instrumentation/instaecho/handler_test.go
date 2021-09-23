@@ -40,8 +40,7 @@ func TestPropagation(t *testing.T) {
 
 	sensor := instana.NewSensorWithTracer(tracer)
 
-	engine := echo.New()
-	instaecho.AddMiddleware(sensor, engine)
+	engine := instaecho.New(sensor)
 	engine.GET("/foo", func(c echo.Context) error {
 
 		parent, ok := instana.SpanFromContext(c.Request().Context())
@@ -114,8 +113,7 @@ func TestPropagationWithError(t *testing.T) {
 
 	sensor := instana.NewSensorWithTracer(tracer)
 
-	engine := echo.New()
-	instaecho.AddMiddleware(sensor, engine)
+	engine := instaecho.New(sensor)
 	engine.GET("/foo", func(c echo.Context) error {
 		parent, ok := instana.SpanFromContext(c.Request().Context())
 		assert.True(t, ok)

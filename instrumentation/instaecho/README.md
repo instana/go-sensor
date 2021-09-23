@@ -19,14 +19,11 @@ Usage
 -----
 
 ```go
-// init Echo
-e := echo.New()
-
 // create a sensor
 sensor := instana.NewSensor("echo-sensor")
 
-// add middleware to the Echo's handlers
-instaecho.AddMiddleware(sensor, e)
+// init instrumented Echo
+e := instaecho.New(sensor)
 
 // define API
 e.GET("/foo", func(c echo.Context) error {...})
