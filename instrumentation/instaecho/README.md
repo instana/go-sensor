@@ -1,4 +1,4 @@
-Instana instrumentation for echo framework
+Instana instrumentation for Echo framework
 =============================================
 
 This module contains middleware to instrument HTTP services written with [github.com/labstack/echo](https://github.com/labstack/echo).
