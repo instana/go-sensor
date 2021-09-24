@@ -32,14 +32,9 @@ func main() {
 	engine := instaecho.New(sensor)
 
 	engine.GET("/myendpoint", func(c echo.Context) error {
-		return c.JSON(200, []byte(`{"message": "pong"}`))
-	})
-
-	// use group: v1
-	v1 := engine.Group("/v1")
-
-	v1.GET("/myendpoint", func(c echo.Context) error {
-		return c.JSON(200, []byte(`{"message": "ping"}`))
+		return c.JSON(200, map[string]string{
+			"message": "pong",
+		})
 	})
 
 	engine.Start(listenAddr)

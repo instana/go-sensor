@@ -23,5 +23,4 @@ There will be two endpoints exposed:
 
 ```
 GET    /myendpoint               
-GET    /v1/myendpoint    
 ```       
