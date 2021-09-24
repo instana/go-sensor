@@ -1,12 +1,11 @@
+github.com/davecgh/go-spew v1.1.0 h1:ZDRjVQ15GmhC3fiQ8ni8+OwkZQO4DARzQgrnXU1Liz8=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
-github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
-github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/golang-jwt/jwt v3.2.2+incompatible/go.mod h1:8pz2t5EyA70fFQQSrl6XZXzqecmYZeUEB8OUGHkxJ+I=
 github.com/instana/go-sensor v1.30.0/go.mod h1:Uh9j3eF2mBw/FLk2MxISmVDIj8mtJBFRj2S19M6CVyQ=
-github.com/instana/go-sensor v1.31.1-0.20210923075053-370a2ec3bbc9 h1:QHyvf52ZJ0b88JodL2LuurgqGyArahxZ0SfEHL2K/Dw=
-github.com/instana/go-sensor v1.31.1-0.20210923075053-370a2ec3bbc9/go.mod h1:Uh9j3eF2mBw/FLk2MxISmVDIj8mtJBFRj2S19M6CVyQ=
-github.com/instana/go-sensor/instrumentation/instaecho v0.0.0-20210923125055-d4a4c8b1e806 h1:BFLc5/Vn7EQX1msd2lMxccK8OivlGJFQo3108atOHK0=
-github.com/instana/go-sensor/instrumentation/instaecho v0.0.0-20210923125055-d4a4c8b1e806/go.mod h1:9kmu3WAL733KFSr1/UZMwxVg3r4hQgSDbRzv4BMOmdk=
+github.com/instana/go-sensor v1.31.0 h1:rGOsDlPkQWcgPfXiDI7CPASQ7wvfriojoiPi83tkvJQ=
+github.com/instana/go-sensor v1.31.0/go.mod h1:Uh9j3eF2mBw/FLk2MxISmVDIj8mtJBFRj2S19M6CVyQ=
+github.com/instana/go-sensor/instrumentation/instaecho v1.0.0 h1:/czCk13vf7Ty1q0iaWsBO8LkV2EVHzd5iQFQq3slsVg=
+github.com/instana/go-sensor/instrumentation/instaecho v1.0.0/go.mod h1:KXJlno0iLsG0jS4pB/gfO8RFCYQCRlcjEUNtrHTKEU4=
 github.com/instana/testify v1.6.2-0.20200721153833-94b1851f4d65 h1:T25FL3WEzgmKB0m6XCJNZ65nw09/QIp3T1yXr487D+A=
 github.com/instana/testify v1.6.2-0.20200721153833-94b1851f4d65/go.mod h1:nYhEREG/B7HUY7P+LKOrqy53TpIqmJ9JyUShcaEKtGw=
 github.com/labstack/echo/v4 v4.6.0 h1:vsYEeeYy077cB5yMpgI+ubA7iVRZEtrzHhcvRhd27gA=
