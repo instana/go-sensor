@@ -26,8 +26,8 @@ sensor := instana.NewSensor("echo-sensor")
 e := instaecho.New(sensor)
 
 // define API
-e.GET("/foo", func(c echo.Context) error {...})
-...
+e.GET("/foo", func(c echo.Context) error { /* ... */ })
+// ...
 ```
 [Full example][fullExample]
 
