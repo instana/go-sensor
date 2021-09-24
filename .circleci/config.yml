@@ -68,9 +68,11 @@ workflows:
       - build:
           name: "go1.14"
           go_version: "1.14"
+          exclude_dirs: "./example/echo ./instrumentation/instaecho"
       - build:
           name: "go1.13"
           go_version: "1.13"
+          exclude_dirs: "./example/echo ./instrumentation/instaecho"
       - build:
           name: "go1.12"
           go_version: "1.12"
