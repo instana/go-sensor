@@ -1,7 +1,7 @@
 An Instrumented Server Echo Example
 ==========================
 
-An example of usage of Instana tracer to instrument an Echo application with `https://github.com/instana/go-sensor/tree/master/instrumentation/instaecho`.
+An example of usage of Instana tracer to instrument an Echo application with [`github.com/instana/go-sensor/instrumentation/instaecho`](../../instrumentation/instaecho).
 
 Usage
 -----
