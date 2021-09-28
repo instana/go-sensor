@@ -58,17 +58,9 @@ func main() {
 }
 ```
 
-The `instana.InitSensor()` function takes an [`*instana.Options`][instana.Options] struct with the following optional fields:
+The `instana.InitSensor()` function takes an [`*instana.Options`][instana.Options] to provide the initial configuration for the sensor.
 
-* **Service** - global service name that will be used to identify the program in the Instana backend
-* **AgentHost**, **AgentPort** - default to `localhost:42699`, set the coordinates of the Instana proxy agent
-* **LogLevel** - one of `Error`, `Warn`, `Info` or `Debug`
-* **EnableAutoProfile** - enables automatic continuous process profiling when `true`
-* **MaxBufferedSpans** - the maximum number of spans to buffer
-* **ForceTransmissionStartingAt** - the number of spans to collect before flushing the buffer to the agent
-* **MaxBufferedProfiles** - the maximum number of profiles to buffer
-* **IncludeProfilerFrames** - whether to include profiler calls into the profile or not
-* **Tracer** - [tracer-specific configuration][instana.TracerOptions] used by all tracers
+**Note:** subsequent calls to `instana.InitSensor()` with different configuration won't have any effect.
 
 Once initialized, the sensor performs a host agent lookup using following list of addresses (in order of priority):
 
