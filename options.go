@@ -29,7 +29,7 @@ type Options struct {
 // and ForceTransmissionStartingAt are set to instana.DefaultMaxBufferedSpans and
 // instana.DefaultForceSpanSendAt correspondigly. The AgentHost and AgentPort are
 // taken from the env INSTANA_AGENT_HOST and INSTANA_AGENT_PORT if set, and default
-// to localhost and 46999 otherwise.
+// to localhost and 42699 otherwise.
 func DefaultOptions() *Options {
 	opts := &Options{
 		Tracer: DefaultTracerOptions(),
