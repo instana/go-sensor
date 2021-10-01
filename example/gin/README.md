@@ -1,7 +1,7 @@
-An Instrumented Server gin Example
-==========================
+An Instrumented github.com/gin-gonic/gin Server Example
+=======================================================
 
-An example of usage of Instana tracer to instrument a Gin application with `https://github.com/instana/go-sensor/tree/master/instrumentation/instagin`.
+An example of instrumenting a `github.com/gin-gonic/gin` HTTP service with Instana using [`github.com/instana/go-sensor/tree/master/instrumentation/instagin`](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instagin).
 
 Usage
 -----
@@ -22,6 +22,6 @@ In case when the port is already in use, please choose another one.
 There will be two endpoints exposed:
 
 ```
-GET    /myendpoint               
-GET    /v1/myendpoint    
-```       
+GET    /myendpoint
+GET    /v1/myendpoint
+```

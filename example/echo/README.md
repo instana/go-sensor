@@ -1,7 +1,7 @@
-An Instrumented Server Echo Example
-==========================
+An Instrumented github.com/labstack/echo Server Example
+=======================================================
 
-An example of usage of Instana tracer to instrument an Echo application with [`github.com/instana/go-sensor/instrumentation/instaecho`](../../instrumentation/instaecho).
+An example of instrumenting a `github.com/labstack/echo` HTTP service with Instana using [`github.com/instana/go-sensor/tree/master/instrumentation/instaecho`](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instaecho).
 
 Usage
 -----
@@ -22,5 +22,5 @@ In case when the port is already in use, please choose another one.
 There will be two endpoints exposed:
 
 ```
-GET    /myendpoint               
-```       
+GET    /myendpoint
+```
