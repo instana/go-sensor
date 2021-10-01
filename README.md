@@ -1,16 +1,16 @@
-![golang banner 2017-07-11](https://disznc.s3.amazonaws.com/Instana-Go-2017-07-11-at-16.01.45.png)
-
 # Instana Go Collector
 
-The Go Collector is a runtime metrics collector, code execution tracer and profiler for applications and services written in Go. This module
-is a part of [Instana](https://instana.com) APM solution.
-
-Te Go Collector requires Go version 1.9 or greater.
+![Instana, an IBM company](https://user-images.githubusercontent.com/203793/135623131-0babc5b4-7599-4511-8bf0-ce05922de8a3.png)
 
 [![Build Status](https://circleci.com/gh/instana/go-sensor/tree/master.svg?style=svg)](https://circleci.com/gh/instana/go-sensor/tree/master)
 [![PkgGoDev](https://pkg.go.dev/badge/github.com/instana/go-sensor)][pkg.go.dev]
 [![OpenTracing](https://img.shields.io/badge/OpenTracing-enabled-blue.svg)](http://opentracing.io)
 [![Go Report Card](https://goreportcard.com/badge/github.com/instana/go-sensor)](https://goreportcard.com/report/github.com/instana/go-sensor)
+
+The Go Collector is a runtime metrics collector, code execution tracer and profiler for applications and services written in Go. This module
+is a part of [Instana](https://instana.com) APM solution.
+
+The Go Collector requires Go version 1.9 or greater.
 
 ## Installation
 
