@@ -1,7 +1,7 @@
-An Instrumented Server gorilla mux Example
-==========================
+An Instrumented github.com/gorilla/mux Server Example
+=====================================================
 
-An example of usage of Instana tracer to instrument a gorilla mux application with `https://github.com/instana/go-sensor/tree/master/instrumentation/instamux`.
+An example of instrumenting a `github.com/gorilla/mux` HTTP service with Instana using [`github.com/instana/go-sensor/tree/master/instrumentation/instamux`](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instamux).
 
 Usage
 -----
@@ -22,5 +22,5 @@ In case when the port is already in use, please choose another one.
 There will be an exposed endpoint:
 
 ```
-GET    /foo               
-```       
+GET    /foo
+```

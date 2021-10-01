@@ -1,7 +1,7 @@
 Doubler
 =======
 
-Doubler is an example app that demonstrates the use of `github.com/instana/go-sensor/instrumentation/instasarama` to
+Doubler is an example app that demonstrates the use of [`github.com/instana/go-sensor/instrumentation/instasarama`](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instasarama) to
 instrument Kafka consumers and producers. It reads messages, containing integer values to the `-in` topic, multiplies
 it by 2 and publishes the result to the topic defined by the `-out` flag.
 
