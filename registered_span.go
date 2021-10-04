@@ -46,6 +46,8 @@ const (
 	AWSLambdaInvokeSpanType = RegisteredSpanType("aws.lambda.invoke")
 	// Logging span
 	LogSpanType = RegisteredSpanType("log.go")
+	// MongoDB client span
+	MongoDBSpanType = RegisteredSpanType("mongo")
 )
 
 // RegisteredSpanType represents the span type supported by Instana
@@ -78,6 +80,8 @@ func (st RegisteredSpanType) ExtractData(span *spanS) typedSpanData {
 		return newAWSLambdaInvokeSpanData(span)
 	case LogSpanType:
 		return newLogSpanData(span)
+	case MongoDBSpanType:
+		return newMongoDBSpanData(span)
 	default:
 		return NewSDKSpanData(span)
 	}
@@ -196,6 +200,15 @@ func (st RegisteredSpanType) TagsNames() map[string]struct{} {
 			"log.level":      yes,
 			"log.parameters": yes,
 			"log.logger":     yes,
+		}
+	case MongoDBSpanType:
+		return map[string]struct{}{
+			"mongo.service":   yes,
+			"mongo.namespace": yes,
+			"mongo.command":   yes,
+			"mongo.query":     yes,
+			"mongo.json":      yes,
+			"mongo.filter":    yes,
 		}
 	default:
 		return nil
@@ -1172,6 +1185,63 @@ func newLogSpanTags(span *spanS) LogSpanTags {
 			readStringTag(&tags.Error, v)
 		case "log.logger":
 			readStringTag(&tags.Logger, v)
+		}
+	}
+
+	return tags
+}
+
+// MongoDBSpanData represents the `data` section of a MongoDB client span
+type MongoDBSpanData struct {
+	SpanData
+	Tags MongoDBSpanTags `json:"mongo"`
+}
+
+// newMongoDBSpanData initializes a new MongoDB clientspan data from tracer span
+func newMongoDBSpanData(span *spanS) MongoDBSpanData {
+	return MongoDBSpanData{
+		SpanData: NewSpanData(span, MongoDBSpanType),
+		Tags:     newMongoDBSpanTags(span),
+	}
+}
+
+// Kind returns the span kind for a MongoDB client span
+func (d MongoDBSpanData) Kind() SpanKind {
+	return ExitSpanKind
+}
+
+// MongoDBSpanTags contains fields within the `data.mongo` section of an OT span document
+type MongoDBSpanTags struct {
+	// Service is the MongoDB server address in form of host:port
+	Service string `json:"service"`
+	// Namespace is the namespace name
+	Namespace string `json:"namespace"`
+	// Command is the name of the command initiated the span
+	Command string `json:"command"`
+	// Query is an optional query passed with command
+	Query string `json:"query,omitempty"`
+	// JSON is an optional JSON aggregation provided with command
+	JSON string `json:"json,omitempty"`
+	// Filter is an optional filter passed with command
+	Filter string `json:"filter,omitempty"`
+}
+
+func newMongoDBSpanTags(span *spanS) MongoDBSpanTags {
+	var tags MongoDBSpanTags
+	for k, v := range span.Tags {
+		switch k {
+		case "mongo.service":
+			readStringTag(&tags.Service, v)
+		case "mongo.namespace":
+			readStringTag(&tags.Namespace, v)
+		case "mongo.command":
+			readStringTag(&tags.Command, v)
+		case "mongo.query":
+			readStringTag(&tags.Query, v)
+		case "mongo.json":
+			readStringTag(&tags.JSON, v)
+		case "mongo.filter":
+			readStringTag(&tags.Filter, v)
 		}
 	}
 
