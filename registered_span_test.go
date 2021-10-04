@@ -66,6 +66,10 @@ func TestRegisteredSpanType_ExtractData(t *testing.T) {
 			Operation: "log.go",
 			Expected:  instana.LogSpanData{},
 		},
+		"mongodb": {
+			Operation: "mongo",
+			Expected:  instana.MongoDBSpanData{},
+		},
 	}
 
 	for name, example := range examples {
