@@ -209,6 +209,7 @@ func (st RegisteredSpanType) TagsNames() map[string]struct{} {
 			"mongo.query":     yes,
 			"mongo.json":      yes,
 			"mongo.filter":    yes,
+			"mongo.error":     yes,
 		}
 	default:
 		return nil
@@ -1224,6 +1225,8 @@ type MongoDBSpanTags struct {
 	JSON string `json:"json,omitempty"`
 	// Filter is an optional filter passed with command
 	Filter string `json:"filter,omitempty"`
+	// Error is an optional error message
+	Error string `json:"error,omitempty"`
 }
 
 func newMongoDBSpanTags(span *spanS) MongoDBSpanTags {
@@ -1242,6 +1245,8 @@ func newMongoDBSpanTags(span *spanS) MongoDBSpanTags {
 			readStringTag(&tags.JSON, v)
 		case "mongo.filter":
 			readStringTag(&tags.Filter, v)
+		case "mongo.error":
+			readStringTag(&tags.Error, v)
 		}
 	}
 
