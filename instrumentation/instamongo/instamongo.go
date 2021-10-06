@@ -16,6 +16,8 @@ import (
 	"go.mongodb.org/mongo-driver/bson/bsoncodec"
 	"go.mongodb.org/mongo-driver/bson/bsontype"
 	"go.mongodb.org/mongo-driver/event"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 var unmarshalReg *bsoncodec.Registry
@@ -25,6 +27,38 @@ func init() {
 	rb.RegisterTypeMapEntry(bsontype.EmbeddedDocument, reflect.TypeOf(bson.M{}))
 
 	unmarshalReg = rb.Build()
+}
+
+// Connect creates and instruments a new mongo.Client
+//
+// This is a wrapper method for mongo.Connect(), see https://pkg.go.dev/go.mongodb.org/mongo-driver/mongo#Connect for details on
+// the original method.
+func Connect(ctx context.Context, sensor *instana.Sensor, opts ...*options.ClientOptions) (*mongo.Client, error) {
+	return mongo.Connect(ctx, addInstrumentedCommandMonitor(opts, sensor)...)
+}
+
+// NewClient returns a new instrumented mongo.Client instance
+//
+// This is a wrapper method for mongo.NewClient(), see https://pkg.go.dev/go.mongodb.org/mongo-driver/mongo#NewClient for details on
+// the original method.
+func NewClient(sensor *instana.Sensor, opts ...*options.ClientOptions) (*mongo.Client, error) {
+	return mongo.NewClient(addInstrumentedCommandMonitor(opts, sensor)...)
+}
+
+func addInstrumentedCommandMonitor(opts []*options.ClientOptions, sensor *instana.Sensor) []*options.ClientOptions {
+	// search for the last client options containing a CommandMonitor and wrap it to preserve
+	for i := len(opts) - 1; i >= 0; i-- {
+		if opts[i] != nil && opts[i].Monitor != nil {
+			opts[i].Monitor = WrapCommandMonitor(opts[i].Monitor, sensor)
+
+			return opts
+		}
+	}
+
+	// if there is no CommandMonitor specified, add one
+	return append(opts, &options.ClientOptions{
+		Monitor: NewCommandMonitor(sensor),
+	})
 }
 
 type wrappedCommandMonitor struct {
