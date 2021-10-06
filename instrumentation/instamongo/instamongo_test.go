@@ -2,6 +2,7 @@ package instamongo_test
 
 import (
 	"context"
+	"sync"
 	"testing"
 
 	instana "github.com/instana/go-sensor"
@@ -12,7 +13,7 @@ import (
 	"go.mongodb.org/mongo-driver/event"
 )
 
-func TestNewCommandMonitor_Succeeded(t *testing.T) {
+func TestWrapCommandMonitor_Succeeded(t *testing.T) {
 	examples := map[string]struct {
 		Database     string
 		Command      string
@@ -178,21 +179,23 @@ func TestNewCommandMonitor_Succeeded(t *testing.T) {
 			sensor := instana.NewSensorWithTracer(
 				instana.NewTracerWithEverything(instana.DefaultOptions(), recorder),
 			)
+			mon := &monitorMock{}
 
-			m := instamongo.NewCommandMonitor(sensor)
+			m := instamongo.WrapCommandMonitor(mon.Monitor(), sensor)
 
 			sp := sensor.Tracer().StartSpan("testing")
 			ctx := instana.ContextWithSpan(context.Background(), sp)
 
-			m.Started(ctx, &event.CommandStartedEvent{
+			started := &event.CommandStartedEvent{
 				DatabaseName: example.Database,
 				Command:      marshalBSON(t, example.Data),
 				CommandName:  example.Command,
 				RequestID:    1,
 				ConnectionID: example.ConnectionID,
-			})
+			}
+			m.Started(ctx, started)
 
-			m.Succeeded(context.Background(), &event.CommandSucceededEvent{
+			success := &event.CommandSucceededEvent{
 				CommandFinishedEvent: event.CommandFinishedEvent{
 					DurationNanos: 123,
 					CommandName:   example.Command,
@@ -202,7 +205,8 @@ func TestNewCommandMonitor_Succeeded(t *testing.T) {
 				Reply: marshalBSON(t, bson.M{
 					"databases": bson.A{},
 				}),
-			})
+			}
+			m.Succeeded(context.Background(), success)
 
 			sp.Finish()
 
@@ -241,19 +245,23 @@ func TestNewCommandMonitor_Succeeded(t *testing.T) {
 			data.Tags.JSON = example.Expected.JSON
 
 			assert.Equal(t, example.Expected, data.Tags)
+
+			// Check that events were propagated to the original CommandMonitor
+			assert.Equal(t, []interface{}{started, success}, mon.Events())
 		})
 	}
 }
 
-func TestNewCommandMonitor_Succeeded_NotStarted(t *testing.T) {
+func TestWrapCommandMonitor_Succeeded_NotStarted(t *testing.T) {
 	recorder := instana.NewTestRecorder()
 	sensor := instana.NewSensorWithTracer(
 		instana.NewTracerWithEverything(instana.DefaultOptions(), recorder),
 	)
+	mon := &monitorMock{}
 
-	m := instamongo.NewCommandMonitor(sensor)
+	m := instamongo.WrapCommandMonitor(mon.Monitor(), sensor)
 
-	m.Succeeded(context.Background(), &event.CommandSucceededEvent{
+	success := &event.CommandSucceededEvent{
 		CommandFinishedEvent: event.CommandFinishedEvent{
 			DurationNanos: 123,
 			CommandName:   "listDatabases",
@@ -263,29 +271,35 @@ func TestNewCommandMonitor_Succeeded_NotStarted(t *testing.T) {
 		Reply: marshalBSON(t, bson.M{
 			"databases": bson.A{},
 		}),
-	})
+	}
+	m.Succeeded(context.Background(), success)
 
 	assert.Empty(t, recorder.GetQueuedSpans())
+
+	// Check that events were propagated to the original CommandMonitor
+	assert.Equal(t, []interface{}{success}, mon.Events())
 }
 
-func TestNewCommandMonitor_Succeeded_NotTraced(t *testing.T) {
+func TestWrapCommandMonitor_Succeeded_NotTraced(t *testing.T) {
 	recorder := instana.NewTestRecorder()
 	sensor := instana.NewSensorWithTracer(
 		instana.NewTracerWithEverything(instana.DefaultOptions(), recorder),
 	)
+	mon := &monitorMock{}
 
-	m := instamongo.NewCommandMonitor(sensor)
+	m := instamongo.WrapCommandMonitor(mon.Monitor(), sensor)
 
-	m.Started(context.Background(), &event.CommandStartedEvent{
+	started := &event.CommandStartedEvent{
 		Command: marshalBSON(t, bson.M{
 			"listDatabases": 1,
 		}),
 		CommandName:  "listDatabases",
 		RequestID:    1,
 		ConnectionID: "localhost:27017-1",
-	})
+	}
+	m.Started(context.Background(), started)
 
-	m.Succeeded(context.Background(), &event.CommandSucceededEvent{
+	success := &event.CommandSucceededEvent{
 		CommandFinishedEvent: event.CommandFinishedEvent{
 			DurationNanos: 123,
 			CommandName:   "listDatabases",
@@ -295,31 +309,37 @@ func TestNewCommandMonitor_Succeeded_NotTraced(t *testing.T) {
 		Reply: marshalBSON(t, bson.M{
 			"databases": bson.A{},
 		}),
-	})
+	}
+	m.Succeeded(context.Background(), success)
 
 	assert.Empty(t, recorder.GetQueuedSpans())
+
+	// Check that events were propagated to the original CommandMonitor
+	assert.Equal(t, []interface{}{started, success}, mon.Events())
 }
 
-func TestNewCommandMonitor_Failed(t *testing.T) {
+func TestWrapCommandMonitor_Failed(t *testing.T) {
 	recorder := instana.NewTestRecorder()
 	sensor := instana.NewSensorWithTracer(
 		instana.NewTracerWithEverything(instana.DefaultOptions(), recorder),
 	)
+	mon := &monitorMock{}
 
-	m := instamongo.NewCommandMonitor(sensor)
+	m := instamongo.WrapCommandMonitor(mon.Monitor(), sensor)
 
 	sp := sensor.Tracer().StartSpan("testing")
 	ctx := instana.ContextWithSpan(context.Background(), sp)
 
-	m.Started(ctx, &event.CommandStartedEvent{
+	started := &event.CommandStartedEvent{
 		DatabaseName: "testing-db",
 		Command:      marshalBSON(t, bson.M{"listDatabases": 1}),
 		CommandName:  "listDatabases",
 		RequestID:    1,
 		ConnectionID: "mongo-host:12345-123",
-	})
+	}
+	m.Started(ctx, started)
 
-	m.Failed(context.Background(), &event.CommandFailedEvent{
+	failed := &event.CommandFailedEvent{
 		CommandFinishedEvent: event.CommandFinishedEvent{
 			DurationNanos: 123,
 			CommandName:   "listDatabases",
@@ -327,7 +347,8 @@ func TestNewCommandMonitor_Failed(t *testing.T) {
 			ConnectionID:  "mongo-host:12345-123",
 		},
 		Failure: "something went wrong",
-	})
+	}
+	m.Failed(context.Background(), failed)
 
 	sp.Finish()
 
@@ -358,7 +379,7 @@ func TestNewCommandMonitor_Failed(t *testing.T) {
 	assert.Equal(t, dbSpan.SpanID, logSpan.ParentID)
 	assert.Equal(t, "log.go", logSpan.Name)
 
-	// assert that log message has been recorded within the span interval
+	// Assert that log message has been recorded within the span interval
 	assert.GreaterOrEqual(t, logSpan.Timestamp, dbSpan.Timestamp)
 	assert.LessOrEqual(t, logSpan.Duration, dbSpan.Duration)
 
@@ -369,17 +390,21 @@ func TestNewCommandMonitor_Failed(t *testing.T) {
 		Level:   "ERROR",
 		Message: `error: "something went wrong"`,
 	}, logData.Tags)
+
+	// Check that events were propagated to the original CommandMonitor
+	assert.Equal(t, []interface{}{started, failed}, mon.Events())
 }
 
-func TestNewCommandMonitor_Failed_NotStarted(t *testing.T) {
+func TestWrapCommandMonitor_Failed_NotStarted(t *testing.T) {
 	recorder := instana.NewTestRecorder()
 	sensor := instana.NewSensorWithTracer(
 		instana.NewTracerWithEverything(instana.DefaultOptions(), recorder),
 	)
+	mon := &monitorMock{}
 
-	m := instamongo.NewCommandMonitor(sensor)
+	m := instamongo.WrapCommandMonitor(mon.Monitor(), sensor)
 
-	m.Failed(context.Background(), &event.CommandFailedEvent{
+	failed := &event.CommandFailedEvent{
 		CommandFinishedEvent: event.CommandFinishedEvent{
 			DurationNanos: 123,
 			CommandName:   "listDatabases",
@@ -387,29 +412,35 @@ func TestNewCommandMonitor_Failed_NotStarted(t *testing.T) {
 			ConnectionID:  "localhost:27017-1",
 		},
 		Failure: "something went wrong",
-	})
+	}
+	m.Failed(context.Background(), failed)
 
 	assert.Empty(t, recorder.GetQueuedSpans())
+
+	// Check that events were propagated to the original CommandMonitor
+	assert.Equal(t, []interface{}{failed}, mon.Events())
 }
 
-func TestNewCommandMonitor_Failed_NotTraced(t *testing.T) {
+func TestWrapCommandMonitor_Failed_NotTraced(t *testing.T) {
 	recorder := instana.NewTestRecorder()
 	sensor := instana.NewSensorWithTracer(
 		instana.NewTracerWithEverything(instana.DefaultOptions(), recorder),
 	)
+	mon := &monitorMock{}
 
-	m := instamongo.NewCommandMonitor(sensor)
+	m := instamongo.WrapCommandMonitor(mon.Monitor(), sensor)
 
-	m.Started(context.Background(), &event.CommandStartedEvent{
+	started := &event.CommandStartedEvent{
 		Command: marshalBSON(t, bson.M{
 			"listDatabases": 1,
 		}),
 		CommandName:  "listDatabases",
 		RequestID:    1,
 		ConnectionID: "localhost:27017-1",
-	})
+	}
+	m.Started(context.Background(), started)
 
-	m.Failed(context.Background(), &event.CommandFailedEvent{
+	failed := &event.CommandFailedEvent{
 		CommandFinishedEvent: event.CommandFinishedEvent{
 			DurationNanos: 123,
 			CommandName:   "listDatabases",
@@ -417,9 +448,55 @@ func TestNewCommandMonitor_Failed_NotTraced(t *testing.T) {
 			ConnectionID:  "localhost:27017-1",
 		},
 		Failure: "something went wrong",
-	})
+	}
+	m.Failed(context.Background(), failed)
 
 	assert.Empty(t, recorder.GetQueuedSpans())
+
+	// Check that events were propagated to the original CommandMonitor
+	assert.Equal(t, []interface{}{started, failed}, mon.Events())
+}
+
+type monitorMock struct {
+	mu     sync.RWMutex
+	events []interface{}
+}
+
+func (m *monitorMock) Started(ctx context.Context, evt *event.CommandStartedEvent) {
+	m.recordEvent(evt)
+}
+
+func (m *monitorMock) Succeeded(ctx context.Context, evt *event.CommandSucceededEvent) {
+	m.recordEvent(evt)
+}
+
+func (m *monitorMock) Failed(ctx context.Context, evt *event.CommandFailedEvent) {
+	m.recordEvent(evt)
+}
+
+func (m *monitorMock) Monitor() *event.CommandMonitor {
+	return &event.CommandMonitor{
+		Started:   m.Started,
+		Succeeded: m.Succeeded,
+		Failed:    m.Failed,
+	}
+}
+
+func (m *monitorMock) Events() []interface{} {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	events := make([]interface{}, len(m.events))
+	copy(events, m.events)
+
+	return events
+}
+
+func (m *monitorMock) recordEvent(evt interface{}) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	m.events = append(m.events, evt)
 }
 
 func marshalBSON(t *testing.T, data interface{}) bson.Raw {

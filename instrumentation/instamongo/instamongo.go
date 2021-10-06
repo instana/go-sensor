@@ -27,29 +27,39 @@ func init() {
 	unmarshalReg = rb.Build()
 }
 
-type commandMonitor struct {
+type wrappedCommandMonitor struct {
+	mon    *event.CommandMonitor
 	sensor *instana.Sensor
 	spans  *spanRegistry
 }
 
-// NewCommandMonitor creates a new event.CommandMonitor to be used in mongo.ClientOptions.
-// This monitor instruments mongo.Client with Instana tracing any requests made to the database.
+// NewCommandMonitor creates a new event.CommandMonitor that instruments a mongo.Client with Instana.
 func NewCommandMonitor(sensor *instana.Sensor) *event.CommandMonitor {
-	mon := &commandMonitor{
+	return WrapCommandMonitor(nil, sensor)
+}
+
+// WrapCommandMonitor wraps an existing event.CommandMonitor to instrument a mongo.Client with Instana
+func WrapCommandMonitor(mon *event.CommandMonitor, sensor *instana.Sensor) *event.CommandMonitor {
+	wrapper := &wrappedCommandMonitor{
+		mon:    mon,
 		sensor: sensor,
 		spans:  newSpanRegistry(),
 	}
 
 	return &event.CommandMonitor{
-		Started:   mon.Started,
-		Succeeded: mon.Succeeded,
-		Failed:    mon.Failed,
+		Started:   wrapper.Started,
+		Succeeded: wrapper.Succeeded,
+		Failed:    wrapper.Failed,
 	}
 }
 
 // Started traces command start initiating a new span. This span is finalized whenever either
 // Succeeded() or Failed() method is called with an event containing the same RequestID.
-func (m *commandMonitor) Started(ctx context.Context, evt *event.CommandStartedEvent) {
+func (m *wrappedCommandMonitor) Started(ctx context.Context, evt *event.CommandStartedEvent) {
+	if m.mon != nil && m.mon.Started != nil {
+		defer m.mon.Started(ctx, evt)
+	}
+
 	parent, ok := instana.SpanFromContext(ctx)
 	if !ok {
 		return
@@ -70,7 +80,11 @@ func (m *commandMonitor) Started(ctx context.Context, evt *event.CommandStartedE
 }
 
 // Succeeded finalizes the command span started by Started()
-func (m *commandMonitor) Succeeded(ctx context.Context, evt *event.CommandSucceededEvent) {
+func (m *wrappedCommandMonitor) Succeeded(ctx context.Context, evt *event.CommandSucceededEvent) {
+	if m.mon != nil && m.mon.Succeeded != nil {
+		m.mon.Succeeded(ctx, evt)
+	}
+
 	sp, ok := m.spans.Remove(evt.RequestID)
 	if !ok {
 		return
@@ -80,7 +94,11 @@ func (m *commandMonitor) Succeeded(ctx context.Context, evt *event.CommandSuccee
 }
 
 // Failed finalizes the command span started by Started() and logs the failure reason
-func (m *commandMonitor) Failed(ctx context.Context, evt *event.CommandFailedEvent) {
+func (m *wrappedCommandMonitor) Failed(ctx context.Context, evt *event.CommandFailedEvent) {
+	if m.mon != nil && m.mon.Failed != nil {
+		defer m.mon.Failed(ctx, evt)
+	}
+
 	sp, ok := m.spans.Remove(evt.RequestID)
 	if !ok {
 		return
@@ -92,7 +110,7 @@ func (m *commandMonitor) Failed(ctx context.Context, evt *event.CommandFailedEve
 	sp.Finish()
 }
 
-func (m *commandMonitor) extractSpanTags(evt *event.CommandStartedEvent) opentracing.Tags {
+func (m *wrappedCommandMonitor) extractSpanTags(evt *event.CommandStartedEvent) opentracing.Tags {
 	ns := evt.DatabaseName
 	if collection, ok := evt.Command.Lookup(evt.CommandName).StringValueOK(); ok {
 		ns += "." + collection
