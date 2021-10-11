@@ -1,7 +1,11 @@
+// (c) Copyright IBM Corp. 2021
+// (c) Copyright Instana Inc. 2021
+
 package instamongo_test
 
 import (
 	"context"
+	"log"
 	"sync"
 	"testing"
 
@@ -11,6 +15,7 @@ import (
 	"github.com/instana/testify/require"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/event"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 func TestWrapCommandMonitor_Succeeded(t *testing.T) {
@@ -455,6 +460,39 @@ func TestWrapCommandMonitor_Failed_NotTraced(t *testing.T) {
 
 	// Check that events were propagated to the original CommandMonitor
 	assert.Equal(t, []interface{}{started, failed}, mon.Events())
+}
+
+// To instrument a mongo.Client created with mongo.Connect() replace mongo.Connect() with instamongo.Connect()
+// and pass an instana.Sensor instance to use
+func ExampleConnect() {
+	// Initialize Instana sensor
+	sensor := instana.NewSensor("mongo-client")
+
+	// Replace mongo.Connect() with instamongo.Connect and pass the sensor instance
+	client, err := instamongo.Connect(context.Background(), sensor, options.Client().ApplyURI("mongodb://localhost:27017"))
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer client.Disconnect(context.Background())
+
+	// Query MongoDB as usual using the instrumented client instance
+	// ...
+}
+
+// To instrument a mongo.Client created with mongo.NewClient() replace mongo.NewClient() with instamongo.NewClient()
+// and pass an instana.Sensor instance to use
+func ExampleNewClient() {
+	// Initialize Instana sensor
+	sensor := instana.NewSensor("mongo-client")
+
+	// Replace mongo.Connect() with instamongo.Connect and pass the sensor instance
+	client, err := instamongo.NewClient(sensor, options.Client().ApplyURI("mongodb://localhost:27017"))
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Use instrumented client as usual
+	client.Connect(context.Background())
 }
 
 type monitorMock struct {
