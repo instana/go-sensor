@@ -1,6 +1,6 @@
 module github.com/instana/go-sensor/instrumentation/instamongo
 
-go 1.16
+go 1.10
 
 require (
 	github.com/instana/go-sensor v1.32.1
