@@ -13,21 +13,15 @@ import (
 	"github.com/opentracing/opentracing-go"
 	otlog "github.com/opentracing/opentracing-go/log"
 	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/bsoncodec"
 	"go.mongodb.org/mongo-driver/bson/bsontype"
 	"go.mongodb.org/mongo-driver/event"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-var unmarshalReg *bsoncodec.Registry
-
-func init() {
-	rb := bson.NewRegistryBuilder()
-	rb.RegisterTypeMapEntry(bsontype.EmbeddedDocument, reflect.TypeOf(bson.M{}))
-
-	unmarshalReg = rb.Build()
-}
+var unmarshalReg = bson.NewRegistryBuilder().
+	RegisterTypeMapEntry(bsontype.EmbeddedDocument, reflect.TypeOf(bson.M{})).
+	Build()
 
 // Connect creates and instruments a new mongo.Client
 //
