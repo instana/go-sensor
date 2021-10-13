@@ -52,7 +52,7 @@ func NewTestRecorder() *Recorder {
 	}
 }
 
-// RecordSpan accepts spans to be recorded and and added to the span queue
+// RecordSpan accepts spans to be recorded and added to the span queue
 // for eventual reporting to the host agent.
 func (r *Recorder) RecordSpan(span *spanS) {
 	// If we're not announced and not in test mode then just

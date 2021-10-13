@@ -5,6 +5,7 @@ package instana
 
 import (
 	"encoding/json"
+	"strings"
 	"time"
 
 	"github.com/opentracing/opentracing-go/ext"
@@ -299,6 +300,84 @@ func readStringTag(dst *string, tag interface{}) {
 	case []byte:
 		*dst = string(s)
 	}
+}
+
+// readBoolTag populates the &dst with the tag value if it's either bool, string, byte array or numeric type
+func readBoolTag(dst *bool, tag interface{}) {
+	switch s := tag.(type) {
+	case string:
+		val := strings.ToLower(s)
+		if val == "true" || val == "1" {
+			*dst = true
+			return
+		}
+	case []byte:
+		val := strings.ToLower(string(s))
+		if val == "true" || val == "1" {
+			*dst = true
+			return
+		}
+	case bool:
+		*dst = s
+		return
+	case uint:
+		if s == 1 {
+			*dst = true
+			return
+		}
+	case uint8:
+		if s == 1 {
+			*dst = true
+			return
+		}
+	case uint16:
+		if s == 1 {
+			*dst = true
+			return
+		}
+	case uint32:
+		if s == 1 {
+			*dst = true
+			return
+		}
+	case uint64:
+		if s == 1 {
+			*dst = true
+			return
+		}
+	case int:
+		if s == 1 {
+			*dst = true
+			return
+		}
+	case int8:
+		if s == 1 {
+			*dst = true
+			return
+		}
+	case int16:
+		if s == 1 {
+			*dst = true
+			return
+		}
+	case int32:
+		if s == 1 {
+			*dst = true
+			return
+		}
+	case float32:
+		if s == 1 {
+			*dst = true
+			return
+		}
+	case float64:
+		if s == 1 {
+			*dst = true
+			return
+		}
+	}
+
+	*dst = false
 }
 
 // readIntTag populates the &dst with the tag value if it's of any kind of integer type

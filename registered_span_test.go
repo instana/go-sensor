@@ -108,11 +108,12 @@ func TestNewAWSLambdaSpanData(t *testing.T) {
 			},
 			Expected: instana.AWSLambdaSpanData{
 				Snapshot: instana.AWSLambdaSpanTags{
-					ARN:     "lambda-arn-1",
-					Runtime: "go",
-					Name:    "test-lambda",
-					Version: "42",
-					Trigger: "aws:api.gateway",
+					ARN:       "lambda-arn-1",
+					Runtime:   "go",
+					Name:      "test-lambda",
+					Version:   "42",
+					Trigger:   "aws:api.gateway",
+					ColdStart: true,
 				},
 				HTTP: &instana.HTTPSpanTags{
 					URL:      "https://example.com/lambda",
@@ -141,11 +142,12 @@ func TestNewAWSLambdaSpanData(t *testing.T) {
 			},
 			Expected: instana.AWSLambdaSpanData{
 				Snapshot: instana.AWSLambdaSpanTags{
-					ARN:     "lambda-arn-1",
-					Runtime: "go",
-					Name:    "test-lambda",
-					Version: "42",
-					Trigger: "aws:application.load.balancer",
+					ARN:       "lambda-arn-1",
+					Runtime:   "go",
+					Name:      "test-lambda",
+					Version:   "42",
+					Trigger:   "aws:application.load.balancer",
+					ColdStart: true,
 				},
 				HTTP: &instana.HTTPSpanTags{
 					URL:      "https://example.com/lambda",
@@ -172,11 +174,12 @@ func TestNewAWSLambdaSpanData(t *testing.T) {
 			},
 			Expected: instana.AWSLambdaSpanData{
 				Snapshot: instana.AWSLambdaSpanTags{
-					ARN:     "lambda-arn-1",
-					Runtime: "go",
-					Name:    "test-lambda",
-					Version: "42",
-					Trigger: "aws:cloudwatch.events",
+					ARN:       "lambda-arn-1",
+					Runtime:   "go",
+					Name:      "test-lambda",
+					Version:   "42",
+					Trigger:   "aws:cloudwatch.events",
+					ColdStart: true,
 					CloudWatch: &instana.AWSLambdaCloudWatchSpanTags{
 						Events: &instana.AWSLambdaCloudWatchEventTags{
 							ID: "cw-event-1",
@@ -205,11 +208,12 @@ func TestNewAWSLambdaSpanData(t *testing.T) {
 			},
 			Expected: instana.AWSLambdaSpanData{
 				Snapshot: instana.AWSLambdaSpanTags{
-					ARN:     "lambda-arn-1",
-					Runtime: "go",
-					Name:    "test-lambda",
-					Version: "42",
-					Trigger: "aws:cloudwatch.logs",
+					ARN:       "lambda-arn-1",
+					Runtime:   "go",
+					Name:      "test-lambda",
+					Version:   "42",
+					Trigger:   "aws:cloudwatch.logs",
+					ColdStart: true,
 					CloudWatch: &instana.AWSLambdaCloudWatchSpanTags{
 						Logs: &instana.AWSLambdaCloudWatchLogsTags{
 							Group:  "cw-log-group-1",
@@ -237,11 +241,12 @@ func TestNewAWSLambdaSpanData(t *testing.T) {
 			},
 			Expected: instana.AWSLambdaSpanData{
 				Snapshot: instana.AWSLambdaSpanTags{
-					ARN:     "lambda-arn-1",
-					Runtime: "go",
-					Name:    "test-lambda",
-					Version: "42",
-					Trigger: "aws:s3",
+					ARN:       "lambda-arn-1",
+					Runtime:   "go",
+					Name:      "test-lambda",
+					Version:   "42",
+					Trigger:   "aws:s3",
+					ColdStart: true,
 					S3: &instana.AWSLambdaS3SpanTags{
 						Events: []instana.AWSS3EventTags{
 							{Name: "event1", Bucket: "bucket1", Object: "object1"},
@@ -258,11 +263,12 @@ func TestNewAWSLambdaSpanData(t *testing.T) {
 			},
 			Expected: instana.AWSLambdaSpanData{
 				Snapshot: instana.AWSLambdaSpanTags{
-					ARN:     "lambda-arn-1",
-					Runtime: "go",
-					Name:    "test-lambda",
-					Version: "42",
-					Trigger: "aws:sqs",
+					ARN:       "lambda-arn-1",
+					Runtime:   "go",
+					Name:      "test-lambda",
+					Version:   "42",
+					Trigger:   "aws:sqs",
+					ColdStart: true,
 					SQS: &instana.AWSLambdaSQSSpanTags{
 						Messages: []instana.AWSSQSMessageTags{{Queue: "q1"}, {Queue: "q2"}, {Queue: "q3"}},
 					},
@@ -277,10 +283,11 @@ func TestNewAWSLambdaSpanData(t *testing.T) {
 			tracer := instana.NewTracerWithEverything(&instana.Options{}, recorder)
 
 			sp := tracer.StartSpan("aws.lambda.entry", opentracing.Tags{
-				"lambda.arn":     "lambda-arn-1",
-				"lambda.name":    "test-lambda",
-				"lambda.version": "42",
-				"lambda.trigger": trigger,
+				"lambda.arn":       "lambda-arn-1",
+				"lambda.name":      "test-lambda",
+				"lambda.version":   "42",
+				"lambda.trigger":   trigger,
+				"lambda.coldStart": true,
 			}, example.Tags)
 			sp.Finish()
 
