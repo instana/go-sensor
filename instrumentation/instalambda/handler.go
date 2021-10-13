@@ -31,8 +31,8 @@ type wrappedHandler struct {
 	lambda.Handler
 
 	sensor      *instana.Sensor
-	coldStart   bool
-	coldStartMu sync.Mutex
+	warmStart   bool
+	warmStartMu sync.Mutex
 }
 
 // NewHandler creates a new instrumented handler that can be used with `lambda.StartHandler()` from a handler function
@@ -43,9 +43,9 @@ func NewHandler(handlerFunc interface{}, sensor *instana.Sensor) *wrappedHandler
 // WrapHandler instruments a lambda.Handler to trace the invokations with Instana
 func WrapHandler(h lambda.Handler, sensor *instana.Sensor) *wrappedHandler {
 	return &wrappedHandler{
-		Handler: h,
-		sensor: sensor,
-		coldStart: true,
+		Handler:   h,
+		sensor:    sensor,
+		warmStart: false,
 	}
 }
 
@@ -60,7 +60,7 @@ func (h *wrappedHandler) Invoke(ctx context.Context, payload []byte) ([]byte, er
 		"lambda.arn":       lc.InvokedFunctionArn + ":" + lambdacontext.FunctionVersion,
 		"lambda.name":      lambdacontext.FunctionName,
 		"lambda.version":   lambdacontext.FunctionVersion,
-		"lambda.coldStart": h.isColdStart(),
+		"lambda.coldStart": !h.isWarmStart(),
 	}}, h.triggerEventSpanOptions(payload, lc.ClientContext)...)
 	sp := h.sensor.Tracer().StartSpan("aws.lambda.entry", opts...)
 
@@ -92,16 +92,16 @@ func (h *wrappedHandler) Invoke(ctx context.Context, payload []byte) ([]byte, er
 	return resp, err
 }
 
-func (h *wrappedHandler) isColdStart() bool {
-	h.coldStartMu.Lock()
-	defer h.coldStartMu.Unlock()
+func (h *wrappedHandler) isWarmStart() bool {
+	h.warmStartMu.Lock()
+	defer h.warmStartMu.Unlock()
 
-	if h.coldStart == true {
-		h.coldStart = false
-		return true
+	if h.warmStart == false {
+		h.warmStart = true
+		return false
 	}
 
-	return false
+	return true
 }
 
 func (h *wrappedHandler) triggerEventSpanOptions(payload []byte, lcc lambdacontext.ClientContext) []opentracing.StartSpanOption {
