@@ -42,7 +42,11 @@ func NewHandler(handlerFunc interface{}, sensor *instana.Sensor) *wrappedHandler
 
 // WrapHandler instruments a lambda.Handler to trace the invokations with Instana
 func WrapHandler(h lambda.Handler, sensor *instana.Sensor) *wrappedHandler {
-	return &wrappedHandler{h, sensor, true, sync.Mutex{}}
+	return &wrappedHandler{
+		Handler: h,
+		sensor: sensor,
+		coldStart: true,
+	}
 }
 
 // Invoke is a handler function for a wrapped handler
