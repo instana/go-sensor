@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/aws/aws-lambda-go/events"
@@ -29,7 +30,9 @@ const (
 type wrappedHandler struct {
 	lambda.Handler
 
-	sensor *instana.Sensor
+	sensor      *instana.Sensor
+	coldStart   bool
+	coldStartMu sync.Mutex
 }
 
 // NewHandler creates a new instrumented handler that can be used with `lambda.StartHandler()` from a handler function
@@ -39,7 +42,7 @@ func NewHandler(handlerFunc interface{}, sensor *instana.Sensor) *wrappedHandler
 
 // WrapHandler instruments a lambda.Handler to trace the invokations with Instana
 func WrapHandler(h lambda.Handler, sensor *instana.Sensor) *wrappedHandler {
-	return &wrappedHandler{h, sensor}
+	return &wrappedHandler{h, sensor, true, sync.Mutex{}}
 }
 
 // Invoke is a handler function for a wrapped handler
@@ -50,9 +53,10 @@ func (h *wrappedHandler) Invoke(ctx context.Context, payload []byte) ([]byte, er
 	}
 
 	opts := append([]opentracing.StartSpanOption{opentracing.Tags{
-		"lambda.arn":     lc.InvokedFunctionArn + ":" + lambdacontext.FunctionVersion,
-		"lambda.name":    lambdacontext.FunctionName,
-		"lambda.version": lambdacontext.FunctionVersion,
+		"lambda.arn":       lc.InvokedFunctionArn + ":" + lambdacontext.FunctionVersion,
+		"lambda.name":      lambdacontext.FunctionName,
+		"lambda.version":   lambdacontext.FunctionVersion,
+		"lambda.coldStart": h.isColdStart(),
 	}}, h.triggerEventSpanOptions(payload, lc.ClientContext)...)
 	sp := h.sensor.Tracer().StartSpan("aws.lambda.entry", opts...)
 
@@ -63,7 +67,7 @@ func (h *wrappedHandler) Invoke(ctx context.Context, payload []byte) ([]byte, er
 
 	sp.Finish()
 
-	// ensure that all collected data has been sent before the invokation is finished
+	// ensure that all collected data has been sent before the invocation is finished
 	if tr, ok := h.sensor.Tracer().(instana.Tracer); ok {
 		var i int
 		for {
@@ -82,6 +86,18 @@ func (h *wrappedHandler) Invoke(ctx context.Context, payload []byte) ([]byte, er
 	}
 
 	return resp, err
+}
+
+func (h *wrappedHandler) isColdStart() bool {
+	h.coldStartMu.Lock()
+	defer h.coldStartMu.Unlock()
+
+	if h.coldStart == true {
+		h.coldStart = false
+		return true
+	}
+
+	return false
 }
 
 func (h *wrappedHandler) triggerEventSpanOptions(payload []byte, lcc lambdacontext.ClientContext) []opentracing.StartSpanOption {

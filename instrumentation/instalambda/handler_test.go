@@ -86,11 +86,12 @@ func TestNewHandler_APIGatewayEvent(t *testing.T) {
 
 			assert.Equal(t, instana.AWSLambdaSpanData{
 				Snapshot: instana.AWSLambdaSpanTags{
-					ARN:     "aws:test-function:42",
-					Runtime: "go",
-					Name:    "test-function",
-					Version: "42",
-					Trigger: "aws:api.gateway",
+					ARN:       "aws:test-function:42",
+					Runtime:   "go",
+					Name:      "test-function",
+					Version:   "42",
+					Trigger:   "aws:api.gateway",
+					ColdStart: true,
 				},
 				HTTP: &instana.HTTPSpanTags{
 					URL:          "/",
@@ -158,11 +159,12 @@ func TestNewHandler_APIGatewayV2Event_WithW3Context(t *testing.T) {
 
 			assert.Equal(t, instana.AWSLambdaSpanData{
 				Snapshot: instana.AWSLambdaSpanTags{
-					ARN:     "aws:test-function:42",
-					Runtime: "go",
-					Name:    "test-function",
-					Version: "42",
-					Trigger: "aws:api.gateway",
+					ARN:       "aws:test-function:42",
+					Runtime:   "go",
+					Name:      "test-function",
+					Version:   "42",
+					Trigger:   "aws:api.gateway",
+					ColdStart: true,
 				},
 				HTTP: &instana.HTTPSpanTags{
 					URL:          "/my/path",
@@ -230,11 +232,12 @@ func TestNewHandler_ALBEvent(t *testing.T) {
 
 			assert.Equal(t, instana.AWSLambdaSpanData{
 				Snapshot: instana.AWSLambdaSpanTags{
-					ARN:     "aws:test-function:42",
-					Runtime: "go",
-					Name:    "test-function",
-					Version: "42",
-					Trigger: "aws:application.load.balancer",
+					ARN:       "aws:test-function:42",
+					Runtime:   "go",
+					Name:      "test-function",
+					Version:   "42",
+					Trigger:   "aws:application.load.balancer",
+					ColdStart: true,
 				},
 				HTTP: &instana.HTTPSpanTags{
 					URL:    "/lambda",
@@ -284,11 +287,12 @@ func TestNewHandler_CloudWatchEvent(t *testing.T) {
 
 	assert.Equal(t, instana.AWSLambdaSpanData{
 		Snapshot: instana.AWSLambdaSpanTags{
-			ARN:     "aws:test-function:42",
-			Runtime: "go",
-			Name:    "test-function",
-			Version: "42",
-			Trigger: "aws:cloudwatch.events",
+			ARN:       "aws:test-function:42",
+			Runtime:   "go",
+			Name:      "test-function",
+			Version:   "42",
+			Trigger:   "aws:cloudwatch.events",
+			ColdStart: true,
 			CloudWatch: &instana.AWSLambdaCloudWatchSpanTags{
 				Events: &instana.AWSLambdaCloudWatchEventTags{
 					ID:        "cdc73f9d-aea9-11e3-9d5a-835b769c0d9c",
@@ -333,11 +337,12 @@ func TestNewHandler_CloudWatchLogsEvent(t *testing.T) {
 
 	assert.Equal(t, instana.AWSLambdaSpanData{
 		Snapshot: instana.AWSLambdaSpanTags{
-			ARN:     "aws:test-function:42",
-			Runtime: "go",
-			Name:    "test-function",
-			Version: "42",
-			Trigger: "aws:cloudwatch.logs",
+			ARN:       "aws:test-function:42",
+			Runtime:   "go",
+			Name:      "test-function",
+			Version:   "42",
+			Trigger:   "aws:cloudwatch.logs",
+			ColdStart: true,
 			CloudWatch: &instana.AWSLambdaCloudWatchSpanTags{
 				Logs: &instana.AWSLambdaCloudWatchLogsTags{
 					Group:  "testLogGroup",
@@ -386,11 +391,12 @@ func TestNewHandler_CloudWatchLogsEvent_DecodeError(t *testing.T) {
 
 	assert.Equal(t, instana.AWSLambdaSpanData{
 		Snapshot: instana.AWSLambdaSpanTags{
-			ARN:     "aws:test-function:42",
-			Runtime: "go",
-			Name:    "test-function",
-			Version: "42",
-			Trigger: "aws:cloudwatch.logs",
+			ARN:       "aws:test-function:42",
+			Runtime:   "go",
+			Name:      "test-function",
+			Version:   "42",
+			Trigger:   "aws:cloudwatch.logs",
+			ColdStart: true,
 			CloudWatch: &instana.AWSLambdaCloudWatchSpanTags{
 				Logs: &instana.AWSLambdaCloudWatchLogsTags{
 					DecodingError: "unexpected EOF",
@@ -434,11 +440,12 @@ func TestNewHandler_S3Event(t *testing.T) {
 
 	assert.Equal(t, instana.AWSLambdaSpanData{
 		Snapshot: instana.AWSLambdaSpanTags{
-			ARN:     "aws:test-function:42",
-			Runtime: "go",
-			Name:    "test-function",
-			Version: "42",
-			Trigger: "aws:s3",
+			ARN:       "aws:test-function:42",
+			Runtime:   "go",
+			Name:      "test-function",
+			Version:   "42",
+			Trigger:   "aws:s3",
+			ColdStart: true,
 			S3: &instana.AWSLambdaS3SpanTags{
 				Events: []instana.AWSS3EventTags{
 					{
@@ -486,11 +493,12 @@ func TestNewHandler_SQSEvent(t *testing.T) {
 
 	assert.Equal(t, instana.AWSLambdaSpanData{
 		Snapshot: instana.AWSLambdaSpanTags{
-			ARN:     "aws:test-function:42",
-			Runtime: "go",
-			Name:    "test-function",
-			Version: "42",
-			Trigger: "aws:sqs",
+			ARN:       "aws:test-function:42",
+			Runtime:   "go",
+			Name:      "test-function",
+			Version:   "42",
+			Trigger:   "aws:sqs",
+			ColdStart: true,
 			SQS: &instana.AWSLambdaSQSSpanTags{
 				Messages: []instana.AWSSQSMessageTags{
 					{Queue: "arn:aws:sqs:us-east-2:123456789012:my-queue"},
@@ -587,15 +595,69 @@ func TestNewHandler_InvokeLambda_Success(t *testing.T) {
 
 			assert.Equal(t, instana.AWSLambdaSpanData{
 				Snapshot: instana.AWSLambdaSpanTags{
-					ARN:     "aws:test-function:42",
-					Runtime: "go",
-					Name:    "test-function",
-					Version: "42",
-					Trigger: "aws:lambda.invoke",
+					ARN:       "aws:test-function:42",
+					Runtime:   "go",
+					Name:      "test-function",
+					Version:   "42",
+					Trigger:   "aws:lambda.invoke",
+					ColdStart: true,
 				},
 			}, span.Data)
 		})
 	}
+}
+
+func TestNewHandler_InvokeLambda_ColdStartAndNotColdStart(t *testing.T) {
+	recorder := instana.NewTestRecorder()
+	sensor := instana.NewSensorWithTracer(instana.NewTracerWithEverything(instana.DefaultOptions(), recorder))
+
+	h := instalambda.NewHandler(func(ctx context.Context, evt interface{}) error {
+		_, ok := instana.SpanFromContext(ctx)
+		assert.True(t, ok)
+
+		return nil
+	}, sensor)
+
+	lambdacontext.FunctionName = "test-function"
+	lambdacontext.FunctionVersion = "42"
+
+	ctx := lambdacontext.NewContext(context.Background(), &lambdacontext.LambdaContext{
+		AwsRequestID:       "req1",
+		InvokedFunctionArn: "aws:test-function",
+	})
+
+	// cold start
+	_, err := h.Invoke(ctx, []byte("{}"))
+	require.NoError(t, err)
+
+	// second call
+	_, err = h.Invoke(ctx, []byte("{}"))
+	require.NoError(t, err)
+
+	spans := recorder.GetQueuedSpans()
+	require.Len(t, spans, 2)
+
+	assert.Equal(t, instana.AWSLambdaSpanData{
+		Snapshot: instana.AWSLambdaSpanTags{
+			ARN:       "aws:test-function:42",
+			Runtime:   "go",
+			Name:      "test-function",
+			Version:   "42",
+			Trigger:   "aws:lambda.invoke",
+			ColdStart: true,
+		},
+	}, spans[0].Data)
+
+	assert.Equal(t, instana.AWSLambdaSpanData{
+		Snapshot: instana.AWSLambdaSpanTags{
+			ARN:       "aws:test-function:42",
+			Runtime:   "go",
+			Name:      "test-function",
+			Version:   "42",
+			Trigger:   "aws:lambda.invoke",
+			ColdStart: false,
+		},
+	}, spans[1].Data)
 }
 
 func TestNewHandler_InvokeLambda_WithIncompleteSetOfInstanaHeaders(t *testing.T) {
@@ -643,11 +705,12 @@ func TestNewHandler_InvokeLambda_WithIncompleteSetOfInstanaHeaders(t *testing.T)
 
 	assert.Equal(t, instana.AWSLambdaSpanData{
 		Snapshot: instana.AWSLambdaSpanTags{
-			ARN:     "aws:test-function:42",
-			Runtime: "go",
-			Name:    "test-function",
-			Version: "42",
-			Trigger: "aws:lambda.invoke",
+			ARN:       "aws:test-function:42",
+			Runtime:   "go",
+			Name:      "test-function",
+			Version:   "42",
+			Trigger:   "aws:lambda.invoke",
+			ColdStart: true,
 		},
 	}, span.Data)
 }
