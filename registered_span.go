@@ -149,6 +149,8 @@ func (st RegisteredSpanType) TagsNames() map[string]struct{} {
 			"lambda.version":                yes,
 			"lambda.trigger":                yes,
 			"lambda.coldStart":              yes,
+			"lambda.msleft":                 yes,
+			"lambda.error":                  yes,
 			"cloudwatch.events.id":          yes,
 			"cloudwatch.events.resources":   yes,
 			"cloudwatch.logs.group":         yes,
@@ -793,6 +795,10 @@ type AWSLambdaSpanTags struct {
 	Trigger string `json:"trigger,omitempty"`
 	// ColdStart is true if this is the first time current instance of the function was invoked
 	ColdStart bool `json:"coldStart,omitempty"`
+	// MsLeft a milliseconds before a timeout
+	MsLeft int `json:"ms_left,omitempty"`
+	// Error an AWS Lambda specific error
+	Error string `json:"error,omitempty"`
 	// CloudWatch holds the details of a CloudWatch event associated with this lambda
 	CloudWatch *AWSLambdaCloudWatchSpanTags `json:"cw,omitempty"`
 	// S3 holds the details of a S3 events associated with this lambda
@@ -823,6 +829,15 @@ func NewAWSLambdaSpanTags(span *spanS) AWSLambdaSpanTags {
 
 	if v, ok := span.Tags["lambda.coldStart"]; ok {
 		readBoolTag(&tags.ColdStart, v)
+	}
+
+	if v, ok := span.Tags["lambda.msleft"]; ok {
+		readIntTag(&tags.MsLeft, v)
+	}
+
+	if v, ok := span.Tags["lambda.error"]; ok {
+		span.ErrorCount++
+		readStringTag(&tags.Error, v)
 	}
 
 	if cw := NewAWSLambdaCloudWatchSpanTags(span); !cw.IsZero() {

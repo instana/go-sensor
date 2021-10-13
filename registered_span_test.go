@@ -114,6 +114,8 @@ func TestNewAWSLambdaSpanData(t *testing.T) {
 					Version:   "42",
 					Trigger:   "aws:api.gateway",
 					ColdStart: true,
+					MsLeft:    5,
+					Error:     "Not Found",
 				},
 				HTTP: &instana.HTTPSpanTags{
 					URL:      "https://example.com/lambda",
@@ -148,6 +150,8 @@ func TestNewAWSLambdaSpanData(t *testing.T) {
 					Version:   "42",
 					Trigger:   "aws:application.load.balancer",
 					ColdStart: true,
+					MsLeft:    5,
+					Error:     "Not Found",
 				},
 				HTTP: &instana.HTTPSpanTags{
 					URL:      "https://example.com/lambda",
@@ -180,6 +184,8 @@ func TestNewAWSLambdaSpanData(t *testing.T) {
 					Version:   "42",
 					Trigger:   "aws:cloudwatch.events",
 					ColdStart: true,
+					MsLeft:    5,
+					Error:     "Not Found",
 					CloudWatch: &instana.AWSLambdaCloudWatchSpanTags{
 						Events: &instana.AWSLambdaCloudWatchEventTags{
 							ID: "cw-event-1",
@@ -214,6 +220,8 @@ func TestNewAWSLambdaSpanData(t *testing.T) {
 					Version:   "42",
 					Trigger:   "aws:cloudwatch.logs",
 					ColdStart: true,
+					MsLeft:    5,
+					Error:     "Not Found",
 					CloudWatch: &instana.AWSLambdaCloudWatchSpanTags{
 						Logs: &instana.AWSLambdaCloudWatchLogsTags{
 							Group:  "cw-log-group-1",
@@ -247,6 +255,8 @@ func TestNewAWSLambdaSpanData(t *testing.T) {
 					Version:   "42",
 					Trigger:   "aws:s3",
 					ColdStart: true,
+					MsLeft:    5,
+					Error:     "Not Found",
 					S3: &instana.AWSLambdaS3SpanTags{
 						Events: []instana.AWSS3EventTags{
 							{Name: "event1", Bucket: "bucket1", Object: "object1"},
@@ -269,6 +279,8 @@ func TestNewAWSLambdaSpanData(t *testing.T) {
 					Version:   "42",
 					Trigger:   "aws:sqs",
 					ColdStart: true,
+					MsLeft:    5,
+					Error:     "Not Found",
 					SQS: &instana.AWSLambdaSQSSpanTags{
 						Messages: []instana.AWSSQSMessageTags{{Queue: "q1"}, {Queue: "q2"}, {Queue: "q3"}},
 					},
@@ -288,6 +300,8 @@ func TestNewAWSLambdaSpanData(t *testing.T) {
 				"lambda.version":   "42",
 				"lambda.trigger":   trigger,
 				"lambda.coldStart": true,
+				"lambda.msleft":    5,
+				"lambda.error":     "Not Found",
 			}, example.Tags)
 			sp.Finish()
 
