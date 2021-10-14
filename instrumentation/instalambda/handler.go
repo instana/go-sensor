@@ -8,6 +8,7 @@ package instalambda
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/url"
 	"strings"
@@ -66,10 +67,54 @@ func (h *wrappedHandler) Invoke(ctx context.Context, payload []byte) ([]byte, er
 	})
 
 	resp, err := h.Handler.Invoke(instana.ContextWithSpan(ctx, sp), payload)
-	if err != nil {
-		sp.LogFields(otlog.Error(err))
+	done := make(chan struct{})
+	timeoutChannel := make(<-chan time.Time)
+
+	originalDeadline, deadlineDefined := ctx.Deadline()
+
+	if deadlineDefined {
+		deadline := originalDeadline.Add(-100 * time.Millisecond)
+		timeoutChannel = time.After(time.Until(deadline))
 	}
 
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
+	var resp []byte
+	var err error
+
+	go func() {
+		resp, err = h.Handler.Invoke(instana.ContextWithSpan(ctx, sp), payload)
+		if err != nil {
+			sp.LogFields(otlog.Error(err))
+		}
+
+		done <- struct{}{}
+	}()
+
+	select {
+	case <-done:
+		h.sensor.Logger().Debug("no timeout")
+		if deadlineDefined {
+			remainingTime := originalDeadline.Sub(time.Now())
+			sp.SetTag("lambda.msleft", remainingTime.Milliseconds())
+		}
+	case <-timeoutChannel:
+		h.sensor.Logger().Debug("timeout")
+
+		remainingTime := originalDeadline.Sub(time.Now())
+		sp.SetTag("lambda.msleft", remainingTime.Milliseconds())
+
+		sp.SetTag("lambda.error", fmt.Sprintf(`The Lambda function was still running when only %d ms were left, it might have ended in a timeout.`, remainingTime.Milliseconds()))
+		cancel()
+	}
+
+	h.finishSpanAndFlush(sp)
+
+	return resp, err
+}
+
+func (h *wrappedHandler) finishSpanAndFlush(sp opentracing.Span) {
 	sp.Finish()
 
 	// ensure that all collected data has been sent before the invocation is finished
@@ -89,8 +134,6 @@ func (h *wrappedHandler) Invoke(ctx context.Context, payload []byte) ([]byte, er
 			break
 		}
 	}
-
-	return resp, err
 }
 
 func (h *wrappedHandler) triggerEventSpanOptions(payload []byte, lcc lambdacontext.ClientContext) []opentracing.StartSpanOption {

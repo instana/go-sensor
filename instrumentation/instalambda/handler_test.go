@@ -8,7 +8,9 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"strconv"
 	"testing"
+	"time"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambdacontext"
@@ -658,6 +660,57 @@ func TestNewHandler_InvokeLambda_ColdStartAndNotColdStart(t *testing.T) {
 			ColdStart: false,
 		},
 	}, spans[1].Data)
+}
+
+func TestNewHandler_InvokeLambda_Timeout(t *testing.T) {
+	recorder := instana.NewTestRecorder()
+	sensor := instana.NewSensorWithTracer(instana.NewTracerWithEverything(instana.DefaultOptions(), recorder))
+
+	h := instalambda.NewHandler(func(ctx context.Context, evt interface{}) error {
+		_, ok := instana.SpanFromContext(ctx)
+		assert.True(t, ok)
+
+		return nil
+	}, sensor)
+
+	lambdacontext.FunctionName = "test-function"
+	lambdacontext.FunctionVersion = "42"
+
+	ctx := lambdacontext.NewContext(context.Background(), &lambdacontext.LambdaContext{
+		AwsRequestID:       "req1",
+		InvokedFunctionArn: "aws:test-function",
+	})
+
+	ctx, cancel := context.WithDeadline(ctx, time.Now())
+	defer cancel()
+
+	_, err := h.Invoke(ctx, []byte("{}"))
+	require.NoError(t, err)
+
+	spans := recorder.GetQueuedSpans()
+	require.Len(t, spans, 2)
+
+	awsLambdaSpanData, ok := (spans[0].Data).(instana.AWSLambdaSpanData)
+	require.True(t, ok)
+
+	assert.Equal(t, instana.AWSLambdaSpanData{
+		Snapshot: instana.AWSLambdaSpanTags{
+			ARN:              "aws:test-function:42",
+			Runtime:          "go",
+			Name:             "test-function",
+			Version:          "42",
+			Trigger:          "aws:lambda.invoke",
+			ColdStart:        true,
+			MillisecondsLeft: awsLambdaSpanData.Snapshot.MillisecondsLeft,
+			Error:            "The Lambda function was still running when only " + strconv.Itoa(awsLambdaSpanData.Snapshot.MillisecondsLeft) + " ms were left, it might have ended in a timeout.",
+		},
+	}, spans[0].Data)
+
+	logSpan, ok := (spans[1].Data).(instana.LogSpanData)
+	require.True(t, ok)
+
+	require.Equal(t, "ERROR", logSpan.Tags.Level)
+	require.Equal(t, "error: \"Timeout\"", logSpan.Tags.Message)
 }
 
 func TestNewHandler_InvokeLambda_WithIncompleteSetOfInstanaHeaders(t *testing.T) {
