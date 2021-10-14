@@ -796,7 +796,7 @@ type AWSLambdaSpanTags struct {
 	// ColdStart is true if this is the first time current instance of the function was invoked
 	ColdStart bool `json:"coldStart,omitempty"`
 	// MsLeft a milliseconds before a timeout
-	MsLeft int `json:"ms_left,omitempty"`
+	MillisecondsLeft int `json:"ms_left,omitempty"`
 	// Error an AWS Lambda specific error
 	Error string `json:"error,omitempty"`
 	// CloudWatch holds the details of a CloudWatch event associated with this lambda
