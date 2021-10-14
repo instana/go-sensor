@@ -795,8 +795,8 @@ type AWSLambdaSpanTags struct {
 	Trigger string `json:"trigger,omitempty"`
 	// ColdStart is true if this is the first time current instance of the function was invoked
 	ColdStart bool `json:"coldStart,omitempty"`
-	// MsLeft a milliseconds before a timeout
-	MillisecondsLeft int `json:"ms_left,omitempty"`
+	// MillisecondsLeft a milliseconds before a timeout
+	MillisecondsLeft int `json:"msleft,omitempty"`
 	// Error an AWS Lambda specific error
 	Error string `json:"error,omitempty"`
 	// CloudWatch holds the details of a CloudWatch event associated with this lambda
@@ -832,11 +832,10 @@ func NewAWSLambdaSpanTags(span *spanS) AWSLambdaSpanTags {
 	}
 
 	if v, ok := span.Tags["lambda.msleft"]; ok {
-		readIntTag(&tags.MsLeft, v)
+		readIntTag(&tags.MillisecondsLeft, v)
 	}
 
 	if v, ok := span.Tags["lambda.error"]; ok {
-		span.ErrorCount++
 		readStringTag(&tags.Error, v)
 	}
 
