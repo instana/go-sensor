@@ -66,7 +66,6 @@ func (h *wrappedHandler) Invoke(ctx context.Context, payload []byte) ([]byte, er
 		sp.SetTag("lambda.coldStart", true)
 	})
 
-	resp, err := h.Handler.Invoke(instana.ContextWithSpan(ctx, sp), payload)
 	done := make(chan struct{})
 	timeoutChannel := make(<-chan time.Time)
 
@@ -76,9 +75,6 @@ func (h *wrappedHandler) Invoke(ctx context.Context, payload []byte) ([]byte, er
 		deadline := originalDeadline.Add(-100 * time.Millisecond)
 		timeoutChannel = time.After(time.Until(deadline))
 	}
-
-	ctx, cancel := context.WithCancel(ctx)
-	defer cancel()
 
 	var resp []byte
 	var err error
@@ -104,9 +100,7 @@ func (h *wrappedHandler) Invoke(ctx context.Context, payload []byte) ([]byte, er
 
 		remainingTime := originalDeadline.Sub(time.Now())
 		sp.SetTag("lambda.msleft", remainingTime.Milliseconds())
-
 		sp.SetTag("lambda.error", fmt.Sprintf(`The Lambda function was still running when only %d ms were left, it might have ended in a timeout.`, remainingTime.Milliseconds()))
-		cancel()
 	}
 
 	h.finishSpanAndFlush(sp)
