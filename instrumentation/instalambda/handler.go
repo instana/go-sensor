@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/aws/aws-lambda-go/events"
@@ -29,7 +30,8 @@ const (
 type wrappedHandler struct {
 	lambda.Handler
 
-	sensor *instana.Sensor
+	sensor      *instana.Sensor
+	onColdStart sync.Once
 }
 
 // NewHandler creates a new instrumented handler that can be used with `lambda.StartHandler()` from a handler function
@@ -39,7 +41,10 @@ func NewHandler(handlerFunc interface{}, sensor *instana.Sensor) *wrappedHandler
 
 // WrapHandler instruments a lambda.Handler to trace the invokations with Instana
 func WrapHandler(h lambda.Handler, sensor *instana.Sensor) *wrappedHandler {
-	return &wrappedHandler{h, sensor}
+	return &wrappedHandler{
+		Handler: h,
+		sensor:  sensor,
+	}
 }
 
 // Invoke is a handler function for a wrapped handler
@@ -56,6 +61,10 @@ func (h *wrappedHandler) Invoke(ctx context.Context, payload []byte) ([]byte, er
 	}}, h.triggerEventSpanOptions(payload, lc.ClientContext)...)
 	sp := h.sensor.Tracer().StartSpan("aws.lambda.entry", opts...)
 
+	h.onColdStart.Do(func() {
+		sp.SetTag("lambda.coldStart", true)
+	})
+
 	resp, err := h.Handler.Invoke(instana.ContextWithSpan(ctx, sp), payload)
 	if err != nil {
 		sp.LogFields(otlog.Error(err))
@@ -63,7 +72,7 @@ func (h *wrappedHandler) Invoke(ctx context.Context, payload []byte) ([]byte, er
 
 	sp.Finish()
 
-	// ensure that all collected data has been sent before the invokation is finished
+	// ensure that all collected data has been sent before the invocation is finished
 	if tr, ok := h.sensor.Tracer().(instana.Tracer); ok {
 		var i int
 		for {
