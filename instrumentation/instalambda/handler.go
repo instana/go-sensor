@@ -54,18 +54,16 @@ func (h *wrappedHandler) Invoke(ctx context.Context, payload []byte) ([]byte, er
 		return h.Handler.Invoke(ctx, payload)
 	}
 
-	coldStart := false
-	h.onColdStart.Do(func() {
-		coldStart = true
-	})
-
 	opts := append([]opentracing.StartSpanOption{opentracing.Tags{
-		"lambda.arn":       lc.InvokedFunctionArn + ":" + lambdacontext.FunctionVersion,
-		"lambda.name":      lambdacontext.FunctionName,
-		"lambda.version":   lambdacontext.FunctionVersion,
-		"lambda.coldStart": coldStart,
+		"lambda.arn":     lc.InvokedFunctionArn + ":" + lambdacontext.FunctionVersion,
+		"lambda.name":    lambdacontext.FunctionName,
+		"lambda.version": lambdacontext.FunctionVersion,
 	}}, h.triggerEventSpanOptions(payload, lc.ClientContext)...)
 	sp := h.sensor.Tracer().StartSpan("aws.lambda.entry", opts...)
+
+	h.onColdStart.Do(func() {
+		sp.SetTag("lambda.coldStart", true)
+	})
 
 	resp, err := h.Handler.Invoke(instana.ContextWithSpan(ctx, sp), payload)
 	if err != nil {
