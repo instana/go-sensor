@@ -12,7 +12,7 @@ import (
 	"github.com/instana/testify/assert"
 )
 
-func TestTimer_Restart(t *testing.T) {
+func TestTimer_Stop(t *testing.T) {
 	var fired int64
 	timer := internal.NewTimer(0, 60*time.Millisecond, func() {
 		atomic.AddInt64(&fired, 1)
@@ -24,18 +24,6 @@ func TestTimer_Restart(t *testing.T) {
 	assert.EqualValues(t, 1, atomic.LoadInt64(&fired))
 
 	time.Sleep(200 * time.Millisecond)
-	assert.EqualValues(t, 1, atomic.LoadInt64(&fired))
-}
-
-func TestTimer_Sleep(t *testing.T) {
-	var fired int64
-	timer := internal.NewTimer(0, 60*time.Millisecond, func() {
-		atomic.AddInt64(&fired, 1)
-	})
-
-	time.Sleep(100 * time.Millisecond)
-	timer.Stop()
-
 	assert.EqualValues(t, 1, atomic.LoadInt64(&fired))
 }
 
