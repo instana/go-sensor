@@ -797,7 +797,7 @@ type AWSLambdaSpanTags struct {
 	ColdStart bool `json:"coldStart,omitempty"`
 	// MillisecondsLeft a milliseconds before a timeout
 	MillisecondsLeft int `json:"msleft,omitempty"`
-	// Error an AWS Lambda specific error
+	// Error is an AWS Lambda specific error
 	Error string `json:"error,omitempty"`
 	// CloudWatch holds the details of a CloudWatch event associated with this lambda
 	CloudWatch *AWSLambdaCloudWatchSpanTags `json:"cw,omitempty"`
