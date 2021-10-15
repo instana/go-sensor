@@ -8,6 +8,7 @@ package instalambda
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -91,16 +92,14 @@ func (h *wrappedHandler) Invoke(ctx context.Context, payload []byte) ([]byte, er
 	select {
 	case <-done:
 		h.sensor.Logger().Debug("no timeout")
-		if deadlineDefined {
-			remainingTime := originalDeadline.Sub(time.Now())
-			sp.SetTag("lambda.msleft", remainingTime.Milliseconds())
-		}
 	case <-timeoutChannel:
 		h.sensor.Logger().Debug("timeout")
 
 		remainingTime := originalDeadline.Sub(time.Now())
 		sp.SetTag("lambda.msleft", remainingTime.Milliseconds())
 		sp.SetTag("lambda.error", fmt.Sprintf(`The Lambda function was still running when only %d ms were left, it might have ended in a timeout.`, remainingTime.Milliseconds()))
+
+		sp.LogFields(otlog.Error(errors.New("Timeout")))
 	}
 
 	h.finishSpanAndFlush(sp)
