@@ -96,8 +96,9 @@ func (h *wrappedHandler) Invoke(ctx context.Context, payload []byte) ([]byte, er
 		h.sensor.Logger().Debug("timeout")
 
 		remainingTime := originalDeadline.Sub(time.Now())
-		sp.SetTag("lambda.msleft", remainingTime.Milliseconds())
-		sp.SetTag("lambda.error", fmt.Sprintf(`The Lambda function was still running when only %d ms were left, it might have ended in a timeout.`, remainingTime.Milliseconds()))
+		remainingTimeInMilliseconds := remainingTime.Nanoseconds() / 1000000
+		sp.SetTag("lambda.msleft", remainingTimeInMilliseconds)
+		sp.SetTag("lambda.error", fmt.Sprintf(`The Lambda function was still running when only %d ms were left, it might have ended in a timeout.`, remainingTimeInMilliseconds))
 
 		sp.LogFields(otlog.Error(errors.New("Timeout")))
 	}
