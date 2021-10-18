@@ -27,6 +27,7 @@ import (
 const (
 	awsLambdaFlushMaxRetries  = 5
 	awsLambdaFlushRetryPeriod = 50 * time.Millisecond
+	awsLambdaTimeoutThreshold = 100 * time.Millisecond
 )
 
 type wrappedHandler struct {
@@ -73,7 +74,7 @@ func (h *wrappedHandler) Invoke(ctx context.Context, payload []byte) ([]byte, er
 	originalDeadline, deadlineDefined := ctx.Deadline()
 
 	if deadlineDefined {
-		deadline := originalDeadline.Add(-100 * time.Millisecond)
+		deadline := originalDeadline.Add(-awsLambdaTimeoutThreshold)
 		timeoutChannel = time.After(time.Until(deadline))
 	}
 
