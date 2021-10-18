@@ -8,7 +8,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
-	"strconv"
 	"testing"
 	"time"
 
@@ -690,9 +689,11 @@ func TestNewHandler_InvokeLambda_Timeout(t *testing.T) {
 	spans := recorder.GetQueuedSpans()
 	require.Len(t, spans, 2)
 
-	awsLambdaSpanData, ok := (spans[0].Data).(instana.AWSLambdaSpanData)
-	require.True(t, ok)
+	lambdaSpan, logSpan := spans[0], spans[1]
 
+	require.IsType(t, instana.AWSLambdaSpanData{}, lambdaSpan.Data)
+
+	lambdaData := lambdaSpan.Data.(instana.AWSLambdaSpanData)
 	assert.Equal(t, instana.AWSLambdaSpanData{
 		Snapshot: instana.AWSLambdaSpanTags{
 			ARN:              "aws:test-function:42",
@@ -701,16 +702,16 @@ func TestNewHandler_InvokeLambda_Timeout(t *testing.T) {
 			Version:          "42",
 			Trigger:          "aws:lambda.invoke",
 			ColdStart:        true,
-			MillisecondsLeft: awsLambdaSpanData.Snapshot.MillisecondsLeft,
-			Error:            "The Lambda function was still running when only " + strconv.Itoa(awsLambdaSpanData.Snapshot.MillisecondsLeft) + " ms were left, it might have ended in a timeout.",
+			MillisecondsLeft: lambdaData.Snapshot.MillisecondsLeft,
+			Error:            "The Lambda function was still running when only " + time.Duration(lambdaData.Snapshot.MillisecondsLeft*int(time.Millisecond)).String() + " were left, it might have timed out.",
 		},
-	}, spans[0].Data)
+	}, lambdaSpan.Data)
 
-	logSpan, ok := (spans[1].Data).(instana.LogSpanData)
-	require.True(t, ok)
+	require.IsType(t, instana.LogSpanData{}, logSpan.Data)
 
-	require.Equal(t, "ERROR", logSpan.Tags.Level)
-	require.Equal(t, "error: \"Timeout\"", logSpan.Tags.Message)
+	logData := logSpan.Data.(instana.LogSpanData)
+	require.Equal(t, "ERROR", logData.Tags.Level)
+	require.Equal(t, `error: "handler has timed out"`, logData.Tags.Message)
 }
 
 func TestNewHandler_InvokeLambda_WithIncompleteSetOfInstanaHeaders(t *testing.T) {

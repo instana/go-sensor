@@ -30,6 +30,8 @@ const (
 	awsLambdaTimeoutThreshold = 100 * time.Millisecond
 )
 
+var errHandlerTimedOut = errors.New("handler has timed out")
+
 type wrappedHandler struct {
 	lambda.Handler
 
@@ -62,7 +64,14 @@ func (h *wrappedHandler) Invoke(ctx context.Context, payload []byte) ([]byte, er
 		"lambda.name":    lambdacontext.FunctionName,
 		"lambda.version": lambdacontext.FunctionVersion,
 	}}, h.triggerEventSpanOptions(payload, lc.ClientContext)...)
+
 	sp := h.sensor.Tracer().StartSpan("aws.lambda.entry", opts...)
+	defer func() {
+		sp.Finish()
+
+		// ensure that all collected data has been sent before the invocation is finished
+		h.flushAgent(awsLambdaFlushRetryPeriod, awsLambdaFlushMaxRetries)
+	}()
 
 	h.onColdStart.Do(func() {
 		sp.SetTag("lambda.coldStart", true)
@@ -78,8 +87,10 @@ func (h *wrappedHandler) Invoke(ctx context.Context, payload []byte) ([]byte, er
 		timeoutChannel = time.After(time.Until(deadline))
 	}
 
-	var resp []byte
-	var err error
+	var (
+		resp []byte
+		err  error
+	)
 
 	go func() {
 		resp, err = h.Handler.Invoke(instana.ContextWithSpan(ctx, sp), payload)
@@ -87,39 +98,33 @@ func (h *wrappedHandler) Invoke(ctx context.Context, payload []byte) ([]byte, er
 			sp.LogFields(otlog.Error(err))
 		}
 
-		done <- struct{}{}
+		close(done)
 	}()
 
 	select {
 	case <-done:
-		h.sensor.Logger().Debug("no timeout")
 	case <-timeoutChannel:
-		h.sensor.Logger().Debug("timeout")
+		h.sensor.Logger().Debug("lambda handler has timed out")
 
-		remainingTime := originalDeadline.Sub(time.Now())
-		remainingTimeInMilliseconds := remainingTime.Nanoseconds() / 1000000
-		sp.SetTag("lambda.msleft", remainingTimeInMilliseconds)
-		sp.SetTag("lambda.error", fmt.Sprintf(`The Lambda function was still running when only %d ms were left, it might have ended in a timeout.`, remainingTimeInMilliseconds))
+		remainingTime := time.Until(originalDeadline).Truncate(time.Millisecond)
 
-		sp.LogFields(otlog.Error(errors.New("Timeout")))
+		sp.SetTag("lambda.msleft", int64(remainingTime)/1e6) // cast time.Duration to int64 for compatibility with older Go versions
+		sp.SetTag("lambda.error", fmt.Sprintf(`The Lambda function was still running when only %s were left, it might have timed out.`, remainingTime))
+
+		sp.LogFields(otlog.Error(errHandlerTimedOut))
 	}
-
-	h.finishSpanAndFlush(sp)
 
 	return resp, err
 }
 
-func (h *wrappedHandler) finishSpanAndFlush(sp opentracing.Span) {
-	sp.Finish()
-
-	// ensure that all collected data has been sent before the invocation is finished
+func (h *wrappedHandler) flushAgent(retryPeriod time.Duration, maxRetries int) {
 	if tr, ok := h.sensor.Tracer().(instana.Tracer); ok {
 		var i int
 		for {
 			if err := tr.Flush(context.Background()); err != nil {
-				if err == instana.ErrAgentNotReady && i < awsLambdaFlushMaxRetries {
+				if err == instana.ErrAgentNotReady && i < maxRetries {
 					i++
-					time.Sleep(awsLambdaFlushRetryPeriod)
+					time.Sleep(retryPeriod)
 					continue
 				}
 
