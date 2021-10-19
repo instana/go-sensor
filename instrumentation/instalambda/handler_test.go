@@ -665,9 +665,8 @@ func TestNewHandler_InvokeLambda_Timeout(t *testing.T) {
 	recorder := instana.NewTestRecorder()
 	sensor := instana.NewSensorWithTracer(instana.NewTracerWithEverything(instana.DefaultOptions(), recorder))
 
-	h := instalambda.NewHandler(func(ctx context.Context, evt interface{}) error {
-		_, ok := instana.SpanFromContext(ctx)
-		assert.True(t, ok)
+	h := instalambda.NewHandler(func() error {
+		time.Sleep(100 * time.Millisecond) // make sure the function times out
 
 		return nil
 	}, sensor)
