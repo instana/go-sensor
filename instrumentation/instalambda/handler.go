@@ -70,14 +70,16 @@ func (h *wrappedHandler) Invoke(ctx context.Context, payload []byte) ([]byte, er
 		sp.SetTag("lambda.coldStart", true)
 	})
 
-	traceCtx := ctx
-	done := make(chan struct{})
+	// Here we create a separate context.Context to finalize and send the span. This context
+	// supposed to be canceled once the wrapped handler is done.
+	traceCtx, cancelTraceCtx := context.WithCancel(ctx)
 
+	// In case there is a deadline defined for this invokation, we should finish the span just before
+	// the function times out to send the span data.
 	originalDeadline, deadlineDefined := ctx.Deadline()
 	if deadlineDefined {
 		var cancel context.CancelFunc
 
-		// add a leeway for the agent client to flush data
 		traceCtx, cancel = context.WithDeadline(ctx, originalDeadline.Add(-awsLambdaTimeoutThreshold))
 		defer cancel()
 	}
@@ -85,27 +87,21 @@ func (h *wrappedHandler) Invoke(ctx context.Context, payload []byte) ([]byte, er
 	var wg sync.WaitGroup
 	wg.Add(1)
 
-	// This function waits until either of two happens: the handler returns or the deadline is reached.
-	// We need to make sure that trace data has been sent before the function times out, therefore we
-	// finalize and flush the span concurrently.
+	// Await for the trace context to become either canceled or timed out and finalize the span
 	go func() {
 		defer wg.Done()
 
-		select {
-		case <-done:
-			h.sensor.Logger().Debug("handler done")
-		case <-traceCtx.Done():
-			h.sensor.Logger().Info("handler timed out")
-			if traceCtx.Err() == context.DeadlineExceeded {
-				h.sensor.Logger().Debug("lambda handler has timed out")
+		<-traceCtx.Done()
 
-				remainingTime := time.Until(originalDeadline).Truncate(time.Millisecond)
+		if traceCtx.Err() == context.DeadlineExceeded {
+			h.sensor.Logger().Debug("lambda handler has timed out")
 
-				sp.SetTag("lambda.msleft", int64(remainingTime)/1e6) // cast time.Duration to int64 for compatibility with older Go versions
-				sp.SetTag("lambda.error", fmt.Sprintf(`The Lambda function was still running when only %s were left, it might have timed out.`, remainingTime))
+			remainingTime := time.Until(originalDeadline).Truncate(time.Millisecond)
 
-				sp.LogFields(otlog.Error(errHandlerTimedOut))
-			}
+			sp.SetTag("lambda.msleft", int64(remainingTime)/1e6) // cast time.Duration to int64 for compatibility with older Go versions
+			sp.SetTag("lambda.error", fmt.Sprintf(`The Lambda function was still running when only %s were left, it might have timed out.`, remainingTime))
+
+			sp.LogFields(otlog.Error(errHandlerTimedOut))
 		}
 
 		sp.Finish()
@@ -117,7 +113,7 @@ func (h *wrappedHandler) Invoke(ctx context.Context, payload []byte) ([]byte, er
 		sp.LogFields(otlog.Error(err))
 	}
 
-	close(done)
+	cancelTraceCtx()
 
 	// ensure that span has been finished and sent to the agent before quit
 	wg.Wait()
