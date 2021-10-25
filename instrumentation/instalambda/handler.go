@@ -90,9 +90,8 @@ func (h *wrappedHandler) Invoke(ctx context.Context, payload []byte) ([]byte, er
 		<-traceCtx.Done()
 
 		if traceCtx.Err() == context.DeadlineExceeded {
-			h.sensor.Logger().Debug("lambda handler has timed out")
-
 			remainingTime := time.Until(originalDeadline).Truncate(time.Millisecond)
+			h.sensor.Logger().Debug("heuristical timeout detection was triggered with ", remainingTime, " left")
 
 			sp.SetTag("lambda.msleft", int64(remainingTime)/1e6) // cast time.Duration to int64 for compatibility with older Go versions
 			sp.LogFields(otlog.Error(errHandlerTimedOut))
