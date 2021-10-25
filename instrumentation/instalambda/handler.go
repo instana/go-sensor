@@ -8,6 +8,7 @@ package instalambda
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/url"
 	"strings"
@@ -25,7 +26,10 @@ import (
 const (
 	awsLambdaFlushMaxRetries  = 5
 	awsLambdaFlushRetryPeriod = 50 * time.Millisecond
+	awsLambdaTimeoutThreshold = 100 * time.Millisecond
 )
+
+var errHandlerTimedOut = errors.New("handler has timed out")
 
 type wrappedHandler struct {
 	lambda.Handler
@@ -59,38 +63,77 @@ func (h *wrappedHandler) Invoke(ctx context.Context, payload []byte) ([]byte, er
 		"lambda.name":    lambdacontext.FunctionName,
 		"lambda.version": lambdacontext.FunctionVersion,
 	}}, h.triggerEventSpanOptions(payload, lc.ClientContext)...)
-	sp := h.sensor.Tracer().StartSpan("aws.lambda.entry", opts...)
 
+	sp := h.sensor.Tracer().StartSpan("aws.lambda.entry", opts...)
 	h.onColdStart.Do(func() {
 		sp.SetTag("lambda.coldStart", true)
 	})
+
+	// Here we create a separate context.Context to finalize and send the span. This context
+	// supposed to be canceled once the wrapped handler is done.
+	traceCtx, cancelTraceCtx := context.WithCancel(ctx)
+
+	// In case there is a deadline defined for this invokation, we should finish the span just before
+	// the function times out to send the span data.
+	originalDeadline, deadlineDefined := ctx.Deadline()
+	if deadlineDefined {
+		traceCtx, cancelTraceCtx = context.WithDeadline(ctx, originalDeadline.Add(-awsLambdaTimeoutThreshold))
+	}
+
+	var wg sync.WaitGroup
+	wg.Add(1)
+
+	// Await for the trace context to become either canceled or timed out and finalize the span
+	go func() {
+		defer wg.Done()
+
+		<-traceCtx.Done()
+
+		if traceCtx.Err() == context.DeadlineExceeded {
+			remainingTime := time.Until(originalDeadline).Truncate(time.Millisecond)
+			h.sensor.Logger().Debug("heuristical timeout detection was triggered with ", remainingTime, " left")
+
+			sp.SetTag("lambda.msleft", int64(remainingTime)/1e6) // cast time.Duration to int64 for compatibility with older Go versions
+			sp.LogFields(otlog.Error(errHandlerTimedOut))
+		}
+
+		sp.Finish()
+		h.flushAgent(awsLambdaFlushRetryPeriod, awsLambdaFlushMaxRetries)
+	}()
 
 	resp, err := h.Handler.Invoke(instana.ContextWithSpan(ctx, sp), payload)
 	if err != nil {
 		sp.LogFields(otlog.Error(err))
 	}
 
-	sp.Finish()
+	cancelTraceCtx()
 
-	// ensure that all collected data has been sent before the invocation is finished
+	// ensure that span has been finished and sent to the agent before quit
+	wg.Wait()
+
+	return resp, err
+}
+
+func (h *wrappedHandler) flushAgent(retryPeriod time.Duration, maxRetries int) {
+	h.sensor.Logger().Debug("flushing trace data")
+
 	if tr, ok := h.sensor.Tracer().(instana.Tracer); ok {
 		var i int
 		for {
 			if err := tr.Flush(context.Background()); err != nil {
-				if err == instana.ErrAgentNotReady && i < awsLambdaFlushMaxRetries {
+				if err == instana.ErrAgentNotReady && i < maxRetries {
 					i++
-					time.Sleep(awsLambdaFlushRetryPeriod)
+					time.Sleep(retryPeriod)
 					continue
 				}
 
 				h.sensor.Logger().Error("failed to send traces:", err)
 			}
 
+			h.sensor.Logger().Debug("data sent")
 			break
 		}
 	}
-
-	return resp, err
 }
 
 func (h *wrappedHandler) triggerEventSpanOptions(payload []byte, lcc lambdacontext.ClientContext) []opentracing.StartSpanOption {

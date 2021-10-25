@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambdacontext"
@@ -658,6 +659,57 @@ func TestNewHandler_InvokeLambda_ColdStartAndNotColdStart(t *testing.T) {
 			ColdStart: false,
 		},
 	}, spans[1].Data)
+}
+
+func TestNewHandler_InvokeLambda_Timeout(t *testing.T) {
+	recorder := instana.NewTestRecorder()
+	sensor := instana.NewSensorWithTracer(instana.NewTracerWithEverything(instana.DefaultOptions(), recorder))
+
+	h := instalambda.NewHandler(func() error {
+		time.Sleep(100 * time.Millisecond) // make sure the function times out
+
+		return nil
+	}, sensor)
+
+	lambdacontext.FunctionName = "test-function"
+	lambdacontext.FunctionVersion = "42"
+
+	ctx := lambdacontext.NewContext(context.Background(), &lambdacontext.LambdaContext{
+		AwsRequestID:       "req1",
+		InvokedFunctionArn: "aws:test-function",
+	})
+
+	ctx, cancel := context.WithDeadline(ctx, time.Now())
+	defer cancel()
+
+	_, err := h.Invoke(ctx, []byte("{}"))
+	require.NoError(t, err)
+
+	spans := recorder.GetQueuedSpans()
+	require.Len(t, spans, 2)
+
+	lambdaSpan, logSpan := spans[0], spans[1]
+
+	require.IsType(t, instana.AWSLambdaSpanData{}, lambdaSpan.Data)
+
+	lambdaData := lambdaSpan.Data.(instana.AWSLambdaSpanData)
+	assert.Equal(t, instana.AWSLambdaSpanData{
+		Snapshot: instana.AWSLambdaSpanTags{
+			ARN:              "aws:test-function:42",
+			Runtime:          "go",
+			Name:             "test-function",
+			Version:          "42",
+			Trigger:          "aws:lambda.invoke",
+			ColdStart:        true,
+			MillisecondsLeft: lambdaData.Snapshot.MillisecondsLeft,
+		},
+	}, lambdaSpan.Data)
+
+	require.IsType(t, instana.LogSpanData{}, logSpan.Data)
+
+	logData := logSpan.Data.(instana.LogSpanData)
+	require.Equal(t, "ERROR", logData.Tags.Level)
+	require.Equal(t, `error: "handler has timed out"`, logData.Tags.Message)
 }
 
 func TestNewHandler_InvokeLambda_WithIncompleteSetOfInstanaHeaders(t *testing.T) {

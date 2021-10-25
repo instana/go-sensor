@@ -10,7 +10,6 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"os"
 	"strconv"
@@ -183,7 +182,6 @@ func (a *lambdaAgent) collectSnapshot(spans []Span) serverlessSnapshot {
 	for i := len(spans) - 1; i >= 0; i-- {
 		sp, ok := spans[i].Data.(AWSLambdaSpanData)
 		if !ok {
-			log.Printf("span data type %t", spans[i].Data)
 			continue
 		}
 
