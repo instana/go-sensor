@@ -77,10 +77,7 @@ func (h *wrappedHandler) Invoke(ctx context.Context, payload []byte) ([]byte, er
 	// the function times out to send the span data.
 	originalDeadline, deadlineDefined := ctx.Deadline()
 	if deadlineDefined {
-		var cancel context.CancelFunc
-
-		traceCtx, cancel = context.WithDeadline(ctx, originalDeadline.Add(-awsLambdaTimeoutThreshold))
-		defer cancel()
+		traceCtx, cancelTraceCtx = context.WithDeadline(ctx, originalDeadline.Add(-awsLambdaTimeoutThreshold))
 	}
 
 	var wg sync.WaitGroup
