@@ -702,7 +702,6 @@ func TestNewHandler_InvokeLambda_Timeout(t *testing.T) {
 			Trigger:          "aws:lambda.invoke",
 			ColdStart:        true,
 			MillisecondsLeft: lambdaData.Snapshot.MillisecondsLeft,
-			Error:            "The Lambda function was still running when only " + time.Duration(lambdaData.Snapshot.MillisecondsLeft*int(time.Millisecond)).String() + " were left, it might have timed out.",
 		},
 	}, lambdaSpan.Data)
 

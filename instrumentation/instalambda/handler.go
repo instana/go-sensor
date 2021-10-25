@@ -9,7 +9,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"net/http"
 	"net/url"
 	"strings"
@@ -99,8 +98,6 @@ func (h *wrappedHandler) Invoke(ctx context.Context, payload []byte) ([]byte, er
 			remainingTime := time.Until(originalDeadline).Truncate(time.Millisecond)
 
 			sp.SetTag("lambda.msleft", int64(remainingTime)/1e6) // cast time.Duration to int64 for compatibility with older Go versions
-			sp.SetTag("lambda.error", fmt.Sprintf(`The Lambda function was still running when only %s were left, it might have timed out.`, remainingTime))
-
 			sp.LogFields(otlog.Error(errHandlerTimedOut))
 		}
 
