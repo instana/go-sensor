@@ -10,7 +10,6 @@ This folder contains examples of instrumenting the common use-cases with `github
 * [OpenTracing](./opentracing) - an example of usage of Instana tracer in an app instrumented with OpenTracing
 * [gRPC](./grpc-client-server) - an example of usage of Instana tracer in an app instrumented with gRPC
 * [Gin](./gin) - an example of usage of Instana tracer instrumenting a [`Gin`](github.com/gin-gonic/gin) application
-* [Gorilla mux](./gorillamux) - an example of usage of Instana tracer instrumenting the [`github.com/gorilla/mux`](https://github.com/gorilla/mux) router
 * [github.com/julienschmidt/httprouter](./httprouter) - an example of usage of Instana tracer to instrument a [`github.com/julienschmidt/httprouter`](https://github.com/julienschmidt/httprouter) router
 
 For more up-to-date instrumentation code examples please consult the respective package documentation page:
