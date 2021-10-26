@@ -144,9 +144,9 @@ func TestPropagationWithError(t *testing.T) {
 	assert.NotEmpty(t, w.Header().Get("Tracestate"))
 
 	spans := recorder.GetQueuedSpans()
-	require.Len(t, spans, 2)
+	require.Len(t, spans, 3)
 
-	entrySpan, interSpan := spans[1], spans[0]
+	interSpan, entrySpan, logSpan := spans[0], spans[1], spans[2]
 
 	assert.EqualValues(t, instana.EntrySpanKind, entrySpan.Kind)
 	assert.EqualValues(t, instana.IntermediateSpanKind, interSpan.Kind)
@@ -175,4 +175,16 @@ func TestPropagationWithError(t *testing.T) {
 		},
 		Error: "Internal Server Error",
 	}, entrySpanData.Tags)
+
+	// assert that log message has been recorded within the span interval
+	assert.GreaterOrEqual(t, logSpan.Timestamp, entrySpan.Timestamp)
+	assert.LessOrEqual(t, logSpan.Duration, entrySpan.Duration)
+
+	require.IsType(t, instana.LogSpanData{}, logSpan.Data)
+	logData := logSpan.Data.(instana.LogSpanData)
+
+	assert.Equal(t, instana.LogSpanTags{
+		Level:   "ERROR",
+		Message: `error: "Internal Server Error"`,
+	}, logData.Tags)
 }
