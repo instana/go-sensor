@@ -41,7 +41,7 @@ func TestPropagation(t *testing.T) {
 	sensor := instana.NewSensorWithTracer(tracer)
 
 	engine := instaecho.New(sensor)
-	engine.GET("/foo", func(c echo.Context) error {
+	engine.GET("/foo/:id", func(c echo.Context) error {
 
 		parent, ok := instana.SpanFromContext(c.Request().Context())
 		assert.True(t, ok)
@@ -53,7 +53,7 @@ func TestPropagation(t *testing.T) {
 		return c.JSON(200, []byte("{}"))
 	})
 
-	req := httptest.NewRequest("GET", "https://example.com/foo?SECRET_VALUE=%3Credacted%3E&myPassword=%3Credacted%3E&q=term&sensitive_key=%3Credacted%3E", nil)
+	req := httptest.NewRequest("GET", "https://example.com/foo/1?SECRET_VALUE=%3Credacted%3E&myPassword=%3Credacted%3E&q=term&sensitive_key=%3Credacted%3E", nil)
 
 	req.Header.Add(instana.FieldT, traceIDHeader)
 	req.Header.Add(instana.FieldS, spanIDHeader)
@@ -90,13 +90,14 @@ func TestPropagation(t *testing.T) {
 	entrySpanData := entrySpan.Data.(instana.HTTPSpanData)
 
 	assert.Equal(t, instana.HTTPSpanTags{
-		Method:   "GET",
-		Status:   http.StatusOK,
-		Path:     "/foo",
-		URL:      "",
-		Host:     "example.com",
-		Protocol: "https",
-		Params:   "SECRET_VALUE=%3Credacted%3E&myPassword=%3Credacted%3E&q=term&sensitive_key=%3Credacted%3E",
+		Method:       "GET",
+		Status:       http.StatusOK,
+		Path:         "/foo/1",
+		PathTemplate: "/foo/:id",
+		URL:          "",
+		Host:         "example.com",
+		Protocol:     "https",
+		Params:       "SECRET_VALUE=%3Credacted%3E&myPassword=%3Credacted%3E&q=term&sensitive_key=%3Credacted%3E",
 		Headers: map[string]string{
 			"x-custom-header-1": "request",
 			"x-custom-header-2": "response",
