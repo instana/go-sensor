@@ -51,7 +51,7 @@ func TestPropagation(t *testing.T) {
 
 		c.Response().Header().Set("x-custom-header-2", "response")
 		return c.JSON(200, []byte("{}"))
-	})
+	}).Name = "foos"
 
 	req := httptest.NewRequest("GET", "https://example.com/foo/1?SECRET_VALUE=%3Credacted%3E&myPassword=%3Credacted%3E&q=term&sensitive_key=%3Credacted%3E", nil)
 
@@ -96,6 +96,7 @@ func TestPropagation(t *testing.T) {
 		PathTemplate: "/foo/:id",
 		URL:          "",
 		Host:         "example.com",
+		RouteID:      "foos",
 		Protocol:     "https",
 		Params:       "SECRET_VALUE=%3Credacted%3E&myPassword=%3Credacted%3E&q=term&sensitive_key=%3Credacted%3E",
 		Headers: map[string]string{
@@ -124,7 +125,7 @@ func TestPropagationWithError(t *testing.T) {
 		c.Response().Header().Set("x-custom-header-2", "response")
 
 		return errors.New("MY-BAD-TEST-ERROR")
-	})
+	}).Name = "foos"
 
 	req := httptest.NewRequest("GET", "https://example.com/foo?SECRET_VALUE=%3Credacted%3E&myPassword=%3Credacted%3E&q=term&sensitive_key=%3Credacted%3E", nil)
 
@@ -168,6 +169,7 @@ func TestPropagationWithError(t *testing.T) {
 		Path:     "/foo",
 		URL:      "",
 		Host:     "example.com",
+		RouteID:  "foos",
 		Protocol: "https",
 		Params:   "SECRET_VALUE=%3Credacted%3E&myPassword=%3Credacted%3E&q=term&sensitive_key=%3Credacted%3E",
 		Headers: map[string]string{

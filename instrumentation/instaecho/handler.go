@@ -35,7 +35,7 @@ func Middleware(sensor *instana.Sensor) echo.MiddlewareFunc {
 
 			var err error
 
-			instana.TracingHandlerFunc(sensor, r.Path, func(w http.ResponseWriter, req *http.Request) {
+			instana.TracingNamedHandlerFunc(sensor, r.Name, r.Path, func(w http.ResponseWriter, req *http.Request) {
 				c.SetResponse(echo.NewResponse(w, c.Echo()))
 				c.SetRequest(req)
 
