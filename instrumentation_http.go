@@ -23,6 +23,12 @@ import (
 // The wrapped handler will also propagate the W3C trace context (https://www.w3.org/TR/trace-context/)
 // if found in request.
 func TracingHandlerFunc(sensor *Sensor, pathTemplate string, handler http.HandlerFunc) http.HandlerFunc {
+	return TracingNamedHandlerFunc(sensor, "", pathTemplate, handler)
+}
+
+// TracingNamedHandlerFunc is an HTTP middleware that similarly to instana.TracingHandlerFunc() captures the tracing data,
+// while allowing to provide a unique route indetifier to be associated with each request.
+func TracingNamedHandlerFunc(sensor *Sensor, routeID, pathTemplate string, handler http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		ctx := req.Context()
 
@@ -33,6 +39,7 @@ func TracingHandlerFunc(sensor *Sensor, pathTemplate string, handler http.Handle
 				"http.method":   req.Method,
 				"http.protocol": req.URL.Scheme,
 				"http.path":     req.URL.Path,
+				"http.route_id": routeID,
 			},
 		}
 

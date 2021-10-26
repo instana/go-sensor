@@ -101,6 +101,7 @@ func (st RegisteredSpanType) TagsNames() map[string]struct{} {
 			"http.params":   yes,
 			"http.header":   yes,
 			"http.path_tpl": yes,
+			"http.route_id": yes,
 			"http.host":     yes,
 			"http.protocol": yes,
 			"http.error":    yes,
@@ -265,6 +266,8 @@ type HTTPSpanTags struct {
 	Headers map[string]string `json:"header,omitempty"`
 	// PathTemplate is the raw template string used to route the request
 	PathTemplate string `json:"path_tpl,omitempty"`
+	// RouteID is an optional name/identifier for the matched route
+	RouteID string `json:"route_id,omitempty"`
 	// The name:port of the host to which the request had been sent
 	Host string `json:"host,omitempty"`
 	// The name of the protocol used for request ("http" or "https")
@@ -294,6 +297,8 @@ func NewHTTPSpanTags(span *spanS) HTTPSpanTags {
 			}
 		case "http.path_tpl":
 			readStringTag(&tags.PathTemplate, v)
+		case "http.route_id":
+			readStringTag(&tags.RouteID, v)
 		case "http.host":
 			readStringTag(&tags.Host, v)
 		case "http.protocol":
