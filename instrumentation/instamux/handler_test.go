@@ -50,7 +50,7 @@ func TestPropagation(t *testing.T) {
 		sp.Finish()
 		w.Header().Add("x-custom-header-2", "response")
 		w.WriteHeader(http.StatusOK)
-	})
+	}).Name("foos")
 
 	instamux.AddMiddleware(sensor, r)
 
@@ -96,6 +96,7 @@ func TestPropagation(t *testing.T) {
 		Path:         "/foo/1",
 		PathTemplate: "/foo/{id}",
 		URL:          "",
+		RouteID:      "foos",
 		Host:         "example.com",
 		Protocol:     "https",
 		Params:       "SECRET_VALUE=%3Credacted%3E&myPassword=%3Credacted%3E&q=term&sensitive_key=%3Credacted%3E",

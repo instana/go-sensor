@@ -16,13 +16,15 @@ import (
 func AddMiddleware(sensor *instana.Sensor, router *mux.Router) {
 	router.Use(func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-			pathTemplate, err := mux.CurrentRoute(req).GetPathTemplate()
+			r := mux.CurrentRoute(req)
+
+			pathTemplate, err := r.GetPathTemplate()
 			if err != nil {
 				sensor.Logger().Debug("can not get path template from the route: ", err)
 				pathTemplate = ""
 			}
 
-			instana.TracingHandlerFunc(sensor, pathTemplate, func(w http.ResponseWriter, req *http.Request) {
+			instana.TracingNamedHandlerFunc(sensor, r.GetName(), pathTemplate, func(w http.ResponseWriter, req *http.Request) {
 				next.ServeHTTP(w, req)
 			})(w, req)
 		})
