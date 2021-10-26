@@ -17,7 +17,7 @@ func ExampleTracingHandlerFunc() {
 	// to use a single instance throughout your application
 	sensor := instana.NewSensor("my-http-server")
 
-	http.HandleFunc("/", instana.TracingHandlerFunc(sensor, "root", func(w http.ResponseWriter, req *http.Request) {
+	http.HandleFunc("/", instana.TracingNamedHandlerFunc(sensor, "root", "/", func(w http.ResponseWriter, req *http.Request) {
 		// handler code
 	}))
 }

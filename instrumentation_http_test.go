@@ -18,13 +18,13 @@ import (
 	"github.com/instana/testify/require"
 )
 
-func BenchmarkTracingHandlerFunc(b *testing.B) {
+func BenchmarkTracingNamedHandlerFunc(b *testing.B) {
 	recorder := instana.NewTestRecorder()
 	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{
 		Service: "go-sensor-test",
 	}, recorder))
 
-	h := instana.TracingHandlerFunc(s, "/{action}", func(w http.ResponseWriter, req *http.Request) {
+	h := instana.TracingNamedHandlerFunc(s, "action", "/{action}", func(w http.ResponseWriter, req *http.Request) {
 		fmt.Fprintln(w, "Ok")
 	})
 
@@ -39,13 +39,13 @@ func BenchmarkTracingHandlerFunc(b *testing.B) {
 	}
 }
 
-func TestTracingHandlerFunc_Write(t *testing.T) {
+func TestTracingNamedHandlerFunc_Write(t *testing.T) {
 	recorder := instana.NewTestRecorder()
 	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{
 		Service: "go-sensor-test",
 	}, recorder))
 
-	h := instana.TracingHandlerFunc(s, "/{action}", func(w http.ResponseWriter, req *http.Request) {
+	h := instana.TracingNamedHandlerFunc(s, "action", "/{action}", func(w http.ResponseWriter, req *http.Request) {
 		w.Header().Set("X-Response", "true")
 		w.Header().Set("X-Custom-Header-2", "response")
 		fmt.Fprintln(w, "Ok")
@@ -87,6 +87,7 @@ func TestTracingHandlerFunc_Write(t *testing.T) {
 			"x-custom-header-2": "response",
 		},
 		PathTemplate: "/{action}",
+		RouteID:      "action",
 	}, data.Tags)
 
 	// check whether the trace context has been sent back to the client
@@ -105,11 +106,11 @@ func TestTracingHandlerFunc_Write(t *testing.T) {
 	), tracestate)
 }
 
-func TestTracingHandlerFunc_WriteHeaders(t *testing.T) {
+func TestTracingNamedHandlerFunc_WriteHeaders(t *testing.T) {
 	recorder := instana.NewTestRecorder()
 	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{}, recorder))
 
-	h := instana.TracingHandlerFunc(s, "/test", func(w http.ResponseWriter, req *http.Request) {
+	h := instana.TracingNamedHandlerFunc(s, "test", "/test", func(w http.ResponseWriter, req *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
 	})
 
@@ -134,11 +135,12 @@ func TestTracingHandlerFunc_WriteHeaders(t *testing.T) {
 	data := span.Data.(instana.HTTPSpanData)
 
 	assert.Equal(t, instana.HTTPSpanTags{
-		Status: http.StatusNotFound,
-		Method: "GET",
-		Host:   "example.com",
-		Path:   "/test",
-		Params: "q=term",
+		Status:  http.StatusNotFound,
+		Method:  "GET",
+		Host:    "example.com",
+		Path:    "/test",
+		Params:  "q=term",
+		RouteID: "test",
 	}, data.Tags)
 
 	// check whether the trace context has been sent back to the client
@@ -157,11 +159,11 @@ func TestTracingHandlerFunc_WriteHeaders(t *testing.T) {
 	), tracestate)
 }
 
-func TestTracingHandlerFunc_W3CTraceContext(t *testing.T) {
+func TestTracingNamedHandlerFunc_W3CTraceContext(t *testing.T) {
 	recorder := instana.NewTestRecorder()
 	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{}, recorder))
 
-	h := instana.TracingHandlerFunc(s, "/test", func(w http.ResponseWriter, req *http.Request) {
+	h := instana.TracingNamedHandlerFunc(s, "test", "/test", func(w http.ResponseWriter, req *http.Request) {
 		fmt.Fprintln(w, "Ok")
 	})
 
@@ -199,10 +201,11 @@ func TestTracingHandlerFunc_W3CTraceContext(t *testing.T) {
 	data := span.Data.(instana.HTTPSpanData)
 
 	assert.Equal(t, instana.HTTPSpanTags{
-		Host:   "example.com",
-		Status: http.StatusOK,
-		Method: "GET",
-		Path:   "/test",
+		Host:    "example.com",
+		Status:  http.StatusOK,
+		Method:  "GET",
+		Path:    "/test",
+		RouteID: "test",
 	}, data.Tags)
 
 	// check whether the trace context has been sent back to the client
@@ -227,7 +230,7 @@ func TestTracingHandlerFunc_SecretsFiltering(t *testing.T) {
 		Service: "go-sensor-test",
 	}, recorder))
 
-	h := instana.TracingHandlerFunc(s, "/{action}", func(w http.ResponseWriter, req *http.Request) {
+	h := instana.TracingNamedHandlerFunc(s, "action", "/{action}", func(w http.ResponseWriter, req *http.Request) {
 		fmt.Fprintln(w, "Ok")
 	})
 
@@ -259,6 +262,7 @@ func TestTracingHandlerFunc_SecretsFiltering(t *testing.T) {
 		Path:         "/test",
 		Params:       "SECRET_VALUE=%3Credacted%3E&myPassword=%3Credacted%3E&q=term&sensitive_key=%3Credacted%3E",
 		PathTemplate: "/{action}",
+		RouteID:      "action",
 	}, data.Tags)
 
 	// check whether the trace context has been sent back to the client
@@ -270,7 +274,7 @@ func TestTracingHandlerFunc_Error(t *testing.T) {
 	recorder := instana.NewTestRecorder()
 	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{}, recorder))
 
-	h := instana.TracingHandlerFunc(s, "/test", func(w http.ResponseWriter, req *http.Request) {
+	h := instana.TracingNamedHandlerFunc(s, "test", "/test", func(w http.ResponseWriter, req *http.Request) {
 		http.Error(w, "something went wrong", http.StatusInternalServerError)
 	})
 
@@ -291,11 +295,12 @@ func TestTracingHandlerFunc_Error(t *testing.T) {
 	data := span.Data.(instana.HTTPSpanData)
 
 	assert.Equal(t, instana.HTTPSpanTags{
-		Status: http.StatusInternalServerError,
-		Method: "GET",
-		Host:   "example.com",
-		Path:   "/test",
-		Error:  "Internal Server Error",
+		Status:  http.StatusInternalServerError,
+		Method:  "GET",
+		Host:    "example.com",
+		Path:    "/test",
+		RouteID: "test",
+		Error:   "Internal Server Error",
 	}, data.Tags)
 
 	assert.Equal(t, span.TraceID, logSpan.TraceID)
@@ -319,7 +324,7 @@ func TestTracingHandlerFunc_SyntheticCall(t *testing.T) {
 	recorder := instana.NewTestRecorder()
 	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{}, recorder))
 
-	h := instana.TracingHandlerFunc(s, "test-handler", func(w http.ResponseWriter, req *http.Request) {
+	h := instana.TracingNamedHandlerFunc(s, "test-handler", "/", func(w http.ResponseWriter, req *http.Request) {
 		fmt.Fprintln(w, "Ok")
 	})
 
@@ -341,7 +346,7 @@ func TestTracingHandlerFunc_EUMCall(t *testing.T) {
 	recorder := instana.NewTestRecorder()
 	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{}, recorder))
 
-	h := instana.TracingHandlerFunc(s, "test-handler", func(w http.ResponseWriter, req *http.Request) {
+	h := instana.TracingNamedHandlerFunc(s, "test-handler", "/", func(w http.ResponseWriter, req *http.Request) {
 		fmt.Fprintln(w, "Ok")
 	})
 
@@ -364,7 +369,7 @@ func TestTracingHandlerFunc_PanicHandling(t *testing.T) {
 	recorder := instana.NewTestRecorder()
 	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{}, recorder))
 
-	h := instana.TracingHandlerFunc(s, "/test", func(w http.ResponseWriter, req *http.Request) {
+	h := instana.TracingNamedHandlerFunc(s, "test", "/test", func(w http.ResponseWriter, req *http.Request) {
 		panic("something went wrong")
 	})
 
@@ -385,12 +390,13 @@ func TestTracingHandlerFunc_PanicHandling(t *testing.T) {
 	data := span.Data.(instana.HTTPSpanData)
 
 	assert.Equal(t, instana.HTTPSpanTags{
-		Status: http.StatusInternalServerError,
-		Method: "GET",
-		Host:   "example.com",
-		Path:   "/test",
-		Params: "q=term",
-		Error:  "something went wrong",
+		Status:  http.StatusInternalServerError,
+		Method:  "GET",
+		Host:    "example.com",
+		Path:    "/test",
+		Params:  "q=term",
+		RouteID: "test",
+		Error:   "something went wrong",
 	}, data.Tags)
 
 	assert.Equal(t, span.TraceID, logSpan.TraceID)

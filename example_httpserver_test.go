@@ -12,7 +12,7 @@ import (
 )
 
 // This example shows how to instrument an HTTP server with Instana tracing
-func Example_tracingHandlerFunc() {
+func Example_tracingNamedHandlerFunc() {
 	sensor := instana.NewSensor("my-http-server")
 
 	// To instrument a handler function, pass it as an argument to instana.TracingHandlerFunc()
@@ -29,8 +29,10 @@ func Example_tracingHandlerFunc() {
 		w.Write([]byte("OK"))
 	}))
 
-	// In case your handler is implemented as an http.Handler, pass its ServeHTTP method instead
-	http.HandleFunc("/files", instana.TracingHandlerFunc(sensor, "index", http.FileServer(http.Dir("./")).ServeHTTP))
+	// In case your handler is implemented as an http.Handler, pass its ServeHTTP method instead.
+	// You can also use instana.TracingNamedHandlerFunc() to provide a unique route identifier to
+	// group the calls to this route later in Instana UI.
+	http.HandleFunc("/files", instana.TracingNamedHandlerFunc(sensor, "index", "/:path", http.FileServer(http.Dir("./")).ServeHTTP))
 
 	if err := http.ListenAndServe(":0", nil); err != nil {
 		log.Fatalf("failed to start server: %s", err)
