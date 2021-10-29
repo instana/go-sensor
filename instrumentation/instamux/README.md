@@ -1,10 +1,9 @@
 Instana instrumentation for gorilla mux
 =============================================
 
-This module contains middleware to instrument HTTP services written with [github.com/gorilla/mux](https://github.com/gorilla/mux).
+This module contains middleware to instrument HTTP services written with [`github.com/gorilla/mux`](https://github.com/gorilla/mux).
 
-[![GoDoc](https://img.shields.io/static/v1?label=godoc&message=reference&color=blue)][godoc]
-
+[![PkgGoDev](https://pkg.go.dev/badge/github.com/instana/go-sensor/instrumentation/instamux)][godoc]
 
 Installation
 ------------
@@ -37,4 +36,4 @@ r.HandleFunc("/foo", func(writer http.ResponseWriter, request *http.Request) {})
 
 
 [godoc]: https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instamux
-[fullExample]: https://github.com/instana/go-sensor/blob/master/example/gorillamux/main.go
+[fullExample]: https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instamux#example-package
