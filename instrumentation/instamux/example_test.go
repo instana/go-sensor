@@ -14,7 +14,7 @@ import (
 	"github.com/instana/go-sensor/instrumentation/instamux"
 )
 
-// This example shows how to instrument an HTTP server written with github.com/instana/go-sensor with Instana
+// This example shows how to instrument an HTTP server that uses github.com/gorilla/mux with Instana
 func Example() {
 	sensor := instana.NewSensor("my-web-server")
 	r := mux.NewRouter()
