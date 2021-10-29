@@ -13,7 +13,8 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-func main() {
+// This example shows how to instrument an HTTP server that uses github.com/labstack/echo with Instana
+func Example() {
 	sensor := instana.NewSensor("my-web-server")
 
 	// Use instaecho.New() to create a new instance of Echo. The returned instance is instrumented
