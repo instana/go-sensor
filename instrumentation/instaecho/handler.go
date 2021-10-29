@@ -25,11 +25,19 @@ func New(sensor *instana.Sensor) *echo.Echo {
 func Middleware(sensor *instana.Sensor) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
+			r := lookupMatchedRoute(c)
+			if r == nil {
+				r = &echo.Route{
+					Method: c.Request().Method,
+					Path:   c.Path(),
+				}
+			}
+
 			var err error
 
-			instana.TracingHandlerFunc(sensor, c.Path(), func(writer http.ResponseWriter, request *http.Request) {
-				c.SetResponse(echo.NewResponse(writer, c.Echo()))
-				c.SetRequest(request)
+			instana.TracingNamedHandlerFunc(sensor, r.Name, r.Path, func(w http.ResponseWriter, req *http.Request) {
+				c.SetResponse(echo.NewResponse(w, c.Echo()))
+				c.SetRequest(req)
 
 				if err = next(c); err != nil {
 					c.Error(err)
@@ -40,4 +48,16 @@ func Middleware(sensor *instana.Sensor) echo.MiddlewareFunc {
 			return err
 		}
 	}
+}
+
+func lookupMatchedRoute(c echo.Context) *echo.Route {
+	path := c.Path()
+
+	for _, r := range c.Echo().Routes() {
+		if r.Path == path {
+			return r
+		}
+	}
+
+	return nil
 }

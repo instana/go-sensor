@@ -3,6 +3,8 @@ github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSs
 github.com/golang-jwt/jwt v3.2.2+incompatible/go.mod h1:8pz2t5EyA70fFQQSrl6XZXzqecmYZeUEB8OUGHkxJ+I=
 github.com/instana/go-sensor v1.30.0 h1:q1FkQwtS0F5BaGwDCufTy35tXxp1R6nCa96q7TJ6NpU=
 github.com/instana/go-sensor v1.30.0/go.mod h1:Uh9j3eF2mBw/FLk2MxISmVDIj8mtJBFRj2S19M6CVyQ=
+github.com/instana/go-sensor v1.35.0 h1:8YO1N5wDCUkabSCACht4aeJm4PVKDM9N0t+/tgECRq8=
+github.com/instana/go-sensor v1.35.0/go.mod h1:Uh9j3eF2mBw/FLk2MxISmVDIj8mtJBFRj2S19M6CVyQ=
 github.com/instana/testify v1.6.2-0.20200721153833-94b1851f4d65 h1:T25FL3WEzgmKB0m6XCJNZ65nw09/QIp3T1yXr487D+A=
 github.com/instana/testify v1.6.2-0.20200721153833-94b1851f4d65/go.mod h1:nYhEREG/B7HUY7P+LKOrqy53TpIqmJ9JyUShcaEKtGw=
 github.com/labstack/echo/v4 v4.6.0 h1:vsYEeeYy077cB5yMpgI+ubA7iVRZEtrzHhcvRhd27gA=

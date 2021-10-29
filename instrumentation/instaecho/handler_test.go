@@ -41,7 +41,7 @@ func TestPropagation(t *testing.T) {
 	sensor := instana.NewSensorWithTracer(tracer)
 
 	engine := instaecho.New(sensor)
-	engine.GET("/foo", func(c echo.Context) error {
+	engine.GET("/foo/:id", func(c echo.Context) error {
 
 		parent, ok := instana.SpanFromContext(c.Request().Context())
 		assert.True(t, ok)
@@ -51,9 +51,9 @@ func TestPropagation(t *testing.T) {
 
 		c.Response().Header().Set("x-custom-header-2", "response")
 		return c.JSON(200, []byte("{}"))
-	})
+	}).Name = "foos"
 
-	req := httptest.NewRequest("GET", "https://example.com/foo?SECRET_VALUE=%3Credacted%3E&myPassword=%3Credacted%3E&q=term&sensitive_key=%3Credacted%3E", nil)
+	req := httptest.NewRequest("GET", "https://example.com/foo/1?SECRET_VALUE=%3Credacted%3E&myPassword=%3Credacted%3E&q=term&sensitive_key=%3Credacted%3E", nil)
 
 	req.Header.Add(instana.FieldT, traceIDHeader)
 	req.Header.Add(instana.FieldS, spanIDHeader)
@@ -90,13 +90,15 @@ func TestPropagation(t *testing.T) {
 	entrySpanData := entrySpan.Data.(instana.HTTPSpanData)
 
 	assert.Equal(t, instana.HTTPSpanTags{
-		Method:   "GET",
-		Status:   http.StatusOK,
-		Path:     "/foo",
-		URL:      "",
-		Host:     "example.com",
-		Protocol: "https",
-		Params:   "SECRET_VALUE=%3Credacted%3E&myPassword=%3Credacted%3E&q=term&sensitive_key=%3Credacted%3E",
+		Method:       "GET",
+		Status:       http.StatusOK,
+		Path:         "/foo/1",
+		PathTemplate: "/foo/:id",
+		URL:          "",
+		Host:         "example.com",
+		RouteID:      "foos",
+		Protocol:     "https",
+		Params:       "SECRET_VALUE=%3Credacted%3E&myPassword=%3Credacted%3E&q=term&sensitive_key=%3Credacted%3E",
 		Headers: map[string]string{
 			"x-custom-header-1": "request",
 			"x-custom-header-2": "response",
@@ -123,7 +125,7 @@ func TestPropagationWithError(t *testing.T) {
 		c.Response().Header().Set("x-custom-header-2", "response")
 
 		return errors.New("MY-BAD-TEST-ERROR")
-	})
+	}).Name = "foos"
 
 	req := httptest.NewRequest("GET", "https://example.com/foo?SECRET_VALUE=%3Credacted%3E&myPassword=%3Credacted%3E&q=term&sensitive_key=%3Credacted%3E", nil)
 
@@ -144,9 +146,9 @@ func TestPropagationWithError(t *testing.T) {
 	assert.NotEmpty(t, w.Header().Get("Tracestate"))
 
 	spans := recorder.GetQueuedSpans()
-	require.Len(t, spans, 2)
+	require.Len(t, spans, 3)
 
-	entrySpan, interSpan := spans[1], spans[0]
+	interSpan, entrySpan, logSpan := spans[0], spans[1], spans[2]
 
 	assert.EqualValues(t, instana.EntrySpanKind, entrySpan.Kind)
 	assert.EqualValues(t, instana.IntermediateSpanKind, interSpan.Kind)
@@ -167,6 +169,7 @@ func TestPropagationWithError(t *testing.T) {
 		Path:     "/foo",
 		URL:      "",
 		Host:     "example.com",
+		RouteID:  "foos",
 		Protocol: "https",
 		Params:   "SECRET_VALUE=%3Credacted%3E&myPassword=%3Credacted%3E&q=term&sensitive_key=%3Credacted%3E",
 		Headers: map[string]string{
@@ -175,4 +178,16 @@ func TestPropagationWithError(t *testing.T) {
 		},
 		Error: "Internal Server Error",
 	}, entrySpanData.Tags)
+
+	// assert that log message has been recorded within the span interval
+	assert.GreaterOrEqual(t, logSpan.Timestamp, entrySpan.Timestamp)
+	assert.LessOrEqual(t, logSpan.Duration, entrySpan.Duration)
+
+	require.IsType(t, instana.LogSpanData{}, logSpan.Data)
+	logData := logSpan.Data.(instana.LogSpanData)
+
+	assert.Equal(t, instana.LogSpanTags{
+		Level:   "ERROR",
+		Message: `error: "Internal Server Error"`,
+	}, logData.Tags)
 }
