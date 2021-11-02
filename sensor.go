@@ -195,6 +195,15 @@ func InitSensor(options *Options) {
 	sensor.logger.Debug("initialized Instana sensor v", Version)
 }
 
+// Ready returns whether the Instana collector is ready to collect and send data to the agent
+func Ready() bool {
+	if sensor == nil {
+		return false
+	}
+
+	return sensor.Agent().Ready()
+}
+
 func newServerlessAgent(serviceName, agentEndpoint, agentKey string, client *http.Client, logger LeveledLogger) agentClient {
 	switch {
 	case os.Getenv("AWS_EXECUTION_ENV") == "AWS_ECS_FARGATE" && os.Getenv("ECS_CONTAINER_METADATA_URI") != "":
