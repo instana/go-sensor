@@ -204,6 +204,17 @@ func Ready() bool {
 	return sensor.Agent().Ready()
 }
 
+// Flush forces Instana collector to send all buffered data to the agent. This method is intended to implement
+// graceful service shutdown and not recommended for intermittent use. Once Flush() is called, it's not guaranteed
+// that collector remains in operational state.
+func Flush(ctx context.Context) error {
+	if sensor == nil {
+		return nil
+	}
+
+	return sensor.Agent().Flush(ctx)
+}
+
 func newServerlessAgent(serviceName, agentEndpoint, agentKey string, client *http.Client, logger LeveledLogger) agentClient {
 	switch {
 	case os.Getenv("AWS_EXECUTION_ENV") == "AWS_ECS_FARGATE" && os.Getenv("ECS_CONTAINER_METADATA_URI") != "":
