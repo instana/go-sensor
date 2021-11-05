@@ -9,9 +9,12 @@ import (
 	"sync"
 	"time"
 
+	"github.com/instana/go-sensor/logger"
 	ot "github.com/opentracing/opentracing-go"
 	otlog "github.com/opentracing/opentracing-go/log"
 )
+
+const minSpanLogLevel = logger.ErrorLevel
 
 type spanS struct {
 	Service     string
@@ -115,7 +118,7 @@ func (r *spanS) LogFields(fields ...otlog.Field) {
 
 	for _, v := range fields {
 		// If this tag indicates an error, increase the error count
-		if isErrorLogField(v) {
+		if openTracingLogFieldLevel(v) == logger.ErrorLevel {
 			r.ErrorCount++
 		}
 	}
@@ -189,16 +192,17 @@ func (r *spanS) Tracer() ot.Tracer {
 // to Instana log spans and sends them to the agent
 func (r *spanS) sendOpenTracingLogRecords() {
 	for _, lr := range r.Logs {
-		for _, lf := range lr.Fields {
-			if isErrorLogField(lf) {
-				r.sendOpenTracingLogRecord(lr)
-				break
-			}
-		}
+		r.sendOpenTracingLogRecord(lr)
 	}
 }
 
 func (r *spanS) sendOpenTracingLogRecord(lr ot.LogRecord) {
+	lvl := openTracingHighestLogRecordLevel(lr)
+
+	if lvl > minSpanLogLevel {
+		return
+	}
+
 	buf := bytes.NewBuffer(nil)
 
 	enc := newOpenTracingLogEncoder(buf)
@@ -212,7 +216,7 @@ func (r *spanS) sendOpenTracingLogRecord(lr ot.LogRecord) {
 		ot.ChildOf(r.context),
 		ot.StartTime(lr.Timestamp),
 		ot.Tags{
-			"log.level":   "ERROR",
+			"log.level":   lvl.String(),
 			"log.message": strings.TrimSpace(buf.String()),
 		},
 	).FinishWithOptions(
@@ -222,6 +226,23 @@ func (r *spanS) sendOpenTracingLogRecord(lr ot.LogRecord) {
 	)
 }
 
-func isErrorLogField(lf otlog.Field) bool {
-	return lf.Key() == "error" || lf.Key() == "error.object"
+func openTracingHighestLogRecordLevel(lr ot.LogRecord) logger.Level {
+	highestLvl := logger.DebugLevel
+
+	for _, lf := range lr.Fields {
+		if lvl := openTracingLogFieldLevel(lf); lvl < highestLvl {
+			highestLvl = lvl
+		}
+	}
+
+	return highestLvl
+}
+
+func openTracingLogFieldLevel(lf otlog.Field) logger.Level {
+	switch lf.Key() {
+	case "error", "error.object":
+		return logger.ErrorLevel
+	default:
+		return logger.DebugLevel
+	}
 }

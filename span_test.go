@@ -5,7 +5,6 @@ package instana_test
 
 import (
 	"errors"
-	"fmt"
 	"testing"
 	"time"
 
@@ -172,40 +171,64 @@ func TestSpanErrorLogKV(t *testing.T) {
 	}, logData.Tags)
 }
 
-func TestSpanErrorLogFields(t *testing.T) {
+func TestSpan_LogFields(t *testing.T) {
 	recorder := instana.NewTestRecorder()
 	tracer := instana.NewTracerWithEverything(&instana.Options{}, recorder)
 
-	sp := tracer.StartSpan("test")
+	examples := map[string]struct {
+		Fields             []log.Field
+		ExpectedErrorCount int
+		ExpectedTags       instana.LogSpanTags
+	}{
+		"error object": {
+			Fields: []log.Field{
+				log.Error(errors.New("simulated error")),
+				log.String("function", "TestspanErrorLogFields"),
+			},
+			ExpectedErrorCount: 1,
+			ExpectedTags: instana.LogSpanTags{
+				Level:   "ERROR",
+				Message: `error: "simulated error" function: "TestspanErrorLogFields"`,
+			},
+		},
+		"error log": {
+			Fields: []log.Field{
+				log.String("error", "simulated error"),
+				log.String("function", "TestspanErrorLogFields"),
+			},
+			ExpectedErrorCount: 1,
+			ExpectedTags: instana.LogSpanTags{
+				Level:   "ERROR",
+				Message: `error: "simulated error" function: "TestspanErrorLogFields"`,
+			},
+		},
+	}
 
-	err := errors.New("simulated error")
-	sp.LogFields(log.Error(err), log.String("function", "TestspanErrorLogFields"))
-	sp.LogFields(log.Error(err), log.String("function", "TestspanErrorLogFields"))
-	sp.Finish()
+	for name, example := range examples {
+		t.Run(name, func(t *testing.T) {
+			sp := tracer.StartSpan("test")
+			sp.LogFields(example.Fields...)
+			sp.Finish()
 
-	spans := recorder.GetQueuedSpans()
-	require.Len(t, spans, 3)
+			spans := recorder.GetQueuedSpans()
+			require.Len(t, spans, 2)
 
-	span, logSpans := spans[0], spans[1:]
-	assert.Equal(t, 2, span.Ec)
+			span, logSpan := spans[0], spans[1]
+			assert.Equal(t, example.ExpectedErrorCount, span.Ec)
 
-	require.Len(t, logSpans, 2)
-	for i, logSpan := range logSpans {
-		assert.Equal(t, span.TraceID, logSpan.TraceID, fmt.Sprintf("log span %d", i))
-		assert.Equal(t, span.SpanID, logSpan.ParentID, fmt.Sprintf("log span %d", i))
-		assert.Equal(t, "log.go", logSpan.Name, fmt.Sprintf("log span %d", i))
+			assert.Equal(t, span.TraceID, logSpan.TraceID)
+			assert.Equal(t, span.SpanID, logSpan.ParentID)
+			assert.Equal(t, "log.go", logSpan.Name)
 
-		// assert that log message has been recorded within the span interval
-		assert.GreaterOrEqual(t, logSpan.Timestamp, span.Timestamp, fmt.Sprintf("log span %d", i))
-		assert.LessOrEqual(t, logSpan.Duration, span.Duration, fmt.Sprintf("log span %d", i))
+			// assert that log message has been recorded within the span interval
+			assert.GreaterOrEqual(t, logSpan.Timestamp, span.Timestamp)
+			assert.LessOrEqual(t, logSpan.Duration, span.Duration)
 
-		require.IsType(t, instana.LogSpanData{}, logSpan.Data, fmt.Sprintf("log span %d", i))
-		logData := logSpan.Data.(instana.LogSpanData)
+			require.IsType(t, instana.LogSpanData{}, logSpan.Data)
+			logData := logSpan.Data.(instana.LogSpanData)
 
-		assert.Equal(t, instana.LogSpanTags{
-			Level:   "ERROR",
-			Message: `error: "simulated error" function: "TestspanErrorLogFields"`,
-		}, logData.Tags, fmt.Sprintf("log span %d", i))
+			assert.Equal(t, example.ExpectedTags, logData.Tags)
+		})
 	}
 }
 
