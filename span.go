@@ -14,7 +14,7 @@ import (
 	otlog "github.com/opentracing/opentracing-go/log"
 )
 
-const minSpanLogLevel = logger.ErrorLevel
+const minSpanLogLevel = logger.WarnLevel
 
 type spanS struct {
 	Service     string
@@ -242,6 +242,8 @@ func openTracingLogFieldLevel(lf otlog.Field) logger.Level {
 	switch lf.Key() {
 	case "error", "error.object":
 		return logger.ErrorLevel
+	case "warn":
+		return logger.WarnLevel
 	default:
 		return logger.DebugLevel
 	}

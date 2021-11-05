@@ -183,23 +183,33 @@ func TestSpan_LogFields(t *testing.T) {
 		"error object": {
 			Fields: []log.Field{
 				log.Error(errors.New("simulated error")),
-				log.String("function", "TestspanErrorLogFields"),
+				log.String("function", "ErrorFunc"),
 			},
 			ExpectedErrorCount: 1,
 			ExpectedTags: instana.LogSpanTags{
 				Level:   "ERROR",
-				Message: `error: "simulated error" function: "TestspanErrorLogFields"`,
+				Message: `error: "simulated error" function: "ErrorFunc"`,
 			},
 		},
 		"error log": {
 			Fields: []log.Field{
 				log.String("error", "simulated error"),
-				log.String("function", "TestspanErrorLogFields"),
+				log.String("function", "ErrorFunc"),
 			},
 			ExpectedErrorCount: 1,
 			ExpectedTags: instana.LogSpanTags{
 				Level:   "ERROR",
-				Message: `error: "simulated error" function: "TestspanErrorLogFields"`,
+				Message: `error: "simulated error" function: "ErrorFunc"`,
+			},
+		},
+		"warn log": {
+			Fields: []log.Field{
+				log.String("warn", "simulated warning"),
+				log.String("function", "WarnFunc"),
+			},
+			ExpectedTags: instana.LogSpanTags{
+				Level:   "WARN",
+				Message: `warn: "simulated warning" function: "WarnFunc"`,
 			},
 		},
 	}
