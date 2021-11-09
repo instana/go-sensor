@@ -199,7 +199,7 @@ func (r *spanS) sendOpenTracingLogRecords() {
 func (r *spanS) sendOpenTracingLogRecord(lr ot.LogRecord) {
 	lvl := openTracingHighestLogRecordLevel(lr)
 
-	if lvl > minSpanLogLevel {
+	if lvl.Less(minSpanLogLevel) {
 		return
 	}
 
@@ -226,11 +226,14 @@ func (r *spanS) sendOpenTracingLogRecord(lr ot.LogRecord) {
 	)
 }
 
+// openTracingHighestLogRecordLevel determines the level of this record by inspecting its fields.
+// If there are multiple fields suggesting the log level, i.e. both "error" and "warn" are present,
+// the highest one takes precedence.
 func openTracingHighestLogRecordLevel(lr ot.LogRecord) logger.Level {
 	highestLvl := logger.DebugLevel
 
 	for _, lf := range lr.Fields {
-		if lvl := openTracingLogFieldLevel(lf); lvl < highestLvl {
+		if lvl := openTracingLogFieldLevel(lf); highestLvl.Less(lvl) {
 			highestLvl = lvl
 		}
 	}
