@@ -12,6 +12,13 @@ import (
 	"github.com/instana/testify/require"
 )
 
+func TestLevel_Less(t *testing.T) {
+	levels := []logger.Level{logger.ErrorLevel, logger.WarnLevel, logger.InfoLevel, logger.DebugLevel}
+	for i := range levels[:len(levels)-1] {
+		assert.True(t, levels[i+1].Less(levels[i]), "%s should be less than %s", levels[i+1], levels[i])
+	}
+}
+
 func TestLogger_SetPrefix(t *testing.T) {
 	p := &printer{}
 

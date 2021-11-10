@@ -24,6 +24,12 @@ const DefaultPrefix = "instana: "
 // Level defines the minimum logging level for logger.Log
 type Level uint8
 
+// Less returns whether the log level is less than the given one in logical order:
+// ErrorLevel > WarnLevel > InfoLevel > DebugLevel
+func (lvl Level) Less(other Level) bool {
+	return uint8(lvl) > uint8(other)
+}
+
 // String returns the log line label for this level
 func (lvl Level) String() string {
 	switch lvl {
