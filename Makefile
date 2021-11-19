@@ -120,7 +120,7 @@ patch : ensure-git-clean update-local-copy
 	git push $(GIT_REMOTE) HEAD
 
 CHANGELOG.txt :
-	echo 'This release includes the following fixes & improvements:' > CHANGELOG.txt
+	echo 'This release of `github.com/instana/go-sensor``` includes the following fixes & improvements:' > CHANGELOG.txt
 	git log --merges $(VERSION_TAG_PREFIX)$(GIT_VERSION).. --pretty='format:%s' | \
 		sed 's~Merge pull request #\([0-9]*\).*~\1~' | \
 		xargs -n1 $(GITHUB_CLI) pr view | \
