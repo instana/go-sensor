@@ -70,6 +70,7 @@ $(VENDOR_GO):
 
 install:
 	cd .git/hooks && ln -fs ../../.githooks/* .
+	brew install gh
 
 # Make sure there is a copyright at the first line of each .go file
 legal:
