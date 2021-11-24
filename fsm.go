@@ -5,6 +5,7 @@ package instana
 
 import (
 	"fmt"
+	"io/ioutil"
 	"net"
 	"os"
 	"path/filepath"
@@ -228,7 +229,7 @@ func (r *fsmS) reset() {
 
 func (r *fsmS) cpuSetFileContent(pid int) string {
 	path := filepath.Join("proc", strconv.Itoa(pid), "cpuset")
-	data, err := os.ReadFile(path)
+	data, err := ioutil.ReadFile(path)
 	if err != nil {
 		r.agent.logger.Info("error while reading ", path, ":", err.Error())
 		return ""
