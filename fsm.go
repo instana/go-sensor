@@ -4,11 +4,11 @@
 package instana
 
 import (
-	"bufio"
 	"fmt"
 	"net"
 	"os"
-	"regexp"
+	"path/filepath"
+	"runtime"
 	"strconv"
 	"time"
 
@@ -31,8 +31,6 @@ type fsmS struct {
 	timer   *time.Timer
 	retries int
 }
-
-var procSchedPIDRegex = regexp.MustCompile(`\((\d+),`)
 
 func newFSM(agent *agentS) *fsmS {
 	agent.logger.Warn("Stan is on the scene. Starting Instana instrumentation.")
@@ -152,33 +150,18 @@ func (r *fsmS) announceSensor(e *f.Event) {
 			}
 		}()
 
-		pid := 0
-		schedFile := fmt.Sprintf("/proc/%d/sched", os.Getpid())
-		if _, err := os.Stat(schedFile); err == nil {
-			sf, err := os.Open(schedFile)
-			defer sf.Close() //nolint:staticcheck
+		pid := os.Getpid()
+		cpuSetFileContent := ""
 
-			if err == nil {
-				fscanner := bufio.NewScanner(sf)
-				fscanner.Scan()
-				primaLinea := fscanner.Text()
-
-				match := procSchedPIDRegex.FindStringSubmatch(primaLinea)
-				i, err := strconv.Atoi(match[1])
-				if err == nil {
-					pid = i
-				}
-			}
-		}
-
-		if pid == 0 {
-			pid = os.Getpid()
+		if runtime.GOOS == "linux" {
+			cpuSetFileContent = r.cpuSetFileContent(pid)
 		}
 
 		d := &discoveryS{
-			PID:  pid,
-			Name: os.Args[0],
-			Args: os.Args[1:],
+			PID:               pid,
+			CpuSetFileContent: cpuSetFileContent,
+			Name:              os.Args[0],
+			Args:              os.Args[1:],
 		}
 		if name, args, ok := getProcCommandLine(); ok {
 			r.agent.logger.Debug("got cmdline from /proc: ", name, args)
@@ -192,14 +175,14 @@ func (r *fsmS) announceSensor(e *f.Event) {
 				if tcpConn, err := net.DialTCP("tcp", nil, addr); err == nil {
 					defer tcpConn.Close()
 
-					f, err := tcpConn.File()
+					file, err := tcpConn.File()
 
 					if err != nil {
 						r.agent.logger.Error(err)
 					} else {
-						d.Fd = fmt.Sprintf("%v", f.Fd())
+						d.Fd = fmt.Sprintf("%v", file.Fd())
 
-						link := fmt.Sprintf("/proc/%d/fd/%d", os.Getpid(), f.Fd())
+						link := fmt.Sprintf("/proc/%d/fd/%d", os.Getpid(), file.Fd())
 						if _, err := os.Stat(link); err == nil {
 							d.Inode, _ = os.Readlink(link)
 						}
@@ -241,4 +224,15 @@ func (r *fsmS) testAgent(e *f.Event) {
 func (r *fsmS) reset() {
 	r.retries = maximumRetries
 	r.fsm.Event(eInit)
+}
+
+func (r *fsmS) cpuSetFileContent(pid int) string {
+	path := filepath.Join("proc", strconv.Itoa(pid), "cpuset")
+	data, err := os.ReadFile(path)
+	if err != nil {
+		r.agent.logger.Info("error while reading ", path, ":", err.Error())
+		return ""
+	}
+
+	return string(data)
 }
