@@ -50,7 +50,7 @@ type discoveryS struct {
 	Args              []string `json:"args"`
 	Fd                string   `json:"fd"`
 	Inode             string   `json:"inode"`
-	CpuSetFileContent string   `json:"cpuSetFileContent"`
+	CPUSetFileContent string   `json:"cpuSetFileContent"`
 }
 
 type fromS struct {
