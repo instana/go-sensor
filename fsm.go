@@ -160,7 +160,7 @@ func (r *fsmS) announceSensor(e *f.Event) {
 
 		d := &discoveryS{
 			PID:               pid,
-			CpuSetFileContent: cpuSetFileContent,
+			CPUSetFileContent: cpuSetFileContent,
 			Name:              os.Args[0],
 			Args:              os.Args[1:],
 		}
