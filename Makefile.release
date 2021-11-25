@@ -1,7 +1,7 @@
 GO_MODULE_NAME ?= github.com/instana/go-sensor
 
 VERSION_TAG_PREFIX ?= v
-VERSION_GO_FILE ?= $(shell grep -l '^var Version = ".\+"' *.go | head -1)
+VERSION_GO_FILE ?= $(shell grep -l '^const Version = ".\+"' *.go | head -1)
 
 GIT_REMOTE ?= origin
 GIT_MAIN_BRANCH ?= $(shell git remote show $(GIT_REMOTE) | sed -n '/HEAD branch/s/.*: //p')
@@ -21,7 +21,7 @@ GIT_MINOR_VERSION = $(word 2,$(subst ., ,$(GIT_VERSION)))
 GIT_PATCH_VERSION = $(word 3,$(subst ., ,$(GIT_VERSION)))
 
 # Parse version from version.go file
-VERSION = $(shell grep -hm1 '^var Version = ".\+"' ${VERSION_GO_FILE} | head -1 | sed -E 's/var Version = "([0-9\.]+)"/\1/')
+VERSION = $(shell grep -hm1 '^const Version = ".\+"' ${VERSION_GO_FILE} | head -1 | sed -E 's/const Version = "([0-9\.]+)"/\1/')
 
 # Create changelog if GitHub CLI is installed
 ifneq ($(GITHUB_CLI),)
@@ -46,21 +46,21 @@ endif
 major : ensure-git-clean update-local-copy
 	$(eval VERSION = $(shell echo $$(($(GIT_MAJOR_VERSION)+1))).0.0)
 	@printf "You are about to increase the major version to $(VERSION), are you sure? [y/N]: " && read ans && [ $${ans:-N} = y ]
-	sed -i '' 's/^var Version = ".*"/var Version = "$(VERSION)"/' ${VERSION_GO_FILE}
+	sed -i '' 's/^const Version = ".*"/const Version = "$(VERSION)"/' ${VERSION_GO_FILE}
 	git commit -m "Bump version to v$(VERSION)" ${VERSION_GO_FILE}
 	git push $(GIT_REMOTE) HEAD
 
 # Calculate the next minor version from the latest one found in git tags, update version.go, commit and push changes to remote
 minor : ensure-git-clean update-local-copy
 	$(eval VERSION = $(GIT_MAJOR_VERSION).$(shell echo $$(($(GIT_MINOR_VERSION)+1))).0)
-	sed -i '' 's/^var Version = ".*"/var Version = "$(VERSION)"/' ${VERSION_GO_FILE}
+	sed -i '' 's/^const Version = ".*"/const Version = "$(VERSION)"/' ${VERSION_GO_FILE}
 	git commit -m "Bump version to v$(VERSION)" ${VERSION_GO_FILE}
 	git push $(GIT_REMOTE) HEAD
 
 # Calculate the next patch version from the latest one found in git tags, update version.go, commit and push changes to remote
 patch : ensure-git-clean update-local-copy
 	$(eval VERSION = $(GIT_MAJOR_VERSION).$(GIT_MINOR_VERSION).$(shell echo $$(($(GIT_PATCH_VERSION)+1))))
-	sed -i '' 's/^var Version = ".*"/var Version = "$(VERSION)"/' ${VERSION_GO_FILE}
+	sed -i '' 's/^const Version = ".*"/const Version = "$(VERSION)"/' ${VERSION_GO_FILE}
 	git commit -m "Bump version to v$(VERSION)" ${VERSION_GO_FILE}
 	git push $(GIT_REMOTE) HEAD
 
