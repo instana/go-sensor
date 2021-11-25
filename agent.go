@@ -45,11 +45,12 @@ type agentResponse struct {
 }
 
 type discoveryS struct {
-	PID   int      `json:"pid"`
-	Name  string   `json:"name"`
-	Args  []string `json:"args"`
-	Fd    string   `json:"fd"`
-	Inode string   `json:"inode"`
+	PID               int      `json:"pid"`
+	Name              string   `json:"name"`
+	Args              []string `json:"args"`
+	Fd                string   `json:"fd"`
+	Inode             string   `json:"inode"`
+	CPUSetFileContent string   `json:"cpuSetFileContent"`
 }
 
 type fromS struct {
