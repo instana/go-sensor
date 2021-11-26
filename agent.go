@@ -101,7 +101,7 @@ func newAgent(serviceName, host string, port int, logger LeveledLogger) *agentS 
 		from:   &fromS{},
 		host:   host,
 		port:   strconv.Itoa(port),
-		client: &http.Client{Timeout: 5 * time.Second},
+		client: &http.Client{Timeout: 15 * time.Second},
 		snapshot: &SnapshotCollector{
 			CollectionInterval: snapshotCollectionInterval,
 			ServiceName:        serviceName,
