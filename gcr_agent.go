@@ -143,7 +143,7 @@ func newGCRAgent(
 					break
 				}
 
-				time.Sleep(retryPeriod)
+				time.Sleep(getRetryPeriodForIteration(i + 1))
 			}
 			time.Sleep(snapshotCollectionInterval)
 		}

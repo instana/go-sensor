@@ -6,6 +6,7 @@ package instana
 import (
 	"fmt"
 	"io/ioutil"
+	"math"
 	"net"
 	"os"
 	"path/filepath"
@@ -22,15 +23,16 @@ const (
 	eAnnounce = "announce"
 	eTest     = "test"
 
-	retryPeriod    = 30 * 1000 * time.Millisecond
-	maximumRetries = 2
+	retryPeriod                = 30 * 1000 * time.Millisecond
+	exponentialRetryPeriodBase = 10 * 1000 * time.Millisecond
+	maximumRetries             = 3
 )
 
 type fsmS struct {
-	agent   *agentS
-	fsm     *f.FSM
-	timer   *time.Timer
-	retries int
+	agent       *agentS
+	fsm         *f.FSM
+	timer       *time.Timer
+	retriesLeft int
 }
 
 func newFSM(agent *agentS) *fsmS {
@@ -38,8 +40,8 @@ func newFSM(agent *agentS) *fsmS {
 	agent.logger.Debug("initializing fsm")
 
 	ret := &fsmS{
-		agent:   agent,
-		retries: maximumRetries,
+		agent:       agent,
+		retriesLeft: maximumRetries,
 	}
 
 	ret.fsm = f.NewFSM(
@@ -61,6 +63,14 @@ func newFSM(agent *agentS) *fsmS {
 
 func (r *fsmS) scheduleRetry(e *f.Event, cb func(e *f.Event)) {
 	r.timer = time.NewTimer(retryPeriod)
+	go func() {
+		<-r.timer.C
+		cb(e)
+	}()
+}
+
+func (r *fsmS) scheduleRetryWithExponentialDelay(e *f.Event, cb func(e *f.Event), retryNumber int) {
+	r.timer = time.NewTimer(getRetryPeriodForIteration(retryNumber))
 	go func() {
 		<-r.timer.C
 		cb(e)
@@ -116,7 +126,7 @@ func (r *fsmS) lookupSuccess(host string) {
 	r.agent.logger.Debug("agent lookup success ", host)
 
 	r.agent.setHost(host)
-	r.retries = maximumRetries
+	r.retriesLeft = maximumRetries
 	r.fsm.Event(eLookup)
 }
 
@@ -124,13 +134,14 @@ func (r *fsmS) announceSensor(e *f.Event) {
 	cb := func(success bool, resp agentResponse) {
 		if !success {
 			r.agent.logger.Error("Cannot announce sensor. Scheduling retry.")
-			r.retries--
-			if r.retries == 0 {
+			r.retriesLeft--
+			if r.retriesLeft == 0 {
 				r.fsm.Event(eInit)
 				return
 			}
 
-			r.scheduleRetry(e, r.announceSensor)
+			retryNumber := maximumRetries - r.retriesLeft + 1
+			r.scheduleRetryWithExponentialDelay(e, r.announceSensor, retryNumber)
 
 			return
 		}
@@ -138,7 +149,7 @@ func (r *fsmS) announceSensor(e *f.Event) {
 		r.agent.logger.Info("Host agent available. We're in business. Announced pid:", resp.Pid)
 		r.agent.applyHostAgentSettings(resp)
 
-		r.retries = maximumRetries
+		r.retriesLeft = maximumRetries
 		r.fsm.Event(eAnnounce)
 	}
 
@@ -201,13 +212,14 @@ func (r *fsmS) announceSensor(e *f.Event) {
 func (r *fsmS) testAgent(e *f.Event) {
 	cb := func(b bool) {
 		if b {
-			r.retries = maximumRetries
+			r.retriesLeft = maximumRetries
 			r.fsm.Event(eTest)
 		} else {
 			r.agent.logger.Debug("Agent is not yet ready. Scheduling retry.")
-			r.retries--
-			if r.retries > 0 {
-				r.scheduleRetry(e, r.testAgent)
+			r.retriesLeft--
+			if r.retriesLeft > 0 {
+				retryNumber := maximumRetries - r.retriesLeft + 1
+				r.scheduleRetryWithExponentialDelay(e, r.testAgent, retryNumber)
 			} else {
 				r.fsm.Event(eInit)
 			}
@@ -223,7 +235,7 @@ func (r *fsmS) testAgent(e *f.Event) {
 }
 
 func (r *fsmS) reset() {
-	r.retries = maximumRetries
+	r.retriesLeft = maximumRetries
 	r.fsm.Event(eInit)
 }
 
@@ -236,4 +248,8 @@ func (r *fsmS) cpuSetFileContent(pid int) string {
 	}
 
 	return string(data)
+}
+
+func getRetryPeriodForIteration(retryNumber int) time.Duration {
+	return time.Duration(math.Pow(2, float64(retryNumber-1))) * exponentialRetryPeriodBase
 }
