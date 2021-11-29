@@ -271,10 +271,12 @@ func (agent *agentS) fullRequestResponse(ctx context.Context, url string, method
 
 	if err == nil {
 		if j != nil {
-			req, err = http.NewRequestWithContext(ctx, method, url, bytes.NewBuffer(j))
+			req, err = http.NewRequest(method, url, bytes.NewBuffer(j))
 		} else {
-			req, err = http.NewRequestWithContext(ctx, method, url, nil)
+			req, err = http.NewRequest(method, url, nil)
 		}
+
+		req := req.WithContext(ctx)
 
 		// Uncomment this to dump json payloads
 		// log.debug(bytes.NewBuffer(j))
