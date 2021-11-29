@@ -85,9 +85,11 @@ type agentS struct {
 	mu  sync.RWMutex
 	fsm *fsmS
 
-	client   *http.Client
-	snapshot *SnapshotCollector
-	logger   LeveledLogger
+	client          *http.Client
+	snapshot        *SnapshotCollector
+	logger          LeveledLogger
+	clientTimeout   time.Duration
+	announceTimeout time.Duration
 }
 
 func newAgent(serviceName, host string, port int, logger LeveledLogger) *agentS {
@@ -97,11 +99,15 @@ func newAgent(serviceName, host string, port int, logger LeveledLogger) *agentS 
 
 	logger.Debug("initializing agent")
 
+	// maxClientTimeout is max timeout that can this client has, for each request it can be reduced using `context.WithTimeout`
+	maxClientTimeout := 60 * time.Second
 	agent := &agentS{
-		from:   &fromS{},
-		host:   host,
-		port:   strconv.Itoa(port),
-		client: &http.Client{Timeout: 15 * time.Second},
+		from:            &fromS{},
+		host:            host,
+		port:            strconv.Itoa(port),
+		clientTimeout:   5 * time.Second,
+		announceTimeout: 15 * time.Second,
+		client:          &http.Client{Timeout: maxClientTimeout},
 		snapshot: &SnapshotCollector{
 			CollectionInterval: snapshotCollectionInterval,
 			ServiceName:        serviceName,
@@ -229,18 +235,20 @@ func (agent *agentS) head(url string) (string, error) {
 }
 
 func (agent *agentS) request(url string, method string, data interface{}) (string, error) {
-	return agent.fullRequestResponse(url, method, data, nil, "")
+	return agent.fullRequestResponse(nil, url, method, data, nil, "")
 }
 
-func (agent *agentS) requestResponse(url string, method string, data interface{}, ret interface{}) (string, error) {
-	return agent.fullRequestResponse(url, method, data, ret, "")
+func (agent *agentS) announceRequest(url string, method string, data interface{}, ret *agentResponse) (string, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), agent.clientTimeout)
+	defer cancel()
+	return agent.fullRequestResponse(ctx, url, method, data, ret, "")
 }
 
 func (agent *agentS) requestHeader(url string, method string, header string) (string, error) {
-	return agent.fullRequestResponse(url, method, nil, nil, header)
+	return agent.fullRequestResponse(nil, url, method, nil, nil, header)
 }
 
-func (agent *agentS) fullRequestResponse(url string, method string, data interface{}, body interface{}, header string) (string, error) {
+func (agent *agentS) fullRequestResponse(ctx context.Context, url string, method string, data interface{}, body interface{}, header string) (string, error) {
 	var j []byte
 	var ret string
 	var err error
@@ -251,11 +259,21 @@ func (agent *agentS) fullRequestResponse(url string, method string, data interfa
 		j, err = json.Marshal(data)
 	}
 
+	var cancel context.CancelFunc
+	if ctx == nil {
+		ctx, cancel = context.WithTimeout(context.Background(), agent.clientTimeout)
+		defer cancel()
+	}
+	if _, ok := ctx.Deadline(); !ok {
+		ctx, cancel = context.WithTimeout(ctx, agent.clientTimeout)
+		defer cancel()
+	}
+
 	if err == nil {
 		if j != nil {
-			req, err = http.NewRequest(method, url, bytes.NewBuffer(j))
+			req, err = http.NewRequestWithContext(ctx, method, url, bytes.NewBuffer(j))
 		} else {
-			req, err = http.NewRequest(method, url, nil)
+			req, err = http.NewRequestWithContext(ctx, method, url, nil)
 		}
 
 		// Uncomment this to dump json payloads

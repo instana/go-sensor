@@ -193,7 +193,7 @@ func (r *fsmS) announceSensor(e *f.Event) {
 		}
 
 		var resp agentResponse
-		_, err := r.agent.requestResponse(r.agent.makeURL(agentDiscoveryURL), "PUT", d, &resp)
+		_, err := r.agent.announceRequest(r.agent.makeURL(agentDiscoveryURL), "PUT", d, &resp)
 		cb(err == nil, resp)
 	}(cb)
 }
