@@ -65,7 +65,7 @@ type Span struct {
 }
 
 func newSpan(span *spanS) Span {
-	data := RegisteredSpanType(span.Operation).ExtractData(span)
+	data := RegisteredSpanType(span.Operation).extractData(span)
 	sp := Span{
 		TraceID:         span.context.TraceID,
 		TraceIDHi:       span.context.TraceIDHi,
@@ -231,8 +231,8 @@ type SDKSpanData struct {
 	sk SpanKind
 }
 
-// NewSDKSpanData initializes a new SDK span data from a tracer span
-func NewSDKSpanData(span *spanS) SDKSpanData {
+// newSDKSpanData initializes a new SDK span data from a tracer span
+func newSDKSpanData(span *spanS) SDKSpanData {
 	sk := IntermediateSpanKind
 
 	switch span.Tags[string(ext.SpanKind)] {
@@ -248,7 +248,7 @@ func NewSDKSpanData(span *spanS) SDKSpanData {
 
 	return SDKSpanData{
 		Service: span.Service,
-		Tags:    NewSDKSpanTags(span, sk.String()),
+		Tags:    newSDKSpanTags(span, sk.String()),
 		sk:      sk,
 	}
 }
@@ -273,8 +273,8 @@ type SDKSpanTags struct {
 	Custom    map[string]interface{} `json:"custom,omitempty"`
 }
 
-// NewSDKSpanTags extracts SDK span tags from a tracer span
-func NewSDKSpanTags(span *spanS, spanType string) SDKSpanTags {
+// newSDKSpanTags extracts SDK span tags from a tracer span
+func newSDKSpanTags(span *spanS, spanType string) SDKSpanTags {
 	tags := SDKSpanTags{
 		Name:   span.Operation,
 		Type:   spanType,
