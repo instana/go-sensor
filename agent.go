@@ -235,7 +235,7 @@ func (agent *agentS) head(url string) (string, error) {
 }
 
 func (agent *agentS) request(url string, method string, data interface{}) (string, error) {
-	return agent.fullRequestResponse(nil, url, method, data, nil, "")
+	return agent.fullRequestResponse(context.Background(), url, method, data, nil, "")
 }
 
 func (agent *agentS) announceRequest(url string, method string, data interface{}, ret *agentResponse) (string, error) {
@@ -245,7 +245,7 @@ func (agent *agentS) announceRequest(url string, method string, data interface{}
 }
 
 func (agent *agentS) requestHeader(url string, method string, header string) (string, error) {
-	return agent.fullRequestResponse(nil, url, method, nil, nil, header)
+	return agent.fullRequestResponse(context.Background(), url, method, nil, nil, header)
 }
 
 func (agent *agentS) fullRequestResponse(ctx context.Context, url string, method string, data interface{}, body interface{}, header string) (string, error) {
