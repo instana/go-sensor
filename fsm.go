@@ -70,11 +70,8 @@ func (r *fsmS) scheduleRetry(e *f.Event, cb func(e *f.Event)) {
 }
 
 func (r *fsmS) scheduleRetryWithExponentialDelay(e *f.Event, cb func(e *f.Event), retryNumber int) {
-	r.timer = time.NewTimer(getRetryPeriodForIteration(retryNumber))
-	go func() {
-		<-r.timer.C
-		cb(e)
-	}()
+	time.Sleep(getRetryPeriodForIteration(retryNumber))
+	cb(e)
 }
 
 func (r *fsmS) lookupAgentHost(e *f.Event) {
@@ -141,7 +138,7 @@ func (r *fsmS) announceSensor(e *f.Event) {
 			}
 
 			retryNumber := maximumRetries - r.retriesLeft + 1
-			r.scheduleRetryWithExponentialDelay(e, r.announceSensor, retryNumber)
+			go r.scheduleRetryWithExponentialDelay(e, r.announceSensor, retryNumber)
 
 			return
 		}
@@ -219,7 +216,7 @@ func (r *fsmS) testAgent(e *f.Event) {
 			r.retriesLeft--
 			if r.retriesLeft > 0 {
 				retryNumber := maximumRetries - r.retriesLeft + 1
-				r.scheduleRetryWithExponentialDelay(e, r.testAgent, retryNumber)
+				go r.scheduleRetryWithExponentialDelay(e, r.testAgent, retryNumber)
 			} else {
 				r.fsm.Event(eInit)
 			}
