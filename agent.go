@@ -99,15 +99,14 @@ func newAgent(serviceName, host string, port int, logger LeveledLogger) *agentS 
 
 	logger.Debug("initializing agent")
 
-	// maxClientTimeout is max timeout that can this client has, for each request it can be reduced using `context.WithTimeout`
-	maxClientTimeout := 60 * time.Second
+	announceTimeout := 15 * time.Second
 	agent := &agentS{
 		from:            &fromS{},
 		host:            host,
 		port:            strconv.Itoa(port),
 		clientTimeout:   5 * time.Second,
-		announceTimeout: 15 * time.Second,
-		client:          &http.Client{Timeout: maxClientTimeout},
+		announceTimeout: announceTimeout,
+		client:          &http.Client{Timeout: announceTimeout},
 		snapshot: &SnapshotCollector{
 			CollectionInterval: snapshotCollectionInterval,
 			ServiceName:        serviceName,
@@ -235,17 +234,19 @@ func (agent *agentS) head(url string) (string, error) {
 }
 
 func (agent *agentS) request(url string, method string, data interface{}) (string, error) {
-	return agent.fullRequestResponse(context.Background(), url, method, data, nil, "")
+	ctx, cancel := context.WithTimeout(context.Background(), agent.clientTimeout)
+	defer cancel()
+	return agent.fullRequestResponse(ctx, url, method, data, nil, "")
 }
 
 func (agent *agentS) announceRequest(url string, method string, data interface{}, ret *agentResponse) (string, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), agent.clientTimeout)
-	defer cancel()
-	return agent.fullRequestResponse(ctx, url, method, data, ret, "")
+	return agent.fullRequestResponse(context.Background(), url, method, data, ret, "")
 }
 
 func (agent *agentS) requestHeader(url string, method string, header string) (string, error) {
-	return agent.fullRequestResponse(context.Background(), url, method, nil, nil, header)
+	ctx, cancel := context.WithTimeout(context.Background(), agent.clientTimeout)
+	defer cancel()
+	return agent.fullRequestResponse(ctx, url, method, nil, nil, header)
 }
 
 func (agent *agentS) fullRequestResponse(ctx context.Context, url string, method string, data interface{}, body interface{}, header string) (string, error) {
@@ -257,16 +258,6 @@ func (agent *agentS) fullRequestResponse(ctx context.Context, url string, method
 
 	if data != nil {
 		j, err = json.Marshal(data)
-	}
-
-	var cancel context.CancelFunc
-	if ctx == nil {
-		ctx, cancel = context.WithTimeout(context.Background(), agent.clientTimeout)
-		defer cancel()
-	}
-	if _, ok := ctx.Deadline(); !ok {
-		ctx, cancel = context.WithTimeout(ctx, agent.clientTimeout)
-		defer cancel()
 	}
 
 	if err == nil {
