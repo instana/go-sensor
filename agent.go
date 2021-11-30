@@ -32,6 +32,9 @@ const (
 	// SnapshotPeriod is the amount of time in seconds between snapshot reports.
 	SnapshotPeriod             = 600
 	snapshotCollectionInterval = SnapshotPeriod * time.Second
+
+	announceTimeout = 15 * time.Second
+	clientTimeout   = 5 * time.Second
 )
 
 type agentResponse struct {
@@ -99,12 +102,11 @@ func newAgent(serviceName, host string, port int, logger LeveledLogger) *agentS 
 
 	logger.Debug("initializing agent")
 
-	announceTimeout := 15 * time.Second
 	agent := &agentS{
 		from:            &fromS{},
 		host:            host,
 		port:            strconv.Itoa(port),
-		clientTimeout:   5 * time.Second,
+		clientTimeout:   clientTimeout,
 		announceTimeout: announceTimeout,
 		client:          &http.Client{Timeout: announceTimeout},
 		snapshot: &SnapshotCollector{
@@ -233,6 +235,7 @@ func (agent *agentS) head(url string) (string, error) {
 	return agent.request(url, "HEAD", nil)
 }
 
+// request will overwrite the client timeout for a single request
 func (agent *agentS) request(url string, method string, data interface{}) (string, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), agent.clientTimeout)
 	defer cancel()
@@ -243,6 +246,7 @@ func (agent *agentS) announceRequest(url string, method string, data interface{}
 	return agent.fullRequestResponse(context.Background(), url, method, data, ret, "")
 }
 
+// requestHeader will overwrite the client timeout for a single request
 func (agent *agentS) requestHeader(url string, method string, header string) (string, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), agent.clientTimeout)
 	defer cancel()
