@@ -70,7 +70,7 @@ func (r *fsmS) scheduleRetry(e *f.Event, cb func(e *f.Event)) {
 }
 
 func (r *fsmS) scheduleRetryWithExponentialDelay(e *f.Event, cb func(e *f.Event), retryNumber int) {
-	time.Sleep(getRetryPeriodForIteration(retryNumber))
+	time.Sleep(expDelay(retryNumber))
 	cb(e)
 }
 
@@ -247,6 +247,6 @@ func (r *fsmS) cpuSetFileContent(pid int) string {
 	return string(data)
 }
 
-func getRetryPeriodForIteration(retryNumber int) time.Duration {
+func expDelay(retryNumber int) time.Duration {
 	return time.Duration(math.Pow(2, float64(retryNumber-1))) * exponentialRetryPeriodBase
 }

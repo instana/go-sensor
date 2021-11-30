@@ -206,7 +206,7 @@ func newFargateAgent(
 					break
 				}
 
-				time.Sleep(getRetryPeriodForIteration(i + 1))
+				time.Sleep(expDelay(i + 1))
 			}
 			time.Sleep(snapshotCollectionInterval)
 		}
