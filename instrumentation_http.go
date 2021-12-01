@@ -4,8 +4,10 @@
 package instana
 
 import (
+	"bufio"
 	"context"
 	"mime/multipart"
+	"net"
 	"net/http"
 	"net/textproto"
 	"net/url"
@@ -219,7 +221,7 @@ func RoundTripper(sensor *Sensor, original http.RoundTripper) http.RoundTripper 
 	})
 }
 
-// wrapper over http.ResponseWriter to spy the returned status code
+// statusCodeRecorder is a wrapper over http.ResponseWriter to spy the returned status code
 type statusCodeRecorder struct {
 	http.ResponseWriter
 	Status int
@@ -240,6 +242,14 @@ func (rec *statusCodeRecorder) Write(b []byte) (int, error) {
 	}
 
 	return rec.ResponseWriter.Write(b)
+}
+
+// statusCodeRecorderHTTP10 is a wrapper over http.ResponseWriter similar to statusCodeRecorder, but
+// also implementing http.Hijaker
+type statusCodeRecorderHTTP10 = statusCodeRecorder
+
+func (rec *statusCodeRecorderHTTP10) Hijack() (net.Conn, *bufio.ReadWriter, error) {
+	return rec.ResponseWriter.(http.Hijacker).Hijack()
 }
 
 type tracingRoundTripper func(*http.Request) (*http.Response, error)
