@@ -4,8 +4,10 @@
 package instana
 
 import (
+	"bufio"
 	"context"
 	"mime/multipart"
+	"net"
 	"net/http"
 	"net/textproto"
 	"net/url"
@@ -116,7 +118,7 @@ func TracingNamedHandlerFunc(sensor *Sensor, routeID, pathTemplate string, handl
 			}
 		}()
 
-		wrapped := &statusCodeRecorder{ResponseWriter: w}
+		wrapped := wrapResponseWriter(w)
 		tracer.Inject(span.Context(), ot.HTTPHeaders, ot.HTTPHeadersCarrier(wrapped.Header()))
 
 		handler(wrapped, req.WithContext(ContextWithSpan(ctx, span)))
@@ -128,15 +130,15 @@ func TracingNamedHandlerFunc(sensor *Sensor, routeID, pathTemplate string, handl
 			}
 		}
 
-		if wrapped.Status > 0 {
-			if wrapped.Status >= http.StatusInternalServerError {
-				statusText := http.StatusText(wrapped.Status)
+		if wrapped.Status() > 0 {
+			if wrapped.Status() >= http.StatusInternalServerError {
+				statusText := http.StatusText(wrapped.Status())
 
 				span.SetTag("http.error", statusText)
 				span.LogFields(otlog.Object("error", statusText))
 			}
 
-			span.SetTag("http.status", wrapped.Status)
+			span.SetTag("http.status", wrapped.Status())
 		}
 	}
 }
@@ -219,14 +221,31 @@ func RoundTripper(sensor *Sensor, original http.RoundTripper) http.RoundTripper 
 	})
 }
 
-// wrapper over http.ResponseWriter to spy the returned status code
+type wrappedResponseWriter interface {
+	http.ResponseWriter
+	Status() int
+}
+
+func wrapResponseWriter(w http.ResponseWriter) wrappedResponseWriter {
+	if _, ok := w.(http.Hijacker); ok {
+		return &statusCodeRecorderHTTP10{
+			ResponseWriter: w,
+		}
+	}
+
+	return &statusCodeRecorder{
+		ResponseWriter: w,
+	}
+}
+
+// statusCodeRecorder is a wrapper over http.ResponseWriter to spy the returned status code
 type statusCodeRecorder struct {
 	http.ResponseWriter
-	Status int
+	status int
 }
 
 func (rec *statusCodeRecorder) SetStatus(status int) {
-	rec.Status = status
+	rec.status = status
 }
 
 func (rec *statusCodeRecorder) WriteHeader(status int) {
@@ -235,11 +254,23 @@ func (rec *statusCodeRecorder) WriteHeader(status int) {
 }
 
 func (rec *statusCodeRecorder) Write(b []byte) (int, error) {
-	if rec.Status == 0 {
+	if rec.status == 0 {
 		rec.SetStatus(http.StatusOK)
 	}
 
 	return rec.ResponseWriter.Write(b)
+}
+
+func (rec *statusCodeRecorder) Status() int {
+	return rec.status
+}
+
+// statusCodeRecorderHTTP10 is a wrapper over http.ResponseWriter similar to statusCodeRecorder, but
+// also implementing http.Hijaker
+type statusCodeRecorderHTTP10 = statusCodeRecorder
+
+func (rec *statusCodeRecorderHTTP10) Hijack() (net.Conn, *bufio.ReadWriter, error) {
+	return rec.ResponseWriter.(http.Hijacker).Hijack()
 }
 
 type tracingRoundTripper func(*http.Request) (*http.Response, error)
