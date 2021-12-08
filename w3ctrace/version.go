@@ -4,6 +4,7 @@
 package w3ctrace
 
 import (
+	"encoding/hex"
 	"fmt"
 	"strconv"
 )
@@ -102,6 +103,8 @@ func parseV0Parent(s string) (Parent, error) {
 		parentIDLen      = 16
 		flagsLen         = 2
 		separator        = '-'
+		invalidTraceID   = "00000000000000000000000000000000"
+		invalidParentID  = "0000000000000000"
 	)
 
 	// trim version part
@@ -116,11 +119,19 @@ func parseV0Parent(s string) (Parent, error) {
 	}
 	traceID, s := s[:traceIDLen], s[traceIDLen+1:]
 
+	if traceID == invalidTraceID || !isHex(traceID) {
+		return Parent{}, ErrContextCorrupted
+	}
+
 	// extract parent id
 	if s[parentIDLen] != separator {
 		return Parent{}, ErrContextCorrupted
 	}
 	parentID, s := s[:parentIDLen], s[parentIDLen+1:]
+
+	if parentID == invalidParentID || !isHex(parentID) {
+		return Parent{}, ErrContextCorrupted
+	}
 
 	// extract and parse flags
 	if len(s) > flagsLen && s[flagsLen] != separator {
@@ -149,4 +160,9 @@ func formatV0Parent(p Parent) string {
 	}
 
 	return fmt.Sprintf("00-%032s-%016s-%02x", p.TraceID, p.ParentID, flags)
+}
+
+func isHex(s string) bool {
+	_, err := hex.DecodeString(s)
+	return err == nil
 }

@@ -59,13 +59,20 @@ func TestParseParent(t *testing.T) {
 
 func TestParseParent_Malformed(t *testing.T) {
 	examples := map[string]string{
-		"invalid version":            "ff-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01",
-		"malformed version":          "xx-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01",
-		"v0, no version separator":   "00@4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01",
-		"v0, no trace id separator":  "00-4bf92f3577b34da6a3ce929d0e0e4736@00f067aa0ba902b7-01",
-		"v0, no parent id separator": "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7@01",
-		"v0, malformed flags":        "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-xx",
-		"future, no flags separator": "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01@hello future",
+		"invalid version":                   "ff-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01",
+		"malformed version":                 "xx-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01",
+		"v0, no version separator":          "00@4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01",
+		"v0, no trace id separator":         "00-4bf92f3577b34da6a3ce929d0e0e4736@00f067aa0ba902b7-01",
+		"v0, no parent id separator":        "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7@01",
+		"v0, malformed flags":               "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-xx",
+		"future, no flags separator":        "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01@hello future",
+		"trace id all zeroes":               "00-00000000000000000000000000000001-0000000000000000-01",
+		"parent id all zeroes":              "00-00000000000000000000000000000000-0000000000000001-01",
+		"trace id and parent id all zeroes": "00-00000000000000000000000000000000-0000000000000000-01",
+		"uppercase in trace id":             "00-CAPAAAA4Af92f3577b34da6a3ce92736-00f067aa0ba902b7-01",
+		"uppercase in parent id":            "00-aaaaaaa4Af92f3577b34da6a3ce92736-CAP067aa0ba902b7-01",
+		"non-hex chars in trace id":         "00-zzzzzzz4Af92f3577b34da6a3ce92736-00f067aa0ba902b7-01",
+		"non-hex chars in parent id":        "00-aaaaaaa4Af92f3577b34da6a3ce92736-zzf067aa0ba902b7-01",
 	}
 
 	for name, header := range examples {
