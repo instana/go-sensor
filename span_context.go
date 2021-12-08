@@ -127,7 +127,7 @@ func restoreFromW3CTraceContext(parent SpanContext) SpanContext {
 
 	if sensor.options.disableW3CTraceCorrelation {
 		restored := restoreFromW3CTraceState(parent.W3CContext)
-		restored.Suppressed = parent.Suppressed || !traceparent.Flags.Sampled
+		restored.Suppressed = parent.Suppressed
 
 		return restored
 	}
@@ -146,7 +146,7 @@ func restoreFromW3CTraceContext(parent SpanContext) SpanContext {
 		TraceIDHi:  traceIDHi,
 		TraceID:    traceIDLo,
 		SpanID:     parentID,
-		Suppressed: parent.Suppressed || !traceparent.Flags.Sampled,
+		Suppressed: parent.Suppressed,
 		W3CContext: parent.W3CContext,
 	}
 }

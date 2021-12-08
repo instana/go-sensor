@@ -106,6 +106,74 @@ func TestTracingNamedHandlerFunc_Write(t *testing.T) {
 	), tracestate)
 }
 
+func TestTracingNamedHandlerFunc_InstanaFieldLPriorityOverTraceParentHeader(t *testing.T) {
+	type testCase struct {
+		headers                 http.Header
+		traceParentHeaderSuffix string
+	}
+
+	testCases := map[string]testCase{
+		"traceparent is suppressed, x-instana-l is not suppressed": {
+			headers: http.Header{
+				w3ctrace.TraceParentHeader: []string{"00-00000000000000000000000000000001-0000000000000001-00"},
+				instana.FieldL:             []string{"1"},
+			},
+			traceParentHeaderSuffix: "-01",
+		},
+		"traceparent is suppressed, x-instana-l is absent (is not suppressed by default)": {
+			headers: http.Header{
+				w3ctrace.TraceParentHeader: []string{"00-00000000000000000000000000000001-0000000000000001-00"},
+			},
+			traceParentHeaderSuffix: "-01",
+		},
+		"traceparent is not suppressed, x-instana-l is absent (tracing enabled by default)": {
+			headers: http.Header{
+				w3ctrace.TraceParentHeader: []string{"00-00000000000000000000000000000001-0000000000000001-01"},
+			},
+			traceParentHeaderSuffix: "-01",
+		},
+		"traceparent is not suppressed, x-instana-l is not suppressed": {
+			headers: http.Header{
+				w3ctrace.TraceParentHeader: []string{"00-00000000000000000000000000000001-0000000000000001-01"},
+				instana.FieldL:             []string{"1"},
+			},
+			traceParentHeaderSuffix: "-01",
+		},
+		"traceparent is suppressed, x-instana-l is suppressed": {
+			headers: http.Header{
+				w3ctrace.TraceParentHeader: []string{"00-00000000000000000000000000000001-0000000000000001-00"},
+				instana.FieldL:             []string{"0"},
+			},
+			traceParentHeaderSuffix: "-00",
+		},
+		"traceparent is not suppressed, x-instana-l is suppressed": {
+			headers: http.Header{
+				w3ctrace.TraceParentHeader: []string{"00-00000000000000000000000000000001-0000000000000001-01"},
+				instana.FieldL:             []string{"0"},
+			},
+			traceParentHeaderSuffix: "-00",
+		},
+	}
+
+	recorder := instana.NewTestRecorder()
+	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{
+		Service: "go-sensor-test",
+	}, recorder))
+
+	h := instana.TracingNamedHandlerFunc(s, "action", "/test", func(w http.ResponseWriter, req *http.Request) {})
+
+	for name, testCase := range testCases {
+		req := httptest.NewRequest(http.MethodGet, "/test", nil)
+		req.Header = testCase.headers
+
+		rec := httptest.NewRecorder()
+		h.ServeHTTP(rec, req)
+
+		assert.Equal(t, http.StatusOK, rec.Code)
+		assert.True(t, strings.HasSuffix(rec.Header().Get(w3ctrace.TraceParentHeader), testCase.traceParentHeaderSuffix), "case '"+name+"' failed")
+	}
+}
+
 func TestTracingNamedHandlerFunc_WriteHeaders(t *testing.T) {
 	recorder := instana.NewTestRecorder()
 	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{}, recorder))
