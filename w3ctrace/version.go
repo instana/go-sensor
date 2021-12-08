@@ -4,6 +4,7 @@
 package w3ctrace
 
 import (
+	"encoding/hex"
 	"fmt"
 	"strconv"
 )
@@ -162,7 +163,6 @@ func formatV0Parent(p Parent) string {
 }
 
 func isHex(s string) bool {
-	_, err := strconv.ParseUint(s, 16, 64)
-
+	_, err := hex.DecodeString(s)
 	return err == nil
 }
