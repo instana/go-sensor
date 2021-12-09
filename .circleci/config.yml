@@ -23,12 +23,15 @@ jobs:
         type: string
     docker:
       - image: circleci/golang:<< parameters.go_version >>
+        user: root
     working_directory: /go/src/github.com/instana/go-sensor
     steps:
       - checkout
       - restore_cache:
           keys:
             - go-mod-v4-{{ checksum "go.sum" }}
+      - run:
+          command: apt-get --allow-releaseinfo-change-suite update -y && apt-get install ca-certificates libgnutls30 -y || true
       - run:
           name: Run unit tests
           environment:
