@@ -11,24 +11,56 @@ import (
 // VendorInstana is the Instana vendor key in the `tracestate` list
 const VendorInstana = "in"
 
+// Max amount of KV pairs in `tracestate` header
+const maxKVPairs = 32
+
+// Length of entries that should be filtered first in case, if tracestate has more than `maxKVPairs` items
+const thresholdLen = 128
+
 // State is list of key=value pairs representing vendor-specific data in the trace context
 type State []string
 
-// ParseState parses the value of `tracestate` header. It strips any optional white-space chararacters
-// preceding or following the key=value pairs. Empty list items are omitted.
+// ParseState parses the value of `tracestate` header. Empty list items are omitted.
 func ParseState(traceStateValue string) (State, error) {
 	var state State
 
-	for _, st := range strings.SplitN(traceStateValue, ",", 32) {
-		st = strings.TrimSpace(st)
-		if st == "" {
-			continue
-		}
-
-		state = append(state, st)
+	entries := strings.Split(traceStateValue, ",")
+	if len(entries) == 1 && entries[0] == "" {
+		return state, nil
 	}
 
-	return state, nil
+	filteredEntries := filterEmptyItems(entries)
+	filteredEntriesLen := len(filteredEntries)
+
+	if filteredEntriesLen == 0 {
+		return state, nil
+	}
+
+	if filteredEntriesLen > maxKVPairs {
+		filtered := 0
+
+		for k, st := range filteredEntries {
+			if len(state) == maxKVPairs {
+				break
+			}
+
+			// check if enough elements were filtered already
+			if filteredEntriesLen-filtered <= maxKVPairs {
+				return append(state, filteredEntries[k:]...), nil
+			}
+
+			if len(st) > thresholdLen {
+				filtered++
+				continue
+			}
+
+			state = append(state, st)
+		}
+
+		return state, nil
+	}
+
+	return filteredEntries, nil
 }
 
 // Add returns a new state prepended with provided vendor-specific data. It removes any existing
@@ -108,4 +140,17 @@ func (st State) String() string {
 	buf.Truncate(buf.Len() - 1) // remove trailing comma
 
 	return buf.String()
+}
+
+func filterEmptyItems(entries []string) []string {
+	var entriesWithoutEmptyItems []string
+	for _, v := range entries {
+		if v == "" {
+			continue
+		}
+
+		entriesWithoutEmptyItems = append(entriesWithoutEmptyItems, v)
+	}
+
+	return entriesWithoutEmptyItems
 }
