@@ -23,16 +23,15 @@ type State []string
 // ParseState parses the value of `tracestate` header. Empty list items are omitted.
 func ParseState(traceStateValue string) (State, error) {
 	states := filterEmptyItems(strings.Split(traceStateValue, ","))
-	statesLen := len(states)
+	unfilteredStatesAmount := len(states)
 
-	if statesLen < maxKVPairs {
+	if unfilteredStatesAmount < maxKVPairs {
 		return states, nil
 	}
 
 	filteredStates := states[:0]
-	for stateNumber, st := range states {
-		unfilteredStatesAmount := statesLen - stateNumber
-
+	for _, st := range states {
+		unfilteredStatesAmount--
 		needToFilter := len(filteredStates)+unfilteredStatesAmount > maxKVPairs
 
 		if len(st) > thresholdLen && needToFilter {
