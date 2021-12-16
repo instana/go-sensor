@@ -22,45 +22,26 @@ type State []string
 
 // ParseState parses the value of `tracestate` header. Empty list items are omitted.
 func ParseState(traceStateValue string) (State, error) {
-	var state State
+	states := filterEmptyItems(strings.Split(traceStateValue, ","))
+	statesLen := len(states)
 
-	entries := strings.Split(traceStateValue, ",")
-	if len(entries) == 1 && entries[0] == "" {
-		return state, nil
+	if statesLen < maxKVPairs {
+		return states, nil
 	}
 
-	filteredEntries := filterEmptyItems(entries)
-	filteredEntriesLen := len(filteredEntries)
+	filteredStates := states[:0]
+	for stateNumber, st := range states {
+		unfilteredStatesAmount := statesLen - stateNumber
 
-	if filteredEntriesLen == 0 {
-		return state, nil
-	}
+		needToFilter := len(filteredStates)+unfilteredStatesAmount > maxKVPairs
 
-	if filteredEntriesLen > maxKVPairs {
-		filtered := 0
-
-		for k, st := range filteredEntries {
-			if len(state) == maxKVPairs {
-				break
-			}
-
-			// check if enough elements were filtered already
-			if filteredEntriesLen-filtered <= maxKVPairs {
-				return append(state, filteredEntries[k:]...), nil
-			}
-
-			if len(st) > thresholdLen {
-				filtered++
-				continue
-			}
-
-			state = append(state, st)
+		if len(st) > thresholdLen && needToFilter {
+			continue
 		}
-
-		return state, nil
+		filteredStates = append(filteredStates, st)
 	}
 
-	return filteredEntries, nil
+	return filteredStates[:min(len(filteredStates), maxKVPairs)], nil
 }
 
 // Add returns a new state prepended with provided vendor-specific data. It removes any existing
@@ -143,14 +124,20 @@ func (st State) String() string {
 }
 
 func filterEmptyItems(entries []string) []string {
-	var entriesWithoutEmptyItems []string
+	result := entries[:0]
 	for _, v := range entries {
-		if v == "" {
-			continue
+		if v != "" {
+			result = append(result, v)
 		}
-
-		entriesWithoutEmptyItems = append(entriesWithoutEmptyItems, v)
 	}
 
-	return entriesWithoutEmptyItems
+	return result
+}
+
+func min(a, b int) int {
+	if a > b {
+		return b
+	}
+
+	return a
 }
