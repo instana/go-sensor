@@ -23,24 +23,30 @@ type State []string
 // ParseState parses the value of `tracestate` header. Empty list items are omitted.
 func ParseState(traceStateValue string) (State, error) {
 	states := filterEmptyItems(strings.Split(traceStateValue, ","))
-	unfilteredStatesAmount := len(states)
-
-	if unfilteredStatesAmount < maxKVPairs {
+	if len(states) < maxKVPairs {
 		return states, nil
 	}
 
+	itemsToFilter := len(states) - maxKVPairs
 	filteredStates := states[:0]
-	for _, st := range states {
-		unfilteredStatesAmount--
-		needToFilter := len(filteredStates)+unfilteredStatesAmount > maxKVPairs
 
-		if len(st) > thresholdLen && needToFilter {
+	i := 0
+	for ; itemsToFilter > 0 && i < len(states); i++ {
+
+		if len(states[i]) > thresholdLen {
+			itemsToFilter--
 			continue
 		}
-		filteredStates = append(filteredStates, st)
+
+		filteredStates = append(filteredStates, states[i])
+	}
+	filteredStates = append(filteredStates, states[i:]...)
+
+	if len(filteredStates) > maxKVPairs {
+		return filteredStates[:maxKVPairs], nil
 	}
 
-	return filteredStates[:min(len(filteredStates), maxKVPairs)], nil
+	return filteredStates, nil
 }
 
 // Add returns a new state prepended with provided vendor-specific data. It removes any existing
@@ -131,12 +137,4 @@ func filterEmptyItems(entries []string) []string {
 	}
 
 	return result
-}
-
-func min(a, b int) int {
-	if a > b {
-		return b
-	}
-
-	return a
 }
