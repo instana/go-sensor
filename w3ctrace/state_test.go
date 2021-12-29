@@ -5,6 +5,7 @@ package w3ctrace_test
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/instana/go-sensor/w3ctrace"
@@ -13,22 +14,54 @@ import (
 )
 
 func TestParseState(t *testing.T) {
+	const maxKVPairs = 32
+
 	examples := map[string]struct {
 		Header   string
 		Expected w3ctrace.State
 	}{
-		"empty": {},
+		"empty": {
+			Expected: w3ctrace.State{},
+		},
 		"single tracing system": {
 			Header:   "rojo=00f067aa0ba902b7",
 			Expected: w3ctrace.State{"rojo=00f067aa0ba902b7"},
 		},
 		"multiple tracing systems": {
-			Header:   "rojo=00f067aa0ba902b7 , congo=t61rcWkgMzE",
+			Header:   "rojo=00f067aa0ba902b7,congo=t61rcWkgMzE",
 			Expected: w3ctrace.State{"rojo=00f067aa0ba902b7", "congo=t61rcWkgMzE"},
 		},
 		"with empty list items": {
 			Header:   "rojo=00f067aa0ba902b7,    ,,congo=t61rcWkgMzE",
-			Expected: w3ctrace.State{"rojo=00f067aa0ba902b7", "congo=t61rcWkgMzE"},
+			Expected: w3ctrace.State{"rojo=00f067aa0ba902b7", "    ", "congo=t61rcWkgMzE"},
+		},
+		"with 33 list items": {
+			Header:   strings.TrimRight(strings.Repeat("rojo=00f067aa0ba902b7,", maxKVPairs+1), ","),
+			Expected: strings.Split(strings.TrimRight(strings.Repeat("rojo=00f067aa0ba902b7,", maxKVPairs), ","), ","),
+		},
+		"with 34 list items, with long one at the beginning": {
+			Header:   "rojo=" + strings.Repeat("a", 129) + "," + strings.TrimRight(strings.Repeat("rojo=00f067aa0ba902b7,", maxKVPairs+1), ","),
+			Expected: strings.Split(strings.TrimRight(strings.Repeat("rojo=00f067aa0ba902b7,", maxKVPairs), ","), ","),
+		},
+		"with 33 list items, each is more then 128 char long": {
+			Header:   strings.TrimRight(strings.Repeat("rojo="+strings.Repeat("a", 129)+",", maxKVPairs+1), ","),
+			Expected: strings.Split(strings.TrimRight(strings.Repeat("rojo="+strings.Repeat("a", 129)+",", maxKVPairs), ","), ","),
+		},
+		"with 34 list items: one short and 33 long": {
+			Header:   "rojo=00f067aa0ba902b7," + strings.TrimRight(strings.Repeat("rojo="+strings.Repeat("a", 129)+",", maxKVPairs+1), ","),
+			Expected: strings.Split("rojo=00f067aa0ba902b7,"+strings.TrimRight(strings.Repeat("rojo="+strings.Repeat("a", 129)+",", maxKVPairs-1), ","), ","),
+		},
+		"with 64 list items, mixed long and short values": {
+			Header:   strings.TrimRight(strings.Repeat("short="+strings.Repeat("b", 10)+","+"long="+strings.Repeat("a", 129)+",", maxKVPairs), ","),
+			Expected: strings.Split(strings.TrimRight(strings.Repeat("short="+strings.Repeat("b", 10)+",", maxKVPairs), ","), ","),
+		},
+		"with empty header value": {
+			Header:   "",
+			Expected: w3ctrace.State{},
+		},
+		"with a lot of comas": {
+			Header:   strings.Repeat(",", 1024),
+			Expected: w3ctrace.State{},
 		},
 	}
 

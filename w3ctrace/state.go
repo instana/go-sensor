@@ -11,24 +11,42 @@ import (
 // VendorInstana is the Instana vendor key in the `tracestate` list
 const VendorInstana = "in"
 
+// Max amount of KV pairs in `tracestate` header
+const maxKVPairs = 32
+
+// Length of entries that should be filtered first in case, if tracestate has more than `maxKVPairs` items
+const thresholdLen = 128
+
 // State is list of key=value pairs representing vendor-specific data in the trace context
 type State []string
 
-// ParseState parses the value of `tracestate` header. It strips any optional white-space chararacters
-// preceding or following the key=value pairs. Empty list items are omitted.
+// ParseState parses the value of `tracestate` header. Empty list items are omitted.
 func ParseState(traceStateValue string) (State, error) {
-	var state State
+	states := filterEmptyItems(strings.Split(traceStateValue, ","))
+	if len(states) < maxKVPairs {
+		return states, nil
+	}
 
-	for _, st := range strings.SplitN(traceStateValue, ",", 32) {
-		st = strings.TrimSpace(st)
-		if st == "" {
+	itemsToFilter := len(states) - maxKVPairs
+	filteredStates := states[:0]
+
+	i := 0
+	for ; itemsToFilter > 0 && i < len(states); i++ {
+
+		if len(states[i]) > thresholdLen {
+			itemsToFilter--
 			continue
 		}
 
-		state = append(state, st)
+		filteredStates = append(filteredStates, states[i])
+	}
+	filteredStates = append(filteredStates, states[i:]...)
+
+	if len(filteredStates) > maxKVPairs {
+		return filteredStates[:maxKVPairs], nil
 	}
 
-	return state, nil
+	return filteredStates, nil
 }
 
 // Add returns a new state prepended with provided vendor-specific data. It removes any existing
@@ -108,4 +126,15 @@ func (st State) String() string {
 	buf.Truncate(buf.Len() - 1) // remove trailing comma
 
 	return buf.String()
+}
+
+func filterEmptyItems(entries []string) []string {
+	result := entries[:0]
+	for _, v := range entries {
+		if v != "" {
+			result = append(result, v)
+		}
+	}
+
+	return result
 }
