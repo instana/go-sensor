@@ -125,6 +125,23 @@ func TestLogger_SetLevel(t *testing.T) {
 
 		assert.Equal(t, examples[logger.InfoLevel], p.Records)
 	})
+
+	t.Run("INSTANA_DEBUG has priority over INSTANA_LOG_LEVEL env var", func(t *testing.T) {
+		p := &printer{}
+
+		t.Setenv("INSTANA_LOG_LEVEL", "wArn")
+		t.Setenv("INSTANA_DEBUG", "yes")
+		l := logger.New(p)
+		l.Debug("debug", "level")
+		l.Info("info", "level")
+		l.Warn("warn", "level")
+		l.Error("error", "level")
+
+		// The first element in p.Records is the INFO:
+		// INSTANA_DEBUG env variable is set, the log level has been set to DEBUG instead of requested WARN
+
+		assert.Equal(t, p.Records[1:], examples[logger.DebugLevel])
+	})
 }
 
 func TestLogger_SetLevel_INSTANA_DEBUG(t *testing.T) {
