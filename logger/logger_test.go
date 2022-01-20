@@ -4,7 +4,6 @@
 package logger_test
 
 import (
-	"fmt"
 	"os"
 	"testing"
 
@@ -88,6 +87,44 @@ func TestLogger_SetLevel(t *testing.T) {
 			assert.Equal(t, expected, p.Records)
 		})
 	}
+
+	for lvl, expected := range examples {
+		t.Run(lvl.String()+" INSTANA_LOG_LEVEL env var", func(t *testing.T) {
+			p := &printer{}
+
+			t.Setenv("INSTANA_LOG_LEVEL", lvl.String())
+			l := logger.New(p)
+			l.Debug("debug", "level")
+			l.Info("info", "level")
+			l.Warn("warn", "level")
+			l.Error("error", "level")
+
+			assert.Equal(t, expected, p.Records)
+		})
+	}
+
+	t.Run("INSTANA_LOG_LEVEL env var replaced by SetLevel", func(t *testing.T) {
+		p := &printer{}
+
+		t.Setenv("INSTANA_LOG_LEVEL", "wArn")
+		l := logger.New(p)
+		l.Debug("debug", "level")
+		l.Info("info", "level")
+		l.Warn("warn", "level")
+		l.Error("error", "level")
+
+		assert.Equal(t, examples[logger.WarnLevel], p.Records)
+
+		p.Records = p.Records[:0]
+
+		l.SetLevel(logger.InfoLevel)
+		l.Debug("debug", "level")
+		l.Info("info", "level")
+		l.Warn("warn", "level")
+		l.Error("error", "level")
+
+		assert.Equal(t, examples[logger.InfoLevel], p.Records)
+	})
 }
 
 func TestLogger_SetLevel_INSTANA_DEBUG(t *testing.T) {
@@ -119,37 +156,6 @@ func TestLogger_SetLevel_INSTANA_DEBUG(t *testing.T) {
 			assert.Contains(t, p.Records, []interface{}{"instana: ", "DEBUG", ": ", "debuglevel"})
 		})
 	}
-}
-
-func TestLogger_INSTANA_LOG_LEVEL(t *testing.T) {
-
-	//t.Run("Lele lala", func(t *testing.T) {
-	t.Setenv("INSTANA_LOG_LEVEL", "waRn")
-	p := &printer{}
-
-	l := logger.New(p)
-
-	// DEBUG, INFO, WARN, ERROR
-
-	l.Debug("")
-	l.Info("")
-	l.Warn("")
-	l.Error("")
-
-	var infoIsTrue []interface{}
-
-	for idx := range p.Records {
-		infoIsTrue = append(infoIsTrue, p.Records[idx][1])
-	}
-
-	fmt.Println(infoIsTrue)
-
-	//assert.Contains(t, infoIsTrue, "INFO")
-	assert.NotContains(t, infoIsTrue, "DEBUG")
-	//assert.Equal(t, infoIsTrue, []interface{}{"INFO", "WARN", "ERROR"})
-
-	//})
-
 }
 
 type printer struct {
