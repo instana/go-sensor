@@ -92,7 +92,11 @@ func TestLogger_SetLevel(t *testing.T) {
 		t.Run(lvl.String()+" INSTANA_LOG_LEVEL env var", func(t *testing.T) {
 			p := &printer{}
 
-			t.Setenv("INSTANA_LOG_LEVEL", lvl.String())
+			defer func() {
+				os.Unsetenv("INSTANA_LOG_LEVEL")
+			}()
+
+			os.Setenv("INSTANA_LOG_LEVEL", lvl.String())
 			l := logger.New(p)
 			l.Debug("debug", "level")
 			l.Info("info", "level")
@@ -106,7 +110,12 @@ func TestLogger_SetLevel(t *testing.T) {
 	t.Run("INSTANA_LOG_LEVEL env var replaced by SetLevel", func(t *testing.T) {
 		p := &printer{}
 
-		t.Setenv("INSTANA_LOG_LEVEL", "wArn")
+		// restore original value
+		defer func() {
+			os.Unsetenv("INSTANA_LOG_LEVEL")
+		}()
+
+		os.Setenv("INSTANA_LOG_LEVEL", "wArn")
 		l := logger.New(p)
 		l.Debug("debug", "level")
 		l.Info("info", "level")
@@ -129,8 +138,8 @@ func TestLogger_SetLevel(t *testing.T) {
 	t.Run("INSTANA_DEBUG has priority over INSTANA_LOG_LEVEL env var", func(t *testing.T) {
 		p := &printer{}
 
-		t.Setenv("INSTANA_LOG_LEVEL", "wArn")
-		t.Setenv("INSTANA_DEBUG", "yes")
+		os.Setenv("INSTANA_LOG_LEVEL", "wArn")
+		os.Setenv("INSTANA_DEBUG", "yes")
 		l := logger.New(p)
 		l.Debug("debug", "level")
 		l.Info("info", "level")
