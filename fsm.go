@@ -82,7 +82,7 @@ func (r *fsmS) lookupAgentHost(e *f.Event) {
 			return
 		}
 
-		if runtime.GOOS == "Linux" {
+		if _, fileNotFoundErr := os.Stat("/proc/net/route"); fileNotFoundErr == nil {
 			gateway, err := getDefaultGateway("/proc/net/route")
 			if err != nil {
 				// This will be always the "failed to open /proc/net/route: no such file or directory" error.
@@ -136,7 +136,7 @@ func (r *fsmS) announceSensor(e *f.Event) {
 		if !success {
 			r.retriesLeft--
 			if r.retriesLeft == 0 {
-				r.agent.logger.Error("Couldn't announce sensor after reaching the maximum amount of attempts.")
+				r.agent.logger.Error("Couldn't announce the sensor after reaching the maximum amount of attempts.")
 				r.fsm.Event(eInit)
 				return
 			} else {
