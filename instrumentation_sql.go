@@ -88,6 +88,42 @@ type wrappedSQLConn struct {
 	sensor  *Sensor
 }
 
+func (conn *wrappedSQLConn) QueryContext(ctx context.Context, query string, args []driver.NamedValue) (driver.Rows, error) {
+	sp := startSQLSpan(ctx, conn.details, query, conn.sensor)
+	defer sp.Finish()
+
+	if c, ok := conn.Conn.(driver.QueryerContext); ok {
+		res, err := c.QueryContext(ctx, query, args)
+		if err != nil && err != driver.ErrSkip {
+			sp.LogFields(otlog.Error(err))
+		}
+
+		return res, err
+	}
+
+	if c, ok := conn.Conn.(driver.Queryer); ok { //nolint:staticcheck
+		values, err := sqlNamedValuesToValues(args)
+		if err != nil {
+			return nil, err
+		}
+
+		select {
+		default:
+		case <-ctx.Done():
+			return nil, ctx.Err()
+		}
+
+		res, err := c.Query(query, values)
+		if err != nil && err != driver.ErrSkip {
+			sp.LogFields(otlog.Error(err))
+		}
+
+		return res, err
+	}
+
+	return nil, driver.ErrSkip
+}
+
 func (conn *wrappedSQLConn) Prepare(query string) (driver.Stmt, error) {
 	stmt, err := conn.Conn.Prepare(query)
 	if err != nil {
