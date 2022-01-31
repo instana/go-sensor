@@ -76,36 +76,40 @@ func (r *fsmS) scheduleRetryWithExponentialDelay(e *f.Event, cb func(e *f.Event)
 
 func (r *fsmS) lookupAgentHost(e *f.Event) {
 	cb := func(found bool, host string) {
+		// Agent host is found through the checkHost method, that attempts to read "Instana Agent" from the response header.
 		if found {
 			r.lookupSuccess(host)
 			return
 		}
 
-		gateway, err := getDefaultGateway("/proc/net/route")
-		if err != nil {
-			r.agent.logger.Error("failed to fetch the default gateway, scheduling retry: ", err)
-			r.scheduleRetry(e, r.lookupAgentHost)
+		if _, fileNotFoundErr := os.Stat("/proc/net/route"); fileNotFoundErr == nil {
+			gateway, err := getDefaultGateway("/proc/net/route")
+			if err != nil {
+				// This will be always the "failed to open /proc/net/route: no such file or directory" error.
+				// As this info is not relevant to the customer, we can remove it from the message.
+				r.agent.logger.Error("Couldn't open the /proc/net/route file in order to retrieve the default gateway. Scheduling retry.")
+				r.scheduleRetry(e, r.lookupAgentHost)
 
-			return
-		}
-
-		if gateway == "" {
-			r.agent.logger.Error("default gateway not available, scheduling retry")
-			r.scheduleRetry(e, r.lookupAgentHost)
-
-			return
-		}
-
-		go r.checkHost(gateway, func(found bool, host string) {
-			if found {
-				r.lookupSuccess(host)
 				return
 			}
 
-			r.agent.logger.Error("cannot connect to the agent through localhost or default gateway, scheduling retry")
-			r.scheduleRetry(e, r.lookupAgentHost)
-		})
+			if gateway == "" {
+				r.agent.logger.Error("Couldn't parse the default gateway address from /proc/net/route. Scheduling retry.")
+				r.scheduleRetry(e, r.lookupAgentHost)
 
+				return
+			}
+
+			go r.checkHost(gateway, func(found bool, host string) {
+				if found {
+					r.lookupSuccess(host)
+					return
+				}
+
+				r.agent.logger.Error("Cannot connect to the agent through localhost or default gateway. Scheduling retry.")
+				r.scheduleRetry(e, r.lookupAgentHost)
+			})
+		}
 	}
 
 	go r.checkHost(r.agent.host, cb)
@@ -130,11 +134,13 @@ func (r *fsmS) lookupSuccess(host string) {
 func (r *fsmS) announceSensor(e *f.Event) {
 	cb := func(success bool, resp agentResponse) {
 		if !success {
-			r.agent.logger.Error("Cannot announce sensor. Scheduling retry.")
 			r.retriesLeft--
 			if r.retriesLeft == 0 {
+				r.agent.logger.Error("Couldn't announce the sensor after reaching the maximum amount of attempts.")
 				r.fsm.Event(eInit)
 				return
+			} else {
+				r.agent.logger.Debug("Cannot announce sensor. Scheduling retry.")
 			}
 
 			retryNumber := maximumRetries - r.retriesLeft + 1
