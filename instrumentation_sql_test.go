@@ -236,6 +236,10 @@ func (conn sqlConn) ExecContext(ctx context.Context, query string, args []driver
 	return sqlResult{}, conn.Error
 }
 
+func (conn sqlConn) QueryContext(ctx context.Context, query string, args []driver.NamedValue) (driver.Rows, error) {
+	return sqlRows{}, conn.Error
+}
+
 type sqlStmt struct{ Error error }
 
 func (sqlStmt) Close() error                                         { return nil }
