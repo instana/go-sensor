@@ -9,7 +9,7 @@ The API of this instrumentation might change in the future.
 
 The current version contains instrumentation for most of the methods defined for `pgx.Tx` and `*pg.Conn`.
 
-###Known limitation:
+### Known limitation:
 
 - LargeObjects are not supported by this version.
 - For methods `BeginTxFunc` and `BeginFunc` time for `Begin` statement is not measured precisely.
