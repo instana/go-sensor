@@ -137,7 +137,7 @@ func ExampleTx_Exec() {
 	}
 	defer tx.Commit(ctx)
 
-	_, err = tx.Exec(ctx, "VACUUM (VERBOSE, ANALYZE)")
+	_, err = tx.Exec(ctx, ";")
 	if err != nil {
 		log.Fatalln(err.Error())
 	}

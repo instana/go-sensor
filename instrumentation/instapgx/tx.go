@@ -93,6 +93,9 @@ func (iTx *instaTx) Commit(ctx context.Context) error {
 
 	err := iTx.Tx.Commit(ctx)
 	if err != nil {
+		if err == pgx.ErrTxCommitRollback {
+			span.SetTag("pg.stmt", "ROLLBACK")
+		}
 		recordAnError(span, err)
 	}
 
