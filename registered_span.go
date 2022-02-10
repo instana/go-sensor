@@ -48,6 +48,8 @@ const (
 	LogSpanType = RegisteredSpanType("log.go")
 	// MongoDB client span
 	MongoDBSpanType = RegisteredSpanType("mongo")
+	// PostgreSQL client span
+	PostgreSQLSpanType = RegisteredSpanType("postgres")
 )
 
 // RegisteredSpanType represents the span type supported by Instana
@@ -82,6 +84,8 @@ func (st RegisteredSpanType) extractData(span *spanS) typedSpanData {
 		return newLogSpanData(span)
 	case MongoDBSpanType:
 		return newMongoDBSpanData(span)
+	case PostgreSQLSpanType:
+		return newPostgreSQLSpanData(span)
 	default:
 		return newSDKSpanData(span)
 	}
@@ -214,6 +218,15 @@ func (st RegisteredSpanType) TagsNames() map[string]struct{} {
 			"mongo.json":      yes,
 			"mongo.filter":    yes,
 			"mongo.error":     yes,
+		}
+	case PostgreSQLSpanType:
+		return map[string]struct{}{
+			"pg.db":    yes,
+			"pg.user":  yes,
+			"pg.stmt":  yes,
+			"pg.host":  yes,
+			"pg.port":  yes,
+			"pg.error": yes,
 		}
 	default:
 		return nil
@@ -1272,6 +1285,58 @@ func newMongoDBSpanTags(span *spanS) MongoDBSpanTags {
 		case "mongo.filter":
 			readStringTag(&tags.Filter, v)
 		case "mongo.error":
+			readStringTag(&tags.Error, v)
+		}
+	}
+
+	return tags
+}
+
+// PostgreSQLSpanData represents the `data` section of a PostgreSQL client span
+type PostgreSQLSpanData struct {
+	SpanData
+	Tags postgreSQLSpanTags `json:"pg"`
+}
+
+// newPostgreSQLSpanData initializes a new PostgreSQL client span data from tracer span
+func newPostgreSQLSpanData(span *spanS) PostgreSQLSpanData {
+	return PostgreSQLSpanData{
+		SpanData: NewSpanData(span, PostgreSQLSpanType),
+		Tags:     newPostgreSQLSpanTags(span),
+	}
+}
+
+// Kind returns the span kind for a PostgreSQL client span
+func (d PostgreSQLSpanData) Kind() SpanKind {
+	return ExitSpanKind
+}
+
+// postgreSQLSpanTags contains fields within the `data.pg` section of an OT span document
+type postgreSQLSpanTags struct {
+	Host string `json:"host"`
+	Port string `json:"port"`
+	DB   string `json:"db"`
+	User string `json:"user"`
+	Stmt string `json:"stmt"`
+
+	Error string `json:"error,omitempty"`
+}
+
+func newPostgreSQLSpanTags(span *spanS) postgreSQLSpanTags {
+	var tags postgreSQLSpanTags
+	for k, v := range span.Tags {
+		switch k {
+		case "pg.host":
+			readStringTag(&tags.Host, v)
+		case "pg.port":
+			readStringTag(&tags.Port, v)
+		case "pg.db":
+			readStringTag(&tags.DB, v)
+		case "pg.stmt":
+			readStringTag(&tags.Stmt, v)
+		case "pg.user":
+			readStringTag(&tags.User, v)
+		case "pg.error":
 			readStringTag(&tags.Error, v)
 		}
 	}

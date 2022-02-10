@@ -70,6 +70,10 @@ func TestRegisteredSpanType_ExtractData(t *testing.T) {
 			Operation: "mongo",
 			Expected:  instana.MongoDBSpanData{},
 		},
+		"postgresql": {
+			Operation: "postgres",
+			Expected:  instana.PostgreSQLSpanData{},
+		},
 	}
 
 	for name, example := range examples {
