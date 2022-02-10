@@ -50,6 +50,8 @@ const (
 	MongoDBSpanType = RegisteredSpanType("mongo")
 	// PostgreSQL client span
 	PostgreSQLSpanType = RegisteredSpanType("postgres")
+	// Redis client span
+	RedisSpanType = RegisteredSpanType("redis")
 )
 
 // RegisteredSpanType represents the span type supported by Instana
@@ -86,6 +88,8 @@ func (st RegisteredSpanType) extractData(span *spanS) typedSpanData {
 		return newMongoDBSpanData(span)
 	case PostgreSQLSpanType:
 		return newPostgreSQLSpanData(span)
+	case RedisSpanType:
+		return newRedisSpanData(span)
 	default:
 		return newSDKSpanData(span)
 	}
@@ -227,6 +231,13 @@ func (st RegisteredSpanType) TagsNames() map[string]struct{} {
 			"pg.host":  yes,
 			"pg.port":  yes,
 			"pg.error": yes,
+		}
+	case RedisSpanType:
+		return map[string]struct{}{
+			"redis.connection":  yes,
+			"redis.command":     yes,
+			"redis.subCommands": yes,
+			"redis.error":       yes,
 		}
 	default:
 		return nil
@@ -1245,6 +1256,25 @@ func newMongoDBSpanData(span *spanS) MongoDBSpanData {
 	}
 }
 
+// RedisSpanData represents the `data` section of a MongoDB client span
+type RedisSpanData struct {
+	SpanData
+	Tags RedisSpanTags `json:"redis"`
+}
+
+// newRedisSpanData initializes a new MongoDB clientspan data from tracer span
+func newRedisSpanData(span *spanS) RedisSpanData {
+	return RedisSpanData{
+		SpanData: NewSpanData(span, RedisSpanType),
+		Tags:     newRedisSpanTags(span),
+	}
+}
+
+// Kind returns the span kind for a MongoDB client span
+func (d RedisSpanData) Kind() SpanKind {
+	return ExitSpanKind
+}
+
 // Kind returns the span kind for a MongoDB client span
 func (d MongoDBSpanData) Kind() SpanKind {
 	return ExitSpanKind
@@ -1337,6 +1367,30 @@ func newPostgreSQLSpanTags(span *spanS) postgreSQLSpanTags {
 		case "pg.user":
 			readStringTag(&tags.User, v)
 		case "pg.error":
+		}
+	}
+	return tags
+}
+
+// RedisSpanTags contains fields within the `data.redis` section of an OT span document
+type RedisSpanTags struct {
+	Connection  string   `json:"connection"`
+	Command     string   `json:"command,omitempty"`
+	Subcommands []string `json:"subCommands,omitempty"`
+	Error       string   `json:"error,omitempty"`
+}
+
+func newRedisSpanTags(span *spanS) RedisSpanTags {
+	var tags RedisSpanTags
+	for k, v := range span.Tags {
+		switch k {
+		case "redis.connection":
+			readStringTag(&tags.Connection, v)
+		case "redis.command":
+			readStringTag(&tags.Command, v)
+		case "redis.subCommands":
+			readArrayStringTag(&tags.Subcommands, v)
+		case "redis.error":
 			readStringTag(&tags.Error, v)
 		}
 	}
