@@ -20,7 +20,7 @@ To add Instana Go Collector to your service run:
 $ go get github.com/instana/go-sensor
 ```
 
-You might also consider installing [supplemental modules](https://www.instana.com/docs/ecosystem/go/#supported-frameworks-and-libraries)
+You might also consider installing [supplemental modules](https://www.ibm.com/docs/en/obi/current?topic=technologies-monitoring-go#supported-frameworks-and-libraries)
 that provide instrumentation for most popular 3rd-party packages.
 
 Please refer to [Instana Go Collector documentation][docs.installation] for further details on how to activate Go Collector and use it to
@@ -44,7 +44,7 @@ and the [Go Collector How To guide][docs.howto.instrumentation] to learn about c
 
 ### Runtime metrics collection
 
-Once [initialized](https://www.instana.com/docs/ecosystem/go/howto/#how-to-initialize-go-collector), the Go Collector starts automatically
+Once [initialized](https://www.ibm.com/docs/en/obi/current?topic=go-collector-common-operations#how-to-initialize-go-collector), the Go Collector starts automatically
 collecting and sending the following runtime metrics to Instana in background:
 
 * Memory usage
@@ -58,8 +58,8 @@ Instana Go Collector provides an API to [instrument][docs.howto.instrumentation]
 to trace its execution.
 
 The core `github.com/instana/go-sensor` package is shipped with instrumentation wrappers for the standard library, including HTTP client and
-server, as well as SQL database drivers compatible with `database/sql`. There are also upplemental
-[instrumentation modules](https://www.instana.com/docs/ecosystem/go/#supported-frameworks-and-libraries) provide code wrappers to instrument
+server, as well as SQL database drivers compatible with `database/sql`. There are also supplemental
+[instrumentation modules](https://www.ibm.com/docs/en/obi/current?topic=technologies-monitoring-go#supported-frameworks-and-libraries) provide code wrappers to instrument
 the most popular 3rd-party libraries.
 
 Please check the [examples section](#examples) and the [Go Collector How To guide][docs.howto.instrumentation] to learn about common
@@ -88,12 +88,12 @@ headers.
 where a user must manually initiate profiling, AutoProfile™ automatically schedules and continuously performs profiling appropriate for
 critical production environments.
 
-Please refer to the [Instana Go Collector docs](https://www.instana.com/docs/ecosystem/go/#instana-autoprofile) to learn how to activate and
+Please refer to the [Instana Go Collector docs](https://www.ibm.com/docs/en/obi/current?topic=go-collector-common-operations#instana-autoprofile%E2%84%A2) to learn how to activate and
 use continuous profiling for your applications and services.
 
 ### Sending custom events
 
-The Go Collector, be it instantiated explicitly or implicitly through the tracer, provides a simple wrapper API to send events to Instana as described in [its documentation](https://www.instana.com/docs/api/agent/#event-sdk-web-service).
+The Go Collector, be it instantiated explicitly or implicitly through the tracer, provides a simple wrapper API to send events to Instana as described in [its documentation](https://www.ibm.com/docs/en/obi/current?topic=integrations-sdks-apis).
 
 To learn more, see the [Events API](./EventAPI.md) document in this repository.
 
@@ -110,7 +110,7 @@ Following examples are included in the `example` folder:
 * [Gin](./example/gin) - an example of usage of Instana tracer instrumenting a [`Gin`](github.com/gin-gonic/gin) application
 * [httprouter](./example/httprouter) - an example of usage of Instana tracer instrumenting a [`github.com/julienschmidt/httprouter`](https://github.com/julienschmidt/httprouter) router
 
-For more examples please consult the [godoc][godoc] and the [Go Collector How To page](https://www.instana.com/docs/ecosystem/go/howto).
+For more examples please consult the [godoc][godoc] and the [Go Collector How To page](https://www.ibm.com/docs/en/obi/current?topic=go-collector-common-operations).
 
 ## Filing Issues
 
@@ -120,9 +120,9 @@ If something is not working as expected or you have a question, instead of openi
 
 [godoc]: https://pkg.go.dev/github.com/instana/go-sensor/?tab=doc#pkg-examples
 [pkg.go.dev]: https://pkg.go.dev/github.com/instana/go-sensor
-[docs.autoprofile]: https://www.instana.com/docs/profiling/
-[docs.configuration]: https://www.instana.com/docs/ecosystem/go/configuration/
-[docs.installation]: https://www.instana.com/docs/ecosystem/go/installation/
-[docs.howto.configuration]: https://www.instana.com/docs/ecosystem/go/howto/#configuration
-[docs.howto.instrumentation]: https://www.instana.com/docs/ecosystem/go/howto/#instrumentation
+[docs.autoprofile]: https://www.ibm.com/docs/en/obi/current?topic=technologies-monitoring-go#instana-autoprofile%E2%84%A2
+[docs.configuration]: https://www.ibm.com/docs/en/obi/current?topic=go-collector-configuration
+[docs.installation]: https://www.ibm.com/docs/en/obi/current?topic=go-collector-installation
+[docs.howto.configuration]: https://www.ibm.com/docs/en/obi/current?topic=go-collector-common-operations#configuration
+[docs.howto.instrumentation]: https://www.ibm.com/docs/en/obi/current?topic=go-collector-common-operations#instrumentation
 [instana.DefaultOptions]: https://pkg.go.dev/github.com/instana/go-sensor#DefaultOptions
