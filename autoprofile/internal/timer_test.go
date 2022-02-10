@@ -14,23 +14,17 @@ import (
 
 func TestTimer_Stop_Restart(t *testing.T) {
 	var fired int64
-	scheduleTime := 60 * time.Millisecond
-
-	start := time.Now()
-	timer := internal.NewTimer(0, scheduleTime, func() {
+	timer := internal.NewTimer(0, 60*time.Millisecond, func() {
 		atomic.AddInt64(&fired, 1)
 	})
 
 	time.Sleep(100 * time.Millisecond)
 	timer.Stop()
 
-	elapsed := time.Since(start)
-	expectation := elapsed / scheduleTime
-
-	assert.EqualValues(t, expectation, atomic.LoadInt64(&fired))
+	assert.EqualValues(t, 1, atomic.LoadInt64(&fired))
 
 	time.Sleep(200 * time.Millisecond)
-	assert.EqualValues(t, expectation, atomic.LoadInt64(&fired), "a stopped timer should not be restarted")
+	assert.EqualValues(t, 1, atomic.LoadInt64(&fired), "a stopped timer should not be restarted")
 }
 
 func TestTimer_Sleep_Stopped(t *testing.T) {

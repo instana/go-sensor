@@ -75,8 +75,7 @@ func TestNewHook_SendLogSpans(t *testing.T) {
 			assert.WithinDuration(t,
 				time.Unix(int64(sp.Timestamp)/1000, int64(sp.Timestamp)%1000*1e6),
 				time.Unix(int64(logSp.Timestamp)/1000, int64(logSp.Timestamp)%1000*1e6),
-				// We relax this requirement, because of the rounding we make when calculating the duration and timestamps.
-				(time.Duration(sp.Duration)+time.Nanosecond)*time.Millisecond,
+				time.Duration(sp.Duration)*time.Millisecond,
 			)
 
 			require.IsType(t, instana.LogSpanData{}, logSp.Data)
