@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
 	"sync"
 )
 
@@ -85,9 +86,27 @@ func New(printer Printer) *Logger {
 		p:      printer,
 		prefix: DefaultPrefix,
 	}
-	l.SetLevel(ErrorLevel)
+
+	setInstanaLogLevel(l)
 
 	return l
+}
+
+func setInstanaLogLevel(l *Logger) {
+	instanaLogLevelEnvVar := os.Getenv("INSTANA_LOG_LEVEL")
+
+	envVarLogLevel := map[string]Level{
+		"error": ErrorLevel,
+		"info":  InfoLevel,
+		"warn":  WarnLevel,
+		"debug": DebugLevel,
+	}
+
+	if value, ok := envVarLogLevel[strings.ToLower(instanaLogLevelEnvVar)]; ok {
+		l.SetLevel(value)
+	} else {
+		l.SetLevel(ErrorLevel)
+	}
 }
 
 // SetLevel changes the log level for this logger instance. In case there is an INSTANA_DEBUG env variable set,

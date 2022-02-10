@@ -83,7 +83,12 @@ func newSensor(options *Options) *sensorS {
 
 	// handle the legacy (instana.Options).LogLevel value if we use logger.Logger to log
 	if l, ok := s.logger.(*logger.Logger); ok {
-		setLogLevel(l, options.LogLevel)
+
+		_, isInstanaLogLevelSet := os.LookupEnv("INSTANA_LOG_LEVEL")
+
+		if !isInstanaLogLevelSet {
+			setLogLevel(l, options.LogLevel)
+		}
 	}
 
 	var agent agentClient
