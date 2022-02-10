@@ -15,7 +15,7 @@ The current version contains instrumentation for most of the methods defined for
 - For methods `BeginTxFunc` and `BeginFunc` time for `Begin` statement is not measured precisely.
 - Span for `CopyFrom` statement does not contain detailed information about the parameters.
 - Function `QueryRow` requires the result row to be `Scan`. This operation will close the corresponding span and prevent resource leaks. Span's duration will be a sum of query and scan duration.
-- For a `SendBatch` result, when methods either `Exec`, `Query`, `QueryRow` or `QueryFunc` are called, the corresponded span will have the wrong duration because these methods are only reading the result of the execution that happened before.
+- For a `SendBatch` result, when methods either `Exec`, `Query`, `QueryRow` or `QueryFunc` are called, the correspondent span will have the wrong duration because these methods are only reading the result of the execution that happened before.
 
 Installation
 ------------
@@ -34,7 +34,7 @@ Usage
 sensor := instana.NewSensor("pgx-sensort")
 
 // Parse config
-conf, err := pgx.ParseConfig("postgres://postgres:mysecretpassword@localhost/postgres?sslmode=disable")
+conf, err := pgx.ParseConfig("postgres://postgres:mysecretpassword@localhost/postgres")
 ...
 
 // Instrument connection 

@@ -1,5 +1,4 @@
-// (c) Copyright IBM Corp. 2021
-// (c) Copyright Instana Inc. 2020
+// (c) Copyright IBM Corp. 2022
 
 //go:build integration
 // +build integration
@@ -19,7 +18,7 @@ import (
 	"github.com/jackc/pgx/v4"
 )
 
-var databaseUrl = "postgres://postgres:mysecretpassword@localhost/postgres?sslmode=disable"
+var databaseUrl = "postgres://postgres:mysecretpassword@localhost/postgres"
 
 func TestMain(m *testing.M) {
 	db, err := sql.Open("postgres", databaseUrl)

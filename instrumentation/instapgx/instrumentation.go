@@ -1,5 +1,4 @@
-// (c) Copyright IBM Corp. 2021
-// (c) Copyright Instana Inc. 2020
+// (c) Copyright IBM Corp. 2022
 
 //go:build go1.13
 // +build go1.13
