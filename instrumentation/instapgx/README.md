@@ -55,7 +55,12 @@ br := conn.SendBatch(ctx, b)
 ```
 
 
-[More examples](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instapgx)
+Examples
+---
+
+[Connection examples](https://github.com/instana/go-sensor/blob/master/instrumentation/instapgx/example_conn_test.go)
+
+[Transaction examples](https://github.com/instana/go-sensor/blob/master/instrumentation/instapgx/example_tx_test.go)
 
 Testing
 ---
