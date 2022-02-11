@@ -15,7 +15,7 @@ import (
 )
 
 func ExampleConn_Prepare() {
-	databaseUrl := "postgres://postgres:mysecretpassword@localhost/postgres?sslmode=disable"
+	databaseUrl := "postgres://postgres:mysecretpassword@localhost/postgres"
 
 	sensor := instana.NewSensor("pgx-example-prepare")
 	conf, err := pgx.ParseConfig(databaseUrl)
@@ -36,7 +36,7 @@ func ExampleConn_Prepare() {
 }
 
 func ExampleConn_Begin() {
-	databaseUrl := "postgres://postgres:mysecretpassword@localhost/postgres?sslmode=disable"
+	databaseUrl := "postgres://postgres:mysecretpassword@localhost/postgres"
 
 	sensor := instana.NewSensor("pgx-example-begin")
 	conf, err := pgx.ParseConfig(databaseUrl)
@@ -63,7 +63,7 @@ func ExampleConn_Begin() {
 }
 
 func ExampleConn_BeginFunc() {
-	databaseUrl := "postgres://postgres:mysecretpassword@localhost/postgres?sslmode=disable"
+	databaseUrl := "postgres://postgres:mysecretpassword@localhost/postgres"
 
 	sensor := instana.NewSensor("pgx-example-begin-func")
 	conf, err := pgx.ParseConfig(databaseUrl)
@@ -98,7 +98,7 @@ func ExampleConn_BeginFunc() {
 }
 
 func ExampleConn_Ping() {
-	databaseUrl := "postgres://postgres:mysecretpassword@localhost/postgres?sslmode=disable"
+	databaseUrl := "postgres://postgres:mysecretpassword@localhost/postgres"
 
 	sensor := instana.NewSensor("pgx-example-ping")
 	conf, err := pgx.ParseConfig(databaseUrl)
@@ -119,7 +119,7 @@ func ExampleConn_Ping() {
 }
 
 func ExampleConn_Exec() {
-	databaseUrl := "postgres://postgres:mysecretpassword@localhost/postgres?sslmode=disable"
+	databaseUrl := "postgres://postgres:mysecretpassword@localhost/postgres"
 
 	sensor := instana.NewSensor("pgx-example-exec")
 	conf, err := pgx.ParseConfig(databaseUrl)
@@ -140,7 +140,7 @@ func ExampleConn_Exec() {
 }
 
 func ExampleConn_Query() {
-	databaseUrl := "postgres://postgres:mysecretpassword@localhost/postgres?sslmode=disable"
+	databaseUrl := "postgres://postgres:mysecretpassword@localhost/postgres"
 
 	sensor := instana.NewSensor("pgx-example-query")
 	conf, err := pgx.ParseConfig(databaseUrl)
@@ -164,7 +164,7 @@ func ExampleConn_Query() {
 }
 
 func ExampleConn_QueryFunc() {
-	databaseUrl := "postgres://postgres:mysecretpassword@localhost/postgres?sslmode=disable"
+	databaseUrl := "postgres://postgres:mysecretpassword@localhost/postgres"
 
 	sensor := instana.NewSensor("pgx-example-query-func")
 	conf, err := pgx.ParseConfig(databaseUrl)
@@ -195,7 +195,7 @@ func ExampleConn_QueryFunc() {
 }
 
 func ExampleConn_SendBatch() {
-	databaseUrl := "postgres://postgres:mysecretpassword@localhost/postgres?sslmode=disable"
+	databaseUrl := "postgres://postgres:mysecretpassword@localhost/postgres"
 
 	sensor := instana.NewSensor("pgx-example-send-batch")
 	conf, err := pgx.ParseConfig(databaseUrl)
