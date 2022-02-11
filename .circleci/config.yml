@@ -24,9 +24,25 @@ jobs:
     docker:
       - image: circleci/golang:<< parameters.go_version >>
         user: root
+      - image: postgres:14
+        environment:
+          POSTGRES_USER: postgres
+          POSTGRES_DB: postgres
+          POSTGRES_PASSWORD: mysecretpassword
     working_directory: /go/src/github.com/instana/go-sensor
     steps:
       - checkout
+      - run:
+          name: Waiting for Postgres to be ready
+          command: |
+            for i in `seq 1 10`;
+            do
+              nc -z localhost 5432 && echo Success && exit 0
+              echo -n .
+              sleep 1
+            done
+            echo Failed waiting for Postgress && exit 1
+
       - restore_cache:
           keys:
             - go-mod-v4-{{ checksum "go.sum" }}
@@ -80,19 +96,19 @@ workflows:
           name: "go1.12"
           go_version: "1.12"
           go111module: "on"
-          exclude_dirs: "./example/echo ./instrumentation/instaecho"
+          exclude_dirs: "./example/echo ./instrumentation/instaecho ./instrumentation/instapgx"
       - build:
           name: "go1.11"
           go_version: "1.11"
           go111module: "on"
-          exclude_dirs: "./example/gorillamux ./instrumentation/instamux ./example/echo ./instrumentation/instaecho"
+          exclude_dirs: "./example/gorillamux ./instrumentation/instamux ./example/echo ./instrumentation/instaecho ./instrumentation/instapgx"
       - build:
           name: "go1.10"
           go_version: "1.10"
           vendor_deps: "yes"
-          exclude_dirs: "./instrumentation/cloud.google.com/go ./example/gin  ./instrumentation/instagin ./example/gorillamux ./instrumentation/instamux ./example/echo ./instrumentation/instaecho"
+          exclude_dirs: "./instrumentation/cloud.google.com/go ./example/gin  ./instrumentation/instagin ./example/gorillamux ./instrumentation/instamux ./example/echo ./instrumentation/instaecho ./instrumentation/instapgx"
       - build:
           name: "go1.9"
           go_version: "1.9"
           vendor_deps: "yes"
-          exclude_dirs: "./instrumentation/cloud.google.com/go ./instrumentation/instagin ./example/http-database-greeter ./example/grpc-client-server ./example/grpc-client-server/pb ./example/gin ./example/gorillamux ./instrumentation/instamux ./example/echo ./instrumentation/instaecho"
+          exclude_dirs: "./instrumentation/cloud.google.com/go ./instrumentation/instagin ./example/http-database-greeter ./example/grpc-client-server ./example/grpc-client-server/pb ./example/gin ./example/gorillamux ./instrumentation/instamux ./example/echo ./instrumentation/instaecho ./instrumentation/instapgx"
