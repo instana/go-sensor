@@ -18,7 +18,7 @@ import (
 var detailedBatchMode = false
 var detailedBatchModeMaxEntries = 10
 
-// EnableDetailedBatchMode allows reporting up to detailedBatchModeMaxEntries sql when executing sql in batches.
+// EnableDetailedBatchMode allows reporting detailed information about sql statements when executing sql in batches.
 func EnableDetailedBatchMode() {
 	detailedBatchMode = true
 }
@@ -194,7 +194,7 @@ func (c *Conn) QueryFunc(ctx context.Context, sql string, args []interface{}, sc
 }
 
 // SendBatch wraps (*pgx.Conn).SendBatch method and adds tracing to it. Call the EnableDetailedBatchMode(), to have
-// sql statements in the span. Amount of the sql that might be reported are limited by detailedBatchModeMaxEntries var.
+// sql statements in the span. Amount of the sql statements that might be reported are limited.
 func (c *Conn) SendBatch(ctx context.Context, b *pgx.Batch) pgx.BatchResults {
 	sql := "-- SEND BATCH"
 	if detailedBatchMode {
