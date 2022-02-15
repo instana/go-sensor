@@ -33,7 +33,7 @@ func TestBasicSpan(t *testing.T) {
 	assert.NotEmpty(t, span.SpanID)
 	assert.NotEmpty(t, span.TraceID)
 	assert.NotEmpty(t, span.Timestamp)
-	assert.LessOrEqual(t, uint64(10*time.Millisecond), span.Duration)
+	assert.LessOrEqual(t, uint64(10), span.Duration)
 	assert.LessOrEqual(t, span.Duration, uint64(elapsed))
 	assert.Equal(t, "sdk", span.Name)
 
