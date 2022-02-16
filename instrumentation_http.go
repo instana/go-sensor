@@ -34,16 +34,7 @@ func TracingNamedHandlerFunc(sensor *Sensor, routeID, pathTemplate string, handl
 	return func(w http.ResponseWriter, req *http.Request) {
 		ctx := req.Context()
 
-		opts := []ot.StartSpanOption{
-			ext.SpanKindRPCServer,
-			ot.Tags{
-				"http.host":     req.Host,
-				"http.method":   req.Method,
-				"http.protocol": req.URL.Scheme,
-				"http.path":     req.URL.Path,
-				"http.route_id": routeID,
-			},
-		}
+		opts := initSpanOptions(req, routeID)
 
 		tracer := sensor.Tracer()
 		if ps, ok := SpanFromContext(req.Context()); ok {
@@ -83,12 +74,7 @@ func TracingNamedHandlerFunc(sensor *Sensor, routeID, pathTemplate string, handl
 			}
 		}()
 
-		// collect request headers
-		for _, h := range collectableHTTPHeaders {
-			if v := req.Header.Get(h); v != "" {
-				collectedHeaders[h] = v
-			}
-		}
+		collectRequestHeaders(req, collectableHTTPHeaders, collectedHeaders)
 
 		defer func() {
 			// Be sure to capture any kind of panic/error
@@ -113,22 +99,50 @@ func TracingNamedHandlerFunc(sensor *Sensor, routeID, pathTemplate string, handl
 
 		handler(wrapped, req.WithContext(ContextWithSpan(ctx, span)))
 
-		// collect response headers
-		for _, h := range collectableHTTPHeaders {
-			if v := wrapped.Header().Get(h); v != "" {
-				collectedHeaders[h] = v
-			}
+		collectResponseHeaders(wrapped, collectableHTTPHeaders, collectedHeaders)
+		processResponseStatus(wrapped, span)
+	}
+}
+
+func initSpanOptions(req *http.Request, routeID string) []ot.StartSpanOption {
+	opts := []ot.StartSpanOption{
+		ext.SpanKindRPCServer,
+		ot.Tags{
+			"http.host":     req.Host,
+			"http.method":   req.Method,
+			"http.protocol": req.URL.Scheme,
+			"http.path":     req.URL.Path,
+			"http.route_id": routeID,
+		},
+	}
+	return opts
+}
+
+func processResponseStatus(response wrappedResponseWriter, span ot.Span) {
+	if response.Status() > 0 {
+		if response.Status() >= http.StatusInternalServerError {
+			statusText := http.StatusText(response.Status())
+
+			span.SetTag("http.error", statusText)
+			span.LogFields(otlog.Object("error", statusText))
 		}
 
-		if wrapped.Status() > 0 {
-			if wrapped.Status() >= http.StatusInternalServerError {
-				statusText := http.StatusText(wrapped.Status())
+		span.SetTag("http.status", response.Status())
+	}
+}
 
-				span.SetTag("http.error", statusText)
-				span.LogFields(otlog.Object("error", statusText))
-			}
+func collectResponseHeaders(response wrappedResponseWriter, collectableHTTPHeaders []string, collectedHeaders map[string]string) {
+	for _, h := range collectableHTTPHeaders {
+		if v := response.Header().Get(h); v != "" {
+			collectedHeaders[h] = v
+		}
+	}
+}
 
-			span.SetTag("http.status", wrapped.Status())
+func collectRequestHeaders(req *http.Request, collectableHTTPHeaders []string, collectedHeaders map[string]string) {
+	for _, h := range collectableHTTPHeaders {
+		if v := req.Header.Get(h); v != "" {
+			collectedHeaders[h] = v
 		}
 	}
 }
