@@ -51,17 +51,7 @@ func TracingNamedHandlerFunc(sensor *Sensor, routeID, pathTemplate string, handl
 			opts = append(opts, ot.ChildOf(ps.Context()))
 		}
 
-		wireContext, err := tracer.Extract(ot.HTTPHeaders, ot.HTTPHeadersCarrier(req.Header))
-		switch err {
-		case nil:
-			opts = append(opts, ext.RPCServerOption(wireContext))
-		case ot.ErrSpanContextNotFound:
-			sensor.Logger().Debug("no span context provided with ", req.Method, " ", req.URL.Path)
-		case ot.ErrUnsupportedFormat:
-			sensor.Logger().Info("unsupported span context format provided with ", req.Method, " ", req.URL.Path)
-		default:
-			sensor.Logger().Warn("failed to extract span context from the request:", err)
-		}
+		opts = append(opts, extractStartSpanOptionsFromHeaders(tracer, req, sensor)...)
 
 		if req.Header.Get(FieldSynthetic) == "1" {
 			opts = append(opts, syntheticCall())
@@ -141,6 +131,22 @@ func TracingNamedHandlerFunc(sensor *Sensor, routeID, pathTemplate string, handl
 			span.SetTag("http.status", wrapped.Status())
 		}
 	}
+}
+
+func extractStartSpanOptionsFromHeaders(tracer ot.Tracer, req *http.Request, sensor *Sensor) []ot.StartSpanOption {
+	var opts []ot.StartSpanOption
+	wireContext, err := tracer.Extract(ot.HTTPHeaders, ot.HTTPHeadersCarrier(req.Header))
+	switch err {
+	case nil:
+		opts = append(opts, ext.RPCServerOption(wireContext))
+	case ot.ErrSpanContextNotFound:
+		sensor.Logger().Debug("no span context provided with ", req.Method, " ", req.URL.Path)
+	case ot.ErrUnsupportedFormat:
+		sensor.Logger().Info("unsupported span context format provided with ", req.Method, " ", req.URL.Path)
+	default:
+		sensor.Logger().Warn("failed to extract span context from the request:", err)
+	}
+	return opts
 }
 
 // RoundTripper wraps an existing http.RoundTripper and injects the tracing headers into the outgoing request.
