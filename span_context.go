@@ -70,7 +70,7 @@ func NewSpanContext(parent SpanContext) SpanContext {
 	var foreignTrace bool
 	if parent.TraceIDHi == 0 && parent.TraceID == 0 && parent.SpanID == 0 {
 		parent = restoreFromW3CTraceContext(parent)
-		foreignTrace = true && !sensor.options.disableW3CTraceCorrelation
+		foreignTrace = !sensor.options.disableW3CTraceCorrelation
 	}
 
 	if parent.TraceIDHi == 0 && parent.TraceID == 0 && parent.SpanID == 0 {
