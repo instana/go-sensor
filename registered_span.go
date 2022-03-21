@@ -1374,10 +1374,14 @@ func newPostgreSQLSpanTags(span *spanS) postgreSQLSpanTags {
 
 // RedisSpanTags contains fields within the `data.redis` section of an OT span document
 type RedisSpanTags struct {
-	Connection  string   `json:"connection"`
-	Command     string   `json:"command,omitempty"`
+	// Connection is the host and port where the Redis server is running
+	Connection string `json:"connection"`
+	// Command is the Redis command being executed
+	Command string `json:"command"`
+	// Subcommands is the list of commands queued when a transaction starts, eg: by using the MULTI command
 	Subcommands []string `json:"subCommands,omitempty"`
-	Error       string   `json:"error,omitempty"`
+	// Error is the optional error that can be thrown by Redis when executing a command
+	Error string `json:"error,omitempty"`
 }
 
 func newRedisSpanTags(span *spanS) RedisSpanTags {

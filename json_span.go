@@ -307,7 +307,7 @@ func readArrayStringTag(dst *[]string, tag interface{}) {
 	case []string:
 		*dst = s
 	default:
-		*dst = []string{}
+		*dst = nil
 	}
 }
 
