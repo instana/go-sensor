@@ -74,6 +74,10 @@ func TestRegisteredSpanType_ExtractData(t *testing.T) {
 			Operation: "postgres",
 			Expected:  instana.PostgreSQLSpanData{},
 		},
+		"redis": {
+			Operation: "redis",
+			Expected:  instana.RedisSpanData{},
+		},
 	}
 
 	for name, example := range examples {

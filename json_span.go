@@ -302,6 +302,15 @@ func readStringTag(dst *string, tag interface{}) {
 	}
 }
 
+func readArrayStringTag(dst *[]string, tag interface{}) {
+	switch s := tag.(type) {
+	case []string:
+		*dst = s
+	default:
+		*dst = nil
+	}
+}
+
 // readBoolTag populates the &dst with the tag value if it's either bool, string, byte array or numeric type
 func readBoolTag(dst *bool, tag interface{}) {
 	switch s := tag.(type) {
