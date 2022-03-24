@@ -22,7 +22,7 @@ jobs:
         default: ""
         type: string
     docker:
-      - image: circleci/golang:<< parameters.go_version >>
+      - image: cimg/go:<< parameters.go_version >>
         user: root
       - image: postgres:14
         environment:
