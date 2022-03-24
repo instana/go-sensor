@@ -119,7 +119,7 @@ func getMockConn(clientType redisType, ctx context.Context, network, addr string
 	return conn
 }
 
-func parseIncomingCommand(incomingCmd []byte, isSingleRedis bool) ([]byte, error) {
+func parseIncomingCommandForSingle(incomingCmd []byte) ([]byte, error) {
 	cmd := string(incomingCmd)
 
 	if cmd == "*1\r\n$5\r\nmulti\r\n*2\r\n$3\r\nget\r\n$4\r\nname\r\n*1\r\n$4\r\nexec\r\n" {
@@ -138,10 +138,33 @@ func parseIncomingCommand(incomingCmd []byte, isSingleRedis bool) ([]byte, error
 		return []byte("+OK\r\n+QUEUED\r\n+QUEUED\r\n+QUEUED\r\n*3\r\n+OK\r\n$3\r\nIBM\r\n:1\r\n"), nil
 	}
 
+	reply := make([]byte, len(incomingCmd))
+	copy(reply, incomingCmd)
+	return reply, nil
+}
+
+func parseIncomingCommand(incomingCmd []byte, isSingleRedis bool) ([]byte, error) {
+
 	if isSingleRedis {
-		reply := make([]byte, len(incomingCmd))
-		copy(reply, incomingCmd)
-		return reply, nil
+		return parseIncomingCommandForSingle(incomingCmd)
+	}
+
+	cmd := string(incomingCmd)
+
+	if cmd == "*1\r\n$5\r\nmulti\r\n*2\r\n$3\r\nget\r\n$4\r\nname\r\n*1\r\n$4\r\nexec\r\n" {
+		return []byte("+OK\r\n+QUEUED\r\n*1\r\n$3\r\nIBM\r\n"), nil
+	}
+
+	if cmd == "*1\r\n$5\r\nmulti\r\n*3\r\n$3\r\nset\r\n$4\r\nname\r\n$3\r\nIBM\r\n*1\r\n$4\r\nexec\r\n" {
+		return []byte("+OK\r\n+QUEUED\r\n*1\r\n+OK\r\n"), nil
+	}
+
+	if cmd == "*1\r\n$5\r\nmulti\r\n*2\r\n$3\r\ndel\r\n$4\r\nname\r\n*1\r\n$4\r\nexec\r\n" {
+		return []byte("+OK\r\n+QUEUED\r\n*1\r\n:1\r\n"), nil
+	}
+
+	if strings.Contains(cmd, "\r\nmulti\r\n") {
+		return []byte("+OK\r\n+QUEUED\r\n+QUEUED\r\n+QUEUED\r\n*3\r\n+OK\r\n$3\r\nIBM\r\n:1\r\n"), nil
 	}
 
 	if strings.Contains(cmd, "get-master-addr-by-name") {
