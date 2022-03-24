@@ -109,6 +109,6 @@ workflows:
           exclude_dirs: "./instrumentation/cloud.google.com/go ./example/gin  ./instrumentation/instagin ./example/gorillamux ./instrumentation/instamux ./example/echo ./instrumentation/instaecho ./instrumentation/instapgx"
       - build:
           name: "go1.9"
-          go_version: "1.9"
+          go_version: "1.9.7"
           vendor_deps: "yes"
           exclude_dirs: "./instrumentation/cloud.google.com/go ./instrumentation/instagin ./example/http-database-greeter ./example/grpc-client-server ./example/grpc-client-server/pb ./example/gin ./example/gorillamux ./instrumentation/instamux ./example/echo ./instrumentation/instaecho ./instrumentation/instapgx"
