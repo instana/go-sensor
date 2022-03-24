@@ -119,7 +119,7 @@ func getMockConn(clientType redisType, ctx context.Context, network, addr string
 	return conn
 }
 
-func parseIncomingCommand(incomingCmd []byte, rType redisType) ([]byte, error) {
+func parseIncomingCommand(incomingCmd []byte, isSingleRedis bool) ([]byte, error) {
 	cmd := string(incomingCmd)
 
 	if cmd == "*1\r\n$5\r\nmulti\r\n*2\r\n$3\r\nget\r\n$4\r\nname\r\n*1\r\n$4\r\nexec\r\n" {
@@ -138,7 +138,7 @@ func parseIncomingCommand(incomingCmd []byte, rType redisType) ([]byte, error) {
 		return []byte("+OK\r\n+QUEUED\r\n+QUEUED\r\n+QUEUED\r\n*3\r\n+OK\r\n$3\r\nIBM\r\n:1\r\n"), nil
 	}
 
-	if rType == Single {
+	if isSingleRedis {
 		reply := make([]byte, len(incomingCmd))
 		copy(reply, incomingCmd)
 		return reply, nil
@@ -189,7 +189,21 @@ func parseIncomingCommand(incomingCmd []byte, rType redisType) ([]byte, error) {
 }
 
 func (c *MockConn) Read(b []byte) (n int, err error) {
-	parsedCmd, err := parseIncomingCommand(c.connData, c.clientType)
+	if c.clientType == Single {
+		parsedCmd, err := parseIncomingCommand(c.connData, true)
+
+		if err != nil {
+			return 0, err
+		}
+
+		copy(b, parsedCmd)
+		_len := len(parsedCmd)
+		c.connData = []byte{}
+		return _len, nil
+	}
+
+	// This case tests single redis with sentinel (NewFailoverClient), cluster (NewClusterClient) or ClusterFailover
+	parsedCmd, err := parseIncomingCommand(c.connData, false)
 
 	if err != nil {
 		return 0, err
