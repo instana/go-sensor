@@ -19,6 +19,24 @@ type commandCaptureHook struct {
 	options        *redis.Options
 	clusterOptions *redis.ClusterOptions
 	sensor         *instana.Sensor
+	connection     string
+}
+
+func newCommandCapture(s instana.Sensor, o *redis.Options, co *redis.ClusterOptions) *commandCaptureHook {
+	var cch *commandCaptureHook
+
+	if o != nil {
+		cch = &commandCaptureHook{options: o, sensor: &s, connection: ""}
+		cch.connection = cch.options.Addr
+	} else {
+		cch = &commandCaptureHook{clusterOptions: co, sensor: &s, connection: ""}
+
+		if cch.clusterOptions != nil && len(cch.clusterOptions.Addrs) > 0 {
+			cch.connection = cch.clusterOptions.Addrs[0]
+		}
+	}
+
+	return cch
 }
 
 func setSpanCommands(span ot.Span, cmd redis.Cmder, cmds []redis.Cmder) {
@@ -55,31 +73,28 @@ func setSpanCommands(span ot.Span, cmd redis.Cmder, cmds []redis.Cmder) {
 }
 
 func (h commandCaptureHook) getConnection(ctx context.Context) string {
-	if h.clusterOptions != nil {
-		if len(h.clusterOptions.Addrs) > 0 {
-			return h.clusterOptions.Addrs[0]
+	if h.connection == "FailoverClient" {
+		conn, err := h.options.Dialer(ctx, h.options.Network, "")
+
+		if err == nil {
+			h.connection = conn.RemoteAddr().String()
+			return h.connection
 		}
+	}
 
-		if h.clusterOptions.ClusterSlots != nil {
-			cs, err := h.clusterOptions.ClusterSlots(ctx)
+	if h.connection != "" {
+		return h.connection
+	}
 
-			if err == nil {
-				return cs[0].Nodes[0].Addr
-			}
+	if h.clusterOptions != nil && h.clusterOptions.ClusterSlots != nil {
+		if cs, err := h.clusterOptions.ClusterSlots(ctx); err == nil {
+			h.connection = cs[0].Nodes[0].Addr
+			return h.connection
 		}
 		return ""
 	}
 
-	connection := h.options.Addr
-
-	if connection == "FailoverClient" {
-		conn, err := h.options.Dialer(ctx, h.options.Network, "")
-
-		if err == nil {
-			return conn.RemoteAddr().String()
-		}
-	}
-	return connection
+	return ""
 }
 
 func (h commandCaptureHook) handleHook(ctx context.Context, cmd redis.Cmder, cmds []redis.Cmder) {
@@ -132,13 +147,13 @@ func (h commandCaptureHook) AfterProcessPipeline(ctx context.Context, cmds []red
 // WrapClient wraps the Redis client instance in order to add the instrumentation
 func WrapClient(client *redis.Client, sensor *instana.Sensor) *redis.Client {
 	opts := client.Options()
-	client.AddHook(&commandCaptureHook{options: opts, sensor: sensor})
+	client.AddHook(newCommandCapture(*sensor, opts, nil))
 	return client
 }
 
 // WrapClient wraps the Redis client instance in order to add the instrumentation
 func WrapClusterClient(clusterClient *redis.ClusterClient, sensor *instana.Sensor) *redis.ClusterClient {
 	opts := clusterClient.Options()
-	clusterClient.AddHook(&commandCaptureHook{clusterOptions: opts, sensor: sensor})
+	clusterClient.AddHook(newCommandCapture(*sensor, nil, opts))
 	return clusterClient
 }
