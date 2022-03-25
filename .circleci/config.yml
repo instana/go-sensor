@@ -72,43 +72,43 @@ workflows:
   version: 2
   build:
     jobs:
-      # - build:
-      #     name: "latest"
-      #     go_version: "latest"
-      # - build:
-      #     name: "go1.17"
-      #     go_version: "1.17"
+      - build:
+          name: "latest"
+          go_version: "latest"
+      - build:
+          name: "go1.17"
+          go_version: "1.17"
       - build:
           name: "go1.16"
           go_version: "1.16"
-      # - build:
-      #     name: "go1.15"
-      #     go_version: "1.15"
-      # - build:
-      #     name: "go1.14"
-      #     go_version: "1.14"
-      #     exclude_dirs: "./example/echo ./instrumentation/instaecho"
-      # - build:
-      #     name: "go1.13"
-      #     go_version: "1.13"
-      #     exclude_dirs: "./example/echo ./instrumentation/instaecho"
-      # - build:
-      #     name: "go1.12"
-      #     go_version: "1.12"
-      #     go111module: "on"
-      #     exclude_dirs: "./example/echo ./instrumentation/instaecho ./instrumentation/instapgx"
-      # - build:
-      #     name: "go1.11"
-      #     go_version: "1.11"
-      #     go111module: "on"
-      #     exclude_dirs: "./example/gorillamux ./instrumentation/instamux ./example/echo ./instrumentation/instaecho ./instrumentation/instapgx"
-      # - build:
-      #     name: "go1.10"
-      #     go_version: "1.10"
-      #     vendor_deps: "yes"
-      #     exclude_dirs: "./instrumentation/cloud.google.com/go ./example/gin  ./instrumentation/instagin ./example/gorillamux ./instrumentation/instamux ./example/echo ./instrumentation/instaecho ./instrumentation/instapgx"
-      # - build:
-      #     name: "go1.9"
-      #     go_version: "1.9"
-      #     vendor_deps: "yes"
-      #     exclude_dirs: "./instrumentation/cloud.google.com/go ./instrumentation/instagin ./example/http-database-greeter ./example/grpc-client-server ./example/grpc-client-server/pb ./example/gin ./example/gorillamux ./instrumentation/instamux ./example/echo ./instrumentation/instaecho ./instrumentation/instapgx"
+      - build:
+          name: "go1.15"
+          go_version: "1.15"
+      - build:
+          name: "go1.14"
+          go_version: "1.14"
+          exclude_dirs: "./example/echo ./instrumentation/instaecho"
+      - build:
+          name: "go1.13"
+          go_version: "1.13"
+          exclude_dirs: "./example/echo ./instrumentation/instaecho"
+      - build:
+          name: "go1.12"
+          go_version: "1.12"
+          go111module: "on"
+          exclude_dirs: "./example/echo ./instrumentation/instaecho ./instrumentation/instapgx"
+      - build:
+          name: "go1.11"
+          go_version: "1.11"
+          go111module: "on"
+          exclude_dirs: "./example/gorillamux ./instrumentation/instamux ./example/echo ./instrumentation/instaecho ./instrumentation/instapgx"
+      - build:
+          name: "go1.10"
+          go_version: "1.10"
+          vendor_deps: "yes"
+          exclude_dirs: "./instrumentation/cloud.google.com/go ./example/gin  ./instrumentation/instagin ./example/gorillamux ./instrumentation/instamux ./example/echo ./instrumentation/instaecho ./instrumentation/instapgx"
+      - build:
+          name: "go1.9"
+          go_version: "1.9"
+          vendor_deps: "yes"
+          exclude_dirs: "./instrumentation/cloud.google.com/go ./instrumentation/instagin ./example/http-database-greeter ./example/grpc-client-server ./example/grpc-client-server/pb ./example/gin ./example/gorillamux ./instrumentation/instamux ./example/echo ./instrumentation/instaecho ./instrumentation/instapgx"
