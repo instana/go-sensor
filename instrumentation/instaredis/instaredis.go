@@ -11,7 +11,7 @@ import (
 
 	"github.com/go-redis/redis/v8"
 	instana "github.com/instana/go-sensor"
-	"github.com/opentracing/opentracing-go"
+	ot "github.com/opentracing/opentracing-go"
 	otlog "github.com/opentracing/opentracing-go/log"
 )
 
@@ -21,7 +21,7 @@ type commandCaptureHook struct {
 	sensor         *instana.Sensor
 }
 
-func setSpanCommands(span opentracing.Span, cmd redis.Cmder, cmds []redis.Cmder) {
+func setSpanCommands(span ot.Span, cmd redis.Cmder, cmds []redis.Cmder) {
 	if cmd != nil {
 		span.SetTag("redis.command", cmd.Name())
 
@@ -90,19 +90,20 @@ func (h commandCaptureHook) handleHook(ctx context.Context, cmd redis.Cmder, cmd
 		connection = "localhost" + connection
 	}
 
-	tags := opentracing.Tags{
-		"redis.connection": connection,
+	opts := []ot.StartSpanOption{
+		ot.Tags{
+			"redis.connection": connection,
+		},
 	}
 
-	var span opentracing.Span
-
 	// We need an entry parent span in order to test this, so we will need a webserver or manually create an entry span
-	parentSpan, ok := instana.SpanFromContext(ctx)
+	tracer := h.sensor.Tracer()
+	var span ot.Span = tracer.StartSpan("redis", opts...)
 
-	if ok {
-		span = h.sensor.Tracer().StartSpan("redis", opentracing.ChildOf(parentSpan.Context()), tags)
-	} else {
-		span = h.sensor.Tracer().StartSpan("redis", tags)
+	if ps, ok := instana.SpanFromContext(ctx); ok {
+		tracer = ps.Tracer()
+		opts = append(opts, ot.ChildOf(ps.Context()))
+		span = tracer.StartSpan("redis", opts...)
 	}
 
 	setSpanCommands(span, cmd, cmds)
