@@ -144,12 +144,15 @@ func parseIncomingCommandForSingle(incomingCmd []byte) ([]byte, error) {
 }
 
 func parseIncomingCommand(incomingCmd []byte, isSingleRedis bool) ([]byte, error) {
-
 	if isSingleRedis {
 		return parseIncomingCommandForSingle(incomingCmd)
 	}
 
 	cmd := string(incomingCmd)
+
+	if cmd == "*3\r\n$9\r\nsubscribe\r\n$14\r\n+switch-master\r\n$18\r\n+slave-reconf-done\r\n" {
+		return []byte("*3\r\n$9\r\nsubscribe\r\n$14\r\n+switch-master\r\n:1\r\n*3\r\n$9\r\nsubscribe\r\n$18\r\n+slave-reconf-done\r\n:2\r\n"), nil
+	}
 
 	if cmd == "*1\r\n$5\r\nmulti\r\n*2\r\n$3\r\nget\r\n$4\r\nname\r\n*1\r\n$4\r\nexec\r\n" {
 		return []byte("+OK\r\n+QUEUED\r\n*1\r\n$3\r\nIBM\r\n"), nil
