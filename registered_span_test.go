@@ -78,6 +78,10 @@ func TestRegisteredSpanType_ExtractData(t *testing.T) {
 			Operation: "redis",
 			Expected:  instana.RedisSpanData{},
 		},
+		"rabbitmq": {
+			Operation: "rabbitmq",
+			Expected:  instana.RabbitMQSpanData{},
+		},
 	}
 
 	for name, example := range examples {
