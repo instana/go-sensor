@@ -217,18 +217,13 @@ func (agent *agentS) makeURL(prefix string) string {
 }
 
 func (agent *agentS) makeHostURL(host string, prefix string) string {
-	var buffer bytes.Buffer
+	url := "http://" + host + ":" + agent.port + prefix
 
-	buffer.WriteString("http://")
-	buffer.WriteString(host)
-	buffer.WriteString(":")
-	buffer.WriteString(agent.port)
-	buffer.WriteString(prefix)
 	if prefix[len(prefix)-1:] == "." && agent.from.EntityID != "" {
-		buffer.WriteString(agent.from.EntityID)
+		url += agent.from.EntityID
 	}
 
-	return buffer.String()
+	return url
 }
 
 func (agent *agentS) head(url string) (string, error) {
