@@ -316,23 +316,23 @@ func (h *wrappedHandler) extractCloudWatchLogsTriggerTags(evt events.CloudwatchL
 		}
 	}
 
-	var events []string
+	var e []string
 	for _, event := range logs.LogEvents {
-		events = append(events, event.Message)
+		e = append(e, event.Message)
 	}
 
 	return opentracing.Tags{
 		"lambda.trigger":         "aws:cloudwatch.logs",
 		"cloudwatch.logs.group":  logs.LogGroup,
 		"cloudwatch.logs.stream": logs.LogStream,
-		"cloudwatch.logs.events": events,
+		"cloudwatch.logs.events": e,
 	}
 }
 
 func (h *wrappedHandler) extractS3TriggerTags(evt events.S3Event) opentracing.Tags {
-	var events []instana.AWSS3EventTags
+	var e []instana.AWSS3EventTags
 	for _, rec := range evt.Records {
-		events = append(events, instana.AWSS3EventTags{
+		e = append(e, instana.AWSS3EventTags{
 			Name:   rec.EventName,
 			Bucket: rec.S3.Bucket.Name,
 			Object: rec.S3.Object.Key,
@@ -341,7 +341,7 @@ func (h *wrappedHandler) extractS3TriggerTags(evt events.S3Event) opentracing.Ta
 
 	return opentracing.Tags{
 		"lambda.trigger": "aws:s3",
-		"s3.events":      events,
+		"s3.events":      e,
 	}
 }
 
