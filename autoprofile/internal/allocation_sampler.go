@@ -8,7 +8,7 @@ import (
 	"errors"
 	"runtime/pprof"
 
-	profile "github.com/instana/go-sensor/autoprofile/internal/pprof/profile"
+	"github.com/instana/go-sensor/autoprofile/internal/pprof/profile"
 )
 
 // AllocationSampler collects information about the number of memory allocations
