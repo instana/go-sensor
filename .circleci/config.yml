@@ -4,8 +4,8 @@ jobs:
   build:
     description: "Run Go unit and integration tests using make targets"
     parameters:
-      go_version:
-        description: "Go version to use (1.x)"
+      image:
+        description: "Image to use (1.x)"
         type: string
       go111module:
         description: "GO111MODULE= env var value"
@@ -22,7 +22,7 @@ jobs:
         default: ""
         type: string
     docker:
-      - image: circleci/golang:<< parameters.go_version >>
+      - image: << parameters.image >>
         user: root
       - image: postgres:14
         environment:
@@ -73,42 +73,42 @@ workflows:
   build:
     jobs:
       - build:
-          name: "latest"
-          go_version: "latest"
+          name: "go1.18"
+          image: "cimg/go:1.18"
       - build:
           name: "go1.17"
-          go_version: "1.17"
+          image: "circleci/golang:1.17"
       - build:
           name: "go1.16"
-          go_version: "1.16"
+          image: "circleci/golang:1.16"
       - build:
           name: "go1.15"
-          go_version: "1.15"
+          image: "circleci/golang:1.15"
       - build:
           name: "go1.14"
-          go_version: "1.14"
+          image: "circleci/golang:1.14"
           exclude_dirs: "./example/echo ./instrumentation/instaecho"
       - build:
           name: "go1.13"
-          go_version: "1.13"
+          image: "circleci/golang:1.13"
           exclude_dirs: "./example/echo ./instrumentation/instaecho"
       - build:
           name: "go1.12"
-          go_version: "1.12"
+          image: "circleci/golang:1.12"
           go111module: "on"
           exclude_dirs: "./example/echo ./instrumentation/instaecho ./instrumentation/instapgx"
       - build:
           name: "go1.11"
-          go_version: "1.11"
+          image: "circleci/golang:1.11"
           go111module: "on"
           exclude_dirs: "./example/gorillamux ./instrumentation/instamux ./example/echo ./instrumentation/instaecho ./instrumentation/instapgx"
       - build:
           name: "go1.10"
-          go_version: "1.10"
+          image: "circleci/golang:1.10"
           vendor_deps: "yes"
           exclude_dirs: "./instrumentation/cloud.google.com/go ./example/gin  ./instrumentation/instagin ./example/gorillamux ./instrumentation/instamux ./example/echo ./instrumentation/instaecho ./instrumentation/instapgx"
       - build:
           name: "go1.9"
-          go_version: "1.9"
+          image: "circleci/golang:1.9"
           vendor_deps: "yes"
           exclude_dirs: "./instrumentation/cloud.google.com/go ./instrumentation/instagin ./example/http-database-greeter ./example/grpc-client-server ./example/grpc-client-server/pb ./example/gin ./example/gorillamux ./instrumentation/instamux ./example/echo ./instrumentation/instaecho ./instrumentation/instapgx"
