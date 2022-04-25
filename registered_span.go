@@ -52,6 +52,8 @@ const (
 	PostgreSQLSpanType = RegisteredSpanType("postgres")
 	// Redis client span
 	RedisSpanType = RegisteredSpanType("redis")
+	// RabbitMQ client span
+	RabbitMQSpanType = RegisteredSpanType("rabbitmq")
 )
 
 // RegisteredSpanType represents the span type supported by Instana
@@ -90,12 +92,14 @@ func (st RegisteredSpanType) extractData(span *spanS) typedSpanData {
 		return newPostgreSQLSpanData(span)
 	case RedisSpanType:
 		return newRedisSpanData(span)
+	case RabbitMQSpanType:
+		return newRabbitMQSpanData(span)
 	default:
 		return newSDKSpanData(span)
 	}
 }
 
-// TagsNames returns a set of tag names know to the registered span type
+// TagsNames returns a set of tag names known to the registered span type
 func (st RegisteredSpanType) TagsNames() map[string]struct{} {
 	var yes struct{}
 
@@ -238,6 +242,14 @@ func (st RegisteredSpanType) TagsNames() map[string]struct{} {
 			"redis.command":     yes,
 			"redis.subCommands": yes,
 			"redis.error":       yes,
+		}
+	case RabbitMQSpanType:
+		return map[string]struct{}{
+			"rabbitmq.exchange": yes,
+			"rabbitmq.key":      yes,
+			"rabbitmq.sort":     yes,
+			"rabbitmq.address":  yes,
+			"rabbitmq.error":    yes,
 		}
 	default:
 		return nil
@@ -451,6 +463,67 @@ func newKafkaSpanTags(span *spanS) KafkaSpanTags {
 			readStringTag(&tags.Service, v)
 		case "kafka.access":
 			readStringTag(&tags.Access, v)
+		}
+	}
+
+	return tags
+}
+
+// RabbitMQSpanData represents the `data` section of an RabbitMQ span
+type RabbitMQSpanData struct {
+	SpanData
+	Tags RabbitMQSpanTags `json:"rabbitmq"`
+
+	producerSpan bool
+}
+
+// newRabbitMQSpanData initializes a new RabbitMQ span data from tracer span
+func newRabbitMQSpanData(span *spanS) RabbitMQSpanData {
+	data := RabbitMQSpanData{
+		SpanData: NewSpanData(span, RegisteredSpanType(span.Operation)),
+		Tags:     newRabbitMQSpanTags(span),
+	}
+
+	kindTag := span.Tags[string(ext.SpanKind)]
+	data.producerSpan = kindTag == ext.SpanKindProducerEnum || kindTag == string(ext.SpanKindProducerEnum)
+
+	return data
+}
+
+// Kind returns instana.ExitSpanKind for producer spans and instana.EntrySpanKind otherwise
+func (d RabbitMQSpanData) Kind() SpanKind {
+	if d.producerSpan {
+		return ExitSpanKind
+	}
+
+	return EntrySpanKind
+}
+
+// RabbitMQSpanTags contains fields within the `data.rabbitmq` section
+type RabbitMQSpanTags struct {
+	// The RabbitMQ exchange name
+	Exchange string `json:"exchange"`
+	// The routing key
+	Key string `json:"key"`
+	// Indicates wether the message is being produced or consumed
+	Sort string `json:"sort"`
+	// The AMQP URI used to establish a connection to RabbitMQ
+	Address string `json:"address"`
+}
+
+// newRabbitMQSpanTags extracts RabbitMQ-specific span tags from a tracer span
+func newRabbitMQSpanTags(span *spanS) RabbitMQSpanTags {
+	var tags RabbitMQSpanTags
+	for k, v := range span.Tags {
+		switch k {
+		case "rabbitmq.exchange":
+			readStringTag(&tags.Exchange, v)
+		case "rabbitmq.key":
+			readStringTag(&tags.Key, v)
+		case "rabbitmq.sort":
+			readStringTag(&tags.Sort, v)
+		case "rabbitmq.address":
+			readStringTag(&tags.Address, v)
 		}
 	}
 
@@ -1256,13 +1329,13 @@ func newMongoDBSpanData(span *spanS) MongoDBSpanData {
 	}
 }
 
-// RedisSpanData represents the `data` section of a MongoDB client span
+// RedisSpanData represents the `data` section of a Redis client span
 type RedisSpanData struct {
 	SpanData
 	Tags RedisSpanTags `json:"redis"`
 }
 
-// newRedisSpanData initializes a new MongoDB clientspan data from tracer span
+// newRedisSpanData initializes a new Redis clientspan data from tracer span
 func newRedisSpanData(span *spanS) RedisSpanData {
 	return RedisSpanData{
 		SpanData: NewSpanData(span, RedisSpanType),
@@ -1270,7 +1343,7 @@ func newRedisSpanData(span *spanS) RedisSpanData {
 	}
 }
 
-// Kind returns the span kind for a MongoDB client span
+// Kind returns the span kind for a Redis client span
 func (d RedisSpanData) Kind() SpanKind {
 	return ExitSpanKind
 }
