@@ -509,6 +509,8 @@ type RabbitMQSpanTags struct {
 	Sort string `json:"sort"`
 	// The AMQP URI used to establish a connection to RabbitMQ
 	Address string `json:"address"`
+	// Error is the optional error that can be thrown by RabbitMQ when executing a command
+	Error string `json:"error,omitempty"`
 }
 
 // newRabbitMQSpanTags extracts RabbitMQ-specific span tags from a tracer span
@@ -524,6 +526,8 @@ func newRabbitMQSpanTags(span *spanS) RabbitMQSpanTags {
 			readStringTag(&tags.Sort, v)
 		case "rabbitmq.address":
 			readStringTag(&tags.Address, v)
+		case "rabbitmq.error":
+			readStringTag(&tags.Error, v)
 		}
 	}
 
