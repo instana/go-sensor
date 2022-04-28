@@ -12,7 +12,7 @@ import (
 	"github.com/instana/testify/assert"
 	"github.com/instana/testify/require"
 	ot "github.com/opentracing/opentracing-go"
-	ext "github.com/opentracing/opentracing-go/ext"
+	"github.com/opentracing/opentracing-go/ext"
 	"github.com/opentracing/opentracing-go/log"
 )
 

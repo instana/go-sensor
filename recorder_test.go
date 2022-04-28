@@ -9,7 +9,7 @@ import (
 	instana "github.com/instana/go-sensor"
 	"github.com/instana/testify/assert"
 	"github.com/instana/testify/require"
-	ext "github.com/opentracing/opentracing-go/ext"
+	"github.com/opentracing/opentracing-go/ext"
 )
 
 func TestRecorderBasics(t *testing.T) {
