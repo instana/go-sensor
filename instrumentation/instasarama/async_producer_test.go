@@ -5,6 +5,7 @@ package instasarama_test
 
 import (
 	"errors"
+	"os"
 	"testing"
 	"time"
 
@@ -16,60 +17,86 @@ import (
 )
 
 func TestAsyncProducer_Input(t *testing.T) {
-	recorder := instana.NewTestRecorder()
-	sensor := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{}, recorder))
+	headerFormats := []string{"binary", "string", "both"}
 
-	parent := sensor.Tracer().StartSpan("test-span")
-	msg := instasarama.ProducerMessageWithSpan(&sarama.ProducerMessage{Topic: "test-topic"}, parent)
+	for _, headerFormat := range headerFormats {
+		os.Setenv(instasarama.KafkaHeaderEnvVarKey, headerFormat)
 
-	ap := newTestAsyncProducer(nil)
-	defer ap.Teardown()
+		recorder := instana.NewTestRecorder()
+		sensor := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{}, recorder))
 
-	conf := sarama.NewConfig()
-	conf.Version = sarama.V0_11_0_0
+		parent := sensor.Tracer().StartSpan("test-span")
+		msg := instasarama.ProducerMessageWithSpan(&sarama.ProducerMessage{Topic: "test-topic"}, parent)
 
-	wrapped := instasarama.WrapAsyncProducer(ap, conf, sensor)
-	wrapped.Input() <- msg
+		ap := newTestAsyncProducer(nil)
+		defer ap.Teardown()
 
-	var published *sarama.ProducerMessage
-	select {
-	case published = <-ap.input:
-		break
-	case <-time.After(1 * time.Second):
-		t.Fatalf("publishing via async producer timed out after 1s")
+		conf := sarama.NewConfig()
+		conf.Version = sarama.V0_11_0_0
+
+		wrapped := instasarama.WrapAsyncProducer(ap, conf, sensor)
+		wrapped.Input() <- msg
+
+		var published *sarama.ProducerMessage
+	channelSelect:
+		select {
+		case published = <-ap.input:
+			break channelSelect
+		case <-time.After(1 * time.Second):
+			t.Fatalf("publishing via async producer timed out after 1s")
+		}
+
+		parent.Finish()
+
+		spans := recorder.GetQueuedSpans()
+		require.Len(t, spans, 2)
+
+		pSpan, err := extractAgentSpan(spans[1])
+		require.NoError(t, err)
+
+		cSpan, err := extractAgentSpan(spans[0])
+		require.NoError(t, err)
+
+		assert.Equal(t, 0, cSpan.Ec)
+		assert.EqualValues(t, instana.ExitSpanKind, cSpan.Kind)
+
+		assert.Equal(t, agentKafkaSpanData{
+			Service: "test-topic",
+			Access:  "send",
+		}, cSpan.Data.Kafka)
+
+		if headerFormat == "both" || headerFormat == "binary" {
+			assert.Contains(t, published.Headers, sarama.RecordHeader{
+				Key:   []byte("X_INSTANA_C"),
+				Value: instasarama.PackTraceContextHeader(cSpan.TraceID, cSpan.SpanID),
+			})
+			assert.Contains(t, published.Headers, sarama.RecordHeader{
+				Key:   []byte("X_INSTANA_L"),
+				Value: instasarama.PackTraceLevelHeader("1"),
+			})
+		}
+
+		if headerFormat == "both" || headerFormat == "string" {
+			assert.Contains(t, published.Headers, sarama.RecordHeader{
+				Key:   []byte("X_INSTANA_T"),
+				Value: []byte("0000000000000000" + cSpan.TraceID),
+			})
+			assert.Contains(t, published.Headers, sarama.RecordHeader{
+				Key:   []byte("X_INSTANA_S"),
+				Value: []byte(cSpan.SpanID),
+			})
+			assert.Contains(t, published.Headers, sarama.RecordHeader{
+				Key:   []byte("X_INSTANA_L_S"),
+				Value: []byte("1"),
+			})
+		}
+
+		assert.Equal(t, pSpan.TraceID, cSpan.TraceID)
+		assert.Equal(t, pSpan.SpanID, cSpan.ParentID)
+		assert.NotEqual(t, pSpan.SpanID, cSpan.SpanID)
+
+		os.Unsetenv(instasarama.KafkaHeaderEnvVarKey)
 	}
-
-	parent.Finish()
-
-	spans := recorder.GetQueuedSpans()
-	require.Len(t, spans, 2)
-
-	pSpan, err := extractAgentSpan(spans[1])
-	require.NoError(t, err)
-
-	cSpan, err := extractAgentSpan(spans[0])
-	require.NoError(t, err)
-
-	assert.Equal(t, 0, cSpan.Ec)
-	assert.EqualValues(t, instana.ExitSpanKind, cSpan.Kind)
-
-	assert.Equal(t, agentKafkaSpanData{
-		Service: "test-topic",
-		Access:  "send",
-	}, cSpan.Data.Kafka)
-
-	assert.Contains(t, published.Headers, sarama.RecordHeader{
-		Key:   []byte("X_INSTANA_C"),
-		Value: instasarama.PackTraceContextHeader(cSpan.TraceID, cSpan.SpanID),
-	})
-	assert.Contains(t, published.Headers, sarama.RecordHeader{
-		Key:   []byte("X_INSTANA_L"),
-		Value: instasarama.PackTraceLevelHeader("1"),
-	})
-
-	assert.Equal(t, pSpan.TraceID, cSpan.TraceID)
-	assert.Equal(t, pSpan.SpanID, cSpan.ParentID)
-	assert.NotEqual(t, pSpan.SpanID, cSpan.SpanID)
 }
 
 func TestAsyncProducer_Input_WithAwaitResult_Success(t *testing.T) {

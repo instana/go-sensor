@@ -4,6 +4,8 @@
 package instasarama_test
 
 import (
+	"fmt"
+
 	"github.com/Shopify/sarama"
 	instana "github.com/instana/go-sensor"
 	"github.com/instana/go-sensor/instrumentation/instasarama"
@@ -22,10 +24,11 @@ func Example_consumer() {
 	// create a new instrumented instance of sarama.Consumer
 	consumer, _ := instasarama.NewConsumer(brokers, conf, sensor)
 
-	c, _ := consumer.ConsumePartition("records", 0, sarama.OffsetNewest)
+	c, _ := consumer.ConsumePartition("test-topic-1", 0, sarama.OffsetNewest)
 	defer c.Close()
 
 	for msg := range c.Messages() {
+		fmt.Println("Got messagge", msg)
 		processMessage(msg, sensor)
 	}
 }

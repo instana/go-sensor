@@ -31,6 +31,9 @@ func Example_syncProducer() {
 	ext.SpanKind.Set(sp, "entry")
 
 	msg := &sarama.ProducerMessage{
+		Topic:  "test-topic-1",
+		Offset: sarama.OffsetNewest,
+		Value:  sarama.StringEncoder("I am a message"),
 		// ...
 	}
 
