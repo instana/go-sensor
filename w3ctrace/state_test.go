@@ -103,39 +103,38 @@ func TestParseState(t *testing.T) {
 
 	for name, example := range examples {
 		t.Run(name, func(t *testing.T) {
-			st, err := w3ctrace.ParseState(example.Header)
-			require.NoError(t, err)
+			st := w3ctrace.ParseState(example.Header)
 			assert.Equal(t, example.Expected, st)
 		})
 	}
 }
 
-func TestState_SetInstanaTraceStateValueIntoEmptyTraceState(t *testing.T) {
+func TestState_FormStateWithInstanaTraceStateValueIntoEmptyTraceState(t *testing.T) {
 	st := w3ctrace.NewState([]string{}, "")
-	st = st.SetInstanaTraceStateValue("fa2375d711a4ca0f;02468acefdb97531")
+	st = w3ctrace.FormStateWithInstanaTraceStateValue(st, "fa2375d711a4ca0f;02468acefdb97531")
 	require.Equal(t, w3ctrace.NewState([]string{}, "fa2375d711a4ca0f;02468acefdb97531"), st)
 }
 
-func TestState_SetInstanaTraceStateValueIntoNonEmptyTraceState(t *testing.T) {
+func TestState_FormStateWithInstanaTraceStateValueIntoNonEmptyTraceState(t *testing.T) {
 	st := w3ctrace.NewState([]string{"key1=value1", "key2=value"}, "")
-	st = st.SetInstanaTraceStateValue("fa2375d711a4ca0f;02468acefdb97531")
+	st = w3ctrace.FormStateWithInstanaTraceStateValue(st, "fa2375d711a4ca0f;02468acefdb97531")
 	require.Equal(t, w3ctrace.NewState([]string{"key1=value1", "key2=value"}, "fa2375d711a4ca0f;02468acefdb97531"), st)
 }
 
-func TestState_SetInstanaTraceStateValueOverwriteExistingValue(t *testing.T) {
+func TestState_FormStateWithInstanaTraceStateValueOverwriteExistingValue(t *testing.T) {
 	st := w3ctrace.NewState([]string{}, "fa2375d711a4ca0f;02468acefdb97531")
-	st = st.SetInstanaTraceStateValue("aaabbccddeeff012;123456789abcdef0")
+	st = w3ctrace.FormStateWithInstanaTraceStateValue(st, "aaabbccddeeff012;123456789abcdef0")
 	require.Equal(t, w3ctrace.NewState([]string{}, "aaabbccddeeff012;123456789abcdef0"), st)
 }
 
-func TestState_SetInstanaTraceStateValueResetExistingValue(t *testing.T) {
+func TestState_FormStateWithInstanaTraceStateValueResetExistingValue(t *testing.T) {
 	st := w3ctrace.NewState([]string{}, "fa2375d711a4ca0f;02468acefdb97531")
-	st = st.SetInstanaTraceStateValue("")
+	st = w3ctrace.FormStateWithInstanaTraceStateValue(st, "")
 	require.Equal(t, w3ctrace.NewState([]string{}, ""), st)
 }
 
-func TestState_SetInstanaTraceStateValueAddToTraceStateWithMaxNumberOfListMembers(t *testing.T) {
-	listMembers := []string{}
+func TestState_FormStateWithInstanaTraceStateValueAddToTraceStateWithMaxNumberOfListMembers(t *testing.T) {
+	var listMembers []string
 	for i := 0; i < maxKVPairs; i++ {
 		listMembers = append(listMembers, fmt.Sprintf("key%d=value%d", i, i))
 	}
@@ -144,7 +143,7 @@ func TestState_SetInstanaTraceStateValueAddToTraceStateWithMaxNumberOfListMember
 	st := w3ctrace.NewState(listMembers, "")
 	require.Equal(t, w3ctrace.NewState(listMembers, ""), st)
 	// now we also add an Instana list member, which brings us over the limit
-	st = st.SetInstanaTraceStateValue("fa2375d711a4ca0f;02468acefdb97531")
+	st = w3ctrace.FormStateWithInstanaTraceStateValue(st, "fa2375d711a4ca0f;02468acefdb97531")
 	// so we expect the right-most list member to be dropped
 	require.Equal(t, w3ctrace.NewState(listMembers[:maxKVPairs-1], "fa2375d711a4ca0f;02468acefdb97531"), st)
 }

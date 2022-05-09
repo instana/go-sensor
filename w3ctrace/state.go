@@ -12,10 +12,7 @@ import (
 // VendorInstana is the Instana vendor key in the `tracestate` list
 const VendorInstana = "in"
 
-// Max amount of KV pairs in `tracestate` header
-const maxKVPairs = 32
-
-// Length of entries that should be filtered first in case, if tracestate has more than `maxKVPairs` items
+// Length of entries that should be filtered first in case, if tracestate has more than `MaxStateEntries` items
 const thresholdLen = 128
 
 var instanaListMemberRegex = regexp.MustCompile("^\\s*" + VendorInstana + "\\s*=\\s*([^,]*)\\s*$")
@@ -30,7 +27,7 @@ type State struct {
 	instanaTraceStateValue string
 }
 
-// makeState creates a new State with the given values
+// NewState creates a new State with the given values
 func NewState(listMembers []string, instanaTraceStateValue string) State {
 	return State{
 		listMembers:            listMembers,
@@ -38,21 +35,28 @@ func NewState(listMembers []string, instanaTraceStateValue string) State {
 	}
 }
 
+// FormStateWithInstanaTraceStateValue returns a new state prepended with the provided Instana value. If the original state had an Instana
+// list member pair, it is discarded/overwritten.
+func FormStateWithInstanaTraceStateValue(st State, instanaTraceStateValue string) State {
+	var listMembers []string
+	if st.instanaTraceStateValue == "" && instanaTraceStateValue != "" && len(st.listMembers) == MaxStateEntries {
+		// The incoming tracestate had the maximum number of list members but no Instana list member, now we are adding an
+		// Instana list member, so we would exceed the maximum by one. Hence, we need to discard one of the other list
+		// members to stay within the limits mandated by the specification.
+		listMembers = st.listMembers[:MaxStateEntries-1]
+	} else {
+		listMembers = st.listMembers
+	}
+
+	return State{listMembers: listMembers, instanaTraceStateValue: instanaTraceStateValue}
+}
+
 // ParseState parses the value of `tracestate` header. Empty list items are omitted.
-func ParseState(traceStateValue string) (State, error) {
+func ParseState(traceStateValue string) State {
 	listMembers := filterEmptyItems(strings.Split(traceStateValue, ","))
 
 	// Look for the Instana list member first, before discarding any list members due to length restrictions.
-	var instanaTraceStateValue string
-	instanaTraceStateIdx := -1
-	for i, vd := range listMembers {
-		matchResult := instanaListMemberRegex.FindStringSubmatch(vd)
-		if len(matchResult) == 2 {
-			instanaTraceStateValue = strings.TrimSpace(matchResult[1])
-			instanaTraceStateIdx = i
-			break
-		}
-	}
+	instanaTraceStateValue, instanaTraceStateIdx := searchInstanaHeader(listMembers)
 
 	if instanaTraceStateIdx >= 0 {
 		// remove the entry for instana from the array of list members
@@ -60,13 +64,13 @@ func ParseState(traceStateValue string) (State, error) {
 	}
 
 	// Depending on whether we found an Instana list member, we can either allow 31 or 32 list members from other vendors.
-	maxListMembers := maxKVPairs
+	maxListMembers := MaxStateEntries
 	if instanaTraceStateValue != "" {
 		maxListMembers--
 	}
 
 	if len(listMembers) < maxListMembers {
-		return State{listMembers: listMembers, instanaTraceStateValue: instanaTraceStateValue}, nil
+		return State{listMembers: listMembers, instanaTraceStateValue: instanaTraceStateValue}
 	}
 
 	itemsToFilter := len(listMembers) - maxListMembers
@@ -82,26 +86,10 @@ func ParseState(traceStateValue string) (State, error) {
 	filteredListMembers = append(filteredListMembers, listMembers[i:]...)
 
 	if len(filteredListMembers) > maxListMembers {
-		return State{listMembers: filteredListMembers[:maxListMembers], instanaTraceStateValue: instanaTraceStateValue}, nil
+		return State{listMembers: filteredListMembers[:maxListMembers], instanaTraceStateValue: instanaTraceStateValue}
 	}
 
-	return State{listMembers: filteredListMembers, instanaTraceStateValue: instanaTraceStateValue}, nil
-}
-
-// SetInstanaValue returns a new state prepended with the provided Instana value. If the original state had an Instana
-// list member pair, it is discarded/overwritten.
-func (st State) SetInstanaTraceStateValue(instanaTraceStateValue string) State {
-	var listMembers []string
-	if st.instanaTraceStateValue == "" && instanaTraceStateValue != "" && len(st.listMembers) == maxKVPairs {
-		// The incoming tracestate had the maximum number of list members but no Instana list member, now we are adding an
-		// Instana list member, so we would exceed the maximum by one. Hence, we need to discard one of the other list
-		// members to stay within the limits mandated by the specification.
-		listMembers = st.listMembers[:maxKVPairs-1]
-	} else {
-		listMembers = st.listMembers
-	}
-
-	return State{listMembers: listMembers, instanaTraceStateValue: instanaTraceStateValue}
+	return State{listMembers: filteredListMembers, instanaTraceStateValue: instanaTraceStateValue}
 }
 
 // FetchInstanaTraceStateValue retrieves the value of the Instana tracestate list member, if any.
@@ -111,7 +99,7 @@ func (st State) FetchInstanaTraceStateValue() (string, bool) {
 
 // String returns string representation of a trace state. The returned value is compatible with the
 // `tracestate` header format. If the state has an Instana-specific list member, that one is always rendered first. This
-// is optimized for the use case of injecting the string represenation of the tracestate header into downstream
+// is optimized for the use case of injecting the string representation of the tracestate header into downstream
 // requests.
 func (st State) String() string {
 	if len(st.listMembers) == 0 && st.instanaTraceStateValue == "" {
@@ -146,4 +134,18 @@ func filterEmptyItems(entries []string) []string {
 	}
 
 	return result
+}
+
+func searchInstanaHeader(listMembers []string) (string, int) {
+	var instanaTraceStateValue string
+	instanaTraceStateIdx := -1
+	for i, vd := range listMembers {
+		matchResult := instanaListMemberRegex.FindStringSubmatch(vd)
+		if len(matchResult) == 2 {
+			instanaTraceStateValue = strings.TrimSpace(matchResult[1])
+			instanaTraceStateIdx = i
+			break
+		}
+	}
+	return instanaTraceStateValue, instanaTraceStateIdx
 }
