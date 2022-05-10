@@ -95,7 +95,7 @@ func TestContext_State(t *testing.T) {
 		RawState:  exampleTraceState,
 	}
 
-	assert.Equal(t, w3ctrace.State{"vendorname1=opaqueValue1 ", " vendorname2=opaqueValue2"}, trCtx.State())
+	assert.Equal(t, w3ctrace.NewState([]string{"vendorname1=opaqueValue1 ", " vendorname2=opaqueValue2"}, ""), trCtx.State())
 }
 
 func TestContext_Parent(t *testing.T) {

@@ -234,7 +234,7 @@ func addW3CTraceContext(h http.Header, sc SpanContext) {
 	// participate in w3c trace context if tracing is enabled
 	if !sc.Suppressed {
 		// propagate truncated trace ID downstream
-		trCtx.RawState = trCtx.State().Add(w3ctrace.VendorInstana, FormatID(sc.TraceID)+";"+spanID).String()
+		trCtx.RawState = w3ctrace.FormStateWithInstanaTraceStateValue(trCtx.State(), FormatID(sc.TraceID)+";"+spanID).String()
 	}
 
 	w3ctrace.Inject(trCtx, h)
