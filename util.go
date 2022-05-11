@@ -36,18 +36,8 @@ func randomID() int64 {
 func FormatID(id int64) string {
 	// FIXME: We're assuming LittleEndian here
 
-	// Write out _signed_ 64bit integer to byte buffer
-	buf := bytes.NewBuffer(nil)
-	// binary.Write() does not return an error for basic data types, neither does (*bytes.Buffer).Write()
-	binary.Write(buf, binary.LittleEndian, id)
-
-	// Read bytes back into _unsigned_ 64 bit integer
-	var unsigned uint64
-	// it's safe to ignore the error here, since the value in buffer is controlled by us
-	binary.Read(buf, binary.LittleEndian, &unsigned)
-
 	// Convert uint64 to hex string equivalent and return that
-	return padHexString(strconv.FormatUint(unsigned, 16), 64)
+	return padHexString(strconv.FormatUint(uint64(id), 16), 64)
 }
 
 // FormatLongID converts a 128-bit Instana ID passed in two quad words to an
