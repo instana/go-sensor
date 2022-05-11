@@ -181,3 +181,9 @@ eth0	00000000	010011AC	0003	0	0	0	00000000	0	0	0
 		}()
 	}
 }
+
+func BenchmarkFormatID(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		FormatID(int64(i))
+	}
+}
