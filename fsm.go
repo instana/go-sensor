@@ -109,6 +109,10 @@ func (r *fsmS) lookupAgentHost(e *f.Event) {
 				r.agent.logger.Error("Cannot connect to the agent through localhost or default gateway. Scheduling retry.")
 				r.scheduleRetry(e, r.lookupAgentHost)
 			})
+		} else {
+			r.agent.logger.Error("Cannot connect to the agent. Scheduling retry.")
+			r.agent.logger.Debug("Connecting through the default gateway has not been attempted because proc/net/route does not exist.")
+			r.scheduleRetry(e, r.lookupAgentHost)
 		}
 	}
 
