@@ -7,9 +7,7 @@ package instaredis_test
 
 import (
 	"context"
-	"fmt"
 	"net"
-	"strings"
 	"testing"
 	"time"
 
@@ -20,14 +18,148 @@ import (
 	"github.com/instana/testify/require"
 )
 
-/*
-Redis small cheat sheet (command sent vs characters received):
+type mockPipeline struct {
+	cmds  []redis.Cmder
+	hooks []redis.Hook
+}
 
-SET  = +OK\r\n
-GET  = $4\r\n Where 4 is the size of the item "gotten"
-DEL  = :1\r\n Where 1 is the amount of data deleted (I guess)
-INCR = :7\r\n Where 7 is the new value of the variable incremented
-*/
+func (p *mockPipeline) Set(ctx context.Context, key string, value interface{}, expiration time.Duration) *redis.StatusCmd {
+	cmd := redis.NewStatusCmd(ctx, []interface{}{"set", key, value}...)
+	p.cmds = append(p.cmds, cmd)
+	return cmd
+}
+
+func (p *mockPipeline) Incr(ctx context.Context, key string) *redis.IntCmd {
+	cmd := redis.NewIntCmd(ctx, []interface{}{"incr", key}...)
+	p.cmds = append(p.cmds, cmd)
+	return cmd
+}
+
+func (p *mockPipeline) Do(ctx context.Context, args ...interface{}) *redis.Cmd {
+	cmd := redis.NewCmd(ctx, args...)
+	p.cmds = append(p.cmds, cmd)
+	return cmd
+}
+
+func (p mockPipeline) Exec(ctx context.Context) ([]redis.Cmder, error) {
+	for _, hook := range p.hooks {
+		hook.BeforeProcessPipeline(ctx, p.cmds)
+		hook.AfterProcessPipeline(ctx, p.cmds)
+	}
+	return p.cmds, nil
+}
+
+type mockClient struct {
+	hooks   []redis.Hook
+	options *redis.Options
+}
+
+func newMockClient(options *redis.Options, foOptions *redis.FailoverOptions) *mockClient {
+	if options != nil {
+		return &mockClient{options: options}
+	}
+
+	return &mockClient{options: &redis.Options{
+		Addr: "FailoverClient",
+		Dialer: func(ctx context.Context, network string, addr string) (net.Conn, error) {
+			netConn := getMockConn(Single, ctx, network, addr)
+			return netConn, nil
+		},
+	}}
+}
+
+func (c *mockClient) Close() error {
+	return nil
+}
+
+func (c *mockClient) AddHook(hook redis.Hook) {
+	c.hooks = append(c.hooks, hook)
+}
+
+func (c mockClient) Options() *redis.Options {
+	return c.options
+}
+
+func (c mockClient) Do(ctx context.Context, args ...interface{}) *redis.Cmd {
+	cmd := redis.NewCmd(ctx, args...)
+	c.runHooks(ctx, cmd)
+	return cmd
+}
+
+func (c mockClient) Get(ctx context.Context, key string) *redis.StringCmd {
+	cmd := redis.NewStringCmd(ctx, []interface{}{"get", key}...)
+	c.runHooks(ctx, cmd)
+	return cmd
+}
+
+func (c mockClient) Pipeline() mockPipeline {
+	return mockPipeline{hooks: c.hooks}
+}
+
+func (c mockClient) TxPipeline() mockPipeline {
+	return mockPipeline{hooks: c.hooks}
+}
+
+func (c mockClient) runHooks(ctx context.Context, cmd redis.Cmder) {
+	for _, h := range c.hooks {
+		h.BeforeProcess(ctx, cmd)
+		h.AfterProcess(ctx, cmd)
+	}
+}
+
+type mockClusterClient struct {
+	hooks   []redis.Hook
+	options *redis.ClusterOptions
+}
+
+func newMockClusterClient(options *redis.ClusterOptions, foOptions *redis.FailoverOptions) *mockClusterClient {
+	if options != nil {
+		return &mockClusterClient{options: options}
+	}
+
+	return &mockClusterClient{options: &redis.ClusterOptions{
+		Dialer: foOptions.Dialer,
+	}}
+}
+
+func (c *mockClusterClient) Close() error {
+	return nil
+}
+
+func (c *mockClusterClient) AddHook(hook redis.Hook) {
+	c.hooks = append(c.hooks, hook)
+}
+
+func (c mockClusterClient) Options() *redis.ClusterOptions {
+	return c.options
+}
+
+func (c mockClusterClient) Do(ctx context.Context, args ...interface{}) *redis.Cmd {
+	cmd := redis.NewCmd(ctx, args...)
+	c.runHooks(ctx, cmd)
+	return cmd
+}
+
+func (c mockClusterClient) Get(ctx context.Context, key string) *redis.StringCmd {
+	cmd := redis.NewStringCmd(ctx, []interface{}{"get", key}...)
+	c.runHooks(ctx, cmd)
+	return cmd
+}
+
+func (c mockClusterClient) Pipeline() mockPipeline {
+	return mockPipeline{hooks: c.hooks}
+}
+
+func (c mockClusterClient) TxPipeline() mockPipeline {
+	return mockPipeline{hooks: c.hooks}
+}
+
+func (c mockClusterClient) runHooks(ctx context.Context, cmd redis.Cmder) {
+	for _, h := range c.hooks {
+		h.BeforeProcess(ctx, cmd)
+		h.AfterProcess(ctx, cmd)
+	}
+}
 
 type redisType int
 
@@ -45,10 +177,9 @@ var redisTypeMap = map[redisType]string{
 	ClusterFailover: "Cluster Failover Server",
 }
 
-// returns an instance of redis.Client, compatible with redis.NewClient() and redis.NewFailoverClient()
-func buildNewClient(hasSentinel bool) *redis.Client {
+func buildNewClient(hasSentinel bool) *mockClient {
 	if hasSentinel {
-		return redis.NewFailoverClient(&redis.FailoverOptions{
+		return newMockClient(nil, &redis.FailoverOptions{
 			SlaveOnly:     true,
 			RouteRandomly: false,
 			MasterName:    "redis1",
@@ -61,19 +192,18 @@ func buildNewClient(hasSentinel bool) *redis.Client {
 		})
 	}
 
-	return redis.NewClient(&redis.Options{
+	return newMockClient(&redis.Options{
 		Addr: ":6382",
 		Dialer: func(ctx context.Context, network string, addr string) (net.Conn, error) {
 			netConn := getMockConn(Single, ctx, network, addr)
 			return netConn, nil
 		},
-	})
+	}, nil)
 }
 
-// returns an instance of redis.ClusterClient, compatible with redis.NewClusterClient() and redis.NewFailoverClusterClient()
-func buildNewClusterClient(hasSentinel bool) *redis.ClusterClient {
+func buildNewClusterClient(hasSentinel bool) *mockClusterClient {
 	if hasSentinel {
-		return redis.NewFailoverClusterClient(&redis.FailoverOptions{
+		return newMockClusterClient(nil, &redis.FailoverOptions{
 			MasterName:    "redis1",
 			MaxRetries:    1,
 			SentinelAddrs: []string{":26379"},
@@ -84,13 +214,13 @@ func buildNewClusterClient(hasSentinel bool) *redis.ClusterClient {
 		})
 	}
 
-	return redis.NewClusterClient(&redis.ClusterOptions{
+	return newMockClusterClient(&redis.ClusterOptions{
 		Addrs: []string{":6382"},
 		Dialer: func(ctx context.Context, network string, addr string) (net.Conn, error) {
 			netConn := getMockConn(Cluster, ctx, network, addr)
 			return netConn, nil
 		},
-	})
+	}, nil)
 }
 
 type MockAddr struct {
@@ -119,126 +249,8 @@ func getMockConn(clientType redisType, ctx context.Context, network, addr string
 	return conn
 }
 
-func parseIncomingCommandForSingle(incomingCmd []byte) ([]byte, error) {
-	cmd := string(incomingCmd)
-
-	if cmd == "*1\r\n$5\r\nmulti\r\n*2\r\n$3\r\nget\r\n$4\r\nname\r\n*1\r\n$4\r\nexec\r\n" {
-		return []byte("+OK\r\n+QUEUED\r\n*1\r\n$3\r\nIBM\r\n"), nil
-	}
-
-	if cmd == "*1\r\n$5\r\nmulti\r\n*3\r\n$3\r\nset\r\n$4\r\nname\r\n$3\r\nIBM\r\n*1\r\n$4\r\nexec\r\n" {
-		return []byte("+OK\r\n+QUEUED\r\n*1\r\n+OK\r\n"), nil
-	}
-
-	if cmd == "*1\r\n$5\r\nmulti\r\n*2\r\n$3\r\ndel\r\n$4\r\nname\r\n*1\r\n$4\r\nexec\r\n" {
-		return []byte("+OK\r\n+QUEUED\r\n*1\r\n:1\r\n"), nil
-	}
-
-	if strings.Contains(cmd, "\r\nmulti\r\n") {
-		return []byte("+OK\r\n+QUEUED\r\n+QUEUED\r\n+QUEUED\r\n*3\r\n+OK\r\n$3\r\nIBM\r\n:1\r\n"), nil
-	}
-
-	reply := make([]byte, len(incomingCmd))
-	copy(reply, incomingCmd)
-	return reply, nil
-}
-
-func parseIncomingCommand(incomingCmd []byte, isSingleRedis bool) ([]byte, error) {
-	if isSingleRedis {
-		return parseIncomingCommandForSingle(incomingCmd)
-	}
-
-	cmd := string(incomingCmd)
-
-	if cmd == "*3\r\n$9\r\nsubscribe\r\n$14\r\n+switch-master\r\n$18\r\n+slave-reconf-done\r\n" {
-		return []byte("*3\r\n$9\r\nsubscribe\r\n$14\r\n+switch-master\r\n:1\r\n*3\r\n$9\r\nsubscribe\r\n$18\r\n+slave-reconf-done\r\n:2\r\n"), nil
-	}
-
-	if cmd == "*1\r\n$5\r\nmulti\r\n*2\r\n$3\r\nget\r\n$4\r\nname\r\n*1\r\n$4\r\nexec\r\n" {
-		return []byte("+OK\r\n+QUEUED\r\n*1\r\n$3\r\nIBM\r\n"), nil
-	}
-
-	if cmd == "*1\r\n$5\r\nmulti\r\n*3\r\n$3\r\nset\r\n$4\r\nname\r\n$3\r\nIBM\r\n*1\r\n$4\r\nexec\r\n" {
-		return []byte("+OK\r\n+QUEUED\r\n*1\r\n+OK\r\n"), nil
-	}
-
-	if cmd == "*1\r\n$5\r\nmulti\r\n*2\r\n$3\r\ndel\r\n$4\r\nname\r\n*1\r\n$4\r\nexec\r\n" {
-		return []byte("+OK\r\n+QUEUED\r\n*1\r\n:1\r\n"), nil
-	}
-
-	if strings.Contains(cmd, "\r\nmulti\r\n") {
-		return []byte("+OK\r\n+QUEUED\r\n+QUEUED\r\n+QUEUED\r\n*3\r\n+OK\r\n$3\r\nIBM\r\n:1\r\n"), nil
-	}
-
-	if strings.Contains(cmd, "get-master-addr-by-name") {
-		return []byte("*2\r\n$9\r\n127.0.0.1\r\n$4\r\n6382\r\n"), nil
-	}
-
-	if strings.Contains(cmd, "sentinels") {
-		return []byte("*0\r\n"), nil
-	}
-
-	// Used by FailoverClusterClient
-	if strings.Contains(cmd, "sentinel\r\n$6\r\nslaves") {
-		return []byte("*0\r\n"), nil
-	}
-
-	// Case of Pipeline (without multi/exec commands)
-	if cmd == "*3\r\n$3\r\nset\r\n$4\r\nname\r\n$3\r\nIBM\r\n*2\r\n$3\r\nget\r\n$4\r\nname\r\n*2\r\n$3\r\ndel\r\n$4\r\nname\r\n" {
-		return []byte("+OK\r\n+QUEUED\r\n+QUEUED\r\n+QUEUED\r\n*3\r\n+OK\r\n$3\r\nIBM\r\n:1\r\n"), nil
-	}
-
-	if strings.Contains(cmd, "set") {
-		return []byte("+OK\r\n"), nil
-	}
-
-	if strings.Contains(cmd, "get") {
-		return []byte("$3\r\nIBM\r\n"), nil
-	}
-
-	if strings.Contains(cmd, "del") {
-		return []byte(":1\r\n"), nil
-	}
-
-	// This commands are used by Cluster servers
-	// For every Redis command you wanna test, you need to tell go-redis that the command is available.
-	// The best way of listing them is by running a Redis server locally, connecting into them via telnet and running the "command" command.
-	if strings.Contains(cmd, "command") {
-		return []byte("*2\r\n*7\r\n$3\r\nget\r\n*7\r\n$3\r\nset\r\n:2\r\n*2\r\n+readonly\r\n+fast\r\n:1\r\n:1\r\n:1\r\n*3\r\n+@read\r\n+@string\r\n+@fast\r\n"), nil
-	}
-
-	if strings.Contains(cmd, "cluster\r\n$5\r\nslots") {
-		return []byte("*1\r\n*3\r\n:0\r\n:5460\r\n*3\r\n$9\r\n127.0.0.1\r\n:6382\r\n$40\r\nd31ffce4060efa89b6b6dac3da472ce03054e1a2\r\n"), nil
-	}
-
-	return nil, fmt.Errorf("Command not handled: '%s'", strings.Replace(cmd, "\r\n", "\\r\\n", -1))
-}
-
 func (c *MockConn) Read(b []byte) (n int, err error) {
-	if c.clientType == Single {
-		parsedCmd, err := parseIncomingCommand(c.connData, true)
-
-		if err != nil {
-			return 0, err
-		}
-
-		copy(b, parsedCmd)
-		_len := len(parsedCmd)
-		c.connData = []byte{}
-		return _len, nil
-	}
-
-	// This case tests single redis with sentinel (NewFailoverClient), cluster (NewClusterClient) or ClusterFailover
-	parsedCmd, err := parseIncomingCommand(c.connData, false)
-
-	if err != nil {
-		return 0, err
-	}
-
-	copy(b, parsedCmd)
-	_len := len(parsedCmd)
-	c.connData = []byte{}
-	return _len, nil
+	return 0, nil
 }
 
 func (c *MockConn) Write(b []byte) (n int, err error) {
@@ -318,7 +330,7 @@ func TestClient(t *testing.T) {
 
 	for _, rType := range rTypes {
 		for name, example := range examples {
-			t.Run(fmt.Sprintf("%s - %s", redisTypeMap[rType], name), func(t *testing.T) {
+			t.Run(redisTypeMap[rType]+" - "+name, func(t *testing.T) {
 				recorder := instana.NewTestRecorder()
 				sensor := instana.NewSensorWithTracer(
 					instana.NewTracerWithEverything(instana.DefaultOptions(), recorder),
