@@ -48,16 +48,18 @@ func (c AmqpChannel) Publish(entrySpan ot.Span, exchange, key string, mandatory,
 		},
 	}
 
+	logger := c.sensor.Logger()
 	tracer := c.sensor.Tracer()
 	sp := tracer.StartSpan(operation, opts...)
 
 	if msg.Headers == nil {
 		msg.Headers = amqp.Table{}
 	}
-	err := tracer.Inject(sp.Context(), ot.TextMap, &messageCarrier{&msg.Headers, c.sensor.Logger()})
+
+	err := tracer.Inject(sp.Context(), ot.TextMap, &messageCarrier{msg.Headers, logger})
 
 	if err != nil {
-		otlog.Error(err)
+		logger.Debug(err)
 	}
 
 	res := c.pc.Publish(exchange, key, mandatory, immediate, msg)
@@ -82,13 +84,21 @@ func (c AmqpChannel) Consume(queue, consumer string, autoAck, exclusive, noLocal
 		pipeCh := make(chan amqp.Delivery, cap(deliveryChan))
 
 		go func() {
-			for deliveryData := range deliveryChan {
+			for {
+				deliveryData, more := <-deliveryChan
+
+				if !more {
+					close(pipeCh)
+					return
+				}
+
 				c.consumeMessage(pipeCh, deliveryData, queue)
 			}
 		}()
 
 		return pipeCh, err
 	}
+
 	return deliveryChan, err
 }
 
@@ -103,24 +113,25 @@ func (c AmqpChannel) consumeMessage(pipeCh chan amqp.Delivery, deliveryData amqp
 		},
 	}
 
+	logger := c.sensor.Logger()
 	tracer := c.sensor.Tracer()
-	sc, err := tracer.Extract(ot.TextMap, &messageCarrier{&deliveryData.Headers, c.sensor.Logger()})
+	sc, err := tracer.Extract(ot.TextMap, &messageCarrier{deliveryData.Headers, logger})
 
 	if err != nil {
-		otlog.Error(err)
+		logger.Debug(err)
 	}
 
 	opts = append(opts, ot.ChildOf(sc))
 	sp := tracer.StartSpan(operation, opts...)
 
-	err = tracer.Inject(sp.Context(), ot.TextMap, &messageCarrier{&deliveryData.Headers, c.sensor.Logger()})
+	err = tracer.Inject(sp.Context(), ot.TextMap, &messageCarrier{deliveryData.Headers, logger})
 
 	if err != nil {
-		otlog.Error(err)
+		logger.Debug(err)
 	}
 
-	pipeCh <- deliveryData
 	sp.Finish()
+	pipeCh <- deliveryData
 }
 
 // WrapChannel returns the AmqpChannel, which is Isntana's wrapper around amqp.Channel

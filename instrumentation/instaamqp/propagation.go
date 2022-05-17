@@ -13,16 +13,16 @@ import (
 
 // messageCarrier holds the data injected into and extracted from a span's context to assure span correlation
 type messageCarrier struct {
-	Headers *amqp.Table
-	Logger  instana.LeveledLogger
+	headers amqp.Table
+	logger  instana.LeveledLogger
 }
 
 // ForeachKey implements opentracing.TextMapReader for MessageCarrier
 func (c *messageCarrier) ForeachKey(handler func(key, value string) error) error {
-	headers := *c.Headers
+	headers := c.headers
 
 	if headers == nil {
-		c.Logger.Info("amqp: no headers provided")
+		c.logger.Info("amqp: no headers provided")
 		return nil
 	}
 
@@ -42,9 +42,9 @@ func (c *messageCarrier) ForeachKey(handler func(key, value string) error) error
 
 // Set implements opentracing.TextMapWriter for MessageCarrier
 func (c *messageCarrier) Set(key, value string) {
-	headers := *c.Headers
-	if c.Headers == nil {
-		c.Logger.Info("amqp: no headers provided")
+	headers := c.headers
+	if c.headers == nil {
+		c.logger.Info("amqp: no headers provided")
 		return
 	}
 
@@ -56,7 +56,7 @@ func (c *messageCarrier) Set(key, value string) {
 
 // SpanContextFromConsumerMessage extracts the tracing context from amqp.Delivery#Headers
 func SpanContextFromConsumerMessage(d amqp.Delivery, sensor *instana.Sensor) (ot.SpanContext, bool) {
-	sc, err := sensor.Tracer().Extract(ot.TextMap, &messageCarrier{&d.Headers, sensor.Logger()})
+	sc, err := sensor.Tracer().Extract(ot.TextMap, &messageCarrier{d.Headers, sensor.Logger()})
 	if err != nil {
 		return nil, false
 	}

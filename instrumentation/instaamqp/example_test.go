@@ -100,7 +100,7 @@ func consume() {
 	<-forever
 }
 
-func Example() {
+func AppExample() {
 	go consume()
 
 	// give consume some time to be ready to receive messages
