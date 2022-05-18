@@ -161,7 +161,7 @@ func WrapClient(client InstanaRedisClient, sensor *instana.Sensor) InstanaRedisC
 	return client
 }
 
-// WrapClient wraps the Redis client instance in order to add the instrumentation
+// WrapClusterClient wraps the Redis client instance in order to add the instrumentation
 func WrapClusterClient(clusterClient InstanaRedisClusterClient, sensor *instana.Sensor) InstanaRedisClusterClient {
 	opts := clusterClient.Options()
 	clusterClient.AddHook(newCommandCapture(*sensor, nil, opts))
