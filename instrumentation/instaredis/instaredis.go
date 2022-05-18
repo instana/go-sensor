@@ -144,15 +144,25 @@ func (h commandCaptureHook) AfterProcessPipeline(ctx context.Context, cmds []red
 	return nil
 }
 
+type InstanaRedisClient interface {
+	AddHook(hook redis.Hook)
+	Options() *redis.Options
+}
+
+type InstanaRedisClusterClient interface {
+	AddHook(hook redis.Hook)
+	Options() *redis.ClusterOptions
+}
+
 // WrapClient wraps the Redis client instance in order to add the instrumentation
-func WrapClient(client *redis.Client, sensor *instana.Sensor) *redis.Client {
+func WrapClient(client InstanaRedisClient, sensor *instana.Sensor) InstanaRedisClient {
 	opts := client.Options()
 	client.AddHook(newCommandCapture(*sensor, opts, nil))
 	return client
 }
 
-// WrapClient wraps the Redis client instance in order to add the instrumentation
-func WrapClusterClient(clusterClient *redis.ClusterClient, sensor *instana.Sensor) *redis.ClusterClient {
+// WrapClusterClient wraps the Redis client instance in order to add the instrumentation
+func WrapClusterClient(clusterClient InstanaRedisClusterClient, sensor *instana.Sensor) InstanaRedisClusterClient {
 	opts := clusterClient.Options()
 	clusterClient.AddHook(newCommandCapture(*sensor, nil, opts))
 	return clusterClient
