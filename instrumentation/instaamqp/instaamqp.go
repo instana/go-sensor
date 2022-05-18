@@ -134,7 +134,7 @@ func (c AmqpChannel) consumeMessage(pipeCh chan amqp.Delivery, deliveryData amqp
 	pipeCh <- deliveryData
 }
 
-// WrapChannel returns the AmqpChannel, which is Isntana's wrapper around amqp.Channel
+// WrapChannel returns the AmqpChannel, which is Instana's wrapper around amqp.Channel
 func WrapChannel(sensor *instana.Sensor, ch PubCons, serverUrl string) *AmqpChannel {
 	sUrl := ""
 	urlObj, err := url.Parse(serverUrl)
