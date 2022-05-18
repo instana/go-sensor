@@ -44,13 +44,7 @@ func Example_consumer() {
 	msgs, err := instaCh.Consume(q.Name, "", true, false, false, false, nil)
 	failOnError(err, "Could not consume messages")
 
-	forever := make(chan bool)
-
-	go func() {
-		for d := range msgs {
-			fmt.Println("Got a message:", string(d.Body))
-		}
-	}()
-
-	<-forever
+	for d := range msgs {
+		fmt.Println("Got a message:", string(d.Body))
+	}
 }
