@@ -37,6 +37,7 @@ func (c *messageCarrier) ForeachKey(handler func(key, value string) error) error
 			return err
 		}
 	}
+
 	return nil
 }
 
@@ -45,6 +46,7 @@ func (c *messageCarrier) Set(key, value string) {
 	headers := c.headers
 	if c.headers == nil {
 		c.logger.Info("amqp: no headers provided")
+
 		return
 	}
 
