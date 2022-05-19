@@ -50,13 +50,3 @@ func extractAgentSpan(span interface{}) (agentSpan, error) {
 
 	return data, nil
 }
-
-// func TestRunExample(t *testing.T) {
-// 	go Example_consumer()
-
-// 	time.Sleep(time.Second * 3)
-
-// 	Example_syncProducer()
-
-// 	time.Sleep(time.Second * 5)
-// }

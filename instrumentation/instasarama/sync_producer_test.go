@@ -153,8 +153,6 @@ func TestSyncProducer_SendMessage_Error(t *testing.T) {
 }
 
 func TestSyncProducer_SendMessages_SameTraceContext(t *testing.T) {
-	headerFormats := []string{"binary", "string", "both"}
-
 	for _, headerFormat := range headerFormats {
 		os.Setenv(instasarama.KafkaHeaderEnvVarKey, headerFormat)
 

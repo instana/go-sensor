@@ -55,7 +55,7 @@ type ProducerMessageCarrier struct {
 
 // Set implements opentracing.TextMapWriter for ProducerMessageCarrier
 func (c ProducerMessageCarrier) Set(key, val string) {
-	kafkaHeaderFormat := GetKafkaHeaderFormat()
+	kafkaHeaderFormat := getKafkaHeaderFormat()
 	switch strings.ToLower(key) {
 	case instana.FieldT:
 		if kafkaHeaderFormat == BOTH || kafkaHeaderFormat == BINARY {
@@ -76,11 +76,19 @@ func (c ProducerMessageCarrier) Set(key, val string) {
 		}
 
 		if kafkaHeaderFormat == BOTH || kafkaHeaderFormat == STRING {
+			// There is no need to preserve any values, as thr trace context (aka X_INSTANA_C) is no longer present when the
+			// header is of string format, wehre we have 2 separated header values: X_INSTANA_T and X_INSTANA_S
 			existingT := val
 			valLen := len(val)
+
 			if valLen < 32 {
 				existingT = strings.Repeat("0", 32-valLen) + val
 			}
+
+			if valLen > 32 {
+				existingT = existingT[:32]
+			}
+
 			c.addOrReplaceHeader(fieldTKey, []byte(existingT))
 		}
 	case instana.FieldS:
@@ -102,6 +110,12 @@ func (c ProducerMessageCarrier) Set(key, val string) {
 		}
 
 		if kafkaHeaderFormat == BOTH || kafkaHeaderFormat == STRING {
+			if len(val) > 16 {
+				return // ignore hex-encoded span IDs longer than 64 bit
+			}
+
+			// There is no need to preserve any values, as thr trace context (aka X_INSTANA_C) is no longer present when the
+			// header is of string format, wehre we have 2 separated header values: X_INSTANA_T and X_INSTANA_S
 			c.addOrReplaceHeader(fieldSKey, []byte(val))
 		}
 	case instana.FieldL:
@@ -136,7 +150,7 @@ func (c ProducerMessageCarrier) RemoveAll() {
 
 // ForeachKey implements opentracing.TextMapReader for ProducerMessageCarrier
 func (c ProducerMessageCarrier) ForeachKey(handler func(key, val string) error) error {
-	kafkaHeaderFormat := GetKafkaHeaderFormat()
+	kafkaHeaderFormat := getKafkaHeaderFormat()
 
 	for _, header := range c.Message.Headers {
 		switch {
@@ -218,7 +232,7 @@ type ConsumerMessageCarrier struct {
 
 // Set implements opentracing.TextMapWriter for ConsumerMessageCarrier
 func (c ConsumerMessageCarrier) Set(key, val string) {
-	kafkaHeaderFormat := GetKafkaHeaderFormat()
+	kafkaHeaderFormat := getKafkaHeaderFormat()
 
 	switch strings.ToLower(key) {
 	case instana.FieldT:
@@ -240,6 +254,8 @@ func (c ConsumerMessageCarrier) Set(key, val string) {
 		}
 
 		if kafkaHeaderFormat == BOTH || kafkaHeaderFormat == STRING {
+			// There is no need to preserve any values, as thr trace context (aka X_INSTANA_C) is no longer present when the
+			// header is of string format, wehre we have 2 separated header values: X_INSTANA_T and X_INSTANA_S
 			c.addOrReplaceHeader(fieldTKey, []byte(val))
 		}
 	case instana.FieldS:
@@ -261,6 +277,8 @@ func (c ConsumerMessageCarrier) Set(key, val string) {
 		}
 
 		if kafkaHeaderFormat == BOTH || kafkaHeaderFormat == STRING {
+			// There is no need to preserve any values, as thr trace context (aka X_INSTANA_C) is no longer present when the
+			// header is of string format, wehre we have 2 separated header values: X_INSTANA_T and X_INSTANA_S
 			c.addOrReplaceHeader(fieldSKey, []byte(val))
 		}
 	case instana.FieldL:
@@ -295,7 +313,7 @@ func (c ConsumerMessageCarrier) RemoveAll() {
 
 // ForeachKey implements opentracing.TextMapReader for ConsumerMessageCarrier
 func (c ConsumerMessageCarrier) ForeachKey(handler func(key, val string) error) error {
-	kafkaHeaderFormat := GetKafkaHeaderFormat()
+	kafkaHeaderFormat := getKafkaHeaderFormat()
 	for _, header := range c.Message.Headers {
 		if header == nil {
 			continue
