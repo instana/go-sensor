@@ -27,7 +27,7 @@ func consume(ch chan bool) {
 	defer c.Close()
 
 	for msg := range c.Messages() {
-		fmt.Println("Got messagge", msg)
+		fmt.Println("Got message", msg)
 		processMessage(msg, sensor)
 		ch <- true
 	}
@@ -38,7 +38,5 @@ func processMessage(msg *sarama.ConsumerMessage, sensor *instana.Sensor) {
 	parentCtx, _ := instasarama.SpanContextFromConsumerMessage(msg, sensor)
 
 	sp := sensor.Tracer().StartSpan("process-message", opentracing.ChildOf(parentCtx))
-	defer sp.Finish()
-
-	// process message
+	sp.Finish()
 }
