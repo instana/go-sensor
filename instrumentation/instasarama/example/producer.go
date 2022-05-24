@@ -1,7 +1,6 @@
-// (c) Copyright IBM Corp. 2021
-// (c) Copyright Instana Inc. 2020
+// (c) Copyright IBM Corp. 2022
 
-package instasarama_test
+package main
 
 import (
 	"github.com/Shopify/sarama"
@@ -12,7 +11,7 @@ import (
 
 // This example demonstrates how to instrument a sync Kafka producer using instasarama.
 // Error handling is omitted for brevity.
-func Example_syncProducer() {
+func produce() {
 	sensor := instana.NewSensor("my-service")
 	brokers := []string{"localhost:9092"}
 

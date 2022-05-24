@@ -1,0 +1,28 @@
+version: '2'
+services:
+
+  # Kafka test will sometimes fail because Zookeeper won't start due to
+  # java.io.IOException: Unable to create data directory /opt/zookeeper-3.4.9/data/version-2, which seems to be a known issue:
+  # -> https://issues.apache.org/jira/browse/ZOOKEEPER-1936
+  zookeeper:
+    image: wurstmeister/zookeeper
+    ports:
+      - 2181:2181
+
+  kafka:
+    image: wurstmeister/kafka:2.12-2.2.1
+    ports:
+      - 9092:9092
+      - 29092:29092
+    depends_on:
+      - "zookeeper"
+    hostname: kafka0
+    environment:
+      KAFKA_ADVERTISED_HOST_NAME: 127.0.0.1
+      KAFKA_ADVERTISED_PORT: 9092
+      KAFKA_CREATE_TOPICS: "test-topic-1:1:1"
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./bin:/go-tracer-bin
+    command: ["/go-tracer-bin/wait-for-it.sh", "-s", "-t", "120", "zookeeper:2181", "--", "start-kafka.sh"]

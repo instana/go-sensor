@@ -1,7 +1,6 @@
-// (c) Copyright IBM Corp. 2021
-// (c) Copyright Instana Inc. 2020
+// (c) Copyright IBM Corp. 2022
 
-package instasarama_test
+package main
 
 import (
 	"fmt"
@@ -14,7 +13,7 @@ import (
 
 // This example demonstrates how to instrument a Kafka consumer using instasarama
 // and extract the trace context to ensure continuation. Error handling is omitted for brevity.
-func Example_consumer() {
+func consume(ch chan bool) {
 	sensor := instana.NewSensor("my-service")
 	brokers := []string{"localhost:9092"}
 
@@ -28,8 +27,9 @@ func Example_consumer() {
 	defer c.Close()
 
 	for msg := range c.Messages() {
-		fmt.Println("Got messagge", msg)
+		fmt.Println("Got message", msg)
 		processMessage(msg, sensor)
+		ch <- true
 	}
 }
 
@@ -38,7 +38,5 @@ func processMessage(msg *sarama.ConsumerMessage, sensor *instana.Sensor) {
 	parentCtx, _ := instasarama.SpanContextFromConsumerMessage(msg, sensor)
 
 	sp := sensor.Tracer().StartSpan("process-message", opentracing.ChildOf(parentCtx))
-	defer sp.Finish()
-
-	// process message
+	sp.Finish()
 }
