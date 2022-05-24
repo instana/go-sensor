@@ -121,6 +121,25 @@ The wrapped consumer will pick up the existing trace context if found in message
 into each message. This context can be retrieved with [`instasarama.SpanContextFromConsumerMessage()`][SpanContextFromConsumerMessage] and used
 in the message handler to continue the trace.
 
+### Working With Kafka Header Formats
+
+Starting at v1.2.0, the instrumentation can handle both Kafka headers as binary (legacy) or as string.
+By default, and for versions prior to v1.2.0 , the default behavior is to process Kafka headers in the binary format.
+
+This change affects how Instana headers are propagated via a producer when a message is sent.
+Consumers will always look for headers as string first and fallback to the binary format if necessary.
+
+In the future, the binary headers will be discontinued and only the headers in the string format will be considered.
+
+Customers who wish to choose a header format must provide the `INSTANA_KAFKA_HEADER_FORMAT` environment variable to their application.
+The following are valid values:
+
+* `binary`: Will keep handling Kafka headers in the binary format. 
+* `string`: Will send Kafka header in the string format
+* `both`: Will set Instana headers n both binary and string formats. 
+
+> If no environment variable is provided, or its value is empty or if it's not a valid value, Kafka headers will be treated as binary
+
 [godoc]: https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instasarama
 [NewSyncProducer]: https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instasarama?tab=doc#NewSyncProducer
 [NewSyncProducerFromClient]: https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instasarama?tab=doc#NewSyncProducerFromClient
