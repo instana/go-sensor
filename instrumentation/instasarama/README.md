@@ -131,7 +131,7 @@ Consumers will always look for headers as string first and fallback to the binar
 
 In the future, the binary headers will be discontinued and only the headers in the string format will be considered.
 
-Customers who wish to choose a header format must provide the `INSTANA_KAFKA_HEADER_FORMAT` environment variable to their application.
+To choose a header format provide the `INSTANA_KAFKA_HEADER_FORMAT` environment variable to the application.
 The following are valid values:
 
 * `binary`: Will keep handling Kafka headers in the binary format. 
