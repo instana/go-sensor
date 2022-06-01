@@ -74,11 +74,9 @@ func NewRecorder(options ...RecorderOption) *Recorder {
 // NewTestRecorder initializes a new span recorder that keeps all collected
 // until they are requested. This recorder does not send spans to the agent (used for testing)
 func NewTestRecorder() *Recorder {
-	r := &Recorder{
+	return &Recorder{
 		testMode: true,
 	}
-
-	return r
 }
 
 // RecordSpan accepts spans to be recorded and added to the span queue
