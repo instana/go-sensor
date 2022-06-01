@@ -26,13 +26,40 @@ type Recorder struct {
 	sync.RWMutex
 	spans    []Span
 	testMode bool
+
+	queueWhenNotReady bool
+	flushInterval     time.Duration
+}
+
+// RecorderOption lets you specify more options for the recorder
+type RecorderOption func(recorder *Recorder)
+
+// RecorderWithQueueWhenNotReady will enable queuing even when the sensor is not yet ready
+func RecorderWithQueueWhenNotReady() RecorderOption {
+	return func(recorder *Recorder) {
+		recorder.queueWhenNotReady = true
+	}
+}
+
+// RecorderWithFlushInterval lets you specify how often traces should be flushed
+func RecorderWithFlushInterval(flushInterval time.Duration) RecorderOption {
+	return func(recorder *Recorder) {
+		recorder.flushInterval = flushInterval
+	}
 }
 
 // NewRecorder initializes a new span recorder
-func NewRecorder() *Recorder {
-	r := &Recorder{}
+func NewRecorder(options ...RecorderOption) *Recorder {
+	r := &Recorder{
+		flushInterval:     1 * time.Second,
+		queueWhenNotReady: false,
+	}
 
-	ticker := time.NewTicker(1 * time.Second)
+	for _, option := range options {
+		option(r)
+	}
+
+	ticker := time.NewTicker(r.flushInterval)
 	go func() {
 		for range ticker.C {
 			if sensor.Agent().Ready() {
@@ -47,9 +74,11 @@ func NewRecorder() *Recorder {
 // NewTestRecorder initializes a new span recorder that keeps all collected
 // until they are requested. This recorder does not send spans to the agent (used for testing)
 func NewTestRecorder() *Recorder {
-	return &Recorder{
+	r := &Recorder{
 		testMode: true,
 	}
+
+	return r
 }
 
 // RecordSpan accepts spans to be recorded and added to the span queue
@@ -57,7 +86,7 @@ func NewTestRecorder() *Recorder {
 func (r *Recorder) RecordSpan(span *spanS) {
 	// If we're not announced and not in test mode then just
 	// return
-	if !r.testMode && !sensor.Agent().Ready() {
+	if !r.testMode && !sensor.Agent().Ready() && !r.queueWhenNotReady {
 		return
 	}
 
