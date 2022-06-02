@@ -27,6 +27,7 @@ func AddMiddleware(sensor *instana.Sensor, engine *gin.Engine) {
 func Default(sensor *instana.Sensor) *gin.Engine {
 	e := gin.Default()
 	AddMiddleware(sensor, e)
+
 	return e
 }
 
@@ -34,6 +35,7 @@ func Default(sensor *instana.Sensor) *gin.Engine {
 func New(sensor *instana.Sensor) *gin.Engine {
 	e := gin.New()
 	AddMiddleware(sensor, e)
+
 	return e
 }
 
