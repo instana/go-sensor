@@ -1,6 +1,7 @@
 // (c) Copyright IBM Corp. 2021
 // (c) Copyright Instana Inc. 2016
 
+//go:build go1.12
 // +build go1.12
 
 package instamux
@@ -11,6 +12,14 @@ import (
 	"github.com/gorilla/mux"
 	instana "github.com/instana/go-sensor"
 )
+
+// NewRouter is wrapper for mux.NewRouter()
+func NewRouter(sensor *instana.Sensor) *mux.Router {
+	r := mux.NewRouter()
+	AddMiddleware(sensor, r)
+
+	return r
+}
 
 // AddMiddleware instruments the mux.Router instance with Instana
 func AddMiddleware(sensor *instana.Sensor, router *mux.Router) {
