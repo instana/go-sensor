@@ -26,16 +26,16 @@ var errMethodNotInstrumented = errors.New("method not instrumented")
 const maxClientContextLen = 3582
 
 // New is a wrapper for `session.New`
-func New(cfgs *aws.Config, sensor *instana.Sensor) *session.Session {
-	sess := session.New(cfgs)
+func New(sensor *instana.Sensor, cfgs ...*aws.Config) *session.Session {
+	sess := session.New(cfgs...)
 	InstrumentSession(sess, sensor)
 
 	return sess
 }
 
 // NewSession is a wrapper for `session.NewSession`
-func NewSession(cfgs *aws.Config, sensor *instana.Sensor) (*session.Session, error) {
-	sess, err := session.NewSession(cfgs)
+func NewSession(sensor *instana.Sensor, cfgs ...*aws.Config) (*session.Session, error) {
+	sess, err := session.NewSession(cfgs...)
 	if err != nil {
 		return sess, err
 	}
@@ -46,7 +46,7 @@ func NewSession(cfgs *aws.Config, sensor *instana.Sensor) (*session.Session, err
 }
 
 // NewSessionWithOptions is a wrapper for `session.NewSessionWithOptions`
-func NewSessionWithOptions(opts session.Options, sensor *instana.Sensor) (*session.Session, error) {
+func NewSessionWithOptions(sensor *instana.Sensor, opts session.Options) (*session.Session, error) {
 	sess, err := session.NewSessionWithOptions(opts)
 	if err != nil {
 		return sess, err
