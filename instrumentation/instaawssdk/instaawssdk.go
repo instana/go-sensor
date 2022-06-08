@@ -25,6 +25,38 @@ var errMethodNotInstrumented = errors.New("method not instrumented")
 
 const maxClientContextLen = 3582
 
+// New is a wrapper for `session.New`
+func New(cfgs *aws.Config, sensor *instana.Sensor) *session.Session {
+	sess := session.New(cfgs)
+	InstrumentSession(sess, sensor)
+
+	return sess
+}
+
+// NewSession is a wrapper for `session.NewSession`
+func NewSession(cfgs *aws.Config, sensor *instana.Sensor) (*session.Session, error) {
+	sess, err := session.NewSession(cfgs)
+	if err != nil {
+		return sess, err
+	}
+
+	InstrumentSession(sess, sensor)
+
+	return sess, nil
+}
+
+// NewSessionWithOptions is a wrapper for `session.NewSessionWithOptions`
+func NewSessionWithOptions(opts session.Options, sensor *instana.Sensor) (*session.Session, error) {
+	sess, err := session.NewSessionWithOptions(opts)
+	if err != nil {
+		return sess, err
+	}
+
+	InstrumentSession(sess, sensor)
+
+	return sess, nil
+}
+
 // InstrumentSession instruments github.com/aws/aws-sdk-go/aws/session.Session by
 // injecting handlers to create and finalize Instana spans
 func InstrumentSession(sess *session.Session, sensor *instana.Sensor) {
