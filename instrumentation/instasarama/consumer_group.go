@@ -4,10 +4,12 @@ package instasarama
 
 import (
 	"context"
+
 	"github.com/Shopify/sarama"
 	instana "github.com/instana/go-sensor"
 )
 
+// NewConsumerGroup creates an instrumented sarama.ConsumerGroup
 func NewConsumerGroup(addrs []string, groupID string, config *sarama.Config, sensor *instana.Sensor) (sarama.ConsumerGroup, error) {
 	c, err := sarama.NewConsumerGroup(addrs, groupID, config)
 	if err != nil {
@@ -17,6 +19,7 @@ func NewConsumerGroup(addrs []string, groupID string, config *sarama.Config, sen
 	return consumerGroup{c, sensor}, nil
 }
 
+// NewConsumerGroupFromClient creates an instrumented sarama.ConsumerGroup from sarama.Client
 func NewConsumerGroupFromClient(groupID string, client sarama.Client, sensor *instana.Sensor) (sarama.ConsumerGroup, error) {
 	c, err := sarama.NewConsumerGroupFromClient(groupID, client)
 	if err != nil {
