@@ -30,22 +30,22 @@ func NewConsumerGroupFromClient(groupID string, client sarama.Client, sensor *in
 }
 
 type consumerGroup struct {
-	cg     sarama.ConsumerGroup
+	sarama.ConsumerGroup
 	sensor *instana.Sensor
 }
 
 func (c consumerGroup) Errors() <-chan error {
-	return c.cg.Errors()
+	return c.ConsumerGroup.Errors()
 }
 
 func (c consumerGroup) Close() error {
-	return c.cg.Close()
+	return c.ConsumerGroup.Close()
 }
 
 func (c consumerGroup) Consume(ctx context.Context, topics []string, handler sarama.ConsumerGroupHandler) error {
 	if _, ok := handler.(*ConsumerGroupHandler); ok {
-		return c.cg.Consume(ctx, topics, handler)
+		return c.ConsumerGroup.Consume(ctx, topics, handler)
 	}
 
-	return c.cg.Consume(ctx, topics, WrapConsumerGroupHandler(handler, c.sensor))
+	return c.ConsumerGroup.Consume(ctx, topics, WrapConsumerGroupHandler(handler, c.sensor))
 }
