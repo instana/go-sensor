@@ -106,36 +106,37 @@ func TestPropagation(t *testing.T) {
 		},
 	}, entrySpanData.Tags)
 }
-func TestRawURLPath(t *testing.T) {
-	recorder := instana.NewTestRecorder()
-	tracer := instana.NewTracerWithEverything(nil, recorder)
 
-	sensor := instana.NewSensorWithTracer(tracer)
+// func TestRawURLPath(t *testing.T) {
+// 	recorder := instana.NewTestRecorder()
+// 	tracer := instana.NewTracerWithEverything(nil, recorder)
 
-	engine := instaecho.New(sensor)
+// 	sensor := instana.NewSensorWithTracer(tracer)
 
-	engine.GET("/projects/api/health", func(c echo.Context) error {
-		return c.JSON(200, []byte("{}"))
-	})
+// 	engine := instaecho.New(sensor)
 
-	req := httptest.NewRequest("GET", "https://example.com/projects/api/health", nil)
+// 	engine.GET("/projects/api/health", func(c echo.Context) error {
+// 		return c.JSON(200, []byte("{}"))
+// 	})
 
-	w := httptest.NewRecorder()
+// 	req := httptest.NewRequest("GET", "https://example.com/projects/api/health", nil)
 
-	engine.ServeHTTP(w, req)
+// 	w := httptest.NewRecorder()
 
-	spans := recorder.GetQueuedSpans()
+// 	engine.ServeHTTP(w, req)
 
-	require.Len(t, spans, 1)
+// 	spans := recorder.GetQueuedSpans()
 
-	sp, ok := spans[0].Data.(instana.HTTPSpanData)
+// 	require.Len(t, spans, 1)
 
-	assert.True(t, ok, "span data must be of type HTTPSpanData")
+// 	sp, ok := spans[0].Data.(instana.HTTPSpanData)
 
-	assert.Empty(t, sp.Tags.PathTemplate)
-	assert.NotEmpty(t, sp.Tags.RouteID)
-	assert.Equal(t, "/projects/api/health", sp.Tags.Path)
-}
+// 	assert.True(t, ok, "span data must be of type HTTPSpanData")
+
+// 	assert.Empty(t, sp.Tags.PathTemplate)
+// 	assert.NotEmpty(t, sp.Tags.RouteID)
+// 	assert.Equal(t, "/projects/api/health", sp.Tags.Path)
+// }
 
 func TestPropagationWithError(t *testing.T) {
 	traceIDHeader := "0000000000001234"
