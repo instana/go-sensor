@@ -4,6 +4,7 @@
 package instasarama_test
 
 import (
+	"context"
 	"errors"
 	"os"
 	"testing"
@@ -33,6 +34,65 @@ func TestProducerMessageWithSpan(t *testing.T) {
 				{Key: []byte("headerKey1"), Value: []byte("headerValue1")},
 			},
 		}, sp)
+		sp.Finish()
+
+		spans := recorder.GetQueuedSpans()
+		require.Len(t, spans, 1)
+
+		expected := []sarama.RecordHeader{
+			{Key: []byte("headerKey1"), Value: []byte("headerValue1")},
+		}
+
+		if headerFormat == "both" || headerFormat == "binary" {
+			expected = append(expected, []sarama.RecordHeader{
+				{Key: []byte(instasarama.FieldL), Value: []byte{0x01}},
+				{
+					Key: []byte(instasarama.FieldC),
+					Value: instasarama.PackTraceContextHeader(
+						instana.FormatLongID(spans[0].TraceIDHi, spans[0].TraceID),
+						instana.FormatID(spans[0].SpanID),
+					),
+				},
+			}...)
+		}
+
+		if headerFormat == "both" || headerFormat == "string" {
+			expected = append(expected, []sarama.RecordHeader{
+				{Key: []byte(instasarama.FieldLS), Value: []byte("1")},
+				{
+					Key:   []byte(instasarama.FieldT),
+					Value: []byte("0000000000000000" + instana.FormatID(spans[0].TraceID)),
+				},
+				{
+					Key:   []byte(instasarama.FieldS),
+					Value: []byte(instana.FormatID(spans[0].SpanID)),
+				},
+			}...)
+		}
+		assert.ElementsMatch(t, expected, pm.Headers)
+
+		os.Unsetenv(instasarama.KafkaHeaderEnvVarKey)
+	}
+}
+
+func TestProducerMessageWithSpanFromContext(t *testing.T) {
+	for _, headerFormat := range headerFormats {
+		os.Setenv(instasarama.KafkaHeaderEnvVarKey, headerFormat)
+
+		recorder := instana.NewTestRecorder()
+		tracer := instana.NewTracerWithEverything(&instana.Options{}, recorder)
+
+		sp := tracer.StartSpan("test-span")
+		ctx := instana.ContextWithSpan(context.Background(), sp)
+
+		pm := instasarama.ProducerMessageWithSpanFromContext(ctx, &sarama.ProducerMessage{
+			Topic: "test-topic",
+			Key:   sarama.StringEncoder("key1"),
+			Value: sarama.StringEncoder("value1"),
+			Headers: []sarama.RecordHeader{
+				{Key: []byte("headerKey1"), Value: []byte("headerValue1")},
+			},
+		})
 		sp.Finish()
 
 		spans := recorder.GetQueuedSpans()
