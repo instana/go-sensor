@@ -1,9 +1,8 @@
 github.com/davecgh/go-spew v1.1.0 h1:ZDRjVQ15GmhC3fiQ8ni8+OwkZQO4DARzQgrnXU1Liz8=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/golang-jwt/jwt v3.2.2+incompatible/go.mod h1:8pz2t5EyA70fFQQSrl6XZXzqecmYZeUEB8OUGHkxJ+I=
+github.com/instana/go-sensor v1.35.0 h1:8YO1N5wDCUkabSCACht4aeJm4PVKDM9N0t+/tgECRq8=
 github.com/instana/go-sensor v1.35.0/go.mod h1:Uh9j3eF2mBw/FLk2MxISmVDIj8mtJBFRj2S19M6CVyQ=
-github.com/instana/go-sensor v1.42.1 h1:HMvVpTauV5DHKaY+Q+ZA3UGZfpNs/dF0EtqsOL4yRHw=
-github.com/instana/go-sensor v1.42.1/go.mod h1:E42MelHWFz11qqaLwvgt0j98v2s2O/bq22UDkGaG0Gg=
 github.com/instana/go-sensor/instrumentation/instaecho v1.1.1 h1:t0ajaCSUH68U78aqfJhAH/G4RCmnmVvFxnLSvtkKq7E=
 github.com/instana/go-sensor/instrumentation/instaecho v1.1.1/go.mod h1:pCkUihJZq6O+MSVDcfzoJrJTafYkPTLj1WP/zRa2W7w=
 github.com/instana/testify v1.6.2-0.20200721153833-94b1851f4d65 h1:T25FL3WEzgmKB0m6XCJNZ65nw09/QIp3T1yXr487D+A=
