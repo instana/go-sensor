@@ -5,6 +5,7 @@ package instasarama
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"github.com/Shopify/sarama"
 	instana "github.com/instana/go-sensor"
@@ -53,6 +54,17 @@ var (
 func ProducerMessageWithSpan(pm *sarama.ProducerMessage, sp ot.Span) *sarama.ProducerMessage {
 	sp.Tracer().Inject(sp.Context(), ot.TextMap, ProducerMessageCarrier{Message: pm})
 	return pm
+}
+
+// ProducerMessageWithSpanFromContext injects the tracing context into producer's
+// message headers from the context if it is there.
+func ProducerMessageWithSpanFromContext(ctx context.Context, pm *sarama.ProducerMessage) *sarama.ProducerMessage {
+	sp, ok := instana.SpanFromContext(ctx)
+	if !ok {
+		return pm
+	}
+
+	return ProducerMessageWithSpan(pm, sp)
 }
 
 // ProducerMessageCarrier is a trace context carrier that propagates Instana OpenTracing
