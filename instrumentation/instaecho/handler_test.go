@@ -1,6 +1,7 @@
 // (c) Copyright IBM Corp. 2021
 // (c) Copyright Instana Inc. 2016
 
+//go:build go1.15
 // +build go1.15
 
 package instaecho_test
@@ -104,6 +105,36 @@ func TestPropagation(t *testing.T) {
 			"x-custom-header-2": "response",
 		},
 	}, entrySpanData.Tags)
+}
+func TestRawURLPath(t *testing.T) {
+	recorder := instana.NewTestRecorder()
+	tracer := instana.NewTracerWithEverything(nil, recorder)
+
+	sensor := instana.NewSensorWithTracer(tracer)
+
+	engine := instaecho.New(sensor)
+
+	engine.GET("/projects/api/health", func(c echo.Context) error {
+		return c.JSON(200, []byte("{}"))
+	})
+
+	req := httptest.NewRequest("GET", "https://example.com/projects/api/health", nil)
+
+	w := httptest.NewRecorder()
+
+	engine.ServeHTTP(w, req)
+
+	spans := recorder.GetQueuedSpans()
+
+	require.Len(t, spans, 1)
+
+	sp, ok := spans[0].Data.(instana.HTTPSpanData)
+
+	assert.True(t, ok, "span data must be of type HTTPSpanData")
+
+	assert.Empty(t, sp.Tags.PathTemplate)
+	assert.NotEmpty(t, sp.Tags.RouteID)
+	assert.Equal(t, "/projects/api/health", sp.Tags.Path)
 }
 
 func TestPropagationWithError(t *testing.T) {
