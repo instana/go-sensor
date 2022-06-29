@@ -16,6 +16,8 @@ import (
 	ot "github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
 	otlog "github.com/opentracing/opentracing-go/log"
+
+	_ "unsafe"
 )
 
 var (
@@ -51,11 +53,24 @@ func InstrumentSQLDriver(sensor *Sensor, name string, driver driver.Driver) {
 // SQLOpen is a convenience wrapper for `sql.Open()` to use the instrumented version
 // of a driver previosly registered using `instana.InstrumentSQLDriver()`
 func SQLOpen(driverName, dataSourceName string) (*sql.DB, error) {
+
 	if !strings.HasSuffix(driverName, "_with_instana") {
 		driverName += "_with_instana"
 	}
 
 	return sql.Open(driverName, dataSourceName)
+}
+
+//go:linkname drivers database/sql.drivers
+var drivers map[string]driver.Driver
+
+// SQLInstrumentAndOpen combines `InstrumentSQLDriver` and `SQLOpen` calls
+func SQLInstrumentAndOpen(sensor *Sensor, driverName, dataSourceName string) (*sql.DB, error) {
+	if d, ok := drivers[driverName]; ok {
+		InstrumentSQLDriver(sensor, driverName, d)
+	}
+
+	return SQLOpen(driverName, dataSourceName)
 }
 
 type wrappedSQLDriver struct {
