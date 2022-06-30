@@ -64,7 +64,13 @@ func SQLOpen(driverName, dataSourceName string) (*sql.DB, error) {
 //go:linkname drivers database/sql.drivers
 var drivers map[string]driver.Driver
 
-// SQLInstrumentAndOpen combines `InstrumentSQLDriver` and `SQLOpen` calls
+// SQLInstrumentAndOpen returns instrumented `*sql.DB`.
+// It takes already registered `driver.Driver` by name, instruments it and additionally registers
+// it with different name. After that it returns instrumented `*sql.DB` or error if any.
+//
+// This function can be used as a convenient shortcut for InstrumentSQLDriver and SQLOpen functions.
+// The main difference is that this approach will use the already registered driver and using InstrumentSQLDriver
+// requires to explicitly provide an instance of the driver to instrument.
 func SQLInstrumentAndOpen(sensor *Sensor, driverName, dataSourceName string) (*sql.DB, error) {
 	if d, ok := drivers[driverName]; ok {
 		InstrumentSQLDriver(sensor, driverName, d)
