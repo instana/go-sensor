@@ -2,6 +2,8 @@ github.com/davecgh/go-spew v1.1.0 h1:ZDRjVQ15GmhC3fiQ8ni8+OwkZQO4DARzQgrnXU1Liz8
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/instana/go-sensor v1.42.1 h1:HMvVpTauV5DHKaY+Q+ZA3UGZfpNs/dF0EtqsOL4yRHw=
 github.com/instana/go-sensor v1.42.1/go.mod h1:E42MelHWFz11qqaLwvgt0j98v2s2O/bq22UDkGaG0Gg=
+github.com/instana/go-sensor v1.43.0 h1:nBdYmMsOgPZbV6jg/DDB+dOyHhyhgvwSFhm7/z9ZMI4=
+github.com/instana/go-sensor v1.43.0/go.mod h1:E42MelHWFz11qqaLwvgt0j98v2s2O/bq22UDkGaG0Gg=
 github.com/instana/testify v1.6.2-0.20200721153833-94b1851f4d65 h1:T25FL3WEzgmKB0m6XCJNZ65nw09/QIp3T1yXr487D+A=
 github.com/instana/testify v1.6.2-0.20200721153833-94b1851f4d65/go.mod h1:nYhEREG/B7HUY7P+LKOrqy53TpIqmJ9JyUShcaEKtGw=
 github.com/lib/pq v1.8.0 h1:9xohqzkUwzR4Ga4ivdTcawVS89YSDVxXMa3xJX3cGzg=
