@@ -9,21 +9,14 @@ that is compatible with `database/sql`.
 Usage
 -----
 
-To start a server listening on `localhost:8081` that connects to the database using `postgres://postgres@localhost:5432/` connection string, run:
+To start a server listening on `localhost:8081` that connects to the database using `postgres://postgres:mysecretpassword@localhost:5432/postgres?sslmode=disable` connection string, run:
 
 ```bash
-go run . -l localhost:8081 -db postgres://postgres@localhost:5432/
+docker run --name http-database-greeter-postgres -e POSTGRES_PASSWORD=mysecretpassword -p 5432:5432 -d postgres
+go run . -l localhost:8081 -db postgres://postgres:mysecretpassword@localhost:5432/postgres?sslmode=disable
 ```
 
 In your browser navigate to [localhost:8081/alice](http://localhost:8081/alice) to see the greeting message for Alice.
-
-Or use make:
-```bash
-make start-docker # starts postgres docker container
-make start-app    # starts app
-make call         # calls application via curl
-make clean        # stops and remove postgres docker container
-```
 
 Trace details
 -------------
