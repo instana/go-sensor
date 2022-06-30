@@ -17,6 +17,14 @@ go run . -l localhost:8081 -db postgres://postgres@localhost:5432/
 
 In your browser navigate to [localhost:8081/alice](http://localhost:8081/alice) to see the greeting message for Alice.
 
+Or use make:
+```bash
+make start-docker # starts postgres docker container
+make start-app    # starts app
+make call         # calls application via curl
+make clean        # stops and remove postgres docker container
+```
+
 Trace details
 -------------
 
