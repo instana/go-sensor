@@ -29,20 +29,6 @@ func TestInstrumentSQLDriver(t *testing.T) {
 	})
 }
 
-func TestNoPanicWithIncorrectConnectionString(t *testing.T) {
-	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{
-		Service: "go-sensor-test",
-	}, instana.NewTestRecorder()))
-
-	instana.InstrumentSQLDriver(s, "test_driver", sqlDriver{})
-	require.Contains(t, sql.Drivers(), "test_driver_with_instana")
-
-	assert.NotPanics(t, func() {
-		_, _ = instana.SQLOpen("test_driver",
-			"postgres:mysecretpassword@localhost/postgres")
-	})
-}
-
 func TestOpenSQLDB(t *testing.T) {
 	recorder := instana.NewTestRecorder()
 	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{
@@ -234,6 +220,20 @@ func TestOpenSQLDB_MySQLKVConnString(t *testing.T) {
 			},
 		},
 	}, data.Tags)
+}
+
+func TestNoPanicWithIncorrectConnectionString(t *testing.T) {
+	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{
+		Service: "go-sensor-test",
+	}, instana.NewTestRecorder()))
+
+	instana.InstrumentSQLDriver(s, "test_driver", sqlDriver{})
+	require.Contains(t, sql.Drivers(), "test_driver_with_instana")
+
+	assert.NotPanics(t, func() {
+		_, _ = instana.SQLOpen("test_driver",
+			"postgres:mysecretpassword@localhost/postgres")
+	})
 }
 
 type sqlDriver struct{ Error error }
