@@ -1,12 +1,14 @@
 // (c) Copyright IBM Corp. 2021
 // (c) Copyright Instana Inc. 2020
 
+//go:build go1.11
 // +build go1.11
 
 package storage
 
 import (
 	"context"
+	"github.com/instana/go-sensor/instrumentation/cloud.google.com/go/tags"
 
 	"cloud.google.com/go/storage"
 	"github.com/instana/go-sensor/instrumentation/cloud.google.com/go/internal"
@@ -40,9 +42,9 @@ func (c *Client) HMACKeyHandle(projectID, accessID string) *HMACKeyHandle {
 // See https://pkg.go.dev/cloud.google.com/go/storage?tab=doc#HMACKeyHandle.Get for further details on wrapped method.
 func (hkh *HMACKeyHandle) Get(ctx context.Context, opts ...storage.HMACKeyOption) (hk *storage.HMACKey, err error) {
 	ctx = internal.StartExitSpan(ctx, "gcs", ot.Tags{
-		"gcs.op":        "hmacKeys.get",
-		"gcs.projectId": hkh.ProjectID,
-		"gcs.accessId":  hkh.AccessID,
+		tags.GcsOp:        "hmacKeys.get",
+		tags.GcsProjectId: hkh.ProjectID,
+		tags.GcsAccessId:  hkh.AccessID,
 	})
 
 	defer func() { internal.FinishSpan(ctx, err) }()
@@ -55,9 +57,9 @@ func (hkh *HMACKeyHandle) Get(ctx context.Context, opts ...storage.HMACKeyOption
 // See https://pkg.go.dev/cloud.google.com/go/storage?tab=doc#HMACKeyHandle.Delete for further details on wrapped method.
 func (hkh *HMACKeyHandle) Delete(ctx context.Context, opts ...storage.HMACKeyOption) (err error) {
 	ctx = internal.StartExitSpan(ctx, "gcs", ot.Tags{
-		"gcs.op":        "hmacKeys.delete",
-		"gcs.projectId": hkh.ProjectID,
-		"gcs.accessId":  hkh.AccessID,
+		tags.GcsOp:        "hmacKeys.delete",
+		tags.GcsProjectId: hkh.ProjectID,
+		tags.GcsAccessId:  hkh.AccessID,
 	})
 
 	defer func() { internal.FinishSpan(ctx, err) }()
@@ -70,8 +72,8 @@ func (hkh *HMACKeyHandle) Delete(ctx context.Context, opts ...storage.HMACKeyOpt
 // See https://pkg.go.dev/cloud.google.com/go/storage?tab=doc#Client.CreateHMACKey for further details on wrapped method.
 func (c *Client) CreateHMACKey(ctx context.Context, projectID, serviceAccountEmail string, opts ...storage.HMACKeyOption) (hk *storage.HMACKey, err error) {
 	ctx = internal.StartExitSpan(ctx, "gcs", ot.Tags{
-		"gcs.op":        "hmacKeys.create",
-		"gcs.projectId": projectID,
+		tags.GcsOp:        "hmacKeys.create",
+		tags.GcsProjectId: projectID,
 	})
 
 	defer func() { internal.FinishSpan(ctx, err) }()
@@ -84,9 +86,9 @@ func (c *Client) CreateHMACKey(ctx context.Context, projectID, serviceAccountEma
 // See https://pkg.go.dev/cloud.google.com/go/storage?tab=doc#HMACKeyHandle.Update for further details on wrapped method.
 func (hkh *HMACKeyHandle) Update(ctx context.Context, au storage.HMACKeyAttrsToUpdate, opts ...storage.HMACKeyOption) (hk *storage.HMACKey, err error) {
 	ctx = internal.StartExitSpan(ctx, "gcs", ot.Tags{
-		"gcs.op":        "hmacKeys.update",
-		"gcs.projectId": hkh.ProjectID,
-		"gcs.accessId":  hkh.AccessID,
+		tags.GcsOp:        "hmacKeys.update",
+		tags.GcsProjectId: hkh.ProjectID,
+		tags.GcsAccessId:  hkh.AccessID,
 	})
 
 	defer func() { internal.FinishSpan(ctx, err) }()
@@ -127,8 +129,8 @@ func (it *HMACKeysIterator) Next() (hk *storage.HMACKey, err error) {
 	}
 
 	ctx := internal.StartExitSpan(it.ctx, "gcs", ot.Tags{
-		"gcs.op":        "hmacKeys.list",
-		"gcs.projectId": it.ProjectID,
+		tags.GcsOp:        "hmacKeys.list",
+		tags.GcsProjectId: it.ProjectID,
 	})
 
 	defer func() {

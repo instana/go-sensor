@@ -1,12 +1,14 @@
 // (c) Copyright IBM Corp. 2021
 // (c) Copyright Instana Inc. 2020
 
+//go:build go1.11
 // +build go1.11
 
 package storage
 
 import (
 	"context"
+	"github.com/instana/go-sensor/instrumentation/cloud.google.com/go/tags"
 	"strings"
 
 	"cloud.google.com/go/storage"
@@ -42,11 +44,11 @@ type Copier struct {
 // See https://pkg.go.dev/cloud.google.com/go/storage?tab=doc#Copier.Run for further details on wrapped method.
 func (c *Copier) Run(ctx context.Context) (attrs *storage.ObjectAttrs, err error) {
 	ctx = internal.StartExitSpan(ctx, "gcs", ot.Tags{
-		"gcs.op":                "objects.copy",
-		"gcs.sourceBucket":      c.SourceBucket,
-		"gcs.sourceObject":      c.SourceName,
-		"gcs.destinationBucket": c.DestinationBucket,
-		"gcs.destinationObject": c.DestinationName,
+		tags.GcsOp:                "objects.copy",
+		tags.GcsSourceBucket:      c.SourceBucket,
+		tags.GcsSourceObject:      c.SourceName,
+		tags.GcsDestinationBucket: c.DestinationBucket,
+		tags.GcsDestinationObject: c.DestinationName,
 	})
 
 	defer func() { internal.FinishSpan(ctx, err) }()
@@ -88,10 +90,10 @@ type Composer struct {
 // See https://pkg.go.dev/cloud.google.com/go/storage?tab=doc#Composer.Run for further details on wrapped method.
 func (c *Composer) Run(ctx context.Context) (attrs *storage.ObjectAttrs, err error) {
 	ctx = internal.StartExitSpan(ctx, "gcs", ot.Tags{
-		"gcs.op":                "objects.compose",
-		"gcs.destinationBucket": c.DestinationBucket,
-		"gcs.destinationObject": c.DestinationName,
-		"gcs.sourceObjects":     strings.Join(c.SourceObjects, ","),
+		tags.GcsOp:                "objects.compose",
+		tags.GcsDestinationBucket: c.DestinationBucket,
+		tags.GcsDestinationObject: c.DestinationName,
+		tags.GcsSourceObjects:     strings.Join(c.SourceObjects, ","),
 	})
 
 	defer func() { internal.FinishSpan(ctx, err) }()

@@ -1,12 +1,14 @@
 // (c) Copyright IBM Corp. 2021
 // (c) Copyright Instana Inc. 2020
 
+//go:build go1.11
 // +build go1.11
 
 package storage
 
 import (
 	"context"
+	"github.com/instana/go-sensor/instrumentation/cloud.google.com/go/tags"
 
 	"cloud.google.com/go/storage"
 	"github.com/instana/go-sensor/instrumentation/cloud.google.com/go/internal"
@@ -92,9 +94,9 @@ func (o *ObjectHandle) Key(encryptionKey []byte) *ObjectHandle {
 // See https://pkg.go.dev/cloud.google.com/go/storage?tab=doc#ObjectHandle.Attrs for further details on wrapped method.
 func (o *ObjectHandle) Attrs(ctx context.Context) (attrs *storage.ObjectAttrs, err error) {
 	ctx = internal.StartExitSpan(ctx, "gcs", ot.Tags{
-		"gcs.op":     "objects.attrs",
-		"gcs.bucket": o.Bucket,
-		"gcs.object": o.Name,
+		tags.GcsOp:     "objects.attrs",
+		tags.GcsBucket: o.Bucket,
+		tags.GcsObject: o.Name,
 	})
 
 	defer func() { internal.FinishSpan(ctx, err) }()
@@ -107,9 +109,9 @@ func (o *ObjectHandle) Attrs(ctx context.Context) (attrs *storage.ObjectAttrs, e
 // See https://pkg.go.dev/cloud.google.com/go/storage?tab=doc#ObjectHandle.Update for further details on wrapped method.
 func (o *ObjectHandle) Update(ctx context.Context, uattrs storage.ObjectAttrsToUpdate) (oa *storage.ObjectAttrs, err error) {
 	ctx = internal.StartExitSpan(ctx, "gcs", ot.Tags{
-		"gcs.op":     "objects.patch",
-		"gcs.bucket": o.Bucket,
-		"gcs.object": o.Name,
+		tags.GcsOp:     "objects.patch",
+		tags.GcsBucket: o.Bucket,
+		tags.GcsObject: o.Name,
 	})
 
 	defer func() { internal.FinishSpan(ctx, err) }()
@@ -122,9 +124,9 @@ func (o *ObjectHandle) Update(ctx context.Context, uattrs storage.ObjectAttrsToU
 // See https://pkg.go.dev/cloud.google.com/go/storage?tab=doc#ObjectHandle.Delete for further details on wrapped method.
 func (o *ObjectHandle) Delete(ctx context.Context) (err error) {
 	ctx = internal.StartExitSpan(ctx, "gcs", ot.Tags{
-		"gcs.op":     "objects.delete",
-		"gcs.bucket": o.Bucket,
-		"gcs.object": o.Name,
+		tags.GcsOp:     "objects.delete",
+		tags.GcsBucket: o.Bucket,
+		tags.GcsObject: o.Name,
 	})
 
 	defer func() { internal.FinishSpan(ctx, err) }()
@@ -161,8 +163,8 @@ func (o *ObjectHandle) NewWriter(ctx context.Context) *Writer {
 // See https://pkg.go.dev/cloud.google.com/go/storage?tab=doc#Client.ServiceAccount for further details on wrapped method.
 func (c *Client) ServiceAccount(ctx context.Context, projectID string) (email string, err error) {
 	ctx = internal.StartExitSpan(ctx, "gcs", ot.Tags{
-		"gcs.op":        "serviceAccount.get",
-		"gcs.projectId": projectID,
+		tags.GcsOp:        "serviceAccount.get",
+		tags.GcsProjectId: projectID,
 	})
 
 	defer func() { internal.FinishSpan(ctx, err) }()
