@@ -222,7 +222,7 @@ func TestOpenSQLDB_MySQLKVConnString(t *testing.T) {
 	}, data.Tags)
 }
 
-func TestNoPanicWithIncorrectConnectionString(t *testing.T) {
+func TestNoPanicWithNotParsableConnectionString(t *testing.T) {
 	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{
 		Service: "go-sensor-test",
 	}, instana.NewTestRecorder()))
