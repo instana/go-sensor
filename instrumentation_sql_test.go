@@ -30,7 +30,11 @@ func TestInstrumentSQLDriver(t *testing.T) {
 }
 
 func TestNoPanicWithIncorrectConnectionString(t *testing.T) {
-	instana.InstrumentSQLDriver(&instana.Sensor{}, "test_driver", sqlDriver{})
+	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{
+		Service: "go-sensor-test",
+	}, instana.NewTestRecorder()))
+
+	instana.InstrumentSQLDriver(s, "test_driver", sqlDriver{})
 	require.Contains(t, sql.Drivers(), "test_driver_with_instana")
 
 	assert.NotPanics(t, func() {
