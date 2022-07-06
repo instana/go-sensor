@@ -361,11 +361,16 @@ func parseDBConnDetailsURI(connStr string) (dbConnDetails, bool) {
 		return dbConnDetails{}, false
 	}
 
+	path := ""
+	if len(u.Path) > 1 {
+		path = u.Path[1:]
+	}
+
 	details := dbConnDetails{
 		RawString: connStr,
 		Host:      u.Hostname(),
 		Port:      u.Port(),
-		Schema:    u.Path[1:],
+		Schema:    path,
 	}
 
 	if u.User != nil {
