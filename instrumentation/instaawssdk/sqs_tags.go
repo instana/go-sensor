@@ -14,48 +14,48 @@ func extractSQSTags(req *request.Request) (opentracing.Tags, error) {
 	switch params := req.Params.(type) {
 	case *sqs.ReceiveMessageInput:
 		return opentracing.Tags{
-			"sqs.queue": aws.StringValue(params.QueueUrl),
+			sqsQueue: aws.StringValue(params.QueueUrl),
 		}, nil
 	case *sqs.SendMessageInput:
 		return opentracing.Tags{
-			"sqs.type":  "single.sync",
-			"sqs.queue": aws.StringValue(params.QueueUrl),
-			"sqs.group": aws.StringValue(params.MessageGroupId),
+			sqsType:  "single.sync",
+			sqsQueue: aws.StringValue(params.QueueUrl),
+			sqsGroup: aws.StringValue(params.MessageGroupId),
 		}, nil
 	case *sqs.SendMessageBatchInput:
 		return opentracing.Tags{
-			"sqs.type":  "batch.sync",
-			"sqs.queue": aws.StringValue(params.QueueUrl),
-			"sqs.size":  len(params.Entries),
+			sqsType:  "batch.sync",
+			sqsQueue: aws.StringValue(params.QueueUrl),
+			sqsSize:  len(params.Entries),
 		}, nil
 	case *sqs.GetQueueUrlInput:
 		return opentracing.Tags{
-			"sqs.type": "get.queue",
+			sqsType: "get.queue",
 			// the queue url will be returned as a part of response,
 			// so we'd need to update this tag once queue is created.
 			// however, we keep the name for now in case there will
 			// be an error to display the desired name in ui
-			"sqs.queue": aws.StringValue(params.QueueName),
+			sqsQueue: aws.StringValue(params.QueueName),
 		}, nil
 	case *sqs.CreateQueueInput:
 		return opentracing.Tags{
-			"sqs.type": "create.queue",
+			sqsType: "create.queue",
 			// the queue url will be returned as a part of response,
 			// so we'd need to update this tag once queue is created.
 			// however, we keep the name for now in case there will
 			// be an error to display the desired name in ui
-			"sqs.queue": aws.StringValue(params.QueueName),
+			sqsQueue: aws.StringValue(params.QueueName),
 		}, nil
 	case *sqs.DeleteMessageInput:
 		return opentracing.Tags{
-			"sqs.type":  "delete.single.sync",
-			"sqs.queue": aws.StringValue(params.QueueUrl),
+			sqsType:  "delete.single.sync",
+			sqsQueue: aws.StringValue(params.QueueUrl),
 		}, nil
 	case *sqs.DeleteMessageBatchInput:
 		return opentracing.Tags{
-			"sqs.type":  "delete.batch.sync",
-			"sqs.queue": aws.StringValue(params.QueueUrl),
-			"sqs.size":  len(params.Entries),
+			sqsType:  "delete.batch.sync",
+			sqsQueue: aws.StringValue(params.QueueUrl),
+			sqsSize:  len(params.Entries),
 		}, nil
 	default:
 		return nil, errMethodNotInstrumented

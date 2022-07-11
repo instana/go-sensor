@@ -48,6 +48,6 @@ func FinalizeDynamoDBSpan(req *request.Request) {
 
 	if req.Error != nil {
 		sp.LogFields(otlog.Error(req.Error))
-		sp.SetTag("dynamodb.error", req.Error.Error())
+		sp.SetTag(dynamodbError, req.Error.Error())
 	}
 }
