@@ -8,7 +8,7 @@ package storage
 
 import (
 	"context"
-	"github.com/instana/go-sensor/instrumentation/cloud.google.com/go/tags"
+	"github.com/instana/go-sensor/instrumentation/cloud.google.com/go/internal/tags"
 	"strings"
 
 	"cloud.google.com/go/storage"

@@ -7,11 +7,10 @@
 package storage
 
 import (
-	"context"
-	"github.com/instana/go-sensor/instrumentation/cloud.google.com/go/tags"
-
 	"cloud.google.com/go/storage"
+	"context"
 	"github.com/instana/go-sensor/instrumentation/cloud.google.com/go/internal"
+	"github.com/instana/go-sensor/instrumentation/cloud.google.com/go/internal/tags"
 	ot "github.com/opentracing/opentracing-go"
 	"google.golang.org/api/iterator"
 )

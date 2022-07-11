@@ -10,7 +10,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/instana/go-sensor/instrumentation/cloud.google.com/go/tags"
+	"github.com/instana/go-sensor/instrumentation/cloud.google.com/go/internal/tags"
 	"io/ioutil"
 	"net/http"
 	"strings"
