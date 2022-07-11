@@ -1,3 +1,5 @@
+// (c) Copyright IBM Corp. 2022
+
 package instalambda
 
 const lambdaArn = "lambda.arn"
