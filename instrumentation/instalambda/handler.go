@@ -59,14 +59,14 @@ func (h *wrappedHandler) Invoke(ctx context.Context, payload []byte) ([]byte, er
 	}
 
 	opts := append([]opentracing.StartSpanOption{opentracing.Tags{
-		"lambda.arn":     lc.InvokedFunctionArn + ":" + lambdacontext.FunctionVersion,
-		"lambda.name":    lambdacontext.FunctionName,
-		"lambda.version": lambdacontext.FunctionVersion,
+		lambdaArn:     lc.InvokedFunctionArn + ":" + lambdacontext.FunctionVersion,
+		lambdaName:    lambdacontext.FunctionName,
+		lambdaVersion: lambdacontext.FunctionVersion,
 	}}, h.triggerEventSpanOptions(payload, lc.ClientContext)...)
 
 	sp := h.sensor.Tracer().StartSpan("aws.lambda.entry", opts...)
 	h.onColdStart.Do(func() {
-		sp.SetTag("lambda.coldStart", true)
+		sp.SetTag(lambdaColdStart, true)
 	})
 
 	// Here we create a separate context.Context to finalize and send the span. This context
@@ -93,7 +93,7 @@ func (h *wrappedHandler) Invoke(ctx context.Context, payload []byte) ([]byte, er
 			remainingTime := time.Until(originalDeadline).Truncate(time.Millisecond)
 			h.sensor.Logger().Debug("heuristical timeout detection was triggered with ", remainingTime, " left")
 
-			sp.SetTag("lambda.msleft", int64(remainingTime)/1e6) // cast time.Duration to int64 for compatibility with older Go versions
+			sp.SetTag(lambdaMsLeft, int64(remainingTime)/1e6) // cast time.Duration to int64 for compatibility with older Go versions
 			sp.LogFields(otlog.Error(errHandlerTimedOut))
 		}
 
@@ -210,8 +210,9 @@ func (h *wrappedHandler) triggerEventSpanOptions(payload []byte, lcc lambdaconte
 
 		return []opentracing.StartSpanOption{h.extractSQSTriggerTags(v)}
 	case invokeRequestType:
+
 		tags := opentracing.Tags{
-			"lambda.trigger": "aws:lambda.invoke",
+			lambdaTrigger: "aws:lambda.invoke",
 		}
 
 		opts := []opentracing.StartSpanOption{tags}
@@ -248,15 +249,15 @@ func (h *wrappedHandler) extractParentContext(headers map[string]string) (opentr
 
 func (h *wrappedHandler) extractAPIGatewayTriggerTags(evt events.APIGatewayProxyRequest) opentracing.Tags {
 	tags := opentracing.Tags{
-		"lambda.trigger": "aws:api.gateway",
-		"http.method":    evt.HTTPMethod,
-		"http.url":       evt.Path,
-		"http.path_tpl":  evt.Resource,
-		"http.params":    h.sanitizeHTTPParams(evt.QueryStringParameters, evt.MultiValueQueryStringParameters).Encode(),
+		lambdaTrigger: "aws:api.gateway",
+		httpMethod:    evt.HTTPMethod,
+		httpUrl:       evt.Path,
+		httpPathTpl:   evt.Resource,
+		httpParams:    h.sanitizeHTTPParams(evt.QueryStringParameters, evt.MultiValueQueryStringParameters).Encode(),
 	}
 
 	if headers := h.collectHTTPHeaders(evt.Headers, evt.MultiValueHeaders); len(headers) > 0 {
-		tags["http.header"] = headers
+		tags[httpHeader] = headers
 	}
 
 	return tags
@@ -270,15 +271,15 @@ func (h *wrappedHandler) extractAPIGatewayV2TriggerTags(evt events.APIGatewayV2H
 	}
 
 	tags := opentracing.Tags{
-		"lambda.trigger": "aws:api.gateway",
-		"http.method":    evt.RequestContext.HTTP.Method,
-		"http.url":       evt.RequestContext.HTTP.Path,
-		"http.path_tpl":  routeKeyPath,
-		"http.params":    h.sanitizeHTTPParams(evt.QueryStringParameters, nil).Encode(),
+		lambdaTrigger: "aws:api.gateway",
+		httpMethod:    evt.RequestContext.HTTP.Method,
+		httpUrl:       evt.RequestContext.HTTP.Path,
+		httpPathTpl:   routeKeyPath,
+		httpParams:    h.sanitizeHTTPParams(evt.QueryStringParameters, nil).Encode(),
 	}
 
 	if headers := h.collectHTTPHeaders(evt.Headers, nil); len(headers) > 0 {
-		tags["http.header"] = headers
+		tags[httpHeader] = headers
 	}
 
 	return tags
@@ -286,14 +287,14 @@ func (h *wrappedHandler) extractAPIGatewayV2TriggerTags(evt events.APIGatewayV2H
 
 func (h *wrappedHandler) extractALBTriggerTags(evt events.ALBTargetGroupRequest) opentracing.Tags {
 	tags := opentracing.Tags{
-		"lambda.trigger": "aws:application.load.balancer",
-		"http.method":    evt.HTTPMethod,
-		"http.url":       evt.Path,
-		"http.params":    h.sanitizeHTTPParams(evt.QueryStringParameters, evt.MultiValueQueryStringParameters).Encode(),
+		lambdaTrigger: "aws:application.load.balancer",
+		httpMethod:    evt.HTTPMethod,
+		httpUrl:       evt.Path,
+		httpParams:    h.sanitizeHTTPParams(evt.QueryStringParameters, evt.MultiValueQueryStringParameters).Encode(),
 	}
 
 	if headers := h.collectHTTPHeaders(evt.Headers, evt.MultiValueHeaders); len(headers) > 0 {
-		tags["http.header"] = headers
+		tags[httpHeader] = headers
 	}
 
 	return tags
@@ -301,9 +302,9 @@ func (h *wrappedHandler) extractALBTriggerTags(evt events.ALBTargetGroupRequest)
 
 func (h *wrappedHandler) extractCloudWatchTriggerTags(evt events.CloudWatchEvent) opentracing.Tags {
 	return opentracing.Tags{
-		"lambda.trigger":              "aws:cloudwatch.events",
-		"cloudwatch.events.id":        evt.ID,
-		"cloudwatch.events.resources": evt.Resources,
+		lambdaTrigger:             "aws:cloudwatch.events",
+		cloudwatchEventsId:        evt.ID,
+		cloudwatchEventsResources: evt.Resources,
 	}
 }
 
@@ -311,8 +312,8 @@ func (h *wrappedHandler) extractCloudWatchLogsTriggerTags(evt events.CloudwatchL
 	logs, err := evt.AWSLogs.Parse()
 	if err != nil {
 		return opentracing.Tags{
-			"lambda.trigger":                "aws:cloudwatch.logs",
-			"cloudwatch.logs.decodingError": err,
+			lambdaTrigger:               "aws:cloudwatch.logs",
+			cloudwatchLogsDecodingError: err,
 		}
 	}
 
@@ -322,10 +323,10 @@ func (h *wrappedHandler) extractCloudWatchLogsTriggerTags(evt events.CloudwatchL
 	}
 
 	return opentracing.Tags{
-		"lambda.trigger":         "aws:cloudwatch.logs",
-		"cloudwatch.logs.group":  logs.LogGroup,
-		"cloudwatch.logs.stream": logs.LogStream,
-		"cloudwatch.logs.events": e,
+		lambdaTrigger:        "aws:cloudwatch.logs",
+		cloudwatchLogsGroup:  logs.LogGroup,
+		cloudwatchLogsStream: logs.LogStream,
+		cloudwatchLogsEvents: e,
 	}
 }
 
@@ -340,8 +341,8 @@ func (h *wrappedHandler) extractS3TriggerTags(evt events.S3Event) opentracing.Ta
 	}
 
 	return opentracing.Tags{
-		"lambda.trigger": "aws:s3",
-		"s3.events":      e,
+		lambdaTrigger: "aws:s3",
+		s3Events:      e,
 	}
 }
 
@@ -354,8 +355,8 @@ func (h *wrappedHandler) extractSQSTriggerTags(evt events.SQSEvent) opentracing.
 	}
 
 	return opentracing.Tags{
-		"lambda.trigger": "aws:sqs",
-		"sqs.messages":   msgs,
+		lambdaTrigger: "aws:sqs",
+		sqsMessages:   msgs,
 	}
 }
 
