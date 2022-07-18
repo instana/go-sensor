@@ -29,25 +29,39 @@ type prevSpan struct {
 	batchCmds []string
 }
 
-//Dial connects to the Redis server at the given network and address using the specified options along with instrumentation code.
+//Dial connects to the Redis server at the given network and address using the 
+//specified options along with instrumentation code.
 func Dial(sensor *instana.Sensor, network, address string, options ...redis.DialOption) (redis.Conn, error) {
 	conn, err := redis.Dial(network, address, options...)
 	if strings.HasPrefix(address, ":") {
 		address = "localhost" + address
 	}
-	return &instaRedigoConn{Conn: conn, sensor: sensor, address: address, prevSpan: nil}, err
+    if err != nil {
+        return conn, err
+    } else {
+	    return &instaRedigoConn{Conn: conn, sensor: sensor, address: address, prevSpan: nil}, err
+    }
 }
 
 //DialURL wraps DialURLContext using context.Background along with the instrumentation code.
 func DialURL(sensor *instana.Sensor, rawurl string, options ...redis.DialOption) (redis.Conn, error) {
 	conn, err := redis.DialURL(rawurl, options...)
-	return &instaRedigoConn{conn, sensor, rawurl, nil}, err
+    if err != nil {
+        return conn, err
+    } else {
+	    return &instaRedigoConn{conn, sensor, rawurl, nil}, err
+    }
 }
 
-//DialURLContext connects to a Redis server at the given URL using the Redis URI scheme along with the instrumentation code.
+//DialURLContext connects to a Redis server at the given URL using the Redis 
+//URI scheme along with the instrumentation code.
 func DialURLContext(sensor *instana.Sensor, ctx context.Context, rawurl string, options ...redis.DialOption) (redis.Conn, error) {
 	conn, err := redis.DialURLContext(ctx, rawurl, options...)
-	return &instaRedigoConn{conn, sensor, rawurl, nil}, err
+    if err != nil {
+        return conn, err
+    } else {
+	    return &instaRedigoConn{conn, sensor, rawurl, nil}, err
+    }
 }
 
 //NewConn returns a new Redigo connection for the given net connection along with the instrumentation code.
@@ -57,7 +71,11 @@ func NewConn(sensor *instana.Sensor, netConn net.Conn, readTimeout, writeTimeout
 	return &instaRedigoConn{conn, sensor, addr, nil}
 }
 
-/// Do sends a command to the server and returns the received reply and collect the instrumentation details. Inorder to capture the correlated span information, create a context from the parent span and pass it as an argument along with the other arguments. The Do API will retrieve the span information from the context and record the correlated span information.
+// Do sends a command to the server and returns the received reply and collect 
+//the instrumentation details. Inorder to capture the correlated span information, 
+//create a context from the parent span and pass it as an argument along with 
+//the other arguments. The Do API will retrieve the span information from the 
+//context and record the correlated span information.
 func (c *instaRedigoConn) Do(commandName string, args ...interface{}) (reply interface{}, err error) {
 	var cmdArgs []interface{}
 	ctx := context.Background()
@@ -115,7 +133,11 @@ func (c *instaRedigoConn) Do(commandName string, args ...interface{}) (reply int
 	return reply, err
 }
 
-// Send writes the command to the client's output buffer and collect the instrumentation details.Inorder to capture the correlated span information, create a context from the parent span and pass it as an argument along with the other arguments. The Send API will retrieve the span information from the context and record the correlated span information.
+// Send writes the command to the client's output buffer and collect the 
+//instrumentation details.Inorder to capture the correlated span information, 
+//create a context from the parent span and pass it as an argument along with 
+//the other arguments. The Send API will retrieve the span information from the 
+//context and record the correlated span information.
 func (c *instaRedigoConn) Send(commandName string, args ...interface{}) (err error) {
 	var cmdArgs []interface{}
     //Separating the parent context from the arguments
