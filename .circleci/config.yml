@@ -84,31 +84,32 @@ workflows:
       - build:
           name: "go1.15"
           image: "circleci/golang:1.15"
+          exclude_dirs: "./instrumentation/instaredigo"
       - build:
           name: "go1.14"
           image: "circleci/golang:1.14"
-          exclude_dirs: "./example/echo ./instrumentation/instaecho"
+          exclude_dirs: "./example/echo ./instrumentation/instaecho ./instrumentation/instaredigo"
       - build:
           name: "go1.13"
           image: "circleci/golang:1.13"
-          exclude_dirs: "./example/echo ./instrumentation/instaecho"
+          exclude_dirs: "./example/echo ./instrumentation/instaecho ./instrumentation/instaredigo"
       - build:
           name: "go1.12"
           image: "circleci/golang:1.12"
           go111module: "on"
-          exclude_dirs: "./example/echo ./instrumentation/instaecho ./instrumentation/instapgx"
+          exclude_dirs: "./example/echo ./instrumentation/instaecho ./instrumentation/instapgx ./instrumentation/instaredigo"
       - build:
           name: "go1.11"
           image: "circleci/golang:1.11"
           go111module: "on"
-          exclude_dirs: "./example/gorillamux ./instrumentation/instamux ./example/echo ./instrumentation/instaecho ./instrumentation/instapgx"
+          exclude_dirs: "./example/gorillamux ./instrumentation/instamux ./example/echo ./instrumentation/instaecho ./instrumentation/instapgx ./instrumentation/instaredigo"
       - build:
           name: "go1.10"
           image: "circleci/golang:1.10"
           vendor_deps: "yes"
-          exclude_dirs: "./instrumentation/cloud.google.com/go ./example/gin  ./instrumentation/instagin ./example/gorillamux ./instrumentation/instamux ./example/echo ./instrumentation/instaecho ./instrumentation/instapgx"
+          exclude_dirs: "./instrumentation/cloud.google.com/go ./example/gin  ./instrumentation/instagin ./example/gorillamux ./instrumentation/instamux ./example/echo ./instrumentation/instaecho ./instrumentation/instapgx ./instrumentation/instaredigo"
       - build:
           name: "go1.9"
           image: "circleci/golang:1.9"
           vendor_deps: "yes"
-          exclude_dirs: "./instrumentation/cloud.google.com/go ./instrumentation/instagin ./example/http-database-greeter ./example/grpc-client-server ./example/grpc-client-server/pb ./example/gin ./example/gorillamux ./instrumentation/instamux ./example/echo ./instrumentation/instaecho ./instrumentation/instapgx"
+          exclude_dirs: "./instrumentation/cloud.google.com/go ./instrumentation/instagin ./example/http-database-greeter ./example/grpc-client-server ./example/grpc-client-server/pb ./example/gin ./example/gorillamux ./instrumentation/instamux ./example/echo ./instrumentation/instaecho ./instrumentation/instapgx ./instrumentation/instaredigo"
