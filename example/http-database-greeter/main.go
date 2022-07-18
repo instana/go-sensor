@@ -1,6 +1,7 @@
 // (c) Copyright IBM Corp. 2021
 // (c) Copyright Instana Inc. 2020
 
+//go:build go1.10
 // +build go1.10
 
 package main
@@ -19,7 +20,7 @@ import (
 	instana "github.com/instana/go-sensor"
 	"github.com/opentracing/opentracing-go"
 
-	"github.com/lib/pq"
+	_ "github.com/lib/pq"
 )
 
 var (
@@ -44,15 +45,10 @@ func main() {
 	// tracer into all instrumented methods.
 	sensor := instana.NewSensor("greeter-server")
 
-	// We're going to use the "postgres" driver provided by github/lib/pq to log the last time
-	// we greeted user. in order to trace the calls to the database we need to instrument its
-	// driver first.
-	instana.InstrumentSQLDriver(sensor, "postgres", &pq.Driver{})
-
 	// Create a new DB connection using instana.SQLOpen(). This is a drop-in replacement for
 	// database/sql.Open() that makes sure that the instrumented version of a driver is used.
 	var err error
-	db, err = instana.SQLOpen("postgres", args.DBConnStr)
+	db, err = instana.SQLInstrumentAndOpen(sensor, "postgres", args.DBConnStr)
 	if err != nil {
 		log.Fatalln(err)
 	}

@@ -222,6 +222,20 @@ func TestOpenSQLDB_MySQLKVConnString(t *testing.T) {
 	}, data.Tags)
 }
 
+func TestNoPanicWithNotParsableConnectionString(t *testing.T) {
+	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{
+		Service: "go-sensor-test",
+	}, instana.NewTestRecorder()))
+
+	instana.InstrumentSQLDriver(s, "test_driver", sqlDriver{})
+	require.Contains(t, sql.Drivers(), "test_driver_with_instana")
+
+	assert.NotPanics(t, func() {
+		_, _ = instana.SQLOpen("test_driver",
+			"postgres:mysecretpassword@localhost/postgres")
+	})
+}
+
 type sqlDriver struct{ Error error }
 
 func (drv sqlDriver) Open(name string) (driver.Conn, error) { return sqlConn{drv.Error}, nil } //nolint:gosimple

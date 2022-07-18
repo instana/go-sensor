@@ -16,6 +16,8 @@ import (
 	ot "github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
 	otlog "github.com/opentracing/opentracing-go/log"
+
+	_ "unsafe"
 )
 
 var (
@@ -51,11 +53,30 @@ func InstrumentSQLDriver(sensor *Sensor, name string, driver driver.Driver) {
 // SQLOpen is a convenience wrapper for `sql.Open()` to use the instrumented version
 // of a driver previosly registered using `instana.InstrumentSQLDriver()`
 func SQLOpen(driverName, dataSourceName string) (*sql.DB, error) {
+
 	if !strings.HasSuffix(driverName, "_with_instana") {
 		driverName += "_with_instana"
 	}
 
 	return sql.Open(driverName, dataSourceName)
+}
+
+//go:linkname drivers database/sql.drivers
+var drivers map[string]driver.Driver
+
+// SQLInstrumentAndOpen returns instrumented `*sql.DB`.
+// It takes already registered `driver.Driver` by name, instruments it and additionally registers
+// it with different name. After that it returns instrumented `*sql.DB` or error if any.
+//
+// This function can be used as a convenient shortcut for InstrumentSQLDriver and SQLOpen functions.
+// The main difference is that this approach will use the already registered driver and using InstrumentSQLDriver
+// requires to explicitly provide an instance of the driver to instrument.
+func SQLInstrumentAndOpen(sensor *Sensor, driverName, dataSourceName string) (*sql.DB, error) {
+	if d, ok := drivers[driverName]; ok {
+		InstrumentSQLDriver(sensor, driverName, d)
+	}
+
+	return SQLOpen(driverName, dataSourceName)
 }
 
 type wrappedSQLDriver struct {
@@ -340,11 +361,16 @@ func parseDBConnDetailsURI(connStr string) (dbConnDetails, bool) {
 		return dbConnDetails{}, false
 	}
 
+	path := ""
+	if len(u.Path) > 1 {
+		path = u.Path[1:]
+	}
+
 	details := dbConnDetails{
 		RawString: connStr,
 		Host:      u.Hostname(),
 		Port:      u.Port(),
-		Schema:    u.Path[1:],
+		Schema:    path,
 	}
 
 	if u.User != nil {
