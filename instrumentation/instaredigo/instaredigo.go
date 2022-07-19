@@ -30,64 +30,135 @@ type prevSpan struct {
 	batchCmds []string
 }
 
-//DoContext sends a command to server and returns the received reply along with 
+func isTransactionEnding(commandName string) bool {
+	return strings.ToUpper(commandName) == "EXEC" || strings.ToUpper(commandName) == "DISCARD"
+}
+
+func genericDo(conn redis.Conn, ctx context.Context, timeout time.Duration, commandName string, args ...interface{}) (interface{}, error) {
+	switch c := conn.(type) {
+	case redis.ConnWithContext:
+		return c.DoContext(ctx, commandName, args...)
+	case redis.ConnWithTimeout:
+		return c.DoWithTimeout(timeout, commandName, args...)
+	// case redis.Conn:
+	default:
+		return c.Do(commandName, args...)
+	}
+}
+
+func genericHandler(c instaRedigoConn, commandName string, ctx context.Context, conn redis.Conn, timeout time.Duration, args ...interface{}) (interface{}, error) {
+	if c.prevSpan != nil {
+		if isTransactionEnding(commandName) {
+			// reply, err = cwc.DoContext(ctx, commandName, args...)
+			reply, err := genericDo(conn, ctx, time.Millisecond, commandName, args)
+			if err != nil {
+				c.prevSpan.span.SetTag("redis.error", err.Error())
+				c.prevSpan.span.LogFields(otlog.Object("error", err.Error()))
+			}
+			c.prevSpan.span.Finish()
+			c.prevSpan = nil
+			return reply, err
+		} else {
+			c.prevSpan.batchCmds = append(c.prevSpan.batchCmds, commandName)
+			c.prevSpan.span.SetTag("redis.subCommands", c.prevSpan.batchCmds)
+			reply, err := genericDo(conn, ctx, time.Millisecond, commandName, args)
+			if err != nil {
+				c.prevSpan.span.SetTag("redis.error", err.Error())
+				c.prevSpan.span.LogFields(otlog.Object("error", err.Error()))
+			}
+			return reply, err
+		}
+	} else {
+		tracer := c.sensor.Tracer()
+		opts := []ot.StartSpanOption{
+			ot.Tags{
+				"redis.connection": c.address,
+			},
+		}
+		if ps, ok := instana.SpanFromContext(ctx); ok {
+			tracer = ps.Tracer()
+			opts = append(opts, ot.ChildOf(ps.Context()))
+		}
+		span := tracer.StartSpan("redis", opts...)
+		// if strings.ToUpper(commandName) == "MULTI" {
+		// c.prevSpan = &prevSpan{span, nil}
+		// }
+		span.SetTag("redis.command", commandName)
+		// reply, err := conn.DoContext(ctx, commandName, args...)
+		reply, err := genericDo(conn, ctx, time.Millisecond, commandName, args)
+		if err != nil {
+			span.SetTag("redis.error", err.Error())
+			span.LogFields(otlog.Object("error", err.Error()))
+		}
+		if strings.ToUpper(commandName) != "MULTI" {
+			c.prevSpan = &prevSpan{span, nil}
+			span.Finish()
+		}
+		return reply, err
+	}
+}
+
+//DoContext sends a command to server and returns the received reply along with
 //the instrumentation.
 func (c *instaRedigoConn) DoContext(ctx context.Context, commandName string,
 	args ...interface{}) (reply interface{}, err error) {
 	if cwc, ok := c.Conn.(redis.ConnWithContext); ok {
-		if c.prevSpan != nil {
-			if strings.ToUpper(commandName) == "EXEC" || strings.ToUpper(commandName) == "DISCARD" {
-				reply, err = cwc.DoContext(ctx, commandName, args...)
-				if err != nil {
-					c.prevSpan.span.SetTag("redis.error", err.Error())
-					c.prevSpan.span.LogFields(otlog.Object("error", err.Error()))
-				}
-				c.prevSpan.span.Finish()
-				c.prevSpan = nil
-			} else {
-				c.prevSpan.batchCmds = append(c.prevSpan.batchCmds, commandName)
-				c.prevSpan.span.SetTag("redis.subCommands", c.prevSpan.batchCmds)
-				reply, err = cwc.DoContext(ctx, commandName, args...)
-				if err != nil {
-					c.prevSpan.span.SetTag("redis.error", err.Error())
-					c.prevSpan.span.LogFields(otlog.Object("error", err.Error()))
-				}
-			}
-		} else {
-			tracer := c.sensor.Tracer()
-			opts := []ot.StartSpanOption{
-				ot.Tags{
-					"redis.connection": c.address,
-				},
-			}
-			if ps, ok := instana.SpanFromContext(ctx); ok {
-				tracer = ps.Tracer()
-				opts = append(opts, ot.ChildOf(ps.Context()))
-			}
-			span := tracer.StartSpan("redis", opts...)
-			if strings.ToUpper(commandName) == "MULTI" {
-				c.prevSpan = &prevSpan{span, nil}
-			}
-			span.SetTag("redis.command", commandName)
-			reply, err = cwc.DoContext(ctx, commandName, args...)
-			if err != nil {
-				span.SetTag("redis.error", err.Error())
-				span.LogFields(otlog.Object("error", err.Error()))
-			}
-			if strings.ToUpper(commandName) != "MULTI" {
-				span.Finish()
-			}
-		}
-		return reply, err
+		return genericHandler(*c, commandName, ctx, cwc, time.Microsecond, args)
+		// if c.prevSpan != nil {
+		// 	if isTransactionEnding(commandName) {
+		// 		// reply, err = cwc.DoContext(ctx, commandName, args...)
+		// 		reply, err = genericDo(cwc, ctx, time.Millisecond, commandName, args)
+		// 		if err != nil {
+		// 			c.prevSpan.span.SetTag("redis.error", err.Error())
+		// 			c.prevSpan.span.LogFields(otlog.Object("error", err.Error()))
+		// 		}
+		// 		c.prevSpan.span.Finish()
+		// 		c.prevSpan = nil
+		// 	} else {
+		// 		c.prevSpan.batchCmds = append(c.prevSpan.batchCmds, commandName)
+		// 		c.prevSpan.span.SetTag("redis.subCommands", c.prevSpan.batchCmds)
+		// 		reply, err = genericDo(cwc, ctx, time.Millisecond, commandName, args)
+		// 		if err != nil {
+		// 			c.prevSpan.span.SetTag("redis.error", err.Error())
+		// 			c.prevSpan.span.LogFields(otlog.Object("error", err.Error()))
+		// 		}
+		// 	}
+		// } else {
+		// 	tracer := c.sensor.Tracer()
+		// 	opts := []ot.StartSpanOption{
+		// 		ot.Tags{
+		// 			"redis.connection": c.address,
+		// 		},
+		// 	}
+		// 	if ps, ok := instana.SpanFromContext(ctx); ok {
+		// 		tracer = ps.Tracer()
+		// 		opts = append(opts, ot.ChildOf(ps.Context()))
+		// 	}
+		// 	span := tracer.StartSpan("redis", opts...)
+		// 	// if strings.ToUpper(commandName) == "MULTI" {
+		// 	// c.prevSpan = &prevSpan{span, nil}
+		// 	// }
+		// 	span.SetTag("redis.command", commandName)
+		// 	reply, err = cwc.DoContext(ctx, commandName, args...)
+		// 	if err != nil {
+		// 		span.SetTag("redis.error", err.Error())
+		// 		span.LogFields(otlog.Object("error", err.Error()))
+		// 	}
+		// 	if strings.ToUpper(commandName) != "MULTI" {
+		// 		c.prevSpan = &prevSpan{span, nil}
+		// 		span.Finish()
+		// 	}
+		// }
+		// return reply, err
 	}
 	return nil, errors.New("redis: connection does not support ConnWithContext")
 }
 
-//DoWithTimeout executes a Redis command with the specified read timeout along 
-//with the instrumentation. If the connection does not satisfy the ConnWithTimeout 
+//DoWithTimeout executes a Redis command with the specified read timeout along
+//with the instrumentation. If the connection does not satisfy the ConnWithTimeout
 //interface, then an error is returned.
-func (c *instaRedigoConn) DoWithTimeout(timeout time.Duration, commandName string, 
-    args ...interface{}) (reply interface{}, err error) {
+func (c *instaRedigoConn) DoWithTimeout(timeout time.Duration, commandName string,
+	args ...interface{}) (reply interface{}, err error) {
 	if cwt, ok := c.Conn.(redis.ConnWithTimeout); ok {
 		//return cwt.DoWithTimeout(timeout, commandName, args...)
 		var cmdArgs []interface{}
@@ -100,50 +171,56 @@ func (c *instaRedigoConn) DoWithTimeout(timeout time.Duration, commandName strin
 				cmdArgs = append(cmdArgs, a)
 			}
 		}
-		if c.prevSpan != nil {
-			if strings.ToUpper(commandName) == "EXEC" || strings.ToUpper(commandName) == "DISCARD" {
-				reply, err = cwt.DoWithTimeout(timeout, commandName, cmdArgs...) 
-				if err != nil {
-					c.prevSpan.span.SetTag("redis.error", err.Error())
-					c.prevSpan.span.LogFields(otlog.Object("error", err.Error()))
-				}
-				c.prevSpan.span.Finish()
-				c.prevSpan = nil
-			} else {
-				c.prevSpan.batchCmds = append(c.prevSpan.batchCmds, commandName)
-				c.prevSpan.span.SetTag("redis.subCommands", c.prevSpan.batchCmds)
-				reply, err = cwt.DoWithTimeout(timeout, commandName, cmdArgs...) 
-				if err != nil {
-					c.prevSpan.span.SetTag("redis.error", err.Error())
-					c.prevSpan.span.LogFields(otlog.Object("error", err.Error()))
-				}
-			}
-		} else {
-			tracer := c.sensor.Tracer()
-			opts := []ot.StartSpanOption{
-				ot.Tags{
-					"redis.connection": c.address,
-				},
-			}
-			if ps, ok := instana.SpanFromContext(ctx); ok {
-				tracer = ps.Tracer()
-				opts = append(opts, ot.ChildOf(ps.Context()))
-			}
-			span := tracer.StartSpan("redis", opts...)
-			if strings.ToUpper(commandName) == "MULTI" {
-				c.prevSpan = &prevSpan{span, nil}
-			}
-			span.SetTag("redis.command", commandName)
-			reply, err = cwt.DoWithTimeout(timeout, commandName, cmdArgs...) 
-			if err != nil {
-				span.SetTag("redis.error", err.Error())
-				span.LogFields(otlog.Object("error", err.Error()))
-			}
-			if strings.ToUpper(commandName) != "MULTI" {
-				span.Finish()
-			}
-		}
-		return reply, err
+
+		return genericHandler(*c, commandName, ctx, cwt, timeout, args)
+		// if c.prevSpan != nil {
+		// 	if isTransactionEnding(commandName) {
+		// 		// reply, err = cwt.DoWithTimeout(timeout, commandName, cmdArgs...)
+		// 		reply, err = genericDo(cwt, ctx, timeout, commandName, cmdArgs)
+		// 		if err != nil {
+		// 			c.prevSpan.span.SetTag("redis.error", err.Error())
+		// 			c.prevSpan.span.LogFields(otlog.Object("error", err.Error()))
+		// 		}
+		// 		c.prevSpan.span.Finish()
+		// 		c.prevSpan = nil
+		// 	} else {
+		// 		c.prevSpan.batchCmds = append(c.prevSpan.batchCmds, commandName)
+		// 		c.prevSpan.span.SetTag("redis.subCommands", c.prevSpan.batchCmds)
+		// 		// reply, err = cwt.DoWithTimeout(timeout, commandName, cmdArgs...)
+		// 		reply, err = genericDo(cwt, ctx, timeout, commandName, cmdArgs)
+		// 		if err != nil {
+		// 			c.prevSpan.span.SetTag("redis.error", err.Error())
+		// 			c.prevSpan.span.LogFields(otlog.Object("error", err.Error()))
+		// 		}
+		// 	}
+		// } else {
+		// 	tracer := c.sensor.Tracer()
+		// 	opts := []ot.StartSpanOption{
+		// 		ot.Tags{
+		// 			"redis.connection": c.address,
+		// 		},
+		// 	}
+		// 	if ps, ok := instana.SpanFromContext(ctx); ok {
+		// 		tracer = ps.Tracer()
+		// 		opts = append(opts, ot.ChildOf(ps.Context()))
+		// 	}
+		// 	span := tracer.StartSpan("redis", opts...)
+		// 	// if strings.ToUpper(commandName) == "MULTI" {
+		// 	// 	c.prevSpan = &prevSpan{span, nil}
+		// 	// }
+		// 	span.SetTag("redis.command", commandName)
+		// 	// reply, err = cwt.DoWithTimeout(timeout, commandName, cmdArgs...)
+		// 	reply, err = genericDo(cwt, ctx, timeout, commandName, cmdArgs)
+		// 	if err != nil {
+		// 		span.SetTag("redis.error", err.Error())
+		// 		span.LogFields(otlog.Object("error", err.Error()))
+		// 	}
+		// 	if strings.ToUpper(commandName) != "MULTI" {
+		// 		c.prevSpan = &prevSpan{span, nil}
+		// 		span.Finish()
+		// 	}
+		// }
+		// return reply, err
 	}
 	return nil, errors.New("redis: connection does not support ConnWithTimeout")
 }
@@ -206,50 +283,55 @@ func (c *instaRedigoConn) Do(commandName string, args ...interface{}) (reply int
 			cmdArgs = append(cmdArgs, a)
 		}
 	}
-	if c.prevSpan != nil {
-		if strings.ToUpper(commandName) == "EXEC" || strings.ToUpper(commandName) == "DISCARD" {
-			reply, err = c.Conn.Do(commandName, cmdArgs...)
-			if err != nil {
-				c.prevSpan.span.SetTag("redis.error", err.Error())
-				c.prevSpan.span.LogFields(otlog.Object("error", err.Error()))
-			}
-			c.prevSpan.span.Finish()
-			c.prevSpan = nil
-		} else {
-			c.prevSpan.batchCmds = append(c.prevSpan.batchCmds, commandName)
-			c.prevSpan.span.SetTag("redis.subCommands", c.prevSpan.batchCmds)
-			reply, err = c.Conn.Do(commandName, cmdArgs...)
-			if err != nil {
-				c.prevSpan.span.SetTag("redis.error", err.Error())
-				c.prevSpan.span.LogFields(otlog.Object("error", err.Error()))
-			}
-		}
-	} else {
-		tracer := c.sensor.Tracer()
-		opts := []ot.StartSpanOption{
-			ot.Tags{
-				"redis.connection": c.address,
-			},
-		}
-		if ps, ok := instana.SpanFromContext(ctx); ok {
-			tracer = ps.Tracer()
-			opts = append(opts, ot.ChildOf(ps.Context()))
-		}
-		span := tracer.StartSpan("redis", opts...)
-		if strings.ToUpper(commandName) == "MULTI" {
-			c.prevSpan = &prevSpan{span, nil}
-		}
-		span.SetTag("redis.command", commandName)
-		reply, err = c.Conn.Do(commandName, cmdArgs...)
-		if err != nil {
-			span.SetTag("redis.error", err.Error())
-			span.LogFields(otlog.Object("error", err.Error()))
-		}
-		if strings.ToUpper(commandName) != "MULTI" {
-			span.Finish()
-		}
-	}
-	return reply, err
+	// if c.prevSpan != nil {
+	// 	if isTransactionEnding(commandName) {
+	// 		// reply, err = c.Conn.Do(commandName, cmdArgs...)
+	// 		reply, err = genericDo(c.Conn, ctx, time.Millisecond, commandName, cmdArgs)
+	// 		if err != nil {
+	// 			c.prevSpan.span.SetTag("redis.error", err.Error())
+	// 			c.prevSpan.span.LogFields(otlog.Object("error", err.Error()))
+	// 		}
+	// 		c.prevSpan.span.Finish()
+	// 		c.prevSpan = nil
+	// 	} else {
+	// 		c.prevSpan.batchCmds = append(c.prevSpan.batchCmds, commandName)
+	// 		c.prevSpan.span.SetTag("redis.subCommands", c.prevSpan.batchCmds)
+	// 		// reply, err = c.Conn.Do(commandName, cmdArgs...)
+	// 		reply, err = genericDo(c.Conn, ctx, time.Millisecond, commandName, cmdArgs)
+	// 		if err != nil {
+	// 			c.prevSpan.span.SetTag("redis.error", err.Error())
+	// 			c.prevSpan.span.LogFields(otlog.Object("error", err.Error()))
+	// 		}
+	// 	}
+	// } else {
+	// 	tracer := c.sensor.Tracer()
+	// 	opts := []ot.StartSpanOption{
+	// 		ot.Tags{
+	// 			"redis.connection": c.address,
+	// 		},
+	// 	}
+	// 	if ps, ok := instana.SpanFromContext(ctx); ok {
+	// 		tracer = ps.Tracer()
+	// 		opts = append(opts, ot.ChildOf(ps.Context()))
+	// 	}
+	// 	span := tracer.StartSpan("redis", opts...)
+	// 	// if strings.ToUpper(commandName) == "MULTI" {
+	// 	// 	c.prevSpan = &prevSpan{span, nil}
+	// 	// }
+	// 	span.SetTag("redis.command", commandName)
+	// 	// reply, err = c.Conn.Do(commandName, cmdArgs...)
+	// 	reply, err = genericDo(c.Conn, ctx, time.Millisecond, commandName, cmdArgs)
+	// 	if err != nil {
+	// 		span.SetTag("redis.error", err.Error())
+	// 		span.LogFields(otlog.Object("error", err.Error()))
+	// 	}
+	// 	if strings.ToUpper(commandName) != "MULTI" {
+	// 		c.prevSpan = &prevSpan{span, nil}
+	// 		span.Finish()
+	// 	}
+	// }
+	// return reply, err
+	return genericHandler(*c, commandName, ctx, c.Conn, time.Microsecond, args)
 }
 
 // Send writes the command to the client's output buffer and collect the
@@ -269,7 +351,7 @@ func (c *instaRedigoConn) Send(commandName string, args ...interface{}) (err err
 		}
 	}
 	if c.prevSpan != nil {
-		if strings.ToUpper(commandName) == "EXEC" || strings.ToUpper(commandName) == "DISCARD" {
+		if isTransactionEnding(commandName) {
 			err = c.Conn.Send(commandName, cmdArgs...)
 			if err != nil {
 				c.prevSpan.span.SetTag("redis.error", err.Error())
