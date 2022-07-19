@@ -30,27 +30,6 @@ type prevSpan struct {
 	batchCmds []string
 }
 
-type instaRedigoPool struct {
-    redis.Pool
-    sensor *instana.Sensor
-}
-
-//GetContext gets a connection using the provided context with the instana sensor.
-func (p *instaRedigoPool) GetContext(s *instana.Sensor, ctx  context.Context) (redis.Conn, error) {
-    conn,err := p.Pool.GetContext(ctx)
-    if err != nil {
-        return conn, err
-    } else {
-        return &instaRedigoConn{Conn: conn, sensor: s, address: "", prevSpan: nil}, err
-    }
-}
-
-//Get gets a connection with the instana sensor.
-func (p *instaRedigoPool) Get(s *instana.Sensor) redis.Conn {
-    conn := p.Pool.Get()
-    return &instaRedigoConn{Conn: conn, sensor: s, address: "", prevSpan: nil}
-}
-
 //DoContext sends a command to server and returns the received reply along with 
 //the instrumentation.
 func (c *instaRedigoConn) DoContext(ctx context.Context, commandName string,

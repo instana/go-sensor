@@ -11,6 +11,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gomodule/redigo/redis"
 	instana "github.com/instana/go-sensor"
 	"github.com/instana/testify/assert"
 	"github.com/instana/testify/require"
@@ -334,7 +335,72 @@ func TestMockDoTimeout(t *testing.T) {
 			defer sp.Finish()
 			conn := &instaRedigoConn{&MockConn{}, sensor, ":7001", nil}
             defer conn.Close()
-            _, err := conn.DoWithTimeout(1000, name, example.Command...)
+            _, err := conn.DoWithTimeout(200 * time.Millisecond, name, example.Command...)
+			assert.Equal(t, err, nil)
+			spans := recorder.GetQueuedSpans()
+			assert.Equal(t, 1, len(spans))
+			dbSpan := spans[0]
+			data := dbSpan.Data.(instana.RedisSpanData)
+
+			assert.Equal(t, "redis", dbSpan.Name)
+			assert.EqualValues(t, instana.ExitSpanKind, dbSpan.Kind)
+			assert.Empty(t, dbSpan.Ec)
+
+			require.IsType(t, instana.RedisSpanData{}, dbSpan.Data)
+
+			assert.Equal(t, example.Expected.Error, data.Tags.Error)
+			assert.Equal(t, example.Expected.Command, data.Tags.Command)
+		})
+	}
+}
+
+//Helper function to retrieve a connection for the redis.Pool
+func newPool(sensor *instana.Sensor) *redis.Pool {
+    return &redis.Pool{
+        MaxIdle: 3,
+        IdleTimeout: 200 * time.Second,
+        Dial: func() (redis.Conn, error){
+            return &instaRedigoConn{&MockConn{}, sensor, ":7001", nil}, nil
+        },
+    }
+}
+
+func TestMockPool(t *testing.T) {
+	examples := map[string]struct {
+		Command []interface{}
+		Expected  instana.RedisSpanTags
+	}{
+		"SET": {
+			Command: []interface{}{"name", "Instana"},
+			Expected: instana.RedisSpanTags{
+				Command: "SET",
+			},
+		},
+		"GET": {
+			Command: []interface{}{"name"},
+			Expected: instana.RedisSpanTags{
+				Command: "GET",
+			},
+		},
+		"DEL": {
+			Command: []interface{}{"name"},
+			Expected: instana.RedisSpanTags{
+				Command: "DEL",
+			},
+		},
+	}
+	for name, example := range examples {
+		t.Run(name, func(t *testing.T) {
+			recorder := instana.NewTestRecorder()
+			sensor := instana.NewSensorWithTracer(
+				instana.NewTracerWithEverything(instana.DefaultOptions(), recorder),
+			)
+			sp := sensor.Tracer().StartSpan("testing")
+			defer sp.Finish()
+            pool := newPool(sensor)
+            conn := pool.Get()
+            defer conn.Close()
+            _, err := conn.Do(name, example.Command...)
 			assert.Equal(t, err, nil)
 			spans := recorder.GetQueuedSpans()
 			assert.Equal(t, 1, len(spans))
