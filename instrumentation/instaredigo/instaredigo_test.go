@@ -9,6 +9,7 @@ import (
 	"context"
 	"errors"
 	"testing"
+	"time"
 
 	instana "github.com/instana/go-sensor"
 	"github.com/instana/testify/assert"
@@ -25,6 +26,34 @@ func (conn *MockConn) Do(commandName string, args ...interface{}) (reply interfa
 		err = errors.New("Empty command received")
 	}
 	return reply, err
+}
+
+func (conn *MockConn) DoContext(ctx context.Context,commandName string, 
+    args ...interface{}) (reply interface{}, err error) {
+	reply = "OK <->" + commandName
+	if len(commandName) == 0 {
+		err = errors.New("Empty command received")
+	}
+	return reply, err
+}
+
+func (conn *MockConn) ReceiveContext(ctx context.Context) (reply interface{}, err error) {
+    reply = "OK"
+    return reply, err
+}
+
+func (conn *MockConn) DoWithTimeout(timeOut time.Duration, commandName string, 
+    args ...interface{}) (reply interface{}, err error) {
+	reply = "OK <->" + commandName
+	if len(commandName) == 0 {
+		err = errors.New("Empty command received")
+	}
+	return reply, err
+}
+
+func (conn *MockConn) ReceiveWithTimeout(timeout time.Duration) (reply interface{}, err error) {
+    reply = "OK"
+    return reply, err
 }
 
 func (conn *MockConn) Send(commandName string, args ...interface{}) error {
@@ -213,6 +242,113 @@ func TestSubCommands(t *testing.T) {
 			assert.Equal(t, testCase.Expected.Error, data.Tags.Error)
 			assert.Equal(t, testCase.Expected.Command, data.Tags.Command)
 			assert.Equal(t, testCase.Expected.Subcommands, data.Tags.Subcommands)
+		})
+	}
+}
+
+func TestMockDoContext(t *testing.T) {
+	examples := map[string]struct {
+		Command []interface{}
+		Expected  instana.RedisSpanTags
+	}{
+		"SET": {
+			Command: []interface{}{"name", "Instana"},
+			Expected: instana.RedisSpanTags{
+				Command: "SET",
+			},
+		},
+		"GET": {
+			Command: []interface{}{"name"},
+			Expected: instana.RedisSpanTags{
+				Command: "GET",
+			},
+		},
+		"DEL": {
+			Command: []interface{}{"name"},
+			Expected: instana.RedisSpanTags{
+				Command: "DEL",
+			},
+		},
+	}
+	for name, example := range examples {
+		t.Run(name, func(t *testing.T) {
+			recorder := instana.NewTestRecorder()
+			sensor := instana.NewSensorWithTracer(
+				instana.NewTracerWithEverything(instana.DefaultOptions(), recorder),
+			)
+			sp := sensor.Tracer().StartSpan("testing")
+			defer sp.Finish()
+			conn := &instaRedigoConn{&MockConn{}, sensor, ":7001", nil}
+            defer conn.Close()
+            ctx := context.Background()
+            _, err := conn.DoContext(ctx, name, example.Command...)
+			assert.Equal(t, err, nil)
+			spans := recorder.GetQueuedSpans()
+			assert.Equal(t, 1, len(spans))
+			dbSpan := spans[0]
+			data := dbSpan.Data.(instana.RedisSpanData)
+
+			assert.Equal(t, "redis", dbSpan.Name)
+			assert.EqualValues(t, instana.ExitSpanKind, dbSpan.Kind)
+			assert.Empty(t, dbSpan.Ec)
+
+			require.IsType(t, instana.RedisSpanData{}, dbSpan.Data)
+
+			assert.Equal(t, example.Expected.Error, data.Tags.Error)
+			assert.Equal(t, example.Expected.Command, data.Tags.Command)
+		})
+	}
+}
+
+func TestMockDoTimeout(t *testing.T) {
+	examples := map[string]struct {
+		Command []interface{}
+		Expected  instana.RedisSpanTags
+	}{
+		"SET": {
+			Command: []interface{}{"name", "Instana"},
+			Expected: instana.RedisSpanTags{
+				Command: "SET",
+			},
+		},
+		"GET": {
+			Command: []interface{}{"name"},
+			Expected: instana.RedisSpanTags{
+				Command: "GET",
+			},
+		},
+		"DEL": {
+			Command: []interface{}{"name"},
+			Expected: instana.RedisSpanTags{
+				Command: "DEL",
+			},
+		},
+	}
+	for name, example := range examples {
+		t.Run(name, func(t *testing.T) {
+			recorder := instana.NewTestRecorder()
+			sensor := instana.NewSensorWithTracer(
+				instana.NewTracerWithEverything(instana.DefaultOptions(), recorder),
+			)
+			sp := sensor.Tracer().StartSpan("testing")
+			defer sp.Finish()
+			conn := &instaRedigoConn{&MockConn{}, sensor, ":7001", nil}
+            defer conn.Close()
+            _, err := conn.DoWithTimeout(1000, name, example.Command...)
+			assert.Equal(t, err, nil)
+			spans := recorder.GetQueuedSpans()
+			assert.Equal(t, 1, len(spans))
+			dbSpan := spans[0]
+			data := dbSpan.Data.(instana.RedisSpanData)
+
+			assert.Equal(t, "redis", dbSpan.Name)
+			assert.EqualValues(t, instana.ExitSpanKind, dbSpan.Kind)
+			assert.Empty(t, dbSpan.Ec)
+
+			require.IsType(t, instana.RedisSpanData{}, dbSpan.Data)
+
+			assert.Equal(t, example.Expected.Error, data.Tags.Error)
+			assert.Equal(t, example.Expected.Command, data.Tags.Command)
 		})
 	}
 }
