@@ -29,8 +29,8 @@ func (conn *MockConn) Do(commandName string, args ...interface{}) (reply interfa
 	return reply, err
 }
 
-func (conn *MockConn) DoContext(ctx context.Context,commandName string, 
-    args ...interface{}) (reply interface{}, err error) {
+func (conn *MockConn) DoContext(ctx context.Context, commandName string,
+	args ...interface{}) (reply interface{}, err error) {
 	reply = "OK <->" + commandName
 	if len(commandName) == 0 {
 		err = errors.New("Empty command received")
@@ -39,12 +39,12 @@ func (conn *MockConn) DoContext(ctx context.Context,commandName string,
 }
 
 func (conn *MockConn) ReceiveContext(ctx context.Context) (reply interface{}, err error) {
-    reply = "OK"
-    return reply, err
+	reply = "OK"
+	return reply, err
 }
 
-func (conn *MockConn) DoWithTimeout(timeOut time.Duration, commandName string, 
-    args ...interface{}) (reply interface{}, err error) {
+func (conn *MockConn) DoWithTimeout(timeOut time.Duration, commandName string,
+	args ...interface{}) (reply interface{}, err error) {
 	reply = "OK <->" + commandName
 	if len(commandName) == 0 {
 		err = errors.New("Empty command received")
@@ -53,8 +53,8 @@ func (conn *MockConn) DoWithTimeout(timeOut time.Duration, commandName string,
 }
 
 func (conn *MockConn) ReceiveWithTimeout(timeout time.Duration) (reply interface{}, err error) {
-    reply = "OK"
-    return reply, err
+	reply = "OK"
+	return reply, err
 }
 
 func (conn *MockConn) Send(commandName string, args ...interface{}) error {
@@ -117,8 +117,8 @@ func TestMockDo(t *testing.T) {
 			)
 			sp := sensor.Tracer().StartSpan("testing")
 			defer sp.Finish()
-			conn := &instaRedigoConn{&MockConn{}, sensor, ":7001", nil}
-            defer conn.Close()
+			conn := &instaRedigoConn{Conn: &MockConn{}, sensor: sensor, address: ":7001", prevSpan: nil}
+			defer conn.Close()
 			_, err := conn.Do(name, example.DoCommand...)
 			assert.Equal(t, err, nil)
 			spans := recorder.GetQueuedSpans()
@@ -170,8 +170,8 @@ func TestMockSend(t *testing.T) {
 			)
 			sp := sensor.Tracer().StartSpan("testing")
 			defer sp.Finish()
-			conn := &instaRedigoConn{&MockConn{}, sensor, ":7001", nil}
-            defer conn.Close()
+			conn := &instaRedigoConn{Conn: &MockConn{}, sensor: sensor, address: ":7001", prevSpan: nil}
+			defer conn.Close()
 			err := conn.Send(name, example.DoCommand...)
 			assert.Equal(t, err, nil)
 			spans := recorder.GetQueuedSpans()
@@ -190,7 +190,6 @@ func TestMockSend(t *testing.T) {
 		})
 	}
 }
-
 
 func TestSubCommands(t *testing.T) {
 	testCases := map[string]struct {
@@ -219,7 +218,7 @@ func TestSubCommands(t *testing.T) {
 			)
 			sp := sensor.Tracer().StartSpan("testing")
 			defer sp.Finish()
-			conn := &instaRedigoConn{&MockConn{}, sensor, ":7001", nil}
+			conn := &instaRedigoConn{Conn: &MockConn{}, sensor: sensor, address: ":7001", prevSpan: nil}
 			defer conn.Close()
 			ctx := context.Background()
 			ctxSpan := instana.ContextWithSpan(ctx, sp)
@@ -227,7 +226,7 @@ func TestSubCommands(t *testing.T) {
 				cmdArgs := cmd[1:]
 				cmdArgs = append(cmdArgs, ctxSpan)
 				cmdStr := cmd[0].(string)
-                err := conn.Send(cmdStr, cmdArgs...)
+				err := conn.Send(cmdStr, cmdArgs...)
 				assert.Equal(t, nil, err)
 			}
 			spans := recorder.GetQueuedSpans()
@@ -249,8 +248,8 @@ func TestSubCommands(t *testing.T) {
 
 func TestMockDoContext(t *testing.T) {
 	examples := map[string]struct {
-		Command []interface{}
-		Expected  instana.RedisSpanTags
+		Command  []interface{}
+		Expected instana.RedisSpanTags
 	}{
 		"SET": {
 			Command: []interface{}{"name", "Instana"},
@@ -279,10 +278,10 @@ func TestMockDoContext(t *testing.T) {
 			)
 			sp := sensor.Tracer().StartSpan("testing")
 			defer sp.Finish()
-			conn := &instaRedigoConn{&MockConn{}, sensor, ":7001", nil}
-            defer conn.Close()
-            ctx := context.Background()
-            _, err := conn.DoContext(ctx, name, example.Command...)
+			conn := &instaRedigoConn{Conn: &MockConn{}, sensor: sensor, address: ":7001", prevSpan: nil}
+			defer conn.Close()
+			ctx := context.Background()
+			_, err := conn.DoContext(ctx, name, example.Command...)
 			assert.Equal(t, err, nil)
 			spans := recorder.GetQueuedSpans()
 			assert.Equal(t, 1, len(spans))
@@ -303,8 +302,8 @@ func TestMockDoContext(t *testing.T) {
 
 func TestMockDoTimeout(t *testing.T) {
 	examples := map[string]struct {
-		Command []interface{}
-		Expected  instana.RedisSpanTags
+		Command  []interface{}
+		Expected instana.RedisSpanTags
 	}{
 		"SET": {
 			Command: []interface{}{"name", "Instana"},
@@ -333,9 +332,9 @@ func TestMockDoTimeout(t *testing.T) {
 			)
 			sp := sensor.Tracer().StartSpan("testing")
 			defer sp.Finish()
-			conn := &instaRedigoConn{&MockConn{}, sensor, ":7001", nil}
-            defer conn.Close()
-            _, err := conn.DoWithTimeout(200 * time.Millisecond, name, example.Command...)
+			conn := &instaRedigoConn{Conn: &MockConn{}, sensor: sensor, address: ":7001", prevSpan: nil}
+			defer conn.Close()
+			_, err := conn.DoWithTimeout(200*time.Millisecond, name, example.Command...)
 			assert.Equal(t, err, nil)
 			spans := recorder.GetQueuedSpans()
 			assert.Equal(t, 1, len(spans))
@@ -356,19 +355,19 @@ func TestMockDoTimeout(t *testing.T) {
 
 //Helper function to retrieve a connection for the redis.Pool
 func newPool(sensor *instana.Sensor) *redis.Pool {
-    return &redis.Pool{
-        MaxIdle: 3,
-        IdleTimeout: 200 * time.Second,
-        Dial: func() (redis.Conn, error){
-            return &instaRedigoConn{&MockConn{}, sensor, ":7001", nil}, nil
-        },
-    }
+	return &redis.Pool{
+		MaxIdle:     3,
+		IdleTimeout: 200 * time.Second,
+		Dial: func() (redis.Conn, error) {
+			return &instaRedigoConn{Conn: &MockConn{}, sensor: sensor, address: ":7001", prevSpan: nil}, nil
+		},
+	}
 }
 
 func TestMockPool(t *testing.T) {
 	examples := map[string]struct {
-		Command []interface{}
-		Expected  instana.RedisSpanTags
+		Command  []interface{}
+		Expected instana.RedisSpanTags
 	}{
 		"SET": {
 			Command: []interface{}{"name", "Instana"},
@@ -397,10 +396,10 @@ func TestMockPool(t *testing.T) {
 			)
 			sp := sensor.Tracer().StartSpan("testing")
 			defer sp.Finish()
-            pool := newPool(sensor)
-            conn := pool.Get()
-            defer conn.Close()
-            _, err := conn.Do(name, example.Command...)
+			pool := newPool(sensor)
+			conn := pool.Get()
+			defer conn.Close()
+			_, err := conn.Do(name, example.Command...)
 			assert.Equal(t, err, nil)
 			spans := recorder.GetQueuedSpans()
 			assert.Equal(t, 1, len(spans))
