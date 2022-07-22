@@ -55,7 +55,7 @@ func genericDo(conn *redis.Conn, ctx context.Context, timeout time.Duration, com
 func handleMultiTransaction(c *instaRedigoConn, commandName string, 
     ctx context.Context, conn redis.Conn, timeout time.Duration, 
     args ...interface{}) (reply interface{}, err error){
-        reply, err = genericDo(&conn, ctx, time.Millisecond, commandName, args)
+        reply, err = genericDo(&conn, ctx, time.Millisecond, commandName, args...)
 		if err != nil {
 			c.prevSpan.span.SetTag("redis.error", err.Error())
 			c.prevSpan.span.LogFields(otlog.Object("error", err.Error()))
@@ -103,7 +103,7 @@ func genericHandler(c *instaRedigoConn, commandName string, ctx context.Context,
 
 		//Setting span tags and executing the command
 		span.SetTag("redis.command", commandName)
-		reply, err := genericDo(&conn, ctx, time.Millisecond, commandName, args)
+		reply, err := genericDo(&conn, ctx, time.Millisecond, commandName, args...)
 		if err != nil {
 			span.SetTag("redis.error", err.Error())
 			span.LogFields(otlog.Object("error", err.Error()))
@@ -130,7 +130,7 @@ func (c *instaRedigoConn) Do(commandName string, args ...interface{}) (reply int
 		}
 	}
 
-	return genericHandler(c, commandName, ctx, c.Conn, time.Microsecond, args)
+	return genericHandler(c, commandName, ctx, c.Conn, time.Microsecond, cmdArgs...)
 }
 
 //DoContext sends a command to server and returns the received reply along with
@@ -138,7 +138,7 @@ func (c *instaRedigoConn) Do(commandName string, args ...interface{}) (reply int
 func (c *instaRedigoConn) DoContext(ctx context.Context, commandName string,
 	args ...interface{}) (reply interface{}, err error) {
 	if cwc, ok := c.Conn.(redis.ConnWithContext); ok {
-		return genericHandler(c, commandName, ctx, cwc, time.Microsecond, args)
+		return genericHandler(c, commandName, ctx, cwc, time.Microsecond, args...)
 	}
 
 	return nil, errors.New("redis: connection does not support ConnWithContext")
@@ -151,7 +151,6 @@ func (c *instaRedigoConn) DoWithTimeout(timeout time.Duration, commandName strin
 	args ...interface{}) (reply interface{}, err error) {
 	
         if cwt, ok := c.Conn.(redis.ConnWithTimeout); ok {
-		//return cwt.DoWithTimeout(timeout, commandName, args...)
 		var cmdArgs []interface{}
 		ctx := context.Background()
 		//Separating the passed context and the arguments
@@ -163,7 +162,7 @@ func (c *instaRedigoConn) DoWithTimeout(timeout time.Duration, commandName strin
 			}
 		}
 
-		return genericHandler(c, commandName, ctx, cwt, timeout, args)
+		return genericHandler(c, commandName, ctx, cwt, timeout, cmdArgs...)
 	}
 
 	return nil, errors.New("redis: connection does not support ConnWithTimeout")
@@ -182,6 +181,21 @@ func Dial(sensor *instana.Sensor, network, address string, options ...redis.Dial
 
 	return &instaRedigoConn{Conn: conn, sensor: sensor, address: address, prevSpan: nil}, err
 }
+
+// DialContext connects to the Redis server at the given network and
+// address using the specified options and context along with instrumentation code.
+func DialContext(sensor *instana.Sensor, ctx context.Context, network, address string, options ...redis.DialOption) (redis.Conn, error) {
+    conn, err := redis.DialContext(ctx, network, address, options...)
+    if err != nil {
+		return conn, err
+	}
+	if strings.HasPrefix(address, ":") {
+		address = "localhost" + address
+	}
+
+	return &instaRedigoConn{Conn: conn, sensor: sensor, address: address, prevSpan: nil}, err
+}
+
 
 //DialURL wraps DialURLContext using context.Background along with the instrumentation code.
 func DialURL(sensor *instana.Sensor, rawurl string, options ...redis.DialOption) (redis.Conn, error) {
