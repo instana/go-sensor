@@ -1,6 +1,7 @@
 // (c) Copyright IBM Corp. 2021
 // (c) Copyright Instana Inc. 2020
 
+//go:build go1.11
 // +build go1.11
 
 package storage
@@ -8,6 +9,7 @@ package storage
 import (
 	"context"
 	"fmt"
+	"github.com/instana/go-sensor/instrumentation/cloud.google.com/go/internal/tags"
 	"io"
 
 	"cloud.google.com/go/storage"
@@ -28,9 +30,9 @@ func (o *ObjectHandle) NewReader(ctx context.Context) (*Reader, error) {
 // See https://pkg.go.dev/cloud.google.com/go/storage?tab=doc#ObjectHandle.NewRangeReader for further details on wrapped method.
 func (o *ObjectHandle) NewRangeReader(ctx context.Context, offset, length int64) (r *Reader, err error) {
 	attrsCtx := internal.StartExitSpan(ctx, "gcs", ot.Tags{
-		"gcs.op":     "objects.get",
-		"gcs.bucket": o.Bucket,
-		"gcs.object": o.Name,
+		tags.GcsOp:     "objects.get",
+		tags.GcsBucket: o.Bucket,
+		tags.GcsObject: o.Name,
 	})
 	defer func() { internal.FinishSpan(attrsCtx, err) }()
 
@@ -60,10 +62,10 @@ type Reader struct {
 // See https://pkg.go.dev/cloud.google.com/go/storage?tab=doc#Reader.Read for further details on wrapped method.
 func (r *Reader) Read(p []byte) (n int, err error) {
 	tags := ot.Tags{
-		"gcs.op":     "objects.get",
-		"gcs.bucket": r.Bucket,
-		"gcs.object": r.Name,
-		"gcs.range":  fmt.Sprintf("%d-%d", r.Attrs.StartOffset, r.Attrs.Size),
+		tags.GcsOp:     "objects.get",
+		tags.GcsBucket: r.Bucket,
+		tags.GcsObject: r.Name,
+		tags.GcsRange:  fmt.Sprintf("%d-%d", r.Attrs.StartOffset, r.Attrs.Size),
 	}
 
 	ctx := internal.StartExitSpan(r.ctx, "gcs", tags)

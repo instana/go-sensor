@@ -36,7 +36,7 @@ func StartSQSSpan(req *request.Request, sensor *instana.Sensor) {
 	sp := sensor.Tracer().StartSpan("sqs",
 		ext.SpanKindProducer,
 		opentracing.ChildOf(parent.Context()),
-		opentracing.Tags{"sqs.sort": "exit"},
+		opentracing.Tags{sqsSort: "exit"},
 		tags,
 	)
 
@@ -55,17 +55,17 @@ func FinalizeSQSSpan(req *request.Request) {
 
 	if req.Error != nil {
 		sp.LogFields(otlog.Error(req.Error))
-		sp.SetTag("sqs.error", req.Error.Error())
+		sp.SetTag(sqsError, req.Error.Error())
 	}
 
 	if req.DataFilled() {
 		switch data := req.Data.(type) {
 		case *sqs.GetQueueUrlOutput:
-			sp.SetTag("sqs.queue", aws.StringValue(data.QueueUrl))
+			sp.SetTag(sqsQueue, aws.StringValue(data.QueueUrl))
 		case *sqs.CreateQueueOutput:
-			sp.SetTag("sqs.queue", aws.StringValue(data.QueueUrl))
+			sp.SetTag(sqsQueue, aws.StringValue(data.QueueUrl))
 		case *sqs.ReceiveMessageOutput:
-			sp.SetTag("sqs.size", len(data.Messages))
+			sp.SetTag(sqsSize, len(data.Messages))
 		}
 	}
 }
@@ -77,7 +77,7 @@ func TraceSQSMessage(msg *sqs.Message, sensor *instana.Sensor) opentracing.Span 
 	opts := []opentracing.StartSpanOption{
 		ext.SpanKindConsumer,
 		opentracing.Tags{
-			"sqs.sort": "entry",
+			sqsSort: "entry",
 		},
 	}
 
