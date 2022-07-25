@@ -1,6 +1,7 @@
 // (c) Copyright IBM Corp. 2021
 // (c) Copyright Instana Inc. 2020
 
+//go:build go1.11
 // +build go1.11
 
 package pubsub
@@ -9,6 +10,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/instana/go-sensor/instrumentation/cloud.google.com/go/internal/tags"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -74,10 +76,10 @@ func startConsumePushSpan(body []byte, sensor *instana.Sensor) (opentracing.Span
 	opts := []opentracing.StartSpanOption{
 		ext.SpanKindConsumer,
 		opentracing.Tags{
-			"gcps.op":     "CONSUME",
-			"gcps.projid": projectID,
-			"gcps.sub":    subscription,
-			"gcps.msgid":  delivery.Message.ID,
+			tags.GcpsOp:     "CONSUME",
+			tags.GcpsProjid: projectID,
+			tags.GcpsSub:    subscription,
+			tags.GcpsMsgid:  delivery.Message.ID,
 		},
 	}
 

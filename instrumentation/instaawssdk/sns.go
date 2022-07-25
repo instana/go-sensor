@@ -49,6 +49,6 @@ func FinalizeSNSSpan(req *request.Request) {
 
 	if req.Error != nil {
 		sp.LogFields(otlog.Error(req.Error))
-		sp.SetTag("sns.error", req.Error.Error())
+		sp.SetTag(snsError, req.Error.Error())
 	}
 }

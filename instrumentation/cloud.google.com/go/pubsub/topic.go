@@ -1,15 +1,16 @@
 // (c) Copyright IBM Corp. 2021
 // (c) Copyright Instana Inc. 2020
 
+//go:build go1.11
 // +build go1.11
 
 package pubsub
 
 import (
-	"context"
-
 	"cloud.google.com/go/pubsub"
+	"context"
 	instana "github.com/instana/go-sensor"
+	"github.com/instana/go-sensor/instrumentation/cloud.google.com/go/internal/tags"
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
 	otlog "github.com/opentracing/opentracing-go/log"
@@ -42,9 +43,9 @@ func (top *Topic) Publish(ctx context.Context, msg *pubsub.Message) *pubsub.Publ
 		ext.SpanKindProducer,
 		opentracing.ChildOf(parent.Context()),
 		opentracing.Tags{
-			"gcps.op":     "PUBLISH",
-			"gcps.projid": top.projectID,
-			"gcps.top":    top.ID(),
+			tags.GcpsOp:     "PUBLISH",
+			tags.GcpsProjid: top.projectID,
+			tags.GcpsTop:    top.ID(),
 		},
 	)
 

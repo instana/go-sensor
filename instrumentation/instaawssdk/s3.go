@@ -32,7 +32,7 @@ func StartS3Span(req *request.Request, sensor *instana.Sensor) {
 		ext.SpanKindRPCClient,
 		opentracing.ChildOf(parent.Context()),
 		opentracing.Tags{
-			"s3.region": req.ClientInfo.SigningRegion,
+			s3Region: req.ClientInfo.SigningRegion,
 		},
 		tags,
 	)
@@ -51,6 +51,6 @@ func FinalizeS3Span(req *request.Request) {
 
 	if req.Error != nil {
 		sp.LogFields(otlog.Error(req.Error))
-		sp.SetTag("s3.error", req.Error.Error())
+		sp.SetTag(s3Error, req.Error.Error())
 	}
 }

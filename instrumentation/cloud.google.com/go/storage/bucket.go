@@ -1,15 +1,16 @@
 // (c) Copyright IBM Corp. 2021
 // (c) Copyright Instana Inc. 2020
 
+//go:build go1.11
 // +build go1.11
 
 package storage
 
 import (
-	"context"
-
 	"cloud.google.com/go/storage"
+	"context"
 	"github.com/instana/go-sensor/instrumentation/cloud.google.com/go/internal"
+	"github.com/instana/go-sensor/instrumentation/cloud.google.com/go/internal/tags"
 	ot "github.com/opentracing/opentracing-go"
 	"google.golang.org/api/iterator"
 )
@@ -38,9 +39,9 @@ func (c *Client) Bucket(name string) *BucketHandle {
 // See https://pkg.go.dev/cloud.google.com/go/storage?tab=doc#BucketHandle.Create for further details on wrapped method.
 func (b *BucketHandle) Create(ctx context.Context, projectID string, attrs *storage.BucketAttrs) (err error) {
 	ctx = internal.StartExitSpan(ctx, "gcs", ot.Tags{
-		"gcs.op":        "buckets.insert",
-		"gcs.bucket":    b.Name,
-		"gcs.projectId": projectID,
+		tags.GcsOp:        "buckets.insert",
+		tags.GcsBucket:    b.Name,
+		tags.GcsProjectId: projectID,
 	})
 
 	defer func() { internal.FinishSpan(ctx, err) }()
@@ -53,8 +54,8 @@ func (b *BucketHandle) Create(ctx context.Context, projectID string, attrs *stor
 // See https://pkg.go.dev/cloud.google.com/go/storage?tab=doc#BucketHandle.Delete for further details on wrapped method.
 func (b *BucketHandle) Delete(ctx context.Context) (err error) {
 	ctx = internal.StartExitSpan(ctx, "gcs", ot.Tags{
-		"gcs.op":     "buckets.delete",
-		"gcs.bucket": b.Name,
+		tags.GcsOp:     "buckets.delete",
+		tags.GcsBucket: b.Name,
 	})
 
 	defer func() { internal.FinishSpan(ctx, err) }()
@@ -101,8 +102,8 @@ func (b *BucketHandle) Object(name string) *ObjectHandle {
 // See https://pkg.go.dev/cloud.google.com/go/storage?tab=doc#BucketHandle.Attrs for further details on wrapped method.
 func (b *BucketHandle) Attrs(ctx context.Context) (attrs *storage.BucketAttrs, err error) {
 	ctx = internal.StartExitSpan(ctx, "gcs", ot.Tags{
-		"gcs.op":     "buckets.get",
-		"gcs.bucket": b.Name,
+		tags.GcsOp:     "buckets.get",
+		tags.GcsBucket: b.Name,
 	})
 
 	defer func() { internal.FinishSpan(ctx, err) }()
@@ -115,8 +116,8 @@ func (b *BucketHandle) Attrs(ctx context.Context) (attrs *storage.BucketAttrs, e
 // See https://pkg.go.dev/cloud.google.com/go/storage?tab=doc#BucketHandle.Update for further details on wrapped method.
 func (b *BucketHandle) Update(ctx context.Context, uattrs storage.BucketAttrsToUpdate) (attrs *storage.BucketAttrs, err error) {
 	ctx = internal.StartExitSpan(ctx, "gcs", ot.Tags{
-		"gcs.op":     "buckets.patch",
-		"gcs.bucket": b.Name,
+		tags.GcsOp:     "buckets.patch",
+		tags.GcsBucket: b.Name,
 	})
 
 	defer func() { internal.FinishSpan(ctx, err) }()
@@ -150,8 +151,8 @@ func (b *BucketHandle) UserProject(projectID string) *BucketHandle {
 // See https://pkg.go.dev/cloud.google.com/go/storage?tab=doc#BucketHandle.LockRetentionPolicy for further details on wrapped method.
 func (b *BucketHandle) LockRetentionPolicy(ctx context.Context) (err error) {
 	ctx = internal.StartExitSpan(ctx, "gcs", ot.Tags{
-		"gcs.op":     "buckets.lockRetentionPolicy",
-		"gcs.bucket": b.Name,
+		tags.GcsOp:     "buckets.lockRetentionPolicy",
+		tags.GcsBucket: b.Name,
 	})
 
 	defer func() { internal.FinishSpan(ctx, err) }()
@@ -192,8 +193,8 @@ func (it *ObjectIterator) Next() (attrs *storage.ObjectAttrs, err error) {
 	}
 
 	ctx := internal.StartExitSpan(it.ctx, "gcs", ot.Tags{
-		"gcs.op":     "objects.list",
-		"gcs.bucket": it.Bucket,
+		tags.GcsOp:     "objects.list",
+		tags.GcsBucket: it.Bucket,
 	})
 
 	defer func() {
@@ -242,8 +243,8 @@ func (it *BucketIterator) Next() (attrs *storage.BucketAttrs, err error) {
 	}
 
 	ctx := internal.StartExitSpan(it.ctx, "gcs", ot.Tags{
-		"gcs.op":        "buckets.list",
-		"gcs.projectId": it.projectID,
+		tags.GcsOp:        "buckets.list",
+		tags.GcsProjectId: it.projectID,
 	})
 
 	defer func() {

@@ -14,10 +14,10 @@ func extractSNSTags(req *request.Request) (opentracing.Tags, error) {
 	switch params := req.Params.(type) {
 	case *sns.PublishInput:
 		return opentracing.Tags{
-			"sns.topic":   aws.StringValue(params.TopicArn),
-			"sns.target":  aws.StringValue(params.TargetArn),
-			"sns.phone":   aws.StringValue(params.PhoneNumber),
-			"sns.subject": aws.StringValue(params.Subject),
+			snsTopic:   aws.StringValue(params.TopicArn),
+			snsTarget:  aws.StringValue(params.TargetArn),
+			snsPhone:   aws.StringValue(params.PhoneNumber),
+			snsSubject: aws.StringValue(params.Subject),
 		}, nil
 	default:
 		return nil, errMethodNotInstrumented
