@@ -26,13 +26,13 @@ func StartInvokeLambdaSpan(req *request.Request, sensor *instana.Sensor) {
 	)
 
 	if ii, ok := req.Params.(*lambda.InvokeInput); ok {
-		sp.SetTag("function", aws.StringValue(ii.FunctionName))
+		sp.SetTag(lambdaFunction, aws.StringValue(ii.FunctionName))
 
 		invocationType := aws.StringValue(ii.InvocationType)
 		if invocationType == "" {
 			invocationType = lambda.InvocationTypeRequestResponse
 		}
-		sp.SetTag("type", invocationType)
+		sp.SetTag(typeTag, invocationType)
 	}
 
 	req.SetContext(instana.ContextWithSpan(req.Context(), sp))
@@ -50,6 +50,6 @@ func FinalizeInvokeLambdaSpan(req *request.Request) {
 
 	if req.Error != nil {
 		sp.LogFields(otlog.Error(req.Error))
-		sp.SetTag("error", req.Error.Error())
+		sp.SetTag(errorTag, req.Error.Error())
 	}
 }

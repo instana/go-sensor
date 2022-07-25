@@ -1,15 +1,16 @@
 // (c) Copyright IBM Corp. 2021
 // (c) Copyright Instana Inc. 2020
 
+//go:build go1.11
 // +build go1.11
 
 package pubsub
 
 import (
-	"context"
-
 	"cloud.google.com/go/pubsub"
+	"context"
 	instana "github.com/instana/go-sensor"
+	"github.com/instana/go-sensor/instrumentation/cloud.google.com/go/internal/tags"
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
 )
@@ -35,10 +36,10 @@ func (sub *Subscription) Receive(ctx context.Context, f func(context.Context, *p
 		opts := []opentracing.StartSpanOption{
 			ext.SpanKindConsumer,
 			opentracing.Tags{
-				"gcps.op":     "CONSUME",
-				"gcps.projid": sub.projectID,
-				"gcps.sub":    sub.ID(),
-				"gcps.msgid":  msg.ID,
+				tags.GcpsOp:     "CONSUME",
+				tags.GcpsProjid: sub.projectID,
+				tags.GcpsSub:    sub.ID(),
+				tags.GcpsMsgid:  msg.ID,
 			},
 		}
 		if spCtx, err := sub.sensor.Tracer().Extract(opentracing.TextMap, opentracing.TextMapCarrier(msg.Attributes)); err == nil {

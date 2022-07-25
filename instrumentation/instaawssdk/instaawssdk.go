@@ -89,7 +89,7 @@ func InstrumentSession(sess *session.Session, sensor *instana.Sensor) {
 
 				for i := range data.Messages {
 					sp := TraceSQSMessage(data.Messages[i], sensor)
-					sp.SetTag("sqs.queue", aws.StringValue(params.QueueUrl))
+					sp.SetTag(sqsQueue, aws.StringValue(params.QueueUrl))
 					sp.Finish()
 				}
 			}
