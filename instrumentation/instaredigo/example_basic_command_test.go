@@ -6,7 +6,7 @@
 package instaredigo_test
 
 import (
-    "context"
+	"context"
 	"fmt"
 	"os"
 
@@ -15,22 +15,21 @@ import (
 )
 
 func Example_basicCommand() {
-    //Create a sensor for instana instrumentation
-    sensor := instana.NewSensor("mysensor")
+	// Create a sensor for instana instrumentation
+	sensor := instana.NewSensor("mysensor")
 
-    //Create an InstaRedigo connection
-    conn, err := instaredigo.Dial(sensor, "tcp", ":7001")
-    if err != nil {
-        os.Exit(1)
-    }
-    defer conn.Close()
+	// Create an InstaRedigo connection
+	conn, err := instaredigo.Dial(sensor, "tcp", ":7001")
+	if err != nil {
+		os.Exit(1)
+	}
+	defer conn.Close()
 
-    //Send a command using the new connection
-    ctx := context.Background()
-    reply, err := conn.Do("SET", "greetings", "helloworld", ctx)
-    if err != nil {
-        fmt.Println("Error while sending command. Details: ", err.Error())
-    }
-    fmt.Println("Response received: ", fmt.Sprintf("%s", reply))
+	// Send a command using the new connection
+	ctx := context.Background()
+	reply, err := conn.Do("SET", "greetings", "helloworld", ctx)
+	if err != nil {
+		fmt.Println("Error while sending command. Details: ", err.Error())
+	}
+	fmt.Println("Response received: ", fmt.Sprintf("%s", reply))
 }
-
