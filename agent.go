@@ -8,6 +8,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -18,6 +19,8 @@ import (
 	"github.com/instana/go-sensor/acceptor"
 	"github.com/instana/go-sensor/autoprofile"
 )
+
+var payloadTooLargeErr = errors.New(`request payload is too large`)
 
 const (
 	agentDiscoveryURL = "/com.instana.plugin.golang.discovery"
@@ -35,6 +38,8 @@ const (
 
 	announceTimeout = 15 * time.Second
 	clientTimeout   = 5 * time.Second
+
+	maxContentLength = 1024 * 1024 * 5
 )
 
 type agentResponse struct {
@@ -80,6 +85,10 @@ func newServerlessAgentFromS(entityID, provider string) *fromS {
 	}
 }
 
+type httpClient interface {
+	Do(req *http.Request) (*http.Response, error)
+}
+
 type agentS struct {
 	from *fromS
 	host string
@@ -88,7 +97,7 @@ type agentS struct {
 	mu  sync.RWMutex
 	fsm *fsmS
 
-	client          *http.Client
+	client          httpClient
 	snapshot        *SnapshotCollector
 	logger          LeveledLogger
 	clientTimeout   time.Duration
@@ -173,8 +182,14 @@ func (agent *agentS) SendSpans(spans []Span) error {
 
 	_, err := agent.request(agent.makeURL(agentTracesURL), "POST", spans)
 	if err != nil {
-		agent.logger.Error("failed to send spans to the host agent: ", err)
-		agent.reset()
+		if err == payloadTooLargeErr {
+			agent.logger.Warn(fmt.Sprintf("failed to send spans to the host agent: dropped %d span(s) : %s", len(spans), err.Error()))
+
+			return nil
+		} else {
+			agent.logger.Error("failed to send spans to the host agent: ", err)
+			agent.reset()
+		}
 
 		return err
 	}
@@ -261,7 +276,14 @@ func (agent *agentS) fullRequestResponse(ctx context.Context, url string, method
 
 	if err == nil {
 		if j != nil {
-			req, err = http.NewRequest(method, url, bytes.NewBuffer(j))
+			b := bytes.NewBuffer(j)
+			if b.Len() > maxContentLength {
+				sensor.logger.Warn(`A batch of spans have been rejected because they are too large to be sent to the agent.`)
+
+				return "", payloadTooLargeErr
+			}
+
+			req, err = http.NewRequest(method, url, b)
 		} else {
 			req, err = http.NewRequest(method, url, nil)
 		}
