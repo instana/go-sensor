@@ -41,7 +41,8 @@ const (
 	announceTimeout = 15 * time.Second
 	clientTimeout   = 5 * time.Second
 
-	maxContentLength = 1024 * 1024 * 5
+	maxContentLength      = 1024 * 1024 * 5
+	numberOfBigSpansToLog = 5
 )
 
 type agentResponse struct {
@@ -189,7 +190,7 @@ func (agent *agentS) SendSpans(spans []Span) error {
 		if err == payloadTooLargeErr {
 			agent.printPayloadTooLargeErrInfoOnce.Do(
 				func() {
-					agent.logDetailedInformationAboutDroppedSpans(5, spans, err)
+					agent.logDetailedInformationAboutDroppedSpans(numberOfBigSpansToLog, spans, err)
 				},
 			)
 
