@@ -12,7 +12,9 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+	"sort"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -102,6 +104,8 @@ type agentS struct {
 	logger          LeveledLogger
 	clientTimeout   time.Duration
 	announceTimeout time.Duration
+
+	printPayloadTooLargeErrInfoOnce sync.Once
 }
 
 func newAgent(serviceName, host string, port int, logger LeveledLogger) *agentS {
@@ -183,7 +187,11 @@ func (agent *agentS) SendSpans(spans []Span) error {
 	_, err := agent.request(agent.makeURL(agentTracesURL), "POST", spans)
 	if err != nil {
 		if err == payloadTooLargeErr {
-			agent.logger.Warn(fmt.Sprintf("failed to send spans to the host agent: dropped %d span(s) : %s", len(spans), err.Error()))
+			agent.printPayloadTooLargeErrInfoOnce.Do(
+				func() {
+					agent.logDetailedInformationAboutDroppedSpans(5, spans, err)
+				},
+			)
 
 			return nil
 		} else {
@@ -355,4 +363,30 @@ func (agent *agentS) reset() {
 	agent.mu.Lock()
 	agent.fsm.reset()
 	agent.mu.Unlock()
+}
+
+func (agent *agentS) logDetailedInformationAboutDroppedSpans(size int, spans []Span, err error) {
+	var marshaledSpans []string
+	for i := range spans {
+		ms, err := json.Marshal(spans[i])
+		if err == nil {
+			marshaledSpans = append(marshaledSpans, string(ms))
+		}
+	}
+	sort.Slice(marshaledSpans, func(i, j int) bool {
+		// descending order
+		return len(marshaledSpans[i]) > len(marshaledSpans[j])
+	})
+
+	if size > len(marshaledSpans) {
+		size = len(marshaledSpans)
+	}
+
+	agent.logger.Warn(
+		fmt.Sprintf("failed to send spans to the host agent: dropped %d span(s) : %s.\nThis detailed information will only be logged once.\nSpans :\n %s",
+			len(spans),
+			err.Error(),
+			strings.Join(marshaledSpans[:size], ";"),
+		),
+	)
 }
