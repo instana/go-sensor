@@ -13,7 +13,7 @@ To start a server listening on `localhost:8081` that connects to the database us
 
 ```bash
 docker run --name http-database-greeter-postgres -e POSTGRES_PASSWORD=mysecretpassword -p 5432:5432 -d postgres
-go run . -l localhost:8081 -db postgres://postgres:mysecretpassword@localhost:5432/postgres?sslmode=disable
+go run . -l localhost:8081 -db "postgres://postgres:mysecretpassword@localhost:5432/postgres?sslmode=disable"
 ```
 
 In your browser navigate to [localhost:8081/alice](http://localhost:8081/alice) to see the greeting message for Alice.
