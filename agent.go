@@ -278,7 +278,7 @@ func (agent *agentS) fullRequestResponse(ctx context.Context, url string, method
 		if j != nil {
 			b := bytes.NewBuffer(j)
 			if b.Len() > maxContentLength {
-				sensor.logger.Warn(`A batch of spans have been rejected because they are too large to be sent to the agent.`)
+				sensor.logger.Warn(`A batch of spans has been rejected because it is too large to be sent to the agent.`)
 
 				return "", payloadTooLargeErr
 			}
