@@ -126,7 +126,7 @@ func (r *tracerS) Options() TracerOptions {
 	return sensor.options.Tracer
 }
 
-// Flush forces sendind any queued finished spans to the agent
+// Flush forces sending any queued finished spans to the agent
 func (r *tracerS) Flush(ctx context.Context) error {
 	if err := r.recorder.Flush(ctx); err != nil {
 		return err
