@@ -73,6 +73,9 @@ workflows:
   build:
     jobs:
       - build:
+          name: "go1.19"
+          image: "cimg/go:1.19"
+      - build:
           name: "go1.18"
           image: "cimg/go:1.18"
       - build:
