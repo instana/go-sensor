@@ -360,6 +360,14 @@ func (agent *agentS) setHost(host string) {
 	agent.host = host
 }
 
+func (agent *agentS) log() LeveledLogger {
+	return agent.logger
+}
+
+func (agent *agentS) getHost() string {
+	return agent.host
+}
+
 func (agent *agentS) reset() {
 	agent.mu.Lock()
 	agent.fsm.reset()
