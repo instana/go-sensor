@@ -29,7 +29,6 @@ const (
 )
 
 type fsmAgent interface {
-	log() LeveledLogger
 	getHost() string
 	setHost(host string)
 	requestHeader(url string, method string, header string) (string, error)
@@ -41,19 +40,23 @@ type fsmAgent interface {
 }
 
 type fsmS struct {
-	agent       fsmAgent
-	fsm         *f.FSM
-	timer       *time.Timer
-	retriesLeft int
+	agent        fsmAgent
+	fsm          *f.FSM
+	timer        *time.Timer
+	retriesLeft  int
+	expDelayFunc func(retryNumber int) time.Duration
+	logger       LeveledLogger
 }
 
-func newFSM(agent fsmAgent) *fsmS {
-	agent.log().Warn("Stan is on the scene. Starting Instana instrumentation.")
-	agent.log().Debug("initializing fsm")
+func newFSM(agent fsmAgent, logger LeveledLogger) *fsmS {
+	logger.Warn("Stan is on the scene. Starting Instana instrumentation.")
+	logger.Debug("initializing fsm")
 
 	ret := &fsmS{
-		agent:       agent,
-		retriesLeft: maximumRetries,
+		agent:        agent,
+		retriesLeft:  maximumRetries,
+		expDelayFunc: expDelay,
+		logger:       logger,
 	}
 
 	ret.fsm = f.NewFSM(
@@ -82,7 +85,7 @@ func (r *fsmS) scheduleRetry(e *f.Event, cb func(e *f.Event)) {
 }
 
 func (r *fsmS) scheduleRetryWithExponentialDelay(e *f.Event, cb func(e *f.Event), retryNumber int) {
-	time.Sleep(expDelay(retryNumber))
+	time.Sleep(r.expDelayFunc(retryNumber))
 	cb(e)
 }
 
@@ -99,14 +102,14 @@ func (r *fsmS) lookupAgentHost(e *f.Event) {
 			if err != nil {
 				// This will be always the "failed to open /proc/net/route: no such file or directory" error.
 				// As this info is not relevant to the customer, we can remove it from the message.
-				r.agent.log().Error("Couldn't open the /proc/net/route file in order to retrieve the default gateway. Scheduling retry.")
+				r.logger.Error("Couldn't open the /proc/net/route file in order to retrieve the default gateway. Scheduling retry.")
 				r.scheduleRetry(e, r.lookupAgentHost)
 
 				return
 			}
 
 			if gateway == "" {
-				r.agent.log().Error("Couldn't parse the default gateway address from /proc/net/route. Scheduling retry.")
+				r.logger.Error("Couldn't parse the default gateway address from /proc/net/route. Scheduling retry.")
 				r.scheduleRetry(e, r.lookupAgentHost)
 
 				return
@@ -118,12 +121,12 @@ func (r *fsmS) lookupAgentHost(e *f.Event) {
 					return
 				}
 
-				r.agent.log().Error("Cannot connect to the agent through localhost or default gateway. Scheduling retry.")
+				r.logger.Error("Cannot connect to the agent through localhost or default gateway. Scheduling retry.")
 				r.scheduleRetry(e, r.lookupAgentHost)
 			})
 		} else {
-			r.agent.log().Error("Cannot connect to the agent. Scheduling retry.")
-			r.agent.log().Debug("Connecting through the default gateway has not been attempted because proc/net/route does not exist.")
+			r.logger.Error("Cannot connect to the agent. Scheduling retry.")
+			r.logger.Debug("Connecting through the default gateway has not been attempted because proc/net/route does not exist.")
 			r.scheduleRetry(e, r.lookupAgentHost)
 		}
 	}
@@ -132,7 +135,7 @@ func (r *fsmS) lookupAgentHost(e *f.Event) {
 }
 
 func (r *fsmS) checkHost(host string, cb func(found bool, host string)) {
-	r.agent.log().Debug("checking host ", host)
+	r.logger.Debug("checking host ", host)
 
 	header, err := r.agent.requestHeader(r.agent.makeHostURL(host, "/"), "GET", "Server")
 
@@ -140,7 +143,7 @@ func (r *fsmS) checkHost(host string, cb func(found bool, host string)) {
 }
 
 func (r *fsmS) lookupSuccess(host string) {
-	r.agent.log().Debug("agent lookup success ", host)
+	r.logger.Debug("agent lookup success ", host)
 
 	r.agent.setHost(host)
 	r.retriesLeft = maximumRetries
@@ -152,11 +155,11 @@ func (r *fsmS) announceSensor(e *f.Event) {
 		if !success {
 			r.retriesLeft--
 			if r.retriesLeft == 0 {
-				r.agent.log().Error("Couldn't announce the sensor after reaching the maximum amount of attempts.")
+				r.logger.Error("Couldn't announce the sensor after reaching the maximum amount of attempts.")
 				r.fsm.Event(eInit)
 				return
 			} else {
-				r.agent.log().Debug("Cannot announce sensor. Scheduling retry.")
+				r.logger.Debug("Cannot announce sensor. Scheduling retry.")
 			}
 
 			retryNumber := maximumRetries - r.retriesLeft + 1
@@ -165,19 +168,19 @@ func (r *fsmS) announceSensor(e *f.Event) {
 			return
 		}
 
-		r.agent.log().Info("Host agent available. We're in business. Announced pid:", resp.Pid)
+		r.logger.Info("Host agent available. We're in business. Announced pid:", resp.Pid)
 		r.agent.applyHostAgentSettings(resp)
 
 		r.retriesLeft = maximumRetries
 		r.fsm.Event(eAnnounce)
 	}
 
-	r.agent.log().Debug("announcing sensor to the agent")
+	r.logger.Debug("announcing sensor to the agent")
 
 	go func(cb func(success bool, resp agentResponse)) {
 		defer func() {
 			if err := recover(); err != nil {
-				r.agent.log().Debug("Announce recovered:", err)
+				r.logger.Debug("Announce recovered:", err)
 			}
 		}()
 
@@ -195,10 +198,10 @@ func (r *fsmS) announceSensor(e *f.Event) {
 			Args:              os.Args[1:],
 		}
 		if name, args, ok := getProcCommandLine(); ok {
-			r.agent.log().Debug("got cmdline from /proc: ", name, args)
+			r.logger.Debug("got cmdline from /proc: ", name, args)
 			d.Name, d.Args = name, args
 		} else {
-			r.agent.log().Debug("no /proc, using OS reported cmdline")
+			r.logger.Debug("no /proc, using OS reported cmdline")
 		}
 
 		if _, err := os.Stat("/proc"); err == nil {
@@ -209,7 +212,7 @@ func (r *fsmS) announceSensor(e *f.Event) {
 					file, err := tcpConn.File()
 
 					if err != nil {
-						r.agent.log().Error(err)
+						r.logger.Error(err)
 					} else {
 						d.Fd = fmt.Sprintf("%v", file.Fd())
 
@@ -229,28 +232,25 @@ func (r *fsmS) announceSensor(e *f.Event) {
 }
 
 func (r *fsmS) testAgent(e *f.Event) {
-	cb := func(b bool) {
+	r.logger.Debug("testing communication with the agent")
+	go func() {
+		_, err := r.agent.head(r.agent.makeURL(agentDataURL))
+		b := err == nil
+
 		if b {
 			r.retriesLeft = maximumRetries
 			r.fsm.Event(eTest)
 		} else {
-			r.agent.log().Debug("Agent is not yet ready. Scheduling retry.")
+			r.logger.Debug("Agent is not yet ready. Scheduling retry.")
 			r.retriesLeft--
 			if r.retriesLeft > 0 {
 				retryNumber := maximumRetries - r.retriesLeft + 1
-				go r.scheduleRetryWithExponentialDelay(e, r.testAgent, retryNumber)
+				r.scheduleRetryWithExponentialDelay(e, r.testAgent, retryNumber)
 			} else {
 				r.fsm.Event(eInit)
 			}
 		}
-	}
-
-	r.agent.log().Debug("testing communication with the agent")
-
-	go func(cb func(b bool)) {
-		_, err := r.agent.head(r.agent.makeURL(agentDataURL))
-		cb(err == nil)
-	}(cb)
+	}()
 }
 
 func (r *fsmS) reset() {
@@ -262,7 +262,7 @@ func (r *fsmS) cpuSetFileContent(pid int) string {
 	path := filepath.Join("proc", strconv.Itoa(pid), "cpuset")
 	data, err := ioutil.ReadFile(path)
 	if err != nil {
-		r.agent.log().Info("error while reading ", path, ":", err.Error())
+		r.logger.Info("error while reading ", path, ":", err.Error())
 		return ""
 	}
 
