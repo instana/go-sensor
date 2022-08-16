@@ -31,15 +31,16 @@ const (
 type fsmAgent interface {
 	getHost() string
 	setHost(host string)
-	requestHeader(url string, method string, header string) (string, error)
+	makeURL(prefix string) string
 	makeHostURL(host string, prefix string) string
 	applyHostAgentSettings(resp agentResponse)
+	requestHeader(url string, method string, header string) (string, error)
 	announceRequest(url string, method string, data interface{}, ret *agentResponse) (string, error)
-	makeURL(prefix string) string
 	head(url string) (string, error)
 }
 
 type fsmS struct {
+	name         string
 	agent        fsmAgent
 	fsm          *f.FSM
 	timer        *time.Timer
@@ -115,15 +116,13 @@ func (r *fsmS) lookupAgentHost(e *f.Event) {
 				return
 			}
 
-			go r.checkHost(gateway, func(found bool, host string) {
-				if found {
-					r.lookupSuccess(host)
-					return
-				}
+			if found {
+				r.lookupSuccess(gateway)
+				return
+			}
 
-				r.logger.Error("Cannot connect to the agent through localhost or default gateway. Scheduling retry.")
-				r.scheduleRetry(e, r.lookupAgentHost)
-			})
+			r.logger.Error("Cannot connect to the agent through localhost or default gateway. Scheduling retry.")
+			r.scheduleRetry(e, r.lookupAgentHost)
 		} else {
 			r.logger.Error("Cannot connect to the agent. Scheduling retry.")
 			r.logger.Debug("Connecting through the default gateway has not been attempted because proc/net/route does not exist.")
@@ -151,8 +150,21 @@ func (r *fsmS) lookupSuccess(host string) {
 }
 
 func (r *fsmS) announceSensor(e *f.Event) {
-	cb := func(success bool, resp agentResponse) {
-		if !success {
+	r.logger.Debug("announcing sensor to the agent")
+
+	go func() {
+		defer func() {
+			if err := recover(); err != nil {
+				r.logger.Debug("Announce recovered:", err)
+			}
+		}()
+
+		d := r.getDiscoveryS()
+
+		var resp agentResponse
+		_, err := r.agent.announceRequest(r.agent.makeURL(agentDiscoveryURL), "PUT", d, &resp)
+
+		if err != nil {
 			r.retriesLeft--
 			if r.retriesLeft == 0 {
 				r.logger.Error("Couldn't announce the sensor after reaching the maximum amount of attempts.")
@@ -163,7 +175,7 @@ func (r *fsmS) announceSensor(e *f.Event) {
 			}
 
 			retryNumber := maximumRetries - r.retriesLeft + 1
-			go r.scheduleRetryWithExponentialDelay(e, r.announceSensor, retryNumber)
+			r.scheduleRetryWithExponentialDelay(e, r.announceSensor, retryNumber)
 
 			return
 		}
@@ -173,62 +185,54 @@ func (r *fsmS) announceSensor(e *f.Event) {
 
 		r.retriesLeft = maximumRetries
 		r.fsm.Event(eAnnounce)
+
+	}()
+}
+
+func (r *fsmS) getDiscoveryS() *discoveryS {
+	pid := os.Getpid()
+	cpuSetFileContent := ""
+
+	if runtime.GOOS == "linux" {
+		cpuSetFileContent = r.cpuSetFileContent(pid)
 	}
 
-	r.logger.Debug("announcing sensor to the agent")
+	d := &discoveryS{
+		PID:               pid,
+		CPUSetFileContent: cpuSetFileContent,
+		Name:              os.Args[0],
+		Args:              os.Args[1:],
+	}
 
-	go func(cb func(success bool, resp agentResponse)) {
-		defer func() {
-			if err := recover(); err != nil {
-				r.logger.Debug("Announce recovered:", err)
-			}
-		}()
+	if name, args, ok := getProcCommandLine(); ok {
+		r.logger.Debug("got cmdline from /proc: ", name, args)
+		d.Name, d.Args = name, args
+	} else {
+		r.logger.Debug("no /proc, using OS reported cmdline")
+	}
 
-		pid := os.Getpid()
-		cpuSetFileContent := ""
+	if _, err := os.Stat("/proc"); err == nil {
+		if addr, err := net.ResolveTCPAddr("tcp", r.agent.getHost()+":42699"); err == nil {
+			if tcpConn, err := net.DialTCP("tcp", nil, addr); err == nil {
+				defer tcpConn.Close()
 
-		if runtime.GOOS == "linux" {
-			cpuSetFileContent = r.cpuSetFileContent(pid)
-		}
+				file, err := tcpConn.File()
 
-		d := &discoveryS{
-			PID:               pid,
-			CPUSetFileContent: cpuSetFileContent,
-			Name:              os.Args[0],
-			Args:              os.Args[1:],
-		}
-		if name, args, ok := getProcCommandLine(); ok {
-			r.logger.Debug("got cmdline from /proc: ", name, args)
-			d.Name, d.Args = name, args
-		} else {
-			r.logger.Debug("no /proc, using OS reported cmdline")
-		}
+				if err != nil {
+					r.logger.Error(err)
+				} else {
+					d.Fd = fmt.Sprintf("%v", file.Fd())
 
-		if _, err := os.Stat("/proc"); err == nil {
-			if addr, err := net.ResolveTCPAddr("tcp", r.agent.getHost()+":42699"); err == nil {
-				if tcpConn, err := net.DialTCP("tcp", nil, addr); err == nil {
-					defer tcpConn.Close()
-
-					file, err := tcpConn.File()
-
-					if err != nil {
-						r.logger.Error(err)
-					} else {
-						d.Fd = fmt.Sprintf("%v", file.Fd())
-
-						link := fmt.Sprintf("/proc/%d/fd/%d", os.Getpid(), file.Fd())
-						if _, err := os.Stat(link); err == nil {
-							d.Inode, _ = os.Readlink(link)
-						}
+					link := fmt.Sprintf("/proc/%d/fd/%d", os.Getpid(), file.Fd())
+					if _, err := os.Stat(link); err == nil {
+						d.Inode, _ = os.Readlink(link)
 					}
 				}
 			}
 		}
+	}
 
-		var resp agentResponse
-		_, err := r.agent.announceRequest(r.agent.makeURL(agentDiscoveryURL), "PUT", d, &resp)
-		cb(err == nil, resp)
-	}(cb)
+	return d
 }
 
 func (r *fsmS) testAgent(e *f.Event) {

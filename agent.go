@@ -131,7 +131,7 @@ func newAgent(serviceName, host string, port int, logger LeveledLogger) *agentS 
 	}
 
 	agent.mu.Lock()
-	agent.fsm = newFSM(agent)
+	agent.fsm = newFSM(agent, logger)
 	agent.mu.Unlock()
 
 	return agent
@@ -358,10 +358,6 @@ func (agent *agentS) applyHostAgentSettings(resp agentResponse) {
 
 func (agent *agentS) setHost(host string) {
 	agent.host = host
-}
-
-func (agent *agentS) log() LeveledLogger {
-	return agent.logger
 }
 
 func (agent *agentS) getHost() string {

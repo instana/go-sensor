@@ -91,6 +91,130 @@ func Test_fsmS_testAgent_Error(t *testing.T) {
 	assert.Equal(t, 0, r.retriesLeft)
 }
 
+func Test_fsmS_announceSensor(t *testing.T) {
+	rCh := make(chan string, 2)
+	errCh := make(chan error, 2)
+
+	res := make(chan bool, 1)
+
+	r := &fsmS{
+		agent: &mockFsmAgent{
+			announceRequestResponse: rCh,
+			announceRequestErr:      errCh,
+		},
+		fsm: f.NewFSM(
+			"unannounced",
+			f.Events{
+				{Name: eAnnounce, Src: []string{"unannounced"}, Dst: "announced"}},
+			f.Callbacks{
+				"announced": func(event *f.Event) {
+					res <- true
+				},
+			}),
+		retriesLeft: maximumRetries,
+		expDelayFunc: func(retryNumber int) time.Duration {
+			return 0
+		},
+		logger: defaultLogger,
+	}
+
+	rCh <- ""
+	errCh <- errors.New("some error")
+
+	rCh <- "Hello"
+	errCh <- nil
+
+	r.announceSensor(&f.Event{})
+
+	assert.True(t, <-res)
+	assert.Empty(t, rCh)
+	assert.Empty(t, errCh)
+	assert.Equal(t, maximumRetries, r.retriesLeft)
+}
+
+func Test_fsmS_announceSensor_Error(t *testing.T) {
+	rCh := make(chan string, 3)
+	errCh := make(chan error, 3)
+
+	res := make(chan bool, 1)
+
+	r := &fsmS{
+		agent: &mockFsmAgent{
+			announceRequestResponse: rCh,
+			announceRequestErr:      errCh,
+		},
+		fsm: f.NewFSM(
+			"unannounced",
+			f.Events{
+				{Name: eInit, Src: []string{"unannounced"}, Dst: "init"}},
+			f.Callbacks{
+				"init": func(event *f.Event) {
+					res <- true
+				},
+			}),
+		retriesLeft: maximumRetries,
+		expDelayFunc: func(retryNumber int) time.Duration {
+			return 0
+		},
+		logger: defaultLogger,
+	}
+
+	rCh <- ""
+	errCh <- errors.New("error #1")
+	rCh <- ""
+	errCh <- errors.New("error #2")
+	rCh <- ""
+	errCh <- errors.New("error #3")
+
+	r.announceSensor(&f.Event{})
+
+	assert.True(t, <-res)
+	assert.Empty(t, rCh)
+	assert.Empty(t, errCh)
+	assert.Equal(t, 0, r.retriesLeft)
+}
+
+func Test_fsmS_lookupAgentHost(t *testing.T) {
+	rCh := make(chan string, 2)
+	errCh := make(chan error, 2)
+
+	res := make(chan bool, 1)
+
+	r := &fsmS{
+		agent: &mockFsmAgent{
+			requestHeaderResponse: rCh,
+			requestHeaderErr:      errCh,
+		},
+		fsm: f.NewFSM(
+			"init",
+			f.Events{
+				{Name: eLookup, Src: []string{"init"}, Dst: "unannounced"}},
+			f.Callbacks{
+				"enter_unannounced": func(event *f.Event) {
+					res <- true
+				},
+			}),
+		retriesLeft: maximumRetries,
+		expDelayFunc: func(retryNumber int) time.Duration {
+			return 0
+		},
+		logger: defaultLogger,
+	}
+
+	rCh <- ""
+	errCh <- errors.New("some error")
+
+	rCh <- agentHeader
+	errCh <- nil
+
+	r.lookupAgentHost(&f.Event{})
+
+	assert.True(t, <-res)
+	assert.Empty(t, rCh)
+	assert.Empty(t, errCh)
+	assert.Equal(t, maximumRetries, r.retriesLeft)
+}
+
 type mockFsmAgent struct {
 	host string
 
