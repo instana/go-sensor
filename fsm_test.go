@@ -185,6 +185,7 @@ func Test_fsmS_lookupAgentHost(t *testing.T) {
 			requestHeaderResponse: rCh,
 			requestHeaderErr:      errCh,
 		},
+		lookupAgentHostRetryPeriod: 0,
 		fsm: f.NewFSM(
 			"init",
 			f.Events{

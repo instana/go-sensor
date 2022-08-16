@@ -40,13 +40,14 @@ type fsmAgent interface {
 }
 
 type fsmS struct {
-	name         string
-	agent        fsmAgent
-	fsm          *f.FSM
-	timer        *time.Timer
-	retriesLeft  int
-	expDelayFunc func(retryNumber int) time.Duration
-	logger       LeveledLogger
+	name                       string
+	agent                      fsmAgent
+	fsm                        *f.FSM
+	timer                      *time.Timer
+	retriesLeft                int
+	expDelayFunc               func(retryNumber int) time.Duration
+	lookupAgentHostRetryPeriod time.Duration
+	logger                     LeveledLogger
 }
 
 func newFSM(agent fsmAgent, logger LeveledLogger) *fsmS {
@@ -54,10 +55,11 @@ func newFSM(agent fsmAgent, logger LeveledLogger) *fsmS {
 	logger.Debug("initializing fsm")
 
 	ret := &fsmS{
-		agent:        agent,
-		retriesLeft:  maximumRetries,
-		expDelayFunc: expDelay,
-		logger:       logger,
+		agent:                      agent,
+		retriesLeft:                maximumRetries,
+		expDelayFunc:               expDelay,
+		logger:                     logger,
+		lookupAgentHostRetryPeriod: retryPeriod,
 	}
 
 	ret.fsm = f.NewFSM(
@@ -78,7 +80,7 @@ func newFSM(agent fsmAgent, logger LeveledLogger) *fsmS {
 }
 
 func (r *fsmS) scheduleRetry(e *f.Event, cb func(e *f.Event)) {
-	r.timer = time.NewTimer(retryPeriod)
+	r.timer = time.NewTimer(r.lookupAgentHostRetryPeriod)
 	go func() {
 		<-r.timer.C
 		cb(e)
@@ -91,54 +93,51 @@ func (r *fsmS) scheduleRetryWithExponentialDelay(e *f.Event, cb func(e *f.Event)
 }
 
 func (r *fsmS) lookupAgentHost(e *f.Event) {
-	cb := func(found bool, host string) {
-		// Agent host is found through the checkHost method, that attempts to read "Instana Agent" from the response header.
-		if found {
-			r.lookupSuccess(host)
+	go r.checkHost(e, r.agent.getHost())
+}
+
+func (r *fsmS) checkHost(e *f.Event, host string) {
+	r.logger.Debug("checking host ", host)
+	header, err := r.agent.requestHeader(r.agent.makeHostURL(host, "/"), "GET", "Server")
+
+	found := err == nil && header == agentHeader
+
+	// Agent host is found through the checkHost method, that attempts to read "Instana Agent" from the response header.
+	if found {
+		r.lookupSuccess(host)
+		return
+	}
+
+	if _, fileNotFoundErr := os.Stat("/proc/net/route"); fileNotFoundErr == nil {
+		gateway, err := getDefaultGateway("/proc/net/route")
+		if err != nil {
+			// This will be always the "failed to open /proc/net/route: no such file or directory" error.
+			// As this info is not relevant to the customer, we can remove it from the message.
+			r.logger.Error("Couldn't open the /proc/net/route file in order to retrieve the default gateway. Scheduling retry.")
+			r.scheduleRetry(e, r.lookupAgentHost)
+
 			return
 		}
 
-		if _, fileNotFoundErr := os.Stat("/proc/net/route"); fileNotFoundErr == nil {
-			gateway, err := getDefaultGateway("/proc/net/route")
-			if err != nil {
-				// This will be always the "failed to open /proc/net/route: no such file or directory" error.
-				// As this info is not relevant to the customer, we can remove it from the message.
-				r.logger.Error("Couldn't open the /proc/net/route file in order to retrieve the default gateway. Scheduling retry.")
-				r.scheduleRetry(e, r.lookupAgentHost)
-
-				return
-			}
-
-			if gateway == "" {
-				r.logger.Error("Couldn't parse the default gateway address from /proc/net/route. Scheduling retry.")
-				r.scheduleRetry(e, r.lookupAgentHost)
-
-				return
-			}
-
-			if found {
-				r.lookupSuccess(gateway)
-				return
-			}
-
-			r.logger.Error("Cannot connect to the agent through localhost or default gateway. Scheduling retry.")
+		if gateway == "" {
+			r.logger.Error("Couldn't parse the default gateway address from /proc/net/route. Scheduling retry.")
 			r.scheduleRetry(e, r.lookupAgentHost)
-		} else {
-			r.logger.Error("Cannot connect to the agent. Scheduling retry.")
-			r.logger.Debug("Connecting through the default gateway has not been attempted because proc/net/route does not exist.")
-			r.scheduleRetry(e, r.lookupAgentHost)
+
+			return
 		}
+
+		if found {
+			r.lookupSuccess(gateway)
+			return
+		}
+
+		r.logger.Error("Cannot connect to the agent through localhost or default gateway. Scheduling retry.")
+		r.scheduleRetry(e, r.lookupAgentHost)
+	} else {
+		r.logger.Error("Cannot connect to the agent. Scheduling retry.")
+		r.logger.Debug("Connecting through the default gateway has not been attempted because proc/net/route does not exist.")
+		r.scheduleRetry(e, r.lookupAgentHost)
 	}
-
-	go r.checkHost(r.agent.getHost(), cb)
-}
-
-func (r *fsmS) checkHost(host string, cb func(found bool, host string)) {
-	r.logger.Debug("checking host ", host)
-
-	header, err := r.agent.requestHeader(r.agent.makeHostURL(host, "/"), "GET", "Server")
-
-	cb(err == nil && header == agentHeader, host)
 }
 
 func (r *fsmS) lookupSuccess(host string) {

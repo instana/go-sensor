@@ -4,10 +4,9 @@
 package instana_test
 
 import (
+	instana "github.com/instana/go-sensor"
 	"os"
 	"testing"
-
-	instana "github.com/instana/go-sensor"
 )
 
 const TestServiceName = "test_service"
