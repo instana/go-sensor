@@ -87,13 +87,13 @@ func Test_agentResponse_getExtraHTTPHeaders(t *testing.T) {
 	}{
 		{
 			name:         "old config",
-			originalJSON: `{"pid":37808,"agentUuid":"88:66:5a:ff:fe:05:a5:f0","extraHeaders":["x-loadtest-id"],"secrets":{"matcher":"contains-ignore-case","list":["key","pass","secret"]}}`,
-			want:         []string{"x-loadtest-id"},
+			originalJSON: `{"pid":37808,"agentUuid":"88:66:5a:ff:fe:05:a5:f0","extraHeaders":["expected-value"],"secrets":{"matcher":"contains-ignore-case","list":["key","pass","secret"]}}`,
+			want:         []string{"expected-value"},
 		},
 		{
 			name:         "new config",
-			originalJSON: `{"pid":38381,"agentUuid":"88:66:5a:ff:fe:05:a5:f0","tracing":{"extra-http-headers":["x-loadtest-id"]},"extraHeaders":["not-expected-value"],"secrets":{"matcher":"contains-ignore-case","list":["key","pass","secret"]}}`,
-			want:         []string{"x-loadtest-id"},
+			originalJSON: `{"pid":38381,"agentUuid":"88:66:5a:ff:fe:05:a5:f0","tracing":{"extra-http-headers":["expected-value"]},"extraHeaders":["non-expected-value"],"secrets":{"matcher":"contains-ignore-case","list":["key","pass","secret"]}}`,
+			want:         []string{"expected-value"},
 		},
 	}
 
