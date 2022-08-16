@@ -11,6 +11,7 @@ import (
 )
 
 func Test_fsmS_testAgent(t *testing.T) {
+	// init channels for agent mock
 	rCh := make(chan string, 2)
 	errCh := make(chan error, 2)
 
@@ -37,6 +38,7 @@ func Test_fsmS_testAgent(t *testing.T) {
 		logger: defaultLogger,
 	}
 
+	// simulate errors and successful requests
 	rCh <- ""
 	errCh <- errors.New("some error")
 
@@ -52,6 +54,7 @@ func Test_fsmS_testAgent(t *testing.T) {
 }
 
 func Test_fsmS_testAgent_Error(t *testing.T) {
+	// init channels for agent mock
 	rCh := make(chan string, 3)
 	errCh := make(chan error, 3)
 
@@ -78,6 +81,7 @@ func Test_fsmS_testAgent_Error(t *testing.T) {
 		logger: defaultLogger,
 	}
 
+	// simulate errors
 	rCh <- ""
 	errCh <- errors.New("error #1")
 	rCh <- ""
@@ -94,6 +98,7 @@ func Test_fsmS_testAgent_Error(t *testing.T) {
 }
 
 func Test_fsmS_announceSensor(t *testing.T) {
+	// init channels for agent mock
 	rCh := make(chan string, 2)
 	errCh := make(chan error, 2)
 
@@ -120,6 +125,7 @@ func Test_fsmS_announceSensor(t *testing.T) {
 		logger: defaultLogger,
 	}
 
+	// simulate errors and successful requests
 	rCh <- ""
 	errCh <- errors.New("some error")
 
@@ -135,6 +141,7 @@ func Test_fsmS_announceSensor(t *testing.T) {
 }
 
 func Test_fsmS_announceSensor_Error(t *testing.T) {
+	// init channels for agent mock
 	rCh := make(chan string, 3)
 	errCh := make(chan error, 3)
 
@@ -161,6 +168,7 @@ func Test_fsmS_announceSensor_Error(t *testing.T) {
 		logger: defaultLogger,
 	}
 
+	// simulate errors
 	rCh <- ""
 	errCh <- errors.New("error #1")
 	rCh <- ""
@@ -177,6 +185,7 @@ func Test_fsmS_announceSensor_Error(t *testing.T) {
 }
 
 func Test_fsmS_lookupAgentHost(t *testing.T) {
+	// init channels for agent mock
 	rCh := make(chan string, 2)
 	errCh := make(chan error, 2)
 
@@ -204,6 +213,7 @@ func Test_fsmS_lookupAgentHost(t *testing.T) {
 		logger: defaultLogger,
 	}
 
+	// simulate errors and successful requests
 	rCh <- ""
 	errCh <- errors.New("some error")
 
