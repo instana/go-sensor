@@ -53,6 +53,17 @@ type agentResponse struct {
 		List    []string `json:"list"`
 	} `json:"secrets"`
 	ExtraHTTPHeaders []string `json:"extraHeaders"`
+	Tracing          struct {
+		ExtraHTTPHeaders []string `json:"extra-http-headers"`
+	} `json:"tracing"`
+}
+
+func (a *agentResponse) getExtraHTTPHeaders() []string {
+	if len(a.Tracing.ExtraHTTPHeaders) == 0 {
+		return a.ExtraHTTPHeaders
+	}
+
+	return a.Tracing.ExtraHTTPHeaders
 }
 
 type discoveryS struct {
@@ -353,7 +364,7 @@ func (agent *agentS) applyHostAgentSettings(resp agentResponse) {
 		}
 	}
 
-	sensor.options.Tracer.CollectableHTTPHeaders = resp.ExtraHTTPHeaders
+	sensor.options.Tracer.CollectableHTTPHeaders = resp.getExtraHTTPHeaders()
 }
 
 func (agent *agentS) setHost(host string) {

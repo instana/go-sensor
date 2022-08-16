@@ -4,6 +4,7 @@ package instana
 
 import (
 	"bytes"
+	"encoding/json"
 	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"net/http"
@@ -75,4 +76,32 @@ type httpClientMock struct {
 
 func (h httpClientMock) Do(req *http.Request) (*http.Response, error) {
 	return h.resp, h.err
+}
+
+func Test_agentResponse_getExtraHTTPHeaders(t *testing.T) {
+
+	tests := []struct {
+		name         string
+		originalJSON string
+		want         []string
+	}{
+		{
+			name:         "old config",
+			originalJSON: `{"pid":37808,"agentUuid":"88:66:5a:ff:fe:05:a5:f0","extraHeaders":["x-loadtest-id"],"secrets":{"matcher":"contains-ignore-case","list":["key","pass","secret"]}}`,
+			want:         []string{"x-loadtest-id"},
+		},
+		{
+			name:         "new config",
+			originalJSON: `{"pid":38381,"agentUuid":"88:66:5a:ff:fe:05:a5:f0","tracing":{"extra-http-headers":["x-loadtest-id"]},"extraHeaders":["not-expected-value"],"secrets":{"matcher":"contains-ignore-case","list":["key","pass","secret"]}}`,
+			want:         []string{"x-loadtest-id"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			r := &agentResponse{}
+			json.Unmarshal([]byte(tt.originalJSON), r)
+			assert.Equalf(t, tt.want, r.getExtraHTTPHeaders(), "getExtraHTTPHeaders()")
+		})
+	}
 }
