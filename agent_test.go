@@ -5,7 +5,7 @@ package instana
 import (
 	"bytes"
 	"encoding/json"
-	"github.com/stretchr/testify/assert"
+	"github.com/instana/testify/assert"
 	"io/ioutil"
 	"net/http"
 	"strings"
