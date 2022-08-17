@@ -4,12 +4,13 @@ package instana
 
 import (
 	"bytes"
-	"github.com/instana/testify/assert"
-
+	"encoding/json"
 	"io/ioutil"
 	"net/http"
 	"strings"
 	"testing"
+
+	"github.com/instana/testify/assert"
 )
 
 func Test_agentS_SendSpans(t *testing.T) {
@@ -76,4 +77,32 @@ type httpClientMock struct {
 
 func (h httpClientMock) Do(req *http.Request) (*http.Response, error) {
 	return h.resp, h.err
+}
+
+func Test_agentResponse_getExtraHTTPHeaders(t *testing.T) {
+
+	tests := []struct {
+		name         string
+		originalJSON string
+		want         []string
+	}{
+		{
+			name:         "old config",
+			originalJSON: `{"pid":37808,"agentUuid":"88:66:5a:ff:fe:05:a5:f0","extraHeaders":["expected-value"],"secrets":{"matcher":"contains-ignore-case","list":["key","pass","secret"]}}`,
+			want:         []string{"expected-value"},
+		},
+		{
+			name:         "new config",
+			originalJSON: `{"pid":38381,"agentUuid":"88:66:5a:ff:fe:05:a5:f0","tracing":{"extra-http-headers":["expected-value"]},"extraHeaders":["non-expected-value"],"secrets":{"matcher":"contains-ignore-case","list":["key","pass","secret"]}}`,
+			want:         []string{"expected-value"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			r := &agentResponse{}
+			json.Unmarshal([]byte(tt.originalJSON), r)
+			assert.Equalf(t, tt.want, r.getExtraHTTPHeaders(), "getExtraHTTPHeaders()")
+		})
+	}
 }
