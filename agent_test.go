@@ -5,11 +5,12 @@ package instana
 import (
 	"bytes"
 	"encoding/json"
-	"github.com/instana/testify/assert"
 	"io/ioutil"
 	"net/http"
 	"strings"
 	"testing"
+
+	"github.com/instana/testify/assert"
 )
 
 func Test_agentS_SendSpans(t *testing.T) {

@@ -142,7 +142,7 @@ func newAgent(serviceName, host string, port int, logger LeveledLogger) *agentS 
 	}
 
 	agent.mu.Lock()
-	agent.fsm = newFSM(agent)
+	agent.fsm = newFSM(agent, logger)
 	agent.mu.Unlock()
 
 	return agent
@@ -298,7 +298,7 @@ func (agent *agentS) fullRequestResponse(ctx context.Context, url string, method
 		if j != nil {
 			b := bytes.NewBuffer(j)
 			if b.Len() > maxContentLength {
-				sensor.logger.Warn(`A batch of spans has been rejected because it is too large to be sent to the agent.`)
+				agent.logger.Warn(`A batch of spans has been rejected because it is too large to be sent to the agent.`)
 
 				return "", payloadTooLargeErr
 			}
@@ -369,6 +369,10 @@ func (agent *agentS) applyHostAgentSettings(resp agentResponse) {
 
 func (agent *agentS) setHost(host string) {
 	agent.host = host
+}
+
+func (agent *agentS) getHost() string {
+	return agent.host
 }
 
 func (agent *agentS) reset() {
