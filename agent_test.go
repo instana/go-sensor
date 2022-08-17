@@ -4,7 +4,8 @@ package instana
 
 import (
 	"bytes"
-	"github.com/stretchr/testify/assert"
+	"github.com/instana/testify/assert"
+
 	"io/ioutil"
 	"net/http"
 	"strings"
