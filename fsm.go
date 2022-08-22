@@ -204,7 +204,7 @@ func (r *fsmS) getDiscoveryS() *discoveryS {
 	}
 
 	if name, args, ok := getProcCommandLine(); ok {
-		r.logger.Debug("got cmdline from /proc: ", name, args)
+		r.logger.Debug("got cmdline from /proc: ", name)
 		d.Name, d.Args = name, args
 	} else {
 		r.logger.Debug("no /proc, using OS reported cmdline")
