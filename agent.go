@@ -364,7 +364,9 @@ func (agent *agentS) applyHostAgentSettings(resp agentResponse) {
 		}
 	}
 
-	sensor.options.Tracer.CollectableHTTPHeaders = resp.getExtraHTTPHeaders()
+	if len(sensor.options.Tracer.CollectableHTTPHeaders) == 0 {
+		sensor.options.Tracer.CollectableHTTPHeaders = resp.getExtraHTTPHeaders()
+	}
 }
 
 func (agent *agentS) setHost(host string) {
