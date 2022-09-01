@@ -106,3 +106,20 @@ func Test_agentResponse_getExtraHTTPHeaders(t *testing.T) {
 		})
 	}
 }
+
+func Test_agentApplyHostSettings(t *testing.T) {
+	agent := &agentS{}
+	response := agentResponse{
+		Pid:    37892,
+		HostID: "myhost",
+		Tracing: struct {
+			ExtraHTTPHeaders []string `json:"extra-http-headers"`
+		}{
+			ExtraHTTPHeaders: []string{"my-unwanted-custom-headers"},
+		},
+	}
+
+	agent.applyHostAgentSettings(response)
+
+	assert.NotContains(t, sensor.options.Tracer.CollectableHTTPHeaders, "my-unwanted-custom-headers")
+}
