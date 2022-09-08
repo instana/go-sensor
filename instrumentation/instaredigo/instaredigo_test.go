@@ -18,7 +18,7 @@ import (
 )
 
 func TestDo(t *testing.T) {
-	examples := map[string]struct {
+	testcases := map[string]struct {
 		DoCommand []interface{}
 		Expected  instana.RedisSpanTags
 	}{
@@ -41,7 +41,7 @@ func TestDo(t *testing.T) {
 			},
 		},
 	}
-	for name, example := range examples {
+	for name, testcase := range testcases {
 		t.Run(name, func(t *testing.T) {
 			recorder := instana.NewTestRecorder()
 			sensor := instana.NewSensorWithTracer(
@@ -52,7 +52,7 @@ func TestDo(t *testing.T) {
 
 			conn := &instaRedigoConn{Conn: &MockConn{}, sensor: sensor, address: ":7001", prevSpan: nil}
 			defer conn.Close()
-			_, err := conn.Do(name, example.DoCommand...)
+			_, err := conn.Do(name, testcase.DoCommand...)
 			assert.Equal(t, err, nil)
 
 			spans := recorder.GetQueuedSpans()
@@ -66,14 +66,14 @@ func TestDo(t *testing.T) {
 
 			require.IsType(t, instana.RedisSpanData{}, dbSpan.Data)
 
-			assert.Equal(t, example.Expected.Error, data.Tags.Error)
-			assert.Equal(t, example.Expected.Command, data.Tags.Command)
+			assert.Equal(t, testcase.Expected.Error, data.Tags.Error)
+			assert.Equal(t, testcase.Expected.Command, data.Tags.Command)
 		})
 	}
 }
 
 func TestSend(t *testing.T) {
-	examples := map[string]struct {
+	testcases := map[string]struct {
 		DoCommand []interface{}
 		Expected  instana.RedisSpanTags
 	}{
@@ -96,7 +96,7 @@ func TestSend(t *testing.T) {
 			},
 		},
 	}
-	for name, example := range examples {
+	for name, testcase := range testcases {
 		t.Run(name, func(t *testing.T) {
 			recorder := instana.NewTestRecorder()
 			sensor := instana.NewSensorWithTracer(
@@ -107,7 +107,7 @@ func TestSend(t *testing.T) {
 
 			conn := &instaRedigoConn{Conn: &MockConn{}, sensor: sensor, address: ":7001", prevSpan: nil}
 			defer conn.Close()
-			err := conn.Send(name, example.DoCommand...)
+			err := conn.Send(name, testcase.DoCommand...)
 			assert.Equal(t, err, nil)
 
 			spans := recorder.GetQueuedSpans()
@@ -121,8 +121,8 @@ func TestSend(t *testing.T) {
 
 			require.IsType(t, instana.RedisSpanData{}, dbSpan.Data)
 
-			assert.Equal(t, example.Expected.Error, data.Tags.Error)
-			assert.Equal(t, example.Expected.Command, data.Tags.Command)
+			assert.Equal(t, testcase.Expected.Error, data.Tags.Error)
+			assert.Equal(t, testcase.Expected.Command, data.Tags.Command)
 		})
 	}
 }
@@ -186,7 +186,7 @@ func TestSubCommands(t *testing.T) {
 }
 
 func TestDoContext(t *testing.T) {
-	examples := map[string]struct {
+	testcases := map[string]struct {
 		Command  []interface{}
 		Expected instana.RedisSpanTags
 	}{
@@ -209,7 +209,7 @@ func TestDoContext(t *testing.T) {
 			},
 		},
 	}
-	for name, example := range examples {
+	for name, testcase := range testcases {
 		t.Run(name, func(t *testing.T) {
 			recorder := instana.NewTestRecorder()
 			sensor := instana.NewSensorWithTracer(
@@ -222,7 +222,7 @@ func TestDoContext(t *testing.T) {
 			defer conn.Close()
 
 			ctx := context.Background()
-			_, err := conn.DoContext(ctx, name, example.Command...)
+			_, err := conn.DoContext(ctx, name, testcase.Command...)
 			assert.Equal(t, err, nil)
 
 			spans := recorder.GetQueuedSpans()
@@ -235,14 +235,14 @@ func TestDoContext(t *testing.T) {
 
 			require.IsType(t, instana.RedisSpanData{}, dbSpan.Data)
 
-			assert.Equal(t, example.Expected.Error, data.Tags.Error)
-			assert.Equal(t, example.Expected.Command, data.Tags.Command)
+			assert.Equal(t, testcase.Expected.Error, data.Tags.Error)
+			assert.Equal(t, testcase.Expected.Command, data.Tags.Command)
 		})
 	}
 }
 
 func TestDoTimeout(t *testing.T) {
-	examples := map[string]struct {
+	testcases := map[string]struct {
 		Command  []interface{}
 		Expected instana.RedisSpanTags
 	}{
@@ -265,7 +265,7 @@ func TestDoTimeout(t *testing.T) {
 			},
 		},
 	}
-	for name, example := range examples {
+	for name, testcase := range testcases {
 		t.Run(name, func(t *testing.T) {
 			recorder := instana.NewTestRecorder()
 			sensor := instana.NewSensorWithTracer(
@@ -276,7 +276,7 @@ func TestDoTimeout(t *testing.T) {
 			defer sp.Finish()
 			conn := &instaRedigoConn{Conn: &MockConn{}, sensor: sensor, address: ":7001", prevSpan: nil}
 			defer conn.Close()
-			_, err := conn.DoWithTimeout(200*time.Millisecond, name, example.Command...)
+			_, err := conn.DoWithTimeout(200*time.Millisecond, name, testcase.Command...)
 			assert.Equal(t, err, nil)
 
 			spans := recorder.GetQueuedSpans()
@@ -290,14 +290,14 @@ func TestDoTimeout(t *testing.T) {
 
 			require.IsType(t, instana.RedisSpanData{}, dbSpan.Data)
 
-			assert.Equal(t, example.Expected.Error, data.Tags.Error)
-			assert.Equal(t, example.Expected.Command, data.Tags.Command)
+			assert.Equal(t, testcase.Expected.Error, data.Tags.Error)
+			assert.Equal(t, testcase.Expected.Command, data.Tags.Command)
 		})
 	}
 }
 
 func TestPool(t *testing.T) {
-	examples := map[string]struct {
+	testcases := map[string]struct {
 		Command  []interface{}
 		Expected instana.RedisSpanTags
 	}{
@@ -320,7 +320,7 @@ func TestPool(t *testing.T) {
 			},
 		},
 	}
-	for name, example := range examples {
+	for name, testcase := range testcases {
 		t.Run(name, func(t *testing.T) {
 			recorder := instana.NewTestRecorder()
 			sensor := instana.NewSensorWithTracer(
@@ -332,7 +332,7 @@ func TestPool(t *testing.T) {
 			pool := newPool(sensor)
 			conn := pool.Get()
 			defer conn.Close()
-			_, err := conn.Do(name, example.Command...)
+			_, err := conn.Do(name, testcase.Command...)
 			assert.Equal(t, err, nil)
 
 			spans := recorder.GetQueuedSpans()
@@ -346,8 +346,8 @@ func TestPool(t *testing.T) {
 
 			require.IsType(t, instana.RedisSpanData{}, dbSpan.Data)
 
-			assert.Equal(t, example.Expected.Error, data.Tags.Error)
-			assert.Equal(t, example.Expected.Command, data.Tags.Command)
+			assert.Equal(t, testcase.Expected.Error, data.Tags.Error)
+			assert.Equal(t, testcase.Expected.Command, data.Tags.Command)
 		})
 	}
 }

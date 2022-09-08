@@ -106,7 +106,7 @@ func (c *instaRedigoConn) Do(commandName string, args ...interface{}) (reply int
 		}
 	}
 
-	return c.genericHandler(commandName, ctx, time.Microsecond, cmdArgs...)
+	return c.genericHandler(commandName, ctx, time.Microsecond, true, cmdArgs...)
 }
 
 // DoContext sends a command to server and returns the received reply along with
@@ -114,7 +114,7 @@ func (c *instaRedigoConn) Do(commandName string, args ...interface{}) (reply int
 func (c *instaRedigoConn) DoContext(ctx context.Context, commandName string,
 	args ...interface{}) (reply interface{}, err error) {
 	if _, ok := c.Conn.(redis.ConnWithContext); ok {
-		return c.genericHandler(commandName, ctx, time.Microsecond, args...)
+		return c.genericHandler(commandName, ctx, time.Microsecond, true, args...)
 	}
 
 	return nil, errors.New("redis: connection does not support ConnWithContext")
@@ -138,7 +138,7 @@ func (c *instaRedigoConn) DoWithTimeout(timeout time.Duration, commandName strin
 			}
 		}
 
-		return c.genericHandler(commandName, ctx, timeout, cmdArgs...)
+		return c.genericHandler(commandName, ctx, timeout, true, cmdArgs...)
 	}
 
 	return nil, errors.New("redis: connection does not support ConnWithTimeout")
@@ -149,8 +149,9 @@ func (c *instaRedigoConn) DoWithTimeout(timeout time.Duration, commandName strin
 // create a context from the parent span and pass it as an argument along with
 // the other arguments. The Send API will retrieve the span information from the
 // context and record the correlated span information.
-func (c *instaRedigoConn) Send(commandName string, args ...interface{}) (err error) {
+func (c *instaRedigoConn) Send(commandName string, args ...interface{}) error {
 	var cmdArgs []interface{}
+
 	// Separating the parent context from the arguments
 	ctx := context.Background()
 	for _, a := range args {
@@ -161,58 +162,8 @@ func (c *instaRedigoConn) Send(commandName string, args ...interface{}) (err err
 		}
 	}
 
-	// Handling the command if there exists a previous span
-	c.mu.Lock()
-	defer c.mu.Unlock()
-
-	if c.prevSpan != nil {
-
-		err = c.Conn.Send(commandName, cmdArgs...)
-		if err != nil {
-			c.prevSpan.span.SetTag("redis.error", err.Error())
-			c.prevSpan.span.LogFields(otlog.Object("error", err.Error()))
-		}
-
-		if !c.isTransactionEndingCommand(commandName) {
-			c.prevSpan.batchCmds = append(c.prevSpan.batchCmds, commandName)
-			c.prevSpan.span.SetTag("redis.subCommands", c.prevSpan.batchCmds)
-		} else {
-			c.prevSpan.span.Finish()
-			c.prevSpan = nil
-		}
-
-	} else {
-
-		// Fetching the tracer
-		tracer := c.sensor.Tracer()
-		opts := []ot.StartSpanOption{
-			ot.Tags{
-				"redis.connection": c.address,
-			},
-		}
-
-		// Fetching the span and starting it
-		if ps, ok := instana.SpanFromContext(ctx); ok {
-			tracer = ps.Tracer()
-			opts = append(opts, ot.ChildOf(ps.Context()))
-		}
-		span := tracer.StartSpan("redis", opts...)
-
-		// Checking for multi command transaction
-		if c.isTransactionBeginningCommand(commandName) {
-			c.prevSpan = &prevSpan{span, nil}
-		} else {
-			defer span.Finish()
-		}
-
-		// Setting the span tags and executing the command
-		span.SetTag("redis.command", commandName)
-		err = c.Conn.Send(commandName, cmdArgs...)
-		if err != nil {
-			span.SetTag("redis.error", err.Error())
-			span.LogFields(otlog.Object("error", err.Error()))
-		}
-	}
+	// Handling Send operation
+	_, err := c.genericHandler(commandName, ctx, time.Microsecond, false, cmdArgs...)
 
 	return err
 }
@@ -225,52 +176,24 @@ func (c *instaRedigoConn) isTransactionBeginningCommand(commandName string) bool
 	return strings.ToUpper(commandName) == "MULTI"
 }
 
-func (c *instaRedigoConn) genericDo(ctx context.Context, timeout time.Duration,
-	commandName string, args ...interface{}) (interface{}, error) {
-
-	switch connType := c.Conn.(type) {
-	case redis.ConnWithContext:
-
-		return connType.DoContext(ctx, commandName, args...)
-	case redis.ConnWithTimeout:
-
-		return connType.DoWithTimeout(timeout, commandName, args...)
-	default:
-
-		return connType.Do(commandName, args...)
-	}
-}
-
-func (c *instaRedigoConn) handleMultiTransaction(commandName string,
-	ctx context.Context, timeout time.Duration,
-	args ...interface{}) (reply interface{}, err error) {
-	reply, err = c.genericDo(ctx, timeout, commandName, args...)
-	if err != nil {
-		c.prevSpan.span.SetTag("redis.error", err.Error())
-		c.prevSpan.span.LogFields(otlog.Object("error", err.Error()))
-	}
-
-	if !c.isTransactionEndingCommand(commandName) {
-		c.prevSpan.batchCmds = append(c.prevSpan.batchCmds, commandName)
-		c.prevSpan.span.SetTag("redis.subCommands", c.prevSpan.batchCmds)
-	} else {
-		c.prevSpan.span.Finish()
-		c.prevSpan = nil
-	}
-
-	return reply, err
-}
-
 func (c *instaRedigoConn) genericHandler(commandName string, ctx context.Context,
-	timeout time.Duration, args ...interface{}) (interface{}, error) {
+	timeout time.Duration, needResponse bool, args ...interface{}) (interface{}, error) {
 
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
 	// Handle multi statement transaction
 	if c.prevSpan != nil {
-		return c.handleMultiTransaction(commandName, ctx, timeout, args...)
+		return c.handleMultiTransaction(commandName, ctx, timeout, needResponse, args...)
 	}
+
+	// Handle single statement transaction
+	return c.handleSingleTransaction(commandName, ctx, timeout, needResponse, args...)
+}
+
+func (c *instaRedigoConn) handleSingleTransaction(commandName string,
+	ctx context.Context, timeout time.Duration, needResponse bool,
+	args ...interface{}) (interface{}, error) {
 	// Fetching the tracer
 	tracer := c.sensor.Tracer()
 	opts := []ot.StartSpanOption{
@@ -295,11 +218,61 @@ func (c *instaRedigoConn) genericHandler(commandName string, ctx context.Context
 
 	// Setting span tags and executing the command
 	span.SetTag("redis.command", commandName)
-	reply, err := c.genericDo(ctx, time.Millisecond, commandName, args...)
+
+	var err error
+	var reply interface{}
+
+	if needResponse {
+		reply, err = c.genericDo(ctx, time.Millisecond, commandName, args...)
+	} else {
+		err = c.Conn.Send(commandName, args...)
+	}
+
 	if err != nil {
 		span.SetTag("redis.error", err.Error())
 		span.LogFields(otlog.Object("error", err.Error()))
 	}
 
 	return reply, err
+}
+
+func (c *instaRedigoConn) handleMultiTransaction(commandName string,
+	ctx context.Context, timeout time.Duration, needResponse bool,
+	args ...interface{}) (reply interface{}, err error) {
+	if needResponse {
+		reply, err = c.genericDo(ctx, timeout, commandName, args...)
+	} else {
+		err = c.Conn.Send(commandName, args...)
+	}
+
+	if err != nil {
+		c.prevSpan.span.SetTag("redis.error", err.Error())
+		c.prevSpan.span.LogFields(otlog.Object("error", err.Error()))
+	}
+
+	if c.isTransactionEndingCommand(commandName) {
+		c.prevSpan.span.Finish()
+		c.prevSpan = nil
+	} else {
+		c.prevSpan.batchCmds = append(c.prevSpan.batchCmds, commandName)
+		c.prevSpan.span.SetTag("redis.subCommands", c.prevSpan.batchCmds)
+	}
+
+	return reply, err
+}
+
+func (c *instaRedigoConn) genericDo(ctx context.Context, timeout time.Duration,
+	commandName string, args ...interface{}) (interface{}, error) {
+
+	switch connType := c.Conn.(type) {
+	case redis.ConnWithContext:
+
+		return connType.DoContext(ctx, commandName, args...)
+	case redis.ConnWithTimeout:
+
+		return connType.DoWithTimeout(timeout, commandName, args...)
+	default:
+
+		return connType.Do(commandName, args...)
+	}
 }
