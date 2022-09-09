@@ -16,7 +16,7 @@ import (
 	"github.com/instana/testify/require"
 )
 
-var headerFormats = []string{"binary", "string", "both"}
+var headerFormats = []string{"" /* tests the default behavior */, "binary", "string", "both"}
 
 func TestProducerMessageWithSpan(t *testing.T) {
 	for _, headerFormat := range headerFormats {
@@ -43,7 +43,7 @@ func TestProducerMessageWithSpan(t *testing.T) {
 			{Key: []byte("headerKey1"), Value: []byte("headerValue1")},
 		}
 
-		if headerFormat == "both" || headerFormat == "binary" {
+		if headerFormat == "both" || headerFormat == "binary" || headerFormat == "" /* -> default, currently both */ {
 			expected = append(expected, []sarama.RecordHeader{
 				{Key: []byte(instasarama.FieldL), Value: []byte{0x01}},
 				{
@@ -56,7 +56,7 @@ func TestProducerMessageWithSpan(t *testing.T) {
 			}...)
 		}
 
-		if headerFormat == "both" || headerFormat == "string" {
+		if headerFormat == "both" || headerFormat == "string" || headerFormat == "" /* -> default, currently both */ {
 			expected = append(expected, []sarama.RecordHeader{
 				{Key: []byte(instasarama.FieldLS), Value: []byte("1")},
 				{
@@ -102,7 +102,7 @@ func TestProducerMessageWithSpanFromContext(t *testing.T) {
 			{Key: []byte("headerKey1"), Value: []byte("headerValue1")},
 		}
 
-		if headerFormat == "both" || headerFormat == "binary" {
+		if headerFormat == "both" || headerFormat == "binary" || headerFormat == "" /* -> default, currently both */ {
 			expected = append(expected, []sarama.RecordHeader{
 				{Key: []byte(instasarama.FieldL), Value: []byte{0x01}},
 				{
@@ -115,7 +115,7 @@ func TestProducerMessageWithSpanFromContext(t *testing.T) {
 			}...)
 		}
 
-		if headerFormat == "both" || headerFormat == "string" {
+		if headerFormat == "both" || headerFormat == "string" || headerFormat == "" /* -> default, currently both */ {
 			expected = append(expected, []sarama.RecordHeader{
 				{Key: []byte(instasarama.FieldLS), Value: []byte("1")},
 				{
@@ -142,7 +142,7 @@ func TestProducerMessageCarrier_Set_FieldT(t *testing.T) {
 		c := instasarama.ProducerMessageCarrier{&msg}
 		c.Set(instana.FieldT, "0000000000000001deadbeefdeadbeef")
 
-		if headerFormat == "both" || headerFormat == "binary" {
+		if headerFormat == "both" || headerFormat == "binary" || headerFormat == "" /* -> default, currently both */ {
 			expected = append(expected, []sarama.RecordHeader{
 				{
 					Key: []byte(instasarama.FieldC),
@@ -157,7 +157,7 @@ func TestProducerMessageCarrier_Set_FieldT(t *testing.T) {
 			}...)
 		}
 
-		if headerFormat == "both" || headerFormat == "string" {
+		if headerFormat == "both" || headerFormat == "string" || headerFormat == "" /* -> default, currently both */ {
 			expected = append(expected, []sarama.RecordHeader{
 				{
 					Key:   []byte(instasarama.FieldT),
@@ -393,7 +393,7 @@ func TestProducerMessageCarrier_Set_FieldS(t *testing.T) {
 
 		var expected []sarama.RecordHeader
 
-		if headerFormat == "both" || headerFormat == "binary" {
+		if headerFormat == "both" || headerFormat == "binary" || headerFormat == "" /* -> default, currently both */ {
 			expected = append(expected, []sarama.RecordHeader{
 				{
 					Key: []byte(instasarama.FieldC),
@@ -408,7 +408,7 @@ func TestProducerMessageCarrier_Set_FieldS(t *testing.T) {
 			}...)
 		}
 
-		if headerFormat == "both" || headerFormat == "string" {
+		if headerFormat == "both" || headerFormat == "string" || headerFormat == "" /* -> default, currently both */ {
 			expected = append(expected, []sarama.RecordHeader{
 				{
 					Key:   []byte(instasarama.FieldS),
@@ -683,7 +683,7 @@ func TestProducerMessageCarrier_Update_FieldL(t *testing.T) {
 		var headerSuppressed []sarama.RecordHeader
 		var headerNotSuppressed []sarama.RecordHeader
 
-		if headerFormat == "both" || headerFormat == "binary" {
+		if headerFormat == "both" || headerFormat == "binary" || headerFormat == "" /* -> default, currently both */ {
 			headerSuppressed = append(headerSuppressed, []sarama.RecordHeader{
 				{Key: []byte("X_CUSTOM_1"), Value: []byte("value1")},
 				{Key: []byte("x_instana_l"), Value: []byte{0x00}},
@@ -697,7 +697,7 @@ func TestProducerMessageCarrier_Update_FieldL(t *testing.T) {
 			}...)
 		}
 
-		if headerFormat == "both" || headerFormat == "string" {
+		if headerFormat == "both" || headerFormat == "string" || headerFormat == "" /* -> default, currently both */ {
 			headerSuppressed = append(headerSuppressed, []sarama.RecordHeader{
 				{Key: []byte("X_CUSTOM_1"), Value: []byte("value1")},
 				{Key: []byte("x_instana_l_s"), Value: []byte("0")},
@@ -771,7 +771,7 @@ func TestProducerMessageCarrier_ForeachKey(t *testing.T) {
 			{Key: []byte("X_CUSTOM_2"), Value: []byte("value2")},
 		}
 
-		if headerFormat == "both" || headerFormat == "binary" {
+		if headerFormat == "both" || headerFormat == "binary" || headerFormat == "" /* -> default, currently both */ {
 			headers = append(headers, []sarama.RecordHeader{
 				{
 					Key: []byte("x_instana_c"),
@@ -787,7 +787,7 @@ func TestProducerMessageCarrier_ForeachKey(t *testing.T) {
 			}...)
 		}
 
-		if headerFormat == "both" || headerFormat == "string" {
+		if headerFormat == "both" || headerFormat == "string" || headerFormat == "" /* -> default, currently both */ {
 			headers = append(headers, []sarama.RecordHeader{
 				{Key: []byte("x_instana_t"), Value: []byte("000000000000000100000000abcdef12")},
 				{Key: []byte("x_instana_s"), Value: []byte("00000000deadbeef")},
@@ -869,7 +869,7 @@ func TestSpanContextFromConsumerMessage(t *testing.T) {
 
 		var headers []*sarama.RecordHeader
 
-		if headerFormat == "both" || headerFormat == "binary" {
+		if headerFormat == "both" || headerFormat == "binary" || headerFormat == "" /* -> default, currently both */ {
 			headers = []*sarama.RecordHeader{
 				{
 					Key: []byte("x_instana_c"),
@@ -885,7 +885,7 @@ func TestSpanContextFromConsumerMessage(t *testing.T) {
 			}
 		}
 
-		if headerFormat == "both" || headerFormat == "string" {
+		if headerFormat == "both" || headerFormat == "string" || headerFormat == "" /* -> default, currently both */ {
 			headers = []*sarama.RecordHeader{
 				{Key: []byte("x_instana_t"), Value: []byte("000000000000000100000000abcdef12")},
 				{Key: []byte("x_instana_s"), Value: []byte("00000000deadbeef")},
@@ -1037,7 +1037,7 @@ func TestConsumerMessageCarrier_Set_FieldT(t *testing.T) {
 
 		var expected []*sarama.RecordHeader
 
-		if headerFormat == "both" || headerFormat == "binary" {
+		if headerFormat == "both" || headerFormat == "binary" || headerFormat == "" /* -> default, currently both */ {
 			expected = append(expected, []*sarama.RecordHeader{
 				{
 					Key: []byte(instasarama.FieldC),
@@ -1052,7 +1052,7 @@ func TestConsumerMessageCarrier_Set_FieldT(t *testing.T) {
 			}...)
 		}
 
-		if headerFormat == "both" || headerFormat == "string" {
+		if headerFormat == "both" || headerFormat == "string" || headerFormat == "" /* -> default, currently both */ {
 			expected = append(expected, []*sarama.RecordHeader{
 				{
 					Key:   []byte(instasarama.FieldT),
@@ -1417,7 +1417,7 @@ func TestConsumerMessageCarrier_Set_FieldS(t *testing.T) {
 		var expected []*sarama.RecordHeader
 		c := instasarama.ConsumerMessageCarrier{&msg}
 
-		if headerFormat == "both" || headerFormat == "binary" {
+		if headerFormat == "both" || headerFormat == "binary" || headerFormat == "" /* -> default, currently both */ {
 			expected = append(expected, []*sarama.RecordHeader{
 				{
 					Key: []byte(instasarama.FieldC),
@@ -1432,7 +1432,7 @@ func TestConsumerMessageCarrier_Set_FieldS(t *testing.T) {
 			}...)
 		}
 
-		if headerFormat == "both" || headerFormat == "string" {
+		if headerFormat == "both" || headerFormat == "string" || headerFormat == "" /* -> default, currently both */ {
 			expected = append(expected, []*sarama.RecordHeader{
 				{
 					Key:   []byte(instasarama.FieldS),
@@ -1928,7 +1928,7 @@ func TestConsumerMessageCarrier_ForeachKey(t *testing.T) {
 			},
 		}
 
-		if headerFormat == "both" || headerFormat == "binary" {
+		if headerFormat == "both" || headerFormat == "binary" || headerFormat == "" /* -> default, currently both */ {
 			msg.Headers = append(msg.Headers, []*sarama.RecordHeader{
 				{
 					Key: []byte("x_instana_c"),
@@ -1945,7 +1945,7 @@ func TestConsumerMessageCarrier_ForeachKey(t *testing.T) {
 			}...)
 		}
 
-		if headerFormat == "both" || headerFormat == "string" {
+		if headerFormat == "both" || headerFormat == "string" || headerFormat == "" /* -> default, currently both */ {
 			msg.Headers = append(msg.Headers, []*sarama.RecordHeader{
 				{Key: []byte("x_instana_t"), Value: []byte("000000000000000100000000abcdef12")},
 				{Key: []byte("x_instana_s"), Value: []byte("00000000deadbeef")},

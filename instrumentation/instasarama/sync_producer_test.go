@@ -18,7 +18,7 @@ import (
 )
 
 func TestSyncProducer_SendMessage(t *testing.T) {
-	headerFormats := []string{"binary", "string", "both"}
+	headerFormats := []string{"" /* tests the default behavior */, "binary", "string", "both"}
 
 	for _, headerFormat := range headerFormats {
 		os.Setenv(instasarama.KafkaHeaderEnvVarKey, headerFormat)
@@ -60,7 +60,7 @@ func TestSyncProducer_SendMessage(t *testing.T) {
 
 		require.Len(t, p.Messages, 1)
 
-		if headerFormat == "both" || headerFormat == "binary" {
+		if headerFormat == "both" || headerFormat == "binary" || headerFormat == "" /* -> default, currently both */ {
 			assert.Contains(t, p.Messages[0].Headers, sarama.RecordHeader{
 				Key:   []byte("X_INSTANA_C"),
 				Value: instasarama.PackTraceContextHeader(cSpan.TraceID, cSpan.SpanID),
@@ -71,7 +71,7 @@ func TestSyncProducer_SendMessage(t *testing.T) {
 			})
 		}
 
-		if headerFormat == "both" || headerFormat == "string" {
+		if headerFormat == "both" || headerFormat == "string" || headerFormat == "" /* -> default, currently both */ {
 			assert.Contains(t, p.Messages[0].Headers, sarama.RecordHeader{
 				Key:   []byte(instasarama.FieldLS),
 				Value: []byte("1"),
@@ -198,7 +198,7 @@ func TestSyncProducer_SendMessages_SameTraceContext(t *testing.T) {
 
 		require.Len(t, p.Messages, 2)
 		for _, msg := range p.Messages {
-			if headerFormat == "both" || headerFormat == "binary" {
+			if headerFormat == "both" || headerFormat == "binary" || headerFormat == "" /* -> default, currently both */ {
 				assert.Contains(t, msg.Headers, sarama.RecordHeader{
 					Key:   []byte("X_INSTANA_C"),
 					Value: instasarama.PackTraceContextHeader(cSpan.TraceID, cSpan.SpanID),
@@ -209,7 +209,7 @@ func TestSyncProducer_SendMessages_SameTraceContext(t *testing.T) {
 				})
 			}
 
-			if headerFormat == "both" || headerFormat == "string" {
+			if headerFormat == "both" || headerFormat == "string" || headerFormat == "" /* -> default, currently both */ {
 				assert.Contains(t, msg.Headers, sarama.RecordHeader{
 					Key:   []byte(instasarama.FieldLS),
 					Value: []byte("1"),

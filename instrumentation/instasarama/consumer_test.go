@@ -16,7 +16,7 @@ import (
 )
 
 func TestConsumer_ConsumePartition(t *testing.T) {
-	headerFormats := []string{"binary", "string"}
+	headerFormats := []string{"binary", "string", "both"}
 
 	for _, headerFormat := range headerFormats {
 		recorder := instana.NewTestRecorder()
@@ -48,9 +48,7 @@ func TestConsumer_ConsumePartition(t *testing.T) {
 					{Key: []byte("x_instana_l"), Value: []byte{0x01}},
 				},
 			}
-		}
-
-		if headerFormat == "string" {
+		} else if headerFormat == "string" {
 			messages <- &sarama.ConsumerMessage{
 				Topic: "topic-1",
 				Headers: []*sarama.RecordHeader{
@@ -65,6 +63,34 @@ func TestConsumer_ConsumePartition(t *testing.T) {
 					{Key: []byte(instasarama.FieldLS), Value: []byte("1")},
 				},
 			}
+		} else if headerFormat == "both" {
+			messages <- &sarama.ConsumerMessage{
+				Topic: "topic-1",
+				Headers: []*sarama.RecordHeader{
+					{
+						Key:   []byte("x_instana_t"),
+						Value: []byte("0000000000000000000000000abcde12"),
+					},
+					{
+						Key:   []byte("x_instana_s"),
+						Value: []byte("00000000deadbeef"),
+					},
+					{Key: []byte(instasarama.FieldLS), Value: []byte("1")},
+					{
+						Key: []byte("x_instana_c"),
+						Value: []byte{
+							// trace id
+							0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+							0x00, 0x00, 0x00, 0x00, 0x0a, 0xbc, 0xde, 0x12,
+							// span id
+							0x00, 0x00, 0x00, 0x00, 0xde, 0xad, 0xbe, 0xef,
+						},
+					},
+					{Key: []byte("x_instana_l"), Value: []byte{0x01}},
+				},
+			}
+		} else {
+			t.Fatalf("Unexpected header format: %s", headerFormat)
 		}
 
 		wrapped := instasarama.WrapConsumer(c, sensor)
