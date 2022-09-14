@@ -5,6 +5,7 @@ package instana_test
 
 import (
 	"context"
+	"github.com/opentracing/opentracing-go"
 	"testing"
 
 	instana "github.com/instana/go-sensor"
@@ -27,4 +28,18 @@ func TestSpanFromContext_WithActiveSpan(t *testing.T) {
 func TestSpanFromContext_NoActiveSpan(t *testing.T) {
 	_, ok := instana.SpanFromContext(context.Background())
 	assert.False(t, ok)
+}
+
+func TestInteroperabilityWithOpenTracing(t *testing.T) {
+	recorder := instana.NewTestRecorder()
+	tracer := instana.NewTracerWithEverything(&instana.Options{}, recorder)
+
+	// If a span was stored in context via instana (for example by http middleware)
+	span := tracer.StartSpan("test")
+	ctx := instana.ContextWithSpan(context.Background(), span)
+
+	// It should be possible to retrieve it with opentracing API
+	otSpan := opentracing.SpanFromContext(ctx)
+
+	assert.NotNil(t, otSpan)
 }
