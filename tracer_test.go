@@ -67,12 +67,6 @@ type strangeContext struct{}
 func (c *strangeContext) ForeachBaggageItem(handler func(k, v string) bool) {}
 
 func TestTracer_NonInstanaSpan(t *testing.T) {
-	defer func() {
-		if rec := recover(); rec != nil {
-			t.Fatalf("failed to start span with panic: %v", rec)
-		}
-	}()
-
 	tracer := instana.NewTracerWithEverything(&instana.Options{}, nil)
 
 	ref := ot.SpanReference{
@@ -86,5 +80,7 @@ func TestTracer_NonInstanaSpan(t *testing.T) {
 		},
 	}
 
-	tracer.StartSpanWithOptions("my_operation", opts)
+	assert.NotPanics(t, func() {
+		tracer.StartSpanWithOptions("my_operation", opts)
+	})
 }
