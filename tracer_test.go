@@ -61,3 +61,26 @@ func TestTracer_StartSpan_WithCorrelationData(t *testing.T) {
 	sc := sp.Context().(instana.SpanContext)
 	assert.Equal(t, instana.EUMCorrelationData{}, sc.Correlation)
 }
+
+type strangeContext struct{}
+
+func (c *strangeContext) ForeachBaggageItem(handler func(k, v string) bool) {}
+
+func TestTracer_NonInstanaSpan(t *testing.T) {
+	tracer := instana.NewTracerWithEverything(&instana.Options{}, nil)
+
+	ref := ot.SpanReference{
+		Type:              ot.ChildOfRef,
+		ReferencedContext: &strangeContext{},
+	}
+
+	opts := ot.StartSpanOptions{
+		References: []ot.SpanReference{
+			ref,
+		},
+	}
+
+	assert.NotPanics(t, func() {
+		tracer.StartSpanWithOptions("my_operation", opts)
+	})
+}
