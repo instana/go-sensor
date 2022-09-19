@@ -242,7 +242,9 @@ func (conn *wrappedSQLConn) CheckNamedValue(d *driver.NamedValue) error {
 		return s.CheckNamedValue(d)
 	}
 
-	return errors.New("no named check provided for driver.Conn")
+	_, err = driver.DefaultParameterConverter.ConvertValue(d)
+
+	return err
 }
 
 type wrappedSQLStmt struct {
@@ -290,7 +292,9 @@ func (stmt *wrappedSQLStmt) CheckNamedValue(d *driver.NamedValue) error {
 		return s.CheckNamedValue(d)
 	}
 
-	return errors.New("no named check provided for driver.Stmt")
+	_, err := driver.DefaultParameterConverter.ConvertValue(d)
+
+	return err
 }
 
 func (stmt *wrappedSQLStmt) QueryContext(ctx context.Context, args []driver.NamedValue) (driver.Rows, error) {
