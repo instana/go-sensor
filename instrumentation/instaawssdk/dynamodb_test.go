@@ -57,6 +57,7 @@ func TestStartDynamoDBSpan(t *testing.T) {
 	assert.Equal(t, instana.AWSDynamoDBSpanTags{
 		Operation: "get",
 		Table:     "test-table",
+		Region:    "mock-region",
 	}, data.Tags)
 }
 
@@ -157,6 +158,7 @@ func TestFinalizeDynamoDBSpan_WithError(t *testing.T) {
 		Operation: "get",
 		Table:     "test-table",
 		Error:     req.Error.Error(),
+		Region:    "mock-region",
 	}, data.Tags)
 }
 

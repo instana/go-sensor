@@ -10,9 +10,10 @@ const (
 
 // dynamodb
 const (
-	dynamodbOp    = "dynamodb.op"
-	dynamodbTable = "dynamodb.table"
-	dynamodbError = "dynamodb.error"
+	dynamodbOp     = "dynamodb.op"
+	dynamodbTable  = "dynamodb.table"
+	dynamodbError  = "dynamodb.error"
+	dynamodbRegion = "dynamodb.region"
 )
 
 // lambda
