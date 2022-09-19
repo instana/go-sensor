@@ -15,6 +15,9 @@ const (
 	MaxLogsPerSpan = 2
 )
 
+var _ ot.Tracer = (*tracerS)(nil)
+var _ Tracer = (*tracerS)(nil)
+
 type tracerS struct {
 	recorder SpanRecorder
 }
@@ -93,10 +96,11 @@ func (r *tracerS) StartSpanWithOptions(operationName string, opts ot.StartSpanOp
 	sc := NewRootSpanContext()
 	for _, ref := range opts.References {
 		if ref.Type == ot.ChildOfRef || ref.Type == ot.FollowsFromRef {
-			parent := ref.ReferencedContext.(SpanContext)
-			corrData = parent.Correlation
-			sc = NewSpanContext(parent)
-			break
+			if parent, ok := ref.ReferencedContext.(SpanContext); ok {
+				corrData = parent.Correlation
+				sc = NewSpanContext(parent)
+				break
+			}
 		}
 	}
 

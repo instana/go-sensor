@@ -16,6 +16,8 @@ import (
 
 const minSpanLogLevel = logger.WarnLevel
 
+var _ ot.Span = (*spanS)(nil)
+
 type spanS struct {
 	Service     string
 	Operation   string
