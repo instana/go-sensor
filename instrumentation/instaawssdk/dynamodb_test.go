@@ -136,8 +136,9 @@ func TestFinalizeDynamoDBSpan_WithError(t *testing.T) {
 	)
 
 	sp := sensor.Tracer().StartSpan("dynamodb", opentracing.Tags{
-		"dynamodb.op":    "get",
-		"dynamodb.table": "test-table",
+		"dynamodb.op":     "get",
+		"dynamodb.table":  "test-table",
+		"dynamodb.region": "mock-region",
 	})
 
 	req := newDynamoDBRequest()
@@ -147,7 +148,7 @@ func TestFinalizeDynamoDBSpan_WithError(t *testing.T) {
 	instaawssdk.FinalizeDynamoDBSpan(req)
 
 	spans := recorder.GetQueuedSpans()
-	require.Len(t, spans, 1)
+	require.Len(t, spans, 2)
 
 	dbSpan := spans[0]
 
