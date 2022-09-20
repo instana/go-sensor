@@ -242,7 +242,7 @@ func (conn *wrappedSQLConn) CheckNamedValue(d *driver.NamedValue) error {
 		return s.CheckNamedValue(d)
 	}
 
-	_, err = driver.DefaultParameterConverter.ConvertValue(d)
+	d.Value, err = driver.DefaultParameterConverter.ConvertValue(d)
 
 	return err
 }
@@ -292,7 +292,8 @@ func (stmt *wrappedSQLStmt) CheckNamedValue(d *driver.NamedValue) error {
 		return s.CheckNamedValue(d)
 	}
 
-	_, err := driver.DefaultParameterConverter.ConvertValue(d)
+	var err error
+	d.Value, err = driver.DefaultParameterConverter.ConvertValue(d)
 
 	return err
 }
