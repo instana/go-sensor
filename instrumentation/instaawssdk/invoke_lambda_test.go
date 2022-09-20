@@ -152,7 +152,7 @@ func TestFinalizeInvokeLambdaSpan_WithError(t *testing.T) {
 	instaawssdk.FinalizeInvokeLambdaSpan(req)
 
 	spans := recorder.GetQueuedSpans()
-	require.Len(t, spans, 1)
+	require.Len(t, spans, 2)
 
 	invokeSpan := spans[0]
 
