@@ -201,7 +201,7 @@ func TestFinalizeSNSSpan_WithError(t *testing.T) {
 	instaawssdk.FinalizeSNSSpan(req)
 
 	spans := recorder.GetQueuedSpans()
-	require.Len(t, spans, 1)
+	require.Len(t, spans, 2)
 
 	snsSpan := spans[0]
 

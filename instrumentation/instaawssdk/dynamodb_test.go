@@ -57,6 +57,7 @@ func TestStartDynamoDBSpan(t *testing.T) {
 	assert.Equal(t, instana.AWSDynamoDBSpanTags{
 		Operation: "get",
 		Table:     "test-table",
+		Region:    "mock-region",
 	}, data.Tags)
 }
 
@@ -135,8 +136,9 @@ func TestFinalizeDynamoDBSpan_WithError(t *testing.T) {
 	)
 
 	sp := sensor.Tracer().StartSpan("dynamodb", opentracing.Tags{
-		"dynamodb.op":    "get",
-		"dynamodb.table": "test-table",
+		"dynamodb.op":     "get",
+		"dynamodb.table":  "test-table",
+		"dynamodb.region": "mock-region",
 	})
 
 	req := newDynamoDBRequest()
@@ -146,7 +148,7 @@ func TestFinalizeDynamoDBSpan_WithError(t *testing.T) {
 	instaawssdk.FinalizeDynamoDBSpan(req)
 
 	spans := recorder.GetQueuedSpans()
-	require.Len(t, spans, 1)
+	require.Len(t, spans, 2)
 
 	dbSpan := spans[0]
 
@@ -157,6 +159,7 @@ func TestFinalizeDynamoDBSpan_WithError(t *testing.T) {
 		Operation: "get",
 		Table:     "test-table",
 		Error:     req.Error.Error(),
+		Region:    "mock-region",
 	}, data.Tags)
 }
 
