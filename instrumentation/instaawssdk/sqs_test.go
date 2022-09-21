@@ -462,7 +462,7 @@ func TestFinalizeSQSSpan_WithError(t *testing.T) {
 	instaawssdk.FinalizeSQSSpan(req)
 
 	spans := recorder.GetQueuedSpans()
-	require.Len(t, spans, 1)
+	require.Len(t, spans, 2)
 
 	sqsSpan := spans[0]
 

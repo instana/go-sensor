@@ -1199,6 +1199,8 @@ type AWSDynamoDBSpanTags struct {
 	Operation string `json:"op,omitempty"`
 	// Error is an optional name returned by AWS API
 	Error string `json:"error,omitempty"`
+	// Region is a region from the AWS session config
+	Region string `json:"region,omitempty"`
 }
 
 // newAWSDynamoDBSpanTags extracts AWS DynamoDB span tags from a tracer span
@@ -1212,6 +1214,8 @@ func newAWSDynamoDBSpanTags(span *spanS) AWSDynamoDBSpanTags {
 			readStringTag(&tags.Operation, v)
 		case "dynamodb.error":
 			readStringTag(&tags.Error, v)
+		case "dynamodb.region":
+			readStringTag(&tags.Region, v)
 		}
 	}
 

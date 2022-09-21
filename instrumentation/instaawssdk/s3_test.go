@@ -129,7 +129,7 @@ func TestFinalizeS3Span_WithError(t *testing.T) {
 	instaawssdk.FinalizeS3Span(req)
 
 	spans := recorder.GetQueuedSpans()
-	require.Len(t, spans, 1)
+	require.Len(t, spans, 2)
 
 	s3Span := spans[0]
 
