@@ -249,7 +249,10 @@ func TestProcedureWithCheckerOnStmt(t *testing.T) {
 	var outValue string
 	_, err = db.Exec("CALL SOME_PROCEDURE(?)", sql.Out{Dest: &outValue})
 
-	// Here we expect the instrumentation to look for stmt.CheckNamedValue since conn.CheckNamedValue is not implemented.
+	// Here we expect the instrumentation to look for the driver's conn.CheckNamedValue implementation.
+	// If there is none, we return nil from our side, since driver.ErrSkip won't work for CheckNamedValue, as seen here:
+	// https://cs.opensource.google/go/go/+/refs/tags/go1.19.1:src/database/sql/driver/driver.go;l=143
+	// and here: https://cs.opensource.google/go/go/+/refs/tags/go1.19.1:src/database/sql/driver/driver.go;l=399
 	assert.NoError(t, err)
 }
 
@@ -292,8 +295,7 @@ func (sqlRows) Next(dest []driver.Value) error { return io.EOF }
 // Driver use case:
 // * driver.Conn doesn't implement Exec or ExecContext
 // * driver.Conn doesn't implement the driver.NamedValueChecker interface (CheckNamedValue method)
-// * driver.Stmt DOES implement the driver.NamedValueChecker interface (CheckNamedValue method)
-// * The wrapper ALWAYS implements ExecContext, no matter what
+// * Our wrapper ALWAYS implements ExecContext, no matter what
 
 type sqlDriver2 struct{ Error error }
 
