@@ -4,10 +4,13 @@
 package instana
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"math"
 	"net"
+	"net/http"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -40,26 +43,32 @@ type fsmAgent interface {
 }
 
 type fsmS struct {
-	name                       string
-	agent                      fsmAgent
+	name string
+	// agent                      fsmAgent
 	fsm                        *f.FSM
 	timer                      *time.Timer
 	retriesLeft                int
 	expDelayFunc               func(retryNumber int) time.Duration
 	lookupAgentHostRetryPeriod time.Duration
 	logger                     LeveledLogger
+	agentHost                  string
+	agentPort                  string
+	execAgentResponseFunc      func(agentResponse)
 }
 
-func newFSM(agent fsmAgent, logger LeveledLogger) *fsmS {
+func newFSM(agent fsmAgent, logger LeveledLogger, ear func(agentResponse), host, port string) *fsmS {
 	logger.Warn("Stan is on the scene. Starting Instana instrumentation.")
 	logger.Debug("initializing fsm")
 
 	ret := &fsmS{
-		agent:                      agent,
+		// agent:                      agent,
 		retriesLeft:                maximumRetries,
 		expDelayFunc:               expDelay,
 		logger:                     logger,
 		lookupAgentHostRetryPeriod: retryPeriod,
+		agentHost:                  host,
+		agentPort:                  port,
+		execAgentResponseFunc:      ear,
 	}
 
 	ret.fsm = f.NewFSM(
@@ -93,12 +102,23 @@ func (r *fsmS) scheduleRetryWithExponentialDelay(e *f.Event, cb func(e *f.Event)
 }
 
 func (r *fsmS) lookupAgentHost(e *f.Event) {
-	go r.checkHost(e, r.agent.getHost())
+	// go r.checkHost(e, r.agent.getHost())
+	go r.checkHost(e, r.agentHost)
 }
 
 func (r *fsmS) checkHost(e *f.Event, host string) {
-	r.logger.Debug("checking host ", host)
-	header, err := r.agent.requestHeader(r.agent.makeHostURL(host, "/"), "GET", "Server")
+	// r.logger.Debug("checking host ", host)
+	r.logger.Debug("checking host ", r.agentHost)
+	url := "http://" + r.agentHost + ":" + r.agentPort + "/"
+	// header, err := r.agent.requestHeader(r.agent.makeHostURL(host, "/"), "GET", "Server")
+
+	resp, err := http.Get(url)
+
+	var header string
+
+	if err == nil {
+		header = resp.Header.Get("Server")
+	}
 
 	found := err == nil && header == agentHeader
 
@@ -143,7 +163,7 @@ func (r *fsmS) checkHost(e *f.Event, host string) {
 func (r *fsmS) lookupSuccess(host string) {
 	r.logger.Debug("agent lookup success ", host)
 
-	r.agent.setHost(host)
+	// r.agent.setHost(host)
 	r.retriesLeft = maximumRetries
 	r.fsm.Event(eLookup)
 }
@@ -160,8 +180,19 @@ func (r *fsmS) announceSensor(e *f.Event) {
 
 		d := r.getDiscoveryS()
 
+		jsonData, _ := json.Marshal(d)
+
 		var resp agentResponse
-		_, err := r.agent.announceRequest(r.agent.makeURL(agentDiscoveryURL), "PUT", d, &resp)
+		// _, err := r.agent.announceRequest(r.agent.makeURL(agentDiscoveryURL), "PUT", d, &resp)
+		// fullRequestResponse(context.Background(), url, method, data, ret, "")
+
+		client := http.DefaultClient
+
+		// agentUrl, _ := url.Parse("http://" + r.agentHost + ":" + r.agentPort + agentDiscoveryURL)
+
+		req, err := http.NewRequest(http.MethodPut, "http://"+r.agentHost+":"+r.agentPort+agentDiscoveryURL, bytes.NewBuffer(jsonData))
+
+		client.Do(req)
 
 		if err != nil {
 			r.retriesLeft--
@@ -180,7 +211,8 @@ func (r *fsmS) announceSensor(e *f.Event) {
 		}
 
 		r.logger.Info("Host agent available. We're in business. Announced pid:", resp.Pid)
-		r.agent.applyHostAgentSettings(resp)
+		// r.agent.applyHostAgentSettings(resp)
+		r.execAgentResponseFunc(resp)
 
 		r.retriesLeft = maximumRetries
 		r.fsm.Event(eAnnounce)
@@ -211,7 +243,8 @@ func (r *fsmS) getDiscoveryS() *discoveryS {
 	}
 
 	if _, err := os.Stat("/proc"); err == nil {
-		if addr, err := net.ResolveTCPAddr("tcp", r.agent.getHost()+":42699"); err == nil {
+		// if addr, err := net.ResolveTCPAddr("tcp", r.agent.getHost()+":42699"); err == nil {
+		if addr, err := net.ResolveTCPAddr("tcp", r.agentHost+":42699"); err == nil {
 			if tcpConn, err := net.DialTCP("tcp", nil, addr); err == nil {
 				defer tcpConn.Close()
 
@@ -237,7 +270,10 @@ func (r *fsmS) getDiscoveryS() *discoveryS {
 func (r *fsmS) testAgent(e *f.Event) {
 	r.logger.Debug("testing communication with the agent")
 	go func() {
-		_, err := r.agent.head(r.agent.makeURL(agentDataURL))
+		// _, err := r.agent.head(r.agent.makeURL(agentDataURL))
+
+		_, err := http.Head("http://" + r.agentHost + ":" + r.agentPort + agentDataURL)
+
 		b := err == nil
 
 		if b {

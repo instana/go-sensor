@@ -142,7 +142,10 @@ func newAgent(serviceName, host string, port int, logger LeveledLogger) *agentS 
 	}
 
 	agent.mu.Lock()
-	agent.fsm = newFSM(agent, logger)
+	agent.fsm = newFSM(agent, logger, func(ar agentResponse) {
+		fmt.Println("uia passa aki")
+		agent.applyHostAgentSettings(ar)
+	}, agent.host, agent.port)
 	agent.mu.Unlock()
 
 	return agent
@@ -168,6 +171,7 @@ func (agent *agentS) SendMetrics(data acceptor.Metrics) error {
 		Snapshot: agent.snapshot.Collect(),
 		Metrics:  data,
 	}); err != nil {
+		fmt.Println(agent.makeURL(agentDataURL))
 		agent.logger.Error("failed to send metrics to the host agent: ", err)
 		agent.reset()
 
