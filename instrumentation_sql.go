@@ -226,6 +226,14 @@ func (conn *wrappedSQLConn) ExecContext(ctx context.Context, query string, args 
 	return nil, driver.ErrSkip
 }
 
+func (conn *wrappedSQLConn) CheckNamedValue(d *driver.NamedValue) error {
+	if c, ok := conn.Conn.(driver.NamedValueChecker); ok {
+		return c.CheckNamedValue(d)
+	}
+
+	return nil
+}
+
 type wrappedSQLStmt struct {
 	driver.Stmt
 
@@ -264,6 +272,14 @@ func (stmt *wrappedSQLStmt) ExecContext(ctx context.Context, args []driver.Named
 	}
 
 	return res, err
+}
+
+func (stmt *wrappedSQLStmt) CheckNamedValue(d *driver.NamedValue) error {
+	if s, ok := stmt.Stmt.(driver.NamedValueChecker); ok {
+		return s.CheckNamedValue(d)
+	}
+
+	return nil
 }
 
 func (stmt *wrappedSQLStmt) QueryContext(ctx context.Context, args []driver.NamedValue) (driver.Rows, error) {
