@@ -138,7 +138,7 @@ func TestSyncProducer_SendMessage_Error(t *testing.T) {
 	assert.Error(t, err)
 
 	spans := recorder.GetQueuedSpans()
-	require.Len(t, spans, 2)
+	require.Len(t, spans, 3)
 
 	span, err := extractAgentSpan(spans[0])
 	require.NoError(t, err)
@@ -315,7 +315,7 @@ func TestSyncProducer_SendMessages_Error(t *testing.T) {
 	parent.Finish()
 
 	spans := recorder.GetQueuedSpans()
-	require.Len(t, spans, 2)
+	require.Len(t, spans, 3)
 
 	span, err := extractAgentSpan(spans[0])
 	require.NoError(t, err)
