@@ -236,6 +236,26 @@ func TestNoPanicWithNotParsableConnectionString(t *testing.T) {
 	})
 }
 
+func TestProcedureWithCheckerOnStmt(t *testing.T) {
+	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{
+		Service: "go-sensor-test",
+	}, instana.NewTestRecorder()))
+
+	instana.InstrumentSQLDriver(s, "test_driver2", sqlDriver2{})
+	db, err := instana.SQLOpen("test_driver2", "some datasource")
+
+	assert.NoError(t, err)
+
+	var outValue string
+	_, err = db.Exec("CALL SOME_PROCEDURE(?)", sql.Out{Dest: &outValue})
+
+	// Here we expect the instrumentation to look for the driver's conn.CheckNamedValue implementation.
+	// If there is none, we return nil from our side, since driver.ErrSkip won't work for CheckNamedValue, as seen here:
+	// https://cs.opensource.google/go/go/+/refs/tags/go1.19.1:src/database/sql/driver/driver.go;l=143
+	// and here: https://cs.opensource.google/go/go/+/refs/tags/go1.19.1:src/database/sql/driver/driver.go;l=399
+	assert.NoError(t, err)
+}
+
 type sqlDriver struct{ Error error }
 
 func (drv sqlDriver) Open(name string) (driver.Conn, error) { return sqlConn{drv.Error}, nil } //nolint:gosimple
@@ -243,8 +263,8 @@ func (drv sqlDriver) Open(name string) (driver.Conn, error) { return sqlConn{drv
 type sqlConn struct{ Error error }
 
 func (conn sqlConn) Prepare(query string) (driver.Stmt, error) { return sqlStmt{conn.Error}, nil } //nolint:gosimple
-func (sqlConn) Close() error                                   { return driver.ErrSkip }
-func (sqlConn) Begin() (driver.Tx, error)                      { return nil, driver.ErrSkip }
+func (s sqlConn) Close() error                                 { return driver.ErrSkip }
+func (s sqlConn) Begin() (driver.Tx, error)                    { return nil, driver.ErrSkip }
 
 func (conn sqlConn) ExecContext(ctx context.Context, query string, args []driver.NamedValue) (driver.Result, error) {
 	return sqlResult{}, conn.Error
@@ -271,3 +291,46 @@ type sqlRows struct{}
 func (sqlRows) Columns() []string              { return []string{"col1", "col2"} }
 func (sqlRows) Close() error                   { return nil }
 func (sqlRows) Next(dest []driver.Value) error { return io.EOF }
+
+// Driver use case:
+// * driver.Conn doesn't implement Exec or ExecContext
+// * driver.Conn doesn't implement the driver.NamedValueChecker interface (CheckNamedValue method)
+// * Our wrapper ALWAYS implements ExecContext, no matter what
+
+type sqlDriver2 struct{ Error error }
+
+func (drv sqlDriver2) Open(name string) (driver.Conn, error) { return sqlConn2{drv.Error}, nil } //nolint:gosimple
+
+type sqlConn2 struct{ Error error }
+
+func (conn sqlConn2) Prepare(query string) (driver.Stmt, error) {
+	return sqlStmt2{conn.Error}, nil //nolint:gosimple
+}
+func (s sqlConn2) Close() error { return driver.ErrSkip }
+
+func (s sqlConn2) Begin() (driver.Tx, error) { return nil, driver.ErrSkip }
+
+type sqlStmt2 struct{ Error error }
+
+func (sqlStmt2) Close() error  { return nil }
+func (sqlStmt2) NumInput() int { return -1 }
+func (stmt sqlStmt2) Exec(args []driver.Value) (driver.Result, error) {
+	return sqlResult2{}, stmt.Error
+}
+
+func (stmt sqlStmt2) Query(args []driver.Value) (driver.Rows, error) {
+	return sqlRows2{}, stmt.Error
+}
+
+func (stmt sqlStmt2) CheckNamedValue(d *driver.NamedValue) error { return nil }
+
+type sqlResult2 struct{}
+
+func (sqlResult2) LastInsertId() (int64, error) { return 42, nil }
+func (sqlResult2) RowsAffected() (int64, error) { return 100, nil }
+
+type sqlRows2 struct{}
+
+func (sqlRows2) Columns() []string              { return []string{"col1", "col2"} }
+func (sqlRows2) Close() error                   { return nil }
+func (sqlRows2) Next(dest []driver.Value) error { return io.EOF }
