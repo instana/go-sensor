@@ -429,7 +429,7 @@ func getKafkaHeaderFormat() string {
 		return kafkaHeaderEnvVar
 	}
 
-	return binaryFormat
+	return bothFormat
 }
 
 func isValidFormat(format string) bool {
