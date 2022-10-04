@@ -10,7 +10,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"sort"
 	"strconv"
@@ -142,9 +141,8 @@ func newAgent(serviceName, host string, port int, logger LeveledLogger) *agentS 
 	}
 
 	agent.mu.Lock()
-	agent.fsm = newFSM(agent, logger, func(ar agentResponse) {
-		fmt.Println("uia passa aki")
-		agent.applyHostAgentSettings(ar)
+	agent.fsm = newFSM(agent, logger, agent.applyHostAgentSettings, func(newHost string) {
+		agent.host = newHost
 	}, agent.host, agent.port)
 	agent.mu.Unlock()
 
@@ -166,7 +164,7 @@ func (agent *agentS) SendMetrics(data acceptor.Metrics) error {
 		agent.logger.Debug("agent got malformed PID %q", agent.from.EntityID)
 	}
 
-	if _, err = agent.request(agent.makeURL(agentDataURL), "POST", acceptor.GoProcessData{
+	if err = agent.request(agent.makeURL(agentDataURL), "POST", acceptor.GoProcessData{
 		PID:      pid,
 		Snapshot: agent.snapshot.Collect(),
 		Metrics:  data,
@@ -183,7 +181,7 @@ func (agent *agentS) SendMetrics(data acceptor.Metrics) error {
 
 // SendEvent sends an event using Instana Events API
 func (agent *agentS) SendEvent(event *EventData) error {
-	_, err := agent.request(agent.makeURL(agentEventURL), "POST", event)
+	err := agent.request(agent.makeURL(agentEventURL), "POST", event)
 	if err != nil {
 		// do not reset the agent as it might be not initialized at this state yet
 		agent.logger.Warn("failed to send event ", event.Title, " to the host agent: ", err)
@@ -200,7 +198,7 @@ func (agent *agentS) SendSpans(spans []Span) error {
 		spans[i].From = agent.from
 	}
 
-	_, err := agent.request(agent.makeURL(agentTracesURL), "POST", spans)
+	err := agent.request(agent.makeURL(agentTracesURL), "POST", spans)
 	if err != nil {
 		if err == payloadTooLargeErr {
 			agent.printPayloadTooLargeErrInfoOnce.Do(
@@ -236,7 +234,7 @@ func (agent *agentS) SendProfiles(profiles []autoprofile.Profile) error {
 		agentProfiles = append(agentProfiles, hostAgentProfile{p, agent.from.EntityID})
 	}
 
-	_, err := agent.request(agent.makeURL(agentProfilesURL), "POST", agentProfiles)
+	err := agent.request(agent.makeURL(agentProfilesURL), "POST", agentProfiles)
 	if err != nil {
 		agent.logger.Error("failed to send profile data to the host agent: ", err)
 		agent.reset()
@@ -252,6 +250,7 @@ func (agent *agentS) setLogger(l LeveledLogger) {
 }
 
 func (agent *agentS) makeURL(prefix string) string {
+	fmt.Println(">>>", agent.host, agent.port)
 	return agent.makeHostURL(agent.host, prefix)
 }
 
@@ -265,96 +264,124 @@ func (agent *agentS) makeHostURL(host string, prefix string) string {
 	return url
 }
 
-func (agent *agentS) head(url string) (string, error) {
-	return agent.request(url, "HEAD", nil)
-}
+// func (agent *agentS) head(url string) (string, error) {
+// 	return agent.request(url, "HEAD", nil)
+// }
 
+// All usages are now with POST method
 // request will overwrite the client timeout for a single request
-func (agent *agentS) request(url string, method string, data interface{}) (string, error) {
+func (agent *agentS) request(url string, method string, data interface{}) error {
 	ctx, cancel := context.WithTimeout(context.Background(), agent.clientTimeout)
 	defer cancel()
-	return agent.fullRequestResponse(ctx, url, method, data, nil, "")
-}
 
-func (agent *agentS) announceRequest(url string, method string, data interface{}, ret *agentResponse) (string, error) {
-	return agent.fullRequestResponse(context.Background(), url, method, data, ret, "")
-}
-
-// requestHeader will overwrite the client timeout for a single request
-func (agent *agentS) requestHeader(url string, method string, header string) (string, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), agent.clientTimeout)
-	defer cancel()
-	return agent.fullRequestResponse(ctx, url, method, nil, nil, header)
-}
-
-func (agent *agentS) fullRequestResponse(ctx context.Context, url string, method string, data interface{}, body interface{}, header string) (string, error) {
-	var j []byte
-	var ret string
-	var err error
-	var resp *http.Response
-	var req *http.Request
+	var r io.Reader
 
 	if data != nil {
-		j, err = json.Marshal(data)
-	}
+		b, err := json.Marshal(data)
 
-	if err == nil {
-		if j != nil {
-			b := bytes.NewBuffer(j)
-			if b.Len() > maxContentLength {
-				agent.logger.Warn(`A batch of spans has been rejected because it is too large to be sent to the agent.`)
-
-				return "", payloadTooLargeErr
-			}
-
-			req, err = http.NewRequest(method, url, b)
-		} else {
-			req, err = http.NewRequest(method, url, nil)
+		if err != nil {
+			return err
 		}
 
-		req := req.WithContext(ctx)
-
-		// Uncomment this to dump json payloads
-		// log.debug(bytes.NewBuffer(j))
-
-		if err == nil {
-			req.Header.Set("Content-Type", "application/json")
-			resp, err = agent.client.Do(req)
-			if err == nil {
-				defer resp.Body.Close()
-
-				if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-					err = errors.New(resp.Status)
-				} else {
-					if body != nil {
-						var b []byte
-						b, err = ioutil.ReadAll(resp.Body)
-						json.Unmarshal(b, body)
-					}
-
-					if header != "" {
-						ret = resp.Header.Get(header)
-					}
-				}
-
-				io.CopyN(ioutil.Discard, resp.Body, 256<<10)
-			}
-		}
+		r = bytes.NewBuffer(b)
 	}
+
+	req, err := http.NewRequest(method, url, r)
 
 	if err != nil {
-		// Ignore errors while in announced stated (before ready) as
-		// this is the time where the entity is registering in the Instana
-		// backend and it will return 404 until it's done.
-		agent.mu.RLock()
-		if !agent.fsm.fsm.Is("announced") {
-			agent.logger.Info("failed to send a request to ", url, ": ", err)
-		}
-		agent.mu.RUnlock()
+		return err
 	}
 
-	return ret, err
+	req = req.WithContext(ctx)
+
+	client := http.DefaultClient
+
+	_, err = client.Do(req)
+
+	return err
+
+	// return agent.fullRequestResponse(ctx, url, method, data, nil, "")
 }
+
+// func (agent *agentS) announceRequest(url string, method string, data interface{}, ret *agentResponse) (string, error) {
+// 	return agent.fullRequestResponse(context.Background(), url, method, data, ret, "")
+// }
+
+// requestHeader will overwrite the client timeout for a single request
+// func (agent *agentS) requestHeader(url string, method string, header string) (string, error) {
+// 	ctx, cancel := context.WithTimeout(context.Background(), agent.clientTimeout)
+// 	defer cancel()
+// 	return agent.fullRequestResponse(ctx, url, method, nil, nil, header)
+// }
+
+// func (agent *agentS) fullRequestResponse(ctx context.Context, url string, method string, data interface{}, body interface{}, header string) (string, error) {
+// 	var j []byte
+// 	var ret string
+// 	var err error
+// 	var resp *http.Response
+// 	var req *http.Request
+
+// 	if data != nil {
+// 		j, err = json.Marshal(data)
+// 	}
+
+// 	if err == nil {
+// 		if j != nil {
+// 			b := bytes.NewBuffer(j)
+// 			if b.Len() > maxContentLength {
+// 				agent.logger.Warn(`A batch of spans has been rejected because it is too large to be sent to the agent.`)
+
+// 				return "", payloadTooLargeErr
+// 			}
+
+// 			req, err = http.NewRequest(method, url, b)
+// 		} else {
+// 			req, err = http.NewRequest(method, url, nil)
+// 		}
+
+// 		req := req.WithContext(ctx)
+
+// 		// Uncomment this to dump json payloads
+// 		// log.debug(bytes.NewBuffer(j))
+
+// 		if err == nil {
+// 			req.Header.Set("Content-Type", "application/json")
+// 			resp, err = agent.client.Do(req)
+// 			if err == nil {
+// 				defer resp.Body.Close()
+
+// 				if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+// 					err = errors.New(resp.Status)
+// 				} else {
+// 					if body != nil {
+// 						var b []byte
+// 						b, err = ioutil.ReadAll(resp.Body)
+// 						json.Unmarshal(b, body)
+// 					}
+
+// 					if header != "" {
+// 						ret = resp.Header.Get(header)
+// 					}
+// 				}
+
+// 				io.CopyN(ioutil.Discard, resp.Body, 256<<10)
+// 			}
+// 		}
+// 	}
+
+// 	if err != nil {
+// 		// Ignore errors while in announced stated (before ready) as
+// 		// this is the time where the entity is registering in the Instana
+// 		// backend and it will return 404 until it's done.
+// 		agent.mu.RLock()
+// 		if !agent.fsm.fsm.Is("announced") {
+// 			agent.logger.Info("failed to send a request to ", url, ": ", err)
+// 		}
+// 		agent.mu.RUnlock()
+// 	}
+
+// 	return ret, err
+// }
 
 func (agent *agentS) applyHostAgentSettings(resp agentResponse) {
 	agent.from = newHostAgentFromS(int(resp.Pid), resp.HostID)

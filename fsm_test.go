@@ -4,10 +4,11 @@ package instana
 
 import (
 	"errors"
-	"github.com/instana/testify/assert"
-	f "github.com/looplab/fsm"
 	"testing"
 	"time"
+
+	"github.com/instana/testify/assert"
+	f "github.com/looplab/fsm"
 )
 
 func Test_fsmS_testAgent(t *testing.T) {
@@ -18,10 +19,10 @@ func Test_fsmS_testAgent(t *testing.T) {
 	res := make(chan bool, 1)
 
 	r := &fsmS{
-		agent: &mockFsmAgent{
-			headRequestResponse: rCh,
-			headRequestErr:      errCh,
-		},
+		// agent: &mockFsmAgent{
+		// 	headRequestResponse: rCh,
+		// 	headRequestErr:      errCh,
+		// },
 		fsm: f.NewFSM(
 			"announced",
 			f.Events{
@@ -61,10 +62,10 @@ func Test_fsmS_testAgent_Error(t *testing.T) {
 	res := make(chan bool, 1)
 
 	r := &fsmS{
-		agent: &mockFsmAgent{
-			headRequestResponse: rCh,
-			headRequestErr:      errCh,
-		},
+		// agent: &mockFsmAgent{
+		// 	headRequestResponse: rCh,
+		// 	headRequestErr:      errCh,
+		// },
 		fsm: f.NewFSM(
 			"announced",
 			f.Events{
@@ -105,10 +106,10 @@ func Test_fsmS_announceSensor(t *testing.T) {
 	res := make(chan bool, 1)
 
 	r := &fsmS{
-		agent: &mockFsmAgent{
-			announceRequestResponse: rCh,
-			announceRequestErr:      errCh,
-		},
+		// agent: &mockFsmAgent{
+		// 	announceRequestResponse: rCh,
+		// 	announceRequestErr:      errCh,
+		// },
 		fsm: f.NewFSM(
 			"unannounced",
 			f.Events{
@@ -148,10 +149,10 @@ func Test_fsmS_announceSensor_Error(t *testing.T) {
 	res := make(chan bool, 1)
 
 	r := &fsmS{
-		agent: &mockFsmAgent{
-			announceRequestResponse: rCh,
-			announceRequestErr:      errCh,
-		},
+		// agent: &mockFsmAgent{
+		// 	announceRequestResponse: rCh,
+		// 	announceRequestErr:      errCh,
+		// },
 		fsm: f.NewFSM(
 			"unannounced",
 			f.Events{
@@ -192,10 +193,10 @@ func Test_fsmS_lookupAgentHost(t *testing.T) {
 	res := make(chan bool, 1)
 
 	r := &fsmS{
-		agent: &mockFsmAgent{
-			requestHeaderResponse: rCh,
-			requestHeaderErr:      errCh,
-		},
+		// agent: &mockFsmAgent{
+		// 	requestHeaderResponse: rCh,
+		// 	requestHeaderErr:      errCh,
+		// },
 		lookupAgentHostRetryPeriod: 0,
 		fsm: f.NewFSM(
 			"init",

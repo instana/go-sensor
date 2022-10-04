@@ -7,6 +7,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"math"
 	"net"
@@ -37,9 +38,9 @@ type fsmAgent interface {
 	makeURL(prefix string) string
 	makeHostURL(host string, prefix string) string
 	applyHostAgentSettings(resp agentResponse)
-	requestHeader(url string, method string, header string) (string, error)
-	announceRequest(url string, method string, data interface{}, ret *agentResponse) (string, error)
-	head(url string) (string, error)
+	// requestHeader(url string, method string, header string) (string, error)
+	// announceRequest(url string, method string, data interface{}, ret *agentResponse) (string, error)
+	// head(url string) (string, error)
 }
 
 type fsmS struct {
@@ -53,10 +54,11 @@ type fsmS struct {
 	logger                     LeveledLogger
 	agentHost                  string
 	agentPort                  string
-	execAgentResponseFunc      func(agentResponse)
+	onAgentResponse            func(agentResponse)
+	onHostChanged              func(string)
 }
 
-func newFSM(agent fsmAgent, logger LeveledLogger, ear func(agentResponse), host, port string) *fsmS {
+func newFSM(agent fsmAgent, logger LeveledLogger, ear func(agentResponse), ohc func(newHost string), host, port string) *fsmS {
 	logger.Warn("Stan is on the scene. Starting Instana instrumentation.")
 	logger.Debug("initializing fsm")
 
@@ -68,7 +70,8 @@ func newFSM(agent fsmAgent, logger LeveledLogger, ear func(agentResponse), host,
 		lookupAgentHostRetryPeriod: retryPeriod,
 		agentHost:                  host,
 		agentPort:                  port,
-		execAgentResponseFunc:      ear,
+		onAgentResponse:            ear,
+		onHostChanged:              ohc,
 	}
 
 	ret.fsm = f.NewFSM(
@@ -146,6 +149,8 @@ func (r *fsmS) checkHost(e *f.Event, host string) {
 			return
 		}
 
+		//TODO: check found again here
+
 		if found {
 			r.lookupSuccess(gateway)
 			return
@@ -164,8 +169,23 @@ func (r *fsmS) lookupSuccess(host string) {
 	r.logger.Debug("agent lookup success ", host)
 
 	// r.agent.setHost(host)
+	r.onHostChanged(host)
 	r.retriesLeft = maximumRetries
 	r.fsm.Event(eLookup)
+}
+
+func (r *fsmS) handleRetries(e *f.Event) {
+	r.retriesLeft--
+	if r.retriesLeft == 0 {
+		r.logger.Error("Couldn't announce the sensor after reaching the maximum amount of attempts.")
+		r.fsm.Event(eInit)
+		return
+	}
+
+	r.logger.Debug("Cannot announce sensor. Scheduling retry.")
+
+	retryNumber := maximumRetries - r.retriesLeft + 1
+	r.scheduleRetryWithExponentialDelay(e, r.announceSensor, retryNumber)
 }
 
 func (r *fsmS) announceSensor(e *f.Event) {
@@ -184,35 +204,48 @@ func (r *fsmS) announceSensor(e *f.Event) {
 
 		var resp agentResponse
 		// _, err := r.agent.announceRequest(r.agent.makeURL(agentDiscoveryURL), "PUT", d, &resp)
-		// fullRequestResponse(context.Background(), url, method, data, ret, "")
 
 		client := http.DefaultClient
 
-		// agentUrl, _ := url.Parse("http://" + r.agentHost + ":" + r.agentPort + agentDiscoveryURL)
-
 		req, err := http.NewRequest(http.MethodPut, "http://"+r.agentHost+":"+r.agentPort+agentDiscoveryURL, bytes.NewBuffer(jsonData))
 
-		client.Do(req)
+		if err != nil {
+			r.handleRetries(e)
+			return
+		}
+
+		res, err := client.Do(req)
 
 		if err != nil {
-			r.retriesLeft--
-			if r.retriesLeft == 0 {
-				r.logger.Error("Couldn't announce the sensor after reaching the maximum amount of attempts.")
-				r.fsm.Event(eInit)
-				return
-			} else {
-				r.logger.Debug("Cannot announce sensor. Scheduling retry.")
-			}
+			// r.retriesLeft--
+			// if r.retriesLeft == 0 {
+			// 	r.logger.Error("Couldn't announce the sensor after reaching the maximum amount of attempts.")
+			// 	r.fsm.Event(eInit)
+			// 	return
+			// }
 
-			retryNumber := maximumRetries - r.retriesLeft + 1
-			r.scheduleRetryWithExponentialDelay(e, r.announceSensor, retryNumber)
+			// r.logger.Debug("Cannot announce sensor. Scheduling retry.")
+
+			// retryNumber := maximumRetries - r.retriesLeft + 1
+			// r.scheduleRetryWithExponentialDelay(e, r.announceSensor, retryNumber)
+			r.handleRetries(e)
 
 			return
 		}
 
+		respBytes, err := io.ReadAll(res.Body)
+		defer res.Body.Close()
+
+		if err != nil {
+			r.handleRetries(e)
+			return
+		}
+
+		json.Unmarshal(respBytes, &resp)
+
 		r.logger.Info("Host agent available. We're in business. Announced pid:", resp.Pid)
 		// r.agent.applyHostAgentSettings(resp)
-		r.execAgentResponseFunc(resp)
+		r.onAgentResponse(resp)
 
 		r.retriesLeft = maximumRetries
 		r.fsm.Event(eAnnounce)

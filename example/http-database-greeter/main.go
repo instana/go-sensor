@@ -103,7 +103,7 @@ func handle(w http.ResponseWriter, req *http.Request) {
 	}
 
 	// Update last greet time in background
-	go logLastGreetTime(ctx, name)
+	// go logLastGreetTime(ctx, name)
 }
 
 func logLastGreetTime(ctx context.Context, name string) {
