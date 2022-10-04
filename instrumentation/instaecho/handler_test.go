@@ -1,7 +1,8 @@
 // (c) Copyright IBM Corp. 2021
 // (c) Copyright Instana Inc. 2016
 
-// +build go1.15
+//go:build go1.16
+// +build go1.16
 
 package instaecho_test
 
