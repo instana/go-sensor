@@ -32,46 +32,54 @@ const (
 	maximumRetries             = 3
 )
 
-type fsmAgent interface {
-	getHost() string
-	setHost(host string)
-	makeURL(prefix string) string
-	makeHostURL(host string, prefix string) string
-	applyHostAgentSettings(resp agentResponse)
-	// requestHeader(url string, method string, header string) (string, error)
-	// announceRequest(url string, method string, data interface{}, ret *agentResponse) (string, error)
-	// head(url string) (string, error)
-}
+// type fsmAgent interface {
+// 	getHost() string
+// 	setHost(host string)
+// 	makeURL(prefix string) string
+// 	makeHostURL(host string, prefix string) string
+// 	applyHostAgentSettings(resp agentResponse)
+// requestHeader(url string, method string, header string) (string, error)
+// announceRequest(url string, method string, data interface{}, ret *agentResponse) (string, error)
+// head(url string) (string, error)
+// }
 
 type fsmS struct {
-	name string
 	// agent                      fsmAgent
+	agentData                  *agentHostData
 	fsm                        *f.FSM
 	timer                      *time.Timer
 	retriesLeft                int
 	expDelayFunc               func(retryNumber int) time.Duration
 	lookupAgentHostRetryPeriod time.Duration
 	logger                     LeveledLogger
-	agentHost                  string
-	agentPort                  string
-	onAgentResponse            func(agentResponse)
-	onHostChanged              func(string)
+	// agentHost                  string
+	agentPort string
+	// onAgentResponse            func(agentResponse)
+	// onHostChanged              func(string)
 }
 
-func newFSM(agent fsmAgent, logger LeveledLogger, ear func(agentResponse), ohc func(newHost string), host, port string) *fsmS {
+func newHostAgentFromS(pid int, hostID string) *fromS {
+	return &fromS{
+		EntityID: strconv.Itoa(pid),
+		HostID:   hostID,
+	}
+}
+
+func newFSM( /**agent fsmAgent,*/ ahd *agentHostData, logger LeveledLogger, port string) *fsmS {
 	logger.Warn("Stan is on the scene. Starting Instana instrumentation.")
 	logger.Debug("initializing fsm")
 
 	ret := &fsmS{
 		// agent:                      agent,
+		agentData:                  ahd,
 		retriesLeft:                maximumRetries,
 		expDelayFunc:               expDelay,
 		logger:                     logger,
 		lookupAgentHostRetryPeriod: retryPeriod,
-		agentHost:                  host,
-		agentPort:                  port,
-		onAgentResponse:            ear,
-		onHostChanged:              ohc,
+		// agentHost:                  host,
+		agentPort: port,
+		// onAgentResponse:            ear,
+		// onHostChanged:              ohc,
 	}
 
 	ret.fsm = f.NewFSM(
@@ -106,13 +114,13 @@ func (r *fsmS) scheduleRetryWithExponentialDelay(e *f.Event, cb func(e *f.Event)
 
 func (r *fsmS) lookupAgentHost(e *f.Event) {
 	// go r.checkHost(e, r.agent.getHost())
-	go r.checkHost(e, r.agentHost)
+	go r.checkHost(e, r.agentData.host)
 }
 
 func (r *fsmS) checkHost(e *f.Event, host string) {
 	// r.logger.Debug("checking host ", host)
-	r.logger.Debug("checking host ", r.agentHost)
-	url := "http://" + r.agentHost + ":" + r.agentPort + "/"
+	r.logger.Debug("checking host ", r.agentData.host)
+	url := "http://" + r.agentData.host + ":" + r.agentPort + "/"
 	// header, err := r.agent.requestHeader(r.agent.makeHostURL(host, "/"), "GET", "Server")
 
 	resp, err := http.Get(url)
@@ -169,7 +177,8 @@ func (r *fsmS) lookupSuccess(host string) {
 	r.logger.Debug("agent lookup success ", host)
 
 	// r.agent.setHost(host)
-	r.onHostChanged(host)
+	// r.onHostChanged(host)
+	r.agentData.host = host
 	r.retriesLeft = maximumRetries
 	r.fsm.Event(eLookup)
 }
@@ -186,6 +195,23 @@ func (r *fsmS) handleRetries(e *f.Event) {
 
 	retryNumber := maximumRetries - r.retriesLeft + 1
 	r.scheduleRetryWithExponentialDelay(e, r.announceSensor, retryNumber)
+}
+
+func (r *fsmS) applyHostAgentSettings(resp agentResponse) {
+	r.agentData.from = newHostAgentFromS(int(resp.Pid), resp.HostID)
+
+	if resp.Secrets.Matcher != "" {
+		m, err := NamedMatcher(resp.Secrets.Matcher, resp.Secrets.List)
+		if err != nil {
+			r.logger.Warn("failed to apply secrets matcher configuration: ", err)
+		} else {
+			sensor.options.Tracer.Secrets = m
+		}
+	}
+
+	if len(sensor.options.Tracer.CollectableHTTPHeaders) == 0 {
+		sensor.options.Tracer.CollectableHTTPHeaders = resp.getExtraHTTPHeaders()
+	}
 }
 
 func (r *fsmS) announceSensor(e *f.Event) {
@@ -207,7 +233,7 @@ func (r *fsmS) announceSensor(e *f.Event) {
 
 		client := http.DefaultClient
 
-		req, err := http.NewRequest(http.MethodPut, "http://"+r.agentHost+":"+r.agentPort+agentDiscoveryURL, bytes.NewBuffer(jsonData))
+		req, err := http.NewRequest(http.MethodPut, "http://"+r.agentData.host+":"+r.agentPort+agentDiscoveryURL, bytes.NewBuffer(jsonData))
 
 		if err != nil {
 			r.handleRetries(e)
@@ -245,11 +271,13 @@ func (r *fsmS) announceSensor(e *f.Event) {
 
 		r.logger.Info("Host agent available. We're in business. Announced pid:", resp.Pid)
 		// r.agent.applyHostAgentSettings(resp)
-		r.onAgentResponse(resp)
+		// r.onAgentResponse(resp)
+
+		// this function was moved from agent.go to here
+		r.applyHostAgentSettings(resp)
 
 		r.retriesLeft = maximumRetries
 		r.fsm.Event(eAnnounce)
-
 	}()
 }
 
@@ -277,7 +305,7 @@ func (r *fsmS) getDiscoveryS() *discoveryS {
 
 	if _, err := os.Stat("/proc"); err == nil {
 		// if addr, err := net.ResolveTCPAddr("tcp", r.agent.getHost()+":42699"); err == nil {
-		if addr, err := net.ResolveTCPAddr("tcp", r.agentHost+":42699"); err == nil {
+		if addr, err := net.ResolveTCPAddr("tcp", r.agentData.host+":42699"); err == nil {
 			if tcpConn, err := net.DialTCP("tcp", nil, addr); err == nil {
 				defer tcpConn.Close()
 
@@ -305,7 +333,11 @@ func (r *fsmS) testAgent(e *f.Event) {
 	go func() {
 		// _, err := r.agent.head(r.agent.makeURL(agentDataURL))
 
-		_, err := http.Head("http://" + r.agentHost + ":" + r.agentPort + agentDataURL)
+		u := "http://" + r.agentData.host + ":" + r.agentPort + agentDataURL
+
+		_, err := http.Head(u)
+
+		fmt.Println("ERR", err)
 
 		b := err == nil
 

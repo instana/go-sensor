@@ -4,6 +4,10 @@ package instana
 
 import (
 	"errors"
+	"fmt"
+	"net/http"
+	"net/http/httptest"
+	"net/url"
 	"testing"
 	"time"
 
@@ -12,13 +16,34 @@ import (
 )
 
 func Test_fsmS_testAgent(t *testing.T) {
+	t.Fatal("FODEU")
+	fmt.Println("LERO LERO")
 	// init channels for agent mock
-	rCh := make(chan string, 2)
-	errCh := make(chan error, 2)
+	// rCh := make(chan string, 2)
+	// errCh := make(chan error, 2)
+
+	handler := http.NewServeMux()
+
+	handler.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Println("hi from the test server")
+	})
+
+	server := httptest.NewServer(handler)
+	defer server.Close()
+
+	surl := server.URL
+	u, err := url.Parse(surl)
+
+	assert.NoError(t, err)
 
 	res := make(chan bool, 1)
 
 	r := &fsmS{
+		agentData: &agentHostData{
+			host: u.Hostname(),
+			from: &fromS{},
+		},
+		agentPort: u.Port(),
 		// agent: &mockFsmAgent{
 		// 	headRequestResponse: rCh,
 		// 	headRequestErr:      errCh,
@@ -39,18 +64,21 @@ func Test_fsmS_testAgent(t *testing.T) {
 		logger: defaultLogger,
 	}
 
-	// simulate errors and successful requests
-	rCh <- ""
-	errCh <- errors.New("some error")
+	time.Sleep(time.Second)
+	fmt.Println("LALALALA")
 
-	rCh <- "Hello"
-	errCh <- nil
+	// simulate errors and successful requests
+	// rCh <- ""
+	// errCh <- errors.New("some error")
+
+	// rCh <- "Hello"
+	// errCh <- nil
 
 	r.testAgent(&f.Event{})
 
-	assert.True(t, <-res)
-	assert.Empty(t, rCh)
-	assert.Empty(t, errCh)
+	// assert.True(t, <-res)
+	// assert.Empty(t, rCh)
+	// assert.Empty(t, errCh)
 	assert.Equal(t, maximumRetries, r.retriesLeft)
 }
 
@@ -62,6 +90,11 @@ func Test_fsmS_testAgent_Error(t *testing.T) {
 	res := make(chan bool, 1)
 
 	r := &fsmS{
+		agentData: &agentHostData{
+			host: "",
+			from: &fromS{},
+		},
+
 		// agent: &mockFsmAgent{
 		// 	headRequestResponse: rCh,
 		// 	headRequestErr:      errCh,
@@ -106,6 +139,11 @@ func Test_fsmS_announceSensor(t *testing.T) {
 	res := make(chan bool, 1)
 
 	r := &fsmS{
+		agentData: &agentHostData{
+			host: "",
+			from: &fromS{},
+		},
+
 		// agent: &mockFsmAgent{
 		// 	announceRequestResponse: rCh,
 		// 	announceRequestErr:      errCh,
@@ -149,6 +187,11 @@ func Test_fsmS_announceSensor_Error(t *testing.T) {
 	res := make(chan bool, 1)
 
 	r := &fsmS{
+		agentData: &agentHostData{
+			host: "",
+			from: &fromS{},
+		},
+
 		// agent: &mockFsmAgent{
 		// 	announceRequestResponse: rCh,
 		// 	announceRequestErr:      errCh,
@@ -193,6 +236,11 @@ func Test_fsmS_lookupAgentHost(t *testing.T) {
 	res := make(chan bool, 1)
 
 	r := &fsmS{
+		agentData: &agentHostData{
+			host: "",
+			from: &fromS{},
+		},
+
 		// agent: &mockFsmAgent{
 		// 	requestHeaderResponse: rCh,
 		// 	requestHeaderErr:      errCh,

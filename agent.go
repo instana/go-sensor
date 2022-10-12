@@ -44,6 +44,22 @@ const (
 	numberOfBigSpansToLog = 5
 )
 
+// Shared data between agent and FSM (aka, stuff that FSM changes in the Agent):
+// - agent.from
+// - agent.host
+// - sensor.options.Tracer.Secrets (comes from agentResonse.Secrets.Matcher)
+// - sensor.options.Tracer.CollectableHTTPHeaders (comes from agentResponse.getExtraHTTPHeaders)
+// *** sensor is global, so no need to pass it through functions ***
+type agentHostData struct {
+	// host is the agent host. It can be updated via default gateway or a new client announcement.
+	host string
+
+	// from is the agent information sent with each span in the "from" (span.f) section. it's format is as follows:
+	// {e: "entityId", h: "hostAgentId", hl: trueIfServerlessPlatform, cp: "The cloud provider for a hostless span"}
+	// Only span.f.e is mandatory.
+	from *fromS
+}
+
 type agentResponse struct {
 	Pid     uint32 `json:"pid"`
 	HostID  string `json:"agentUuid"`
@@ -83,13 +99,6 @@ type fromS struct {
 	HostID string `json:"h,omitempty"`
 }
 
-func newHostAgentFromS(pid int, hostID string) *fromS {
-	return &fromS{
-		EntityID: strconv.Itoa(pid),
-		HostID:   hostID,
-	}
-}
-
 func newServerlessAgentFromS(entityID, provider string) *fromS {
 	return &fromS{
 		EntityID:      entityID,
@@ -103,9 +112,14 @@ type httpClient interface {
 }
 
 type agentS struct {
-	from *fromS
-	host string
-	port string
+	// from *fromS
+	// host string
+
+	// agentData encapsulates info about the agent host and fromS. This is a shared information between the agent and
+	// the fsm layer, so we use this wrapper to prevent passing data from one side to the other in a more sophisticated
+	// way.
+	agentData *agentHostData
+	port      string
 
 	mu  sync.RWMutex
 	fsm *fsmS
@@ -127,8 +141,12 @@ func newAgent(serviceName, host string, port int, logger LeveledLogger) *agentS 
 	logger.Debug("initializing agent")
 
 	agent := &agentS{
-		from:            &fromS{},
-		host:            host,
+		// from:            &fromS{},
+		// host:            host,
+		agentData: &agentHostData{
+			host: host,
+			from: &fromS{},
+		},
 		port:            strconv.Itoa(port),
 		clientTimeout:   clientTimeout,
 		announceTimeout: announceTimeout,
@@ -141,9 +159,7 @@ func newAgent(serviceName, host string, port int, logger LeveledLogger) *agentS 
 	}
 
 	agent.mu.Lock()
-	agent.fsm = newFSM(agent, logger, agent.applyHostAgentSettings, func(newHost string) {
-		agent.host = newHost
-	}, agent.host, agent.port)
+	agent.fsm = newFSM( /** agent,*/ agent.agentData, logger, agent.port)
 	agent.mu.Unlock()
 
 	return agent
@@ -159,9 +175,9 @@ func (agent *agentS) Ready() bool {
 
 // SendMetrics sends collected entity data to the host agent
 func (agent *agentS) SendMetrics(data acceptor.Metrics) error {
-	pid, err := strconv.Atoi(agent.from.EntityID)
-	if err != nil && agent.from.EntityID != "" {
-		agent.logger.Debug("agent got malformed PID %q", agent.from.EntityID)
+	pid, err := strconv.Atoi(agent.agentData.from.EntityID)
+	if err != nil && agent.agentData.from.EntityID != "" {
+		agent.logger.Debug("agent got malformed PID %q", agent.agentData.from.EntityID)
 	}
 
 	if err = agent.request(agent.makeURL(agentDataURL), "POST", acceptor.GoProcessData{
@@ -195,7 +211,7 @@ func (agent *agentS) SendEvent(event *EventData) error {
 // SendSpans sends collected spans to the host agent
 func (agent *agentS) SendSpans(spans []Span) error {
 	for i := range spans {
-		spans[i].From = agent.from
+		spans[i].From = agent.agentData.from
 	}
 
 	err := agent.request(agent.makeURL(agentTracesURL), "POST", spans)
@@ -231,7 +247,7 @@ type hostAgentProfile struct {
 func (agent *agentS) SendProfiles(profiles []autoprofile.Profile) error {
 	agentProfiles := make([]hostAgentProfile, 0, len(profiles))
 	for _, p := range profiles {
-		agentProfiles = append(agentProfiles, hostAgentProfile{p, agent.from.EntityID})
+		agentProfiles = append(agentProfiles, hostAgentProfile{p, agent.agentData.from.EntityID})
 	}
 
 	err := agent.request(agent.makeURL(agentProfilesURL), "POST", agentProfiles)
@@ -250,15 +266,14 @@ func (agent *agentS) setLogger(l LeveledLogger) {
 }
 
 func (agent *agentS) makeURL(prefix string) string {
-	fmt.Println(">>>", agent.host, agent.port)
-	return agent.makeHostURL(agent.host, prefix)
+	return agent.makeHostURL(agent.agentData.host, prefix)
 }
 
 func (agent *agentS) makeHostURL(host string, prefix string) string {
 	url := "http://" + host + ":" + agent.port + prefix
 
-	if prefix[len(prefix)-1:] == "." && agent.from.EntityID != "" {
-		url += agent.from.EntityID
+	if prefix[len(prefix)-1:] == "." && agent.agentData.from.EntityID != "" {
+		url += agent.agentData.from.EntityID
 	}
 
 	return url
@@ -294,9 +309,9 @@ func (agent *agentS) request(url string, method string, data interface{}) error 
 
 	req = req.WithContext(ctx)
 
-	client := http.DefaultClient
+	// client := http.DefaultClient
 
-	_, err = client.Do(req)
+	_, err = agent.client.Do(req)
 
 	return err
 
@@ -383,30 +398,13 @@ func (agent *agentS) request(url string, method string, data interface{}) error 
 // 	return ret, err
 // }
 
-func (agent *agentS) applyHostAgentSettings(resp agentResponse) {
-	agent.from = newHostAgentFromS(int(resp.Pid), resp.HostID)
+// func (agent *agentS) setHost(host string) {
+// 	agent.agentData.host = host
+// }
 
-	if resp.Secrets.Matcher != "" {
-		m, err := NamedMatcher(resp.Secrets.Matcher, resp.Secrets.List)
-		if err != nil {
-			agent.logger.Warn("failed to apply secrets matcher configuration: ", err)
-		} else {
-			sensor.options.Tracer.Secrets = m
-		}
-	}
-
-	if len(sensor.options.Tracer.CollectableHTTPHeaders) == 0 {
-		sensor.options.Tracer.CollectableHTTPHeaders = resp.getExtraHTTPHeaders()
-	}
-}
-
-func (agent *agentS) setHost(host string) {
-	agent.host = host
-}
-
-func (agent *agentS) getHost() string {
-	return agent.host
-}
+// func (agent *agentS) getHost() string {
+// 	return agent.agentData.host
+// }
 
 func (agent *agentS) reset() {
 	agent.mu.Lock()
