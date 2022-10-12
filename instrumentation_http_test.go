@@ -39,7 +39,7 @@ func BenchmarkTracingNamedHandlerFunc(b *testing.B) {
 	}
 }
 
-func TestTracingNamedHandlerFunc_Write(t *testing.T) {
+func testTracingNamedHandlerFunc_Write(t *testing.T) {
 	recorder := instana.NewTestRecorder()
 	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{
 		Service: "go-sensor-test",
@@ -484,7 +484,7 @@ func TestTracingHandlerFunc_PanicHandling(t *testing.T) {
 	}, logData.Tags)
 }
 
-func TestRoundTripper(t *testing.T) {
+func tTestRoundTripper(t *testing.T) {
 	recorder := instana.NewTestRecorder()
 	tracer := instana.NewTracerWithEverything(&instana.Options{}, recorder)
 	s := instana.NewSensorWithTracer(tracer)

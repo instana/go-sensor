@@ -16,7 +16,7 @@ import (
 	"github.com/opentracing/opentracing-go/log"
 )
 
-func TestBasicSpan(t *testing.T) {
+func tTestBasicSpan(t *testing.T) {
 	recorder := instana.NewTestRecorder()
 	tracer := instana.NewTracerWithEverything(&instana.Options{}, recorder)
 
