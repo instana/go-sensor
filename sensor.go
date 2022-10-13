@@ -6,7 +6,6 @@ package instana
 import (
 	"context"
 	"errors"
-	"fmt"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -161,10 +160,8 @@ func (r *sensorS) Agent() agentClient {
 // and reporting metrics.
 func InitSensor(options *Options) {
 	if sensor != nil {
-		fmt.Println(">>> ALREADY HAS sensor")
 		return
 	}
-	fmt.Println("!!! CREATING sensor")
 
 	if options == nil {
 		options = DefaultOptions()
