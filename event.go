@@ -79,8 +79,5 @@ func sendEvent(event *EventData) {
 	}
 
 	// we do fire & forget here, because the whole pid dance isn't necessary to send events
-	go func() {
-		sensor.Agent().SendEvent(event)
-		sensor = nil
-	}()
+	go sensor.Agent().SendEvent(event)
 }

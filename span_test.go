@@ -25,8 +25,6 @@ func TestBasicSpan(t *testing.T) {
 	})
 	defer instana.TestOnlyStopSensor()
 
-	time.Sleep(time.Second)
-
 	recorder := instana.NewTestRecorder()
 	tracer := instana.NewTracerWithEverything(&instana.Options{}, recorder)
 
