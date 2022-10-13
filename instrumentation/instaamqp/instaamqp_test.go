@@ -87,12 +87,12 @@ func TestClient(t *testing.T) {
 			sensor := instana.NewSensorWithTracer(
 				instana.NewTracerWithEverything(instana.DefaultOptions(), recorder),
 			)
-			defer instana.TestOnlyStopSensor()
 
 			instaCh := instaamqp.WrapChannel(sensor, chMock, url)
 
 			// Start waiting for messages to consume
 			go func(s string) {
+				defer instana.TestOnlyStopSensor()
 				ch, _ := instaCh.Consume("queue", "consumer", true, false, false, false, nil)
 
 				for range ch {
