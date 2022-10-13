@@ -23,6 +23,7 @@ func TestSpanContextFromSQSMessage(t *testing.T) {
 			instana.NewTestRecorder(),
 		),
 	)
+	defer instana.TestOnlyStopSensor()
 
 	examples := map[string]*sqs.Message{
 		"standard keys": {
@@ -93,6 +94,7 @@ func TestSpanContextFromSQSMessage_LegacyHeaders(t *testing.T) {
 			instana.NewTestRecorder(),
 		),
 	)
+	defer instana.TestOnlyStopSensor()
 
 	msg := &sqs.Message{
 		MessageAttributes: map[string]*sqs.MessageAttributeValue{

@@ -22,7 +22,7 @@ type EventData struct {
 
 type severity int
 
-//Severity values for events sent to the instana agent
+// Severity values for events sent to the instana agent
 const (
 	SeverityChange   severity = -1
 	SeverityWarning  severity = 5
@@ -79,5 +79,8 @@ func sendEvent(event *EventData) {
 	}
 
 	// we do fire & forget here, because the whole pid dance isn't necessary to send events
-	go sensor.Agent().SendEvent(event)
+	go func() {
+		sensor.Agent().SendEvent(event)
+		sensor = nil
+	}()
 }

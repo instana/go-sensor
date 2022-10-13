@@ -38,6 +38,7 @@ func TestPropagation(t *testing.T) {
 
 	recorder := instana.NewTestRecorder()
 	tracer := instana.NewTracerWithEverything(nil, recorder)
+	defer instana.TestOnlyStopSensor()
 
 	sensor := instana.NewSensorWithTracer(tracer)
 
@@ -113,6 +114,7 @@ func TestPropagationWithError(t *testing.T) {
 
 	recorder := instana.NewTestRecorder()
 	tracer := instana.NewTracerWithEverything(nil, recorder)
+	defer instana.TestOnlyStopSensor()
 
 	sensor := instana.NewSensorWithTracer(tracer)
 

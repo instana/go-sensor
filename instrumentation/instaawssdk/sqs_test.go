@@ -143,6 +143,7 @@ func TestStartSQSSpan(t *testing.T) {
 			sensor := instana.NewSensorWithTracer(
 				instana.NewTracerWithEverything(instana.DefaultOptions(), recorder),
 			)
+			defer instana.TestOnlyStopSensor()
 
 			parentSp := sensor.Tracer().StartSpan("testing")
 
@@ -184,6 +185,7 @@ func TestStartSQSSpan_NonInstrumentedMethod(t *testing.T) {
 	sensor := instana.NewSensorWithTracer(
 		instana.NewTracerWithEverything(instana.DefaultOptions(), recorder),
 	)
+	defer instana.TestOnlyStopSensor()
 
 	parentSp := sensor.Tracer().StartSpan("testing")
 
@@ -210,6 +212,7 @@ func TestStartSQSSpan_TraceContextPropagation_Single(t *testing.T) {
 	sensor := instana.NewSensorWithTracer(
 		instana.NewTracerWithEverything(instana.DefaultOptions(), recorder),
 	)
+	defer instana.TestOnlyStopSensor()
 
 	svc := sqs.New(unit.Session)
 
@@ -257,6 +260,7 @@ func TestStartSQSSpan_TraceContextPropagation_Batch(t *testing.T) {
 	sensor := instana.NewSensorWithTracer(
 		instana.NewTracerWithEverything(instana.DefaultOptions(), recorder),
 	)
+	defer instana.TestOnlyStopSensor()
 
 	svc := sqs.New(unit.Session)
 
@@ -308,6 +312,7 @@ func TestStartSQSSpan_TraceContextPropagation_Single_NoActiveSpan(t *testing.T) 
 	sensor := instana.NewSensorWithTracer(
 		instana.NewTracerWithEverything(instana.DefaultOptions(), recorder),
 	)
+	defer instana.TestOnlyStopSensor()
 
 	svc := sqs.New(unit.Session)
 
@@ -336,6 +341,7 @@ func TestStartSQSSpan_TraceContextPropagation_Batch_NoActiveSpan(t *testing.T) {
 	sensor := instana.NewSensorWithTracer(
 		instana.NewTracerWithEverything(instana.DefaultOptions(), recorder),
 	)
+	defer instana.TestOnlyStopSensor()
 
 	svc := sqs.New(unit.Session)
 
@@ -424,6 +430,7 @@ func TestFinalizeSQSSpan(t *testing.T) {
 
 			recorder := instana.NewTestRecorder()
 			tracer := instana.NewTracerWithEverything(instana.DefaultOptions(), recorder)
+			defer instana.TestOnlyStopSensor()
 
 			sp := tracer.StartSpan("sqs")
 
@@ -448,6 +455,7 @@ func TestFinalizeSQSSpan(t *testing.T) {
 func TestFinalizeSQSSpan_WithError(t *testing.T) {
 	recorder := instana.NewTestRecorder()
 	tracer := instana.NewTracerWithEverything(instana.DefaultOptions(), recorder)
+	defer instana.TestOnlyStopSensor()
 
 	sp := tracer.StartSpan("sqs")
 
@@ -534,6 +542,7 @@ func TestTraceSQSMessage_WithTraceContext(t *testing.T) {
 			sensor := instana.NewSensorWithTracer(
 				instana.NewTracerWithEverything(instana.DefaultOptions(), recorder),
 			)
+			defer instana.TestOnlyStopSensor()
 
 			sp := instaawssdk.TraceSQSMessage(msg, sensor)
 			require.Equal(t, 0, recorder.QueuedSpansCount())
@@ -569,6 +578,7 @@ func TestTraceSQSMessage_NoTraceContext(t *testing.T) {
 	sensor := instana.NewSensorWithTracer(
 		instana.NewTracerWithEverything(instana.DefaultOptions(), recorder),
 	)
+	defer instana.TestOnlyStopSensor()
 
 	msg := &sqs.Message{
 		Body: aws.String("message body"),

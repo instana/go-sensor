@@ -1,6 +1,7 @@
 // (c) Copyright IBM Corp. 2021
 // (c) Copyright Instana Inc. 2020
 
+//go:build go1.11
 // +build go1.11
 
 package pubsub_test
@@ -25,6 +26,7 @@ func TestSubscription_Receive(t *testing.T) {
 
 	recorder := instana.NewTestRecorder()
 	tracer := instana.NewTracerWithEverything(instana.DefaultOptions(), recorder)
+	defer instana.TestOnlyStopSensor()
 
 	srv, conn, teardown, err := setupMockServer()
 	require.NoError(t, err)
@@ -99,6 +101,7 @@ func TestSubscription_Receive_NoTrace(t *testing.T) {
 
 	recorder := instana.NewTestRecorder()
 	tracer := instana.NewTracerWithEverything(instana.DefaultOptions(), recorder)
+	defer instana.TestOnlyStopSensor()
 
 	srv, conn, teardown, err := setupMockServer()
 	require.NoError(t, err)

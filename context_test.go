@@ -15,6 +15,7 @@ import (
 func TestSpanFromContext_WithActiveSpan(t *testing.T) {
 	recorder := instana.NewTestRecorder()
 	tracer := instana.NewTracerWithEverything(&instana.Options{}, recorder)
+	defer instana.TestOnlyStopSensor()
 
 	span := tracer.StartSpan("test")
 	ctx := instana.ContextWithSpan(context.Background(), span)

@@ -87,6 +87,10 @@ func TestNewSpanContext_EmptyParent(t *testing.T) {
 
 	for name, parent := range examples {
 		t.Run(name, func(t *testing.T) {
+
+			instana.NewTracerWithEverything(&instana.Options{}, nil)
+			defer instana.TestOnlyStopSensor()
+
 			c := instana.NewSpanContext(parent)
 
 			assert.NotEmpty(t, c.TraceID)
@@ -108,6 +112,9 @@ func TestNewSpanContext_FromW3CTraceContext(t *testing.T) {
 			RawState:  "in=1234;5678,vendor1=data",
 		},
 	}
+
+	instana.NewTracerWithEverything(&instana.Options{}, nil)
+	defer instana.TestOnlyStopSensor()
 
 	c := instana.NewSpanContext(parent)
 

@@ -93,6 +93,7 @@ func TestTracer_Inject_HTTPHeaders(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			recorder := instana.NewTestRecorder()
 			tracer := instana.NewTracerWithEverything(&instana.Options{}, recorder)
+			defer instana.TestOnlyStopSensor()
 
 			require.NoError(t, tracer.Inject(example.SpanContext, ot.HTTPHeaders, ot.HTTPHeadersCarrier(example.Headers)))
 			assert.Equal(t, example.Expected, example.Headers)
@@ -213,6 +214,7 @@ func TestTracer_Inject_HTTPHeaders_W3CTraceContext(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			recorder := instana.NewTestRecorder()
 			tracer := instana.NewTracerWithEverything(&instana.Options{}, recorder)
+			defer instana.TestOnlyStopSensor()
 			headers := http.Header{}
 
 			require.NoError(t, tracer.Inject(example.SpanContext, ot.HTTPHeaders, ot.HTTPHeadersCarrier(headers)))
@@ -224,6 +226,7 @@ func TestTracer_Inject_HTTPHeaders_W3CTraceContext(t *testing.T) {
 func TestTracer_Inject_HTTPHeaders_SuppressedTracing(t *testing.T) {
 	recorder := instana.NewTestRecorder()
 	tracer := instana.NewTracerWithEverything(&instana.Options{}, recorder)
+	defer instana.TestOnlyStopSensor()
 
 	headers := http.Header{
 		"Authorization": {"Basic 123"},
@@ -251,6 +254,7 @@ func TestTracer_Inject_HTTPHeaders_SuppressedTracing(t *testing.T) {
 func TestTracer_Inject_HTTPHeaders_WithExistingServerTiming(t *testing.T) {
 	recorder := instana.NewTestRecorder()
 	tracer := instana.NewTracerWithEverything(&instana.Options{}, recorder)
+	defer instana.TestOnlyStopSensor()
 
 	headers := http.Header{
 		"x-instana-t":   {"0000000000001314"},
@@ -369,6 +373,7 @@ func TestTracer_Extract_HTTPHeaders(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			recorder := instana.NewTestRecorder()
 			tracer := instana.NewTracerWithEverything(&instana.Options{}, recorder)
+			defer instana.TestOnlyStopSensor()
 
 			headers := http.Header{}
 			for k, v := range example.Headers {
@@ -406,6 +411,7 @@ func TestTracer_Extract_HTTPHeaders_WithEUMCorrelation(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			recorder := instana.NewTestRecorder()
 			tracer := instana.NewTracerWithEverything(&instana.Options{}, recorder)
+			defer instana.TestOnlyStopSensor()
 
 			headers := http.Header{}
 			for k, v := range example.Headers {
@@ -428,6 +434,7 @@ func TestTracer_Extract_HTTPHeaders_WithEUMCorrelation(t *testing.T) {
 func TestTracer_Extract_HTTPHeaders_NoContext(t *testing.T) {
 	recorder := instana.NewTestRecorder()
 	tracer := instana.NewTracerWithEverything(&instana.Options{}, recorder)
+	defer instana.TestOnlyStopSensor()
 
 	headers := http.Header{
 		"Authorization": {"Basic 123"},
@@ -463,6 +470,7 @@ func TestTracer_Extract_HTTPHeaders_CorruptedContext(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			recorder := instana.NewTestRecorder()
 			tracer := instana.NewTracerWithEverything(&instana.Options{}, recorder)
+			defer instana.TestOnlyStopSensor()
 
 			_, err := tracer.Extract(ot.HTTPHeaders, ot.HTTPHeadersCarrier(headers))
 			assert.Equal(t, ot.ErrSpanContextCorrupted, err)
@@ -473,6 +481,7 @@ func TestTracer_Extract_HTTPHeaders_CorruptedContext(t *testing.T) {
 func TestTracer_Inject_TextMap_AddValues(t *testing.T) {
 	recorder := instana.NewTestRecorder()
 	tracer := instana.NewTracerWithEverything(&instana.Options{}, recorder)
+	defer instana.TestOnlyStopSensor()
 
 	sc := instana.SpanContext{
 		TraceIDHi: 0x1,
@@ -501,6 +510,7 @@ func TestTracer_Inject_TextMap_AddValues(t *testing.T) {
 func TestTracer_Inject_TextMap_UpdateValues(t *testing.T) {
 	recorder := instana.NewTestRecorder()
 	tracer := instana.NewTracerWithEverything(&instana.Options{}, recorder)
+	defer instana.TestOnlyStopSensor()
 
 	sc := instana.SpanContext{
 		TraceIDHi: 0x1,
@@ -533,6 +543,7 @@ func TestTracer_Inject_TextMap_UpdateValues(t *testing.T) {
 func TestTracer_Inject_TextMap_SuppressedTracing(t *testing.T) {
 	recorder := instana.NewTestRecorder()
 	tracer := instana.NewTracerWithEverything(&instana.Options{}, recorder)
+	defer instana.TestOnlyStopSensor()
 
 	sc := instana.SpanContext{
 		TraceIDHi:  0x1,
@@ -609,6 +620,7 @@ func TestTracer_Extract_TextMap(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			recorder := instana.NewTestRecorder()
 			tracer := instana.NewTracerWithEverything(&instana.Options{}, recorder)
+			defer instana.TestOnlyStopSensor()
 
 			sc, err := tracer.Extract(ot.TextMap, ot.TextMapCarrier(example.Carrier))
 			require.NoError(t, err)
@@ -621,6 +633,7 @@ func TestTracer_Extract_TextMap(t *testing.T) {
 func TestTracer_Extract_TextMap_NoContext(t *testing.T) {
 	recorder := instana.NewTestRecorder()
 	tracer := instana.NewTracerWithEverything(&instana.Options{}, recorder)
+	defer instana.TestOnlyStopSensor()
 
 	carrier := map[string]string{
 		"key": "value",
@@ -656,6 +669,7 @@ func TestTracer_Extract_TextMap_CorruptedContext(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			recorder := instana.NewTestRecorder()
 			tracer := instana.NewTracerWithEverything(&instana.Options{}, recorder)
+			defer instana.TestOnlyStopSensor()
 
 			_, err := tracer.Extract(ot.TextMap, ot.TextMapCarrier(carrier))
 			assert.Equal(t, ot.ErrSpanContextCorrupted, err)
@@ -676,6 +690,7 @@ func (c *textMapWithRemoveAll) RemoveAll() {
 func TestTracer_Inject_CarrierWithRemoveAll_SuppressedTrace(t *testing.T) {
 	recorder := instana.NewTestRecorder()
 	tracer := instana.NewTracerWithEverything(&instana.Options{}, recorder)
+	defer instana.TestOnlyStopSensor()
 
 	sc := instana.SpanContext{
 		TraceIDHi:  0x1,

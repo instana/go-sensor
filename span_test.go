@@ -16,7 +16,17 @@ import (
 	"github.com/opentracing/opentracing-go/log"
 )
 
-func tTestBasicSpan(t *testing.T) {
+func TestBasicSpan(t *testing.T) {
+	instana.InitSensor(&instana.Options{
+		Service: TestServiceName,
+		Tracer: instana.TracerOptions{
+			CollectableHTTPHeaders: []string{"x-custom-header-1", "x-custom-header-2"},
+		},
+	})
+	defer instana.TestOnlyStopSensor()
+
+	time.Sleep(time.Second)
+
 	recorder := instana.NewTestRecorder()
 	tracer := instana.NewTracerWithEverything(&instana.Options{}, recorder)
 
@@ -49,6 +59,7 @@ func tTestBasicSpan(t *testing.T) {
 func TestSpanHeritage(t *testing.T) {
 	recorder := instana.NewTestRecorder()
 	tracer := instana.NewTracerWithEverything(&instana.Options{}, recorder)
+	defer instana.TestOnlyStopSensor()
 
 	parentSpan := tracer.StartSpan("parent")
 
@@ -87,6 +98,7 @@ func TestSpanBaggage(t *testing.T) {
 	const op = "test"
 	recorder := instana.NewTestRecorder()
 	tracer := instana.NewTracerWithEverything(&instana.Options{}, recorder)
+	defer instana.TestOnlyStopSensor()
 
 	sp := tracer.StartSpan(op)
 	sp.SetBaggageItem("foo", "bar")
@@ -106,6 +118,7 @@ func TestSpanTags(t *testing.T) {
 	const op = "test"
 	recorder := instana.NewTestRecorder()
 	tracer := instana.NewTracerWithEverything(&instana.Options{}, recorder)
+	defer instana.TestOnlyStopSensor()
 
 	sp := tracer.StartSpan(op)
 	sp.SetTag("foo", "bar")
@@ -124,6 +137,7 @@ func TestSpanTags(t *testing.T) {
 func TestOTLogError(t *testing.T) {
 	recorder := instana.NewTestRecorder()
 	tracer := instana.NewTracerWithEverything(&instana.Options{}, recorder)
+	defer instana.TestOnlyStopSensor()
 
 	sp := tracer.StartSpan("test")
 	ext.Error.Set(sp, true)
@@ -146,6 +160,7 @@ func TestOTLogError(t *testing.T) {
 func TestSpanErrorLogKV(t *testing.T) {
 	recorder := instana.NewTestRecorder()
 	tracer := instana.NewTracerWithEverything(&instana.Options{}, recorder)
+	defer instana.TestOnlyStopSensor()
 
 	sp := tracer.StartSpan("test")
 	sp.LogKV("error", "simulated error")
@@ -177,6 +192,7 @@ func TestSpanErrorLogKV(t *testing.T) {
 func TestSpan_LogFields(t *testing.T) {
 	recorder := instana.NewTestRecorder()
 	tracer := instana.NewTracerWithEverything(&instana.Options{}, recorder)
+	defer instana.TestOnlyStopSensor()
 
 	examples := map[string]struct {
 		Fields             []log.Field
@@ -248,6 +264,7 @@ func TestSpan_LogFields(t *testing.T) {
 func TestSpan_Suppressed_StartSpanOption(t *testing.T) {
 	recorder := instana.NewTestRecorder()
 	tracer := instana.NewTracerWithEverything(&instana.Options{}, recorder)
+	defer instana.TestOnlyStopSensor()
 
 	sp := tracer.StartSpan("test", instana.SuppressTracing())
 	sp.Finish()
@@ -258,6 +275,7 @@ func TestSpan_Suppressed_StartSpanOption(t *testing.T) {
 func TestSpan_Suppressed_SetTag(t *testing.T) {
 	recorder := instana.NewTestRecorder()
 	tracer := instana.NewTracerWithEverything(&instana.Options{}, recorder)
+	defer instana.TestOnlyStopSensor()
 
 	sp := tracer.StartSpan("test")
 	instana.SuppressTracing().Set(sp)

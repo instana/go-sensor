@@ -87,6 +87,7 @@ func TestClient(t *testing.T) {
 			sensor := instana.NewSensorWithTracer(
 				instana.NewTracerWithEverything(instana.DefaultOptions(), recorder),
 			)
+			defer instana.TestOnlyStopSensor()
 
 			instaCh := instaamqp.WrapChannel(sensor, chMock, url)
 

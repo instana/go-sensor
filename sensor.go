@@ -6,6 +6,7 @@ package instana
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -160,8 +161,10 @@ func (r *sensorS) Agent() agentClient {
 // and reporting metrics.
 func InitSensor(options *Options) {
 	if sensor != nil {
+		fmt.Println(">>> ALREADY HAS sensor")
 		return
 	}
+	fmt.Println("!!! CREATING sensor")
 
 	if options == nil {
 		options = DefaultOptions()
@@ -218,6 +221,12 @@ func Flush(ctx context.Context) error {
 	}
 
 	return sensor.Agent().Flush(ctx)
+}
+
+func TestOnlyStopSensor() {
+	if sensor != nil {
+		sensor = nil
+	}
 }
 
 func newServerlessAgent(serviceName, agentEndpoint, agentKey string, client *http.Client, logger LeveledLogger) agentClient {
