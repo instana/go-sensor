@@ -23,7 +23,7 @@ func BenchmarkTracingNamedHandlerFunc(b *testing.B) {
 	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{
 		Service: "go-sensor-test",
 	}, recorder))
-	defer instana.TestOnlyStopSensor()
+	defer instana.ShutdownSensor()
 
 	h := instana.TracingNamedHandlerFunc(s, "action", "/{action}", func(w http.ResponseWriter, req *http.Request) {
 		fmt.Fprintln(w, "Ok")
@@ -50,7 +50,7 @@ func TestTracingNamedHandlerFunc_Write(t *testing.T) {
 
 	recorder := instana.NewTestRecorder()
 	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(opts, recorder))
-	defer instana.TestOnlyStopSensor()
+	defer instana.ShutdownSensor()
 
 	h := instana.TracingNamedHandlerFunc(s, "action", "/{action}", func(w http.ResponseWriter, req *http.Request) {
 		w.Header().Set("X-Response", "true")
@@ -166,7 +166,7 @@ func TestTracingNamedHandlerFunc_InstanaFieldLPriorityOverTraceParentHeader(t *t
 	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{
 		Service: "go-sensor-test",
 	}, recorder))
-	defer instana.TestOnlyStopSensor()
+	defer instana.ShutdownSensor()
 
 	h := instana.TracingNamedHandlerFunc(s, "action", "/test", func(w http.ResponseWriter, req *http.Request) {})
 
@@ -185,7 +185,7 @@ func TestTracingNamedHandlerFunc_InstanaFieldLPriorityOverTraceParentHeader(t *t
 func TestTracingNamedHandlerFunc_WriteHeaders(t *testing.T) {
 	recorder := instana.NewTestRecorder()
 	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{}, recorder))
-	defer instana.TestOnlyStopSensor()
+	defer instana.ShutdownSensor()
 
 	h := instana.TracingNamedHandlerFunc(s, "test", "/test", func(w http.ResponseWriter, req *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
@@ -239,7 +239,7 @@ func TestTracingNamedHandlerFunc_WriteHeaders(t *testing.T) {
 func TestTracingNamedHandlerFunc_W3CTraceContext(t *testing.T) {
 	recorder := instana.NewTestRecorder()
 	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{}, recorder))
-	defer instana.TestOnlyStopSensor()
+	defer instana.ShutdownSensor()
 
 	h := instana.TracingNamedHandlerFunc(s, "test", "/test", func(w http.ResponseWriter, req *http.Request) {
 		fmt.Fprintln(w, "Ok")
@@ -307,7 +307,7 @@ func TestTracingHandlerFunc_SecretsFiltering(t *testing.T) {
 	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{
 		Service: "go-sensor-test",
 	}, recorder))
-	defer instana.TestOnlyStopSensor()
+	defer instana.ShutdownSensor()
 
 	h := instana.TracingNamedHandlerFunc(s, "action", "/{action}", func(w http.ResponseWriter, req *http.Request) {
 		fmt.Fprintln(w, "Ok")
@@ -352,7 +352,7 @@ func TestTracingHandlerFunc_SecretsFiltering(t *testing.T) {
 func TestTracingHandlerFunc_Error(t *testing.T) {
 	recorder := instana.NewTestRecorder()
 	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{}, recorder))
-	defer instana.TestOnlyStopSensor()
+	defer instana.ShutdownSensor()
 
 	h := instana.TracingNamedHandlerFunc(s, "test", "/test", func(w http.ResponseWriter, req *http.Request) {
 		http.Error(w, "something went wrong", http.StatusInternalServerError)
@@ -403,7 +403,7 @@ func TestTracingHandlerFunc_Error(t *testing.T) {
 func TestTracingHandlerFunc_SyntheticCall(t *testing.T) {
 	recorder := instana.NewTestRecorder()
 	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{}, recorder))
-	defer instana.TestOnlyStopSensor()
+	defer instana.ShutdownSensor()
 
 	h := instana.TracingNamedHandlerFunc(s, "test-handler", "/", func(w http.ResponseWriter, req *http.Request) {
 		fmt.Fprintln(w, "Ok")
@@ -426,7 +426,7 @@ func TestTracingHandlerFunc_SyntheticCall(t *testing.T) {
 func TestTracingHandlerFunc_EUMCall(t *testing.T) {
 	recorder := instana.NewTestRecorder()
 	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{}, recorder))
-	defer instana.TestOnlyStopSensor()
+	defer instana.ShutdownSensor()
 
 	h := instana.TracingNamedHandlerFunc(s, "test-handler", "/", func(w http.ResponseWriter, req *http.Request) {
 		fmt.Fprintln(w, "Ok")
@@ -450,7 +450,7 @@ func TestTracingHandlerFunc_EUMCall(t *testing.T) {
 func TestTracingHandlerFunc_PanicHandling(t *testing.T) {
 	recorder := instana.NewTestRecorder()
 	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{}, recorder))
-	defer instana.TestOnlyStopSensor()
+	defer instana.ShutdownSensor()
 
 	h := instana.TracingNamedHandlerFunc(s, "test", "/test", func(w http.ResponseWriter, req *http.Request) {
 		panic("something went wrong")
@@ -508,7 +508,7 @@ func TestRoundTripper(t *testing.T) {
 		},
 	}
 	tracer := instana.NewTracerWithEverything(opts, recorder)
-	defer instana.TestOnlyStopSensor()
+	defer instana.ShutdownSensor()
 	s := instana.NewSensorWithTracer(tracer)
 
 	parentSpan := tracer.StartSpan("parent")
@@ -569,7 +569,7 @@ func TestRoundTripper(t *testing.T) {
 func TestRoundTripper_WithoutParentSpan(t *testing.T) {
 	recorder := instana.NewTestRecorder()
 	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{}, recorder))
-	defer instana.TestOnlyStopSensor()
+	defer instana.ShutdownSensor()
 
 	rt := instana.RoundTripper(s, testRoundTripper(func(req *http.Request) (*http.Response, error) {
 		assert.Empty(t, req.Header.Get(instana.FieldT))
@@ -593,7 +593,7 @@ func TestRoundTripper_Error(t *testing.T) {
 
 	recorder := instana.NewTestRecorder()
 	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{}, recorder))
-	defer instana.TestOnlyStopSensor()
+	defer instana.ShutdownSensor()
 
 	rt := instana.RoundTripper(s, testRoundTripper(func(req *http.Request) (*http.Response, error) {
 		return nil, serverErr
@@ -642,7 +642,7 @@ func TestRoundTripper_Error(t *testing.T) {
 func TestRoundTripper_DefaultTransport(t *testing.T) {
 	recorder := instana.NewTestRecorder()
 	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{}, recorder))
-	defer instana.TestOnlyStopSensor()
+	defer instana.ShutdownSensor()
 
 	var numCalls int
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {

@@ -38,7 +38,7 @@ func TestPropagation(t *testing.T) {
 
 	recorder := instana.NewTestRecorder()
 	tracer := instana.NewTracerWithEverything(nil, recorder)
-	defer instana.TestOnlyStopSensor()
+	defer instana.ShutdownSensor()
 
 	sensor := instana.NewSensorWithTracer(tracer)
 
@@ -119,7 +119,7 @@ func TestPropagationWithError(t *testing.T) {
 			CollectableHTTPHeaders: []string{"x-custom-header-1", "x-custom-header-2"},
 		},
 	}, recorder)
-	defer instana.TestOnlyStopSensor()
+	defer instana.ShutdownSensor()
 
 	sensor := instana.NewSensorWithTracer(tracer)
 

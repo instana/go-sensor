@@ -88,7 +88,7 @@ func TestRegisteredSpanType_ExtractData(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			recorder := instana.NewTestRecorder()
 			tracer := instana.NewTracerWithEverything(&instana.Options{}, recorder)
-			defer instana.TestOnlyStopSensor()
+			defer instana.ShutdownSensor()
 
 			sp := tracer.StartSpan(example.Operation)
 			sp.Finish()
@@ -306,7 +306,7 @@ func TestNewAWSLambdaSpanData(t *testing.T) {
 		t.Run(trigger, func(t *testing.T) {
 			recorder := instana.NewTestRecorder()
 			tracer := instana.NewTracerWithEverything(&instana.Options{}, recorder)
-			defer instana.TestOnlyStopSensor()
+			defer instana.ShutdownSensor()
 
 			sp := tracer.StartSpan("aws.lambda.entry", opentracing.Tags{
 				"lambda.arn":       "lambda-arn-1",

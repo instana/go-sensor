@@ -89,7 +89,7 @@ func TestNewSpanContext_EmptyParent(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 
 			instana.NewTracerWithEverything(&instana.Options{}, nil)
-			defer instana.TestOnlyStopSensor()
+			defer instana.ShutdownSensor()
 
 			c := instana.NewSpanContext(parent)
 
@@ -114,7 +114,7 @@ func TestNewSpanContext_FromW3CTraceContext(t *testing.T) {
 	}
 
 	instana.NewTracerWithEverything(&instana.Options{}, nil)
-	defer instana.TestOnlyStopSensor()
+	defer instana.ShutdownSensor()
 
 	c := instana.NewSpanContext(parent)
 

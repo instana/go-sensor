@@ -26,7 +26,7 @@ func TestSubscription_Receive(t *testing.T) {
 
 	recorder := instana.NewTestRecorder()
 	tracer := instana.NewTracerWithEverything(instana.DefaultOptions(), recorder)
-	defer instana.TestOnlyStopSensor()
+	defer instana.ShutdownSensor()
 
 	srv, conn, teardown, err := setupMockServer()
 	require.NoError(t, err)
@@ -101,7 +101,7 @@ func TestSubscription_Receive_NoTrace(t *testing.T) {
 
 	recorder := instana.NewTestRecorder()
 	tracer := instana.NewTracerWithEverything(instana.DefaultOptions(), recorder)
-	defer instana.TestOnlyStopSensor()
+	defer instana.ShutdownSensor()
 
 	srv, conn, teardown, err := setupMockServer()
 	require.NoError(t, err)

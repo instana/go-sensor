@@ -220,7 +220,9 @@ func Flush(ctx context.Context) error {
 	return sensor.Agent().Flush(ctx)
 }
 
-func TestOnlyStopSensor() {
+// ShutdownSensor cleans up the internal global sensor reference. The next time that instana.InitSensor is called,
+// directly or indirectly, the internal sensor will be reinitialized.
+func ShutdownSensor() {
 	if sensor != nil {
 		sensor = nil
 	}

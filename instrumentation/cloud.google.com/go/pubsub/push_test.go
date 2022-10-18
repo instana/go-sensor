@@ -26,7 +26,7 @@ func TestTracingHandler(t *testing.T) {
 	sensor := instana.NewSensorWithTracer(
 		instana.NewTracerWithEverything(instana.DefaultOptions(), recorder),
 	)
-	defer instana.TestOnlyStopSensor()
+	defer instana.ShutdownSensor()
 
 	payload, err := ioutil.ReadFile("testdata/message.json")
 	require.NoError(t, err)
@@ -90,7 +90,7 @@ func TestTracingHandlerFunc_TracePropagation(t *testing.T) {
 	sensor := instana.NewSensorWithTracer(
 		instana.NewTracerWithEverything(instana.DefaultOptions(), recorder),
 	)
-	defer instana.TestOnlyStopSensor()
+	defer instana.ShutdownSensor()
 
 	payload, err := ioutil.ReadFile("testdata/message_with_context.json")
 	require.NoError(t, err)
@@ -148,7 +148,7 @@ func TestTracingHandlerFunc_NotPubSub(t *testing.T) {
 	sensor := instana.NewSensorWithTracer(
 		instana.NewTracerWithEverything(instana.DefaultOptions(), recorder),
 	)
-	defer instana.TestOnlyStopSensor()
+	defer instana.ShutdownSensor()
 
 	var numCalls int
 	h := pubsub.TracingHandlerFunc(sensor, "/", func(w http.ResponseWriter, req *http.Request) {

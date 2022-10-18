@@ -24,7 +24,7 @@ func TestStartSNSSpan_WithActiveSpan(t *testing.T) {
 	sensor := instana.NewSensorWithTracer(
 		instana.NewTracerWithEverything(instana.DefaultOptions(), recorder),
 	)
-	defer instana.TestOnlyStopSensor()
+	defer instana.ShutdownSensor()
 
 	parentSp := sensor.Tracer().StartSpan("testing")
 
@@ -68,7 +68,7 @@ func TestStartSNSSpan_NonInstrumentedMethod(t *testing.T) {
 	sensor := instana.NewSensorWithTracer(
 		instana.NewTracerWithEverything(instana.DefaultOptions(), recorder),
 	)
-	defer instana.TestOnlyStopSensor()
+	defer instana.ShutdownSensor()
 
 	parentSp := sensor.Tracer().StartSpan("testing")
 
@@ -95,7 +95,7 @@ func TestStartSNSSpan_TraceContextPropagation_Single(t *testing.T) {
 	sensor := instana.NewSensorWithTracer(
 		instana.NewTracerWithEverything(instana.DefaultOptions(), recorder),
 	)
-	defer instana.TestOnlyStopSensor()
+	defer instana.ShutdownSensor()
 
 	svc := sns.New(unit.Session)
 
@@ -142,7 +142,7 @@ func TestStartSNSSpan_NoActiveSpan(t *testing.T) {
 	sensor := instana.NewSensorWithTracer(
 		instana.NewTracerWithEverything(instana.DefaultOptions(), recorder),
 	)
-	defer instana.TestOnlyStopSensor()
+	defer instana.ShutdownSensor()
 
 	req := newSNSRequest()
 	instaawssdk.StartSNSSpan(req, sensor)
@@ -156,7 +156,7 @@ func TestFinalizeSNS_NoError(t *testing.T) {
 	sensor := instana.NewSensorWithTracer(
 		instana.NewTracerWithEverything(instana.DefaultOptions(), recorder),
 	)
-	defer instana.TestOnlyStopSensor()
+	defer instana.ShutdownSensor()
 
 	sp := sensor.Tracer().StartSpan("sns", opentracing.Tags{
 		"sns.topic":   "test-topic-arn",
@@ -191,7 +191,7 @@ func TestFinalizeSNSSpan_WithError(t *testing.T) {
 	sensor := instana.NewSensorWithTracer(
 		instana.NewTracerWithEverything(instana.DefaultOptions(), recorder),
 	)
-	defer instana.TestOnlyStopSensor()
+	defer instana.ShutdownSensor()
 
 	sp := sensor.Tracer().StartSpan("sns", opentracing.Tags{
 		"sns.topic":   "test-topic-arn",

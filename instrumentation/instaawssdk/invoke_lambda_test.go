@@ -29,7 +29,7 @@ func TestStartInvokeLambdaSpan_WithActiveSpan(t *testing.T) {
 	sensor := instana.NewSensorWithTracer(
 		instana.NewTracerWithEverything(instana.DefaultOptions(), recorder),
 	)
-	defer instana.TestOnlyStopSensor()
+	defer instana.ShutdownSensor()
 
 	parentSp := sensor.Tracer().StartSpan("testing")
 
@@ -88,7 +88,7 @@ func TestStartInvokeLambdaSpan_NoActiveSpan(t *testing.T) {
 	sensor := instana.NewSensorWithTracer(
 		instana.NewTracerWithEverything(instana.DefaultOptions(), recorder),
 	)
-	defer instana.TestOnlyStopSensor()
+	defer instana.ShutdownSensor()
 
 	req := newInvokeRequest(funcName)
 	instaawssdk.StartInvokeLambdaSpan(req, sensor)
@@ -104,7 +104,7 @@ func TestFinalizeInvoke_NoError(t *testing.T) {
 	sensor := instana.NewSensorWithTracer(
 		instana.NewTracerWithEverything(instana.DefaultOptions(), recorder),
 	)
-	defer instana.TestOnlyStopSensor()
+	defer instana.ShutdownSensor()
 
 	sp := sensor.Tracer().StartSpan("aws.lambda.invoke", opentracing.Tags{
 		"function": funcName,
@@ -142,7 +142,7 @@ func TestFinalizeInvokeLambdaSpan_WithError(t *testing.T) {
 	sensor := instana.NewSensorWithTracer(
 		instana.NewTracerWithEverything(instana.DefaultOptions(), recorder),
 	)
-	defer instana.TestOnlyStopSensor()
+	defer instana.ShutdownSensor()
 
 	sp := sensor.Tracer().StartSpan("aws.lambda.invoke", opentracing.Tags{
 		"function": funcName,

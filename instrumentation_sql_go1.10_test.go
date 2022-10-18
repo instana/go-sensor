@@ -25,7 +25,7 @@ func TestWrapSQLConnector_Exec(t *testing.T) {
 	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{
 		Service: "go-sensor-test",
 	}, recorder))
-	defer instana.TestOnlyStopSensor()
+	defer instana.ShutdownSensor()
 
 	db := sql.OpenDB(instana.WrapSQLConnector(s, "connection string", sqlConnector{}))
 
@@ -66,7 +66,7 @@ func TestWrapSQLConnector_Exec_Error(t *testing.T) {
 	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{
 		Service: "go-sensor-test",
 	}, recorder))
-	defer instana.TestOnlyStopSensor()
+	defer instana.ShutdownSensor()
 
 	db := sql.OpenDB(instana.WrapSQLConnector(s, "connection string", sqlConnector{
 		Error: errors.New("something went wrong"),
@@ -106,7 +106,7 @@ func TestWrapSQLConnector_Query(t *testing.T) {
 	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{
 		Service: "go-sensor-test",
 	}, recorder))
-	defer instana.TestOnlyStopSensor()
+	defer instana.ShutdownSensor()
 
 	db := sql.OpenDB(instana.WrapSQLConnector(s, "connection string", sqlConnector{}))
 
@@ -147,7 +147,7 @@ func TestWrapSQLConnector_Query_Error(t *testing.T) {
 	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{
 		Service: "go-sensor-test",
 	}, recorder))
-	defer instana.TestOnlyStopSensor()
+	defer instana.ShutdownSensor()
 
 	dbErr := errors.New("something went wrong")
 	db := sql.OpenDB(instana.WrapSQLConnector(s, "connection string", sqlConnector{

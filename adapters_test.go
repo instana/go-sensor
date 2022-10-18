@@ -17,7 +17,7 @@ import (
 func TestWithTracingSpan(t *testing.T) {
 	recorder := instana.NewTestRecorder()
 	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{}, recorder))
-	defer instana.TestOnlyStopSensor()
+	defer instana.ShutdownSensor()
 
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest("GET", "/test", nil)
@@ -53,7 +53,7 @@ func TestWithTracingSpan(t *testing.T) {
 func TestWithTracingSpan_PanicHandling(t *testing.T) {
 	recorder := instana.NewTestRecorder()
 	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{}, recorder))
-	defer instana.TestOnlyStopSensor()
+	defer instana.ShutdownSensor()
 
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest("GET", "/test", nil)
@@ -106,7 +106,7 @@ func TestWithTracingSpan_WithActiveParentSpan(t *testing.T) {
 	recorder := instana.NewTestRecorder()
 	tracer := instana.NewTracerWithEverything(&instana.Options{}, recorder)
 	s := instana.NewSensorWithTracer(tracer)
-	defer instana.TestOnlyStopSensor()
+	defer instana.ShutdownSensor()
 
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest("GET", "/test", nil)
@@ -127,7 +127,7 @@ func TestWithTracingSpan_WithActiveParentSpan(t *testing.T) {
 func TestWithTracingSpan_WithWireContext(t *testing.T) {
 	recorder := instana.NewTestRecorder()
 	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{}, recorder))
-	defer instana.TestOnlyStopSensor()
+	defer instana.ShutdownSensor()
 
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest("GET", "/test", nil)
