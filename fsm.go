@@ -126,6 +126,9 @@ func (r *fsmS) checkHost(e *f.Event, host string) {
 			return
 		}
 
+		header, err := r.agent.requestHeader(r.agent.makeHostURL(gateway, "/"), "GET", "Server")
+		found := err == nil && header == agentHeader
+
 		if found {
 			r.lookupSuccess(gateway)
 			return
