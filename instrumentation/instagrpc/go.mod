@@ -8,3 +8,5 @@ require (
 	github.com/opentracing/opentracing-go v1.1.0
 	google.golang.org/grpc v1.15.0
 )
+
+replace github.com/instana/go-sensor => ../../

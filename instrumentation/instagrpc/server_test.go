@@ -68,6 +68,7 @@ func TestUnaryServerInterceptor_WithClientTraceID(t *testing.T) {
 	sensor := instana.NewSensorWithTracer(
 		instana.NewTracerWithEverything(&instana.Options{}, recorder),
 	)
+	defer instana.ShutdownSensor()
 
 	addr, teardown, err := startTestServer(
 		&testServer{},

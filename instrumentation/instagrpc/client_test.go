@@ -114,7 +114,7 @@ func TestUnaryClientInterceptor_ErrorHandling(t *testing.T) {
 	assert.Error(t, err)
 
 	spans := recorder.GetQueuedSpans()
-	require.Len(t, spans, 1)
+	require.Len(t, spans, 2)
 
 	span, err := extractAgentSpan(spans[0])
 	require.NoError(t, err)
@@ -250,6 +250,7 @@ func TestStreamClientInterceptor_ErrorHandling(t *testing.T) {
 	sensor := instana.NewSensorWithTracer(
 		instana.NewTracerWithEverything(&instana.Options{}, recorder),
 	)
+	defer instana.ShutdownSensor()
 
 	addr, teardown, err := startTestServer(&testServer{Error: serverErr})
 	require.NoError(t, err)
@@ -274,7 +275,7 @@ func TestStreamClientInterceptor_ErrorHandling(t *testing.T) {
 	assert.Error(t, err)
 
 	spans := recorder.GetQueuedSpans()
-	require.Len(t, spans, 1)
+	require.Len(t, spans, 2)
 
 	span, err := extractAgentSpan(spans[0])
 	require.NoError(t, err)
