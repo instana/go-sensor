@@ -2,8 +2,6 @@ github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSs
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/golang-jwt/jwt v3.2.2+incompatible/go.mod h1:8pz2t5EyA70fFQQSrl6XZXzqecmYZeUEB8OUGHkxJ+I=
-github.com/instana/go-sensor v1.35.0 h1:8YO1N5wDCUkabSCACht4aeJm4PVKDM9N0t+/tgECRq8=
-github.com/instana/go-sensor v1.35.0/go.mod h1:Uh9j3eF2mBw/FLk2MxISmVDIj8mtJBFRj2S19M6CVyQ=
 github.com/instana/go-sensor v1.44.0 h1:ZF0Cvr/jUe1jj5x7w9PMWGFW7WLPZZd32v/3BuuWb1w=
 github.com/instana/go-sensor v1.44.0/go.mod h1:E42MelHWFz11qqaLwvgt0j98v2s2O/bq22UDkGaG0Gg=
 github.com/instana/testify v1.6.2-0.20200721153833-94b1851f4d65 h1:T25FL3WEzgmKB0m6XCJNZ65nw09/QIp3T1yXr487D+A=
