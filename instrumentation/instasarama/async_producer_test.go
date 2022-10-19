@@ -17,7 +17,7 @@ import (
 )
 
 func TestAsyncProducer_Input(t *testing.T) {
-	headerFormats := []string{"binary", "string", "both"}
+	headerFormats := []string{"" /* tests the default behavior */, "binary", "string", "both"}
 
 	for _, headerFormat := range headerFormats {
 		os.Setenv(instasarama.KafkaHeaderEnvVarKey, headerFormat)
@@ -65,7 +65,7 @@ func TestAsyncProducer_Input(t *testing.T) {
 			Access:  "send",
 		}, cSpan.Data.Kafka)
 
-		if headerFormat == "both" || headerFormat == "binary" {
+		if headerFormat == "both" || headerFormat == "binary" || headerFormat == "" /* -> default, currently both */ {
 			assert.Contains(t, published.Headers, sarama.RecordHeader{
 				Key:   []byte("X_INSTANA_C"),
 				Value: instasarama.PackTraceContextHeader(cSpan.TraceID, cSpan.SpanID),
@@ -76,7 +76,7 @@ func TestAsyncProducer_Input(t *testing.T) {
 			})
 		}
 
-		if headerFormat == "both" || headerFormat == "string" {
+		if headerFormat == "both" || headerFormat == "string" || headerFormat == "" /* -> default, currently both */ {
 			assert.Contains(t, published.Headers, sarama.RecordHeader{
 				Key:   []byte("X_INSTANA_T"),
 				Value: []byte("0000000000000000" + cSpan.TraceID),

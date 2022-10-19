@@ -9,7 +9,7 @@ from v1.19.0 and above.
 Installation
 ------------
 
-Unlike the Instana Go sensor, this instrumentation module requires Go v1.9+. 
+Unlike the Instana Go sensor, this instrumentation module requires Go v1.9+.
 
 ```bash
 $ go get github.com/instana/go-sensor/instrumentation/instasarama
@@ -31,7 +31,7 @@ You can create a new instance of Instana sensor using `instana.NewSensor()`.
 wrappers are named the same way as their origins and use the same set of arguments. In most cases it's enough to replace
 `sarama` with `instasarama` in the constructor call and append an instance of `*instana.Sensor` to the argument list.
 
-**Note**: Kafka supports record headers starting from v0.11.0. In order to enable trace context propagation, you need to make sure 
+**Note**: Kafka supports record headers starting from v0.11.0. In order to enable trace context propagation, you need to make sure
 that your `(sarama.Config).Version` is set to at least `sarama.V0_11_0_0`.
 
 ### Instrumenting `sarama.SyncProducer`
@@ -52,7 +52,7 @@ producer := instasarama.NewSyncProducerFromClient(client, sensor)
 
 The wrapped producer takes care of trace context propagation by creating an exit span and injecting the trace context into each Kafka
 message headers. Since `github.com/Shopify/sarama` does not use `context.Context`, which is a conventional way of passing the parent
-span in Instana Go sensor, the caller needs to inject the parent span context using [`instasarama.ProducerMessageWithSpan()`][ProducerMessageWithSpan] 
+span in Instana Go sensor, the caller needs to inject the parent span context using [`instasarama.ProducerMessageWithSpan()`][ProducerMessageWithSpan]
 before passing it to the wrapped producer.
 
 ### Instrumenting `sarama.AsyncProducer`
@@ -76,7 +76,7 @@ producer := instasarama.NewAsyncProducerFromClient(client, sensor)
 
 The wrapped producer takes care of trace context propagation by creating an exit span and injecting the trace context into each Kafka
 message headers. Since `github.com/Shopify/sarama` does not use `context.Context`, which is a conventional way of passing the parent
-span in Instana Go sensor, the caller needs to inject the parent span context using [`instasarama.ProducerMessageWithSpan()`][ProducerMessageWithSpan] 
+span in Instana Go sensor, the caller needs to inject the parent span context using [`instasarama.ProducerMessageWithSpan()`][ProducerMessageWithSpan]
 before passing it to the wrapped producer.
 
 ### Instrumenting `sarama.Consumer`
@@ -123,22 +123,25 @@ in the message handler to continue the trace.
 
 ### Working With Kafka Header Formats
 
-Starting at v1.2.0, the instrumentation can handle both Kafka headers as binary (legacy) or as string.
-By default, and for versions prior to v1.2.0 , the default behavior is to process Kafka headers in the binary format.
+Since v1.2.0, the instrumentation supports Instana's trace correlation headers in both binary (legacy) and string (new) formats.
+
+By default, both sets of headers (binary and string) will be added to messages. Versions prior to v1.2.0 will only add headers in the binary format.
 
 This change affects how Instana headers are propagated via a producer when a message is sent.
-Consumers will always look for headers as string first and fallback to the binary format if necessary.
+Consumers will always look for the string headers first and fallback to the binary format if necessary.
 
 In the future, the binary headers will be discontinued and only the headers in the string format will be considered.
 
 To choose a header format provide the `INSTANA_KAFKA_HEADER_FORMAT` environment variable to the application.
 The following are valid values:
 
-* `binary`: Will keep handling Kafka headers in the binary format. 
-* `string`: Will send Kafka header in the string format
-* `both`: Will set Instana headers n both binary and string formats. 
+* `binary`: Producers will only add binary headers to Kafka messages.
+* `string`: Producers will only add string headers to Kafka messages.
+* `both`: Producers will add both sets of headers to Kafka messages.
 
 > If no environment variable is provided, or its value is empty or if it's not a valid value, Kafka headers will be treated as binary
+
+See the topic [Kafka header migration](https://www.ibm.com/docs/en/instana-observability/current?topic=references-kafka-header-migration) in Instana's documentation for more information.
 
 [godoc]: https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instasarama
 [NewSyncProducer]: https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instasarama?tab=doc#NewSyncProducer

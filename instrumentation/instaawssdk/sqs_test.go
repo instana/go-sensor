@@ -493,23 +493,6 @@ func TestTraceSQSMessage_WithTraceContext(t *testing.T) {
 				},
 			},
 		},
-		"legacy keys": {
-			Body: aws.String("message body"),
-			MessageAttributes: map[string]*sqs.MessageAttributeValue{
-				"X_INSTANA_ST": {
-					DataType:    aws.String("String"),
-					StringValue: aws.String("00000000000000010000000000000002"),
-				},
-				"X_INSTANA_SS": {
-					DataType:    aws.String("String"),
-					StringValue: aws.String("0000000000000003"),
-				},
-				"X_INSTANA_SL": {
-					DataType:    aws.String("String"),
-					StringValue: aws.String("1"),
-				},
-			},
-		},
 		"sns notification": {
 			Body: aws.String(`{
   "Type" : "Notification",

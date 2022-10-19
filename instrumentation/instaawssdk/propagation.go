@@ -22,10 +22,6 @@ const (
 	FieldS = "X_INSTANA_S"
 	// FieldL is the trace level message attribute key
 	FieldL = "X_INSTANA_L"
-
-	legacyFieldT = "X_INSTANA_ST"
-	legacyFieldS = "X_INSTANA_SS"
-	legacyFieldL = "X_INSTANA_SL"
 )
 
 // SpanContextFromSQSMessage returns the trace context from an SQS message
@@ -59,7 +55,7 @@ func SNSMessageAttributesCarrier(attrs map[string]*sns.MessageAttributeValue) me
 
 type messageAttributesCarrier struct {
 	Attrs interface {
-		Get(string, string) (string, bool)
+		Get(string) (string, bool)
 		Set(string, string)
 		Del(string)
 	}
@@ -68,27 +64,24 @@ type messageAttributesCarrier struct {
 func (c messageAttributesCarrier) Set(key, val string) {
 	switch strings.ToLower(key) {
 	case instana.FieldT:
-		c.Attrs.Del(legacyFieldT)
 		c.Attrs.Set(FieldT, val)
 	case instana.FieldS:
-		c.Attrs.Del(legacyFieldS)
 		c.Attrs.Set(FieldS, val)
 	case instana.FieldL:
-		c.Attrs.Del(legacyFieldL)
 		c.Attrs.Set(FieldL, val)
 	}
 }
 
 func (c messageAttributesCarrier) ForeachKey(handler func(key, val string) error) error {
-	if v, ok := c.Attrs.Get(FieldT, legacyFieldT); ok {
+	if v, ok := c.Attrs.Get(FieldT); ok {
 		handler(instana.FieldT, v)
 	}
 
-	if v, ok := c.Attrs.Get(FieldS, legacyFieldS); ok {
+	if v, ok := c.Attrs.Get(FieldS); ok {
 		handler(instana.FieldS, v)
 	}
 
-	if v, ok := c.Attrs.Get(FieldL, legacyFieldL); ok {
+	if v, ok := c.Attrs.Get(FieldL); ok {
 		handler(instana.FieldL, v)
 	}
 
@@ -97,16 +90,8 @@ func (c messageAttributesCarrier) ForeachKey(handler func(key, val string) error
 
 type sqsMessageAttributes map[string]*sqs.MessageAttributeValue
 
-func (attrs sqsMessageAttributes) Get(key, fallbackKey string) (string, bool) {
+func (attrs sqsMessageAttributes) Get(key string) (string, bool) {
 	if v, ok := attrs[key]; ok {
-		return aws.StringValue(v.StringValue), ok
-	}
-
-	if fallbackKey == "" {
-		return "", false
-	}
-
-	if v, ok := attrs[fallbackKey]; ok {
 		return aws.StringValue(v.StringValue), ok
 	}
 
@@ -126,16 +111,8 @@ func (attrs sqsMessageAttributes) Del(key string) {
 
 type snsMessageAttributes map[string]*sns.MessageAttributeValue
 
-func (attrs snsMessageAttributes) Get(key, fallbackKey string) (string, bool) {
+func (attrs snsMessageAttributes) Get(key string) (string, bool) {
 	if v, ok := attrs[key]; ok {
-		return aws.StringValue(v.StringValue), ok
-	}
-
-	if fallbackKey == "" {
-		return "", false
-	}
-
-	if v, ok := attrs[fallbackKey]; ok {
 		return aws.StringValue(v.StringValue), ok
 	}
 
