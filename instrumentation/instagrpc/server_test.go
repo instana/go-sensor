@@ -96,7 +96,7 @@ func TestUnaryServerInterceptor_WithClientTraceID(t *testing.T) {
 	span, err := extractAgentSpan(spans[0])
 	require.NoError(t, err)
 
-	assert.Equal(t, "00000000000000010000001234567890", span.TraceID)
+	assert.Equal(t, "0000001234567890", span.TraceID)
 	assert.Equal(t, "0000000000000001", span.ParentID)
 }
 
@@ -122,7 +122,7 @@ func TestUnaryServerInterceptor_ErrorHandling(t *testing.T) {
 	assert.Error(t, err)
 
 	spans := recorder.GetQueuedSpans()
-	require.Len(t, spans, 1)
+	require.Len(t, spans, 2)
 
 	span, err := extractAgentSpan(spans[0])
 	require.NoError(t, err)
@@ -154,7 +154,7 @@ func TestUnaryServerInterceptor_PanicHandling(t *testing.T) {
 	require.NoError(t, err)
 
 	spans := recorder.GetQueuedSpans()
-	require.Len(t, spans, 1)
+	require.Len(t, spans, 2)
 
 	span, err := extractAgentSpan(spans[0])
 	require.NoError(t, err)
@@ -255,7 +255,7 @@ func TestStreamServerInterceptor_WithClientTraceID(t *testing.T) {
 	span, err := extractAgentSpan(spans[0])
 	require.NoError(t, err)
 
-	assert.Equal(t, "00000000000000010000001234567890", span.TraceID)
+	assert.Equal(t, "0000001234567890", span.TraceID)
 	assert.Equal(t, "0000000000000001", span.ParentID)
 }
 
@@ -287,7 +287,7 @@ func TestStreamServerInterceptor_ErrorHandling(t *testing.T) {
 	assert.Error(t, err)
 
 	spans := recorder.GetQueuedSpans()
-	require.Len(t, spans, 1)
+	require.Len(t, spans, 2)
 
 	span, err := extractAgentSpan(spans[0])
 	require.NoError(t, err)
@@ -323,10 +323,10 @@ func TestStreamServerInterceptor_PanicHandling(t *testing.T) {
 	}
 	require.NoError(t, stream.CloseSend())
 
-	require.Eventually(t, func() bool { return recorder.QueuedSpansCount() == 1 }, 100*time.Millisecond, 50*time.Millisecond)
+	require.Eventually(t, func() bool { return recorder.QueuedSpansCount() == 2 }, 100*time.Millisecond, 50*time.Millisecond)
 
 	spans := recorder.GetQueuedSpans()
-	require.Len(t, spans, 1)
+	require.Len(t, spans, 2)
 
 	span, err := extractAgentSpan(spans[0])
 	require.NoError(t, err)

@@ -233,7 +233,7 @@ func TestAsyncProducer_Input_WithAwaitResult_Error(t *testing.T) {
 	<-wrapped.Errors()
 
 	spans = recorder.GetQueuedSpans()
-	require.Len(t, spans, 1)
+	require.Len(t, spans, 2)
 
 	cSpan, err := extractAgentSpan(spans[0])
 	require.NoError(t, err)
