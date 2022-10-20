@@ -8,3 +8,5 @@ require (
 	github.com/opentracing/opentracing-go v1.2.0
 	go.mongodb.org/mongo-driver v1.7.2
 )
+
+replace github.com/instana/go-sensor => ../../
