@@ -220,6 +220,14 @@ func Flush(ctx context.Context) error {
 	return sensor.Agent().Flush(ctx)
 }
 
+// ShutdownSensor cleans up the internal global sensor reference. The next time that instana.InitSensor is called,
+// directly or indirectly, the internal sensor will be reinitialized.
+func ShutdownSensor() {
+	if sensor != nil {
+		sensor = nil
+	}
+}
+
 func newServerlessAgent(serviceName, agentEndpoint, agentKey string, client *http.Client, logger LeveledLogger) agentClient {
 	switch {
 	case os.Getenv("AWS_EXECUTION_ENV") == "AWS_ECS_FARGATE" && os.Getenv("ECS_CONTAINER_METADATA_URI") != "":
