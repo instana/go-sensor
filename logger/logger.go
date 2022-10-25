@@ -140,9 +140,6 @@ func (l *Logger) SetPrefix(prefix string) {
 
 // Debug appends a debug message to the log
 func (l *Logger) Debug(v ...interface{}) {
-	l.mu.Lock()
-	defer l.mu.Unlock()
-
 	if l.lvl < DebugLevel {
 		return
 	}
