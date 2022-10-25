@@ -65,16 +65,16 @@ type Logger struct {
 // New initializes a new instance of Logger that uses provided printer as a backend to
 // output the log messages. The stdlib log.Logger satisfies logger.Printer interface:
 //
-// 	logger := logger.New(logger.WarnLevel, log.New(os.Stderr, "instana:", log.LstdFlags))
-// 	logger.SetLevel(logger.WarnLevel)
+//	logger := logger.New(logger.WarnLevel, log.New(os.Stderr, "instana:", log.LstdFlags))
+//	logger.SetLevel(logger.WarnLevel)
 //
-// 	logger.Debug("this is a debug message") // won't be printed
-// 	logger.Error("this is an  message") // ... while this one will
+//	logger.Debug("this is a debug message") // won't be printed
+//	logger.Error("this is an  message") // ... while this one will
 //
 // In case  there is no printer provided, logger.Logger will use a new instance of log.Logger
 // initialized with log.Lstdflags that writes to os.Stderr:
 //
-// 	log.New(os.Stderr, "", log.Lstdflags)
+//	log.New(os.Stderr, "", log.Lstdflags)
 //
 // The default logging level for a new logger instance is logger.ErrorLevel.
 func New(printer Printer) *Logger {

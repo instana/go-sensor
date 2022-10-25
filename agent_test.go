@@ -119,6 +119,18 @@ func Test_agentApplyHostSettings(t *testing.T) {
 		},
 	}
 
+	opts := &Options{
+		Service: "test_service",
+		Tracer: TracerOptions{
+			CollectableHTTPHeaders: []string{"x-custom-header-1", "x-custom-header-2"},
+		},
+	}
+
+	sensor = newSensor(opts)
+	defer func() {
+		sensor = nil
+	}()
+
 	agent.applyHostAgentSettings(response)
 
 	assert.NotContains(t, sensor.options.Tracer.CollectableHTTPHeaders, "my-unwanted-custom-headers")

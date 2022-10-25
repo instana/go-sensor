@@ -22,6 +22,7 @@ func TestInstrumentSQLDriver(t *testing.T) {
 	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{
 		Service: "go-sensor-test",
 	}, recorder))
+	defer instana.ShutdownSensor()
 
 	instana.InstrumentSQLDriver(s, "test_register_driver", sqlDriver{})
 	assert.NotPanics(t, func() {
@@ -34,6 +35,7 @@ func TestOpenSQLDB(t *testing.T) {
 	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{
 		Service: "go-sensor-test",
 	}, recorder))
+	defer instana.ShutdownSensor()
 
 	instana.InstrumentSQLDriver(s, "test_driver", sqlDriver{})
 	require.Contains(t, sql.Drivers(), "test_driver_with_instana")
@@ -113,6 +115,7 @@ func TestOpenSQLDB_URIConnString(t *testing.T) {
 	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{
 		Service: "go-sensor-test",
 	}, recorder))
+	defer instana.ShutdownSensor()
 
 	instana.InstrumentSQLDriver(s, "fake_db_driver", sqlDriver{})
 	require.Contains(t, sql.Drivers(), "test_driver_with_instana")
@@ -151,6 +154,7 @@ func TestOpenSQLDB_PostgresKVConnString(t *testing.T) {
 	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{
 		Service: "go-sensor-test",
 	}, recorder))
+	defer instana.ShutdownSensor()
 
 	instana.InstrumentSQLDriver(s, "fake_postgres_driver", sqlDriver{})
 	require.Contains(t, sql.Drivers(), "fake_postgres_driver_with_instana")
@@ -189,6 +193,7 @@ func TestOpenSQLDB_MySQLKVConnString(t *testing.T) {
 	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{
 		Service: "go-sensor-test",
 	}, recorder))
+	defer instana.ShutdownSensor()
 
 	instana.InstrumentSQLDriver(s, "fake_mysql_driver", sqlDriver{})
 	require.Contains(t, sql.Drivers(), "fake_mysql_driver_with_instana")
@@ -226,6 +231,7 @@ func TestNoPanicWithNotParsableConnectionString(t *testing.T) {
 	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{
 		Service: "go-sensor-test",
 	}, instana.NewTestRecorder()))
+	defer instana.ShutdownSensor()
 
 	instana.InstrumentSQLDriver(s, "test_driver", sqlDriver{})
 	require.Contains(t, sql.Drivers(), "test_driver_with_instana")
@@ -240,6 +246,7 @@ func TestProcedureWithCheckerOnStmt(t *testing.T) {
 	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{
 		Service: "go-sensor-test",
 	}, instana.NewTestRecorder()))
+	defer instana.ShutdownSensor()
 
 	instana.InstrumentSQLDriver(s, "test_driver2", sqlDriver2{})
 	db, err := instana.SQLOpen("test_driver2", "some datasource")
