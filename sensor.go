@@ -168,7 +168,9 @@ func InitSensor(options *Options) {
 		options = DefaultOptions()
 	}
 
+	muSensor.Lock()
 	sensor = newSensor(options)
+	muSensor.Unlock()
 
 	// configure auto-profiling
 	autoprofile.SetLogger(sensor.logger)
