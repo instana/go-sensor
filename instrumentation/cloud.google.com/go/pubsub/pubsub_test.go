@@ -1,6 +1,7 @@
 // (c) Copyright IBM Corp. 2021
 // (c) Copyright Instana Inc. 2020
 
+//go:build go1.11
 // +build go1.11
 
 package pubsub_test
@@ -34,6 +35,7 @@ func TestClient_Topic(t *testing.T) {
 			instana.NewTestRecorder(),
 		),
 	)
+	defer instana.ShutdownSensor()
 
 	_, err = srv.GServer.CreateTopic(context.Background(), &pb.Topic{
 		Name: "projects/test-project/topics/test-topic",
@@ -126,6 +128,7 @@ func TestClient_Topics(t *testing.T) {
 			instana.NewTestRecorder(),
 		),
 	)
+	defer instana.ShutdownSensor()
 
 	topicNames := []string{"first-topic", "second-topic"}
 
@@ -181,6 +184,7 @@ func TestClient_Subscription(t *testing.T) {
 			instana.NewTestRecorder(),
 		),
 	)
+	defer instana.ShutdownSensor()
 
 	top, err := srv.GServer.CreateTopic(context.Background(), &pb.Topic{
 		Name: "projects/test-project/topics/test-topic",
@@ -272,6 +276,7 @@ func TestClient_Subscriptions(t *testing.T) {
 			instana.NewTestRecorder(),
 		),
 	)
+	defer instana.ShutdownSensor()
 
 	top, err := srv.GServer.CreateTopic(context.Background(), &pb.Topic{
 		Name: "projects/test-project/topics/test-topic",

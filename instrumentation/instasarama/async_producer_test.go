@@ -181,6 +181,7 @@ func TestAsyncProducer_Input_WithAwaitResult_Success(t *testing.T) {
 func TestAsyncProducer_Input_WithAwaitResult_Error(t *testing.T) {
 	recorder := instana.NewTestRecorder()
 	sensor := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{}, recorder))
+	defer instana.ShutdownSensor()
 
 	parent := sensor.Tracer().StartSpan("test-span")
 	msg := instasarama.ProducerMessageWithSpan(&sarama.ProducerMessage{Topic: "test-topic"}, parent)

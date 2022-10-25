@@ -16,3 +16,5 @@ require (
 	github.com/pierrec/lz4 v2.4.1+incompatible // indirect
 	github.com/rcrowley/go-metrics v0.0.0-20200313005456-10cdbea86bc0 // indirect
 )
+
+replace github.com/instana/go-sensor => ../../

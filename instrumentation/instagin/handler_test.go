@@ -63,6 +63,7 @@ func TestAddMiddleware(t *testing.T) {
 func TestPropagation(t *testing.T) {
 	recorder := instana.NewTestRecorder()
 	tracer := instana.NewTracerWithEverything(nil, recorder)
+	defer instana.ShutdownSensor()
 	sensor := instana.NewSensorWithTracer(tracer)
 
 	engines := map[string]func() *gin.Engine{

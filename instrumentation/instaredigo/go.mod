@@ -12,3 +12,5 @@ require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/instana/go-sensor v1.44.0
 )
+
+replace github.com/instana/go-sensor => ../../

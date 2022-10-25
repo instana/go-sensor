@@ -43,9 +43,11 @@ func (m *meterS) Run(collectInterval time.Duration) {
 		case <-m.done:
 			return
 		case <-ticker.C:
+			muSensor.RLock()
 			if sensor.Agent().Ready() {
 				go sensor.Agent().SendMetrics(m.collectMetrics())
 			}
+			muSensor.RUnlock()
 		}
 	}
 }

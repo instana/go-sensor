@@ -140,6 +140,8 @@ func (l *Logger) SetPrefix(prefix string) {
 
 // Debug appends a debug message to the log
 func (l *Logger) Debug(v ...interface{}) {
+	l.mu.Lock()
+	defer l.mu.Unlock()
 	if l.lvl < DebugLevel {
 		return
 	}
@@ -149,6 +151,8 @@ func (l *Logger) Debug(v ...interface{}) {
 
 // Info appends an info message to the log
 func (l *Logger) Info(v ...interface{}) {
+	l.mu.Lock()
+	defer l.mu.Unlock()
 	if l.lvl < InfoLevel {
 		return
 	}
@@ -167,6 +171,8 @@ func (l *Logger) Warn(v ...interface{}) {
 
 // Error appends an error message to the log
 func (l *Logger) Error(v ...interface{}) {
+	l.mu.Lock()
+	defer l.mu.Unlock()
 	if l.lvl < ErrorLevel {
 		return
 	}

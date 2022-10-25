@@ -24,6 +24,7 @@ func TestStartS3Span_WithActiveSpan(t *testing.T) {
 	sensor := instana.NewSensorWithTracer(
 		instana.NewTracerWithEverything(instana.DefaultOptions(), recorder),
 	)
+	defer instana.ShutdownSensor()
 
 	parentSp := sensor.Tracer().StartSpan("testing")
 
@@ -67,6 +68,7 @@ func TestStartS3Span_NoActiveSpan(t *testing.T) {
 	sensor := instana.NewSensorWithTracer(
 		instana.NewTracerWithEverything(instana.DefaultOptions(), recorder),
 	)
+	defer instana.ShutdownSensor()
 
 	req := newS3Request()
 	instaawssdk.StartS3Span(req, sensor)
@@ -80,6 +82,7 @@ func TestFinalizeS3_NoError(t *testing.T) {
 	sensor := instana.NewSensorWithTracer(
 		instana.NewTracerWithEverything(instana.DefaultOptions(), recorder),
 	)
+	defer instana.ShutdownSensor()
 
 	sp := sensor.Tracer().StartSpan("s3", opentracing.Tags{
 		"s3.region": "us-east-1",
@@ -114,6 +117,7 @@ func TestFinalizeS3Span_WithError(t *testing.T) {
 	sensor := instana.NewSensorWithTracer(
 		instana.NewTracerWithEverything(instana.DefaultOptions(), recorder),
 	)
+	defer instana.ShutdownSensor()
 
 	sp := sensor.Tracer().StartSpan("s3", opentracing.Tags{
 		"s3.region": "us-east-1",

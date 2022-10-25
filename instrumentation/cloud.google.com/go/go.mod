@@ -23,3 +23,5 @@ require (
 	google.golang.org/protobuf v1.25.0 // indirect
 	honnef.co/go/tools v0.0.1-2020.1.4 // indirect
 )
+
+replace github.com/instana/go-sensor => ../../../

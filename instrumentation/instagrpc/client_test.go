@@ -250,6 +250,7 @@ func TestStreamClientInterceptor_ErrorHandling(t *testing.T) {
 	sensor := instana.NewSensorWithTracer(
 		instana.NewTracerWithEverything(&instana.Options{}, recorder),
 	)
+	defer instana.ShutdownSensor()
 
 	addr, teardown, err := startTestServer(&testServer{Error: serverErr})
 	require.NoError(t, err)
