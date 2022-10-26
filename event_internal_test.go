@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/instana/testify/assert"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestEventBasic(t *testing.T) {

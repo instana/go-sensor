@@ -7,8 +7,9 @@
 package storage
 
 import (
-	"cloud.google.com/go/storage"
 	"context"
+
+	"cloud.google.com/go/storage"
 	"github.com/instana/go-sensor/instrumentation/cloud.google.com/go/internal"
 	"github.com/instana/go-sensor/instrumentation/cloud.google.com/go/internal/tags"
 	ot "github.com/opentracing/opentracing-go"

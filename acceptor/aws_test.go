@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/instana/go-sensor/acceptor"
-	"github.com/instana/testify/assert"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestNewECSTaskPluginPayload(t *testing.T) {

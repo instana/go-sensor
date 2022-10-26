@@ -11,8 +11,8 @@ import (
 	"testing"
 
 	"github.com/instana/go-sensor/gcloud"
-	"github.com/instana/testify/assert"
-	"github.com/instana/testify/require"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestComputeMetadataProvider_ComputeMetadata(t *testing.T) {

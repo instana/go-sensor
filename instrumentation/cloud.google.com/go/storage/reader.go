@@ -9,8 +9,9 @@ package storage
 import (
 	"context"
 	"fmt"
-	"github.com/instana/go-sensor/instrumentation/cloud.google.com/go/internal/tags"
 	"io"
+
+	"github.com/instana/go-sensor/instrumentation/cloud.google.com/go/internal/tags"
 
 	"cloud.google.com/go/storage"
 	"github.com/instana/go-sensor/instrumentation/cloud.google.com/go/internal"

@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	instana "github.com/instana/go-sensor"
-	"github.com/instana/testify/assert"
+	"github.com/stretchr/testify/assert"
 )
 
 const eumExpectedResult string = `<script>
