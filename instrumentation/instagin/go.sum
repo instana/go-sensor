@@ -16,10 +16,6 @@ github.com/go-playground/validator/v10 v10.4.1/go.mod h1:nlOn6nFhuKACm19sB/8EGNn
 github.com/golang/protobuf v1.3.3 h1:gyjaxf+svBWX08ZjK86iN9geUJF0H6gp2IRKX6Nf6/I=
 github.com/golang/protobuf v1.3.3/go.mod h1:vzj43D7+SQXF/4pzW/hwtAqwc6iTitCiVSaWz5lYuqw=
 github.com/google/gofuzz v1.0.0/go.mod h1:dBl0BpW6vV/+mYPU4Po3pmUjxk6FQPldtuIdl/M65Eg=
-github.com/instana/go-sensor v1.30.0 h1:q1FkQwtS0F5BaGwDCufTy35tXxp1R6nCa96q7TJ6NpU=
-github.com/instana/go-sensor v1.30.0/go.mod h1:Uh9j3eF2mBw/FLk2MxISmVDIj8mtJBFRj2S19M6CVyQ=
-github.com/instana/go-sensor v1.44.0 h1:ZF0Cvr/jUe1jj5x7w9PMWGFW7WLPZZd32v/3BuuWb1w=
-github.com/instana/go-sensor v1.44.0/go.mod h1:E42MelHWFz11qqaLwvgt0j98v2s2O/bq22UDkGaG0Gg=
 github.com/instana/go-sensor v1.46.0 h1:Qx2VgTPZHzRgKSMAlH0Gm8nb/y7BfsUGuRst9XsM17Y=
 github.com/instana/go-sensor v1.46.0/go.mod h1:E42MelHWFz11qqaLwvgt0j98v2s2O/bq22UDkGaG0Gg=
 github.com/instana/testify v1.6.2-0.20200721153833-94b1851f4d65 h1:T25FL3WEzgmKB0m6XCJNZ65nw09/QIp3T1yXr487D+A=

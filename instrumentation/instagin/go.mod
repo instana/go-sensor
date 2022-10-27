@@ -9,4 +9,3 @@ require (
 	github.com/opentracing/opentracing-go v1.2.0
 	golang.org/x/sys v0.0.0-20220503163025-988cb79eb6c6 // indirect
 )
-
