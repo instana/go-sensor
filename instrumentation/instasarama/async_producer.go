@@ -82,7 +82,7 @@ func WrapAsyncProducer(p sarama.AsyncProducer, conf *sarama.Config, sensor *inst
 }
 
 // Input is the input channel for the user to write messages to that they wish to send. The async producer
-// will than create a new exit span for each message that has trace context added with instasarama.ProducerMessageWithSpan()
+// will then create a new exit span for each message that has trace context added with instasarama.ProducerMessageWithSpan()
 func (p *AsyncProducer) Input() chan<- *sarama.ProducerMessage { return p.input }
 
 // Successes is the success output channel back to the user
