@@ -59,7 +59,7 @@ type sensorS struct {
 
 var (
 	sensor           *sensorS
-	muSensor         sync.RWMutex
+	muSensor         sync.Mutex
 	binaryName       = filepath.Base(os.Args[0])
 	processStartedAt = time.Now()
 )
@@ -198,9 +198,7 @@ func InitSensor(options *Options) {
 	}
 
 	// start collecting metrics
-	muSensor.RLock()
 	go sensor.meter.Run(1 * time.Second)
-	muSensor.RUnlock()
 
 	sensor.logger.Debug("initialized Instana sensor v", Version)
 }
