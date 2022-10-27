@@ -55,7 +55,7 @@ jobs:
             GO111MODULE: << parameters.go111module >>
             VENDOR_DEPS: << parameters.vendor_deps >>
             EXCLUDE_DIRS: << parameters.exclude_dirs >>
-            GOFLAGS: -race
+            # GOFLAGS: -race
           command: make test
       - run:
           name: Run integration tests
