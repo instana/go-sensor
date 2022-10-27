@@ -3,7 +3,7 @@ module github.com/instana/go-sensor/instrumentation/instapgx
 go 1.17
 
 require (
-	github.com/instana/go-sensor v1.44.0
+	github.com/instana/go-sensor v1.46.0
 	github.com/instana/testify v1.6.2-0.20200721153833-94b1851f4d65
 	github.com/jackc/pgconn v1.10.1
 	github.com/jackc/pgx/v4 v4.14.1
@@ -28,4 +28,3 @@ require (
 	gopkg.in/yaml.v3 v3.0.0-20200313102051-9f266ea9e77c // indirect
 )
 
-replace github.com/instana/go-sensor => ../../

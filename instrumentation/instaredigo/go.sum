@@ -5,6 +5,8 @@ github.com/gomodule/redigo v1.8.8 h1:f6cXq6RRfiyrOJEV7p3JhLDlmawGBVBBP1MggY8Mo4E
 github.com/gomodule/redigo v1.8.8/go.mod h1:7ArFNvsTjH8GMMzB4uy1snslv2BwmginuMs06a1uzZE=
 github.com/instana/go-sensor v1.44.0 h1:ZF0Cvr/jUe1jj5x7w9PMWGFW7WLPZZd32v/3BuuWb1w=
 github.com/instana/go-sensor v1.44.0/go.mod h1:E42MelHWFz11qqaLwvgt0j98v2s2O/bq22UDkGaG0Gg=
+github.com/instana/go-sensor v1.46.0 h1:Qx2VgTPZHzRgKSMAlH0Gm8nb/y7BfsUGuRst9XsM17Y=
+github.com/instana/go-sensor v1.46.0/go.mod h1:E42MelHWFz11qqaLwvgt0j98v2s2O/bq22UDkGaG0Gg=
 github.com/instana/testify v1.6.2-0.20200721153833-94b1851f4d65 h1:T25FL3WEzgmKB0m6XCJNZ65nw09/QIp3T1yXr487D+A=
 github.com/instana/testify v1.6.2-0.20200721153833-94b1851f4d65/go.mod h1:nYhEREG/B7HUY7P+LKOrqy53TpIqmJ9JyUShcaEKtGw=
 github.com/looplab/fsm v0.1.0 h1:Qte7Zdn/5hBNbXzP7yxVU4OIFHWXBovyTT2LaBTyC20=
