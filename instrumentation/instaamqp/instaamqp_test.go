@@ -92,6 +92,7 @@ func TestClient(t *testing.T) {
 
 			// Start waiting for messages to consume
 			go func(s string) {
+				defer instana.ShutdownSensor()
 				ch, _ := instaCh.Consume("queue", "consumer", true, false, false, false, nil)
 
 				for range ch {

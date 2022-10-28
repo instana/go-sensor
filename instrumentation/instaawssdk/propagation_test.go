@@ -23,6 +23,7 @@ func TestSpanContextFromSQSMessage(t *testing.T) {
 			instana.NewTestRecorder(),
 		),
 	)
+	defer instana.ShutdownSensor()
 
 	examples := map[string]*sqs.Message{
 		"standard keys": {

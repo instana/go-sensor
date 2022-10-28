@@ -1,6 +1,7 @@
 // (c) Copyright IBM Corp. 2021
 // (c) Copyright Instana Inc. 2020
 
+//go:build go1.11
 // +build go1.11
 
 package pubsub_test
@@ -22,6 +23,7 @@ import (
 func TestTopic_Publish(t *testing.T) {
 	recorder := instana.NewTestRecorder()
 	tracer := instana.NewTracerWithEverything(instana.DefaultOptions(), recorder)
+	defer instana.ShutdownSensor()
 
 	srv, conn, teardown, err := setupMockServer()
 	require.NoError(t, err)
@@ -106,6 +108,7 @@ func TestTopic_Publish(t *testing.T) {
 func TestTopic_Publish_NoTrace(t *testing.T) {
 	recorder := instana.NewTestRecorder()
 	tracer := instana.NewTracerWithEverything(instana.DefaultOptions(), recorder)
+	defer instana.ShutdownSensor()
 
 	srv, conn, teardown, err := setupMockServer()
 	require.NoError(t, err)

@@ -151,7 +151,11 @@ func TestAsyncProducer_Input_WithAwaitResult_Success(t *testing.T) {
 	<-wrapped.Successes()
 
 	spans = recorder.GetQueuedSpans()
-	require.Len(t, spans, 1)
+
+	require.Eventually(t, func() bool {
+		spans = append(spans, recorder.GetQueuedSpans()...)
+		return len(spans) == 1
+	}, time.Millisecond*200, time.Millisecond*50)
 
 	cSpan, err := extractAgentSpan(spans[0])
 	require.NoError(t, err)
@@ -181,6 +185,7 @@ func TestAsyncProducer_Input_WithAwaitResult_Success(t *testing.T) {
 func TestAsyncProducer_Input_WithAwaitResult_Error(t *testing.T) {
 	recorder := instana.NewTestRecorder()
 	sensor := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{}, recorder))
+	defer instana.ShutdownSensor()
 
 	parent := sensor.Tracer().StartSpan("test-span")
 	msg := instasarama.ProducerMessageWithSpan(&sarama.ProducerMessage{Topic: "test-topic"}, parent)
@@ -233,7 +238,11 @@ func TestAsyncProducer_Input_WithAwaitResult_Error(t *testing.T) {
 	<-wrapped.Errors()
 
 	spans = recorder.GetQueuedSpans()
-	require.Len(t, spans, 2)
+
+	require.Eventually(t, func() bool {
+		spans = append(spans, recorder.GetQueuedSpans()...)
+		return len(spans) == 2
+	}, time.Millisecond*200, time.Millisecond*5)
 
 	cSpan, err := extractAgentSpan(spans[0])
 	require.NoError(t, err)

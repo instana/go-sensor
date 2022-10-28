@@ -38,6 +38,7 @@ func TestPropagation(t *testing.T) {
 
 	recorder := instana.NewTestRecorder()
 	tracer := instana.NewTracerWithEverything(nil, recorder)
+	defer instana.ShutdownSensor()
 
 	sensor := instana.NewSensorWithTracer(tracer)
 
@@ -112,7 +113,13 @@ func TestPropagationWithError(t *testing.T) {
 	spanIDHeader := "0000000000004567"
 
 	recorder := instana.NewTestRecorder()
-	tracer := instana.NewTracerWithEverything(nil, recorder)
+	tracer := instana.NewTracerWithEverything(&instana.Options{
+		Service: "test_service",
+		Tracer: instana.TracerOptions{
+			CollectableHTTPHeaders: []string{"x-custom-header-1", "x-custom-header-2"},
+		},
+	}, recorder)
+	defer instana.ShutdownSensor()
 
 	sensor := instana.NewSensorWithTracer(tracer)
 
