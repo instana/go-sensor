@@ -24,6 +24,7 @@ func TestStartDynamoDBSpan(t *testing.T) {
 	sensor := instana.NewSensorWithTracer(
 		instana.NewTracerWithEverything(instana.DefaultOptions(), recorder),
 	)
+	defer instana.ShutdownSensor()
 
 	parentSp := sensor.Tracer().StartSpan("testing")
 
@@ -66,6 +67,7 @@ func TestStartDynamoDBSpan_NonInstrumentedMethod(t *testing.T) {
 	sensor := instana.NewSensorWithTracer(
 		instana.NewTracerWithEverything(instana.DefaultOptions(), recorder),
 	)
+	defer instana.ShutdownSensor()
 
 	parentSp := sensor.Tracer().StartSpan("testing")
 
@@ -91,6 +93,7 @@ func TestStartDynamoDBSpan_NoActiveSpan(t *testing.T) {
 	sensor := instana.NewSensorWithTracer(
 		instana.NewTracerWithEverything(instana.DefaultOptions(), recorder),
 	)
+	defer instana.ShutdownSensor()
 
 	req := newDynamoDBRequest()
 	instaawssdk.StartDynamoDBSpan(req, sensor)
@@ -104,6 +107,7 @@ func TestFinalizeDynamoDB_NoError(t *testing.T) {
 	sensor := instana.NewSensorWithTracer(
 		instana.NewTracerWithEverything(instana.DefaultOptions(), recorder),
 	)
+	defer instana.ShutdownSensor()
 
 	sp := sensor.Tracer().StartSpan("dynamodb", opentracing.Tags{
 		"dynamodb.op":    "get",
@@ -134,6 +138,7 @@ func TestFinalizeDynamoDBSpan_WithError(t *testing.T) {
 	sensor := instana.NewSensorWithTracer(
 		instana.NewTracerWithEverything(instana.DefaultOptions(), recorder),
 	)
+	defer instana.ShutdownSensor()
 
 	sp := sensor.Tracer().StartSpan("dynamodb", opentracing.Tags{
 		"dynamodb.op":     "get",

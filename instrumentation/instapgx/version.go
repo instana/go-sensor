@@ -1,7 +1,7 @@
 // (c) Copyright IBM Corp. 2021
 // (c) Copyright Instana Inc. 2021
 
-package instago
+package instapgx
 
 // Version is the instrumentation module semantic version
-const Version = "1.4.0"
+const Version = "0.1.0"

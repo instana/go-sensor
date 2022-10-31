@@ -23,6 +23,7 @@ import (
 func TestTopic_Publish(t *testing.T) {
 	recorder := instana.NewTestRecorder()
 	tracer := instana.NewTracerWithEverything(instana.DefaultOptions(), recorder)
+	defer instana.ShutdownSensor()
 
 	srv, conn, teardown, err := setupMockServer()
 	require.NoError(t, err)
@@ -107,6 +108,7 @@ func TestTopic_Publish(t *testing.T) {
 func TestTopic_Publish_NoTrace(t *testing.T) {
 	recorder := instana.NewTestRecorder()
 	tracer := instana.NewTracerWithEverything(instana.DefaultOptions(), recorder)
+	defer instana.ShutdownSensor()
 
 	srv, conn, teardown, err := setupMockServer()
 	require.NoError(t, err)
