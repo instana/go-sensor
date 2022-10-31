@@ -4,4 +4,4 @@
 package instahttprouter
 
 // Version is the instrumentation module semantic version
-const Version = "v1.0.0"
+const Version = "1.1.0"
