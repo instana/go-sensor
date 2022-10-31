@@ -9,8 +9,8 @@ import (
 	"os"
 	"testing"
 
-	"github.com/instana/testify/assert"
-	"github.com/instana/testify/require"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 // Trace IDs (and Span IDs) are based on Java Signed Long datatype

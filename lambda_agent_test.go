@@ -1,6 +1,7 @@
 // (c) Copyright IBM Corp. 2021
 // (c) Copyright Instana Inc. 2020
 
+//go:build lambda && integration
 // +build lambda,integration
 
 package instana_test
@@ -14,9 +15,9 @@ import (
 	"time"
 
 	instana "github.com/instana/go-sensor"
-	"github.com/instana/testify/assert"
-	"github.com/instana/testify/require"
 	"github.com/opentracing/opentracing-go"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 var agent *serverlessAgent

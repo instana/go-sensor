@@ -8,7 +8,7 @@ import (
 
 	"github.com/instana/go-sensor/acceptor"
 	"github.com/instana/go-sensor/process"
-	"github.com/instana/testify/assert"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestNewProcessPluginPayload(t *testing.T) {

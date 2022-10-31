@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	"github.com/instana/go-sensor/autoprofile/internal"
-	"github.com/instana/testify/assert"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestRecorder_Flush(t *testing.T) {

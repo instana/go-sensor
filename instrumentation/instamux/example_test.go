@@ -1,6 +1,7 @@
 // (c) Copyright IBM Corp. 2021
 // (c) Copyright Instana Inc. 2021
 
+//go:build go1.12
 // +build go1.12
 
 package instamux_test

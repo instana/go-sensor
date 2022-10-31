@@ -8,7 +8,7 @@ import (
 
 	instana "github.com/instana/go-sensor"
 	"github.com/instana/go-sensor/w3ctrace"
-	"github.com/instana/testify/assert"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestNewRootSpanContext(t *testing.T) {

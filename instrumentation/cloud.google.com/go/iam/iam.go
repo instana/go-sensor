@@ -8,8 +8,9 @@ package iam
 
 import (
 	"context"
-	"github.com/instana/go-sensor/instrumentation/cloud.google.com/go/internal/tags"
 	"strings"
+
+	"github.com/instana/go-sensor/instrumentation/cloud.google.com/go/internal/tags"
 
 	"cloud.google.com/go/iam"
 	"github.com/instana/go-sensor/instrumentation/cloud.google.com/go/internal"

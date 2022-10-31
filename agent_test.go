@@ -10,7 +10,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/instana/testify/assert"
+	"github.com/stretchr/testify/assert"
 )
 
 func Test_agentS_SendSpans(t *testing.T) {
