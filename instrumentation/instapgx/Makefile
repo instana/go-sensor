@@ -11,6 +11,3 @@ pgx_integration_test:
 		echo "pgx_integration_test is ignored"; \
 		exit 0; \
 	fi
-
-
-include ../../Makefile.release
