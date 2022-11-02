@@ -1,9 +1,6 @@
 // (c) Copyright IBM Corp. 2021
 // (c) Copyright Instana Inc. 2016
 
-//go:build go1.10
-// +build go1.10
-
 package main
 
 import (
