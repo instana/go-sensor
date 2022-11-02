@@ -15,10 +15,10 @@ import (
 
 	instana "github.com/instana/go-sensor"
 	"github.com/instana/go-sensor/instrumentation/instaecho"
-	"github.com/instana/testify/assert"
-	"github.com/instana/testify/require"
 	"github.com/labstack/echo/v4"
 	"github.com/opentracing/opentracing-go"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestMain(m *testing.M) {

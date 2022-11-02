@@ -14,8 +14,8 @@ import (
 
 	instana "github.com/instana/go-sensor"
 	"github.com/instana/go-sensor/instrumentation/instapgx"
-	"github.com/instana/testify/assert"
 	"github.com/jackc/pgx/v4"
+	"github.com/stretchr/testify/assert"
 )
 
 var databaseUrl = "postgres://postgres:mysecretpassword@localhost/postgres"

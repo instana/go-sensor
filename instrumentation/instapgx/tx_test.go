@@ -13,9 +13,9 @@ import (
 
 	instana "github.com/instana/go-sensor"
 
-	"github.com/instana/testify/assert"
 	"github.com/jackc/pgx/v4"
 	_ "github.com/lib/pq"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestBeginCommit(t *testing.T) {

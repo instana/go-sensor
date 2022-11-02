@@ -11,11 +11,11 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/instana/testify/require"
+	"github.com/stretchr/testify/require"
 
 	"github.com/opentracing/opentracing-go"
 
-	"github.com/instana/testify/assert"
+	"github.com/stretchr/testify/assert"
 
 	"github.com/gin-gonic/gin"
 	instana "github.com/instana/go-sensor"

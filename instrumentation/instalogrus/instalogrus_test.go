@@ -11,9 +11,9 @@ import (
 
 	instana "github.com/instana/go-sensor"
 	"github.com/instana/go-sensor/instrumentation/instalogrus"
-	"github.com/instana/testify/assert"
-	"github.com/instana/testify/require"
 	"github.com/sirupsen/logrus"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestNewHook_Levels(t *testing.T) {
