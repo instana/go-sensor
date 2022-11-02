@@ -12,10 +12,10 @@ import (
 	"github.com/instana/go-sensor/instrumentation/instahttprouter"
 	"github.com/instana/go-sensor/secrets"
 	"github.com/instana/go-sensor/w3ctrace"
-	"github.com/instana/testify/assert"
-	"github.com/instana/testify/require"
 	"github.com/julienschmidt/httprouter"
 	"github.com/opentracing/opentracing-go"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestRouter_Handle_StartTrace(t *testing.T) {

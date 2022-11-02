@@ -1,8 +1,5 @@
 // (c) Copyright IBM Corp. 2022
 
-//go:build go1.10
-// +build go1.10
-
 package instaamqp
 
 import (
