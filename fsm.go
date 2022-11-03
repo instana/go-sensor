@@ -78,8 +78,6 @@ func newFSM( /**agent fsmAgent,*/ ahd *agentHostData, logger LeveledLogger, port
 		lookupAgentHostRetryPeriod: retryPeriod,
 		// agentHost:                  host,
 		agentPort: port,
-		// onAgentResponse:            ear,
-		// onHostChanged:              ohc,
 	}
 
 	ret.fsm = f.NewFSM(
@@ -256,7 +254,9 @@ func (r *fsmS) announceSensor(e *f.Event) {
 
 		res, err := client.Do(req)
 
-		if err != nil {
+		badResponse := res != nil && (res.StatusCode < 200 || res.StatusCode >= 300)
+
+		if err != nil || badResponse {
 			// r.retriesLeft--
 			// if r.retriesLeft == 0 {
 			// 	r.logger.Error("Couldn't announce the sensor after reaching the maximum amount of attempts.")
@@ -347,18 +347,15 @@ func (r *fsmS) testAgent(e *f.Event) {
 	go func() {
 		// _, err := r.agent.head(r.agent.makeURL(agentDataURL))
 
+		// TODO: url is missing pid at the end
 		u := "http://" + r.agentData.host + ":" + r.agentPort + agentDataURL
 
-		_, err := http.Head(u)
+		resp, err := http.Head(u)
 
-		fmt.Println("ERR", err)
+		badResponse := resp != nil && (resp.StatusCode < 200 || resp.StatusCode >= 300)
 
-		b := err == nil
-
-		if b {
-			r.retriesLeft = maximumRetries
-			r.fsm.Event(eTest)
-		} else {
+		// TODO: to put this piece of code i na function
+		if err != nil || badResponse {
 			r.logger.Debug("Agent is not yet ready. Scheduling retry.")
 			r.retriesLeft--
 			if r.retriesLeft > 0 {
@@ -367,6 +364,9 @@ func (r *fsmS) testAgent(e *f.Event) {
 			} else {
 				r.fsm.Event(eInit)
 			}
+		} else {
+			r.retriesLeft = maximumRetries
+			r.fsm.Event(eTest)
 		}
 	}()
 }
