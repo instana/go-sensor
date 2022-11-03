@@ -29,12 +29,11 @@ var (
 )
 
 func main() {
-	// flag.StringVar(&args.DBConnStr, "db", os.Getenv("POSTGRES"), "PostgreSQL connection string")
+	flag.StringVar(&args.DBConnStr, "db", os.Getenv("POSTGRES"), "PostgreSQL connection string")
 	flag.StringVar(&args.ListenAddr, "l", os.Getenv("LISTEN_ADDR"), "Server listen address")
 	flag.Parse()
 
-	// if args.DBConnStr == "" || args.ListenAddr == "" {
-	if args.ListenAddr == "" {
+	if args.DBConnStr == "" || args.ListenAddr == "" {
 		flag.Usage()
 		os.Exit(2)
 	}
@@ -45,11 +44,11 @@ func main() {
 
 	// Create a new DB connection using instana.SQLOpen(). This is a drop-in replacement for
 	// database/sql.Open() that makes sure that the instrumented version of a driver is used.
-	// var err error
-	// db, err = instana.SQLInstrumentAndOpen(sensor, "postgres", args.DBConnStr)
-	// if err != nil {
-	// 	log.Fatalln(err)
-	// }
+	var err error
+	db, err = instana.SQLInstrumentAndOpen(sensor, "postgres", args.DBConnStr)
+	if err != nil {
+		log.Fatalln(err)
+	}
 
 	// Here we instrument an HTTP handler by wrapping it with instana.TracingHandlerFunc() middleware.
 	// The `/{name}` parameter here is used as a path template, so requests with different parameters
@@ -100,7 +99,7 @@ func handle(w http.ResponseWriter, req *http.Request) {
 	}
 
 	// Update last greet time in background
-	// go logLastGreetTime(ctx, name)
+	go logLastGreetTime(ctx, name)
 }
 
 func logLastGreetTime(ctx context.Context, name string) {
