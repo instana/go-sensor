@@ -1,8 +1,6 @@
 // (c) Copyright IBM Corp. 2021
 // (c) Copyright Instana Inc. 2020
 
-// +build go1.11
-
 package pubsub_test
 
 import (
@@ -15,9 +13,9 @@ import (
 
 	instana "github.com/instana/go-sensor"
 	"github.com/instana/go-sensor/instrumentation/cloud.google.com/go/pubsub"
-	"github.com/instana/testify/assert"
-	"github.com/instana/testify/require"
 	"github.com/opentracing/opentracing-go"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestTracingHandler(t *testing.T) {
@@ -25,6 +23,7 @@ func TestTracingHandler(t *testing.T) {
 	sensor := instana.NewSensorWithTracer(
 		instana.NewTracerWithEverything(instana.DefaultOptions(), recorder),
 	)
+	defer instana.ShutdownSensor()
 
 	payload, err := ioutil.ReadFile("testdata/message.json")
 	require.NoError(t, err)
@@ -88,6 +87,7 @@ func TestTracingHandlerFunc_TracePropagation(t *testing.T) {
 	sensor := instana.NewSensorWithTracer(
 		instana.NewTracerWithEverything(instana.DefaultOptions(), recorder),
 	)
+	defer instana.ShutdownSensor()
 
 	payload, err := ioutil.ReadFile("testdata/message_with_context.json")
 	require.NoError(t, err)
@@ -145,6 +145,7 @@ func TestTracingHandlerFunc_NotPubSub(t *testing.T) {
 	sensor := instana.NewSensorWithTracer(
 		instana.NewTracerWithEverything(instana.DefaultOptions(), recorder),
 	)
+	defer instana.ShutdownSensor()
 
 	var numCalls int
 	h := pubsub.TracingHandlerFunc(sensor, "/", func(w http.ResponseWriter, req *http.Request) {

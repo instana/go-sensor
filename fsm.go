@@ -157,7 +157,21 @@ func (r *fsmS) checkHost(e *f.Event, host string) {
 			return
 		}
 
-		//TODO: check found again here
+		url := "http://" + r.agentData.host + ":" + r.agentPort + "/"
+		// header, err := r.agent.requestHeader(r.agent.makeHostURL(host, "/"), "GET", "Server")
+
+		resp, err := http.Get(url)
+
+		var header string
+
+		if err == nil {
+			header = resp.Header.Get("Server")
+		}
+
+		found := err == nil && header == agentHeader
+
+		// header, err := r.agent.requestHeader(r.agent.makeHostURL(gateway, "/"), "GET", "Server")
+		// found := err == nil && header == agentHeader
 
 		if found {
 			r.lookupSuccess(gateway)

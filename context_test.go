@@ -8,13 +8,14 @@ import (
 	"testing"
 
 	instana "github.com/instana/go-sensor"
-	"github.com/instana/testify/assert"
-	"github.com/instana/testify/require"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestSpanFromContext_WithActiveSpan(t *testing.T) {
 	recorder := instana.NewTestRecorder()
 	tracer := instana.NewTracerWithEverything(&instana.Options{}, recorder)
+	defer instana.ShutdownSensor()
 
 	span := tracer.StartSpan("test")
 	ctx := instana.ContextWithSpan(context.Background(), span)

@@ -1,8 +1,6 @@
 // (c) Copyright IBM Corp. 2021
 // (c) Copyright Instana Inc. 2020
 
-// +build go1.11
-
 package internal
 
 import (

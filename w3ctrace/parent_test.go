@@ -7,8 +7,8 @@ import (
 	"testing"
 
 	"github.com/instana/go-sensor/w3ctrace"
-	"github.com/instana/testify/assert"
-	"github.com/instana/testify/require"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestParseParent(t *testing.T) {

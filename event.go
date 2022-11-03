@@ -22,7 +22,7 @@ type EventData struct {
 
 type severity int
 
-//Severity values for events sent to the instana agent
+// Severity values for events sent to the instana agent
 const (
 	SeverityChange   severity = -1
 	SeverityWarning  severity = 5

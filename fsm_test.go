@@ -11,8 +11,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/instana/testify/assert"
 	f "github.com/looplab/fsm"
+	"github.com/stretchr/testify/assert"
 )
 
 func Test_fsmS_testAgent(t *testing.T) {

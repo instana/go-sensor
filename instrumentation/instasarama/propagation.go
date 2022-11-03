@@ -7,11 +7,12 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"os"
+	"strings"
+
 	"github.com/Shopify/sarama"
 	instana "github.com/instana/go-sensor"
 	ot "github.com/opentracing/opentracing-go"
-	"os"
-	"strings"
 )
 
 const KafkaHeaderEnvVarKey = "INSTANA_KAFKA_HEADER_FORMAT"
@@ -429,7 +430,7 @@ func getKafkaHeaderFormat() string {
 		return kafkaHeaderEnvVar
 	}
 
-	return binaryFormat
+	return bothFormat
 }
 
 func isValidFormat(format string) bool {

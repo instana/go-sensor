@@ -9,8 +9,8 @@ import (
 	"testing"
 
 	instana "github.com/instana/go-sensor"
-	"github.com/instana/testify/assert"
 	"github.com/opentracing/opentracing-go"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestRegisteredSpanType_ExtractData(t *testing.T) {
@@ -88,6 +88,7 @@ func TestRegisteredSpanType_ExtractData(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			recorder := instana.NewTestRecorder()
 			tracer := instana.NewTracerWithEverything(&instana.Options{}, recorder)
+			defer instana.ShutdownSensor()
 
 			sp := tracer.StartSpan(example.Operation)
 			sp.Finish()
@@ -305,6 +306,7 @@ func TestNewAWSLambdaSpanData(t *testing.T) {
 		t.Run(trigger, func(t *testing.T) {
 			recorder := instana.NewTestRecorder()
 			tracer := instana.NewTracerWithEverything(&instana.Options{}, recorder)
+			defer instana.ShutdownSensor()
 
 			sp := tracer.StartSpan("aws.lambda.entry", opentracing.Tags{
 				"lambda.arn":       "lambda-arn-1",

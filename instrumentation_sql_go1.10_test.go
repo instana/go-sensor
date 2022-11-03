@@ -1,8 +1,6 @@
 // (c) Copyright IBM Corp. 2021
 // (c) Copyright Instana Inc. 2020
 
-// +build go1.10
-
 package instana_test
 
 import (
@@ -13,10 +11,10 @@ import (
 	"testing"
 
 	instana "github.com/instana/go-sensor"
-	"github.com/instana/testify/assert"
-	"github.com/instana/testify/require"
 	ot "github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestWrapSQLConnector_Exec(t *testing.T) {
@@ -24,6 +22,7 @@ func TestWrapSQLConnector_Exec(t *testing.T) {
 	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{
 		Service: "go-sensor-test",
 	}, recorder))
+	defer instana.ShutdownSensor()
 
 	db := sql.OpenDB(instana.WrapSQLConnector(s, "connection string", sqlConnector{}))
 
@@ -64,6 +63,7 @@ func TestWrapSQLConnector_Exec_Error(t *testing.T) {
 	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{
 		Service: "go-sensor-test",
 	}, recorder))
+	defer instana.ShutdownSensor()
 
 	db := sql.OpenDB(instana.WrapSQLConnector(s, "connection string", sqlConnector{
 		Error: errors.New("something went wrong"),
@@ -103,6 +103,7 @@ func TestWrapSQLConnector_Query(t *testing.T) {
 	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{
 		Service: "go-sensor-test",
 	}, recorder))
+	defer instana.ShutdownSensor()
 
 	db := sql.OpenDB(instana.WrapSQLConnector(s, "connection string", sqlConnector{}))
 
@@ -143,6 +144,7 @@ func TestWrapSQLConnector_Query_Error(t *testing.T) {
 	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{
 		Service: "go-sensor-test",
 	}, recorder))
+	defer instana.ShutdownSensor()
 
 	dbErr := errors.New("something went wrong")
 	db := sql.OpenDB(instana.WrapSQLConnector(s, "connection string", sqlConnector{

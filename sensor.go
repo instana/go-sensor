@@ -59,6 +59,7 @@ type sensorS struct {
 
 var (
 	sensor           *sensorS
+	muSensor         sync.Mutex
 	binaryName       = filepath.Base(os.Args[0])
 	processStartedAt = time.Now()
 )
@@ -167,7 +168,9 @@ func InitSensor(options *Options) {
 		options = DefaultOptions()
 	}
 
+	muSensor.Lock()
 	sensor = newSensor(options)
+	muSensor.Unlock()
 
 	// configure auto-profiling
 	autoprofile.SetLogger(sensor.logger)
@@ -218,6 +221,16 @@ func Flush(ctx context.Context) error {
 	}
 
 	return sensor.Agent().Flush(ctx)
+}
+
+// ShutdownSensor cleans up the internal global sensor reference. The next time that instana.InitSensor is called,
+// directly or indirectly, the internal sensor will be reinitialized.
+func ShutdownSensor() {
+	muSensor.Lock()
+	if sensor != nil {
+		sensor = nil
+	}
+	muSensor.Unlock()
 }
 
 func newServerlessAgent(serviceName, agentEndpoint, agentKey string, client *http.Client, logger LeveledLogger) agentClient {

@@ -14,9 +14,9 @@ import (
 	"github.com/aws/aws-sdk-go/service/sns"
 	instana "github.com/instana/go-sensor"
 	"github.com/instana/go-sensor/instrumentation/instaawssdk"
-	"github.com/instana/testify/assert"
-	"github.com/instana/testify/require"
 	"github.com/opentracing/opentracing-go"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestStartSNSSpan_WithActiveSpan(t *testing.T) {
@@ -24,6 +24,7 @@ func TestStartSNSSpan_WithActiveSpan(t *testing.T) {
 	sensor := instana.NewSensorWithTracer(
 		instana.NewTracerWithEverything(instana.DefaultOptions(), recorder),
 	)
+	defer instana.ShutdownSensor()
 
 	parentSp := sensor.Tracer().StartSpan("testing")
 
@@ -67,6 +68,7 @@ func TestStartSNSSpan_NonInstrumentedMethod(t *testing.T) {
 	sensor := instana.NewSensorWithTracer(
 		instana.NewTracerWithEverything(instana.DefaultOptions(), recorder),
 	)
+	defer instana.ShutdownSensor()
 
 	parentSp := sensor.Tracer().StartSpan("testing")
 
@@ -93,6 +95,7 @@ func TestStartSNSSpan_TraceContextPropagation_Single(t *testing.T) {
 	sensor := instana.NewSensorWithTracer(
 		instana.NewTracerWithEverything(instana.DefaultOptions(), recorder),
 	)
+	defer instana.ShutdownSensor()
 
 	svc := sns.New(unit.Session)
 
@@ -139,6 +142,7 @@ func TestStartSNSSpan_NoActiveSpan(t *testing.T) {
 	sensor := instana.NewSensorWithTracer(
 		instana.NewTracerWithEverything(instana.DefaultOptions(), recorder),
 	)
+	defer instana.ShutdownSensor()
 
 	req := newSNSRequest()
 	instaawssdk.StartSNSSpan(req, sensor)
@@ -152,6 +156,7 @@ func TestFinalizeSNS_NoError(t *testing.T) {
 	sensor := instana.NewSensorWithTracer(
 		instana.NewTracerWithEverything(instana.DefaultOptions(), recorder),
 	)
+	defer instana.ShutdownSensor()
 
 	sp := sensor.Tracer().StartSpan("sns", opentracing.Tags{
 		"sns.topic":   "test-topic-arn",
@@ -186,6 +191,7 @@ func TestFinalizeSNSSpan_WithError(t *testing.T) {
 	sensor := instana.NewSensorWithTracer(
 		instana.NewTracerWithEverything(instana.DefaultOptions(), recorder),
 	)
+	defer instana.ShutdownSensor()
 
 	sp := sensor.Tracer().StartSpan("sns", opentracing.Tags{
 		"sns.topic":   "test-topic-arn",

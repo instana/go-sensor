@@ -1,6 +1,6 @@
 module github.com/instana/go-sensor/instrumentation/cloud.google.com/go
 
-go 1.11
+go 1.13
 
 require (
 	cloud.google.com/go v0.56.0
@@ -8,9 +8,9 @@ require (
 	cloud.google.com/go/storage v1.7.0
 	github.com/golang/protobuf v1.4.2 // indirect
 	github.com/google/go-cmp v0.5.1 // indirect
-	github.com/instana/go-sensor v1.24.0
-	github.com/instana/testify v1.6.2-0.20200721153833-94b1851f4d65
+	github.com/instana/go-sensor v1.46.0
 	github.com/opentracing/opentracing-go v1.2.0
+	github.com/stretchr/testify v1.6.1
 	go.opencensus.io v0.22.4 // indirect
 	golang.org/x/net v0.0.0-20200813134508-3edf25e44fcc // indirect
 	golang.org/x/sys v0.0.0-20200803210538-64077c9b5642 // indirect

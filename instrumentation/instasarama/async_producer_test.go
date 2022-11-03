@@ -12,12 +12,12 @@ import (
 	"github.com/Shopify/sarama"
 	instana "github.com/instana/go-sensor"
 	"github.com/instana/go-sensor/instrumentation/instasarama"
-	"github.com/instana/testify/assert"
-	"github.com/instana/testify/require"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestAsyncProducer_Input(t *testing.T) {
-	headerFormats := []string{"binary", "string", "both"}
+	headerFormats := []string{"" /* tests the default behavior */, "binary", "string", "both"}
 
 	for _, headerFormat := range headerFormats {
 		os.Setenv(instasarama.KafkaHeaderEnvVarKey, headerFormat)
@@ -65,7 +65,7 @@ func TestAsyncProducer_Input(t *testing.T) {
 			Access:  "send",
 		}, cSpan.Data.Kafka)
 
-		if headerFormat == "both" || headerFormat == "binary" {
+		if headerFormat == "both" || headerFormat == "binary" || headerFormat == "" /* -> default, currently both */ {
 			assert.Contains(t, published.Headers, sarama.RecordHeader{
 				Key:   []byte("X_INSTANA_C"),
 				Value: instasarama.PackTraceContextHeader(cSpan.TraceID, cSpan.SpanID),
@@ -76,7 +76,7 @@ func TestAsyncProducer_Input(t *testing.T) {
 			})
 		}
 
-		if headerFormat == "both" || headerFormat == "string" {
+		if headerFormat == "both" || headerFormat == "string" || headerFormat == "" /* -> default, currently both */ {
 			assert.Contains(t, published.Headers, sarama.RecordHeader{
 				Key:   []byte("X_INSTANA_T"),
 				Value: []byte("0000000000000000" + cSpan.TraceID),
@@ -151,7 +151,11 @@ func TestAsyncProducer_Input_WithAwaitResult_Success(t *testing.T) {
 	<-wrapped.Successes()
 
 	spans = recorder.GetQueuedSpans()
-	require.Len(t, spans, 1)
+
+	require.Eventually(t, func() bool {
+		spans = append(spans, recorder.GetQueuedSpans()...)
+		return len(spans) == 1
+	}, time.Millisecond*200, time.Millisecond*50)
 
 	cSpan, err := extractAgentSpan(spans[0])
 	require.NoError(t, err)
@@ -181,6 +185,7 @@ func TestAsyncProducer_Input_WithAwaitResult_Success(t *testing.T) {
 func TestAsyncProducer_Input_WithAwaitResult_Error(t *testing.T) {
 	recorder := instana.NewTestRecorder()
 	sensor := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{}, recorder))
+	defer instana.ShutdownSensor()
 
 	parent := sensor.Tracer().StartSpan("test-span")
 	msg := instasarama.ProducerMessageWithSpan(&sarama.ProducerMessage{Topic: "test-topic"}, parent)
@@ -233,7 +238,11 @@ func TestAsyncProducer_Input_WithAwaitResult_Error(t *testing.T) {
 	<-wrapped.Errors()
 
 	spans = recorder.GetQueuedSpans()
-	require.Len(t, spans, 1)
+
+	require.Eventually(t, func() bool {
+		spans = append(spans, recorder.GetQueuedSpans()...)
+		return len(spans) == 2
+	}, time.Millisecond*200, time.Millisecond*5)
 
 	cSpan, err := extractAgentSpan(spans[0])
 	require.NoError(t, err)

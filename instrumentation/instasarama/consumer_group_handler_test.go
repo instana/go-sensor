@@ -11,8 +11,8 @@ import (
 	"github.com/Shopify/sarama"
 	instana "github.com/instana/go-sensor"
 	"github.com/instana/go-sensor/instrumentation/instasarama"
-	"github.com/instana/testify/assert"
-	"github.com/instana/testify/require"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestConsumerGroupHandler_ConsumeClaim(t *testing.T) {
@@ -24,13 +24,24 @@ func TestConsumerGroupHandler_ConsumeClaim(t *testing.T) {
 			Topic: "topic-1",
 			Headers: []*sarama.RecordHeader{
 				{
+					Key:   []byte("x_instana_t"),
+					Value: []byte("0000000000000000000000000abcde12"),
+				},
+				{
+					Key:   []byte("x_instana_s"),
+					Value: []byte("00000000deadbeef"),
+				},
+				{Key: []byte("x_instana_l_s"), Value: []byte("1")},
+				{
+					// We deliberately send a different trace and span id in the binary header as in the string header to validate
+					// that the string headers get preference when both formats are present in the incoming message.
 					Key: []byte("x_instana_c"),
 					Value: []byte{
 						// trace id
 						0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-						0x00, 0x00, 0x00, 0x00, 0x0a, 0xbc, 0xde, 0x12,
+						0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef,
 						// span id
-						0x00, 0x00, 0x00, 0x00, 0xde, 0xad, 0xbe, 0xef,
+						0xfe, 0xdc, 0xba, 0x98, 0x76, 0x54, 0x32, 0x10,
 					},
 				},
 				{Key: []byte("x_instana_l"), Value: []byte{0x01}},
@@ -77,6 +88,18 @@ func TestConsumerGroupHandler_ConsumeClaim(t *testing.T) {
 		}, span.Data.Kafka)
 
 		assert.Contains(t, h.Messages[0].Headers, &sarama.RecordHeader{
+			Key:   []byte("x_instana_t"),
+			Value: []byte(span.TraceID),
+		})
+		assert.Contains(t, h.Messages[0].Headers, &sarama.RecordHeader{
+			Key:   []byte("x_instana_s"),
+			Value: []byte(span.SpanID),
+		})
+		assert.Contains(t, h.Messages[0].Headers, &sarama.RecordHeader{
+			Key:   []byte("x_instana_l_s"),
+			Value: []byte("1"),
+		})
+		assert.Contains(t, h.Messages[0].Headers, &sarama.RecordHeader{
 			Key:   []byte("x_instana_c"),
 			Value: instasarama.PackTraceContextHeader(span.TraceID, span.SpanID),
 		})
@@ -102,6 +125,18 @@ func TestConsumerGroupHandler_ConsumeClaim(t *testing.T) {
 			Access:  "consume",
 		}, span.Data.Kafka)
 
+		assert.Contains(t, h.Messages[1].Headers, &sarama.RecordHeader{
+			Key:   []byte("X_INSTANA_T"),
+			Value: []byte(span.TraceID),
+		})
+		assert.Contains(t, h.Messages[1].Headers, &sarama.RecordHeader{
+			Key:   []byte("X_INSTANA_S"),
+			Value: []byte(span.SpanID),
+		})
+		assert.Contains(t, h.Messages[1].Headers, &sarama.RecordHeader{
+			Key:   []byte("X_INSTANA_L_S"),
+			Value: []byte("1"),
+		})
 		assert.Contains(t, h.Messages[1].Headers, &sarama.RecordHeader{
 			Key:   []byte("X_INSTANA_C"),
 			Value: instasarama.PackTraceContextHeader(span.TraceID, span.SpanID),

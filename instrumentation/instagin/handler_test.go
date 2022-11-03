@@ -1,9 +1,6 @@
 // (c) Copyright IBM Corp. 2021
 // (c) Copyright Instana Inc. 2016
 
-//go:build go1.11
-// +build go1.11
-
 package instagin_test
 
 import (
@@ -14,11 +11,11 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/instana/testify/require"
+	"github.com/stretchr/testify/require"
 
 	"github.com/opentracing/opentracing-go"
 
-	"github.com/instana/testify/assert"
+	"github.com/stretchr/testify/assert"
 
 	"github.com/gin-gonic/gin"
 	instana "github.com/instana/go-sensor"
@@ -63,6 +60,7 @@ func TestAddMiddleware(t *testing.T) {
 func TestPropagation(t *testing.T) {
 	recorder := instana.NewTestRecorder()
 	tracer := instana.NewTracerWithEverything(nil, recorder)
+	defer instana.ShutdownSensor()
 	sensor := instana.NewSensorWithTracer(tracer)
 
 	engines := map[string]func() *gin.Engine{

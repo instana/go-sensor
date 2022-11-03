@@ -14,8 +14,8 @@ import (
 	"github.com/aws/aws-sdk-go/service/sqs"
 	instana "github.com/instana/go-sensor"
 	"github.com/instana/go-sensor/instrumentation/instaawssdk"
-	"github.com/instana/testify/assert"
-	"github.com/instana/testify/require"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestStartSQSSpan(t *testing.T) {
@@ -143,6 +143,7 @@ func TestStartSQSSpan(t *testing.T) {
 			sensor := instana.NewSensorWithTracer(
 				instana.NewTracerWithEverything(instana.DefaultOptions(), recorder),
 			)
+			defer instana.ShutdownSensor()
 
 			parentSp := sensor.Tracer().StartSpan("testing")
 
@@ -184,6 +185,7 @@ func TestStartSQSSpan_NonInstrumentedMethod(t *testing.T) {
 	sensor := instana.NewSensorWithTracer(
 		instana.NewTracerWithEverything(instana.DefaultOptions(), recorder),
 	)
+	defer instana.ShutdownSensor()
 
 	parentSp := sensor.Tracer().StartSpan("testing")
 
@@ -210,6 +212,7 @@ func TestStartSQSSpan_TraceContextPropagation_Single(t *testing.T) {
 	sensor := instana.NewSensorWithTracer(
 		instana.NewTracerWithEverything(instana.DefaultOptions(), recorder),
 	)
+	defer instana.ShutdownSensor()
 
 	svc := sqs.New(unit.Session)
 
@@ -257,6 +260,7 @@ func TestStartSQSSpan_TraceContextPropagation_Batch(t *testing.T) {
 	sensor := instana.NewSensorWithTracer(
 		instana.NewTracerWithEverything(instana.DefaultOptions(), recorder),
 	)
+	defer instana.ShutdownSensor()
 
 	svc := sqs.New(unit.Session)
 
@@ -308,6 +312,7 @@ func TestStartSQSSpan_TraceContextPropagation_Single_NoActiveSpan(t *testing.T) 
 	sensor := instana.NewSensorWithTracer(
 		instana.NewTracerWithEverything(instana.DefaultOptions(), recorder),
 	)
+	defer instana.ShutdownSensor()
 
 	svc := sqs.New(unit.Session)
 
@@ -336,6 +341,7 @@ func TestStartSQSSpan_TraceContextPropagation_Batch_NoActiveSpan(t *testing.T) {
 	sensor := instana.NewSensorWithTracer(
 		instana.NewTracerWithEverything(instana.DefaultOptions(), recorder),
 	)
+	defer instana.ShutdownSensor()
 
 	svc := sqs.New(unit.Session)
 
@@ -424,6 +430,7 @@ func TestFinalizeSQSSpan(t *testing.T) {
 
 			recorder := instana.NewTestRecorder()
 			tracer := instana.NewTracerWithEverything(instana.DefaultOptions(), recorder)
+			defer instana.ShutdownSensor()
 
 			sp := tracer.StartSpan("sqs")
 
@@ -448,6 +455,7 @@ func TestFinalizeSQSSpan(t *testing.T) {
 func TestFinalizeSQSSpan_WithError(t *testing.T) {
 	recorder := instana.NewTestRecorder()
 	tracer := instana.NewTracerWithEverything(instana.DefaultOptions(), recorder)
+	defer instana.ShutdownSensor()
 
 	sp := tracer.StartSpan("sqs")
 
@@ -493,23 +501,6 @@ func TestTraceSQSMessage_WithTraceContext(t *testing.T) {
 				},
 			},
 		},
-		"legacy keys": {
-			Body: aws.String("message body"),
-			MessageAttributes: map[string]*sqs.MessageAttributeValue{
-				"X_INSTANA_ST": {
-					DataType:    aws.String("String"),
-					StringValue: aws.String("00000000000000010000000000000002"),
-				},
-				"X_INSTANA_SS": {
-					DataType:    aws.String("String"),
-					StringValue: aws.String("0000000000000003"),
-				},
-				"X_INSTANA_SL": {
-					DataType:    aws.String("String"),
-					StringValue: aws.String("1"),
-				},
-			},
-		},
 		"sns notification": {
 			Body: aws.String(`{
   "Type" : "Notification",
@@ -534,6 +525,7 @@ func TestTraceSQSMessage_WithTraceContext(t *testing.T) {
 			sensor := instana.NewSensorWithTracer(
 				instana.NewTracerWithEverything(instana.DefaultOptions(), recorder),
 			)
+			defer instana.ShutdownSensor()
 
 			sp := instaawssdk.TraceSQSMessage(msg, sensor)
 			require.Equal(t, 0, recorder.QueuedSpansCount())
@@ -569,6 +561,7 @@ func TestTraceSQSMessage_NoTraceContext(t *testing.T) {
 	sensor := instana.NewSensorWithTracer(
 		instana.NewTracerWithEverything(instana.DefaultOptions(), recorder),
 	)
+	defer instana.ShutdownSensor()
 
 	msg := &sqs.Message{
 		Body: aws.String("message body"),

@@ -12,8 +12,8 @@ import (
 	"github.com/aws/aws-sdk-go/service/sqs"
 	instana "github.com/instana/go-sensor"
 	"github.com/instana/go-sensor/instrumentation/instaawssdk"
-	"github.com/instana/testify/assert"
-	"github.com/instana/testify/require"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestSpanContextFromSQSMessage(t *testing.T) {
@@ -23,6 +23,7 @@ func TestSpanContextFromSQSMessage(t *testing.T) {
 			instana.NewTestRecorder(),
 		),
 	)
+	defer instana.ShutdownSensor()
 
 	examples := map[string]*sqs.Message{
 		"standard keys": {
@@ -40,26 +41,6 @@ func TestSpanContextFromSQSMessage(t *testing.T) {
 					StringValue: aws.String("0000000000000003"),
 				},
 				"X_INSTANA_L": {
-					DataType:    aws.String("String"),
-					StringValue: aws.String("1"),
-				},
-			},
-		},
-		"legacy keys": {
-			MessageAttributes: map[string]*sqs.MessageAttributeValue{
-				"Custom": {
-					DataType:    aws.String("String"),
-					StringValue: aws.String("custom attribute"),
-				},
-				"X_INSTANA_ST": {
-					DataType:    aws.String("String"),
-					StringValue: aws.String("00000000000000010000000000000002"),
-				},
-				"X_INSTANA_SS": {
-					DataType:    aws.String("String"),
-					StringValue: aws.String("0000000000000003"),
-				},
-				"X_INSTANA_SL": {
 					DataType:    aws.String("String"),
 					StringValue: aws.String("1"),
 				},
@@ -86,45 +67,6 @@ func TestSpanContextFromSQSMessage(t *testing.T) {
 	})
 }
 
-func TestSpanContextFromSQSMessage_LegacyHeaders(t *testing.T) {
-	sensor := instana.NewSensorWithTracer(
-		instana.NewTracerWithEverything(
-			instana.DefaultOptions(),
-			instana.NewTestRecorder(),
-		),
-	)
-
-	msg := &sqs.Message{
-		MessageAttributes: map[string]*sqs.MessageAttributeValue{
-			"Custom": {
-				DataType:    aws.String("String"),
-				StringValue: aws.String("custom attribute"),
-			},
-			"X_INSTANA_T": {
-				DataType:    aws.String("String"),
-				StringValue: aws.String("00000000000000010000000000000002"),
-			},
-			"X_INSTANA_S": {
-				DataType:    aws.String("String"),
-				StringValue: aws.String("0000000000000003"),
-			},
-			"X_INSTANA_L": {
-				DataType:    aws.String("String"),
-				StringValue: aws.String("1"),
-			},
-		},
-	}
-
-	spCtx, ok := instaawssdk.SpanContextFromSQSMessage(msg, sensor)
-	require.True(t, ok)
-	assert.Equal(t, instana.SpanContext{
-		TraceIDHi: 0x01,
-		TraceID:   0x02,
-		SpanID:    0x03,
-		Baggage:   make(map[string]string),
-	}, spCtx)
-}
-
 func TestSQSMessageAttributesCarrier_Set_FieldT(t *testing.T) {
 	attrs := make(map[string]*sqs.MessageAttributeValue)
 	c := instaawssdk.SQSMessageAttributesCarrier(attrs)
@@ -142,12 +84,6 @@ func TestSQSMessageAttributesCarrier_Update_FieldT(t *testing.T) {
 	examples := map[string]map[string]*sqs.MessageAttributeValue{
 		"standard key": {
 			"X_INSTANA_T": {
-				DataType:    aws.String("String"),
-				StringValue: aws.String("0000000000000000abcdef12abcdef12"),
-			},
-		},
-		"legacy key": {
-			"X_INSTANA_ST": {
 				DataType:    aws.String("String"),
 				StringValue: aws.String("0000000000000000abcdef12abcdef12"),
 			},
@@ -190,12 +126,6 @@ func TestSQSMessageAttributesCarrier_Update_FieldS(t *testing.T) {
 				StringValue: aws.String("abcdef12abcdef12"),
 			},
 		},
-		"legacy key": {
-			"X_INSTANA_SS": {
-				DataType:    aws.String("String"),
-				StringValue: aws.String("abcdef12abcdef12"),
-			},
-		},
 	}
 
 	for name, attrs := range examples {
@@ -230,12 +160,6 @@ func TestSQSMessageAttributesCarrier_Update_FieldL(t *testing.T) {
 	examples := map[string]map[string]*sqs.MessageAttributeValue{
 		"standard key": {
 			"X_INSTANA_L": {
-				DataType:    aws.String("String"),
-				StringValue: aws.String("1"),
-			},
-		},
-		"legacy key": {
-			"X_INSTANA_SL": {
 				DataType:    aws.String("String"),
 				StringValue: aws.String("1"),
 			},
@@ -275,54 +199,6 @@ func TestSQSMessageAttributesCarrier_ForeachKey(t *testing.T) {
 			"X_INSTANA_L": {
 				DataType:    aws.String("String"),
 				StringValue: aws.String("1"),
-			},
-		},
-		"legacy keys": {
-			"Custom": {
-				DataType:    aws.String("String"),
-				StringValue: aws.String("custom attribute"),
-			},
-			"X_INSTANA_ST": {
-				DataType:    aws.String("String"),
-				StringValue: aws.String("0000000000000001deadbeefdeadbeef"),
-			},
-			"X_INSTANA_SS": {
-				DataType:    aws.String("String"),
-				StringValue: aws.String("abcdef12abcdef12"),
-			},
-			"X_INSTANA_SL": {
-				DataType:    aws.String("String"),
-				StringValue: aws.String("1"),
-			},
-		},
-		"legacy and standard keys": {
-			"Custom": {
-				DataType:    aws.String("String"),
-				StringValue: aws.String("custom attribute"),
-			},
-			"X_INSTANA_T": {
-				DataType:    aws.String("String"),
-				StringValue: aws.String("0000000000000001deadbeefdeadbeef"),
-			},
-			"X_INSTANA_S": {
-				DataType:    aws.String("String"),
-				StringValue: aws.String("abcdef12abcdef12"),
-			},
-			"X_INSTANA_L": {
-				DataType:    aws.String("String"),
-				StringValue: aws.String("1"),
-			},
-			"X_INSTANA_ST": {
-				DataType:    aws.String("String"),
-				StringValue: aws.String("00000000000000001212121212121212"),
-			},
-			"X_INSTANA_SS": {
-				DataType:    aws.String("String"),
-				StringValue: aws.String("2323232323232323"),
-			},
-			"X_INSTANA_SL": {
-				DataType:    aws.String("String"),
-				StringValue: aws.String("0"),
 			},
 		},
 	}
@@ -372,12 +248,6 @@ func TestSNSMessageAttributesCarrier_Update_FieldT(t *testing.T) {
 				StringValue: aws.String("0000000000000000abcdef12abcdef12"),
 			},
 		},
-		"legacy key": {
-			"X_INSTANA_ST": {
-				DataType:    aws.String("String"),
-				StringValue: aws.String("0000000000000000abcdef12abcdef12"),
-			},
-		},
 	}
 
 	for name, attrs := range examples {
@@ -412,12 +282,6 @@ func TestSNSMessageAttributesCarrier_Update_FieldS(t *testing.T) {
 	examples := map[string]map[string]*sns.MessageAttributeValue{
 		"standard key": {
 			"X_INSTANA_S": {
-				DataType:    aws.String("String"),
-				StringValue: aws.String("abcdef12abcdef12"),
-			},
-		},
-		"legacy key": {
-			"X_INSTANA_SS": {
 				DataType:    aws.String("String"),
 				StringValue: aws.String("abcdef12abcdef12"),
 			},
@@ -460,12 +324,6 @@ func TestSNSMessageAttributesCarrier_Update_FieldL(t *testing.T) {
 				StringValue: aws.String("1"),
 			},
 		},
-		"legacy key": {
-			"X_INSTANA_SL": {
-				DataType:    aws.String("String"),
-				StringValue: aws.String("1"),
-			},
-		},
 	}
 
 	for name, attrs := range examples {
@@ -501,54 +359,6 @@ func TestSNSMessageAttributesCarrier_ForeachKey(t *testing.T) {
 			"X_INSTANA_L": {
 				DataType:    aws.String("String"),
 				StringValue: aws.String("1"),
-			},
-		},
-		"legacy keys": {
-			"Custom": {
-				DataType:    aws.String("String"),
-				StringValue: aws.String("custom attribute"),
-			},
-			"X_INSTANA_ST": {
-				DataType:    aws.String("String"),
-				StringValue: aws.String("0000000000000001deadbeefdeadbeef"),
-			},
-			"X_INSTANA_SS": {
-				DataType:    aws.String("String"),
-				StringValue: aws.String("abcdef12abcdef12"),
-			},
-			"X_INSTANA_SL": {
-				DataType:    aws.String("String"),
-				StringValue: aws.String("1"),
-			},
-		},
-		"legacy and standard keys": {
-			"Custom": {
-				DataType:    aws.String("String"),
-				StringValue: aws.String("custom attribute"),
-			},
-			"X_INSTANA_T": {
-				DataType:    aws.String("String"),
-				StringValue: aws.String("0000000000000001deadbeefdeadbeef"),
-			},
-			"X_INSTANA_S": {
-				DataType:    aws.String("String"),
-				StringValue: aws.String("abcdef12abcdef12"),
-			},
-			"X_INSTANA_L": {
-				DataType:    aws.String("String"),
-				StringValue: aws.String("1"),
-			},
-			"X_INSTANA_ST": {
-				DataType:    aws.String("String"),
-				StringValue: aws.String("00000000000000001212121212121212"),
-			},
-			"X_INSTANA_SS": {
-				DataType:    aws.String("String"),
-				StringValue: aws.String("2323232323232323"),
-			},
-			"X_INSTANA_SL": {
-				DataType:    aws.String("String"),
-				StringValue: aws.String("0"),
 			},
 		},
 	}

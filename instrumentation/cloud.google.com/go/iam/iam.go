@@ -1,15 +1,13 @@
 // (c) Copyright IBM Corp. 2021
 // (c) Copyright Instana Inc. 2020
 
-//go:build go1.11
-// +build go1.11
-
 package iam
 
 import (
 	"context"
-	"github.com/instana/go-sensor/instrumentation/cloud.google.com/go/internal/tags"
 	"strings"
+
+	"github.com/instana/go-sensor/instrumentation/cloud.google.com/go/internal/tags"
 
 	"cloud.google.com/go/iam"
 	"github.com/instana/go-sensor/instrumentation/cloud.google.com/go/internal"

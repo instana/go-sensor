@@ -13,8 +13,8 @@ import (
 
 	instana "github.com/instana/go-sensor"
 	"github.com/instana/go-sensor/instrumentation/instagrpc"
-	"github.com/instana/testify/assert"
-	"github.com/instana/testify/require"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -114,7 +114,7 @@ func TestUnaryClientInterceptor_ErrorHandling(t *testing.T) {
 	assert.Error(t, err)
 
 	spans := recorder.GetQueuedSpans()
-	require.Len(t, spans, 1)
+	require.Len(t, spans, 2)
 
 	span, err := extractAgentSpan(spans[0])
 	require.NoError(t, err)
@@ -250,6 +250,7 @@ func TestStreamClientInterceptor_ErrorHandling(t *testing.T) {
 	sensor := instana.NewSensorWithTracer(
 		instana.NewTracerWithEverything(&instana.Options{}, recorder),
 	)
+	defer instana.ShutdownSensor()
 
 	addr, teardown, err := startTestServer(&testServer{Error: serverErr})
 	require.NoError(t, err)
@@ -274,7 +275,7 @@ func TestStreamClientInterceptor_ErrorHandling(t *testing.T) {
 	assert.Error(t, err)
 
 	spans := recorder.GetQueuedSpans()
-	require.Len(t, spans, 1)
+	require.Len(t, spans, 2)
 
 	span, err := extractAgentSpan(spans[0])
 	require.NoError(t, err)

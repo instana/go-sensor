@@ -1,8 +1,6 @@
 // (c) Copyright IBM Corp. 2021
 // (c) Copyright Instana Inc. 2020
 
-// +build go1.11
-
 package pubsub_test
 
 import (
@@ -13,8 +11,8 @@ import (
 	"cloud.google.com/go/pubsub/pstest"
 	instana "github.com/instana/go-sensor"
 	"github.com/instana/go-sensor/instrumentation/cloud.google.com/go/pubsub"
-	"github.com/instana/testify/assert"
-	"github.com/instana/testify/require"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"google.golang.org/api/option"
 	pb "google.golang.org/genproto/googleapis/pubsub/v1"
 )
@@ -25,6 +23,7 @@ func TestSubscription_Receive(t *testing.T) {
 
 	recorder := instana.NewTestRecorder()
 	tracer := instana.NewTracerWithEverything(instana.DefaultOptions(), recorder)
+	defer instana.ShutdownSensor()
 
 	srv, conn, teardown, err := setupMockServer()
 	require.NoError(t, err)
@@ -99,6 +98,7 @@ func TestSubscription_Receive_NoTrace(t *testing.T) {
 
 	recorder := instana.NewTestRecorder()
 	tracer := instana.NewTracerWithEverything(instana.DefaultOptions(), recorder)
+	defer instana.ShutdownSensor()
 
 	srv, conn, teardown, err := setupMockServer()
 	require.NoError(t, err)

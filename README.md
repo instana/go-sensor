@@ -10,7 +10,7 @@
 The Go Collector is a runtime metrics collector, code execution tracer and profiler for applications and services written in Go. This module
 is a part of [Instana](https://instana.com) APM solution.
 
-The Go Collector requires Go version 1.9 or greater.
+Since version 1.47 the Go Collector requires Go version 1.13 or later.
 
 ## Installation
 
