@@ -108,18 +108,23 @@ func Test_agentResponse_getExtraHTTPHeaders(t *testing.T) {
 	}
 }
 
-// TODO: move this test to fsm_test.go
 func Test_agentApplyHostSettings(t *testing.T) {
-	// 	agent := &agentS{}
-	// 	response := agentResponse{
-	// 		Pid:    37892,
-	// 		HostID: "myhost",
-	// 		Tracing: struct {
-	// 			ExtraHTTPHeaders []string `json:"extra-http-headers"`
-	// 		}{
-	// 			ExtraHTTPHeaders: []string{"my-unwanted-custom-headers"},
-	// 		},
-	// 	}
+	fsm := &fsmS{
+		agentData: &agentHostData{
+			host: "",
+			from: &fromS{},
+		},
+	}
+
+	response := agentResponse{
+		Pid:    37892,
+		HostID: "myhost",
+		Tracing: struct {
+			ExtraHTTPHeaders []string `json:"extra-http-headers"`
+		}{
+			ExtraHTTPHeaders: []string{"my-unwanted-custom-headers"},
+		},
+	}
 
 	opts := &Options{
 		Service: "test_service",
@@ -133,7 +138,7 @@ func Test_agentApplyHostSettings(t *testing.T) {
 		sensor = nil
 	}()
 
-	// agent.applyHostAgentSettings(response)
+	fsm.applyHostAgentSettings(response)
 
 	assert.NotContains(t, sensor.options.Tracer.CollectableHTTPHeaders, "my-unwanted-custom-headers")
 }
