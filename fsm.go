@@ -7,7 +7,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"math"
 	"net"
@@ -273,7 +272,7 @@ func (r *fsmS) announceSensor(e *f.Event) {
 			return
 		}
 
-		respBytes, err := io.ReadAll(res.Body)
+		respBytes, err := ioutil.ReadAll(res.Body)
 		defer res.Body.Close()
 
 		if err != nil {
