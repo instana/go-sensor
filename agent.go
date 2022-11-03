@@ -141,8 +141,6 @@ func newAgent(serviceName, host string, port int, logger LeveledLogger) *agentS 
 	logger.Debug("initializing agent")
 
 	agent := &agentS{
-		// from:            &fromS{},
-		// host:            host,
 		agentData: &agentHostData{
 			host: host,
 			from: &fromS{},
@@ -159,7 +157,7 @@ func newAgent(serviceName, host string, port int, logger LeveledLogger) *agentS 
 	}
 
 	agent.mu.Lock()
-	agent.fsm = newFSM( /** agent,*/ agent.agentData, logger, agent.port)
+	agent.fsm = newFSM(agent.agentData, logger, agent.port)
 	agent.mu.Unlock()
 
 	return agent
@@ -279,10 +277,6 @@ func (agent *agentS) makeHostURL(host string, prefix string) string {
 	return url
 }
 
-// func (agent *agentS) head(url string) (string, error) {
-// 	return agent.request(url, "HEAD", nil)
-// }
-
 // All usages are now with POST method
 // request will overwrite the client timeout for a single request
 func (agent *agentS) request(url string, method string, data interface{}) error {
@@ -309,102 +303,10 @@ func (agent *agentS) request(url string, method string, data interface{}) error 
 
 	req = req.WithContext(ctx)
 
-	// client := http.DefaultClient
-
 	_, err = agent.client.Do(req)
 
 	return err
-
-	// return agent.fullRequestResponse(ctx, url, method, data, nil, "")
 }
-
-// func (agent *agentS) announceRequest(url string, method string, data interface{}, ret *agentResponse) (string, error) {
-// 	return agent.fullRequestResponse(context.Background(), url, method, data, ret, "")
-// }
-
-// requestHeader will overwrite the client timeout for a single request
-// func (agent *agentS) requestHeader(url string, method string, header string) (string, error) {
-// 	ctx, cancel := context.WithTimeout(context.Background(), agent.clientTimeout)
-// 	defer cancel()
-// 	return agent.fullRequestResponse(ctx, url, method, nil, nil, header)
-// }
-
-// func (agent *agentS) fullRequestResponse(ctx context.Context, url string, method string, data interface{}, body interface{}, header string) (string, error) {
-// 	var j []byte
-// 	var ret string
-// 	var err error
-// 	var resp *http.Response
-// 	var req *http.Request
-
-// 	if data != nil {
-// 		j, err = json.Marshal(data)
-// 	}
-
-// 	if err == nil {
-// 		if j != nil {
-// 			b := bytes.NewBuffer(j)
-// 			if b.Len() > maxContentLength {
-// 				agent.logger.Warn(`A batch of spans has been rejected because it is too large to be sent to the agent.`)
-
-// 				return "", payloadTooLargeErr
-// 			}
-
-// 			req, err = http.NewRequest(method, url, b)
-// 		} else {
-// 			req, err = http.NewRequest(method, url, nil)
-// 		}
-
-// 		req := req.WithContext(ctx)
-
-// 		// Uncomment this to dump json payloads
-// 		// log.debug(bytes.NewBuffer(j))
-
-// 		if err == nil {
-// 			req.Header.Set("Content-Type", "application/json")
-// 			resp, err = agent.client.Do(req)
-// 			if err == nil {
-// 				defer resp.Body.Close()
-
-// 				if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-// 					err = errors.New(resp.Status)
-// 				} else {
-// 					if body != nil {
-// 						var b []byte
-// 						b, err = ioutil.ReadAll(resp.Body)
-// 						json.Unmarshal(b, body)
-// 					}
-
-// 					if header != "" {
-// 						ret = resp.Header.Get(header)
-// 					}
-// 				}
-
-// 				io.CopyN(ioutil.Discard, resp.Body, 256<<10)
-// 			}
-// 		}
-// 	}
-
-// 	if err != nil {
-// 		// Ignore errors while in announced stated (before ready) as
-// 		// this is the time where the entity is registering in the Instana
-// 		// backend and it will return 404 until it's done.
-// 		agent.mu.RLock()
-// 		if !agent.fsm.fsm.Is("announced") {
-// 			agent.logger.Info("failed to send a request to ", url, ": ", err)
-// 		}
-// 		agent.mu.RUnlock()
-// 	}
-
-// 	return ret, err
-// }
-
-// func (agent *agentS) setHost(host string) {
-// 	agent.agentData.host = host
-// }
-
-// func (agent *agentS) getHost() string {
-// 	return agent.agentData.host
-// }
 
 func (agent *agentS) reset() {
 	agent.mu.Lock()

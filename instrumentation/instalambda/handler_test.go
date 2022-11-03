@@ -32,22 +32,6 @@ func initSensor() {
 	})
 }
 
-// func TestMain(m *testing.M) {
-// 	matcher, err := instana.NamedMatcher(instana.ContainsIgnoreCaseMatcher, []string{"secret"})
-// 	if err != nil {
-// 		panic(err)
-// 	}
-
-// 	instana.InitSensor(&instana.Options{
-// 		Tracer: instana.TracerOptions{
-// 			Secrets:                matcher,
-// 			CollectableHTTPHeaders: []string{"X-Custom-Header-1", "X-Custom-Header-2"},
-// 		},
-// 	})
-
-// 	os.Exit(m.Run())
-// }
-
 func TestNewHandler_APIGatewayEvent(t *testing.T) {
 	initSensor()
 	defer instana.ShutdownSensor()

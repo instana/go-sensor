@@ -31,19 +31,7 @@ const (
 	maximumRetries             = 3
 )
 
-// type fsmAgent interface {
-// 	getHost() string
-// 	setHost(host string)
-// 	makeURL(prefix string) string
-// 	makeHostURL(host string, prefix string) string
-// 	applyHostAgentSettings(resp agentResponse)
-// requestHeader(url string, method string, header string) (string, error)
-// announceRequest(url string, method string, data interface{}, ret *agentResponse) (string, error)
-// head(url string) (string, error)
-// }
-
 type fsmS struct {
-	// agent                      fsmAgent
 	agentData                  *agentHostData
 	fsm                        *f.FSM
 	timer                      *time.Timer
@@ -51,10 +39,7 @@ type fsmS struct {
 	expDelayFunc               func(retryNumber int) time.Duration
 	lookupAgentHostRetryPeriod time.Duration
 	logger                     LeveledLogger
-	// agentHost                  string
-	agentPort string
-	// onAgentResponse            func(agentResponse)
-	// onHostChanged              func(string)
+	agentPort                  string
 }
 
 func newHostAgentFromS(pid int, hostID string) *fromS {
@@ -64,19 +49,17 @@ func newHostAgentFromS(pid int, hostID string) *fromS {
 	}
 }
 
-func newFSM( /**agent fsmAgent,*/ ahd *agentHostData, logger LeveledLogger, port string) *fsmS {
+func newFSM(ahd *agentHostData, logger LeveledLogger, port string) *fsmS {
 	logger.Warn("Stan is on the scene. Starting Instana instrumentation.")
 	logger.Debug("initializing fsm")
 
 	ret := &fsmS{
-		// agent:                      agent,
 		agentData:                  ahd,
 		retriesLeft:                maximumRetries,
 		expDelayFunc:               expDelay,
 		logger:                     logger,
 		lookupAgentHostRetryPeriod: retryPeriod,
-		// agentHost:                  host,
-		agentPort: port,
+		agentPort:                  port,
 	}
 
 	ret.fsm = f.NewFSM(
@@ -110,15 +93,12 @@ func (r *fsmS) scheduleRetryWithExponentialDelay(e *f.Event, cb func(e *f.Event)
 }
 
 func (r *fsmS) lookupAgentHost(e *f.Event) {
-	// go r.checkHost(e, r.agent.getHost())
 	go r.checkHost(e, r.agentData.host)
 }
 
 func (r *fsmS) checkHost(e *f.Event, host string) {
-	// r.logger.Debug("checking host ", host)
 	r.logger.Debug("checking host ", r.agentData.host)
 	url := "http://" + r.agentData.host + ":" + r.agentPort + "/"
-	// header, err := r.agent.requestHeader(r.agent.makeHostURL(host, "/"), "GET", "Server")
 
 	resp, err := http.Get(url)
 
@@ -155,7 +135,6 @@ func (r *fsmS) checkHost(e *f.Event, host string) {
 		}
 
 		url := "http://" + r.agentData.host + ":" + r.agentPort + "/"
-		// header, err := r.agent.requestHeader(r.agent.makeHostURL(host, "/"), "GET", "Server")
 
 		resp, err := http.Get(url)
 
@@ -166,9 +145,6 @@ func (r *fsmS) checkHost(e *f.Event, host string) {
 		}
 
 		found := err == nil && header == agentHeader
-
-		// header, err := r.agent.requestHeader(r.agent.makeHostURL(gateway, "/"), "GET", "Server")
-		// found := err == nil && header == agentHeader
 
 		if found {
 			r.lookupSuccess(gateway)
@@ -187,8 +163,6 @@ func (r *fsmS) checkHost(e *f.Event, host string) {
 func (r *fsmS) lookupSuccess(host string) {
 	r.logger.Debug("agent lookup success ", host)
 
-	// r.agent.setHost(host)
-	// r.onHostChanged(host)
 	r.agentData.host = host
 	r.retriesLeft = maximumRetries
 	r.fsm.Event(eLookup)
@@ -240,7 +214,6 @@ func (r *fsmS) announceSensor(e *f.Event) {
 		jsonData, _ := json.Marshal(d)
 
 		var resp agentResponse
-		// _, err := r.agent.announceRequest(r.agent.makeURL(agentDiscoveryURL), "PUT", d, &resp)
 
 		client := http.DefaultClient
 
@@ -256,19 +229,7 @@ func (r *fsmS) announceSensor(e *f.Event) {
 		badResponse := res != nil && (res.StatusCode < 200 || res.StatusCode >= 300)
 
 		if err != nil || badResponse {
-			// r.retriesLeft--
-			// if r.retriesLeft == 0 {
-			// 	r.logger.Error("Couldn't announce the sensor after reaching the maximum amount of attempts.")
-			// 	r.fsm.Event(eInit)
-			// 	return
-			// }
-
-			// r.logger.Debug("Cannot announce sensor. Scheduling retry.")
-
-			// retryNumber := maximumRetries - r.retriesLeft + 1
-			// r.scheduleRetryWithExponentialDelay(e, r.announceSensor, retryNumber)
 			r.handleRetries(e)
-
 			return
 		}
 
@@ -283,8 +244,6 @@ func (r *fsmS) announceSensor(e *f.Event) {
 		json.Unmarshal(respBytes, &resp)
 
 		r.logger.Info("Host agent available. We're in business. Announced pid:", resp.Pid)
-		// r.agent.applyHostAgentSettings(resp)
-		// r.onAgentResponse(resp)
 
 		// this function was moved from agent.go to here
 		r.applyHostAgentSettings(resp)
@@ -317,7 +276,6 @@ func (r *fsmS) getDiscoveryS() *discoveryS {
 	}
 
 	if _, err := os.Stat("/proc"); err == nil {
-		// if addr, err := net.ResolveTCPAddr("tcp", r.agent.getHost()+":42699"); err == nil {
 		if addr, err := net.ResolveTCPAddr("tcp", r.agentData.host+":42699"); err == nil {
 			if tcpConn, err := net.DialTCP("tcp", nil, addr); err == nil {
 				defer tcpConn.Close()
@@ -344,8 +302,6 @@ func (r *fsmS) getDiscoveryS() *discoveryS {
 func (r *fsmS) testAgent(e *f.Event) {
 	r.logger.Debug("testing communication with the agent")
 	go func() {
-		// _, err := r.agent.head(r.agent.makeURL(agentDataURL))
-
 		// TODO: url is missing pid at the end
 		u := "http://" + r.agentData.host + ":" + r.agentPort + agentDataURL
 
