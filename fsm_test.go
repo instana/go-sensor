@@ -47,8 +47,8 @@ func Test_fsmS_testAgent(t *testing.T) {
 		agentData: &agentHostData{
 			host: u.Hostname(),
 			from: &fromS{},
+			port: u.Port(),
 		},
-		agentPort: u.Port(),
 		fsm: f.NewFSM(
 			"announced",
 			f.Events{
@@ -95,8 +95,8 @@ func Test_fsmS_testAgent_Error(t *testing.T) {
 		agentData: &agentHostData{
 			host: u.Hostname(),
 			from: &fromS{},
+			port: u.Port(),
 		},
-		agentPort: u.Port(),
 		fsm: f.NewFSM(
 			"announced",
 			f.Events{
@@ -156,8 +156,8 @@ func Test_fsmS_announceSensor(t *testing.T) {
 		agentData: &agentHostData{
 			host: u.Hostname(),
 			from: &fromS{},
+			port: u.Port(),
 		},
-		agentPort: u.Port(),
 		fsm: f.NewFSM(
 			"unannounced",
 			f.Events{
@@ -202,8 +202,8 @@ func Test_fsmS_announceSensor_Error(t *testing.T) {
 		agentData: &agentHostData{
 			host: u.Hostname(),
 			from: &fromS{},
+			port: u.Port(),
 		},
-		agentPort: u.Port(),
 		fsm: f.NewFSM(
 			"unannounced",
 			f.Events{
@@ -259,8 +259,8 @@ func Test_fsmS_lookupAgentHost(t *testing.T) {
 		agentData: &agentHostData{
 			host: u.Hostname(),
 			from: &fromS{},
+			port: u.Port(),
 		},
-		agentPort:                  u.Port(),
 		lookupAgentHostRetryPeriod: 0,
 		fsm: f.NewFSM(
 			"init",

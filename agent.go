@@ -54,6 +54,9 @@ type agentHostData struct {
 	// host is the agent host. It can be updated via default gateway or a new client announcement.
 	host string
 
+	// port id the agent port.
+	port string
+
 	// from is the agent information sent with each span in the "from" (span.f) section. it's format is as follows:
 	// {e: "entityId", h: "hostAgentId", hl: trueIfServerlessPlatform, cp: "The cloud provider for a hostless span"}
 	// Only span.f.e is mandatory.
@@ -107,6 +110,16 @@ func newServerlessAgentFromS(entityID, provider string) *fromS {
 	}
 }
 
+func makeHostURL(agentData agentHostData, prefix string) string {
+	url := "http://" + agentData.host + ":" + agentData.port + prefix
+
+	if prefix[len(prefix)-1:] == "." && agentData.from.EntityID != "" {
+		url += agentData.from.EntityID
+	}
+
+	return url
+}
+
 type httpClient interface {
 	Do(req *http.Request) (*http.Response, error)
 }
@@ -140,6 +153,7 @@ func newAgent(serviceName, host string, port int, logger LeveledLogger) *agentS 
 	agent := &agentS{
 		agentData: &agentHostData{
 			host: host,
+			port: strconv.Itoa(port),
 			from: &fromS{},
 		},
 		port:            strconv.Itoa(port),
@@ -154,7 +168,7 @@ func newAgent(serviceName, host string, port int, logger LeveledLogger) *agentS 
 	}
 
 	agent.mu.Lock()
-	agent.fsm = newFSM(agent.agentData, logger, agent.port)
+	agent.fsm = newFSM(agent.agentData, logger)
 	agent.mu.Unlock()
 
 	return agent
@@ -175,7 +189,7 @@ func (agent *agentS) SendMetrics(data acceptor.Metrics) error {
 		agent.logger.Debug("agent got malformed PID %q", agent.agentData.from.EntityID)
 	}
 
-	if err = agent.request(agent.makeURL(agentDataURL), "POST", acceptor.GoProcessData{
+	if err = agent.request(makeHostURL(*agent.agentData, agentDataURL), "POST", acceptor.GoProcessData{
 		PID:      pid,
 		Snapshot: agent.snapshot.Collect(),
 		Metrics:  data,
@@ -191,7 +205,7 @@ func (agent *agentS) SendMetrics(data acceptor.Metrics) error {
 
 // SendEvent sends an event using Instana Events API
 func (agent *agentS) SendEvent(event *EventData) error {
-	err := agent.request(agent.makeURL(agentEventURL), "POST", event)
+	err := agent.request(makeHostURL(*agent.agentData, agentEventURL), "POST", event)
 	if err != nil {
 		// do not reset the agent as it might be not initialized at this state yet
 		agent.logger.Warn("failed to send event ", event.Title, " to the host agent: ", err)
@@ -208,7 +222,7 @@ func (agent *agentS) SendSpans(spans []Span) error {
 		spans[i].From = agent.agentData.from
 	}
 
-	err := agent.request(agent.makeURL(agentTracesURL), "POST", spans)
+	err := agent.request(makeHostURL(*agent.agentData, agentTracesURL), "POST", spans)
 	if err != nil {
 		if err == payloadTooLargeErr {
 			agent.printPayloadTooLargeErrInfoOnce.Do(
@@ -244,7 +258,7 @@ func (agent *agentS) SendProfiles(profiles []autoprofile.Profile) error {
 		agentProfiles = append(agentProfiles, hostAgentProfile{p, agent.agentData.from.EntityID})
 	}
 
-	err := agent.request(agent.makeURL(agentProfilesURL), "POST", agentProfiles)
+	err := agent.request(makeHostURL(*agent.agentData, agentProfilesURL), "POST", agentProfiles)
 	if err != nil {
 		agent.logger.Error("failed to send profile data to the host agent: ", err)
 		agent.reset()
@@ -257,20 +271,6 @@ func (agent *agentS) SendProfiles(profiles []autoprofile.Profile) error {
 
 func (agent *agentS) setLogger(l LeveledLogger) {
 	agent.logger = l
-}
-
-func (agent *agentS) makeURL(prefix string) string {
-	return agent.makeHostURL(agent.agentData.host, prefix)
-}
-
-func (agent *agentS) makeHostURL(host string, prefix string) string {
-	url := "http://" + host + ":" + agent.port + prefix
-
-	if prefix[len(prefix)-1:] == "." && agent.agentData.from.EntityID != "" {
-		url += agent.agentData.from.EntityID
-	}
-
-	return url
 }
 
 // All usages are now with POST method

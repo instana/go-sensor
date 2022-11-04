@@ -39,7 +39,6 @@ type fsmS struct {
 	expDelayFunc               func(retryNumber int) time.Duration
 	lookupAgentHostRetryPeriod time.Duration
 	logger                     LeveledLogger
-	agentPort                  string
 }
 
 func newHostAgentFromS(pid int, hostID string) *fromS {
@@ -49,7 +48,7 @@ func newHostAgentFromS(pid int, hostID string) *fromS {
 	}
 }
 
-func newFSM(ahd *agentHostData, logger LeveledLogger, port string) *fsmS {
+func newFSM(ahd *agentHostData, logger LeveledLogger) *fsmS {
 	logger.Warn("Stan is on the scene. Starting Instana instrumentation.")
 	logger.Debug("initializing fsm")
 
@@ -59,7 +58,6 @@ func newFSM(ahd *agentHostData, logger LeveledLogger, port string) *fsmS {
 		expDelayFunc:               expDelay,
 		logger:                     logger,
 		lookupAgentHostRetryPeriod: retryPeriod,
-		agentPort:                  port,
 	}
 
 	ret.fsm = f.NewFSM(
@@ -98,7 +96,7 @@ func (r *fsmS) lookupAgentHost(e *f.Event) {
 
 func (r *fsmS) checkHost(e *f.Event, host string) {
 	r.logger.Debug("checking host ", r.agentData.host)
-	url := "http://" + r.agentData.host + ":" + r.agentPort + "/"
+	url := makeHostURL(*r.agentData, "/")
 
 	resp, err := http.Get(url)
 
@@ -134,7 +132,7 @@ func (r *fsmS) checkHost(e *f.Event, host string) {
 			return
 		}
 
-		url := "http://" + r.agentData.host + ":" + r.agentPort + "/"
+		url := makeHostURL(*r.agentData, "/")
 
 		resp, err := http.Get(url)
 
@@ -217,7 +215,9 @@ func (r *fsmS) announceSensor(e *f.Event) {
 
 		client := http.DefaultClient
 
-		req, err := http.NewRequest(http.MethodPut, "http://"+r.agentData.host+":"+r.agentPort+agentDiscoveryURL, bytes.NewBuffer(jsonData))
+		u := makeHostURL(*r.agentData, agentDiscoveryURL)
+
+		req, err := http.NewRequest(http.MethodPut, u, bytes.NewBuffer(jsonData))
 
 		if err != nil {
 			r.handleRetries(e)
@@ -301,8 +301,7 @@ func (r *fsmS) getDiscoveryS() *discoveryS {
 func (r *fsmS) testAgent(e *f.Event) {
 	r.logger.Debug("testing communication with the agent")
 	go func() {
-		// TODO: url is missing pid at the end
-		u := "http://" + r.agentData.host + ":" + r.agentPort + agentDataURL
+		u := makeHostURL(*r.agentData, agentDataURL)
 
 		resp, err := http.Head(u)
 
