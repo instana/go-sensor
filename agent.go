@@ -112,9 +112,6 @@ type httpClient interface {
 }
 
 type agentS struct {
-	// from *fromS
-	// host string
-
 	// agentData encapsulates info about the agent host and fromS. This is a shared information between the agent and
 	// the fsm layer, so we use this wrapper to prevent passing data from one side to the other in a more sophisticated
 	// way.
@@ -183,7 +180,6 @@ func (agent *agentS) SendMetrics(data acceptor.Metrics) error {
 		Snapshot: agent.snapshot.Collect(),
 		Metrics:  data,
 	}); err != nil {
-		fmt.Println(agent.makeURL(agentDataURL))
 		agent.logger.Error("failed to send metrics to the host agent: ", err)
 		agent.reset()
 

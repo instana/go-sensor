@@ -245,7 +245,6 @@ func (r *fsmS) announceSensor(e *f.Event) {
 
 		r.logger.Info("Host agent available. We're in business. Announced pid:", resp.Pid)
 
-		// this function was moved from agent.go to here
 		r.applyHostAgentSettings(resp)
 
 		r.retriesLeft = maximumRetries
