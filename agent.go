@@ -298,6 +298,8 @@ func (agent *agentS) request(url string, method string, data interface{}) error 
 
 	req = req.WithContext(ctx)
 
+	req.Header.Set("Content-Type", "application/json")
+
 	_, err = agent.client.Do(req)
 
 	return err
