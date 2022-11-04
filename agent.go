@@ -273,7 +273,6 @@ func (agent *agentS) setLogger(l LeveledLogger) {
 	agent.logger = l
 }
 
-// All usages are now with POST method
 // request will overwrite the client timeout for a single request
 func (agent *agentS) request(url string, method string, data interface{}) error {
 	ctx, cancel := context.WithTimeout(context.Background(), agent.clientTimeout)
