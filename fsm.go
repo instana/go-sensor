@@ -166,18 +166,17 @@ func (r *fsmS) lookupSuccess(host string) {
 	r.fsm.Event(eLookup)
 }
 
-func (r *fsmS) handleRetries(e *f.Event) {
+func (r *fsmS) handleRetries(e *f.Event, cb func(e *f.Event), retryFailMsg, retryMsg string) {
 	r.retriesLeft--
 	if r.retriesLeft == 0 {
-		r.logger.Error("Couldn't announce the sensor after reaching the maximum amount of attempts.")
+		r.logger.Error(retryFailMsg)
 		r.fsm.Event(eInit)
 		return
 	}
 
-	r.logger.Debug("Cannot announce sensor. Scheduling retry.")
-
+	r.logger.Debug(retryMsg)
 	retryNumber := maximumRetries - r.retriesLeft + 1
-	r.scheduleRetryWithExponentialDelay(e, r.announceSensor, retryNumber)
+	r.scheduleRetryWithExponentialDelay(e, cb, retryNumber)
 }
 
 func (r *fsmS) applyHostAgentSettings(resp agentResponse) {
@@ -207,6 +206,9 @@ func (r *fsmS) announceSensor(e *f.Event) {
 			}
 		}()
 
+		retryFailedMsg := "Couldn't announce the sensor after reaching the maximum amount of attempts."
+		retryMsg := "Cannot announce sensor. Scheduling retry."
+
 		d := r.getDiscoveryS()
 
 		jsonData, _ := json.Marshal(d)
@@ -220,7 +222,7 @@ func (r *fsmS) announceSensor(e *f.Event) {
 		req, err := http.NewRequest(http.MethodPut, u, bytes.NewBuffer(jsonData))
 
 		if err != nil {
-			r.handleRetries(e)
+			r.handleRetries(e, r.announceSensor, retryFailedMsg, retryMsg)
 			return
 		}
 
@@ -229,7 +231,7 @@ func (r *fsmS) announceSensor(e *f.Event) {
 		badResponse := res != nil && (res.StatusCode < 200 || res.StatusCode >= 300)
 
 		if err != nil || badResponse {
-			r.handleRetries(e)
+			r.handleRetries(e, r.announceSensor, retryFailedMsg, retryMsg)
 			return
 		}
 
@@ -237,7 +239,7 @@ func (r *fsmS) announceSensor(e *f.Event) {
 		defer res.Body.Close()
 
 		if err != nil {
-			r.handleRetries(e)
+			r.handleRetries(e, r.announceSensor, retryFailedMsg, retryMsg)
 			return
 		}
 
@@ -302,25 +304,16 @@ func (r *fsmS) testAgent(e *f.Event) {
 	r.logger.Debug("testing communication with the agent")
 	go func() {
 		u := makeHostURL(*r.agentData, agentDataURL)
-
 		resp, err := http.Head(u)
-
 		badResponse := resp != nil && (resp.StatusCode < 200 || resp.StatusCode >= 300)
 
-		// TODO: to put this piece of code i na function
 		if err != nil || badResponse {
-			r.logger.Debug("Agent is not yet ready. Scheduling retry.")
-			r.retriesLeft--
-			if r.retriesLeft > 0 {
-				retryNumber := maximumRetries - r.retriesLeft + 1
-				r.scheduleRetryWithExponentialDelay(e, r.testAgent, retryNumber)
-			} else {
-				r.fsm.Event(eInit)
-			}
-		} else {
-			r.retriesLeft = maximumRetries
-			r.fsm.Event(eTest)
+			r.handleRetries(e, r.testAgent, "Couldn't announce the sensor after reaching the maximum amount of attempts.", "Agent is not yet ready. Scheduling retry.")
+			return
 		}
+
+		r.retriesLeft = maximumRetries
+		r.fsm.Event(eTest)
 	}()
 }
 
