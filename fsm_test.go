@@ -16,24 +16,25 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func getTestServer(fn func(w http.ResponseWriter, r *http.Request)) *httptest.Server {
+	handler := http.NewServeMux()
+	handler.HandleFunc("/", fn)
+	return httptest.NewServer(handler)
+}
+
 func Test_fsmS_testAgent(t *testing.T) {
 	// Forces the mocked agent to fail with HTTP 400 in the first call to lead fsm to retry once
 	var serverGaveErrorOnFirstCall bool
 
-	handler := http.NewServeMux()
-
-	handler.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+	server := getTestServer(func(w http.ResponseWriter, r *http.Request) {
 		if serverGaveErrorOnFirstCall {
-			// simulate HTTP success
 			w.WriteHeader(http.StatusOK)
 		} else {
-			// simulate HTTP error
 			serverGaveErrorOnFirstCall = true
 			w.WriteHeader(http.StatusBadRequest)
 		}
 	})
 
-	server := httptest.NewServer(handler)
 	defer server.Close()
 
 	surl := server.URL
@@ -74,14 +75,10 @@ func Test_fsmS_testAgent(t *testing.T) {
 
 func Test_fsmS_testAgent_Error(t *testing.T) {
 	// Forces the mocked agent to fail with HTTP 400 to lead fsm to retry
-	handler := http.NewServeMux()
-
-	handler.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		// simulate errors
+	server := getTestServer(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 	})
 
-	server := httptest.NewServer(handler)
 	defer server.Close()
 
 	surl := server.URL
@@ -127,22 +124,15 @@ func Test_fsmS_announceSensor(t *testing.T) {
 	// Forces the mocked agent to fail with HTTP 400 in the first call to lead fsm to retry once
 	var serverGaveErrorOnFirstCall bool
 
-	handler := http.NewServeMux()
-
-	// simulate errors and successful requests
-	handler.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+	server := getTestServer(func(w http.ResponseWriter, r *http.Request) {
 		if serverGaveErrorOnFirstCall {
-			// simulate HTTP success
 			pid := strconv.FormatInt(int64(os.Getpid()), 10)
 			io.WriteString(w, `{"pid":`+pid+`}`)
 		} else {
-			// simulate HTTP error
 			serverGaveErrorOnFirstCall = true
 			w.WriteHeader(http.StatusBadRequest)
 		}
 	})
-
-	server := httptest.NewServer(handler)
 	defer server.Close()
 
 	surl := server.URL
@@ -181,14 +171,9 @@ func Test_fsmS_announceSensor(t *testing.T) {
 }
 
 func Test_fsmS_announceSensor_Error(t *testing.T) {
-	handler := http.NewServeMux()
-
-	handler.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		// simulate HTTP error
+	server := getTestServer(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 	})
-
-	server := httptest.NewServer(handler)
 	defer server.Close()
 
 	surl := server.URL
@@ -230,22 +215,15 @@ func Test_fsmS_lookupAgentHost(t *testing.T) {
 	// Forces the mocked agent to fail with HTTP 400 in the first call to lead fsm to retry once
 	var serverGaveErrorOnFirstCall bool
 
-	handler := http.NewServeMux()
-
-	// simulate errors and successful requests
-	handler.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+	server := getTestServer(func(w http.ResponseWriter, r *http.Request) {
 		if serverGaveErrorOnFirstCall {
-			// simulate HTTP success
 			w.Header().Add("Server", agentHeader)
 			w.WriteHeader(http.StatusOK)
 		} else {
-			// simulate HTTP error
 			serverGaveErrorOnFirstCall = true
 			w.WriteHeader(http.StatusBadRequest)
 		}
 	})
-
-	server := httptest.NewServer(handler)
 	defer server.Close()
 
 	surl := server.URL
