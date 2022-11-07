@@ -45,7 +45,7 @@ func TestSpanKind_String(t *testing.T) {
 
 func TestNewSDKSpanData(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	tracer := instana.NewTracerWithEverything(&instana.Options{}, recorder)
+	tracer := instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder)
 	defer instana.ShutdownSensor()
 
 	sp := tracer.StartSpan("sdk",
@@ -78,7 +78,7 @@ func TestNewSDKSpanData(t *testing.T) {
 
 func TestSpanData_CustomTags(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	tracer := instana.NewTracerWithEverything(&instana.Options{}, recorder)
+	tracer := instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder)
 	defer instana.ShutdownSensor()
 
 	sp := tracer.StartSpan("g.http", opentracing.Tags{

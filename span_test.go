@@ -22,11 +22,12 @@ func TestBasicSpan(t *testing.T) {
 		Tracer: instana.TracerOptions{
 			CollectableHTTPHeaders: []string{"x-custom-header-1", "x-custom-header-2"},
 		},
+		AgentClient: alwaysReadyClient{},
 	})
 	defer instana.ShutdownSensor()
 
 	recorder := instana.NewTestRecorder()
-	tracer := instana.NewTracerWithEverything(&instana.Options{}, recorder)
+	tracer := instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder)
 
 	start := time.Now()
 	sp := tracer.StartSpan("test")
@@ -56,7 +57,7 @@ func TestBasicSpan(t *testing.T) {
 
 func TestSpanHeritage(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	tracer := instana.NewTracerWithEverything(&instana.Options{}, recorder)
+	tracer := instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder)
 	defer instana.ShutdownSensor()
 
 	parentSpan := tracer.StartSpan("parent")
@@ -95,7 +96,7 @@ func TestSpanHeritage(t *testing.T) {
 func TestSpanBaggage(t *testing.T) {
 	const op = "test"
 	recorder := instana.NewTestRecorder()
-	tracer := instana.NewTracerWithEverything(&instana.Options{}, recorder)
+	tracer := instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder)
 	defer instana.ShutdownSensor()
 
 	sp := tracer.StartSpan(op)
@@ -115,7 +116,7 @@ func TestSpanBaggage(t *testing.T) {
 func TestSpanTags(t *testing.T) {
 	const op = "test"
 	recorder := instana.NewTestRecorder()
-	tracer := instana.NewTracerWithEverything(&instana.Options{}, recorder)
+	tracer := instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder)
 	defer instana.ShutdownSensor()
 
 	sp := tracer.StartSpan(op)
@@ -134,7 +135,7 @@ func TestSpanTags(t *testing.T) {
 
 func TestOTLogError(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	tracer := instana.NewTracerWithEverything(&instana.Options{}, recorder)
+	tracer := instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder)
 	defer instana.ShutdownSensor()
 
 	sp := tracer.StartSpan("test")
@@ -157,7 +158,7 @@ func TestOTLogError(t *testing.T) {
 
 func TestSpanErrorLogKV(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	tracer := instana.NewTracerWithEverything(&instana.Options{}, recorder)
+	tracer := instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder)
 	defer instana.ShutdownSensor()
 
 	sp := tracer.StartSpan("test")
@@ -189,7 +190,7 @@ func TestSpanErrorLogKV(t *testing.T) {
 
 func TestSpan_LogFields(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	tracer := instana.NewTracerWithEverything(&instana.Options{}, recorder)
+	tracer := instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder)
 	defer instana.ShutdownSensor()
 
 	examples := map[string]struct {
@@ -261,7 +262,7 @@ func TestSpan_LogFields(t *testing.T) {
 
 func TestSpan_Suppressed_StartSpanOption(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	tracer := instana.NewTracerWithEverything(&instana.Options{}, recorder)
+	tracer := instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder)
 	defer instana.ShutdownSensor()
 
 	sp := tracer.StartSpan("test", instana.SuppressTracing())
@@ -272,7 +273,7 @@ func TestSpan_Suppressed_StartSpanOption(t *testing.T) {
 
 func TestSpan_Suppressed_SetTag(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	tracer := instana.NewTracerWithEverything(&instana.Options{}, recorder)
+	tracer := instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder)
 	defer instana.ShutdownSensor()
 
 	sp := tracer.StartSpan("test")

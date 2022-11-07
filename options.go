@@ -42,6 +42,8 @@ type Options struct {
 	// Tracer contains tracer-specific configuration used by all tracers
 	Tracer TracerOptions
 
+	AgentClient AgentClient
+
 	disableW3CTraceCorrelation bool
 }
 

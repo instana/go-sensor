@@ -20,7 +20,8 @@ import (
 func TestWrapSQLConnector_Exec(t *testing.T) {
 	recorder := instana.NewTestRecorder()
 	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{
-		Service: "go-sensor-test",
+		Service:     "go-sensor-test",
+		AgentClient: alwaysReadyClient{},
 	}, recorder))
 	defer instana.ShutdownSensor()
 
@@ -61,7 +62,8 @@ func TestWrapSQLConnector_Exec(t *testing.T) {
 func TestWrapSQLConnector_Exec_Error(t *testing.T) {
 	recorder := instana.NewTestRecorder()
 	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{
-		Service: "go-sensor-test",
+		Service:     "go-sensor-test",
+		AgentClient: alwaysReadyClient{},
 	}, recorder))
 	defer instana.ShutdownSensor()
 
@@ -101,7 +103,8 @@ func TestWrapSQLConnector_Exec_Error(t *testing.T) {
 func TestWrapSQLConnector_Query(t *testing.T) {
 	recorder := instana.NewTestRecorder()
 	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{
-		Service: "go-sensor-test",
+		Service:     "go-sensor-test",
+		AgentClient: alwaysReadyClient{},
 	}, recorder))
 	defer instana.ShutdownSensor()
 
@@ -142,7 +145,8 @@ func TestWrapSQLConnector_Query(t *testing.T) {
 func TestWrapSQLConnector_Query_Error(t *testing.T) {
 	recorder := instana.NewTestRecorder()
 	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{
-		Service: "go-sensor-test",
+		Service:     "go-sensor-test",
+		AgentClient: alwaysReadyClient{},
 	}, recorder))
 	defer instana.ShutdownSensor()
 

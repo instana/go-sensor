@@ -20,8 +20,10 @@ import (
 func TestInstrumentSQLDriver(t *testing.T) {
 	recorder := instana.NewTestRecorder()
 	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{
-		Service: "go-sensor-test",
+		Service:     "go-sensor-test",
+		AgentClient: alwaysReadyClient{},
 	}, recorder))
+
 	defer instana.ShutdownSensor()
 
 	instana.InstrumentSQLDriver(s, "test_register_driver", sqlDriver{})
@@ -33,7 +35,8 @@ func TestInstrumentSQLDriver(t *testing.T) {
 func TestOpenSQLDB(t *testing.T) {
 	recorder := instana.NewTestRecorder()
 	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{
-		Service: "go-sensor-test",
+		Service:     "go-sensor-test",
+		AgentClient: alwaysReadyClient{},
 	}, recorder))
 	defer instana.ShutdownSensor()
 
@@ -113,7 +116,8 @@ func TestOpenSQLDB(t *testing.T) {
 func TestOpenSQLDB_URIConnString(t *testing.T) {
 	recorder := instana.NewTestRecorder()
 	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{
-		Service: "go-sensor-test",
+		Service:     "go-sensor-test",
+		AgentClient: alwaysReadyClient{},
 	}, recorder))
 	defer instana.ShutdownSensor()
 
@@ -152,7 +156,8 @@ func TestOpenSQLDB_URIConnString(t *testing.T) {
 func TestOpenSQLDB_PostgresKVConnString(t *testing.T) {
 	recorder := instana.NewTestRecorder()
 	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{
-		Service: "go-sensor-test",
+		Service:     "go-sensor-test",
+		AgentClient: alwaysReadyClient{},
 	}, recorder))
 	defer instana.ShutdownSensor()
 
@@ -191,7 +196,8 @@ func TestOpenSQLDB_PostgresKVConnString(t *testing.T) {
 func TestOpenSQLDB_MySQLKVConnString(t *testing.T) {
 	recorder := instana.NewTestRecorder()
 	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{
-		Service: "go-sensor-test",
+		Service:     "go-sensor-test",
+		AgentClient: alwaysReadyClient{},
 	}, recorder))
 	defer instana.ShutdownSensor()
 
@@ -229,7 +235,8 @@ func TestOpenSQLDB_MySQLKVConnString(t *testing.T) {
 
 func TestNoPanicWithNotParsableConnectionString(t *testing.T) {
 	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{
-		Service: "go-sensor-test",
+		Service:     "go-sensor-test",
+		AgentClient: alwaysReadyClient{},
 	}, instana.NewTestRecorder()))
 	defer instana.ShutdownSensor()
 
@@ -244,7 +251,8 @@ func TestNoPanicWithNotParsableConnectionString(t *testing.T) {
 
 func TestProcedureWithCheckerOnStmt(t *testing.T) {
 	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{
-		Service: "go-sensor-test",
+		Service:     "go-sensor-test",
+		AgentClient: alwaysReadyClient{},
 	}, instana.NewTestRecorder()))
 	defer instana.ShutdownSensor()
 

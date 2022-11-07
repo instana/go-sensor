@@ -28,7 +28,7 @@ const (
 	defaultServerlessTimeout = 500 * time.Millisecond
 )
 
-type agentClient interface {
+type AgentClient interface {
 	Ready() bool
 	SendMetrics(data acceptor.Metrics) error
 	SendEvent(event *EventData) error
@@ -54,7 +54,7 @@ type sensorS struct {
 	serviceName string
 
 	mu    sync.RWMutex
-	agent agentClient
+	agent AgentClient
 }
 
 var (
@@ -92,8 +92,13 @@ func newSensor(options *Options) *sensorS {
 		}
 	}
 
-	var agent agentClient
-	if agentEndpoint := os.Getenv("INSTANA_ENDPOINT_URL"); agentEndpoint != "" {
+	var agent AgentClient
+
+	if options.AgentClient != nil {
+		agent = options.AgentClient
+	}
+
+	if agentEndpoint := os.Getenv("INSTANA_ENDPOINT_URL"); agentEndpoint != "" && agent == nil {
 		s.logger.Debug("INSTANA_ENDPOINT_URL= is set, switching to the serverless mode")
 
 		timeout, err := parseInstanaTimeout(os.Getenv("INSTANA_TIMEOUT"))
@@ -133,7 +138,7 @@ func (r *sensorS) setLogger(l LeveledLogger) {
 	}
 }
 
-func (r *sensorS) setAgent(agent agentClient) {
+func (r *sensorS) setAgent(agent AgentClient) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
@@ -142,7 +147,7 @@ func (r *sensorS) setAgent(agent agentClient) {
 
 // Agent returns the agent client used by the global sensor. It will return a noopAgent that is never ready
 // until both the global sensor and its agent are initialized
-func (r *sensorS) Agent() agentClient {
+func (r *sensorS) Agent() AgentClient {
 	if r == nil {
 		return noopAgent{}
 	}
@@ -233,7 +238,7 @@ func ShutdownSensor() {
 	muSensor.Unlock()
 }
 
-func newServerlessAgent(serviceName, agentEndpoint, agentKey string, client *http.Client, logger LeveledLogger) agentClient {
+func newServerlessAgent(serviceName, agentEndpoint, agentKey string, client *http.Client, logger LeveledLogger) AgentClient {
 	switch {
 	case os.Getenv("AWS_EXECUTION_ENV") == "AWS_ECS_FARGATE" && os.Getenv("ECS_CONTAINER_METADATA_URI") != "":
 		// AWS Fargate

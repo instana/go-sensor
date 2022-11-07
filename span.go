@@ -78,8 +78,13 @@ func (r *spanS) FinishWithOptions(opts ot.FinishOptions) {
 
 	r.Duration = duration
 	if !r.context.Suppressed {
-		r.tracer.recorder.RecordSpan(r)
-		r.sendOpenTracingLogRecords()
+		if sensor.Agent().Ready() {
+			r.tracer.recorder.RecordSpan(r)
+			r.sendOpenTracingLogRecords()
+		} else {
+			delayed.setSpan(r)
+		}
+
 	}
 }
 
