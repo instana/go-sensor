@@ -4,13 +4,10 @@
 package instana
 
 import (
-	"bytes"
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"math"
 	"net"
-	"net/http"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -32,7 +29,7 @@ const (
 )
 
 type fsmS struct {
-	agentData                  *agentHostData
+	agentComm                  *agentCommunicator
 	fsm                        *f.FSM
 	timer                      *time.Timer
 	retriesLeft                int
@@ -48,12 +45,12 @@ func newHostAgentFromS(pid int, hostID string) *fromS {
 	}
 }
 
-func newFSM(ahd *agentHostData, logger LeveledLogger) *fsmS {
+func newFSM(ahd *agentCommunicator, logger LeveledLogger) *fsmS {
 	logger.Warn("Stan is on the scene. Starting Instana instrumentation.")
 	logger.Debug("initializing fsm")
 
 	ret := &fsmS{
-		agentData:                  ahd,
+		agentComm:                  ahd,
 		retriesLeft:                maximumRetries,
 		expDelayFunc:               expDelay,
 		logger:                     logger,
@@ -91,22 +88,15 @@ func (r *fsmS) scheduleRetryWithExponentialDelay(e *f.Event, cb func(e *f.Event)
 }
 
 func (r *fsmS) lookupAgentHost(e *f.Event) {
-	go r.checkHost(e, r.agentData.host)
+	go r.checkHost(e, r.agentComm.host)
 }
 
 func (r *fsmS) checkHost(e *f.Event, host string) {
-	r.logger.Debug("checking host ", r.agentData.host)
-	url := makeHostURL(*r.agentData, "/")
+	r.logger.Debug("checking host ", r.agentComm.host)
 
-	resp, err := http.Get(url)
+	header := r.agentComm.getServerHeader()
 
-	var header string
-
-	if err == nil {
-		header = resp.Header.Get("Server")
-	}
-
-	found := err == nil && header == agentHeader
+	found := header == agentHeader
 
 	// Agent host is found through the checkHost method, that attempts to read "Instana Agent" from the response header.
 	if found {
@@ -132,15 +122,7 @@ func (r *fsmS) checkHost(e *f.Event, host string) {
 			return
 		}
 
-		url := makeHostURL(*r.agentData, "/")
-
-		resp, err := http.Get(url)
-
-		var header string
-
-		if err == nil {
-			header = resp.Header.Get("Server")
-		}
+		header = r.agentComm.getServerHeader()
 
 		found := err == nil && header == agentHeader
 
@@ -161,7 +143,7 @@ func (r *fsmS) checkHost(e *f.Event, host string) {
 func (r *fsmS) lookupSuccess(host string) {
 	r.logger.Debug("agent lookup success ", host)
 
-	r.agentData.host = host
+	r.agentComm.host = host
 	r.retriesLeft = maximumRetries
 	r.fsm.Event(eLookup)
 }
@@ -180,7 +162,7 @@ func (r *fsmS) handleRetries(e *f.Event, cb func(e *f.Event), retryFailMsg, retr
 }
 
 func (r *fsmS) applyHostAgentSettings(resp agentResponse) {
-	r.agentData.from = newHostAgentFromS(int(resp.Pid), resp.HostID)
+	r.agentComm.from = newHostAgentFromS(int(resp.Pid), resp.HostID)
 
 	if resp.Secrets.Matcher != "" {
 		m, err := NamedMatcher(resp.Secrets.Matcher, resp.Secrets.List)
@@ -211,43 +193,16 @@ func (r *fsmS) announceSensor(e *f.Event) {
 
 		d := r.getDiscoveryS()
 
-		jsonData, _ := json.Marshal(d)
+		resp := r.agentComm.getAgentResponse(d)
 
-		var resp agentResponse
-
-		client := http.DefaultClient
-
-		u := makeHostURL(*r.agentData, agentDiscoveryURL)
-
-		req, err := http.NewRequest(http.MethodPut, u, bytes.NewBuffer(jsonData))
-
-		if err != nil {
+		if resp == nil {
 			r.handleRetries(e, r.announceSensor, retryFailedMsg, retryMsg)
 			return
 		}
-
-		res, err := client.Do(req)
-
-		badResponse := res != nil && (res.StatusCode < 200 || res.StatusCode >= 300)
-
-		if err != nil || badResponse {
-			r.handleRetries(e, r.announceSensor, retryFailedMsg, retryMsg)
-			return
-		}
-
-		respBytes, err := ioutil.ReadAll(res.Body)
-		defer res.Body.Close()
-
-		if err != nil {
-			r.handleRetries(e, r.announceSensor, retryFailedMsg, retryMsg)
-			return
-		}
-
-		json.Unmarshal(respBytes, &resp)
 
 		r.logger.Info("Host agent available. We're in business. Announced pid:", resp.Pid)
 
-		r.applyHostAgentSettings(resp)
+		r.applyHostAgentSettings(*resp)
 
 		r.retriesLeft = maximumRetries
 		r.fsm.Event(eAnnounce)
@@ -277,7 +232,7 @@ func (r *fsmS) getDiscoveryS() *discoveryS {
 	}
 
 	if _, err := os.Stat("/proc"); err == nil {
-		if addr, err := net.ResolveTCPAddr("tcp", r.agentData.host+":42699"); err == nil {
+		if addr, err := net.ResolveTCPAddr("tcp", r.agentComm.host+":42699"); err == nil {
 			if tcpConn, err := net.DialTCP("tcp", nil, addr); err == nil {
 				defer tcpConn.Close()
 
@@ -303,11 +258,7 @@ func (r *fsmS) getDiscoveryS() *discoveryS {
 func (r *fsmS) testAgent(e *f.Event) {
 	r.logger.Debug("testing communication with the agent")
 	go func() {
-		u := makeHostURL(*r.agentData, agentDataURL)
-		resp, err := http.Head(u)
-		badResponse := resp != nil && (resp.StatusCode < 200 || resp.StatusCode >= 300)
-
-		if err != nil || badResponse {
+		if !r.agentComm.pingAgent() {
 			r.handleRetries(e, r.testAgent, "Couldn't announce the sensor after reaching the maximum amount of attempts.", "Agent is not yet ready. Scheduling retry.")
 			return
 		}

@@ -57,13 +57,16 @@ func Test_agentS_SendSpans(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			ad := &agentHostData{host: "", from: &fromS{}}
-			agent := &agentS{agentData: ad, logger: defaultLogger, client: &httpClientMock{
-				resp: &http.Response{
-					StatusCode: 200,
-					Body:       ioutil.NopCloser(bytes.NewReader([]byte("{}"))),
+			ad := &agentCommunicator{
+				host: "", from: &fromS{},
+				client: &httpClientMock{
+					resp: &http.Response{
+						StatusCode: 200,
+						Body:       ioutil.NopCloser(bytes.NewReader([]byte("{}"))),
+					},
 				},
-			}}
+			}
+			agent := &agentS{agentComm: ad, logger: defaultLogger}
 			err := agent.SendSpans(tt.spans)
 
 			assert.NoError(t, err)
@@ -110,7 +113,7 @@ func Test_agentResponse_getExtraHTTPHeaders(t *testing.T) {
 
 func Test_agentApplyHostSettings(t *testing.T) {
 	fsm := &fsmS{
-		agentData: &agentHostData{
+		agentComm: &agentCommunicator{
 			host: "",
 			from: &fromS{},
 		},

@@ -4,12 +4,10 @@
 package instana
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"net/http"
 	"sort"
 	"strconv"
@@ -43,25 +41,6 @@ const (
 	maxContentLength      = 1024 * 1024 * 5
 	numberOfBigSpansToLog = 5
 )
-
-// Shared data between agent and FSM (aka, stuff that FSM changes in the Agent):
-// - agent.from
-// - agent.host
-// - sensor.options.Tracer.Secrets (comes from agentResonse.Secrets.Matcher)
-// - sensor.options.Tracer.CollectableHTTPHeaders (comes from agentResponse.getExtraHTTPHeaders)
-// *** sensor is global, so no need to pass it through functions ***
-type agentHostData struct {
-	// host is the agent host. It can be updated via default gateway or a new client announcement.
-	host string
-
-	// port id the agent port.
-	port string
-
-	// from is the agent information sent with each span in the "from" (span.f) section. it's format is as follows:
-	// {e: "entityId", h: "hostAgentId", hl: trueIfServerlessPlatform, cp: "The cloud provider for a hostless span"}
-	// Only span.f.e is mandatory.
-	from *fromS
-}
 
 type agentResponse struct {
 	Pid     uint32 `json:"pid"`
@@ -110,31 +89,20 @@ func newServerlessAgentFromS(entityID, provider string) *fromS {
 	}
 }
 
-func makeHostURL(agentData agentHostData, prefix string) string {
-	url := "http://" + agentData.host + ":" + agentData.port + prefix
-
-	if prefix[len(prefix)-1:] == "." && agentData.from.EntityID != "" {
-		url += agentData.from.EntityID
-	}
-
-	return url
-}
-
 type httpClient interface {
 	Do(req *http.Request) (*http.Response, error)
 }
 
 type agentS struct {
-	// agentData encapsulates info about the agent host and fromS. This is a shared information between the agent and
+	// agentComm encapsulates info about the agent host and fromS. This is a shared information between the agent and
 	// the fsm layer, so we use this wrapper to prevent passing data from one side to the other in a more sophisticated
 	// way.
-	agentData *agentHostData
+	agentComm *agentCommunicator
 	port      string
 
 	mu  sync.RWMutex
 	fsm *fsmS
 
-	client          httpClient
 	snapshot        *SnapshotCollector
 	logger          LeveledLogger
 	clientTimeout   time.Duration
@@ -151,15 +119,10 @@ func newAgent(serviceName, host string, port int, logger LeveledLogger) *agentS 
 	logger.Debug("initializing agent")
 
 	agent := &agentS{
-		agentData: &agentHostData{
-			host: host,
-			port: strconv.Itoa(port),
-			from: &fromS{},
-		},
+		agentComm:       newAgentCommunicator(host, strconv.Itoa(port), &fromS{}),
 		port:            strconv.Itoa(port),
 		clientTimeout:   clientTimeout,
 		announceTimeout: announceTimeout,
-		client:          &http.Client{Timeout: announceTimeout},
 		snapshot: &SnapshotCollector{
 			CollectionInterval: snapshotCollectionInterval,
 			ServiceName:        serviceName,
@@ -168,7 +131,7 @@ func newAgent(serviceName, host string, port int, logger LeveledLogger) *agentS 
 	}
 
 	agent.mu.Lock()
-	agent.fsm = newFSM(agent.agentData, logger)
+	agent.fsm = newFSM(agent.agentComm, logger)
 	agent.mu.Unlock()
 
 	return agent
@@ -184,12 +147,12 @@ func (agent *agentS) Ready() bool {
 
 // SendMetrics sends collected entity data to the host agent
 func (agent *agentS) SendMetrics(data acceptor.Metrics) error {
-	pid, err := strconv.Atoi(agent.agentData.from.EntityID)
-	if err != nil && agent.agentData.from.EntityID != "" {
-		agent.logger.Debug("agent got malformed PID %q", agent.agentData.from.EntityID)
+	pid, err := strconv.Atoi(agent.agentComm.from.EntityID)
+	if err != nil && agent.agentComm.from.EntityID != "" {
+		agent.logger.Debug("agent got malformed PID %q", agent.agentComm.from.EntityID)
 	}
 
-	if err = agent.request(makeHostURL(*agent.agentData, agentDataURL), "POST", acceptor.GoProcessData{
+	if err := agent.agentComm.sendDataToAgent(agentDataURL, acceptor.GoProcessData{
 		PID:      pid,
 		Snapshot: agent.snapshot.Collect(),
 		Metrics:  data,
@@ -205,7 +168,7 @@ func (agent *agentS) SendMetrics(data acceptor.Metrics) error {
 
 // SendEvent sends an event using Instana Events API
 func (agent *agentS) SendEvent(event *EventData) error {
-	err := agent.request(makeHostURL(*agent.agentData, agentEventURL), "POST", event)
+	err := agent.agentComm.sendDataToAgent(agentEventURL, event)
 	if err != nil {
 		// do not reset the agent as it might be not initialized at this state yet
 		agent.logger.Warn("failed to send event ", event.Title, " to the host agent: ", err)
@@ -219,10 +182,10 @@ func (agent *agentS) SendEvent(event *EventData) error {
 // SendSpans sends collected spans to the host agent
 func (agent *agentS) SendSpans(spans []Span) error {
 	for i := range spans {
-		spans[i].From = agent.agentData.from
+		spans[i].From = agent.agentComm.from
 	}
 
-	err := agent.request(makeHostURL(*agent.agentData, agentTracesURL), "POST", spans)
+	err := agent.agentComm.sendDataToAgent(agentTracesURL, spans)
 	if err != nil {
 		if err == payloadTooLargeErr {
 			agent.printPayloadTooLargeErrInfoOnce.Do(
@@ -255,10 +218,10 @@ type hostAgentProfile struct {
 func (agent *agentS) SendProfiles(profiles []autoprofile.Profile) error {
 	agentProfiles := make([]hostAgentProfile, 0, len(profiles))
 	for _, p := range profiles {
-		agentProfiles = append(agentProfiles, hostAgentProfile{p, agent.agentData.from.EntityID})
+		agentProfiles = append(agentProfiles, hostAgentProfile{p, agent.agentComm.from.EntityID})
 	}
 
-	err := agent.request(makeHostURL(*agent.agentData, agentProfilesURL), "POST", agentProfiles)
+	err := agent.agentComm.sendDataToAgent(agentProfilesURL, agentProfiles)
 	if err != nil {
 		agent.logger.Error("failed to send profile data to the host agent: ", err)
 		agent.reset()
@@ -271,38 +234,6 @@ func (agent *agentS) SendProfiles(profiles []autoprofile.Profile) error {
 
 func (agent *agentS) setLogger(l LeveledLogger) {
 	agent.logger = l
-}
-
-// request will overwrite the client timeout for a single request
-func (agent *agentS) request(url string, method string, data interface{}) error {
-	ctx, cancel := context.WithTimeout(context.Background(), agent.clientTimeout)
-	defer cancel()
-
-	var r io.Reader
-
-	if data != nil {
-		b, err := json.Marshal(data)
-
-		if err != nil {
-			return err
-		}
-
-		r = bytes.NewBuffer(b)
-	}
-
-	req, err := http.NewRequest(method, url, r)
-
-	if err != nil {
-		return err
-	}
-
-	req = req.WithContext(ctx)
-
-	req.Header.Set("Content-Type", "application/json")
-
-	_, err = agent.client.Do(req)
-
-	return err
 }
 
 func (agent *agentS) reset() {
