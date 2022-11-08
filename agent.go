@@ -153,6 +153,10 @@ func (agent *agentS) SendMetrics(data acceptor.Metrics) error {
 		Snapshot: agent.snapshot.Collect(),
 		Metrics:  data,
 	}); err != nil {
+		if err == payloadTooLargeErr {
+			agent.logger.Warn(`A batch of spans has been rejected because it is too large to be sent to the agent.`)
+		}
+
 		agent.logger.Error("failed to send metrics to the host agent: ", err)
 		agent.reset()
 
@@ -166,6 +170,10 @@ func (agent *agentS) SendMetrics(data acceptor.Metrics) error {
 func (agent *agentS) SendEvent(event *EventData) error {
 	err := agent.agentComm.sendDataToAgent(agentEventURL, event)
 	if err != nil {
+		if err == payloadTooLargeErr {
+			agent.logger.Warn(`A batch of spans has been rejected because it is too large to be sent to the agent.`)
+		}
+
 		// do not reset the agent as it might be not initialized at this state yet
 		agent.logger.Warn("failed to send event ", event.Title, " to the host agent: ", err)
 
@@ -219,6 +227,10 @@ func (agent *agentS) SendProfiles(profiles []autoprofile.Profile) error {
 
 	err := agent.agentComm.sendDataToAgent(agentProfilesURL, agentProfiles)
 	if err != nil {
+		if err == payloadTooLargeErr {
+			agent.logger.Warn(`A batch of spans has been rejected because it is too large to be sent to the agent.`)
+		}
+
 		agent.logger.Error("failed to send profile data to the host agent: ", err)
 		agent.reset()
 

@@ -145,7 +145,7 @@ func (a *agentCommunicator) sendDataToAgent(suffix string, data interface{}) err
 	ctx, cancel := context.WithTimeout(context.Background(), clientTimeout)
 	defer cancel()
 
-	var r io.Reader
+	var r *bytes.Buffer
 
 	if data != nil {
 		b, err := json.Marshal(data)
@@ -156,10 +156,9 @@ func (a *agentCommunicator) sendDataToAgent(suffix string, data interface{}) err
 
 		r = bytes.NewBuffer(b)
 
-		// if r > maxContentLength {
-		// 	// agent.logger.Warn(`A batch of spans has been rejected because it is too large to be sent to the agent.`)
-		// 	return payloadTooLargeErr
-		// }
+		if r.Len() > maxContentLength {
+			return payloadTooLargeErr
+		}
 	}
 
 	req, err := http.NewRequest(http.MethodPost, url, r)
