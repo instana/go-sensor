@@ -50,6 +50,15 @@ func (a *agentCommunicator) getServerHeader() string {
 
 	resp, err := a.client.Do(req)
 
+	if resp == nil {
+		return ""
+	}
+
+	defer func() {
+		io.CopyN(ioutil.Discard, resp.Body, 256<<10)
+		resp.Body.Close()
+	}()
+
 	if err == nil {
 		return resp.Header.Get("Server")
 	}
@@ -77,6 +86,11 @@ func (a *agentCommunicator) getAgentResponse(d *discoveryS) *agentResponse {
 		return nil
 	}
 
+	defer func() {
+		io.CopyN(ioutil.Discard, res.Body, 256<<10)
+		res.Body.Close()
+	}()
+
 	badResponse := res.StatusCode < 200 || res.StatusCode >= 300
 
 	if err != nil || badResponse {
@@ -84,7 +98,6 @@ func (a *agentCommunicator) getAgentResponse(d *discoveryS) *agentResponse {
 	}
 
 	respBytes, err := ioutil.ReadAll(res.Body)
-	defer res.Body.Close()
 
 	if err != nil {
 		return nil
@@ -114,6 +127,11 @@ func (a *agentCommunicator) pingAgent() bool {
 		return false
 	}
 
+	defer func() {
+		io.CopyN(ioutil.Discard, resp.Body, 256<<10)
+		resp.Body.Close()
+	}()
+
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		return false
 	}
@@ -122,8 +140,8 @@ func (a *agentCommunicator) pingAgent() bool {
 }
 
 // sendDataToAgent makes a POST to the agent sending some data as payload. eg: spans, events or metrics
-func (a *agentCommunicator) sendDataToAgent(sufix string, data interface{}) error {
-	url := a.urlBuilder(sufix)
+func (a *agentCommunicator) sendDataToAgent(suffix string, data interface{}) error {
+	url := a.urlBuilder(suffix)
 	ctx, cancel := context.WithTimeout(context.Background(), clientTimeout)
 	defer cancel()
 
@@ -137,6 +155,11 @@ func (a *agentCommunicator) sendDataToAgent(sufix string, data interface{}) erro
 		}
 
 		r = bytes.NewBuffer(b)
+
+		// if r > maxContentLength {
+		// 	// agent.logger.Warn(`A batch of spans has been rejected because it is too large to be sent to the agent.`)
+		// 	return payloadTooLargeErr
+		// }
 	}
 
 	req, err := http.NewRequest(http.MethodPost, url, r)
@@ -149,7 +172,12 @@ func (a *agentCommunicator) sendDataToAgent(sufix string, data interface{}) erro
 
 	req.Header.Set("Content-Type", "application/json")
 
-	_, err = a.client.Do(req)
+	resp, err := a.client.Do(req)
+
+	if resp != nil {
+		io.CopyN(ioutil.Discard, resp.Body, 256<<10)
+		resp.Body.Close()
+	}
 
 	return err
 }

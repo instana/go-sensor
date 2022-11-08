@@ -103,10 +103,8 @@ type agentS struct {
 	mu  sync.RWMutex
 	fsm *fsmS
 
-	snapshot        *SnapshotCollector
-	logger          LeveledLogger
-	clientTimeout   time.Duration
-	announceTimeout time.Duration
+	snapshot *SnapshotCollector
+	logger   LeveledLogger
 
 	printPayloadTooLargeErrInfoOnce sync.Once
 }
@@ -119,10 +117,8 @@ func newAgent(serviceName, host string, port int, logger LeveledLogger) *agentS 
 	logger.Debug("initializing agent")
 
 	agent := &agentS{
-		agentComm:       newAgentCommunicator(host, strconv.Itoa(port), &fromS{}),
-		port:            strconv.Itoa(port),
-		clientTimeout:   clientTimeout,
-		announceTimeout: announceTimeout,
+		agentComm: newAgentCommunicator(host, strconv.Itoa(port), &fromS{}),
+		port:      strconv.Itoa(port),
 		snapshot: &SnapshotCollector{
 			CollectionInterval: snapshotCollectionInterval,
 			ServiceName:        serviceName,
