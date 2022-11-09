@@ -29,7 +29,7 @@ type agentCommunicator struct {
 }
 
 // urlBuilder builds an Agent URL based on the sufix for the different Agent services.
-func (a agentCommunicator) urlBuilder(sufix string) string {
+func (a *agentCommunicator) urlBuilder(sufix string) string {
 	url := "http://" + a.host + ":" + a.port + sufix
 
 	if sufix[len(sufix)-1:] == "." && a.from.EntityID != "" {
