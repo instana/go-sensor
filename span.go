@@ -82,7 +82,8 @@ func (r *spanS) FinishWithOptions(opts ot.FinishOptions) {
 			r.tracer.recorder.RecordSpan(r)
 			r.sendOpenTracingLogRecords()
 		} else {
-			delayed.setSpan(r)
+			r.sendOpenTracingLogRecords()
+			delayed.append(r)
 		}
 
 	}
