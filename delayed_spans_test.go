@@ -33,81 +33,6 @@ func resetDelayedSpans() {
 	}
 }
 
-func TestProcessDelayedSpans(t *testing.T) {
-	defer resetDelayedSpans()
-
-	recorder := NewTestRecorder()
-	s := NewSensorWithTracer(NewTracerWithEverything(&Options{
-		Service: "go-sensor-test",
-		Tracer: TracerOptions{
-			Secrets: DefaultSecretsMatcher(),
-		},
-	}, recorder))
-	defer ShutdownSensor()
-
-	generateSomeTraffic(s, 2*maxDelayedSpans)
-
-	assert.Len(t, delayed.spans, maxDelayedSpans)
-
-	stop := make(chan struct{})
-	defer close(stop)
-
-	c := delayed.process(stop)
-
-	var spansProcessed []*spanS
-	for s := range c {
-		spansProcessed = append(spansProcessed, s)
-	}
-
-	assert.Len(t, spansProcessed, maxDelayedSpans)
-
-	for _, s := range spansProcessed {
-		assert.Equal(t, "q=term&secret=%3Credacted%3E", s.Tags["http.params"])
-	}
-}
-
-func TestParallelProcessDelayedSpans(t *testing.T) {
-	defer resetDelayedSpans()
-
-	recorder := NewTestRecorder()
-	s := NewSensorWithTracer(NewTracerWithEverything(&Options{
-		Service: "go-sensor-test",
-		Tracer: TracerOptions{
-			Secrets: DefaultSecretsMatcher(),
-		},
-	}, recorder))
-	defer ShutdownSensor()
-
-	generateSomeTraffic(s, maxDelayedSpans*100)
-
-	assert.Len(t, delayed.spans, maxDelayedSpans)
-
-	workers := 15
-	worker := 0
-	wg := sync.WaitGroup{}
-	wg.Add(workers)
-
-	var ops uint64
-
-	for worker < workers {
-		go func() {
-			stop := make(chan struct{})
-			c := delayed.process(stop)
-
-			for range c {
-				atomic.AddUint64(&ops, 1)
-			}
-
-			wg.Done()
-		}()
-		worker++
-	}
-
-	wg.Wait()
-
-	assert.Equal(t, uint64(maxDelayedSpans), ops)
-}
-
 func TestPartiallyFlushDelayedSpans(t *testing.T) {
 	defer resetDelayedSpans()
 
@@ -169,7 +94,7 @@ func TestParallelFlushDelayedSpans(t *testing.T) {
 	}, recorder))
 	defer ShutdownSensor()
 
-	generateSomeTraffic(s, maxDelayedSpans*100)
+	generateSomeTraffic(s, maxDelayedSpans*2)
 
 	assert.Len(t, delayed.spans, maxDelayedSpans)
 
