@@ -28,8 +28,8 @@ type agentCommunicator struct {
 	client httpClient
 }
 
-// urlBuilder builds an Agent URL based on the sufix for the different Agent services.
-func (a *agentCommunicator) urlBuilder(sufix string) string {
+// buildURL builds an Agent URL based on the sufix for the different Agent services.
+func (a *agentCommunicator) buildURL(sufix string) string {
 	url := "http://" + a.host + ":" + a.port + sufix
 
 	if sufix[len(sufix)-1:] == "." && a.from.EntityID != "" {
@@ -39,9 +39,9 @@ func (a *agentCommunicator) urlBuilder(sufix string) string {
 	return url
 }
 
-// getServerHeader attempts to retrieve the "Server" header key from the Agent
-func (a *agentCommunicator) getServerHeader() string {
-	url := a.urlBuilder("/")
+// serverHeader attempts to retrieve the "Server" header key from the Agent
+func (a *agentCommunicator) serverHeader() string {
+	url := a.buildURL("/")
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 
 	if err != nil {
@@ -66,13 +66,13 @@ func (a *agentCommunicator) getServerHeader() string {
 	return ""
 }
 
-// getAgentResponse attempts to retrieve the agent response containing its configuration
-func (a *agentCommunicator) getAgentResponse(d *discoveryS) *agentResponse {
+// agentResponse attempts to retrieve the agent response containing its configuration
+func (a *agentCommunicator) agentResponse(d *discoveryS) *agentResponse {
 	jsonData, _ := json.Marshal(d)
 
 	var resp agentResponse
 
-	u := a.urlBuilder(agentDiscoveryURL)
+	u := a.buildURL(agentDiscoveryURL)
 
 	req, err := http.NewRequest(http.MethodPut, u, bytes.NewBuffer(jsonData))
 
@@ -114,7 +114,7 @@ func (a *agentCommunicator) getAgentResponse(d *discoveryS) *agentResponse {
 
 // pingAgent send a HEAD request to the agent and returns true if it receives a response from it
 func (a *agentCommunicator) pingAgent() bool {
-	u := a.urlBuilder(agentDataURL)
+	u := a.buildURL(agentDataURL)
 	req, err := http.NewRequest(http.MethodHead, u, nil)
 
 	if err != nil {
@@ -141,7 +141,7 @@ func (a *agentCommunicator) pingAgent() bool {
 
 // sendDataToAgent makes a POST to the agent sending some data as payload. eg: spans, events or metrics
 func (a *agentCommunicator) sendDataToAgent(suffix string, data interface{}) error {
-	url := a.urlBuilder(suffix)
+	url := a.buildURL(suffix)
 	ctx, cancel := context.WithTimeout(context.Background(), clientTimeout)
 	defer cancel()
 

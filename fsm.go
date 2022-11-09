@@ -94,7 +94,7 @@ func (r *fsmS) lookupAgentHost(e *f.Event) {
 func (r *fsmS) checkHost(e *f.Event, host string) {
 	r.logger.Debug("checking host ", r.agentComm.host)
 
-	header := r.agentComm.getServerHeader()
+	header := r.agentComm.serverHeader()
 
 	found := header == agentHeader
 
@@ -122,7 +122,7 @@ func (r *fsmS) checkHost(e *f.Event, host string) {
 			return
 		}
 
-		header = r.agentComm.getServerHeader()
+		header = r.agentComm.serverHeader()
 
 		found := err == nil && header == agentHeader
 
@@ -193,7 +193,7 @@ func (r *fsmS) announceSensor(e *f.Event) {
 
 		d := r.getDiscoveryS()
 
-		resp := r.agentComm.getAgentResponse(d)
+		resp := r.agentComm.agentResponse(d)
 
 		if resp == nil {
 			r.handleRetries(e, r.announceSensor, retryFailedMsg, retryMsg)
