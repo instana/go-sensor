@@ -4,7 +4,6 @@ package instana
 
 import (
 	"net/url"
-	"strings"
 )
 
 const maxDelayedSpans = 500
@@ -44,19 +43,18 @@ func (ds *delayedSpans) process(stop chan struct{}) <-chan *spanS {
 						opts := t.Options()
 
 						newParams := url.Values{}
-						if httpParamsI, ok := s.Tags["http.params"]; ok {
-							if httpParams, ok := httpParamsI.(string); ok {
-								p := strings.Split(httpParams, "&")
-								for _, pair := range p {
-									kv := strings.Split(pair, "=")
+						if paramsTag, ok := s.Tags["http.params"]; ok {
+							if httpParams, ok := paramsTag.(string); ok {
+								p, err := url.ParseQuery(httpParams)
+								if err != nil {
+									continue
+								}
 
-									if len(kv) == 2 {
-										key, value := kv[0], kv[1]
-										if opts.Secrets.Match(key) {
-											newParams.Set(key, "<redacted>")
-										} else {
-											newParams.Set(key, value)
-										}
+								for key, value := range p {
+									if opts.Secrets.Match(key) {
+										newParams[key] = []string{"<redacted>"}
+									} else {
+										newParams[key] = value
 									}
 								}
 							}
@@ -92,18 +90,22 @@ func (ds *delayedSpans) flush() {
 			continue
 		}
 
-		if !agentReady || !ok {
+		if !agentReady {
 			stop <- struct{}{}
+		}
 
-			if s != nil {
-				ds.append(s)
-			}
-
-			for spanToDelayAgain := range c {
-				ds.append(spanToDelayAgain)
-			}
-
+		if !ok {
 			break
 		}
+
+		// put back in the queue
+		ds.append(s)
+
+		for spanToDelayAgain := range c {
+			ds.append(spanToDelayAgain)
+		}
+
+		break
+
 	}
 }
