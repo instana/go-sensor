@@ -28,20 +28,8 @@ const (
 	maximumRetries             = 3
 )
 
-type fsmAgent interface {
-	getHost() string
-	setHost(host string)
-	makeURL(prefix string) string
-	makeHostURL(host string, prefix string) string
-	applyHostAgentSettings(resp agentResponse)
-	requestHeader(url string, method string, header string) (string, error)
-	announceRequest(url string, method string, data interface{}, ret *agentResponse) (string, error)
-	head(url string) (string, error)
-}
-
 type fsmS struct {
-	name                       string
-	agent                      fsmAgent
+	agentComm                  *agentCommunicator
 	fsm                        *f.FSM
 	timer                      *time.Timer
 	retriesLeft                int
@@ -50,12 +38,19 @@ type fsmS struct {
 	logger                     LeveledLogger
 }
 
-func newFSM(agent fsmAgent, logger LeveledLogger) *fsmS {
+func newHostAgentFromS(pid int, hostID string) *fromS {
+	return &fromS{
+		EntityID: strconv.Itoa(pid),
+		HostID:   hostID,
+	}
+}
+
+func newFSM(ahd *agentCommunicator, logger LeveledLogger) *fsmS {
 	logger.Warn("Stan is on the scene. Starting Instana instrumentation.")
 	logger.Debug("initializing fsm")
 
 	ret := &fsmS{
-		agent:                      agent,
+		agentComm:                  ahd,
 		retriesLeft:                maximumRetries,
 		expDelayFunc:               expDelay,
 		logger:                     logger,
@@ -94,14 +89,15 @@ func (r *fsmS) scheduleRetryWithExponentialDelay(e *f.Event, cb func(e *f.Event)
 }
 
 func (r *fsmS) lookupAgentHost(e *f.Event) {
-	go r.checkHost(e, r.agent.getHost())
+	go r.checkHost(e, r.agentComm.host)
 }
 
 func (r *fsmS) checkHost(e *f.Event, host string) {
-	r.logger.Debug("checking host ", host)
-	header, err := r.agent.requestHeader(r.agent.makeHostURL(host, "/"), "GET", "Server")
+	r.logger.Debug("checking host ", r.agentComm.host)
 
-	found := err == nil && header == agentHeader
+	header := r.agentComm.serverHeader()
+
+	found := header == agentHeader
 
 	// Agent host is found through the checkHost method, that attempts to read "Instana Agent" from the response header.
 	if found {
@@ -127,7 +123,8 @@ func (r *fsmS) checkHost(e *f.Event, host string) {
 			return
 		}
 
-		header, err := r.agent.requestHeader(r.agent.makeHostURL(gateway, "/"), "GET", "Server")
+		header = r.agentComm.serverHeader()
+
 		found := err == nil && header == agentHeader
 
 		if found {
@@ -147,9 +144,39 @@ func (r *fsmS) checkHost(e *f.Event, host string) {
 func (r *fsmS) lookupSuccess(host string) {
 	r.logger.Debug("agent lookup success ", host)
 
-	r.agent.setHost(host)
+	r.agentComm.host = host
 	r.retriesLeft = maximumRetries
 	r.fsm.Event(eLookup)
+}
+
+func (r *fsmS) handleRetries(e *f.Event, cb func(e *f.Event), retryFailMsg, retryMsg string) {
+	r.retriesLeft--
+	if r.retriesLeft == 0 {
+		r.logger.Error(retryFailMsg)
+		r.fsm.Event(eInit)
+		return
+	}
+
+	r.logger.Debug(retryMsg)
+	retryNumber := maximumRetries - r.retriesLeft + 1
+	r.scheduleRetryWithExponentialDelay(e, cb, retryNumber)
+}
+
+func (r *fsmS) applyHostAgentSettings(resp agentResponse) {
+	r.agentComm.from = newHostAgentFromS(int(resp.Pid), resp.HostID)
+
+	if resp.Secrets.Matcher != "" {
+		m, err := NamedMatcher(resp.Secrets.Matcher, resp.Secrets.List)
+		if err != nil {
+			r.logger.Warn("failed to apply secrets matcher configuration: ", err)
+		} else {
+			sensor.options.Tracer.Secrets = m
+		}
+	}
+
+	if len(sensor.options.Tracer.CollectableHTTPHeaders) == 0 {
+		sensor.options.Tracer.CollectableHTTPHeaders = resp.getExtraHTTPHeaders()
+	}
 }
 
 func (r *fsmS) announceSensor(e *f.Event) {
@@ -162,33 +189,24 @@ func (r *fsmS) announceSensor(e *f.Event) {
 			}
 		}()
 
+		retryFailedMsg := "Couldn't announce the sensor after reaching the maximum amount of attempts."
+		retryMsg := "Cannot announce sensor. Scheduling retry."
+
 		d := r.getDiscoveryS()
 
-		var resp agentResponse
-		_, err := r.agent.announceRequest(r.agent.makeURL(agentDiscoveryURL), "PUT", d, &resp)
+		resp := r.agentComm.agentResponse(d)
 
-		if err != nil {
-			r.retriesLeft--
-			if r.retriesLeft == 0 {
-				r.logger.Error("Couldn't announce the sensor after reaching the maximum amount of attempts.")
-				r.fsm.Event(eInit)
-				return
-			} else {
-				r.logger.Debug("Cannot announce sensor. Scheduling retry.")
-			}
-
-			retryNumber := maximumRetries - r.retriesLeft + 1
-			r.scheduleRetryWithExponentialDelay(e, r.announceSensor, retryNumber)
-
+		if resp == nil {
+			r.handleRetries(e, r.announceSensor, retryFailedMsg, retryMsg)
 			return
 		}
 
 		r.logger.Info("Host agent available. We're in business. Announced pid:", resp.Pid)
-		r.agent.applyHostAgentSettings(resp)
+
+		r.applyHostAgentSettings(*resp)
 
 		r.retriesLeft = maximumRetries
 		r.fsm.Event(eAnnounce)
-
 	}()
 }
 
@@ -215,7 +233,7 @@ func (r *fsmS) getDiscoveryS() *discoveryS {
 	}
 
 	if _, err := os.Stat("/proc"); err == nil {
-		if addr, err := net.ResolveTCPAddr("tcp", r.agent.getHost()+":42699"); err == nil {
+		if addr, err := net.ResolveTCPAddr("tcp", r.agentComm.host+":42699"); err == nil {
 			if tcpConn, err := net.DialTCP("tcp", nil, addr); err == nil {
 				defer tcpConn.Close()
 
@@ -241,22 +259,13 @@ func (r *fsmS) getDiscoveryS() *discoveryS {
 func (r *fsmS) testAgent(e *f.Event) {
 	r.logger.Debug("testing communication with the agent")
 	go func() {
-		_, err := r.agent.head(r.agent.makeURL(agentDataURL))
-		b := err == nil
-
-		if b {
-			r.retriesLeft = maximumRetries
-			r.fsm.Event(eTest)
-		} else {
-			r.logger.Debug("Agent is not yet ready. Scheduling retry.")
-			r.retriesLeft--
-			if r.retriesLeft > 0 {
-				retryNumber := maximumRetries - r.retriesLeft + 1
-				r.scheduleRetryWithExponentialDelay(e, r.testAgent, retryNumber)
-			} else {
-				r.fsm.Event(eInit)
-			}
+		if !r.agentComm.pingAgent() {
+			r.handleRetries(e, r.testAgent, "Couldn't announce the sensor after reaching the maximum amount of attempts.", "Agent is not yet ready. Scheduling retry.")
+			return
 		}
+
+		r.retriesLeft = maximumRetries
+		r.fsm.Event(eTest)
 	}()
 }
 
