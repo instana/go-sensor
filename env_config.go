@@ -4,6 +4,7 @@
 package instana
 
 import (
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -58,7 +59,7 @@ func parseInstanaTags(s string) map[string]interface{} {
 // This function returns DefaultSecretsMatcher() if there is no matcher configuration provided.
 func parseInstanaSecrets(s string) (Matcher, error) {
 	if s == "" {
-		return DefaultSecretsMatcher(), nil
+		return nil, errors.New("empty value for secret matcher configuration")
 	}
 
 	ind := strings.Index(s, ":")

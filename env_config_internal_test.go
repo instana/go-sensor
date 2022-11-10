@@ -4,6 +4,7 @@
 package instana
 
 import (
+	"errors"
 	"regexp"
 	"testing"
 	"time"
@@ -40,6 +41,22 @@ func TestParseInstanaTags(t *testing.T) {
 		})
 	}
 }
+func TestParseInstanaEmptySecrets(t *testing.T) {
+	examples := map[string]struct {
+		Value    string
+		Expected error
+	}{
+		"empty": {"", errors.New("empty value for secret matcher configuration")},
+	}
+
+	for name, example := range examples {
+		t.Run(name, func(t *testing.T) {
+			_, err := parseInstanaSecrets(example.Value)
+			require.Error(t, err)
+			assert.Equal(t, example.Expected, err)
+		})
+	}
+}
 
 func TestParseInstanaSecrets(t *testing.T) {
 	regexMatcher, err := secrets.NewRegexpMatcher(regexp.MustCompile("a|b|c"), regexp.MustCompile("d"))
@@ -49,7 +66,6 @@ func TestParseInstanaSecrets(t *testing.T) {
 		Value    string
 		Expected Matcher
 	}{
-		"empty":                {"", DefaultSecretsMatcher()},
 		"equals":               {"equals:a,b,c", secrets.NewEqualsMatcher("a", "b", "c")},
 		"equals-ignore-case":   {"equals-ignore-case:a,b,c", secrets.NewEqualsIgnoreCaseMatcher("a", "b", "c")},
 		"contains":             {"contains:a,b,c", secrets.NewContainsMatcher("a", "b", "c")},

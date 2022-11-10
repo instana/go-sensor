@@ -87,11 +87,13 @@ func TestFlushDelayedSpans(t *testing.T) {
 func TestParallelFlushDelayedSpans(t *testing.T) {
 	defer resetDelayedSpans()
 
+	m, _ := NamedMatcher(ContainsIgnoreCaseMatcher, []string{"q", "secret"})
+
 	recorder := NewTestRecorder()
 	s := NewSensorWithTracer(NewTracerWithEverything(&Options{
 		Service: "go-sensor-test",
 		Tracer: TracerOptions{
-			Secrets: DefaultSecretsMatcher(),
+			Secrets: m,
 		},
 	}, recorder))
 	defer ShutdownSensor()
@@ -117,7 +119,16 @@ func TestParallelFlushDelayedSpans(t *testing.T) {
 
 	wg.Wait()
 
-	assert.Equal(t, maxDelayedSpans, len(recorder.GetQueuedSpans()))
+	recordedSpans := recorder.GetQueuedSpans()
+	assert.Equal(t, maxDelayedSpans, len(recordedSpans))
+
+	for _, v := range recordedSpans {
+		if v, ok := v.Data.(HTTPSpanData); ok {
+			assert.Equal(t, "q=%3Credacted%3E&secret=%3Credacted%3E", v.Tags.Params)
+		} else {
+			assert.Fail(t, "wrong span type")
+		}
+	}
 }
 
 type eventuallyNotReadyClient struct {
