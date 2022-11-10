@@ -57,12 +57,16 @@ func Test_agentS_SendSpans(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			agent := &agentS{host: "", from: &fromS{}, logger: defaultLogger, client: &httpClientMock{
-				resp: &http.Response{
-					StatusCode: 200,
-					Body:       ioutil.NopCloser(bytes.NewReader([]byte("{}"))),
+			ad := &agentCommunicator{
+				host: "", from: &fromS{},
+				client: &httpClientMock{
+					resp: &http.Response{
+						StatusCode: 200,
+						Body:       ioutil.NopCloser(bytes.NewReader([]byte("{}"))),
+					},
 				},
-			}}
+			}
+			agent := &agentS{agentComm: ad, logger: defaultLogger}
 			err := agent.SendSpans(tt.spans)
 
 			assert.NoError(t, err)
@@ -108,7 +112,13 @@ func Test_agentResponse_getExtraHTTPHeaders(t *testing.T) {
 }
 
 func Test_agentApplyHostSettings(t *testing.T) {
-	agent := &agentS{}
+	fsm := &fsmS{
+		agentComm: &agentCommunicator{
+			host: "",
+			from: &fromS{},
+		},
+	}
+
 	response := agentResponse{
 		Pid:    37892,
 		HostID: "myhost",
@@ -131,7 +141,7 @@ func Test_agentApplyHostSettings(t *testing.T) {
 		sensor = nil
 	}()
 
-	agent.applyHostAgentSettings(response)
+	fsm.applyHostAgentSettings(response)
 
 	assert.NotContains(t, sensor.options.Tracer.CollectableHTTPHeaders, "my-unwanted-custom-headers")
 }

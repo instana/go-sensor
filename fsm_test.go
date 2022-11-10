@@ -3,7 +3,12 @@
 package instana
 
 import (
-	"errors"
+	"io"
+	"net/http"
+	"net/http/httptest"
+	"net/url"
+	"os"
+	"strconv"
 	"testing"
 	"time"
 
@@ -11,18 +16,36 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func getTestServer(fn func(w http.ResponseWriter, r *http.Request)) *httptest.Server {
+	handler := http.NewServeMux()
+	handler.HandleFunc("/", fn)
+	return httptest.NewServer(handler)
+}
+
 func Test_fsmS_testAgent(t *testing.T) {
-	// init channels for agent mock
-	rCh := make(chan string, 2)
-	errCh := make(chan error, 2)
+	// Forces the mocked agent to fail with HTTP 400 in the first call to lead fsm to retry once
+	var serverGaveErrorOnFirstCall bool
+
+	server := getTestServer(func(w http.ResponseWriter, r *http.Request) {
+		if serverGaveErrorOnFirstCall {
+			w.WriteHeader(http.StatusOK)
+		} else {
+			serverGaveErrorOnFirstCall = true
+			w.WriteHeader(http.StatusBadRequest)
+		}
+	})
+
+	defer server.Close()
+
+	surl := server.URL
+	u, err := url.Parse(surl)
+
+	assert.NoError(t, err)
 
 	res := make(chan bool, 1)
 
 	r := &fsmS{
-		agent: &mockFsmAgent{
-			headRequestResponse: rCh,
-			headRequestErr:      errCh,
-		},
+		agentComm: newAgentCommunicator(u.Hostname(), u.Port(), &fromS{}),
 		fsm: f.NewFSM(
 			"announced",
 			f.Events{
@@ -39,33 +62,30 @@ func Test_fsmS_testAgent(t *testing.T) {
 		logger: defaultLogger,
 	}
 
-	// simulate errors and successful requests
-	rCh <- ""
-	errCh <- errors.New("some error")
-
-	rCh <- "Hello"
-	errCh <- nil
-
 	r.testAgent(&f.Event{})
 
 	assert.True(t, <-res)
-	assert.Empty(t, rCh)
-	assert.Empty(t, errCh)
+	// after a successful request, retriesLeft is reset to maximumRetries
 	assert.Equal(t, maximumRetries, r.retriesLeft)
 }
 
 func Test_fsmS_testAgent_Error(t *testing.T) {
-	// init channels for agent mock
-	rCh := make(chan string, 3)
-	errCh := make(chan error, 3)
+	// Forces the mocked agent to fail with HTTP 400 to lead fsm to retry
+	server := getTestServer(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusBadRequest)
+	})
+
+	defer server.Close()
+
+	surl := server.URL
+	u, err := url.Parse(surl)
+
+	assert.NoError(t, err)
 
 	res := make(chan bool, 1)
 
 	r := &fsmS{
-		agent: &mockFsmAgent{
-			headRequestResponse: rCh,
-			headRequestErr:      errCh,
-		},
+		agentComm: newAgentCommunicator(u.Hostname(), u.Port(), &fromS{}),
 		fsm: f.NewFSM(
 			"announced",
 			f.Events{
@@ -82,34 +102,40 @@ func Test_fsmS_testAgent_Error(t *testing.T) {
 		logger: defaultLogger,
 	}
 
-	// simulate errors
-	rCh <- ""
-	errCh <- errors.New("error #1")
-	rCh <- ""
-	errCh <- errors.New("error #2")
-	rCh <- ""
-	errCh <- errors.New("error #3")
-
 	r.testAgent(&f.Event{})
 
 	assert.True(t, <-res)
-	assert.Empty(t, rCh)
-	assert.Empty(t, errCh)
 	assert.Equal(t, 0, r.retriesLeft)
 }
 
 func Test_fsmS_announceSensor(t *testing.T) {
-	// init channels for agent mock
-	rCh := make(chan string, 2)
-	errCh := make(chan error, 2)
+	// initializes the global sensor as it is needed when the announcement is successful
+	InitSensor(DefaultOptions())
+	defer ShutdownSensor()
+
+	// Forces the mocked agent to fail with HTTP 400 in the first call to lead fsm to retry once
+	var serverGaveErrorOnFirstCall bool
+
+	server := getTestServer(func(w http.ResponseWriter, r *http.Request) {
+		if serverGaveErrorOnFirstCall {
+			pid := strconv.FormatInt(int64(os.Getpid()), 10)
+			io.WriteString(w, `{"pid":`+pid+`}`)
+		} else {
+			serverGaveErrorOnFirstCall = true
+			w.WriteHeader(http.StatusBadRequest)
+		}
+	})
+	defer server.Close()
+
+	surl := server.URL
+	u, err := url.Parse(surl)
+
+	assert.NoError(t, err)
 
 	res := make(chan bool, 1)
 
 	r := &fsmS{
-		agent: &mockFsmAgent{
-			announceRequestResponse: rCh,
-			announceRequestErr:      errCh,
-		},
+		agentComm: newAgentCommunicator(u.Hostname(), u.Port(), &fromS{}),
 		fsm: f.NewFSM(
 			"unannounced",
 			f.Events{
@@ -126,33 +152,27 @@ func Test_fsmS_announceSensor(t *testing.T) {
 		logger: defaultLogger,
 	}
 
-	// simulate errors and successful requests
-	rCh <- ""
-	errCh <- errors.New("some error")
-
-	rCh <- "Hello"
-	errCh <- nil
-
 	r.announceSensor(&f.Event{})
 
 	assert.True(t, <-res)
-	assert.Empty(t, rCh)
-	assert.Empty(t, errCh)
 	assert.Equal(t, maximumRetries, r.retriesLeft)
 }
 
 func Test_fsmS_announceSensor_Error(t *testing.T) {
-	// init channels for agent mock
-	rCh := make(chan string, 3)
-	errCh := make(chan error, 3)
+	server := getTestServer(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusBadRequest)
+	})
+	defer server.Close()
+
+	surl := server.URL
+	u, err := url.Parse(surl)
+
+	assert.NoError(t, err)
 
 	res := make(chan bool, 1)
 
 	r := &fsmS{
-		agent: &mockFsmAgent{
-			announceRequestResponse: rCh,
-			announceRequestErr:      errCh,
-		},
+		agentComm: newAgentCommunicator(u.Hostname(), u.Port(), &fromS{}),
 		fsm: f.NewFSM(
 			"unannounced",
 			f.Events{
@@ -169,34 +189,36 @@ func Test_fsmS_announceSensor_Error(t *testing.T) {
 		logger: defaultLogger,
 	}
 
-	// simulate errors
-	rCh <- ""
-	errCh <- errors.New("error #1")
-	rCh <- ""
-	errCh <- errors.New("error #2")
-	rCh <- ""
-	errCh <- errors.New("error #3")
-
 	r.announceSensor(&f.Event{})
 
 	assert.True(t, <-res)
-	assert.Empty(t, rCh)
-	assert.Empty(t, errCh)
 	assert.Equal(t, 0, r.retriesLeft)
 }
 
 func Test_fsmS_lookupAgentHost(t *testing.T) {
-	// init channels for agent mock
-	rCh := make(chan string, 2)
-	errCh := make(chan error, 2)
+	// Forces the mocked agent to fail with HTTP 400 in the first call to lead fsm to retry once
+	var serverGaveErrorOnFirstCall bool
+
+	server := getTestServer(func(w http.ResponseWriter, r *http.Request) {
+		if serverGaveErrorOnFirstCall {
+			w.Header().Add("Server", agentHeader)
+			w.WriteHeader(http.StatusOK)
+		} else {
+			serverGaveErrorOnFirstCall = true
+			w.WriteHeader(http.StatusBadRequest)
+		}
+	})
+	defer server.Close()
+
+	surl := server.URL
+	u, err := url.Parse(surl)
+
+	assert.NoError(t, err)
 
 	res := make(chan bool, 1)
 
 	r := &fsmS{
-		agent: &mockFsmAgent{
-			requestHeaderResponse: rCh,
-			requestHeaderErr:      errCh,
-		},
+		agentComm:                  newAgentCommunicator(u.Hostname(), u.Port(), &fromS{}),
 		lookupAgentHostRetryPeriod: 0,
 		fsm: f.NewFSM(
 			"init",
@@ -214,62 +236,8 @@ func Test_fsmS_lookupAgentHost(t *testing.T) {
 		logger: defaultLogger,
 	}
 
-	// simulate errors and successful requests
-	rCh <- ""
-	errCh <- errors.New("some error")
-
-	rCh <- agentHeader
-	errCh <- nil
-
 	r.lookupAgentHost(&f.Event{})
 
 	assert.True(t, <-res)
-	assert.Empty(t, rCh)
-	assert.Empty(t, errCh)
 	assert.Equal(t, maximumRetries, r.retriesLeft)
-}
-
-type mockFsmAgent struct {
-	host string
-
-	requestHeaderResponse chan string
-	requestHeaderErr      chan error
-
-	announceRequestResponse chan string
-	announceRequestErr      chan error
-
-	headRequestResponse chan string
-	headRequestErr      chan error
-}
-
-func (a *mockFsmAgent) getHost() string {
-	return a.host
-}
-
-func (a *mockFsmAgent) setHost(host string) {
-	a.host = host
-}
-
-func (a *mockFsmAgent) requestHeader(url string, method string, header string) (string, error) {
-	return <-a.requestHeaderResponse, <-a.requestHeaderErr
-}
-
-func (a *mockFsmAgent) makeHostURL(host string, prefix string) string {
-	return "http://" + host + ":5555" + prefix
-}
-
-func (a *mockFsmAgent) applyHostAgentSettings(resp agentResponse) {
-	return
-}
-
-func (a *mockFsmAgent) announceRequest(url string, method string, data interface{}, ret *agentResponse) (string, error) {
-	return <-a.announceRequestResponse, <-a.announceRequestErr
-}
-
-func (a *mockFsmAgent) makeURL(prefix string) string {
-	return a.makeHostURL(a.getHost(), prefix)
-}
-
-func (a *mockFsmAgent) head(url string) (string, error) {
-	return <-a.headRequestResponse, <-a.headRequestErr
 }
