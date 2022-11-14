@@ -31,10 +31,12 @@ func (ds *delayedSpans) flush() {
 		case s := <-ds.spans:
 			t, ok := s.Tracer().(Tracer)
 			if !ok {
+				sensor.logger.Debug("span tracer has unexpected type")
 				continue
 			}
 
 			if err := ds.processSpan(s, t.Options()); err != nil {
+				sensor.logger.Debug("error while processing spans:", err.Error())
 				continue
 			}
 
