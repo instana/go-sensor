@@ -56,7 +56,7 @@ func parseInstanaTags(s string) map[string]interface{} {
 // * `contains-ignore-case` is a case-insensitive version of `contains`
 // * `regex` matches a string if it fully matches any of the regular expressions provided in the secrets list
 //
-// This function returns DefaultSecretsMatcher() if there is no matcher configuration provided.
+// This function returns an error if there is no matcher configuration provided.
 func parseInstanaSecrets(s string) (Matcher, error) {
 	if s == "" {
 		return nil, errors.New("empty value for secret matcher configuration")
