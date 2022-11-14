@@ -16,6 +16,7 @@ type delayedSpans struct {
 	spans chan *spanS
 }
 
+// append add a span to the buffer if buffer is not full yet
 func (ds *delayedSpans) append(span *spanS) bool {
 	select {
 	case ds.spans <- span:
@@ -25,6 +26,7 @@ func (ds *delayedSpans) append(span *spanS) bool {
 	}
 }
 
+// flush processes buffered spans and move them from the delayed buffer to the recorder if agent is ready
 func (ds *delayedSpans) flush() {
 	for {
 		select {
@@ -52,6 +54,7 @@ func (ds *delayedSpans) flush() {
 	}
 }
 
+// processSpan applies secret filtering to the buffered http span http.params tag
 func (ds *delayedSpans) processSpan(s *spanS, opts TracerOptions) error {
 	newParams := url.Values{}
 	if paramsTag, ok := s.Tags["http.params"]; ok {
