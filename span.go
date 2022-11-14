@@ -80,12 +80,10 @@ func (r *spanS) FinishWithOptions(opts ot.FinishOptions) {
 	if !r.context.Suppressed {
 		if sensor.Agent().Ready() {
 			r.tracer.recorder.RecordSpan(r)
-			r.sendOpenTracingLogRecords()
 		} else {
-			r.sendOpenTracingLogRecords()
 			delayed.append(r)
 		}
-
+		r.sendOpenTracingLogRecords()
 	}
 }
 
