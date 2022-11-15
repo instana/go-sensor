@@ -18,14 +18,17 @@ func TestEventBasic(t *testing.T) {
 func TestEventDefault(t *testing.T) {
 	SendDefaultServiceEvent("microservice-14c", "These are event details",
 		SeverityCritical, 5000*time.Millisecond)
+	defer ShutdownSensor()
 }
 
 func TestSendServiceEvent(t *testing.T) {
 	SendServiceEvent("microservice-14c", "Oh No!", "Pull the cable now!",
 		SeverityChange, 1000*time.Millisecond)
+	defer ShutdownSensor()
 }
 
 func TestSendHostEvent(t *testing.T) {
 	SendHostEvent("microservice-14c", "r u listening?",
 		SeverityWarning, 500*time.Millisecond)
+	defer ShutdownSensor()
 }

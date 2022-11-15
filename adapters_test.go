@@ -4,10 +4,10 @@
 package instana_test
 
 import (
+	instana "github.com/instana/go-sensor"
 	"net/http/httptest"
 	"testing"
 
-	instana "github.com/instana/go-sensor"
 	ot "github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
 	"github.com/stretchr/testify/assert"
@@ -16,7 +16,7 @@ import (
 
 func TestWithTracingSpan(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{}, recorder))
+	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder))
 	defer instana.ShutdownSensor()
 
 	rec := httptest.NewRecorder()
@@ -52,7 +52,7 @@ func TestWithTracingSpan(t *testing.T) {
 
 func TestWithTracingSpan_PanicHandling(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{}, recorder))
+	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder))
 	defer instana.ShutdownSensor()
 
 	rec := httptest.NewRecorder()
@@ -104,7 +104,7 @@ func TestWithTracingSpan_PanicHandling(t *testing.T) {
 
 func TestWithTracingSpan_WithActiveParentSpan(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	tracer := instana.NewTracerWithEverything(&instana.Options{}, recorder)
+	tracer := instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder)
 	s := instana.NewSensorWithTracer(tracer)
 	defer instana.ShutdownSensor()
 
@@ -126,7 +126,7 @@ func TestWithTracingSpan_WithActiveParentSpan(t *testing.T) {
 
 func TestWithTracingSpan_WithWireContext(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{}, recorder))
+	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder))
 	defer instana.ShutdownSensor()
 
 	rec := httptest.NewRecorder()
@@ -145,5 +145,3 @@ func TestWithTracingSpan_WithWireContext(t *testing.T) {
 	assert.Equal(t, int64(1234567890), spans[0].TraceID)
 	assert.Equal(t, int64(1), spans[0].ParentID)
 }
-
-func TestWithTracingContext(t *testing.T) {}

@@ -87,7 +87,7 @@ func TestRegisteredSpanType_ExtractData(t *testing.T) {
 	for name, example := range examples {
 		t.Run(name, func(t *testing.T) {
 			recorder := instana.NewTestRecorder()
-			tracer := instana.NewTracerWithEverything(&instana.Options{}, recorder)
+			tracer := instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder)
 			defer instana.ShutdownSensor()
 
 			sp := tracer.StartSpan(example.Operation)
@@ -305,7 +305,7 @@ func TestNewAWSLambdaSpanData(t *testing.T) {
 	for trigger, example := range examples {
 		t.Run(trigger, func(t *testing.T) {
 			recorder := instana.NewTestRecorder()
-			tracer := instana.NewTracerWithEverything(&instana.Options{}, recorder)
+			tracer := instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder)
 			defer instana.ShutdownSensor()
 
 			sp := tracer.StartSpan("aws.lambda.entry", opentracing.Tags{

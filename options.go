@@ -41,6 +41,9 @@ type Options struct {
 	IncludeProfilerFrames bool
 	// Tracer contains tracer-specific configuration used by all tracers
 	Tracer TracerOptions
+	// AgentClient client to communicate with the agent. In most cases, there is no need to provide it.
+	// If it is nil the default implementation will be used.
+	AgentClient AgentClient
 
 	disableW3CTraceCorrelation bool
 }

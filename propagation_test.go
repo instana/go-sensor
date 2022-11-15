@@ -92,7 +92,7 @@ func TestTracer_Inject_HTTPHeaders(t *testing.T) {
 	for name, example := range examples {
 		t.Run(name, func(t *testing.T) {
 			recorder := instana.NewTestRecorder()
-			tracer := instana.NewTracerWithEverything(&instana.Options{}, recorder)
+			tracer := instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder)
 			defer instana.ShutdownSensor()
 
 			require.NoError(t, tracer.Inject(example.SpanContext, ot.HTTPHeaders, ot.HTTPHeadersCarrier(example.Headers)))
@@ -213,7 +213,7 @@ func TestTracer_Inject_HTTPHeaders_W3CTraceContext(t *testing.T) {
 	for name, example := range examples {
 		t.Run(name, func(t *testing.T) {
 			recorder := instana.NewTestRecorder()
-			tracer := instana.NewTracerWithEverything(&instana.Options{}, recorder)
+			tracer := instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder)
 			defer instana.ShutdownSensor()
 			headers := http.Header{}
 
@@ -225,7 +225,7 @@ func TestTracer_Inject_HTTPHeaders_W3CTraceContext(t *testing.T) {
 
 func TestTracer_Inject_HTTPHeaders_SuppressedTracing(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	tracer := instana.NewTracerWithEverything(&instana.Options{}, recorder)
+	tracer := instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder)
 	defer instana.ShutdownSensor()
 
 	headers := http.Header{
@@ -253,7 +253,7 @@ func TestTracer_Inject_HTTPHeaders_SuppressedTracing(t *testing.T) {
 
 func TestTracer_Inject_HTTPHeaders_WithExistingServerTiming(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	tracer := instana.NewTracerWithEverything(&instana.Options{}, recorder)
+	tracer := instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder)
 	defer instana.ShutdownSensor()
 
 	headers := http.Header{
@@ -372,7 +372,7 @@ func TestTracer_Extract_HTTPHeaders(t *testing.T) {
 	for name, example := range examples {
 		t.Run(name, func(t *testing.T) {
 			recorder := instana.NewTestRecorder()
-			tracer := instana.NewTracerWithEverything(&instana.Options{}, recorder)
+			tracer := instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder)
 			defer instana.ShutdownSensor()
 
 			headers := http.Header{}
@@ -410,7 +410,7 @@ func TestTracer_Extract_HTTPHeaders_WithEUMCorrelation(t *testing.T) {
 	for name, example := range examples {
 		t.Run(name, func(t *testing.T) {
 			recorder := instana.NewTestRecorder()
-			tracer := instana.NewTracerWithEverything(&instana.Options{}, recorder)
+			tracer := instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder)
 			defer instana.ShutdownSensor()
 
 			headers := http.Header{}
@@ -433,7 +433,7 @@ func TestTracer_Extract_HTTPHeaders_WithEUMCorrelation(t *testing.T) {
 
 func TestTracer_Extract_HTTPHeaders_NoContext(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	tracer := instana.NewTracerWithEverything(&instana.Options{}, recorder)
+	tracer := instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder)
 	defer instana.ShutdownSensor()
 
 	headers := http.Header{
@@ -469,7 +469,7 @@ func TestTracer_Extract_HTTPHeaders_CorruptedContext(t *testing.T) {
 	for name, headers := range examples {
 		t.Run(name, func(t *testing.T) {
 			recorder := instana.NewTestRecorder()
-			tracer := instana.NewTracerWithEverything(&instana.Options{}, recorder)
+			tracer := instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder)
 			defer instana.ShutdownSensor()
 
 			_, err := tracer.Extract(ot.HTTPHeaders, ot.HTTPHeadersCarrier(headers))
@@ -480,7 +480,7 @@ func TestTracer_Extract_HTTPHeaders_CorruptedContext(t *testing.T) {
 
 func TestTracer_Inject_TextMap_AddValues(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	tracer := instana.NewTracerWithEverything(&instana.Options{}, recorder)
+	tracer := instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder)
 	defer instana.ShutdownSensor()
 
 	sc := instana.SpanContext{
@@ -509,7 +509,7 @@ func TestTracer_Inject_TextMap_AddValues(t *testing.T) {
 
 func TestTracer_Inject_TextMap_UpdateValues(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	tracer := instana.NewTracerWithEverything(&instana.Options{}, recorder)
+	tracer := instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder)
 	defer instana.ShutdownSensor()
 
 	sc := instana.SpanContext{
@@ -542,7 +542,7 @@ func TestTracer_Inject_TextMap_UpdateValues(t *testing.T) {
 
 func TestTracer_Inject_TextMap_SuppressedTracing(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	tracer := instana.NewTracerWithEverything(&instana.Options{}, recorder)
+	tracer := instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder)
 	defer instana.ShutdownSensor()
 
 	sc := instana.SpanContext{
@@ -619,7 +619,7 @@ func TestTracer_Extract_TextMap(t *testing.T) {
 	for name, example := range examples {
 		t.Run(name, func(t *testing.T) {
 			recorder := instana.NewTestRecorder()
-			tracer := instana.NewTracerWithEverything(&instana.Options{}, recorder)
+			tracer := instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder)
 			defer instana.ShutdownSensor()
 
 			sc, err := tracer.Extract(ot.TextMap, ot.TextMapCarrier(example.Carrier))
@@ -632,7 +632,7 @@ func TestTracer_Extract_TextMap(t *testing.T) {
 
 func TestTracer_Extract_TextMap_NoContext(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	tracer := instana.NewTracerWithEverything(&instana.Options{}, recorder)
+	tracer := instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder)
 	defer instana.ShutdownSensor()
 
 	carrier := map[string]string{
@@ -668,7 +668,7 @@ func TestTracer_Extract_TextMap_CorruptedContext(t *testing.T) {
 	for name, carrier := range examples {
 		t.Run(name, func(t *testing.T) {
 			recorder := instana.NewTestRecorder()
-			tracer := instana.NewTracerWithEverything(&instana.Options{}, recorder)
+			tracer := instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder)
 			defer instana.ShutdownSensor()
 
 			_, err := tracer.Extract(ot.TextMap, ot.TextMapCarrier(carrier))
@@ -689,7 +689,7 @@ func (c *textMapWithRemoveAll) RemoveAll() {
 
 func TestTracer_Inject_CarrierWithRemoveAll_SuppressedTrace(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	tracer := instana.NewTracerWithEverything(&instana.Options{}, recorder)
+	tracer := instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder)
 	defer instana.ShutdownSensor()
 
 	sc := instana.SpanContext{

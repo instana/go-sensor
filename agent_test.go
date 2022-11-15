@@ -4,7 +4,10 @@ package instana
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
+	"github.com/instana/go-sensor/acceptor"
+	"github.com/instana/go-sensor/autoprofile"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -134,6 +137,7 @@ func Test_agentApplyHostSettings(t *testing.T) {
 		Tracer: TracerOptions{
 			CollectableHTTPHeaders: []string{"x-custom-header-1", "x-custom-header-2"},
 		},
+		AgentClient: alwaysReadyClient{},
 	}
 
 	sensor = newSensor(opts)
@@ -145,3 +149,12 @@ func Test_agentApplyHostSettings(t *testing.T) {
 
 	assert.NotContains(t, sensor.options.Tracer.CollectableHTTPHeaders, "my-unwanted-custom-headers")
 }
+
+type alwaysReadyClient struct{}
+
+func (alwaysReadyClient) Ready() bool                                       { return true }
+func (alwaysReadyClient) SendMetrics(data acceptor.Metrics) error           { return nil }
+func (alwaysReadyClient) SendEvent(event *EventData) error                  { return nil }
+func (alwaysReadyClient) SendSpans(spans []Span) error                      { return nil }
+func (alwaysReadyClient) SendProfiles(profiles []autoprofile.Profile) error { return nil }
+func (alwaysReadyClient) Flush(context.Context) error                       { return nil }

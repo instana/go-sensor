@@ -14,7 +14,7 @@ import (
 
 func TestRecorderBasics(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	tracer := instana.NewTracerWithEverything(&instana.Options{}, recorder)
+	tracer := instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder)
 	defer instana.ShutdownSensor()
 
 	span := tracer.StartSpan("http-client")
@@ -32,7 +32,7 @@ func TestRecorderBasics(t *testing.T) {
 
 func TestRecorder_BatchSpan(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	tracer := instana.NewTracerWithEverything(&instana.Options{}, recorder)
+	tracer := instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder)
 	defer instana.ShutdownSensor()
 
 	tracer.StartSpan("test-span", instana.BatchSize(2)).Finish()
@@ -46,7 +46,7 @@ func TestRecorder_BatchSpan(t *testing.T) {
 
 func TestRecorder_BatchSpan_Single(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	tracer := instana.NewTracerWithEverything(&instana.Options{}, recorder)
+	tracer := instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder)
 	defer instana.ShutdownSensor()
 
 	tracer.StartSpan("test-span", instana.BatchSize(1)).Finish()

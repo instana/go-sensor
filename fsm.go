@@ -68,6 +68,7 @@ func newFSM(ahd *agentCommunicator, logger LeveledLogger) *fsmS {
 			"init":              ret.lookupAgentHost,
 			"enter_unannounced": ret.announceSensor,
 			"enter_announced":   ret.testAgent,
+			"ready":             ret.ready,
 		})
 	ret.fsm.Event(eInit)
 
@@ -271,6 +272,10 @@ func (r *fsmS) testAgent(e *f.Event) {
 func (r *fsmS) reset() {
 	r.retriesLeft = maximumRetries
 	r.fsm.Event(eInit)
+}
+
+func (r *fsmS) ready(e *f.Event) {
+	go delayed.flush()
 }
 
 func (r *fsmS) cpuSetFileContent(pid int) string {
