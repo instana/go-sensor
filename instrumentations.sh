@@ -6,25 +6,23 @@
 #
 # Update instrumentation phase
 #
-# 1. Run `./instrumentations.sh update`. This will update all instrumentations to refer to the latest core module.
+# 1. Run `./instrumentations.sh update`. This will update all instrumentations to reference the latest core module.
 # 2. Run `make test` to ensure that all instrumentations work with the latest core.
-# 2.1. If any errors are detected in some instrumentation, fix them.
-# 3. Make sure that everything is ok before you commit.
-# 5. If everything is fine, commit your changes, open a PR and get it merged into the master branch.
+# 3. If any errors are detected in some instrumentation, fix them.
+# 4. If everything is fine, commit your changes, open a PR and get it merged into the master branch.
 #
 # Release phase
 # 1. Run `./instrumentations.sh release` to create tags for each instrumentation with a new minor version, and update all version.go files.
 
-
 set -eo pipefail
 
-# Checks if gh is installed, otherwise it halts the script
+# Checks if gh is installed, otherwise stop the script
 if ! [ -x "$(command -v gh)" ]; then
   echo 'Error: gh is not installed.' >&2
   exit 1
 fi
 
-# Checks if the user is logged into Github, otherwise it halts the script
+# Checks if the user is logged into Github, otherwise stop the script
 if gh auth status 2>&1 | grep -i "You are not logged"; then
   echo "Error: You must log into Github"
   exit 1
@@ -43,7 +41,7 @@ run_update() {
   done
 }
 
-# Updates version.go and creates a new tag for every instrumentation, incrementing minor version for all
+# Updates version.go and creates a new tag for every instrumentation, incrementing the minor version
 run_release() {
   TAGS=""
   for lib in $LIB_LIST
@@ -78,8 +76,6 @@ run_release() {
     do git tag $t && git push origin $t
   done
 
-  # git push --tags
-
   # Release every instrumentation
   for t in $TAGS
     do gh release create $t \
@@ -87,7 +83,6 @@ run_release() {
 		--notes "Update instrumentations to the latest core module"
   done
 }
-
 
 if [ "$1" = "update" ]; then
   run_update
