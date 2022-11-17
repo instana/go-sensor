@@ -28,8 +28,8 @@ if gh auth status 2>&1 | grep -i "You are not logged"; then
   exit 1
 fi
 
-# CORE_VERSION=latest
-CORE_VERSION=v1.45.0
+CORE_VERSION=latest
+# CORE_VERSION=v1.45.0
 
 # List of instrumentation folders
 LIB_LIST=$(find ./instrumentation -name go.mod -exec dirname {} \; | grep -v "/instasarama/example")
@@ -37,7 +37,7 @@ LIB_LIST=$(find ./instrumentation -name go.mod -exec dirname {} \; | grep -v "/i
 # Updates all instrumentations to use the @latest version of the core module
 run_update() {
   for lib in $LIB_LIST
-    do cd $lib && go get github.com/instana/go-sensor@$CORE_VERSION && go mod tidy && cd -;
+    do cd "$lib" && go get github.com/instana/go-sensor@$CORE_VERSION && go mod tidy && cd -;
   done
 }
 
@@ -45,20 +45,20 @@ run_update() {
 run_release() {
   TAGS=""
   for lib in $LIB_LIST
-    do LIB_PATH="$(echo $lib | sed 's/\.\///')"
+    do LIB_PATH="$(echo "$lib" | sed 's/\.\///')"
     VERSION=$(git tag -l "$LIB_PATH*" | sort -V | tail -n1 | sed "s/.*v//")
 
-    if [ -z $VERSION ]; then
+    if [ -z "$VERSION" ]; then
       VERSION="0.0.0"
     fi
 
     MINOR_VERSION=$(echo $VERSION | sed -En 's/[0-9]+\.([0-9]+)\.[0-9]+/\1/p')
     MAJOR_VERSION=$(echo $VERSION | sed -En 's/([0-9]+)\.[0-9]+\.[0-9]+/\1/p')
-    MINOR_VERSION=$(($MINOR_VERSION+1))
+    MINOR_VERSION=$((MINOR_VERSION+1))
     NEW_VERSION="$MAJOR_VERSION.$MINOR_VERSION.0"
 
     # Updates the minor version in version.go
-    sed -i '' -E "s/[0-9]+\.[0-9]+\.[0-9]+/${NEW_VERSION}/" $lib/version.go | tail -1
+    sed -i '' -E "s/[0-9]+\.[0-9]+\.[0-9]+/${NEW_VERSION}/" "$lib"/version.go | tail -1
 
     # Tags to be created after version.go is merged to the master branch with the new version
     TAGS="$TAGS $LIB_PATH@v$MAJOR_VERSION.$MINOR_VERSION.0"
@@ -73,13 +73,13 @@ run_release() {
   echo "Creating tags for each instrumentation"
 
   for t in $TAGS
-    do git tag $t && git push origin $t
+    do git tag "$t" && git push origin "$t"
   done
 
   # Release every instrumentation
   for t in $TAGS
-    do gh release create $t \
-		--title $t \
+    do gh release create "$t" \
+		--title "$t" \
 		--notes "Update instrumentations to the latest core module"
   done
 }
