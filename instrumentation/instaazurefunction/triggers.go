@@ -5,18 +5,16 @@ package instaazurefunction
 
 import "encoding/json"
 
-type TriggerType string
-
 const (
-	unknownType TriggerType = "unknown type"
+	unknownType string = "unknown type"
 
 	//supported types
-	httpTrigger         TriggerType = "httpTrigger"
-	queueStorageTrigger TriggerType = "queueTrigger"
+	httpTrigger         string = "httpTrigger"
+	queueStorageTrigger string = "queueTrigger"
 )
 
 // Extracts the trigger type and method name from the payload
-func extractSpanData(payload []byte) (TriggerType, string) {
+func extractSpanData(payload []byte) (string, string) {
 	var v struct {
 		Metadata struct {
 			//queueStorage fields
