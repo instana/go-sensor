@@ -18,13 +18,13 @@ set -eo pipefail
 
 # Checks if gh is installed, otherwise stop the script
 if ! [ -x "$(command -v gh)" ]; then
-  echo 'Error: gh is not installed.' >&2
+  echo "Error: gh is not installed." >&2
   exit 1
 fi
 
 # Checks if the user is logged into Github, otherwise stop the script
 if gh auth status 2>&1 | grep -i "You are not logged"; then
-  echo "Error: You must log into Github"
+  echo "Error: You must log into Github." >&2
   exit 1
 fi
 
