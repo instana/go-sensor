@@ -5,10 +5,14 @@ package instalambda_test
 
 import (
 	"context"
+	"errors"
 	"io/ioutil"
 	"net/http"
 	"testing"
 	"time"
+
+	"github.com/instana/go-sensor/acceptor"
+	"github.com/instana/go-sensor/autoprofile"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambdacontext"
@@ -19,16 +23,12 @@ import (
 )
 
 func getOptions() *instana.Options {
-	matcher, err := instana.NamedMatcher(instana.ContainsIgnoreCaseMatcher, []string{"secret"})
-	if err != nil {
-		panic(err)
-	}
-
 	return &instana.Options{
 		Tracer: instana.TracerOptions{
-			Secrets:                matcher,
 			CollectableHTTPHeaders: []string{"X-Custom-Header-1", "X-Custom-Header-2"},
+			Secrets:                instana.DefaultSecretsMatcher(),
 		},
+		AgentClient: alwaysReadyClient{},
 	}
 }
 
@@ -616,7 +616,7 @@ func TestNewHandler_InvokeLambda_Success(t *testing.T) {
 
 func TestNewHandler_InvokeLambda_ColdStartAndNotColdStart(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	sensor := instana.NewSensorWithTracer(instana.NewTracerWithEverything(instana.DefaultOptions(), recorder))
+	sensor := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder))
 	defer instana.ShutdownSensor()
 
 	h := instalambda.NewHandler(func(ctx context.Context, evt interface{}) error {
@@ -775,3 +775,14 @@ func TestNewHandler_InvokeLambda_WithIncompleteSetOfInstanaHeaders(t *testing.T)
 		},
 	}, span.Data)
 }
+
+type alwaysReadyClient struct{}
+
+func (alwaysReadyClient) Ready() bool                              { return true }
+func (alwaysReadyClient) SendMetrics(data acceptor.Metrics) error  { return nil }
+func (alwaysReadyClient) SendEvent(event *instana.EventData) error { return nil }
+func (alwaysReadyClient) SendSpans(spans []instana.Span) error {
+	return errors.New("Dummy agent client.")
+}
+func (alwaysReadyClient) SendProfiles(profiles []autoprofile.Profile) error { return nil }
+func (alwaysReadyClient) Flush(context.Context) error                       { return nil }

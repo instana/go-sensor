@@ -9,6 +9,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/instana/go-sensor/acceptor"
+	"github.com/instana/go-sensor/autoprofile"
+
 	instana "github.com/instana/go-sensor"
 	"github.com/instana/go-sensor/instrumentation/instalogrus"
 	"github.com/sirupsen/logrus"
@@ -18,7 +21,7 @@ import (
 
 func TestNewHook_Levels(t *testing.T) {
 	sensor := instana.NewSensor("testing")
-
+	defer instana.ShutdownSensor()
 	h := instalogrus.NewHook(sensor)
 
 	assert.ElementsMatch(t, []logrus.Level{logrus.ErrorLevel, logrus.WarnLevel}, h.Levels())
@@ -27,8 +30,9 @@ func TestNewHook_Levels(t *testing.T) {
 func TestNewHook_SendLogSpans(t *testing.T) {
 	recorder := instana.NewTestRecorder()
 	sensor := instana.NewSensorWithTracer(
-		instana.NewTracerWithEverything(instana.DefaultOptions(), recorder),
+		instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder),
 	)
+	defer instana.ShutdownSensor()
 
 	logger := logrus.New()
 	logger.Level = logrus.DebugLevel
@@ -95,8 +99,9 @@ func TestNewHook_SendLogSpans(t *testing.T) {
 func TestNewHook_IgnoreLowLevels(t *testing.T) {
 	recorder := instana.NewTestRecorder()
 	sensor := instana.NewSensorWithTracer(
-		instana.NewTracerWithEverything(instana.DefaultOptions(), recorder),
+		instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder),
 	)
+	defer instana.ShutdownSensor()
 
 	logger := logrus.New()
 	logger.Level = logrus.DebugLevel
@@ -132,6 +137,7 @@ func TestNewHook_NoContext(t *testing.T) {
 	sensor := instana.NewSensorWithTracer(
 		instana.NewTracerWithEverything(instana.DefaultOptions(), recorder),
 	)
+	defer instana.ShutdownSensor()
 
 	logger := logrus.New()
 	logger.Level = logrus.DebugLevel
@@ -143,3 +149,12 @@ func TestNewHook_NoContext(t *testing.T) {
 
 	assert.Empty(t, recorder.GetQueuedSpans())
 }
+
+type alwaysReadyClient struct{}
+
+func (alwaysReadyClient) Ready() bool                                       { return true }
+func (alwaysReadyClient) SendMetrics(data acceptor.Metrics) error           { return nil }
+func (alwaysReadyClient) SendEvent(event *instana.EventData) error          { return nil }
+func (alwaysReadyClient) SendSpans(spans []instana.Span) error              { return nil }
+func (alwaysReadyClient) SendProfiles(profiles []autoprofile.Profile) error { return nil }
+func (alwaysReadyClient) Flush(context.Context) error                       { return nil }

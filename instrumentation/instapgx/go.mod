@@ -3,12 +3,12 @@ module github.com/instana/go-sensor/instrumentation/instapgx
 go 1.17
 
 require (
-	github.com/instana/go-sensor v1.46.0
+	github.com/instana/go-sensor v1.47.0
 	github.com/jackc/pgconn v1.10.1
 	github.com/jackc/pgx/v4 v4.14.1
 	github.com/lib/pq v1.10.2
 	github.com/opentracing/opentracing-go v1.1.0
-	github.com/stretchr/testify v1.7.0
+	github.com/stretchr/testify v1.8.1
 )
 
 require (
@@ -25,5 +25,5 @@ require (
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	golang.org/x/crypto v0.0.0-20210711020723-a769d52b0f97 // indirect
 	golang.org/x/text v0.3.6 // indirect
-	gopkg.in/yaml.v3 v3.0.0-20200313102051-9f266ea9e77c // indirect
+	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

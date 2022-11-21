@@ -6,12 +6,13 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"github.com/instana/go-sensor/acceptor"
-	"github.com/instana/go-sensor/autoprofile"
 	"io/ioutil"
 	"net/http"
 	"strings"
 	"testing"
+
+	"github.com/instana/go-sensor/acceptor"
+	"github.com/instana/go-sensor/autoprofile"
 
 	"github.com/stretchr/testify/assert"
 )

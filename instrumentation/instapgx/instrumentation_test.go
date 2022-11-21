@@ -14,6 +14,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/instana/go-sensor/acceptor"
+	"github.com/instana/go-sensor/autoprofile"
+
 	instana "github.com/instana/go-sensor"
 	"github.com/instana/go-sensor/instrumentation/instapgx"
 	"github.com/jackc/pgconn"
@@ -25,8 +28,9 @@ import (
 
 func TestConnect(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	tracer := instana.NewTracerWithEverything(nil, recorder)
+	tracer := instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder)
 	sensor := instana.NewSensorWithTracer(tracer)
+	defer instana.ShutdownSensor()
 
 	ctx := context.Background()
 	conn, err := instapgx.Connect(ctx, sensor, databaseUrl)
@@ -37,8 +41,9 @@ func TestConnect(t *testing.T) {
 
 func TestConnectConfig(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	tracer := instana.NewTracerWithEverything(nil, recorder)
+	tracer := instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder)
 	sensor := instana.NewSensorWithTracer(tracer)
+	defer instana.ShutdownSensor()
 
 	conf, err := pgx.ParseConfig(databaseUrl)
 	assert.NoError(t, err)
@@ -50,6 +55,7 @@ func TestConnectConfig(t *testing.T) {
 }
 
 func TestExecAndQueryWithoutParameters(t *testing.T) {
+	defer instana.ShutdownSensor()
 	recorder, ctx, conn := prepare(t)
 
 	uniqString := randStringBytes(10)
@@ -110,6 +116,7 @@ func TestExecAndQueryWithoutParameters(t *testing.T) {
 }
 
 func TestExecWithParameters(t *testing.T) {
+	defer instana.ShutdownSensor()
 	recorder, ctx, conn := prepare(t)
 
 	uniqString := randStringBytes(10)
@@ -183,6 +190,7 @@ func TestExecWithParameters(t *testing.T) {
 }
 
 func TestQueryFunc(t *testing.T) {
+	defer instana.ShutdownSensor()
 	recorder, _, conn := prepare(t)
 
 	var a, b int
@@ -204,6 +212,7 @@ func TestQueryFunc(t *testing.T) {
 }
 
 func TestQueryFuncError(t *testing.T) {
+	defer instana.ShutdownSensor()
 	recorder, _, conn := prepare(t)
 
 	var a, b int
@@ -229,6 +238,7 @@ func TestQueryFuncError(t *testing.T) {
 }
 
 func TestSendBatchError(t *testing.T) {
+	defer instana.ShutdownSensor()
 	recorder, ctx, conn := prepare(t)
 
 	b := &pgx.Batch{}
@@ -248,6 +258,7 @@ func TestSendBatchError(t *testing.T) {
 }
 
 func TestSendBatchQuery(t *testing.T) {
+	defer instana.ShutdownSensor()
 	recorder, ctx, conn := prepare(t)
 
 	b := &pgx.Batch{}
@@ -263,6 +274,7 @@ func TestSendBatchQuery(t *testing.T) {
 }
 
 func TestSendBatchExec(t *testing.T) {
+	defer instana.ShutdownSensor()
 	recorder, ctx, conn := prepare(t)
 
 	b := &pgx.Batch{}
@@ -278,6 +290,7 @@ func TestSendBatchExec(t *testing.T) {
 }
 
 func TestSendBatchQueryRow(t *testing.T) {
+	defer instana.ShutdownSensor()
 	recorder, ctx, conn := prepare(t)
 
 	b := &pgx.Batch{}
@@ -296,6 +309,7 @@ func TestSendBatchQueryRow(t *testing.T) {
 }
 
 func TestSendBatchQueryRowError(t *testing.T) {
+	defer instana.ShutdownSensor()
 	recorder, ctx, conn := prepare(t)
 
 	b := &pgx.Batch{}
@@ -314,6 +328,7 @@ func TestSendBatchQueryRowError(t *testing.T) {
 }
 
 func TestSendBatchQueryRowScanMultipleTimes(t *testing.T) {
+	defer instana.ShutdownSensor()
 	recorder, ctx, conn := prepare(t)
 
 	b := &pgx.Batch{}
@@ -345,6 +360,7 @@ func TestSendBatchQueryRowScanMultipleTimes(t *testing.T) {
 }
 
 func TestSendBatchQueryFunc(t *testing.T) {
+	defer instana.ShutdownSensor()
 	recorder, ctx, conn := prepare(t)
 
 	b := &pgx.Batch{}
@@ -366,6 +382,7 @@ func TestSendBatchQueryFunc(t *testing.T) {
 }
 
 func TestSendBatchExecTwice(t *testing.T) {
+	defer instana.ShutdownSensor()
 	recorder, ctx, conn := prepare(t)
 
 	b := &pgx.Batch{}
@@ -383,6 +400,7 @@ func TestSendBatchExecTwice(t *testing.T) {
 }
 
 func TestSendBatchClose(t *testing.T) {
+	defer instana.ShutdownSensor()
 	recorder, ctx, conn := prepare(t)
 
 	b := &pgx.Batch{}
@@ -398,6 +416,7 @@ func TestSendBatchClose(t *testing.T) {
 }
 
 func TestCopyFrom(t *testing.T) {
+	defer instana.ShutdownSensor()
 	recorder, _, conn := prepare(t)
 
 	_, err := conn.Exec(context.Background(), `create temporary table foo(a int2, b int4, c int8, d varchar, e text, f date, g timestamptz)`)
@@ -435,6 +454,7 @@ func TestCopyFrom(t *testing.T) {
 }
 
 func TestPrepare(t *testing.T) {
+	defer instana.ShutdownSensor()
 	recorder, ctx, conn := prepare(t)
 
 	_, err := conn.Exec(context.Background(), `create temporary table foo(a int2, b int4, c int8, d varchar, e text, f date, g timestamptz)`)
@@ -449,6 +469,7 @@ func TestPrepare(t *testing.T) {
 }
 
 func TestBeginFunc(t *testing.T) {
+	defer instana.ShutdownSensor()
 	recorder, ctx, conn := prepare(t)
 
 	uniqString := randStringBytes(10)
@@ -486,3 +507,12 @@ func TestBeginFunc(t *testing.T) {
 	spans := recorder.GetQueuedSpans()
 	assert.Len(t, spans, 5)
 }
+
+type alwaysReadyClient struct{}
+
+func (alwaysReadyClient) Ready() bool                                       { return true }
+func (alwaysReadyClient) SendMetrics(data acceptor.Metrics) error           { return nil }
+func (alwaysReadyClient) SendEvent(event *instana.EventData) error          { return nil }
+func (alwaysReadyClient) SendSpans(spans []instana.Span) error              { return nil }
+func (alwaysReadyClient) SendProfiles(profiles []autoprofile.Profile) error { return nil }
+func (alwaysReadyClient) Flush(context.Context) error                       { return nil }

@@ -9,6 +9,9 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/instana/go-sensor/acceptor"
+	"github.com/instana/go-sensor/autoprofile"
+
 	instana "github.com/instana/go-sensor"
 	"github.com/instana/go-sensor/instrumentation/instamongo"
 	"github.com/stretchr/testify/assert"
@@ -182,8 +185,9 @@ func TestWrapCommandMonitor_Succeeded(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			recorder := instana.NewTestRecorder()
 			sensor := instana.NewSensorWithTracer(
-				instana.NewTracerWithEverything(instana.DefaultOptions(), recorder),
+				instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder),
 			)
+			defer instana.ShutdownSensor()
 			mon := &monitorMock{}
 
 			m := instamongo.WrapCommandMonitor(mon.Monitor(), sensor)
@@ -260,8 +264,9 @@ func TestWrapCommandMonitor_Succeeded(t *testing.T) {
 func TestWrapCommandMonitor_Succeeded_NotStarted(t *testing.T) {
 	recorder := instana.NewTestRecorder()
 	sensor := instana.NewSensorWithTracer(
-		instana.NewTracerWithEverything(instana.DefaultOptions(), recorder),
+		instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder),
 	)
+	defer instana.ShutdownSensor()
 	mon := &monitorMock{}
 
 	m := instamongo.WrapCommandMonitor(mon.Monitor(), sensor)
@@ -288,8 +293,9 @@ func TestWrapCommandMonitor_Succeeded_NotStarted(t *testing.T) {
 func TestWrapCommandMonitor_Succeeded_NotTraced(t *testing.T) {
 	recorder := instana.NewTestRecorder()
 	sensor := instana.NewSensorWithTracer(
-		instana.NewTracerWithEverything(instana.DefaultOptions(), recorder),
+		instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder),
 	)
+	defer instana.ShutdownSensor()
 	mon := &monitorMock{}
 
 	m := instamongo.WrapCommandMonitor(mon.Monitor(), sensor)
@@ -326,8 +332,9 @@ func TestWrapCommandMonitor_Succeeded_NotTraced(t *testing.T) {
 func TestWrapCommandMonitor_Failed(t *testing.T) {
 	recorder := instana.NewTestRecorder()
 	sensor := instana.NewSensorWithTracer(
-		instana.NewTracerWithEverything(instana.DefaultOptions(), recorder),
+		instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder),
 	)
+	defer instana.ShutdownSensor()
 	mon := &monitorMock{}
 
 	m := instamongo.WrapCommandMonitor(mon.Monitor(), sensor)
@@ -403,8 +410,9 @@ func TestWrapCommandMonitor_Failed(t *testing.T) {
 func TestWrapCommandMonitor_Failed_NotStarted(t *testing.T) {
 	recorder := instana.NewTestRecorder()
 	sensor := instana.NewSensorWithTracer(
-		instana.NewTracerWithEverything(instana.DefaultOptions(), recorder),
+		instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder),
 	)
+	defer instana.ShutdownSensor()
 	mon := &monitorMock{}
 
 	m := instamongo.WrapCommandMonitor(mon.Monitor(), sensor)
@@ -429,8 +437,9 @@ func TestWrapCommandMonitor_Failed_NotStarted(t *testing.T) {
 func TestWrapCommandMonitor_Failed_NotTraced(t *testing.T) {
 	recorder := instana.NewTestRecorder()
 	sensor := instana.NewSensorWithTracer(
-		instana.NewTracerWithEverything(instana.DefaultOptions(), recorder),
+		instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder),
 	)
+	defer instana.ShutdownSensor()
 	mon := &monitorMock{}
 
 	m := instamongo.WrapCommandMonitor(mon.Monitor(), sensor)
@@ -545,3 +554,12 @@ func marshalBSON(t *testing.T, data interface{}) bson.Raw {
 
 	return bson.Raw(doc)
 }
+
+type alwaysReadyClient struct{}
+
+func (alwaysReadyClient) Ready() bool                                       { return true }
+func (alwaysReadyClient) SendMetrics(data acceptor.Metrics) error           { return nil }
+func (alwaysReadyClient) SendEvent(event *instana.EventData) error          { return nil }
+func (alwaysReadyClient) SendSpans(spans []instana.Span) error              { return nil }
+func (alwaysReadyClient) SendProfiles(profiles []autoprofile.Profile) error { return nil }
+func (alwaysReadyClient) Flush(context.Context) error                       { return nil }

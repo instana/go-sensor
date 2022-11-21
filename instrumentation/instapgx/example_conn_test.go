@@ -1,8 +1,5 @@
 // (c) Copyright IBM Corp. 2022
 
-//go:build go1.13
-// +build go1.13
-
 package instapgx_test
 
 import (

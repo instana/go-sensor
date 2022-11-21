@@ -22,7 +22,7 @@ import (
 func TestStartS3Span_WithActiveSpan(t *testing.T) {
 	recorder := instana.NewTestRecorder()
 	sensor := instana.NewSensorWithTracer(
-		instana.NewTracerWithEverything(instana.DefaultOptions(), recorder),
+		instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder),
 	)
 	defer instana.ShutdownSensor()
 
@@ -80,7 +80,7 @@ func TestStartS3Span_NoActiveSpan(t *testing.T) {
 func TestFinalizeS3_NoError(t *testing.T) {
 	recorder := instana.NewTestRecorder()
 	sensor := instana.NewSensorWithTracer(
-		instana.NewTracerWithEverything(instana.DefaultOptions(), recorder),
+		instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder),
 	)
 	defer instana.ShutdownSensor()
 
@@ -115,7 +115,7 @@ func TestFinalizeS3_NoError(t *testing.T) {
 func TestFinalizeS3Span_WithError(t *testing.T) {
 	recorder := instana.NewTestRecorder()
 	sensor := instana.NewSensorWithTracer(
-		instana.NewTracerWithEverything(instana.DefaultOptions(), recorder),
+		instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder),
 	)
 	defer instana.ShutdownSensor()
 

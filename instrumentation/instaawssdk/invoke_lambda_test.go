@@ -24,10 +24,9 @@ import (
 
 func TestStartInvokeLambdaSpan_WithActiveSpan(t *testing.T) {
 	const funcName = "test-function"
-
 	recorder := instana.NewTestRecorder()
 	sensor := instana.NewSensorWithTracer(
-		instana.NewTracerWithEverything(instana.DefaultOptions(), recorder),
+		instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder),
 	)
 	defer instana.ShutdownSensor()
 
@@ -102,7 +101,7 @@ func TestFinalizeInvoke_NoError(t *testing.T) {
 
 	recorder := instana.NewTestRecorder()
 	sensor := instana.NewSensorWithTracer(
-		instana.NewTracerWithEverything(instana.DefaultOptions(), recorder),
+		instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder),
 	)
 	defer instana.ShutdownSensor()
 
@@ -140,7 +139,7 @@ func TestFinalizeInvokeLambdaSpan_WithError(t *testing.T) {
 
 	recorder := instana.NewTestRecorder()
 	sensor := instana.NewSensorWithTracer(
-		instana.NewTracerWithEverything(instana.DefaultOptions(), recorder),
+		instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder),
 	)
 	defer instana.ShutdownSensor()
 

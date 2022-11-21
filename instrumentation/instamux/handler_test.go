@@ -7,10 +7,14 @@
 package instamux_test
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"testing"
+
+	"github.com/instana/go-sensor/acceptor"
+	"github.com/instana/go-sensor/autoprofile"
 
 	"github.com/opentracing/opentracing-go"
 	"github.com/stretchr/testify/require"
@@ -27,6 +31,7 @@ func TestMain(m *testing.M) {
 		Tracer: instana.TracerOptions{
 			CollectableHTTPHeaders: []string{"x-custom-header-1", "x-custom-header-2"},
 		},
+		AgentClient: alwaysReadyClient{},
 	})
 
 	os.Exit(m.Run())
@@ -103,3 +108,12 @@ func TestPropagation(t *testing.T) {
 		},
 	}, entrySpanData.Tags)
 }
+
+type alwaysReadyClient struct{}
+
+func (alwaysReadyClient) Ready() bool                                       { return true }
+func (alwaysReadyClient) SendMetrics(data acceptor.Metrics) error           { return nil }
+func (alwaysReadyClient) SendEvent(event *instana.EventData) error          { return nil }
+func (alwaysReadyClient) SendSpans(spans []instana.Span) error              { return nil }
+func (alwaysReadyClient) SendProfiles(profiles []autoprofile.Profile) error { return nil }
+func (alwaysReadyClient) Flush(context.Context) error                       { return nil }
