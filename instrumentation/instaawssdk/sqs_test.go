@@ -141,7 +141,7 @@ func TestStartSQSSpan(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			recorder := instana.NewTestRecorder()
 			sensor := instana.NewSensorWithTracer(
-				instana.NewTracerWithEverything(instana.DefaultOptions(), recorder),
+				instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder),
 			)
 			defer instana.ShutdownSensor()
 
@@ -183,7 +183,7 @@ func TestStartSQSSpan(t *testing.T) {
 func TestStartSQSSpan_NonInstrumentedMethod(t *testing.T) {
 	recorder := instana.NewTestRecorder()
 	sensor := instana.NewSensorWithTracer(
-		instana.NewTracerWithEverything(instana.DefaultOptions(), recorder),
+		instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder),
 	)
 	defer instana.ShutdownSensor()
 
@@ -210,7 +210,7 @@ func TestStartSQSSpan_NonInstrumentedMethod(t *testing.T) {
 func TestStartSQSSpan_TraceContextPropagation_Single(t *testing.T) {
 	recorder := instana.NewTestRecorder()
 	sensor := instana.NewSensorWithTracer(
-		instana.NewTracerWithEverything(instana.DefaultOptions(), recorder),
+		instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder),
 	)
 	defer instana.ShutdownSensor()
 
@@ -258,7 +258,7 @@ func TestStartSQSSpan_TraceContextPropagation_Single(t *testing.T) {
 func TestStartSQSSpan_TraceContextPropagation_Batch(t *testing.T) {
 	recorder := instana.NewTestRecorder()
 	sensor := instana.NewSensorWithTracer(
-		instana.NewTracerWithEverything(instana.DefaultOptions(), recorder),
+		instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder),
 	)
 	defer instana.ShutdownSensor()
 
@@ -429,7 +429,7 @@ func TestFinalizeSQSSpan(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 
 			recorder := instana.NewTestRecorder()
-			tracer := instana.NewTracerWithEverything(instana.DefaultOptions(), recorder)
+			tracer := instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder)
 			defer instana.ShutdownSensor()
 
 			sp := tracer.StartSpan("sqs")
@@ -454,7 +454,7 @@ func TestFinalizeSQSSpan(t *testing.T) {
 
 func TestFinalizeSQSSpan_WithError(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	tracer := instana.NewTracerWithEverything(instana.DefaultOptions(), recorder)
+	tracer := instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder)
 	defer instana.ShutdownSensor()
 
 	sp := tracer.StartSpan("sqs")
@@ -523,7 +523,7 @@ func TestTraceSQSMessage_WithTraceContext(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			recorder := instana.NewTestRecorder()
 			sensor := instana.NewSensorWithTracer(
-				instana.NewTracerWithEverything(instana.DefaultOptions(), recorder),
+				instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder),
 			)
 			defer instana.ShutdownSensor()
 
@@ -559,7 +559,7 @@ func TestTraceSQSMessage_WithTraceContext(t *testing.T) {
 func TestTraceSQSMessage_NoTraceContext(t *testing.T) {
 	recorder := instana.NewTestRecorder()
 	sensor := instana.NewSensorWithTracer(
-		instana.NewTracerWithEverything(instana.DefaultOptions(), recorder),
+		instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder),
 	)
 	defer instana.ShutdownSensor()
 
