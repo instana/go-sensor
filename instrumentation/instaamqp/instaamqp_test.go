@@ -3,7 +3,10 @@
 package instaamqp_test
 
 import (
+	"context"
 	"errors"
+	"github.com/instana/go-sensor/acceptor"
+	"github.com/instana/go-sensor/autoprofile"
 	"log"
 	"sync"
 	"testing"
@@ -82,7 +85,7 @@ func TestClient(t *testing.T) {
 			chMock.consumeError = tc.consumeError
 			recorder := instana.NewTestRecorder()
 			sensor := instana.NewSensorWithTracer(
-				instana.NewTracerWithEverything(instana.DefaultOptions(), recorder),
+				instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder),
 			)
 
 			instaCh := instaamqp.WrapChannel(sensor, chMock, url)
@@ -203,3 +206,12 @@ func getSpanMap(spans []instana.Span) map[string]instana.Span {
 
 	return spanMap
 }
+
+type alwaysReadyClient struct{}
+
+func (alwaysReadyClient) Ready() bool                                       { return true }
+func (alwaysReadyClient) SendMetrics(data acceptor.Metrics) error           { return nil }
+func (alwaysReadyClient) SendEvent(event *instana.EventData) error          { return nil }
+func (alwaysReadyClient) SendSpans(spans []instana.Span) error              { return nil }
+func (alwaysReadyClient) SendProfiles(profiles []autoprofile.Profile) error { return nil }
+func (alwaysReadyClient) Flush(context.Context) error                       { return nil }
