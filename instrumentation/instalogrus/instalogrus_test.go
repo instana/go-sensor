@@ -20,7 +20,7 @@ import (
 
 func TestNewHook_Levels(t *testing.T) {
 	sensor := instana.NewSensor("testing")
-
+	defer instana.ShutdownSensor()
 	h := instalogrus.NewHook(sensor)
 
 	assert.ElementsMatch(t, []logrus.Level{logrus.ErrorLevel, logrus.WarnLevel}, h.Levels())
@@ -31,6 +31,7 @@ func TestNewHook_SendLogSpans(t *testing.T) {
 	sensor := instana.NewSensorWithTracer(
 		instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder),
 	)
+	defer instana.ShutdownSensor()
 
 	logger := logrus.New()
 	logger.Level = logrus.DebugLevel
@@ -99,6 +100,7 @@ func TestNewHook_IgnoreLowLevels(t *testing.T) {
 	sensor := instana.NewSensorWithTracer(
 		instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder),
 	)
+	defer instana.ShutdownSensor()
 
 	logger := logrus.New()
 	logger.Level = logrus.DebugLevel
@@ -134,6 +136,7 @@ func TestNewHook_NoContext(t *testing.T) {
 	sensor := instana.NewSensorWithTracer(
 		instana.NewTracerWithEverything(instana.DefaultOptions(), recorder),
 	)
+	defer instana.ShutdownSensor()
 
 	logger := logrus.New()
 	logger.Level = logrus.DebugLevel
