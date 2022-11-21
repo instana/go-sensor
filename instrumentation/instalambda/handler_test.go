@@ -6,12 +6,13 @@ package instalambda_test
 import (
 	"context"
 	"errors"
-	"github.com/instana/go-sensor/acceptor"
-	"github.com/instana/go-sensor/autoprofile"
 	"io/ioutil"
 	"net/http"
 	"testing"
 	"time"
+
+	"github.com/instana/go-sensor/acceptor"
+	"github.com/instana/go-sensor/autoprofile"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambdacontext"
@@ -22,15 +23,10 @@ import (
 )
 
 func getOptions() *instana.Options {
-	matcher, err := instana.NamedMatcher(instana.ContainsIgnoreCaseMatcher, []string{"secret"})
-	if err != nil {
-		panic(err)
-	}
-
 	return &instana.Options{
 		Tracer: instana.TracerOptions{
-			Secrets:                matcher,
 			CollectableHTTPHeaders: []string{"X-Custom-Header-1", "X-Custom-Header-2"},
+			Secrets:                instana.DefaultSecretsMatcher(),
 		},
 		AgentClient: alwaysReadyClient{},
 	}
