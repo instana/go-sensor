@@ -4,9 +4,10 @@ package instaawssdk_test
 
 import (
 	"context"
+	"testing"
+
 	"github.com/instana/go-sensor/acceptor"
 	"github.com/instana/go-sensor/autoprofile"
-	"testing"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"

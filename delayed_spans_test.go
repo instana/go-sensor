@@ -5,14 +5,15 @@ package instana
 import (
 	"context"
 	"fmt"
-	"github.com/instana/go-sensor/acceptor"
-	"github.com/instana/go-sensor/autoprofile"
-	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
 	"sync"
 	"sync/atomic"
 	"testing"
+
+	"github.com/instana/go-sensor/acceptor"
+	"github.com/instana/go-sensor/autoprofile"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestAppendALotDelayedSpans(t *testing.T) {

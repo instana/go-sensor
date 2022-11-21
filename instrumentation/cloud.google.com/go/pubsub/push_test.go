@@ -6,13 +6,14 @@ package pubsub_test
 import (
 	"bytes"
 	"context"
-	"github.com/instana/go-sensor/acceptor"
-	"github.com/instana/go-sensor/autoprofile"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
+
+	"github.com/instana/go-sensor/acceptor"
+	"github.com/instana/go-sensor/autoprofile"
 
 	instana "github.com/instana/go-sensor"
 	"github.com/instana/go-sensor/instrumentation/cloud.google.com/go/pubsub"

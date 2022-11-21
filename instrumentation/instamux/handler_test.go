@@ -8,12 +8,13 @@ package instamux_test
 
 import (
 	"context"
-	"github.com/instana/go-sensor/acceptor"
-	"github.com/instana/go-sensor/autoprofile"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"testing"
+
+	"github.com/instana/go-sensor/acceptor"
+	"github.com/instana/go-sensor/autoprofile"
 
 	"github.com/opentracing/opentracing-go"
 	"github.com/stretchr/testify/require"

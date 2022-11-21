@@ -9,12 +9,13 @@ package instaecho_test
 import (
 	"context"
 	"errors"
-	"github.com/instana/go-sensor/acceptor"
-	"github.com/instana/go-sensor/autoprofile"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"testing"
+
+	"github.com/instana/go-sensor/acceptor"
+	"github.com/instana/go-sensor/autoprofile"
 
 	instana "github.com/instana/go-sensor"
 	"github.com/instana/go-sensor/instrumentation/instaecho"

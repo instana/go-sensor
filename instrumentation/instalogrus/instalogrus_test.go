@@ -5,11 +5,12 @@ package instalogrus_test
 
 import (
 	"context"
-	"github.com/instana/go-sensor/acceptor"
-	"github.com/instana/go-sensor/autoprofile"
 	"io/ioutil"
 	"testing"
 	"time"
+
+	"github.com/instana/go-sensor/acceptor"
+	"github.com/instana/go-sensor/autoprofile"
 
 	instana "github.com/instana/go-sensor"
 	"github.com/instana/go-sensor/instrumentation/instalogrus"

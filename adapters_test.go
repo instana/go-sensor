@@ -4,9 +4,10 @@
 package instana_test
 
 import (
-	instana "github.com/instana/go-sensor"
 	"net/http/httptest"
 	"testing"
+
+	instana "github.com/instana/go-sensor"
 
 	ot "github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
