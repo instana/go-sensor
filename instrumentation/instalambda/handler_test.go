@@ -5,6 +5,9 @@ package instalambda_test
 
 import (
 	"context"
+	"errors"
+	"github.com/instana/go-sensor/acceptor"
+	"github.com/instana/go-sensor/autoprofile"
 	"io/ioutil"
 	"net/http"
 	"testing"
@@ -29,6 +32,7 @@ func getOptions() *instana.Options {
 			Secrets:                matcher,
 			CollectableHTTPHeaders: []string{"X-Custom-Header-1", "X-Custom-Header-2"},
 		},
+		AgentClient: alwaysReadyClient{},
 	}
 }
 
@@ -616,7 +620,7 @@ func TestNewHandler_InvokeLambda_Success(t *testing.T) {
 
 func TestNewHandler_InvokeLambda_ColdStartAndNotColdStart(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	sensor := instana.NewSensorWithTracer(instana.NewTracerWithEverything(instana.DefaultOptions(), recorder))
+	sensor := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder))
 	defer instana.ShutdownSensor()
 
 	h := instalambda.NewHandler(func(ctx context.Context, evt interface{}) error {
@@ -775,3 +779,14 @@ func TestNewHandler_InvokeLambda_WithIncompleteSetOfInstanaHeaders(t *testing.T)
 		},
 	}, span.Data)
 }
+
+type alwaysReadyClient struct{}
+
+func (alwaysReadyClient) Ready() bool                              { return true }
+func (alwaysReadyClient) SendMetrics(data acceptor.Metrics) error  { return nil }
+func (alwaysReadyClient) SendEvent(event *instana.EventData) error { return nil }
+func (alwaysReadyClient) SendSpans(spans []instana.Span) error {
+	return errors.New("Dummy agent client.")
+}
+func (alwaysReadyClient) SendProfiles(profiles []autoprofile.Profile) error { return nil }
+func (alwaysReadyClient) Flush(context.Context) error                       { return nil }
