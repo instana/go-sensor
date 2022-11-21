@@ -13,6 +13,8 @@ import (
 
 	"github.com/gomodule/redigo/redis"
 	instana "github.com/instana/go-sensor"
+	"github.com/instana/go-sensor/acceptor"
+	"github.com/instana/go-sensor/autoprofile"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -45,7 +47,7 @@ func TestDo(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			recorder := instana.NewTestRecorder()
 			sensor := instana.NewSensorWithTracer(
-				instana.NewTracerWithEverything(instana.DefaultOptions(), recorder),
+				instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder),
 			)
 			sp := sensor.Tracer().StartSpan("testing")
 			defer sp.Finish()
@@ -100,7 +102,7 @@ func TestSend(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			recorder := instana.NewTestRecorder()
 			sensor := instana.NewSensorWithTracer(
-				instana.NewTracerWithEverything(instana.DefaultOptions(), recorder),
+				instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder),
 			)
 			sp := sensor.Tracer().StartSpan("testing")
 			defer sp.Finish()
@@ -150,7 +152,7 @@ func TestSubCommands(t *testing.T) {
 		t.Run(testName, func(t *testing.T) {
 			recorder := instana.NewTestRecorder()
 			sensor := instana.NewSensorWithTracer(
-				instana.NewTracerWithEverything(instana.DefaultOptions(), recorder),
+				instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder),
 			)
 
 			sp := sensor.Tracer().StartSpan("testing")
@@ -213,7 +215,7 @@ func TestDoContext(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			recorder := instana.NewTestRecorder()
 			sensor := instana.NewSensorWithTracer(
-				instana.NewTracerWithEverything(instana.DefaultOptions(), recorder),
+				instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder),
 			)
 
 			sp := sensor.Tracer().StartSpan("testing")
@@ -269,7 +271,7 @@ func TestDoTimeout(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			recorder := instana.NewTestRecorder()
 			sensor := instana.NewSensorWithTracer(
-				instana.NewTracerWithEverything(instana.DefaultOptions(), recorder),
+				instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder),
 			)
 
 			sp := sensor.Tracer().StartSpan("testing")
@@ -324,7 +326,7 @@ func TestPool(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			recorder := instana.NewTestRecorder()
 			sensor := instana.NewSensorWithTracer(
-				instana.NewTracerWithEverything(instana.DefaultOptions(), recorder),
+				instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder),
 			)
 
 			sp := sensor.Tracer().StartSpan("testing")
@@ -454,3 +456,12 @@ func newPool(sensor *instana.Sensor) *redis.Pool {
 		},
 	}
 }
+
+type alwaysReadyClient struct{}
+
+func (alwaysReadyClient) Ready() bool                                       { return true }
+func (alwaysReadyClient) SendMetrics(data acceptor.Metrics) error           { return nil }
+func (alwaysReadyClient) SendEvent(event *instana.EventData) error          { return nil }
+func (alwaysReadyClient) SendSpans(spans []instana.Span) error              { return nil }
+func (alwaysReadyClient) SendProfiles(profiles []autoprofile.Profile) error { return nil }
+func (alwaysReadyClient) Flush(context.Context) error                       { return nil }
