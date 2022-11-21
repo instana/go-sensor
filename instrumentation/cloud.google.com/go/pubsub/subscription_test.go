@@ -22,7 +22,7 @@ func TestSubscription_Receive(t *testing.T) {
 	defer pstest.ResetMinAckDeadline()
 
 	recorder := instana.NewTestRecorder()
-	tracer := instana.NewTracerWithEverything(instana.DefaultOptions(), recorder)
+	tracer := instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder)
 	defer instana.ShutdownSensor()
 
 	srv, conn, teardown, err := setupMockServer()
@@ -97,7 +97,7 @@ func TestSubscription_Receive_NoTrace(t *testing.T) {
 	defer pstest.ResetMinAckDeadline()
 
 	recorder := instana.NewTestRecorder()
-	tracer := instana.NewTracerWithEverything(instana.DefaultOptions(), recorder)
+	tracer := instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder)
 	defer instana.ShutdownSensor()
 
 	srv, conn, teardown, err := setupMockServer()

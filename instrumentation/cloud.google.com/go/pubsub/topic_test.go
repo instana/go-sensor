@@ -19,7 +19,7 @@ import (
 
 func TestTopic_Publish(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	tracer := instana.NewTracerWithEverything(instana.DefaultOptions(), recorder)
+	tracer := instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder)
 	defer instana.ShutdownSensor()
 
 	srv, conn, teardown, err := setupMockServer()

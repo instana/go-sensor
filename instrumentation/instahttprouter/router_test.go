@@ -4,6 +4,9 @@
 package instahttprouter_test
 
 import (
+	"context"
+	"github.com/instana/go-sensor/acceptor"
+	"github.com/instana/go-sensor/autoprofile"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -25,6 +28,7 @@ func TestRouter_Handle_StartTrace(t *testing.T) {
 			Secrets:                secrets.NewEqualsMatcher("secret"),
 			CollectableHTTPHeaders: []string{"X-Custom-1"},
 		},
+		AgentClient: alwaysReadyClient{},
 	}, recorder)
 	sensor := instana.NewSensorWithTracer(tracer)
 
@@ -80,7 +84,7 @@ func TestRouter_Handle_StartTrace(t *testing.T) {
 
 func TestRouter_TracePropagation(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	sensor := instana.NewSensorWithTracer(instana.NewTracerWithEverything(instana.DefaultOptions(), recorder))
+	sensor := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder))
 
 	r := instahttprouter.Wrap(httprouter.New(), sensor)
 	r.Handle(http.MethodGet, "/user/:id", func(w http.ResponseWriter, req *http.Request, params httprouter.Params) {
@@ -119,7 +123,7 @@ func TestRouter_TracePropagation(t *testing.T) {
 
 func TestRouter_Handle_ErrorHandling(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	sensor := instana.NewSensorWithTracer(instana.NewTracerWithEverything(instana.DefaultOptions(), recorder))
+	sensor := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder))
 
 	r := instahttprouter.Wrap(httprouter.New(), sensor)
 	r.Handle(http.MethodGet, "/user/:id", func(w http.ResponseWriter, req *http.Request, params httprouter.Params) {
@@ -174,7 +178,7 @@ func TestRouter_Handle_ErrorHandling(t *testing.T) {
 
 func TestRouter_Handle_PanicHandling(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	sensor := instana.NewSensorWithTracer(instana.NewTracerWithEverything(instana.DefaultOptions(), recorder))
+	sensor := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder))
 
 	r := instahttprouter.Wrap(httprouter.New(), sensor)
 	r.Handle(http.MethodGet, "/user/:id", func(w http.ResponseWriter, req *http.Request, params httprouter.Params) {
@@ -229,7 +233,7 @@ func TestRouter_Handle_PanicHandling(t *testing.T) {
 
 func TestRouter_Helpers(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	sensor := instana.NewSensorWithTracer(instana.NewTracerWithEverything(instana.DefaultOptions(), recorder))
+	sensor := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder))
 
 	r := instahttprouter.Wrap(httprouter.New(), sensor)
 
@@ -306,3 +310,12 @@ func TestRouter_Helpers(t *testing.T) {
 		})
 	}
 }
+
+type alwaysReadyClient struct{}
+
+func (alwaysReadyClient) Ready() bool                                       { return true }
+func (alwaysReadyClient) SendMetrics(data acceptor.Metrics) error           { return nil }
+func (alwaysReadyClient) SendEvent(event *instana.EventData) error          { return nil }
+func (alwaysReadyClient) SendSpans(spans []instana.Span) error              { return nil }
+func (alwaysReadyClient) SendProfiles(profiles []autoprofile.Profile) error { return nil }
+func (alwaysReadyClient) Flush(context.Context) error                       { return nil }
