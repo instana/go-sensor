@@ -1,6 +1,6 @@
 module github.com/go-sensor/instrumentation/instaazurefunction
 
-go 1.19
+go 1.13
 
 require (
 	github.com/instana/go-sensor v1.46.0
@@ -14,3 +14,5 @@ require (
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
+
+replace github.com/instana/go-sensor => /Users/sanoj/all_files/work/projects/go-sensor
