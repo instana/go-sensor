@@ -5,6 +5,8 @@ package instalogrus_test
 
 import (
 	"context"
+	"github.com/instana/go-sensor/acceptor"
+	"github.com/instana/go-sensor/autoprofile"
 	"io/ioutil"
 	"testing"
 	"time"
@@ -27,7 +29,7 @@ func TestNewHook_Levels(t *testing.T) {
 func TestNewHook_SendLogSpans(t *testing.T) {
 	recorder := instana.NewTestRecorder()
 	sensor := instana.NewSensorWithTracer(
-		instana.NewTracerWithEverything(instana.DefaultOptions(), recorder),
+		instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder),
 	)
 
 	logger := logrus.New()
@@ -95,7 +97,7 @@ func TestNewHook_SendLogSpans(t *testing.T) {
 func TestNewHook_IgnoreLowLevels(t *testing.T) {
 	recorder := instana.NewTestRecorder()
 	sensor := instana.NewSensorWithTracer(
-		instana.NewTracerWithEverything(instana.DefaultOptions(), recorder),
+		instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder),
 	)
 
 	logger := logrus.New()
@@ -143,3 +145,12 @@ func TestNewHook_NoContext(t *testing.T) {
 
 	assert.Empty(t, recorder.GetQueuedSpans())
 }
+
+type alwaysReadyClient struct{}
+
+func (alwaysReadyClient) Ready() bool                                       { return true }
+func (alwaysReadyClient) SendMetrics(data acceptor.Metrics) error           { return nil }
+func (alwaysReadyClient) SendEvent(event *instana.EventData) error          { return nil }
+func (alwaysReadyClient) SendSpans(spans []instana.Span) error              { return nil }
+func (alwaysReadyClient) SendProfiles(profiles []autoprofile.Profile) error { return nil }
+func (alwaysReadyClient) Flush(context.Context) error                       { return nil }
