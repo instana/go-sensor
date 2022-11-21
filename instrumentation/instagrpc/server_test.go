@@ -25,8 +25,9 @@ import (
 func TestUnaryServerInterceptor(t *testing.T) {
 	recorder := instana.NewTestRecorder()
 	sensor := instana.NewSensorWithTracer(
-		instana.NewTracerWithEverything(&instana.Options{}, recorder),
+		instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder),
 	)
+	defer instana.ShutdownSensor()
 
 	addr, teardown, err := startTestServer(
 		&testServer{},
@@ -66,7 +67,7 @@ func TestUnaryServerInterceptor(t *testing.T) {
 func TestUnaryServerInterceptor_WithClientTraceID(t *testing.T) {
 	recorder := instana.NewTestRecorder()
 	sensor := instana.NewSensorWithTracer(
-		instana.NewTracerWithEverything(&instana.Options{}, recorder),
+		instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder),
 	)
 	defer instana.ShutdownSensor()
 
@@ -106,8 +107,9 @@ func TestUnaryServerInterceptor_ErrorHandling(t *testing.T) {
 
 	recorder := instana.NewTestRecorder()
 	sensor := instana.NewSensorWithTracer(
-		instana.NewTracerWithEverything(&instana.Options{}, recorder),
+		instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder),
 	)
+	defer instana.ShutdownSensor()
 
 	addr, teardown, err := startTestServer(
 		&testServer{Error: serverErr},
@@ -138,8 +140,9 @@ func TestUnaryServerInterceptor_ErrorHandling(t *testing.T) {
 func TestUnaryServerInterceptor_PanicHandling(t *testing.T) {
 	recorder := instana.NewTestRecorder()
 	sensor := instana.NewSensorWithTracer(
-		instana.NewTracerWithEverything(&instana.Options{}, recorder),
+		instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder),
 	)
+	defer instana.ShutdownSensor()
 
 	addr, teardown, err := startTestServer(
 		&panickingTestServer{},
@@ -170,8 +173,9 @@ func TestUnaryServerInterceptor_PanicHandling(t *testing.T) {
 func TestStreamServerInterceptor(t *testing.T) {
 	recorder := instana.NewTestRecorder()
 	sensor := instana.NewSensorWithTracer(
-		instana.NewTracerWithEverything(&instana.Options{}, recorder),
+		instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder),
 	)
+	defer instana.ShutdownSensor()
 
 	addr, teardown, err := startTestServer(
 		&testServer{},
@@ -221,8 +225,9 @@ func TestStreamServerInterceptor(t *testing.T) {
 func TestStreamServerInterceptor_WithClientTraceID(t *testing.T) {
 	recorder := instana.NewTestRecorder()
 	sensor := instana.NewSensorWithTracer(
-		instana.NewTracerWithEverything(&instana.Options{}, recorder),
+		instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder),
 	)
+	defer instana.ShutdownSensor()
 
 	addr, teardown, err := startTestServer(
 		&testServer{},
@@ -265,8 +270,9 @@ func TestStreamServerInterceptor_ErrorHandling(t *testing.T) {
 
 	recorder := instana.NewTestRecorder()
 	sensor := instana.NewSensorWithTracer(
-		instana.NewTracerWithEverything(&instana.Options{}, recorder),
+		instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder),
 	)
+	defer instana.ShutdownSensor()
 
 	addr, teardown, err := startTestServer(
 		&testServer{Error: serverErr},
@@ -303,8 +309,9 @@ func TestStreamServerInterceptor_ErrorHandling(t *testing.T) {
 func TestStreamServerInterceptor_PanicHandling(t *testing.T) {
 	recorder := instana.NewTestRecorder()
 	sensor := instana.NewSensorWithTracer(
-		instana.NewTracerWithEverything(&instana.Options{}, recorder),
+		instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder),
 	)
+	defer instana.ShutdownSensor()
 
 	addr, teardown, err := startTestServer(
 		&panickingTestServer{},

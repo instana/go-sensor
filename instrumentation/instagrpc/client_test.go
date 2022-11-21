@@ -6,6 +6,8 @@ package instagrpc_test
 import (
 	"context"
 	"fmt"
+	"github.com/instana/go-sensor/acceptor"
+	"github.com/instana/go-sensor/autoprofile"
 	"io"
 	"net"
 	"testing"
@@ -23,7 +25,8 @@ import (
 
 func TestUnaryClientInterceptor(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	tracer := instana.NewTracerWithEverything(&instana.Options{}, recorder)
+	tracer := instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder)
+	defer instana.ShutdownSensor()
 
 	mdRec := &metadataCapturer{}
 	addr, teardown, err := startTestServer(
@@ -94,8 +97,9 @@ func TestUnaryClientInterceptor_ErrorHandling(t *testing.T) {
 
 	recorder := instana.NewTestRecorder()
 	sensor := instana.NewSensorWithTracer(
-		instana.NewTracerWithEverything(&instana.Options{}, recorder),
+		instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder),
 	)
+	defer instana.ShutdownSensor()
 
 	addr, teardown, err := startTestServer(&testServer{Error: serverErr})
 	require.NoError(t, err)
@@ -128,7 +132,8 @@ func TestUnaryClientInterceptor_ErrorHandling(t *testing.T) {
 
 func TestUnaryClientInterceptor_NoParentSpan(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	tracer := instana.NewTracerWithEverything(&instana.Options{}, recorder)
+	tracer := instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder)
+	defer instana.ShutdownSensor()
 
 	mdRec := &metadataCapturer{}
 	addr, teardown, err := startTestServer(
@@ -156,7 +161,8 @@ func TestUnaryClientInterceptor_NoParentSpan(t *testing.T) {
 
 func TestStreamClientInterceptor(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	tracer := instana.NewTracerWithEverything(&instana.Options{}, recorder)
+	tracer := instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder)
+	defer instana.ShutdownSensor()
 
 	mdRec := &metadataCapturer{}
 	addr, teardown, err := startTestServer(
@@ -248,7 +254,7 @@ func TestStreamClientInterceptor_ErrorHandling(t *testing.T) {
 
 	recorder := instana.NewTestRecorder()
 	sensor := instana.NewSensorWithTracer(
-		instana.NewTracerWithEverything(&instana.Options{}, recorder),
+		instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder),
 	)
 	defer instana.ShutdownSensor()
 
@@ -289,7 +295,8 @@ func TestStreamClientInterceptor_ErrorHandling(t *testing.T) {
 
 func TestStreamClientInterceptor_NoParentSpan(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	tracer := instana.NewTracerWithEverything(&instana.Options{}, recorder)
+	tracer := instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder)
+	defer instana.ShutdownSensor()
 
 	mdRec := &metadataCapturer{}
 	addr, teardown, err := startTestServer(
@@ -352,3 +359,12 @@ func newTestServiceClient(addr string, timeout time.Duration, opts ...grpc.DialO
 
 	return grpctest.NewTestServiceClient(conn), nil
 }
+
+type alwaysReadyClient struct{}
+
+func (alwaysReadyClient) Ready() bool                                       { return true }
+func (alwaysReadyClient) SendMetrics(data acceptor.Metrics) error           { return nil }
+func (alwaysReadyClient) SendEvent(event *instana.EventData) error          { return nil }
+func (alwaysReadyClient) SendSpans(spans []instana.Span) error              { return nil }
+func (alwaysReadyClient) SendProfiles(profiles []autoprofile.Profile) error { return nil }
+func (alwaysReadyClient) Flush(context.Context) error                       { return nil }
