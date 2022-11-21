@@ -4,6 +4,7 @@
 package instasarama_test
 
 import (
+	"context"
 	"errors"
 	"os"
 	"testing"
@@ -11,6 +12,8 @@ import (
 
 	"github.com/Shopify/sarama"
 	instana "github.com/instana/go-sensor"
+	"github.com/instana/go-sensor/acceptor"
+	"github.com/instana/go-sensor/autoprofile"
 	"github.com/instana/go-sensor/instrumentation/instasarama"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -23,7 +26,7 @@ func TestAsyncProducer_Input(t *testing.T) {
 		os.Setenv(instasarama.KafkaHeaderEnvVarKey, headerFormat)
 
 		recorder := instana.NewTestRecorder()
-		sensor := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{}, recorder))
+		sensor := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder))
 
 		parent := sensor.Tracer().StartSpan("test-span")
 		msg := instasarama.ProducerMessageWithSpan(&sarama.ProducerMessage{Topic: "test-topic"}, parent)
@@ -101,7 +104,7 @@ func TestAsyncProducer_Input(t *testing.T) {
 
 func TestAsyncProducer_Input_WithAwaitResult_Success(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	sensor := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{}, recorder))
+	sensor := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder))
 
 	parent := sensor.Tracer().StartSpan("test-span")
 	msg := instasarama.ProducerMessageWithSpan(&sarama.ProducerMessage{Topic: "test-topic"}, parent)
@@ -184,7 +187,7 @@ func TestAsyncProducer_Input_WithAwaitResult_Success(t *testing.T) {
 
 func TestAsyncProducer_Input_WithAwaitResult_Error(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	sensor := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{}, recorder))
+	sensor := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder))
 	defer instana.ShutdownSensor()
 
 	parent := sensor.Tracer().StartSpan("test-span")
@@ -271,7 +274,7 @@ func TestAsyncProducer_Input_WithAwaitResult_Error(t *testing.T) {
 
 func TestAsyncProducer_Input_NoTraceContext(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	sensor := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{}, recorder))
+	sensor := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder))
 
 	msg := &sarama.ProducerMessage{
 		Topic: "topic-1",
@@ -295,7 +298,7 @@ func TestAsyncProducer_Input_NoTraceContext(t *testing.T) {
 
 func TestAsyncProducer_Successes(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	sensor := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{}, recorder))
+	sensor := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder))
 
 	msg := &sarama.ProducerMessage{
 		Topic: "topic-1",
@@ -318,7 +321,7 @@ func TestAsyncProducer_Successes(t *testing.T) {
 
 func TestAsyncProducer_Errors(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	sensor := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{}, recorder))
+	sensor := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder))
 
 	msg := &sarama.ProducerError{
 		Err: errors.New("something went wrong"),
@@ -378,3 +381,12 @@ func (p *testAsyncProducer) Teardown() {
 	close(p.successes)
 	close(p.errors)
 }
+
+type alwaysReadyClient struct{}
+
+func (alwaysReadyClient) Ready() bool                                       { return true }
+func (alwaysReadyClient) SendMetrics(data acceptor.Metrics) error           { return nil }
+func (alwaysReadyClient) SendEvent(event *instana.EventData) error          { return nil }
+func (alwaysReadyClient) SendSpans(spans []instana.Span) error              { return nil }
+func (alwaysReadyClient) SendProfiles(profiles []autoprofile.Profile) error { return nil }
+func (alwaysReadyClient) Flush(context.Context) error                       { return nil }
