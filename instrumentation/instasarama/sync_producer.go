@@ -92,27 +92,27 @@ func (p *SyncProducer) SendMessage(msg *sarama.ProducerMessage) (int32, int64, e
 // In case you want your batch publish operation to be a part of a specific trace, make sure that
 // you inject the parent span of this trace explicitly before calling `SendMessages()`, i.e.
 //
-// type MessageCollector struct {
-// 	CollectedMessages []*sarama.ProducerMessage
-// 	producer *instasarama.SyncProducer
-// 	// ...
-// }
+//	type MessageCollector struct {
+//		CollectedMessages []*sarama.ProducerMessage
+//		producer *instasarama.SyncProducer
+//		// ...
+//	}
 //
-// func (c MessageCollector) Flush(ctx context.Context) error {
-// 	// extract the parent span from context and use it to continue the trace
-// 	if parentSpan, ok := instana.SpanFromContext(ctx); ok {
-// 		// start a new span for the batch send job
-//		sp := parentSpan.Tracer().StartSpan("batch-send", ot.ChilfOf(parentSpan.Context()))
-// 		defer sp.Finish()
+//	func (c MessageCollector) Flush(ctx context.Context) error {
+//		// extract the parent span from context and use it to continue the trace
+//		if parentSpan, ok := instana.SpanFromContext(ctx); ok {
+//			// start a new span for the batch send job
+//			sp := parentSpan.Tracer().StartSpan("batch-send", ot.ChilfOf(parentSpan.Context()))
+//			defer sp.Finish()
 //
-// 		// inject the trace context into every collected message, overriding the existing one
-//		for i, msg := range c.CollectedMessages {
-// 			c.CollectedMessages = instasarama.ProducerMessageWithSpan(msg, sp)
-// 		}
-// 	}
+//			// inject the trace context into every collected message, overriding the existing one
+//			for i, msg := range c.CollectedMessages {
+//				c.CollectedMessages = instasarama.ProducerMessageWithSpan(msg, sp)
+//			}
+//		}
 //
-// 	return c.producer.SendMessages(c.CollectedMessages)
-// }
+//		return c.producer.SendMessages(c.CollectedMessages)
+//	}
 func (p *SyncProducer) SendMessages(msgs []*sarama.ProducerMessage) error {
 	if len(msgs) == 0 {
 		return nil
