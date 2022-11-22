@@ -71,7 +71,7 @@ jobs:
 
 workflows:
   version: 2
-  build_tmp:  
+  build:
     jobs:
       - build:
           name: "go1.19"
