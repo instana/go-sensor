@@ -2,7 +2,7 @@ version: '3'
 
 services:
 
-  postgre:
+  postgres:
     image: postgres:14
     ports:
       - 5432:5432
