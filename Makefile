@@ -42,7 +42,13 @@ instrumentation/% :
 	printf "VERSION_TAG_PREFIX ?= $@/v\nGO_MODULE_NAME ?= github.com/instana/go-sensor/$@\n\ninclude ../../Makefile.release\n" > $@/Makefile
 	printf '// (c) Copyright IBM Corp. %s\n// (c) Copyright Instana Inc. %s\n\npackage %s\n\nconst Version = "0.0.0"\n' $(shell date +%Y) $(shell date +%Y) $(notdir $@) > $@/version.go
 
-.PHONY: test install legal $(MODULES) $(INTEGRATION_TESTS)
+fmtcheck:
+	@test -z $(shell gofmt -l . && exit 1)
+
+importcheck:
+	@test -z $(shell goimports -l . && exit 1)
+
+.PHONY: test install legal fmtcheck importcheck $(MODULES) $(INTEGRATION_TESTS)
 
 # Release targets
 include Makefile.release

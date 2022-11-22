@@ -149,10 +149,10 @@ func NewRegexpMatcher(terms ...*regexp.Regexp) (RegexpMatcher, error) {
 // Match returns true if a string fully matches any of matcher's regular expessions. If an expression matches only
 // a part of string, this method returns false:
 //
-//     m := NewRegexpMatcher(regexp.MustCompile(`aaa`), regexp.MustCompile(`bbb`))
-//     m.Match("aaa") // returns true
-//     m.Match("bbb") // returns true
-//     m.Match("aaabbb") // returns false, as both regular expressions match only a part of the string
+//	m := NewRegexpMatcher(regexp.MustCompile(`aaa`), regexp.MustCompile(`bbb`))
+//	m.Match("aaa") // returns true
+//	m.Match("bbb") // returns true
+//	m.Match("aaabbb") // returns false, as both regular expressions match only a part of the string
 func (m RegexpMatcher) Match(s string) bool {
 	return m.re.MatchString(s)
 }

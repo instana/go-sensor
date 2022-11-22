@@ -81,7 +81,8 @@ func (r *Recorder) RecordSpan(span *spanS) {
 }
 
 // QueuedSpansCount returns the number of queued spans
-//   Used only in tests currently.
+//
+//	Used only in tests currently.
 func (r *Recorder) QueuedSpansCount() int {
 	r.RLock()
 	defer r.RUnlock()
@@ -124,10 +125,11 @@ func (r *Recorder) Flush(ctx context.Context) error {
 }
 
 // clearQueuedSpans brings the span queue to empty/0/nada
-//   This function doesn't take the Lock so make sure to have
-//   the write lock before calling.
-//   This is meant to be called from GetQueuedSpans which handles
-//   locking.
+//
+//	This function doesn't take the Lock so make sure to have
+//	the write lock before calling.
+//	This is meant to be called from GetQueuedSpans which handles
+//	locking.
 func (r *Recorder) clearQueuedSpans() {
 	r.spans = r.spans[:0]
 }

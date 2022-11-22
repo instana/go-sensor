@@ -13,10 +13,11 @@ import (
 	"sync"
 	"time"
 
+	"github.com/instana/go-sensor/logger"
+
 	"github.com/instana/go-sensor/acceptor"
 	"github.com/instana/go-sensor/autoprofile"
 	"github.com/instana/go-sensor/aws"
-	"github.com/instana/go-sensor/logger"
 )
 
 const (
