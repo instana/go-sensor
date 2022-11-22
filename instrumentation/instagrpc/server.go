@@ -18,10 +18,10 @@ import (
 // This interceptor is responsible for extracting the Instana OpenTracing headers from incoming requests
 // and staring a new span that can later be accessed inside the handler:
 //
-// 	if parent, ok := instana.SpanFromContext(ctx); ok {
-// 		sp := parent.Tracer().StartSpan("child-span")
-// 		defer sp.Finish()
-// 	}
+//	if parent, ok := instana.SpanFromContext(ctx); ok {
+//		sp := parent.Tracer().StartSpan("child-span")
+//		defer sp.Finish()
+//	}
 //
 // If the handler returns an error or panics, the error message is then attached to the span logs.
 func UnaryServerInterceptor(sensor *instana.Sensor) grpc.UnaryServerInterceptor {
@@ -51,10 +51,10 @@ func UnaryServerInterceptor(sensor *instana.Sensor) grpc.UnaryServerInterceptor 
 // This interceptor is responsible for extracting the Instana OpenTracing headers from incoming streaming
 // requests and starting a new span that can later be accessed inside the handler:
 //
-// 	if parent, ok := instana.SpanFromContext(srv.Context()); ok {
-// 		sp := parent.Tracer().StartSpan("child-span")
-// 		defer sp.Finish()
-// 	}
+//	if parent, ok := instana.SpanFromContext(srv.Context()); ok {
+//		sp := parent.Tracer().StartSpan("child-span")
+//		defer sp.Finish()
+//	}
 //
 // If the handler returns an error or panics, the error message is then attached to the span logs.
 func StreamServerInterceptor(sensor *instana.Sensor) grpc.StreamServerInterceptor {
