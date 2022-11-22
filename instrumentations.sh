@@ -31,8 +31,13 @@ fi
 CORE_VERSION=latest
 # CORE_VERSION=v1.45.0
 
+# List of folders to be excluded from the instrumentation list
+# If new matches must be added, use regular expressions. eg:
+# EXCLUDED_DIRS="/.*/example|/new_match"
+EXCLUDED_DIRS="\/.*\/example"
+
 # List of instrumentation folders
-LIB_LIST=$(find ./instrumentation -name go.mod -exec dirname {} \; | grep -v "/instasarama/example")
+LIB_LIST=$(find ./instrumentation -name go.mod -exec dirname {} \; | grep -E -v "$EXCLUDED_DIRS")
 
 # Updates all instrumentations to use the @latest version of the core module
 run_update() {
