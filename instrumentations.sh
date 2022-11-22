@@ -33,7 +33,7 @@ CORE_VERSION=latest
 
 # List of folders to be excluded from the instrumentation list
 # If new matches must be added, use regular expressions. eg:
-# EXCLUDED_DIRS="/.*/example|/new_match"
+# EXCLUDED_DIRS="\/.*\/example|\/new_match"
 EXCLUDED_DIRS="\/.*\/example"
 
 # List of instrumentation folders
