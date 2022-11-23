@@ -30,7 +30,7 @@ release :
 ifneq ($(GITHUB_CLI),)
 	$(GITHUB_CLI) release create $(VERSION_TAG_PREFIX)$(VERSION) \
 		--draft \
-		--title $(VERSION_TAG_PREFIX)$(VERSION) \
+		--title $(VERSION_TAG_PREFIX)$(VERSION)
 else
 	@echo "GitHub CLI is not installed. Please proceed with creating the release on https://github.com"
 endif
