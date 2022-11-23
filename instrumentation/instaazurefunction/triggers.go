@@ -1,23 +1,24 @@
 // (c) Copyright IBM Corp. 2022
 // (c) Copyright Instana Inc. 2022
 
-//go:build go1.13
-// +build go1.13
-
 package instaazurefunction
 
 import "encoding/json"
 
 const (
-	unknownType string = "unknown type"
-
-	//supported types
+	unknownType         string = "unknown type"
 	httpTrigger         string = "httpTrigger"
 	queueStorageTrigger string = "queueTrigger"
 )
 
+type spanData struct {
+	MethodName  string
+	TriggerType string
+}
+
 // Extracts the trigger type and method name from the payload
-func extractSpanData(payload []byte) (string, string) {
+func extractSpanData(payload []byte) (spanData, error) {
+	var s spanData
 	var v struct {
 		Metadata struct {
 			//queueStorage fields
@@ -35,17 +36,19 @@ func extractSpanData(payload []byte) (string, string) {
 	}
 
 	if err := json.Unmarshal(payload, &v); err != nil {
-		return unknownType, ""
+		return s, err
 	}
 
-	method := v.Metadata.Sys.MethodName
+	s.MethodName = v.Metadata.Sys.MethodName
 
 	switch {
 	case v.Metadata.PopReceipt != "":
-		return queueStorageTrigger, method
+		s.TriggerType = queueStorageTrigger
 	case v.Metadata.Headers.UserAgent != "":
-		return httpTrigger, method
+		s.TriggerType = httpTrigger
 	default:
-		return unknownType, method
+		s.TriggerType = unknownType
 	}
+
+	return s, nil
 }

@@ -1,9 +1,6 @@
 // (c) Copyright IBM Corp. 2022
 // (c) Copyright Instana Inc. 2022
 
-//go:build go1.13
-// +build go1.13
-
 // Package instaazurefunction provides Instana tracing instrumentation for
 // Microsoft Azure Functions
 package instaazurefunction
@@ -40,7 +37,13 @@ func WrapFunctionHandler(sensor *instana.Sensor, handler http.HandlerFunc) http.
 			},
 		}
 
-		span := tracer.StartSpan("azf", opts...)
+		ctx := req.Context()
+
+		var span ot.Span
+		if parent, ok := instana.SpanFromContext(ctx); ok {
+			opts = append(opts, ot.ChildOf(parent.Context()))
+		}
+		span = tracer.StartSpan("azf", opts...)
 
 		defer func() {
 			// Be sure to capture any kind of panic/error
@@ -58,29 +61,23 @@ func WrapFunctionHandler(sensor *instana.Sensor, handler http.HandlerFunc) http.
 			}
 		}()
 
-		//clone the request body
-		body, err := io.ReadAll(req.Body)
-
+		body, err := copyRequestBody(req)
 		if err != nil {
-			span.SetTag("azf.error", err)
-			span.LogFields(otlog.Object("error", err))
+			span.SetTag("azf.error", err.Error())
+			span.LogFields(otlog.Object("error", err.Error()))
 		}
 
-		//request body will be empty if we do not assign it back
-		req.Body = io.NopCloser(bytes.NewBuffer(body))
-
-		trigger, method := extractSpanData(body)
-
-		if trigger == unknownType || method == "" {
-			span.SetTag("azf.error", "invalid type/method")
-			span.LogFields(otlog.Object("error", err))
+		spanData, err := extractSpanData(body)
+		if err != nil {
+			span.SetTag("azf.error", err.Error())
+			span.LogFields(otlog.Object("error", err.Error()))
 		}
-		span.SetTag("azf.methodname", method)
-		span.SetTag("azf.trigger", trigger)
+
+		span.SetTag("azf.methodname", spanData.MethodName)
+		span.SetTag("azf.trigger", spanData.TriggerType)
 
 		// Here we create a separate context.Context to finalize and send the span. This context
 		// supposed to be canceled once the wrapped handler is done.
-		ctx := req.Context()
 		traceCtx, cancelTraceCtx := context.WithCancel(ctx)
 
 		// In case there is a deadline defined for this invocation, we should finish the span just before
@@ -135,4 +132,14 @@ func flushAgent(sensor *instana.Sensor, retryPeriod time.Duration, maxRetries in
 			break
 		}
 	}
+}
+
+// copyRequestBody clones the request body and return it
+func copyRequestBody(req *http.Request) ([]byte, error) {
+	body, err := io.ReadAll(req.Body)
+
+	//request body will be empty if we do not assign it back
+	req.Body = io.NopCloser(bytes.NewBuffer(body))
+
+	return body, err
 }

@@ -2,6 +2,7 @@
   "IsEncrypted": false,
   "Values": {
     "FUNCTIONS_WORKER_RUNTIME": "custom",
+    "INSTANA_ENDPOINT_URL": "https://serverless-blue-saas.instana.io",
     "AzureWebJobsStorage": ""
   }
 }

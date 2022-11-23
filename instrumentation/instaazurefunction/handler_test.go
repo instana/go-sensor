@@ -1,24 +1,22 @@
 // (c) Copyright IBM Corp. 2022
 // (c) Copyright Instana Inc. 2022
 
-//go:build go1.13
-// +build go1.13
-
 package instaazurefunction_test
 
 import (
 	"context"
 	"errors"
 	"fmt"
+	"net/http"
+	"net/http/httptest"
+	"strings"
+	"testing"
+
 	"github.com/go-sensor/instrumentation/instaazurefunction"
 	instana "github.com/instana/go-sensor"
 	"github.com/instana/go-sensor/acceptor"
 	"github.com/instana/go-sensor/autoprofile"
 	"github.com/stretchr/testify/assert"
-	"net/http"
-	"net/http/httptest"
-	"strings"
-	"testing"
 )
 
 func TestHttpTrigger(t *testing.T) {

@@ -8,6 +8,9 @@ import (
 	"log"
 	"net/http"
 	"os"
+
+	instana "github.com/instana/go-sensor"
+	azf "github.com/instana/go-sensor/instrumentation/instaazurefunction"
 )
 
 func handleGreetings(w http.ResponseWriter, r *http.Request) {
@@ -23,6 +26,7 @@ func main() {
 	if val, ok := os.LookupEnv("FUNCTIONS_CUSTOMHANDLER_PORT"); ok {
 		listenAddr = ":" + val
 	}
-	http.HandleFunc("/api/greetings", handleGreetings)
+	sensor := instana.NewSensor("mysensor")
+	http.HandleFunc("/api/greetings", azf.WrapFunctionHandler(sensor, handleGreetings))
 	log.Fatal(http.ListenAndServe(listenAddr, nil))
 }

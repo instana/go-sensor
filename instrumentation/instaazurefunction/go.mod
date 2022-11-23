@@ -1,6 +1,6 @@
 module github.com/go-sensor/instrumentation/instaazurefunction
 
-go 1.13
+go 1.19
 
 require (
 	github.com/instana/go-sensor v1.46.0
