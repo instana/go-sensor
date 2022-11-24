@@ -23,11 +23,6 @@ GIT_PATCH_VERSION = $(word 3,$(subst ., ,$(GIT_VERSION)))
 # Parse version from version.go file
 VERSION = $(shell grep -hm1 '^const Version = ".\+"' ${VERSION_GO_FILE} | head -1 | sed -E 's/const Version = "([0-9\.]+)"/\1/')
 
-# Create changelog if GitHub CLI is installed
-ifneq ($(GITHUB_CLI),)
-release : CHANGELOG.txt
-endif
-
 # Create new release tag and publish a release from it
 release :
 	git tag $(VERSION_TAG_PREFIX)$(VERSION)
@@ -35,9 +30,7 @@ release :
 ifneq ($(GITHUB_CLI),)
 	$(GITHUB_CLI) release create $(VERSION_TAG_PREFIX)$(VERSION) \
 		--draft \
-		--title $(VERSION_TAG_PREFIX)$(VERSION) \
-		--notes-file CHANGELOG.txt
-	rm CHANGELOG.txt
+		--title $(VERSION_TAG_PREFIX)$(VERSION)
 else
 	@echo "GitHub CLI is not installed. Please proceed with creating the release on https://github.com"
 endif
@@ -63,16 +56,6 @@ patch : ensure-git-clean update-local-copy
 	sed -i '' 's/^const Version = ".*"/const Version = "$(VERSION)"/' ${VERSION_GO_FILE}
 	git commit -m "Bump version to v$(VERSION)" ${VERSION_GO_FILE}
 	git push $(GIT_REMOTE) HEAD
-
-.INTERMEDIATE : CHANGELOG.txt
-CHANGELOG.txt :
-	echo "This release of `$(GO_MODULE_NAME)` includes the following fixes & improvements:" > CHANGELOG.txt
-	git log --merges $(VERSION_TAG_PREFIX)$(GIT_VERSION).. --pretty='format:%s' | \
-		sed 's~Merge pull request #\([0-9]*\).*~\1~' | \
-		xargs -n1 $(GITHUB_CLI) pr view | \
-		grep '^title:' | \
-		sed 's~^title:~*~' >> CHANGELOG.txt
-	echo >> CHANGELOG.txt
 
 # Make sure there are no uncommitted changes in the working tree
 ensure-git-clean :
