@@ -31,8 +31,13 @@ fi
 CORE_VERSION=latest
 # CORE_VERSION=v1.45.0
 
+# List of folders to be excluded from the instrumentation list
+# If new matches must be added, use regular expressions. eg:
+# EXCLUDED_DIRS="\/.*\/example|\/new_match"
+EXCLUDED_DIRS="\/.*\/example"
+
 # List of instrumentation folders
-LIB_LIST=$(find ./instrumentation -name go.mod -exec dirname {} \; | grep -v "/instasarama/example")
+LIB_LIST=$(find ./instrumentation -name go.mod -exec dirname {} \; | grep -E -v "$EXCLUDED_DIRS")
 
 # Updates all instrumentations to use the @latest version of the core module
 run_update() {
@@ -84,10 +89,50 @@ run_release() {
   done
 }
 
+run_replace() {
+  ROOT_DIR="$PWD"
+
+  for lib in $LIB_LIST
+    do cd "$lib" && go mod edit -replace=github.com/instana/go-sensor="$ROOT_DIR" && cd -;
+  done
+}
+
+run_dropreplace() {
+  ROOT_DIR="$PWD"
+
+  for lib in $LIB_LIST
+    do cd "$lib" && go mod edit -dropreplace=github.com/instana/go-sensor && cd -;
+  done
+}
+
 if [ "$1" = "update" ]; then
   run_update
+  exit 0
 fi
 
 if [ "$1" = "release" ]; then
   run_release
+  exit 0
 fi
+
+if [ "$1" = "replace" ]; then
+  run_replace
+  exit 0
+fi
+
+if [ "$1" = "dropreplace" ]; then
+  run_dropreplace
+  exit 0
+fi
+
+echo "---------------------------------------------------------"
+echo "Usage: $0 COMMAND"
+echo ""
+echo "Where COMMAND can be:"
+echo "- update: Updates every instrumentation to reference the latest version of the core"
+echo "- release: Releases all instrumentations by increasing a minor version"
+echo "- replace: Adds the 'replace' directive into the go.mod file of each instrumentation changing github.com/instana/go-sensor to the local path"
+echo "- dropreplace: Removes existing 'replace' directives that changes github.com/instana/go-sensor to a different path"
+echo ""
+echo "Example: $0 update"
+echo "---------------------------------------------------------"
