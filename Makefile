@@ -1,5 +1,3 @@
-include instrumentation/instapgx/Makefile
-
 MODULES = $(filter-out $(EXCLUDE_DIRS), $(shell find . -name go.mod -exec dirname {} \;))
 LINTER ?= $(shell go env GOPATH)/bin/golangci-lint
 
@@ -18,7 +16,8 @@ ifeq ($(RUN_LINTER),yes)
 	cd $@ && $(LINTER) run
 endif
 
-integration: $(INTEGRATION_TESTS) pgx_integration_test
+integration: $(INTEGRATION_TESTS)
+	cd instrumentation/instapgx && go test -tags=integration
 
 $(INTEGRATION_TESTS):
 	go test $(GOFLAGS) -tags "$@ integration" $(shell grep --exclude-dir=instapgx -lR '^// +build \($@,\)\?integration\(,$@\)\?' .)
