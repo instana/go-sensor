@@ -123,6 +123,9 @@ func (r *tracerS) StartSpanWithOptions(operationName string, opts ot.StartSpanOp
 
 // Options returns current tracer options
 func (r *tracerS) Options() TracerOptions {
+	sensor.mu.Lock()
+	defer sensor.mu.Unlock()
+
 	if sensor.options == nil {
 		return DefaultTracerOptions()
 	}

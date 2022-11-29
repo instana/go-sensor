@@ -170,12 +170,16 @@ func (r *fsmS) applyHostAgentSettings(resp agentResponse) {
 		if err != nil {
 			r.logger.Warn("failed to apply secrets matcher configuration: ", err)
 		} else {
+			sensor.mu.Lock()
 			sensor.options.Tracer.Secrets = m
+			sensor.mu.Unlock()
 		}
 	}
 
 	if len(sensor.options.Tracer.CollectableHTTPHeaders) == 0 {
+		sensor.mu.Lock()
 		sensor.options.Tracer.CollectableHTTPHeaders = resp.getExtraHTTPHeaders()
+		sensor.mu.Unlock()
 	}
 }
 

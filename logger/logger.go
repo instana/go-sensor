@@ -57,7 +57,7 @@ type Printer interface {
 type Logger struct {
 	p Printer
 
-	mu     sync.Mutex
+	mu     sync.RWMutex
 	lvl    Level
 	prefix string
 }
@@ -140,6 +140,9 @@ func (l *Logger) SetPrefix(prefix string) {
 
 // Debug appends a debug message to the log
 func (l *Logger) Debug(v ...interface{}) {
+	l.mu.RLock()
+	defer l.mu.RUnlock()
+
 	if l.lvl < DebugLevel {
 		return
 	}

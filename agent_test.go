@@ -6,9 +6,11 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"strings"
+	"sync"
 	"testing"
 
 	"github.com/instana/go-sensor/acceptor"
@@ -138,7 +140,7 @@ func Test_agentApplyHostSettings(t *testing.T) {
 		Tracer: TracerOptions{
 			CollectableHTTPHeaders: []string{"x-custom-header-1", "x-custom-header-2"},
 		},
-		AgentClient: alwaysReadyClient{},
+		AgentClient: &alwaysReadyClient{},
 	}
 
 	sensor = newSensor(opts)
@@ -151,11 +153,33 @@ func Test_agentApplyHostSettings(t *testing.T) {
 	assert.NotContains(t, sensor.options.Tracer.CollectableHTTPHeaders, "my-unwanted-custom-headers")
 }
 
-type alwaysReadyClient struct{}
+type alwaysReadyClient struct {
+	mu sync.Mutex
+}
 
-func (alwaysReadyClient) Ready() bool                                       { return true }
-func (alwaysReadyClient) SendMetrics(data acceptor.Metrics) error           { return nil }
-func (alwaysReadyClient) SendEvent(event *EventData) error                  { return nil }
-func (alwaysReadyClient) SendSpans(spans []Span) error                      { return nil }
-func (alwaysReadyClient) SendProfiles(profiles []autoprofile.Profile) error { return nil }
-func (alwaysReadyClient) Flush(context.Context) error                       { return nil }
+func (a *alwaysReadyClient) Ready() bool {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	return true
+}
+func (*alwaysReadyClient) SendMetrics(data acceptor.Metrics) error           { return nil }
+func (*alwaysReadyClient) SendEvent(event *EventData) error                  { return nil }
+func (*alwaysReadyClient) SendSpans(spans []Span) error                      { return nil }
+func (*alwaysReadyClient) SendProfiles(profiles []autoprofile.Profile) error { return nil }
+func (*alwaysReadyClient) Flush(context.Context) error                       { return nil }
+
+type neverReadyClient struct {
+	mu sync.Mutex
+}
+
+func (a *neverReadyClient) Ready() bool {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	fmt.Println("READY DO NEVER READY")
+	return false
+}
+func (*neverReadyClient) SendMetrics(data acceptor.Metrics) error           { return nil }
+func (*neverReadyClient) SendEvent(event *EventData) error                  { return nil }
+func (*neverReadyClient) SendSpans(spans []Span) error                      { return nil }
+func (*neverReadyClient) SendProfiles(profiles []autoprofile.Profile) error { return nil }
+func (*neverReadyClient) Flush(context.Context) error                       { return nil }
