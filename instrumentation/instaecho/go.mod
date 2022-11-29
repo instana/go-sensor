@@ -8,3 +8,5 @@ require (
 	github.com/opentracing/opentracing-go v1.2.0
 	github.com/stretchr/testify v1.8.1
 )
+
+replace github.com/instana/go-sensor => /Users/willian/projects/go-sensor

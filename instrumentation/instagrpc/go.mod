@@ -8,3 +8,5 @@ require (
 	github.com/stretchr/testify v1.8.1
 	google.golang.org/grpc v1.15.0
 )
+
+replace github.com/instana/go-sensor => /Users/willian/projects/go-sensor

@@ -27,3 +27,5 @@ require (
 	golang.org/x/text v0.3.6 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
+
+replace github.com/instana/go-sensor => /Users/willian/projects/go-sensor
