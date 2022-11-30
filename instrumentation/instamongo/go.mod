@@ -8,5 +8,3 @@ require (
 	github.com/stretchr/testify v1.8.1
 	go.mongodb.org/mongo-driver v1.7.2
 )
-
-replace github.com/instana/go-sensor => /Users/willian/projects/go-sensor

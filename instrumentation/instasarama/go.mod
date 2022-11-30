@@ -16,5 +16,3 @@ require (
 	github.com/rcrowley/go-metrics v0.0.0-20200313005456-10cdbea86bc0 // indirect
 	github.com/stretchr/testify v1.8.1
 )
-
-replace github.com/instana/go-sensor => /Users/willian/projects/go-sensor

@@ -6,7 +6,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -175,7 +174,6 @@ type neverReadyClient struct {
 func (a *neverReadyClient) Ready() bool {
 	a.mu.Lock()
 	defer a.mu.Unlock()
-	fmt.Println("READY DO NEVER READY")
 	return false
 }
 func (*neverReadyClient) SendMetrics(data acceptor.Metrics) error           { return nil }
