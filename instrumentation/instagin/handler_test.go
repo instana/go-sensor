@@ -8,7 +8,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"reflect"
 	"testing"
 
@@ -26,23 +25,25 @@ import (
 	"github.com/instana/go-sensor/instrumentation/instagin"
 )
 
-func TestMain(m *testing.M) {
-	gin.SetMode(gin.TestMode)
-	gin.DefaultWriter = ioutil.Discard
-
-	instana.InitSensor(&instana.Options{
+func getOptions() *instana.Options {
+	return &instana.Options{
 		Service: "gin-test",
 		Tracer: instana.TracerOptions{
 			CollectableHTTPHeaders: []string{"x-custom-header-1", "x-custom-header-2"},
 		},
 		AgentClient: alwaysReadyClient{},
-	})
+	}
+}
 
-	os.Exit(m.Run())
+func setGin() {
+	gin.SetMode(gin.TestMode)
+	gin.DefaultWriter = ioutil.Discard
 }
 
 func TestAddMiddleware(t *testing.T) {
+	setGin()
 	const expectedHandlersAmount = 3
+	defer instana.ShutdownSensor()
 
 	// create a gin engine with default handlers
 	engine := gin.Default()
@@ -63,10 +64,13 @@ func TestAddMiddleware(t *testing.T) {
 }
 
 func TestPropagation(t *testing.T) {
+	setGin()
 	recorder := instana.NewTestRecorder()
-	tracer := instana.NewTracerWithEverything(nil, recorder)
+	tracer := instana.NewTracerWithEverything(getOptions(), recorder)
 	defer instana.ShutdownSensor()
 	sensor := instana.NewSensorWithTracer(tracer)
+
+	defer instana.ShutdownSensor()
 
 	engines := map[string]func() *gin.Engine{
 		"AddMiddleware": func() *gin.Engine {
@@ -88,7 +92,6 @@ func TestPropagation(t *testing.T) {
 	for _, getEngine := range engines {
 		engine := getEngine()
 		engine.GET("/foo", func(c *gin.Context) {
-
 			parent, ok := instana.SpanFromContext(c.Request.Context())
 			assert.True(t, ok)
 
