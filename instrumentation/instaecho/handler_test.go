@@ -11,7 +11,6 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"testing"
 
 	"github.com/instana/go-sensor/acceptor"
@@ -25,16 +24,14 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestMain(m *testing.M) {
-	instana.InitSensor(&instana.Options{
+func getOptions() *instana.Options {
+	return &instana.Options{
 		Service: "echo-test",
 		Tracer: instana.TracerOptions{
 			CollectableHTTPHeaders: []string{"x-custom-header-1", "x-custom-header-2"},
 		},
 		AgentClient: alwaysReadyClient{},
-	})
-
-	os.Exit(m.Run())
+	}
 }
 
 func TestPropagation(t *testing.T) {
@@ -42,7 +39,7 @@ func TestPropagation(t *testing.T) {
 	spanIDHeader := "0000000000004567"
 
 	recorder := instana.NewTestRecorder()
-	tracer := instana.NewTracerWithEverything(nil, recorder)
+	tracer := instana.NewTracerWithEverything(getOptions(), recorder)
 	defer instana.ShutdownSensor()
 
 	sensor := instana.NewSensorWithTracer(tracer)
