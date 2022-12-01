@@ -37,7 +37,7 @@ func TestInstrumentSQLDriver(t *testing.T) {
 }
 
 func TestOpenSQLDB(t *testing.T) {
-	rand.Seed(time.Now().UnixMilli())
+	rand.Seed(time.Now().Unix())
 
 	recorder := instana.NewTestRecorder()
 	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{
