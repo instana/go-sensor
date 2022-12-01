@@ -54,6 +54,8 @@ const (
 	RedisSpanType = RegisteredSpanType("redis")
 	// RabbitMQ client span
 	RabbitMQSpanType = RegisteredSpanType("rabbitmq")
+	// Azure function span
+	AzureFunctionType = RegisteredSpanType("azf")
 )
 
 // RegisteredSpanType represents the span type supported by Instana
@@ -94,6 +96,8 @@ func (st RegisteredSpanType) extractData(span *spanS) typedSpanData {
 		return newRedisSpanData(span)
 	case RabbitMQSpanType:
 		return newRabbitMQSpanData(span)
+	case AzureFunctionType:
+		return newAZFSpanData(span)
 	default:
 		return newSDKSpanData(span)
 	}
@@ -250,6 +254,15 @@ func (st RegisteredSpanType) TagsNames() map[string]struct{} {
 			"rabbitmq.sort":     yes,
 			"rabbitmq.address":  yes,
 			"rabbitmq.error":    yes,
+		}
+	case AzureFunctionType:
+		return map[string]struct{}{
+			"azf.name":         yes,
+			"azf.functionname": yes,
+			"azf.methodname":   yes,
+			"azf.triggername":  yes,
+			"azf.runtime":      yes,
+			"azf.error":        yes,
 		}
 	default:
 		return nil
@@ -1481,4 +1494,50 @@ func newRedisSpanTags(span *spanS) RedisSpanTags {
 	}
 
 	return tags
+}
+
+type AZFSpanTags struct {
+	Name         string `json:"name"`
+	FunctionName string `json:"functionname"`
+	MethodName   string `json:"methodname"`
+	Trigger      string `json:"triggername"`
+	Runtime      string `json:"runtime"`
+	Error        string `json:"error,omitempty"`
+}
+
+func newAZFSpanTags(span *spanS) AZFSpanTags {
+	var tags AZFSpanTags
+	for k, v := range span.Tags {
+		switch k {
+		case "azf.name":
+			readStringTag(&tags.Name, v)
+		case "azf.functionname":
+			readStringTag(&tags.FunctionName, v)
+		case "azf.methodname":
+			readStringTag(&tags.MethodName, v)
+		case "azf.triggername":
+			readStringTag(&tags.Trigger, v)
+		case "azf.runtime":
+			readStringTag(&tags.Runtime, v)
+		}
+	}
+
+	return tags
+}
+
+type AZFSpanData struct {
+	SpanData
+	Tags AZFSpanTags `json:"azf"`
+}
+
+func newAZFSpanData(span *spanS) AZFSpanData {
+	return AZFSpanData{
+		SpanData: NewSpanData(span, AzureFunctionType),
+		Tags:     newAZFSpanTags(span),
+	}
+}
+
+// Kind returns instana.EntrySpanKind for server spans and instana.ExitSpanKind otherwise
+func (d AZFSpanData) Kind() SpanKind {
+	return EntrySpanKind
 }
