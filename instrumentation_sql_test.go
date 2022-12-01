@@ -47,8 +47,7 @@ func TestOpenSQLDB(t *testing.T) {
 	defer instana.ShutdownSensor()
 
 	t.Run("Exec", func(t *testing.T) {
-		hex := fmt.Sprintf("%x", rand.Int31())
-		driverName := "test_driver_" + hex
+		driverName := fmt.Sprintf("test_driver_%x", rand.Int31())
 
 		instana.InstrumentSQLDriver(s, driverName, sqlDriver{})
 		require.Contains(t, sql.Drivers(), driverName+"_with_instana")
@@ -89,8 +88,7 @@ func TestOpenSQLDB(t *testing.T) {
 	})
 
 	t.Run("Query", func(t *testing.T) {
-		hex := fmt.Sprintf("%x", rand.Int31())
-		driverName := "test_driver_" + hex
+		driverName := fmt.Sprintf("test_driver_%x", rand.Int31())
 
 		instana.InstrumentSQLDriver(s, driverName, sqlDriver{})
 		require.Contains(t, sql.Drivers(), driverName+"_with_instana")
