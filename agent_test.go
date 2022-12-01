@@ -139,7 +139,7 @@ func Test_agentApplyHostSettings(t *testing.T) {
 		Tracer: TracerOptions{
 			CollectableHTTPHeaders: []string{"x-custom-header-1", "x-custom-header-2"},
 		},
-		AgentClient: &alwaysReadyClient{},
+		AgentClient: getReadyClient(true),
 	}
 
 	sensor = newSensor(opts)
@@ -153,13 +153,14 @@ func Test_agentApplyHostSettings(t *testing.T) {
 }
 
 type alwaysReadyClient struct {
-	mu sync.Mutex
+	mu      sync.Mutex
+	isReady bool
 }
 
 func (a *alwaysReadyClient) Ready() bool {
 	a.mu.Lock()
 	defer a.mu.Unlock()
-	return true
+	return a.isReady
 }
 func (*alwaysReadyClient) SendMetrics(data acceptor.Metrics) error           { return nil }
 func (*alwaysReadyClient) SendEvent(event *EventData) error                  { return nil }
@@ -167,17 +168,9 @@ func (*alwaysReadyClient) SendSpans(spans []Span) error                      { r
 func (*alwaysReadyClient) SendProfiles(profiles []autoprofile.Profile) error { return nil }
 func (*alwaysReadyClient) Flush(context.Context) error                       { return nil }
 
-type neverReadyClient struct {
-	mu sync.Mutex
+// getReadyClient returns an instance of alwaysReadyClient where the Ready() method will return the value passed by b.
+func getReadyClient(b bool) *alwaysReadyClient {
+	return &alwaysReadyClient{
+		isReady: b,
+	}
 }
-
-func (a *neverReadyClient) Ready() bool {
-	a.mu.Lock()
-	defer a.mu.Unlock()
-	return false
-}
-func (*neverReadyClient) SendMetrics(data acceptor.Metrics) error           { return nil }
-func (*neverReadyClient) SendEvent(event *EventData) error                  { return nil }
-func (*neverReadyClient) SendSpans(spans []Span) error                      { return nil }
-func (*neverReadyClient) SendProfiles(profiles []autoprofile.Profile) error { return nil }
-func (*neverReadyClient) Flush(context.Context) error                       { return nil }

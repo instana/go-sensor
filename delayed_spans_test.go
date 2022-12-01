@@ -74,13 +74,13 @@ func TestFlushDelayedSpans(t *testing.T) {
 	}, recorder))
 	defer ShutdownSensor()
 
-	sensor.agent = &neverReadyClient{}
+	sensor.agent = getReadyClient(false)
 
 	generateSomeTraffic(s, maxDelayedSpans)
 
 	assert.Len(t, delayed.spans, maxDelayedSpans)
 
-	sensor.agent = &alwaysReadyClient{}
+	sensor.agent = getReadyClient(true)
 
 	delayed.flush()
 
@@ -110,7 +110,7 @@ func TestParallelFlushDelayedSpans(t *testing.T) {
 	wg := sync.WaitGroup{}
 	wg.Add(workers)
 
-	sensor.agent = &alwaysReadyClient{}
+	sensor.agent = getReadyClient(true)
 
 	for worker < workers {
 		go func() {
