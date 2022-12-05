@@ -8,6 +8,7 @@ import (
 	"database/sql"
 	"database/sql/driver"
 	"errors"
+	"fmt"
 	"net/url"
 	"regexp"
 	"strings"
@@ -95,6 +96,21 @@ func (drv *wrappedSQLDriver) Open(name string) (driver.Conn, error) {
 		return conn, nil
 	}
 
+	if conn, ok := conn.(*wrappedSQLConnWithValueChecker); ok {
+		return conn, nil
+	}
+
+	_, ok := conn.(driver.NamedValueChecker)
+	fmt.Println("CONN IMPLEMENTS NamedValueChecker", ok)
+
+	if ok {
+		c := &wrappedSQLConnWithValueChecker{}
+		c.Conn = conn
+		c.wrappedSQLConn.details = parseDBConnDetails(name)
+		c.wrappedSQLConn.sensor = drv.sensor
+		return c, nil
+	}
+
 	return &wrappedSQLConn{
 		Conn:    conn,
 		details: parseDBConnDetails(name),
@@ -107,6 +123,18 @@ type wrappedSQLConn struct {
 
 	details dbConnDetails
 	sensor  *Sensor
+}
+
+type wrappedSQLConnWithValueChecker struct {
+	wrappedSQLConn
+}
+
+func (conn *wrappedSQLConnWithValueChecker) CheckNamedValue(d *driver.NamedValue) error {
+	if c, ok := conn.Conn.(driver.NamedValueChecker); ok {
+		return c.CheckNamedValue(d)
+	}
+
+	return nil
 }
 
 func (conn *wrappedSQLConn) QueryContext(ctx context.Context, query string, args []driver.NamedValue) (driver.Rows, error) {
@@ -153,6 +181,23 @@ func (conn *wrappedSQLConn) Prepare(query string) (driver.Stmt, error) {
 
 	if stmt, ok := stmt.(*wrappedSQLStmt); ok {
 		return stmt, nil
+	}
+
+	if stmt, ok := stmt.(*wrappedSQLStmtWithValueChecker); ok {
+		return stmt, nil
+	}
+
+	_, ok := stmt.(driver.NamedValueChecker)
+	fmt.Println("STMT IMPLEMENTS NamedValueChecker", ok)
+
+	if ok {
+		st := &wrappedSQLStmtWithValueChecker{}
+		st.wrappedSQLStmt.Stmt = stmt
+		st.connDetails = conn.details
+		st.query = query
+		st.sensor = conn.sensor
+
+		return st, nil
 	}
 
 	return &wrappedSQLStmt{
@@ -226,13 +271,13 @@ func (conn *wrappedSQLConn) ExecContext(ctx context.Context, query string, args 
 	return nil, driver.ErrSkip
 }
 
-func (conn *wrappedSQLConn) CheckNamedValue(d *driver.NamedValue) error {
-	if c, ok := conn.Conn.(driver.NamedValueChecker); ok {
-		return c.CheckNamedValue(d)
-	}
+// func (conn *wrappedSQLConn) CheckNamedValue(d *driver.NamedValue) error {
+// 	if c, ok := conn.Conn.(driver.NamedValueChecker); ok {
+// 		return c.CheckNamedValue(d)
+// 	}
 
-	return nil
-}
+// 	return nil
+// }
 
 type wrappedSQLStmt struct {
 	driver.Stmt
@@ -240,6 +285,18 @@ type wrappedSQLStmt struct {
 	connDetails dbConnDetails
 	query       string
 	sensor      *Sensor
+}
+
+type wrappedSQLStmtWithValueChecker struct {
+	wrappedSQLStmt
+}
+
+func (stmt *wrappedSQLStmtWithValueChecker) CheckNamedValue(d *driver.NamedValue) error {
+	if s, ok := stmt.Stmt.(driver.NamedValueChecker); ok {
+		return s.CheckNamedValue(d)
+	}
+
+	return nil
 }
 
 func (stmt *wrappedSQLStmt) ExecContext(ctx context.Context, args []driver.NamedValue) (driver.Result, error) {
@@ -274,13 +331,13 @@ func (stmt *wrappedSQLStmt) ExecContext(ctx context.Context, args []driver.Named
 	return res, err
 }
 
-func (stmt *wrappedSQLStmt) CheckNamedValue(d *driver.NamedValue) error {
-	if s, ok := stmt.Stmt.(driver.NamedValueChecker); ok {
-		return s.CheckNamedValue(d)
-	}
+// func (stmt *wrappedSQLStmt) CheckNamedValue(d *driver.NamedValue) error {
+// 	if s, ok := stmt.Stmt.(driver.NamedValueChecker); ok {
+// 		return s.CheckNamedValue(d)
+// 	}
 
-	return nil
-}
+// 	return nil
+// }
 
 func (stmt *wrappedSQLStmt) QueryContext(ctx context.Context, args []driver.NamedValue) (driver.Rows, error) {
 	sp := startSQLSpan(ctx, stmt.connDetails, stmt.query, stmt.sensor)
