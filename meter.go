@@ -43,6 +43,7 @@ func (m *meterS) Run(collectInterval time.Duration) {
 		case <-m.done:
 			return
 		case <-ticker.C:
+			// We need this lock not because of Ready(), but because sensor is a shared resource
 			muSensor.Lock()
 			if sensor.Agent().Ready() {
 				go sensor.Agent().SendMetrics(m.collectMetrics())
