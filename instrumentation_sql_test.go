@@ -278,8 +278,8 @@ func (drv sqlDriver) Open(name string) (driver.Conn, error) { return sqlConn{drv
 type sqlConn struct{ Error error }
 
 func (conn sqlConn) Prepare(query string) (driver.Stmt, error) { return sqlStmt{conn.Error}, nil } //nolint:gosimple
-func (s sqlConn) Close() error                                 { return driver.ErrSkip }
-func (s sqlConn) Begin() (driver.Tx, error)                    { return nil, driver.ErrSkip }
+func (conn sqlConn) Close() error                              { return driver.ErrSkip }
+func (conn sqlConn) Begin() (driver.Tx, error)                 { return nil, driver.ErrSkip }
 
 func (conn sqlConn) ExecContext(ctx context.Context, query string, args []driver.NamedValue) (driver.Result, error) {
 	return sqlResult{}, conn.Error
@@ -294,7 +294,17 @@ type sqlStmt struct{ Error error }
 func (sqlStmt) Close() error                                         { return nil }
 func (sqlStmt) NumInput() int                                        { return -1 }
 func (stmt sqlStmt) Exec(args []driver.Value) (driver.Result, error) { return sqlResult{}, stmt.Error }
-func (stmt sqlStmt) Query(args []driver.Value) (driver.Rows, error)  { return sqlRows{}, stmt.Error }
+
+func (stmt sqlStmt) ExecContext(ctx context.Context, args []driver.NamedValue) (driver.Result, error) {
+	return sqlResult{}, stmt.Error
+}
+func (stmt sqlStmt) Query(args []driver.Value) (driver.Rows, error) {
+	return sqlRows{}, stmt.Error
+}
+
+func (stmt sqlStmt) QueryContext(ctx context.Context, args []driver.NamedValue) (driver.Rows, error) {
+	return sqlRows{}, stmt.Error
+}
 
 type sqlResult struct{}
 
