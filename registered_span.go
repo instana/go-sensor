@@ -1497,11 +1497,11 @@ func newRedisSpanTags(span *spanS) RedisSpanTags {
 }
 
 type AZFSpanTags struct {
-	Name         string `json:"name"`
-	FunctionName string `json:"functionname"`
-	MethodName   string `json:"methodname"`
-	Trigger      string `json:"triggername"`
-	Runtime      string `json:"runtime"`
+	Name         string `json:"name,omitempty"`
+	FunctionName string `json:"functionname,omitempty"`
+	MethodName   string `json:"methodname,omitempty"`
+	Trigger      string `json:"triggername,omitempty"`
+	Runtime      string `json:"runtime,omitempty"`
 	Error        string `json:"error,omitempty"`
 }
 
