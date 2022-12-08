@@ -34,40 +34,11 @@ func (c *wrappedSQLConnector) Connect(ctx context.Context) (driver.Conn, error) 
 		return conn, err
 	}
 
-	if conn, ok := conn.(*wrappedSQLConn); ok {
+	if connAlreadyWrapped(conn) {
 		return conn, nil
 	}
 
-	var w wConn
-	w = &wrappedSQLConn{
-		Conn:    conn,
-		details: c.connDetails,
-		sensor:  c.sensor,
-	}
-
-	if _, ok := conn.(driver.NamedValueChecker); ok {
-		w = &wNamedValueChecker{
-			w,
-		}
-	}
-
-	if _, ok := conn.(driver.ExecerContext); ok {
-		w = &wExecerContext{
-			w,
-		}
-	}
-
-	if _, ok := conn.(driver.QueryerContext); ok {
-		w = &wQueryerContext{
-			w,
-		}
-	}
-
-	if _, ok := conn.(driver.ConnPrepareContext); ok {
-		w = &wConnPrepareContext{
-			w,
-		}
-	}
+	w := wrapConn(c.connDetails, conn, c.sensor)
 
 	return w, nil
 }

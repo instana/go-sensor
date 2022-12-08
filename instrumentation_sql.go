@@ -89,45 +89,77 @@ func (drv *wrappedSQLDriver) Open(name string) (driver.Conn, error) {
 		return conn, err
 	}
 
-	switch conn.(type) {
-	case *wrappedSQLConn, *wNamedValueChecker:
+	if connAlreadyWrapped(conn) {
 		return conn, nil
 	}
 
-	w := drv.wrap(name, conn)
+	w := wrapConn(parseDBConnDetails(name), conn, drv.sensor)
 
 	return w, nil
 }
 
-func (drv *wrappedSQLDriver) wrap(name string, conn driver.Conn) wConn {
-	var w wConn
+func connAlreadyWrapped(conn driver.Conn) bool {
+	switch conn.(type) {
+	case *wrappedSQLConn, *wExecerContext, *wQueryerContext, *wConnPrepareContext:
+		return true
+	case wExecerContext, wQueryerContext, wConnPrepareContext:
+		return true
+	}
+
+	return false
+}
+
+func wrapConn(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor) driver.Conn {
+	var w driver.Conn
+
 	w = &wrappedSQLConn{
 		Conn:    conn,
-		details: parseDBConnDetails(name),
-		sensor:  drv.sensor,
+		details: connDetails,
+		sensor:  sensor,
 	}
 
-	if _, ok := conn.(driver.NamedValueChecker); ok {
-		w = &wNamedValueChecker{
-			w,
+	if c, ok := conn.(driver.Execer); ok {
+		w = &wExecer{
+			originalConn: c,
+			Conn:         w,
+			connDetails:  connDetails,
+			sensor:       sensor,
 		}
 	}
 
-	if _, ok := conn.(driver.ExecerContext); ok {
+	if c, ok := conn.(driver.ExecerContext); ok {
 		w = &wExecerContext{
-			w,
+			originalConn: c,
+			Conn:         w,
+			connDetails:  connDetails,
+			sensor:       sensor,
 		}
 	}
 
-	if _, ok := conn.(driver.QueryerContext); ok {
+	if c, ok := conn.(driver.Queryer); ok {
+		w = &wQueryer{
+			originalConn: c,
+			Conn:         w,
+			connDetails:  connDetails,
+			sensor:       sensor,
+		}
+	}
+
+	if c, ok := conn.(driver.QueryerContext); ok {
 		w = &wQueryerContext{
-			w,
+			originalConn: c,
+			Conn:         w,
+			connDetails:  connDetails,
+			sensor:       sensor,
 		}
 	}
 
-	if _, ok := conn.(driver.ConnPrepareContext); ok {
+	if c, ok := conn.(driver.ConnPrepareContext); ok {
 		w = &wConnPrepareContext{
-			w,
+			originalConn: c,
+			Conn:         w,
+			connDetails:  connDetails,
+			sensor:       sensor,
 		}
 	}
 

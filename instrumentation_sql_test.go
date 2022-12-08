@@ -295,14 +295,7 @@ func (sqlStmt) Close() error                                         { return ni
 func (sqlStmt) NumInput() int                                        { return -1 }
 func (stmt sqlStmt) Exec(args []driver.Value) (driver.Result, error) { return sqlResult{}, stmt.Error }
 
-func (stmt sqlStmt) ExecContext(ctx context.Context, args []driver.NamedValue) (driver.Result, error) {
-	return sqlResult{}, stmt.Error
-}
 func (stmt sqlStmt) Query(args []driver.Value) (driver.Rows, error) {
-	return sqlRows{}, stmt.Error
-}
-
-func (stmt sqlStmt) QueryContext(ctx context.Context, args []driver.NamedValue) (driver.Rows, error) {
 	return sqlRows{}, stmt.Error
 }
 
@@ -316,46 +309,3 @@ type sqlRows struct{}
 func (sqlRows) Columns() []string              { return []string{"col1", "col2"} }
 func (sqlRows) Close() error                   { return nil }
 func (sqlRows) Next(dest []driver.Value) error { return io.EOF }
-
-// Driver use case:
-// * driver.Conn doesn't implement Exec or ExecContext
-// * driver.Conn doesn't implement the driver.NamedValueChecker interface (CheckNamedValue method)
-// * Our wrapper ALWAYS implements ExecContext, no matter what
-
-type sqlDriver2 struct{ Error error }
-
-func (drv sqlDriver2) Open(name string) (driver.Conn, error) { return sqlConn2{drv.Error}, nil } //nolint:gosimple
-
-type sqlConn2 struct{ Error error }
-
-func (conn sqlConn2) Prepare(query string) (driver.Stmt, error) {
-	return sqlStmt2{conn.Error}, nil //nolint:gosimple
-}
-func (s sqlConn2) Close() error { return driver.ErrSkip }
-
-func (s sqlConn2) Begin() (driver.Tx, error) { return nil, driver.ErrSkip }
-
-type sqlStmt2 struct{ Error error }
-
-func (sqlStmt2) Close() error  { return nil }
-func (sqlStmt2) NumInput() int { return -1 }
-func (stmt sqlStmt2) Exec(args []driver.Value) (driver.Result, error) {
-	return sqlResult2{}, stmt.Error
-}
-
-func (stmt sqlStmt2) Query(args []driver.Value) (driver.Rows, error) {
-	return sqlRows2{}, stmt.Error
-}
-
-func (stmt sqlStmt2) CheckNamedValue(d *driver.NamedValue) error { return nil }
-
-type sqlResult2 struct{}
-
-func (sqlResult2) LastInsertId() (int64, error) { return 42, nil }
-func (sqlResult2) RowsAffected() (int64, error) { return 100, nil }
-
-type sqlRows2 struct{}
-
-func (sqlRows2) Columns() []string              { return []string{"col1", "col2"} }
-func (sqlRows2) Close() error                   { return nil }
-func (sqlRows2) Next(dest []driver.Value) error { return io.EOF }
