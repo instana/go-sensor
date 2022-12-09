@@ -9,7 +9,6 @@ import (
 
 type wStmtExecContext struct {
 	driver.StmtExecContext
-	driver.Stmt
 	connDetails dbConnDetails
 	sensor      *Sensor
 	query       string

@@ -9,8 +9,7 @@ import (
 )
 
 type wQueryerContext struct {
-	originalConn driver.QueryerContext
-	driver.Conn
+	driver.QueryerContext
 	connDetails dbConnDetails
 	sensor      *Sensor
 }
@@ -19,7 +18,7 @@ func (conn *wQueryerContext) QueryContext(ctx context.Context, query string, arg
 	sp := startSQLSpan(ctx, conn.connDetails, query, conn.sensor)
 	defer sp.Finish()
 
-	res, err := conn.originalConn.QueryContext(ctx, query, args)
+	res, err := conn.QueryerContext.QueryContext(ctx, query, args)
 	if err != nil && err != driver.ErrSkip {
 		sp.LogFields(otlog.Error(err))
 	}

@@ -9,7 +9,7 @@ import (
 	otlog "github.com/opentracing/opentracing-go/log"
 )
 
-type wrappedSQLStmt struct {
+type wStmt struct {
 	driver.Stmt
 
 	connDetails dbConnDetails
@@ -17,7 +17,7 @@ type wrappedSQLStmt struct {
 	sensor      *Sensor
 }
 
-func (stmt *wrappedSQLStmt) Exec(args []driver.Value) (driver.Result, error) {
+func (stmt *wStmt) Exec(args []driver.Value) (driver.Result, error) {
 	ctx := context.Background()
 	sp := startSQLSpan(ctx, stmt.connDetails, stmt.query, stmt.sensor)
 	defer sp.Finish()
@@ -30,7 +30,7 @@ func (stmt *wrappedSQLStmt) Exec(args []driver.Value) (driver.Result, error) {
 	return res, err
 }
 
-func (stmt *wrappedSQLStmt) Query(args []driver.Value) (driver.Rows, error) {
+func (stmt *wStmt) Query(args []driver.Value) (driver.Rows, error) {
 	ctx := context.Background()
 	sp := startSQLSpan(ctx, stmt.connDetails, stmt.query, stmt.sensor)
 	defer sp.Finish()

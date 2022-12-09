@@ -9,8 +9,7 @@ import (
 )
 
 type wExecer struct {
-	originalConn driver.Execer
-	driver.Conn
+	driver.Execer
 	connDetails dbConnDetails
 	sensor      *Sensor
 }
@@ -21,7 +20,7 @@ func (conn *wExecer) Exec(query string, args []driver.Value) (driver.Result, err
 	sp := startSQLSpan(ctx, conn.connDetails, query, conn.sensor)
 	defer sp.Finish()
 
-	res, err := conn.originalConn.Exec(query, args)
+	res, err := conn.Execer.Exec(query, args)
 	if err != nil && err != driver.ErrSkip {
 		sp.LogFields(otlog.Error(err))
 	}
