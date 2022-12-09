@@ -5,6 +5,7 @@ package instana
 import (
 	"context"
 	"database/sql/driver"
+
 	otlog "github.com/opentracing/opentracing-go/log"
 )
 

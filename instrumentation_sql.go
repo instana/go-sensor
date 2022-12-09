@@ -13,9 +13,10 @@ import (
 	"strings"
 	"sync"
 
+	_ "unsafe"
+
 	ot "github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
-	_ "unsafe"
 )
 
 var (
