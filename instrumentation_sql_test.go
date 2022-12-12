@@ -8,6 +8,7 @@ import (
 	"database/sql"
 	"database/sql/driver"
 	"io"
+	"sync"
 	"testing"
 
 	instana "github.com/instana/go-sensor"
@@ -256,7 +257,21 @@ func TestProcedureWithCheckerOnStmt(t *testing.T) {
 	}, instana.NewTestRecorder()))
 	defer instana.ShutdownSensor()
 
-	instana.InstrumentSQLDriver(s, "test_driver2", sqlDriver2{})
+	ch := make(chan int, 2)
+	var wg sync.WaitGroup
+	wg.Add(1)
+
+	go func() {
+		// Here we make sure that stmt.CheckNamedValue from sqlDriver2 is called
+		<-ch
+		wg.Done()
+	}()
+
+	driver := sqlDriver2{
+		ch: ch,
+	}
+
+	instana.InstrumentSQLDriver(s, "test_driver2", driver)
 	db, err := instana.SQLOpen("test_driver2", "some datasource")
 
 	assert.NoError(t, err)
@@ -265,6 +280,34 @@ func TestProcedureWithCheckerOnStmt(t *testing.T) {
 	_, err = db.Exec("CALL SOME_PROCEDURE(?)", sql.Out{Dest: &outValue})
 
 	// Here we expect the instrumentation to look for the driver's conn.CheckNamedValue implementation.
+	// If there is none, we check stmt.CheckNamedValue, which sqlDriver2 has.
+	// If there is none, we return nil from our side, since driver.ErrSkip won't work for CheckNamedValue, as seen here:
+	// https://cs.opensource.google/go/go/+/refs/tags/go1.19.1:src/database/sql/driver/driver.go;l=143
+	// and here: https://cs.opensource.google/go/go/+/refs/tags/go1.19.1:src/database/sql/driver/driver.go;l=399
+	assert.NoError(t, err)
+
+	wg.Wait()
+}
+
+func TestProcedureWithNoDefaultChecker(t *testing.T) {
+	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{
+		Service:     "go-sensor-test",
+		AgentClient: alwaysReadyClient{},
+	}, instana.NewTestRecorder()))
+	defer instana.ShutdownSensor()
+
+	driver := sqlDriver{}
+
+	instana.InstrumentSQLDriver(s, "test_driver3", driver)
+	db, err := instana.SQLOpen("test_driver3", "some datasource")
+
+	assert.NoError(t, err)
+
+	var outValue string
+	_, err = db.Exec("CALL SOME_PROCEDURE(?)", sql.Out{Dest: &outValue})
+
+	// Here we expect the instrumentation to look for the driver's conn.CheckNamedValue implementation.
+	// If there is none, we check stmt.CheckNamedValue, which sqlDriver also doesn't have.
 	// If there is none, we return nil from our side, since driver.ErrSkip won't work for CheckNamedValue, as seen here:
 	// https://cs.opensource.google/go/go/+/refs/tags/go1.19.1:src/database/sql/driver/driver.go;l=143
 	// and here: https://cs.opensource.google/go/go/+/refs/tags/go1.19.1:src/database/sql/driver/driver.go;l=399
@@ -310,22 +353,32 @@ func (sqlRows) Next(dest []driver.Value) error { return io.EOF }
 // Driver use case:
 // * driver.Conn doesn't implement Exec or ExecContext
 // * driver.Conn doesn't implement the driver.NamedValueChecker interface (CheckNamedValue method)
+// * driver.Stmt does implement the driver.NamedValueChecker interface (CheckNamedValue method)
 // * Our wrapper ALWAYS implements ExecContext, no matter what
 
-type sqlDriver2 struct{ Error error }
+type sqlDriver2 struct {
+	Error error
+	ch    chan int
+}
 
-func (drv sqlDriver2) Open(name string) (driver.Conn, error) { return sqlConn2{drv.Error}, nil } //nolint:gosimple
+func (drv sqlDriver2) Open(name string) (driver.Conn, error) { return sqlConn2{drv.Error, drv.ch}, nil } //nolint:gosimple
 
-type sqlConn2 struct{ Error error }
+type sqlConn2 struct {
+	Error error
+	ch    chan int
+}
 
 func (conn sqlConn2) Prepare(query string) (driver.Stmt, error) {
-	return sqlStmt2{conn.Error}, nil //nolint:gosimple
+	return sqlStmt2{conn.Error, conn.ch}, nil //nolint:gosimple
 }
 func (s sqlConn2) Close() error { return driver.ErrSkip }
 
 func (s sqlConn2) Begin() (driver.Tx, error) { return nil, driver.ErrSkip }
 
-type sqlStmt2 struct{ Error error }
+type sqlStmt2 struct {
+	Error error
+	ch    chan int
+}
 
 func (sqlStmt2) Close() error  { return nil }
 func (sqlStmt2) NumInput() int { return -1 }
@@ -337,7 +390,10 @@ func (stmt sqlStmt2) Query(args []driver.Value) (driver.Rows, error) {
 	return sqlRows2{}, stmt.Error
 }
 
-func (stmt sqlStmt2) CheckNamedValue(d *driver.NamedValue) error { return nil }
+func (stmt sqlStmt2) CheckNamedValue(d *driver.NamedValue) error {
+	stmt.ch <- 1
+	return nil
+}
 
 type sqlResult2 struct{}
 
