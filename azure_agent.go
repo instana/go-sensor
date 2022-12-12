@@ -1,5 +1,4 @@
 // (c) Copyright IBM Corp. 2022
-// (c) Copyright Instana Inc. 2022
 
 package instana
 
@@ -22,7 +21,7 @@ import (
 )
 
 const (
-	azureAgentFlushPeriod = 2 * time.Second
+	flushPeriodInSec = 2
 
 	azureCustomRuntime string = "custom"
 )
@@ -41,7 +40,7 @@ type azureAgent struct {
 	logger LeveledLogger
 }
 
-func newAzureAgent(serviceName, acceptorEndpoint, agentKey string, client *http.Client, logger LeveledLogger) *azureAgent {
+func newAzureAgent(acceptorEndpoint, agentKey string, client *http.Client, logger LeveledLogger) *azureAgent {
 	if logger == nil {
 		logger = defaultLogger
 	}
@@ -61,7 +60,7 @@ func newAzureAgent(serviceName, acceptorEndpoint, agentKey string, client *http.
 	}
 
 	go func() {
-		t := time.NewTicker(azureAgentFlushPeriod)
+		t := time.NewTicker(flushPeriodInSec * time.Second)
 		defer t.Stop()
 
 		for range t.C {
@@ -76,25 +75,25 @@ func newAzureAgent(serviceName, acceptorEndpoint, agentKey string, client *http.
 
 func (a *azureAgent) Ready() bool { return true }
 
-func (a *azureAgent) SendMetrics(data acceptor.Metrics) error { return nil }
+func (a *azureAgent) SendMetrics(acceptor.Metrics) error { return nil }
 
-func (a *azureAgent) SendEvent(event *EventData) error { return nil }
+func (a *azureAgent) SendEvent(*EventData) error { return nil }
 
 func (a *azureAgent) SendSpans(spans []Span) error {
 	a.enqueueSpans(spans)
 	return nil
 }
 
-func (a *azureAgent) SendProfiles(profiles []autoprofile.Profile) error { return nil }
+func (a *azureAgent) SendProfiles([]autoprofile.Profile) error { return nil }
 
 func (a *azureAgent) Flush(ctx context.Context) error {
-	snapshot := a.collectSnapshot(a.spanQueue)
+	a.collectSnapshot()
 
-	if snapshot.EntityID == "" {
+	if a.snapshot.EntityID == "" {
 		return ErrAgentNotReady
 	}
 
-	from := newServerlessAgentFromS(snapshot.EntityID, "azure")
+	from := newServerlessAgentFromS(a.snapshot.EntityID, "azure")
 
 	payload := struct {
 		Metrics metricsPayload `json:"metrics,omitempty"`
@@ -102,7 +101,7 @@ func (a *azureAgent) Flush(ctx context.Context) error {
 	}{
 		Metrics: metricsPayload{
 			Plugins: []acceptor.PluginPayload{
-				acceptor.NewAzurePluginPayload(snapshot.EntityID),
+				acceptor.NewAzurePluginPayload(a.snapshot.EntityID),
 			},
 		},
 	}
@@ -122,6 +121,12 @@ func (a *azureAgent) Flush(ctx context.Context) error {
 		return fmt.Errorf("failed to marshal traces payload: %s", err)
 	}
 
+	payloadSize := buf.Len()
+	if payloadSize > maxContentLength {
+		a.logger.Warn(fmt.Sprintf("failed to send the spans. Payload size: %d exceeded max size: %d", payloadSize, maxContentLength))
+		return payloadTooLargeErr
+	}
+
 	req, err := http.NewRequest(http.MethodPost, a.Endpoint+"/bundle", buf)
 	if err != nil {
 		a.enqueueSpans(payload.Spans)
@@ -132,7 +137,8 @@ func (a *azureAgent) Flush(ctx context.Context) error {
 
 	if err := a.sendRequest(req.WithContext(ctx)); err != nil {
 		a.enqueueSpans(payload.Spans)
-		return fmt.Errorf("failed to send traces, will retry later: %s", err)
+		return fmt.Errorf("failed to send traces, will retry later: %dsec. Error details: %s",
+			flushPeriodInSec, err.Error())
 	}
 
 	return nil
@@ -160,12 +166,12 @@ func (a *azureAgent) sendRequest(req *http.Request) error {
 	if resp.StatusCode >= http.StatusBadRequest {
 		respBody, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
-			a.logger.Debug("failed to read serverless agent response: ", err)
-			return nil
+			a.logger.Debug("failed to read serverless agent response: ", err.Error())
+			return err
 		}
 
 		a.logger.Info("serverless agent has responded with ", resp.Status, ": ", string(respBody))
-		return nil
+		return err
 	}
 
 	io.CopyN(ioutil.Discard, resp.Body, 1<<20)
@@ -173,9 +179,9 @@ func (a *azureAgent) sendRequest(req *http.Request) error {
 	return nil
 }
 
-func (a *azureAgent) collectSnapshot(spans []Span) serverlessSnapshot {
+func (a *azureAgent) collectSnapshot() {
 	if a.snapshot.EntityID != "" {
-		return a.snapshot
+		return
 	}
 
 	var subscriptionID, resourceGrp, functionApp string
@@ -199,8 +205,7 @@ func (a *azureAgent) collectSnapshot(spans []Span) serverlessSnapshot {
 
 	a.snapshot = serverlessSnapshot{
 		EntityID: entityID,
+		PID:      a.PID,
 	}
 	a.logger.Debug("collected snapshot")
-
-	return a.snapshot
 }

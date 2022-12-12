@@ -257,7 +257,7 @@ func newServerlessAgent(serviceName, agentEndpoint, agentKey string, client *htt
 		// Knative, e.g. Google Cloud Run
 		return newGCRAgent(serviceName, agentEndpoint, agentKey, client, logger)
 	case os.Getenv("FUNCTIONS_WORKER_RUNTIME") == azureCustomRuntime:
-		return newAzureAgent(serviceName, agentEndpoint, agentKey, client, logger)
+		return newAzureAgent(agentEndpoint, agentKey, client, logger)
 	default:
 		return nil
 	}

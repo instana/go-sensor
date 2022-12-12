@@ -1,5 +1,4 @@
 // (c) Copyright IBM Corp. 2022
-// (c) Copyright Instana Inc. 2022
 
 //go:build azure && integration
 // +build azure,integration
@@ -65,6 +64,49 @@ func TestAzureAgent_SendSpans(t *testing.T) {
 
 	require.Len(t, spans, 1)
 	assert.JSONEq(t, `{"hl": true, "cp": "azure", "e": "/subscriptions/testgh05-3f0d-4bf9-8f53-209408003632/resourceGroups/test-resourcegroup/providers/Microsoft.Web/sites/test-funcname"}`, string(spans[0]["f"]))
+}
+
+func TestAzureAgent_SpanDetails(t *testing.T) {
+	defer agent.Reset()
+
+	tracer := instana.NewTracer()
+	sensor := instana.NewSensorWithTracer(tracer)
+	defer instana.ShutdownSensor()
+
+	sp := sensor.Tracer().StartSpan("azf")
+	sp.SetTag("azf.triggername", "HTTP")
+	sp.SetTag("azf.functionname", "testfunction")
+	sp.SetTag("azf.name", "testapp")
+	sp.SetTag("azf.methodname", "testmethod")
+	sp.SetTag("azf.runtime", "custom")
+	sp.Finish()
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+
+	require.NoError(t, tracer.Flush(ctx))
+	require.Len(t, agent.Bundles, 1)
+
+	var spans []map[string]json.RawMessage
+	for _, bundle := range agent.Bundles {
+		var payload struct {
+			Spans []map[string]json.RawMessage `json:"spans"`
+		}
+
+		require.NoError(t, json.Unmarshal(bundle.Body, &payload), "%s", string(bundle.Body))
+		spans = append(spans, payload.Spans...)
+	}
+
+	require.Len(t, spans, 1)
+	assert.JSONEq(t, `{"hl": true, "cp": "azure", "e": "/subscriptions/testgh05-3f0d-4bf9-8f53-209408003632/resourceGroups/test-resourcegroup/providers/Microsoft.Web/sites/test-funcname"}`, string(spans[0]["f"]))
+	assert.JSONEq(t, ` {
+        "azf": {
+          "name": "testapp",
+          "methodname" : "testmethod",
+          "functionname": "testfunction",
+          "triggername": "HTTP",
+          "runtime": "custom"
+        } }`, string(spans[0]["data"]))
 }
 
 func setupAzureFunctionEnv() func() {

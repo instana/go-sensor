@@ -1,5 +1,4 @@
 // (c) Copyright IBM Corp. 2022
-// (c) Copyright Instana Inc. 2022
 
 package acceptor_test
 
