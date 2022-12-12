@@ -231,12 +231,12 @@ func (conn *wrappedSQLConn) CheckNamedValue(d *driver.NamedValue) error {
 		return c.CheckNamedValue(d)
 	}
 
-	// stmt, err := conn.Prepare("select name from table where name = ?")
-	stmt, err := conn.Prepare("select * from tbl")
-	// stmt, err := conn.Prepare("select 1")
+	q := "drop table tbl"
+
+	stmt, err := conn.Prepare(q)
 
 	if err != nil {
-		return err
+		sensor.logger.Debug("Database does not support temporary statement: ", q)
 	}
 
 	if s, ok := stmt.(driver.NamedValueChecker); ok {
@@ -293,10 +293,13 @@ func (stmt *wrappedSQLStmt) CheckNamedValue(d *driver.NamedValue) error {
 		return s.CheckNamedValue(d)
 	}
 
-	// return nil
-
 	var err error
 	d.Value, err = driver.DefaultParameterConverter.ConvertValue(d.Value)
+
+	if err != nil {
+		sensor.logger.Debug("Swallowing DefaultParameterConverter error: ", err.Error())
+		return nil
+	}
 
 	return err
 }
