@@ -231,13 +231,15 @@ func (conn *wrappedSQLConn) CheckNamedValue(d *driver.NamedValue) error {
 		return c.CheckNamedValue(d)
 	}
 
-	q := "drop table tbl"
+	q := "create table instanatemp (a varchar(1))"
 
 	stmt, err := conn.Prepare(q)
 
 	if err != nil {
 		sensor.logger.Debug("Database does not support temporary statement: ", q)
 	}
+
+	defer stmt.Close()
 
 	if s, ok := stmt.(driver.NamedValueChecker); ok {
 		return s.CheckNamedValue(d)

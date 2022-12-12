@@ -7,6 +7,7 @@ import (
 	"context"
 	"database/sql"
 	"database/sql/driver"
+	"errors"
 	"io"
 	"sync"
 	"testing"
@@ -296,15 +297,14 @@ func TestProcedureWithNoDefaultChecker(t *testing.T) {
 	}, instana.NewTestRecorder()))
 	defer instana.ShutdownSensor()
 
-	driver := sqlDriver{}
+	driver := sqlDriver3{}
 
 	instana.InstrumentSQLDriver(s, "test_driver3", driver)
 	db, err := instana.SQLOpen("test_driver3", "some datasource")
 
 	assert.NoError(t, err)
 
-	var outValue string
-	_, err = db.Exec("CALL SOME_PROCEDURE(?)", sql.Out{Dest: &outValue})
+	_, err = db.Exec("select $1", int32(1))
 
 	// Here we expect the instrumentation to look for the driver's conn.CheckNamedValue implementation.
 	// If there is none, we check stmt.CheckNamedValue, which sqlDriver also doesn't have.
@@ -405,3 +405,50 @@ type sqlRows2 struct{}
 func (sqlRows2) Columns() []string              { return []string{"col1", "col2"} }
 func (sqlRows2) Close() error                   { return nil }
 func (sqlRows2) Next(dest []driver.Value) error { return io.EOF }
+
+// Driver use case: driver does not implement NamedValueChecker,arg type checking is internal.
+// The idea is to mock pq: https://github.com/lib/pq/blob/8446d16b8935fdf2b5c0fe333538ac395e3e1e4b/encode.go#L31
+
+type sqlDriver3 struct{ Error error }
+
+func (drv sqlDriver3) Open(name string) (driver.Conn, error) { return sqlConn3{drv.Error}, nil } //nolint:gosimple
+
+type sqlConn3 struct{ Error error }
+
+func (conn sqlConn3) Prepare(query string) (driver.Stmt, error) { return sqlStmt3{conn.Error}, nil } //nolint:gosimple
+func (s sqlConn3) Close() error                                 { return driver.ErrSkip }
+func (s sqlConn3) Begin() (driver.Tx, error)                    { return nil, driver.ErrSkip }
+
+func (conn sqlConn3) ExecContext(ctx context.Context, query string, args []driver.NamedValue) (driver.Result, error) {
+	var err error
+
+	if _, ok := args[0].Value.(int32); ok {
+		err = errors.New("invalid type int32")
+	}
+
+	return sqlResult3{}, err
+}
+
+func (conn sqlConn3) QueryContext(ctx context.Context, query string, args []driver.NamedValue) (driver.Rows, error) {
+	return sqlRows3{}, conn.Error
+}
+
+type sqlStmt3 struct{ Error error }
+
+func (sqlStmt3) Close() error  { return nil }
+func (sqlStmt3) NumInput() int { return -1 }
+func (stmt sqlStmt3) Exec(args []driver.Value) (driver.Result, error) {
+	return sqlResult3{}, stmt.Error
+}
+func (stmt sqlStmt3) Query(args []driver.Value) (driver.Rows, error) { return sqlRows3{}, stmt.Error }
+
+type sqlResult3 struct{}
+
+func (sqlResult3) LastInsertId() (int64, error) { return 42, nil }
+func (sqlResult3) RowsAffected() (int64, error) { return 100, nil }
+
+type sqlRows3 struct{}
+
+func (sqlRows3) Columns() []string              { return []string{"col1", "col2"} }
+func (sqlRows3) Close() error                   { return nil }
+func (sqlRows3) Next(dest []driver.Value) error { return io.EOF }
