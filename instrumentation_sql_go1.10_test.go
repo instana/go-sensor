@@ -26,6 +26,7 @@ func TestWrapSQLConnector_Exec(t *testing.T) {
 	defer instana.ShutdownSensor()
 
 	db := sql.OpenDB(instana.WrapSQLConnector(s, "connection string", sqlConnector{}))
+
 	res, err := db.Exec("TEST QUERY")
 	require.NoError(t, err)
 

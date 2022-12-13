@@ -4,9 +4,10 @@ package main
 
 import (
 	"fmt"
-	combinations "github.com/mxschmitt/golang-combinations"
 	"sort"
 	"strings"
+
+	combinations "github.com/mxschmitt/golang-combinations"
 )
 
 const driverStmt = "driver.Stmt"
