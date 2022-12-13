@@ -4,7 +4,7 @@ package main
 
 import (
 	"fmt"
-	"github.com/mxschmitt/golang-combinations"
+	combinations "github.com/mxschmitt/golang-combinations"
 	"sort"
 	"strings"
 )
