@@ -227,6 +227,12 @@ func (conn *wrappedSQLConn) ExecContext(ctx context.Context, query string, args 
 }
 
 func (conn *wrappedSQLConn) CheckNamedValue(d *driver.NamedValue) error {
+	defer func() {
+		if err := recover(); err != nil {
+			sensor.logger.Debug("Swallowing error: ", err)
+		}
+	}()
+
 	if c, ok := conn.Conn.(driver.NamedValueChecker); ok {
 		return c.CheckNamedValue(d)
 	}
@@ -296,6 +302,12 @@ func (stmt *wrappedSQLStmt) ExecContext(ctx context.Context, args []driver.Named
 }
 
 func (stmt *wrappedSQLStmt) CheckNamedValue(d *driver.NamedValue) error {
+	defer func() {
+		if err := recover(); err != nil {
+			sensor.logger.Debug("Swallowing error: ", err)
+		}
+	}()
+
 	if s, ok := stmt.Stmt.(driver.NamedValueChecker); ok {
 		return s.CheckNamedValue(d)
 	}
