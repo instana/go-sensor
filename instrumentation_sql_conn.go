@@ -28,10 +28,3 @@ func (conn *wConn) Prepare(query string) (driver.Stmt, error) {
 
 	return w, nil
 }
-
-type wNamedValueChecker struct {
-	driver.NamedValueChecker
-	connDetails dbConnDetails
-	query       string
-	sensor      *Sensor
-}
