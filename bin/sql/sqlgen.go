@@ -11,6 +11,9 @@ import (
 
 var funcs string
 
+var _conn_m = map[string]string{}
+var _stmt_m = map[string]string{}
+
 var arrayConn = []string{
 	"driver.Conn",
 	"driver.Execer",
@@ -57,6 +60,42 @@ func main() {
 
 	gen("driver.Conn", "w_conn_", arrayConn)
 	gen("driver.Stmt", "w_stmt_", arrayStmt)
+
+	fmt.Println("var _conn_n = map[int]func(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {")
+	//fmt.Println(_conn_m)
+	for k, v := range _conn_m {
+		fmt.Println(k, ":", v, ",")
+	}
+	fmt.Println("}")
+	//fmt.Println(_stmt_m)
+
+	fmt.Println("var _stmt_n = map[int]func( driver.Stmt,  string,  dbConnDetails,  *Sensor,  driver.StmtExecContext,  driver.StmtQueryContext,  driver.NamedValueChecker,  driver.ColumnConverter) driver.Stmt {")
+	//fmt.Println(_conn_m)
+	for k, v := range _stmt_m {
+		fmt.Println(k, ":", v, ",")
+	}
+	fmt.Println("}")
+
+	/////
+
+	fmt.Println(`
+func _btu(args ...bool) int {
+	res := 0x1
+	res = res << 1
+
+	for k, v := range args {
+		if v {
+			res = res | 0x1
+		}
+
+		if len(args)-1 != k {
+			res = res << 1
+		}
+	}
+
+	return res
+}
+`)
 }
 
 func gen(droverType, prefix string, arr []string) {
@@ -90,6 +129,7 @@ func gen(droverType, prefix string, arr []string) {
 	genWrapper(prefix, droverType, arr, fconn)
 
 	fmt.Println(funcs)
+
 }
 
 func genType(prefix string, arr []string, droverType string) string {
@@ -144,46 +184,72 @@ func genWrapper(prefix, t string, originalTypes []string, fconn [][]string) {
 
 	}
 
-	for _, subFconn := range fconn {
-		s := strings.Join(subFconn, " && ")
-		s = strings.ReplaceAll(s, "driver.", "is")
+	args := ""
+	for _, tt := range mTypes {
+		args += "," + strings.ReplaceAll(tt, "driver.", "")
+	}
 
-		fmt.Printf("if %s {\n", s)
+	for _, subFconn := range fconn {
+		//s := strings.Join(subFconn, " && ")
+		//s = strings.ReplaceAll(s, "driver.", "is")
+
+		//fmt.Printf("if %s {\n", s)
 
 		name := strings.ReplaceAll(strings.Join(subFconn, "_"), "driver.", "")
 
-		funcs += returnSt(prefix, t, name, subFconn)
-
-		args := ""
-		for _, tt := range subFconn {
-			args += "," + strings.ReplaceAll(tt, "driver.", "")
-		}
+		funcs += returnSt(prefix, t, name, subFconn, mTypes)
 
 		//todo: change
 		if prefix == "w_stmt_" {
-			fmt.Println("return " + "get_stmt_" + name + "(stmt , query , connDetails , sensor  " + args + ")")
+			//n := "get_stmt_" + name + "(stmt , query , connDetails , sensor  " + args + ")"
+			genConnMap("w_stmt_", mTypes, subFconn, "get_stmt_"+name)
+
+			//fmt.Println("return " + n)
 		} else {
-			fmt.Println("return " + "get_conn_" + name + "(connDetails, conn  , sensor  " + args + ")")
+			//n := "get_conn_" + name + "(connDetails, conn  , sensor  " + args + ")"
+			genConnMap("w_conn_", mTypes, subFconn, "get_conn_"+name)
+			//fmt.Println("return " + n)
 		}
 
-		fmt.Println("}")
+		//fmt.Println("}")
 	}
 
+	s := strings.Join(mTypes, " && ")
+	s = strings.ReplaceAll(s, "driver.", "is")
+
 	if t == "driver.Stmt" {
-		fmt.Println("return stmt")
+		fmt.Printf(`if f, ok := _stmt_n[_btu(%s)]; ok {
+				return f(stmt , query , connDetails , sensor  %s )
+	}
+	return &wStmt{
+Stmt:stmt,
+connDetails: connDetails,
+query: query,
+sensor: sensor,
+}
+	`, strings.ReplaceAll(s, "&&", ","), args)
+
 	} else {
-		fmt.Println("return conn")
+		fmt.Printf(`if f, ok := _conn_n[_btu(%s)]; ok {
+				return f(connDetails , conn , sensor  %s )
+	}
+	return &wConn{
+Conn:conn,
+connDetails: connDetails,
+sensor: sensor,
+}
+	`, strings.ReplaceAll(s, "&&", ","), args)
 	}
 
 	fmt.Println("}")
 
 }
 
-func returnSt(prefix string, t string, name string, v []string) string {
+func returnSt(prefix string, t string, name string, v []string, arr []string) string {
 	res := ""
 
 	args := ""
-	for _, tt := range v {
+	for _, tt := range arr {
 		args += "," + strings.ReplaceAll(tt, "driver.", "") + " " + tt
 	}
 
@@ -218,3 +284,44 @@ func returnSt(prefix string, t string, name string, v []string) string {
 	res += fmt.Sprintf("}\n")
 	return res
 }
+
+func genConnMap(prefix string, arr, fconn []string, funcName string) {
+
+	mask := []bool{}
+
+	for _, v := range arr {
+		if inArray(v, fconn) {
+			mask = append(mask, true)
+		} else {
+			mask = append(mask, false)
+		}
+	}
+
+	if prefix == "w_stmt_" {
+		_stmt_m[_btu(mask...)] = funcName
+	} else {
+		_conn_m[_btu(mask...)] = funcName
+	}
+
+}
+
+func _btu(args ...bool) string {
+	res := 0x1
+	res = res << 1
+
+	for k, v := range args {
+		if v {
+			res = res | 0x1
+		}
+
+		if len(args)-1 != k {
+			res = res << 1
+		}
+	}
+
+	return fmt.Sprintf("0x%b", res)
+}
+
+//var _conn_m map[int]func(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
+//1 : get_conn_Execer_ExecerContext_Queryer_QueryerContext_ConnPrepareContext_NamedValueChecker,
+//}
