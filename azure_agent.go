@@ -11,7 +11,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
-	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -47,6 +46,7 @@ func newAzureAgent(acceptorEndpoint, agentKey string, client *http.Client, logge
 
 	if client == nil {
 		client = http.DefaultClient
+		client.Timeout = 500 * time.Millisecond
 	}
 
 	logger.Debug("initializing azure agent")
@@ -154,7 +154,6 @@ func (a *azureAgent) enqueueSpans(spans []Span) {
 func (a *azureAgent) sendRequest(req *http.Request) error {
 	req.Header.Set("X-Instana-Host", a.snapshot.Host)
 	req.Header.Set("X-Instana-Key", a.Key)
-	req.Header.Set("X-Instana-Time", strconv.FormatInt(time.Now().UnixNano()/int64(time.Millisecond), 10))
 
 	resp, err := a.client.Do(req)
 	if err != nil {
