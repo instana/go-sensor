@@ -78,10 +78,8 @@ func main() {
 
 	/////
 
-	fmt.Println(`
-func _btu(args ...bool) int {
-	res := 0x1
-	res = res << 1
+	fmt.Println(`func _btu(args ...bool) int {
+	res := 0
 
 	for k, v := range args {
 		if v {
@@ -94,8 +92,7 @@ func _btu(args ...bool) int {
 	}
 
 	return res
-}
-`)
+}`)
 }
 
 func gen(droverType, prefix string, arr []string) {
@@ -306,8 +303,7 @@ func genConnMap(prefix string, arr, fconn []string, funcName string) {
 }
 
 func _btu(args ...bool) string {
-	res := 0x1
-	res = res << 1
+	res := 0
 
 	for k, v := range args {
 		if v {
@@ -319,9 +315,5 @@ func _btu(args ...bool) string {
 		}
 	}
 
-	return fmt.Sprintf("0x%b", res)
+	return fmt.Sprintf("0b%b", res)
 }
-
-//var _conn_m map[int]func(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
-//1 : get_conn_Execer_ExecerContext_Queryer_QueryerContext_ConnPrepareContext_NamedValueChecker,
-//}
