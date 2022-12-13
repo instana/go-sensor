@@ -314,8 +314,8 @@ func printFunctionMaps() {
 	fmt.Println("}")
 }
 
-func printUtil() (int, error) {
-	return fmt.Println(`func _btu(args ...bool) int {
+func printUtil() {
+	fmt.Println(`func _btu(args ...bool) int {
 	res := 0
 
 	for k, v := range args {
