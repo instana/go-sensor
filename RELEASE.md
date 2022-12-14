@@ -23,6 +23,7 @@ Follow the steps below to release the updated instrumentations:
 1. Make sure that the latest core module release is updated in the [Go Package manager](https://pkg.go.dev/github.com/instana/go-sensor). If not, manually update it until it shows up.
 1. In the new branch, run `./instrumentations.sh update` to update all instrumentations to the latest core module version.
 1. Run `make test` to assure that no instrumentation is broken after the update. If there are any issues, fix them accordingly.
+1. Run `make integration` to assure that no instrumentation is broken after the update. If there are any issues, fix them accordingly.
 1. Once all tests pass, create a pull request with the changes and get it merged into the master branch.
 1. Switch to the master branch and pull the new changes.
 1. Run `./instrumentations.sh release` to release every instrumentation.
