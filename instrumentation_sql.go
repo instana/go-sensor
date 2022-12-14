@@ -253,11 +253,6 @@ func (conn *wrappedSQLConn) CheckNamedValue(d *driver.NamedValue) error {
 
 	d.Value, err = driver.DefaultParameterConverter.ConvertValue(d.Value)
 
-	if err != nil {
-		sensor.logger.Debug("Swallowing DefaultParameterConverter error: ", err.Error())
-		return nil
-	}
-
 	return err
 }
 
@@ -314,11 +309,6 @@ func (stmt *wrappedSQLStmt) CheckNamedValue(d *driver.NamedValue) error {
 
 	var err error
 	d.Value, err = driver.DefaultParameterConverter.ConvertValue(d.Value)
-
-	if err != nil {
-		sensor.logger.Debug("Swallowing DefaultParameterConverter error: ", err.Error())
-		return nil
-	}
 
 	return err
 }

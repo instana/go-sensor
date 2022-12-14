@@ -9,7 +9,6 @@ import (
 	"database/sql/driver"
 	"errors"
 	"io"
-	"sync"
 	"testing"
 
 	instana "github.com/instana/go-sensor"
@@ -258,18 +257,10 @@ func TestProcedureWithCheckerOnStmt(t *testing.T) {
 	}, instana.NewTestRecorder()))
 	defer instana.ShutdownSensor()
 
-	ch := make(chan int, 2)
-	var wg sync.WaitGroup
-	wg.Add(1)
+	var called bool
 
-	go func() {
-		// Here we make sure that stmt.CheckNamedValue from sqlDriver2 is called
-		<-ch
-		wg.Done()
-	}()
-
-	driver := sqlDriver2{
-		ch: ch,
+	driver := &db2DriverMock{
+		called: &called,
 	}
 
 	instana.InstrumentSQLDriver(s, "test_driver2", driver)
@@ -280,14 +271,14 @@ func TestProcedureWithCheckerOnStmt(t *testing.T) {
 	var outValue string
 	_, err = db.Exec("CALL SOME_PROCEDURE(?)", sql.Out{Dest: &outValue})
 
+	assert.True(t, called)
+
 	// Here we expect the instrumentation to look for the driver's conn.CheckNamedValue implementation.
 	// If there is none, we check stmt.CheckNamedValue, which sqlDriver2 has.
 	// If there is none, we return nil from our side, since driver.ErrSkip won't work for CheckNamedValue, as seen here:
 	// https://cs.opensource.google/go/go/+/refs/tags/go1.19.1:src/database/sql/driver/driver.go;l=143
 	// and here: https://cs.opensource.google/go/go/+/refs/tags/go1.19.1:src/database/sql/driver/driver.go;l=399
 	assert.NoError(t, err)
-
-	wg.Wait()
 }
 
 func TestProcedureWithNoDefaultChecker(t *testing.T) {
@@ -297,7 +288,7 @@ func TestProcedureWithNoDefaultChecker(t *testing.T) {
 	}, instana.NewTestRecorder()))
 	defer instana.ShutdownSensor()
 
-	driver := sqlDriver3{}
+	driver := pqDriverMock{}
 
 	instana.InstrumentSQLDriver(s, "test_driver3", driver)
 	db, err := instana.SQLOpen("test_driver3", "some datasource")
@@ -356,99 +347,103 @@ func (sqlRows) Next(dest []driver.Value) error { return io.EOF }
 // * driver.Stmt does implement the driver.NamedValueChecker interface (CheckNamedValue method)
 // * Our wrapper ALWAYS implements ExecContext, no matter what
 
-type sqlDriver2 struct {
-	Error error
-	ch    chan int
+type db2DriverMock struct {
+	Error  error
+	called *bool
 }
 
-func (drv sqlDriver2) Open(name string) (driver.Conn, error) { return sqlConn2{drv.Error, drv.ch}, nil } //nolint:gosimple
+func (drv *db2DriverMock) Open(name string) (driver.Conn, error) {
+	return db2ConnMock{drv.Error, drv.called}, nil
+} //nolint:gosimple
 
-type sqlConn2 struct {
-	Error error
-	ch    chan int
+type db2ConnMock struct {
+	Error  error
+	called *bool
 }
 
-func (conn sqlConn2) Prepare(query string) (driver.Stmt, error) {
-	return sqlStmt2{conn.Error, conn.ch}, nil //nolint:gosimple
+func (conn db2ConnMock) Prepare(query string) (driver.Stmt, error) {
+	return db2StmtMock{conn.Error, conn.called}, nil //nolint:gosimple
 }
-func (s sqlConn2) Close() error { return driver.ErrSkip }
+func (s db2ConnMock) Close() error { return driver.ErrSkip }
 
-func (s sqlConn2) Begin() (driver.Tx, error) { return nil, driver.ErrSkip }
+func (s db2ConnMock) Begin() (driver.Tx, error) { return nil, driver.ErrSkip }
 
-type sqlStmt2 struct {
-	Error error
-	ch    chan int
-}
-
-func (sqlStmt2) Close() error  { return nil }
-func (sqlStmt2) NumInput() int { return -1 }
-func (stmt sqlStmt2) Exec(args []driver.Value) (driver.Result, error) {
-	return sqlResult2{}, stmt.Error
+type db2StmtMock struct {
+	Error  error
+	called *bool
 }
 
-func (stmt sqlStmt2) Query(args []driver.Value) (driver.Rows, error) {
-	return sqlRows2{}, stmt.Error
+func (db2StmtMock) Close() error  { return nil }
+func (db2StmtMock) NumInput() int { return -1 }
+func (stmt db2StmtMock) Exec(args []driver.Value) (driver.Result, error) {
+	return db2ResultMock{}, stmt.Error
 }
 
-func (stmt sqlStmt2) CheckNamedValue(d *driver.NamedValue) error {
-	stmt.ch <- 1
+func (stmt db2StmtMock) Query(args []driver.Value) (driver.Rows, error) {
+	return db2RowsMock{}, stmt.Error
+}
+
+func (stmt db2StmtMock) CheckNamedValue(d *driver.NamedValue) error {
+	*stmt.called = true
 	return nil
 }
 
-type sqlResult2 struct{}
+type db2ResultMock struct{}
 
-func (sqlResult2) LastInsertId() (int64, error) { return 42, nil }
-func (sqlResult2) RowsAffected() (int64, error) { return 100, nil }
+func (db2ResultMock) LastInsertId() (int64, error) { return 42, nil }
+func (db2ResultMock) RowsAffected() (int64, error) { return 100, nil }
 
-type sqlRows2 struct{}
+type db2RowsMock struct{}
 
-func (sqlRows2) Columns() []string              { return []string{"col1", "col2"} }
-func (sqlRows2) Close() error                   { return nil }
-func (sqlRows2) Next(dest []driver.Value) error { return io.EOF }
+func (db2RowsMock) Columns() []string              { return []string{"col1", "col2"} }
+func (db2RowsMock) Close() error                   { return nil }
+func (db2RowsMock) Next(dest []driver.Value) error { return io.EOF }
 
 // Driver use case: driver does not implement NamedValueChecker,arg type checking is internal.
 // The idea is to mock pq: https://github.com/lib/pq/blob/8446d16b8935fdf2b5c0fe333538ac395e3e1e4b/encode.go#L31
 
-type sqlDriver3 struct{ Error error }
+type pqDriverMock struct{ Error error }
 
-func (drv sqlDriver3) Open(name string) (driver.Conn, error) { return sqlConn3{drv.Error}, nil } //nolint:gosimple
+func (drv pqDriverMock) Open(name string) (driver.Conn, error) { return pqConnMock{drv.Error}, nil } //nolint:gosimple
 
-type sqlConn3 struct{ Error error }
+type pqConnMock struct{ Error error }
 
-func (conn sqlConn3) Prepare(query string) (driver.Stmt, error) { return sqlStmt3{conn.Error}, nil } //nolint:gosimple
-func (s sqlConn3) Close() error                                 { return driver.ErrSkip }
-func (s sqlConn3) Begin() (driver.Tx, error)                    { return nil, driver.ErrSkip }
+func (conn pqConnMock) Prepare(query string) (driver.Stmt, error) { return pqStmtMock{conn.Error}, nil } //nolint:gosimple
+func (s pqConnMock) Close() error                                 { return driver.ErrSkip }
+func (s pqConnMock) Begin() (driver.Tx, error)                    { return nil, driver.ErrSkip }
 
-func (conn sqlConn3) ExecContext(ctx context.Context, query string, args []driver.NamedValue) (driver.Result, error) {
+func (conn pqConnMock) ExecContext(ctx context.Context, query string, args []driver.NamedValue) (driver.Result, error) {
 	var err error
 
 	if _, ok := args[0].Value.(int32); ok {
 		err = errors.New("invalid type int32")
 	}
 
-	return sqlResult3{}, err
+	return pqResultMock{}, err
 }
 
-func (conn sqlConn3) QueryContext(ctx context.Context, query string, args []driver.NamedValue) (driver.Rows, error) {
-	return sqlRows3{}, conn.Error
+func (conn pqConnMock) QueryContext(ctx context.Context, query string, args []driver.NamedValue) (driver.Rows, error) {
+	return pqRowsMock{}, conn.Error
 }
 
-type sqlStmt3 struct{ Error error }
+type pqStmtMock struct{ Error error }
 
-func (sqlStmt3) Close() error  { return nil }
-func (sqlStmt3) NumInput() int { return -1 }
-func (stmt sqlStmt3) Exec(args []driver.Value) (driver.Result, error) {
-	return sqlResult3{}, stmt.Error
+func (pqStmtMock) Close() error  { return nil }
+func (pqStmtMock) NumInput() int { return -1 }
+func (stmt pqStmtMock) Exec(args []driver.Value) (driver.Result, error) {
+	return pqResultMock{}, stmt.Error
 }
-func (stmt sqlStmt3) Query(args []driver.Value) (driver.Rows, error) { return sqlRows3{}, stmt.Error }
+func (stmt pqStmtMock) Query(args []driver.Value) (driver.Rows, error) {
+	return pqRowsMock{}, stmt.Error
+}
 
-type sqlResult3 struct{}
+type pqResultMock struct{}
 
-func (sqlResult3) LastInsertId() (int64, error) { return 42, nil }
-func (sqlResult3) RowsAffected() (int64, error) { return 100, nil }
+func (pqResultMock) LastInsertId() (int64, error) { return 42, nil }
+func (pqResultMock) RowsAffected() (int64, error) { return 100, nil }
 
-type sqlRows3 struct{}
+type pqRowsMock struct{}
 
-func (sqlRows3) Columns() []string              { return []string{"col1", "col2"} }
-func (sqlRows3) Close() error                   { return nil }
-func (sqlRows3) Next(dest []driver.Value) error { return io.EOF }
+func (pqRowsMock) Columns() []string              { return []string{"col1", "col2"} }
+func (pqRowsMock) Close() error                   { return nil }
+func (pqRowsMock) Next(dest []driver.Value) error { return io.EOF }
