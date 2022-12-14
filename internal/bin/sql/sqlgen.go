@@ -84,6 +84,7 @@ func gen(basicTypeForWrapper, prefix string, listOfTheOriginalTypes []string) {
 
 	}
 
+	// not really important
 	sort.Slice(filteredSubsets, func(i, j int) bool {
 		return len(filteredSubsets[i]) > len(filteredSubsets[j])
 	})
@@ -130,11 +131,11 @@ func generateAndPrintConstructors(basicTypeForWrapper string, prefix string, fil
 	fmt.Println(funcs)
 }
 
-func genType(prefix string, arr []string, basicTypeForWrapper string) string {
-	name := strings.ReplaceAll(strings.Join(arr, "_"), "driver.", "")
+func genType(prefix string, filteredSubset []string, basicTypeForWrapper string) string {
+	name := strings.ReplaceAll(strings.Join(filteredSubset, "_"), "driver.", "")
 	fmt.Println("type " + prefix + name + " struct {")
 	fmt.Println(basicTypeForWrapper)
-	for _, v := range arr {
+	for _, v := range filteredSubset {
 		fmt.Println(v)
 
 	}
@@ -144,19 +145,28 @@ func genType(prefix string, arr []string, basicTypeForWrapper string) string {
 }
 
 // generate function that checks if basic type is one of the existing wrappers
-func genIsAlreadyWrapped(t string, types []string) {
-	noPrefix := strings.ReplaceAll(t, "driver.", "")
-	fmt.Printf("func %sAlreadyWrapped(%s %s) bool {\n", strings.ToLower(noPrefix), strings.ToLower(noPrefix), t)
+func genIsAlreadyWrapped(basicTypeForWrapper string, types []string) {
+	noPrefix := strings.ReplaceAll(basicTypeForWrapper, "driver.", "")
+	fmt.Printf("func %sAlreadyWrapped(%s %s) bool {\n", strings.ToLower(noPrefix), strings.ToLower(noPrefix), basicTypeForWrapper)
 	fmt.Printf("switch %s.(type) {\n", strings.ToLower(noPrefix))
+
+	pointerWrapperTypes := ""
+	for _, v := range types {
+		pointerWrapperTypes += "*" + v + ","
+	}
+	pointerWrapperTypes = "*w" + noPrefix + "," + strings.TrimRight(pointerWrapperTypes, ",") + ":"
+	fmt.Printf("case %s\n", pointerWrapperTypes)
+	fmt.Println("return true")
 
 	wrapperTypes := ""
 	for _, v := range types {
-		wrapperTypes += "*" + v + ","
+		wrapperTypes += v + ","
 	}
 	wrapperTypes = strings.TrimRight(wrapperTypes, ",") + ":"
 	fmt.Printf("case %s\n", wrapperTypes)
 	fmt.Println("return true")
 	fmt.Println("}")
+
 	fmt.Println("return false")
 	fmt.Println("}")
 }
@@ -194,7 +204,7 @@ func genWrapper(basicTypeForWrapper string, listOfTheInterfacesWithoutBasicType 
 
 	// generate wrapper body
 	if basicTypeForWrapper == driverStmt {
-		fmt.Printf(`if f, ok := _stmt_n[_btu(%s)]; ok {
+		fmt.Printf(`if f, ok := _stmt_n[convertBooleansToInt(%s)]; ok {
 				return f(stmt , query , connDetails , sensor  %s )
 	}
 	return &wStmt{
@@ -206,7 +216,7 @@ sensor: sensor,
 	`, listOfBooleans, args)
 
 	} else {
-		fmt.Printf(`if f, ok := _conn_n[_btu(%s)]; ok {
+		fmt.Printf(`if f, ok := _conn_n[convertBooleansToInt(%s)]; ok {
 				return f(connDetails , conn , sensor  %s )
 	}
 	return &wConn{
@@ -317,7 +327,7 @@ func printFunctionMaps() {
 }
 
 func printUtil() {
-	fmt.Println(`func _btu(args ...bool) int {
+	fmt.Println(`func convertBooleansToInt(args ...bool) int {
 	res := 0
 
 	for k, v := range args {
