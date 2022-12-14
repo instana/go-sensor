@@ -1,4 +1,5 @@
 // (c) Copyright IBM Corp. 2022
+
 package instana
 
 import "database/sql/driver"
@@ -12,7 +13,11 @@ type w_conn_Execer_ExecerContext_Queryer_QueryerContext_ConnPrepareContext_Named
 	driver.QueryerContext
 	driver.ConnPrepareContext
 	driver.NamedValueChecker
-	driver.ColumnConverter
+	cc driver.ColumnConverter
+}
+
+func (w *w_conn_Execer_ExecerContext_Queryer_QueryerContext_ConnPrepareContext_NamedValueChecker_ColumnConverter) ColumnConverter(idx int) driver.ValueConverter {
+	return w.cc.ColumnConverter(idx)
 }
 
 // [driver.Execer driver.ExecerContext driver.Queryer driver.QueryerContext driver.ConnPrepareContext driver.NamedValueChecker]
@@ -34,7 +39,11 @@ type w_conn_ExecerContext_Queryer_QueryerContext_ConnPrepareContext_NamedValueCh
 	driver.QueryerContext
 	driver.ConnPrepareContext
 	driver.NamedValueChecker
-	driver.ColumnConverter
+	cc driver.ColumnConverter
+}
+
+func (w *w_conn_ExecerContext_Queryer_QueryerContext_ConnPrepareContext_NamedValueChecker_ColumnConverter) ColumnConverter(idx int) driver.ValueConverter {
+	return w.cc.ColumnConverter(idx)
 }
 
 // [driver.Execer driver.Queryer driver.QueryerContext driver.ConnPrepareContext driver.NamedValueChecker driver.ColumnConverter]
@@ -45,7 +54,11 @@ type w_conn_Execer_Queryer_QueryerContext_ConnPrepareContext_NamedValueChecker_C
 	driver.QueryerContext
 	driver.ConnPrepareContext
 	driver.NamedValueChecker
-	driver.ColumnConverter
+	cc driver.ColumnConverter
+}
+
+func (w *w_conn_Execer_Queryer_QueryerContext_ConnPrepareContext_NamedValueChecker_ColumnConverter) ColumnConverter(idx int) driver.ValueConverter {
+	return w.cc.ColumnConverter(idx)
 }
 
 // [driver.Execer driver.ExecerContext driver.QueryerContext driver.ConnPrepareContext driver.NamedValueChecker driver.ColumnConverter]
@@ -56,7 +69,11 @@ type w_conn_Execer_ExecerContext_QueryerContext_ConnPrepareContext_NamedValueChe
 	driver.QueryerContext
 	driver.ConnPrepareContext
 	driver.NamedValueChecker
-	driver.ColumnConverter
+	cc driver.ColumnConverter
+}
+
+func (w *w_conn_Execer_ExecerContext_QueryerContext_ConnPrepareContext_NamedValueChecker_ColumnConverter) ColumnConverter(idx int) driver.ValueConverter {
+	return w.cc.ColumnConverter(idx)
 }
 
 // [driver.Execer driver.ExecerContext driver.Queryer driver.ConnPrepareContext driver.NamedValueChecker driver.ColumnConverter]
@@ -67,7 +84,11 @@ type w_conn_Execer_ExecerContext_Queryer_ConnPrepareContext_NamedValueChecker_Co
 	driver.Queryer
 	driver.ConnPrepareContext
 	driver.NamedValueChecker
-	driver.ColumnConverter
+	cc driver.ColumnConverter
+}
+
+func (w *w_conn_Execer_ExecerContext_Queryer_ConnPrepareContext_NamedValueChecker_ColumnConverter) ColumnConverter(idx int) driver.ValueConverter {
+	return w.cc.ColumnConverter(idx)
 }
 
 // [driver.Execer driver.ExecerContext driver.Queryer driver.QueryerContext driver.NamedValueChecker driver.ColumnConverter]
@@ -78,7 +99,11 @@ type w_conn_Execer_ExecerContext_Queryer_QueryerContext_NamedValueChecker_Column
 	driver.Queryer
 	driver.QueryerContext
 	driver.NamedValueChecker
-	driver.ColumnConverter
+	cc driver.ColumnConverter
+}
+
+func (w *w_conn_Execer_ExecerContext_Queryer_QueryerContext_NamedValueChecker_ColumnConverter) ColumnConverter(idx int) driver.ValueConverter {
+	return w.cc.ColumnConverter(idx)
 }
 
 // [driver.Execer driver.ExecerContext driver.Queryer driver.QueryerContext driver.ConnPrepareContext driver.ColumnConverter]
@@ -89,7 +114,11 @@ type w_conn_Execer_ExecerContext_Queryer_QueryerContext_ConnPrepareContext_Colum
 	driver.Queryer
 	driver.QueryerContext
 	driver.ConnPrepareContext
-	driver.ColumnConverter
+	cc driver.ColumnConverter
+}
+
+func (w *w_conn_Execer_ExecerContext_Queryer_QueryerContext_ConnPrepareContext_ColumnConverter) ColumnConverter(idx int) driver.ValueConverter {
+	return w.cc.ColumnConverter(idx)
 }
 
 // [driver.Execer driver.Queryer driver.QueryerContext driver.ConnPrepareContext driver.ColumnConverter]
@@ -99,7 +128,11 @@ type w_conn_Execer_Queryer_QueryerContext_ConnPrepareContext_ColumnConverter str
 	driver.Queryer
 	driver.QueryerContext
 	driver.ConnPrepareContext
-	driver.ColumnConverter
+	cc driver.ColumnConverter
+}
+
+func (w *w_conn_Execer_Queryer_QueryerContext_ConnPrepareContext_ColumnConverter) ColumnConverter(idx int) driver.ValueConverter {
+	return w.cc.ColumnConverter(idx)
 }
 
 // [driver.Execer driver.ExecerContext driver.Queryer driver.QueryerContext driver.ConnPrepareContext]
@@ -119,7 +152,11 @@ type w_conn_Queryer_QueryerContext_ConnPrepareContext_NamedValueChecker_ColumnCo
 	driver.QueryerContext
 	driver.ConnPrepareContext
 	driver.NamedValueChecker
-	driver.ColumnConverter
+	cc driver.ColumnConverter
+}
+
+func (w *w_conn_Queryer_QueryerContext_ConnPrepareContext_NamedValueChecker_ColumnConverter) ColumnConverter(idx int) driver.ValueConverter {
+	return w.cc.ColumnConverter(idx)
 }
 
 // [driver.ExecerContext driver.QueryerContext driver.ConnPrepareContext driver.NamedValueChecker driver.ColumnConverter]
@@ -129,7 +166,11 @@ type w_conn_ExecerContext_QueryerContext_ConnPrepareContext_NamedValueChecker_Co
 	driver.QueryerContext
 	driver.ConnPrepareContext
 	driver.NamedValueChecker
-	driver.ColumnConverter
+	cc driver.ColumnConverter
+}
+
+func (w *w_conn_ExecerContext_QueryerContext_ConnPrepareContext_NamedValueChecker_ColumnConverter) ColumnConverter(idx int) driver.ValueConverter {
+	return w.cc.ColumnConverter(idx)
 }
 
 // [driver.Execer driver.QueryerContext driver.ConnPrepareContext driver.NamedValueChecker driver.ColumnConverter]
@@ -139,7 +180,11 @@ type w_conn_Execer_QueryerContext_ConnPrepareContext_NamedValueChecker_ColumnCon
 	driver.QueryerContext
 	driver.ConnPrepareContext
 	driver.NamedValueChecker
-	driver.ColumnConverter
+	cc driver.ColumnConverter
+}
+
+func (w *w_conn_Execer_QueryerContext_ConnPrepareContext_NamedValueChecker_ColumnConverter) ColumnConverter(idx int) driver.ValueConverter {
+	return w.cc.ColumnConverter(idx)
 }
 
 // [driver.ExecerContext driver.Queryer driver.QueryerContext driver.ConnPrepareContext driver.NamedValueChecker]
@@ -169,7 +214,11 @@ type w_conn_ExecerContext_Queryer_ConnPrepareContext_NamedValueChecker_ColumnCon
 	driver.Queryer
 	driver.ConnPrepareContext
 	driver.NamedValueChecker
-	driver.ColumnConverter
+	cc driver.ColumnConverter
+}
+
+func (w *w_conn_ExecerContext_Queryer_ConnPrepareContext_NamedValueChecker_ColumnConverter) ColumnConverter(idx int) driver.ValueConverter {
+	return w.cc.ColumnConverter(idx)
 }
 
 // [driver.Execer driver.Queryer driver.ConnPrepareContext driver.NamedValueChecker driver.ColumnConverter]
@@ -179,7 +228,11 @@ type w_conn_Execer_Queryer_ConnPrepareContext_NamedValueChecker_ColumnConverter 
 	driver.Queryer
 	driver.ConnPrepareContext
 	driver.NamedValueChecker
-	driver.ColumnConverter
+	cc driver.ColumnConverter
+}
+
+func (w *w_conn_Execer_Queryer_ConnPrepareContext_NamedValueChecker_ColumnConverter) ColumnConverter(idx int) driver.ValueConverter {
+	return w.cc.ColumnConverter(idx)
 }
 
 // [driver.Execer driver.ExecerContext driver.QueryerContext driver.ConnPrepareContext driver.NamedValueChecker]
@@ -199,7 +252,11 @@ type w_conn_Execer_ExecerContext_ConnPrepareContext_NamedValueChecker_ColumnConv
 	driver.ExecerContext
 	driver.ConnPrepareContext
 	driver.NamedValueChecker
-	driver.ColumnConverter
+	cc driver.ColumnConverter
+}
+
+func (w *w_conn_Execer_ExecerContext_ConnPrepareContext_NamedValueChecker_ColumnConverter) ColumnConverter(idx int) driver.ValueConverter {
+	return w.cc.ColumnConverter(idx)
 }
 
 // [driver.Execer driver.ExecerContext driver.Queryer driver.ConnPrepareContext driver.NamedValueChecker]
@@ -219,7 +276,11 @@ type w_conn_Execer_ExecerContext_Queryer_QueryerContext_ColumnConverter struct {
 	driver.ExecerContext
 	driver.Queryer
 	driver.QueryerContext
-	driver.ColumnConverter
+	cc driver.ColumnConverter
+}
+
+func (w *w_conn_Execer_ExecerContext_Queryer_QueryerContext_ColumnConverter) ColumnConverter(idx int) driver.ValueConverter {
+	return w.cc.ColumnConverter(idx)
 }
 
 // [driver.ExecerContext driver.Queryer driver.QueryerContext driver.NamedValueChecker driver.ColumnConverter]
@@ -229,7 +290,11 @@ type w_conn_ExecerContext_Queryer_QueryerContext_NamedValueChecker_ColumnConvert
 	driver.Queryer
 	driver.QueryerContext
 	driver.NamedValueChecker
-	driver.ColumnConverter
+	cc driver.ColumnConverter
+}
+
+func (w *w_conn_ExecerContext_Queryer_QueryerContext_NamedValueChecker_ColumnConverter) ColumnConverter(idx int) driver.ValueConverter {
+	return w.cc.ColumnConverter(idx)
 }
 
 // [driver.Execer driver.ExecerContext driver.Queryer driver.QueryerContext driver.NamedValueChecker]
@@ -249,7 +314,11 @@ type w_conn_Execer_Queryer_QueryerContext_NamedValueChecker_ColumnConverter stru
 	driver.Queryer
 	driver.QueryerContext
 	driver.NamedValueChecker
-	driver.ColumnConverter
+	cc driver.ColumnConverter
+}
+
+func (w *w_conn_Execer_Queryer_QueryerContext_NamedValueChecker_ColumnConverter) ColumnConverter(idx int) driver.ValueConverter {
+	return w.cc.ColumnConverter(idx)
 }
 
 // [driver.Execer driver.ExecerContext driver.Queryer driver.ConnPrepareContext driver.ColumnConverter]
@@ -259,7 +328,11 @@ type w_conn_Execer_ExecerContext_Queryer_ConnPrepareContext_ColumnConverter stru
 	driver.ExecerContext
 	driver.Queryer
 	driver.ConnPrepareContext
-	driver.ColumnConverter
+	cc driver.ColumnConverter
+}
+
+func (w *w_conn_Execer_ExecerContext_Queryer_ConnPrepareContext_ColumnConverter) ColumnConverter(idx int) driver.ValueConverter {
+	return w.cc.ColumnConverter(idx)
 }
 
 // [driver.Execer driver.ExecerContext driver.QueryerContext driver.NamedValueChecker driver.ColumnConverter]
@@ -269,7 +342,11 @@ type w_conn_Execer_ExecerContext_QueryerContext_NamedValueChecker_ColumnConverte
 	driver.ExecerContext
 	driver.QueryerContext
 	driver.NamedValueChecker
-	driver.ColumnConverter
+	cc driver.ColumnConverter
+}
+
+func (w *w_conn_Execer_ExecerContext_QueryerContext_NamedValueChecker_ColumnConverter) ColumnConverter(idx int) driver.ValueConverter {
+	return w.cc.ColumnConverter(idx)
 }
 
 // [driver.ExecerContext driver.Queryer driver.QueryerContext driver.ConnPrepareContext driver.ColumnConverter]
@@ -279,7 +356,11 @@ type w_conn_ExecerContext_Queryer_QueryerContext_ConnPrepareContext_ColumnConver
 	driver.Queryer
 	driver.QueryerContext
 	driver.ConnPrepareContext
-	driver.ColumnConverter
+	cc driver.ColumnConverter
+}
+
+func (w *w_conn_ExecerContext_Queryer_QueryerContext_ConnPrepareContext_ColumnConverter) ColumnConverter(idx int) driver.ValueConverter {
+	return w.cc.ColumnConverter(idx)
 }
 
 // [driver.Execer driver.ExecerContext driver.QueryerContext driver.ConnPrepareContext driver.ColumnConverter]
@@ -289,7 +370,11 @@ type w_conn_Execer_ExecerContext_QueryerContext_ConnPrepareContext_ColumnConvert
 	driver.ExecerContext
 	driver.QueryerContext
 	driver.ConnPrepareContext
-	driver.ColumnConverter
+	cc driver.ColumnConverter
+}
+
+func (w *w_conn_Execer_ExecerContext_QueryerContext_ConnPrepareContext_ColumnConverter) ColumnConverter(idx int) driver.ValueConverter {
+	return w.cc.ColumnConverter(idx)
 }
 
 // [driver.Execer driver.ExecerContext driver.Queryer driver.NamedValueChecker driver.ColumnConverter]
@@ -299,7 +384,11 @@ type w_conn_Execer_ExecerContext_Queryer_NamedValueChecker_ColumnConverter struc
 	driver.ExecerContext
 	driver.Queryer
 	driver.NamedValueChecker
-	driver.ColumnConverter
+	cc driver.ColumnConverter
+}
+
+func (w *w_conn_Execer_ExecerContext_Queryer_NamedValueChecker_ColumnConverter) ColumnConverter(idx int) driver.ValueConverter {
+	return w.cc.ColumnConverter(idx)
 }
 
 // [driver.Execer driver.Queryer driver.NamedValueChecker driver.ColumnConverter]
@@ -308,7 +397,11 @@ type w_conn_Execer_Queryer_NamedValueChecker_ColumnConverter struct {
 	driver.Execer
 	driver.Queryer
 	driver.NamedValueChecker
-	driver.ColumnConverter
+	cc driver.ColumnConverter
+}
+
+func (w *w_conn_Execer_Queryer_NamedValueChecker_ColumnConverter) ColumnConverter(idx int) driver.ValueConverter {
+	return w.cc.ColumnConverter(idx)
 }
 
 // [driver.Execer driver.ExecerContext driver.Queryer driver.ConnPrepareContext]
@@ -326,7 +419,11 @@ type w_conn_Execer_QueryerContext_NamedValueChecker_ColumnConverter struct {
 	driver.Execer
 	driver.QueryerContext
 	driver.NamedValueChecker
-	driver.ColumnConverter
+	cc driver.ColumnConverter
+}
+
+func (w *w_conn_Execer_QueryerContext_NamedValueChecker_ColumnConverter) ColumnConverter(idx int) driver.ValueConverter {
+	return w.cc.ColumnConverter(idx)
 }
 
 // [driver.Execer driver.Queryer driver.QueryerContext driver.ConnPrepareContext]
@@ -344,7 +441,11 @@ type w_conn_ExecerContext_Queryer_NamedValueChecker_ColumnConverter struct {
 	driver.ExecerContext
 	driver.Queryer
 	driver.NamedValueChecker
-	driver.ColumnConverter
+	cc driver.ColumnConverter
+}
+
+func (w *w_conn_ExecerContext_Queryer_NamedValueChecker_ColumnConverter) ColumnConverter(idx int) driver.ValueConverter {
+	return w.cc.ColumnConverter(idx)
 }
 
 // [driver.ExecerContext driver.QueryerContext driver.NamedValueChecker driver.ColumnConverter]
@@ -353,7 +454,11 @@ type w_conn_ExecerContext_QueryerContext_NamedValueChecker_ColumnConverter struc
 	driver.ExecerContext
 	driver.QueryerContext
 	driver.NamedValueChecker
-	driver.ColumnConverter
+	cc driver.ColumnConverter
+}
+
+func (w *w_conn_ExecerContext_QueryerContext_NamedValueChecker_ColumnConverter) ColumnConverter(idx int) driver.ValueConverter {
+	return w.cc.ColumnConverter(idx)
 }
 
 // [driver.Execer driver.ExecerContext driver.NamedValueChecker driver.ColumnConverter]
@@ -362,7 +467,11 @@ type w_conn_Execer_ExecerContext_NamedValueChecker_ColumnConverter struct {
 	driver.Execer
 	driver.ExecerContext
 	driver.NamedValueChecker
-	driver.ColumnConverter
+	cc driver.ColumnConverter
+}
+
+func (w *w_conn_Execer_ExecerContext_NamedValueChecker_ColumnConverter) ColumnConverter(idx int) driver.ValueConverter {
+	return w.cc.ColumnConverter(idx)
 }
 
 // [driver.Execer driver.ExecerContext driver.QueryerContext driver.ConnPrepareContext]
@@ -380,7 +489,11 @@ type w_conn_Queryer_QueryerContext_ConnPrepareContext_ColumnConverter struct {
 	driver.Queryer
 	driver.QueryerContext
 	driver.ConnPrepareContext
-	driver.ColumnConverter
+	cc driver.ColumnConverter
+}
+
+func (w *w_conn_Queryer_QueryerContext_ConnPrepareContext_ColumnConverter) ColumnConverter(idx int) driver.ValueConverter {
+	return w.cc.ColumnConverter(idx)
 }
 
 // [driver.Execer driver.ExecerContext driver.Queryer driver.NamedValueChecker]
@@ -398,7 +511,11 @@ type w_conn_ExecerContext_QueryerContext_ConnPrepareContext_ColumnConverter stru
 	driver.ExecerContext
 	driver.QueryerContext
 	driver.ConnPrepareContext
-	driver.ColumnConverter
+	cc driver.ColumnConverter
+}
+
+func (w *w_conn_ExecerContext_QueryerContext_ConnPrepareContext_ColumnConverter) ColumnConverter(idx int) driver.ValueConverter {
+	return w.cc.ColumnConverter(idx)
 }
 
 // [driver.Execer driver.QueryerContext driver.ConnPrepareContext driver.ColumnConverter]
@@ -407,7 +524,11 @@ type w_conn_Execer_QueryerContext_ConnPrepareContext_ColumnConverter struct {
 	driver.Execer
 	driver.QueryerContext
 	driver.ConnPrepareContext
-	driver.ColumnConverter
+	cc driver.ColumnConverter
+}
+
+func (w *w_conn_Execer_QueryerContext_ConnPrepareContext_ColumnConverter) ColumnConverter(idx int) driver.ValueConverter {
+	return w.cc.ColumnConverter(idx)
 }
 
 // [driver.Queryer driver.QueryerContext driver.NamedValueChecker driver.ColumnConverter]
@@ -416,7 +537,11 @@ type w_conn_Queryer_QueryerContext_NamedValueChecker_ColumnConverter struct {
 	driver.Queryer
 	driver.QueryerContext
 	driver.NamedValueChecker
-	driver.ColumnConverter
+	cc driver.ColumnConverter
+}
+
+func (w *w_conn_Queryer_QueryerContext_NamedValueChecker_ColumnConverter) ColumnConverter(idx int) driver.ValueConverter {
+	return w.cc.ColumnConverter(idx)
 }
 
 // [driver.Execer driver.ExecerContext driver.QueryerContext driver.NamedValueChecker]
@@ -434,7 +559,11 @@ type w_conn_ExecerContext_Queryer_ConnPrepareContext_ColumnConverter struct {
 	driver.ExecerContext
 	driver.Queryer
 	driver.ConnPrepareContext
-	driver.ColumnConverter
+	cc driver.ColumnConverter
+}
+
+func (w *w_conn_ExecerContext_Queryer_ConnPrepareContext_ColumnConverter) ColumnConverter(idx int) driver.ValueConverter {
+	return w.cc.ColumnConverter(idx)
 }
 
 // [driver.Execer driver.Queryer driver.QueryerContext driver.NamedValueChecker]
@@ -470,7 +599,11 @@ type w_conn_Execer_Queryer_ConnPrepareContext_ColumnConverter struct {
 	driver.Execer
 	driver.Queryer
 	driver.ConnPrepareContext
-	driver.ColumnConverter
+	cc driver.ColumnConverter
+}
+
+func (w *w_conn_Execer_Queryer_ConnPrepareContext_ColumnConverter) ColumnConverter(idx int) driver.ValueConverter {
+	return w.cc.ColumnConverter(idx)
 }
 
 // [driver.Execer driver.ExecerContext driver.ConnPrepareContext driver.ColumnConverter]
@@ -479,7 +612,11 @@ type w_conn_Execer_ExecerContext_ConnPrepareContext_ColumnConverter struct {
 	driver.Execer
 	driver.ExecerContext
 	driver.ConnPrepareContext
-	driver.ColumnConverter
+	cc driver.ColumnConverter
+}
+
+func (w *w_conn_Execer_ExecerContext_ConnPrepareContext_ColumnConverter) ColumnConverter(idx int) driver.ValueConverter {
+	return w.cc.ColumnConverter(idx)
 }
 
 // [driver.Execer driver.ConnPrepareContext driver.NamedValueChecker driver.ColumnConverter]
@@ -488,7 +625,11 @@ type w_conn_Execer_ConnPrepareContext_NamedValueChecker_ColumnConverter struct {
 	driver.Execer
 	driver.ConnPrepareContext
 	driver.NamedValueChecker
-	driver.ColumnConverter
+	cc driver.ColumnConverter
+}
+
+func (w *w_conn_Execer_ConnPrepareContext_NamedValueChecker_ColumnConverter) ColumnConverter(idx int) driver.ValueConverter {
+	return w.cc.ColumnConverter(idx)
 }
 
 // [driver.Execer driver.ExecerContext driver.ConnPrepareContext driver.NamedValueChecker]
@@ -506,7 +647,11 @@ type w_conn_ExecerContext_Queryer_QueryerContext_ColumnConverter struct {
 	driver.ExecerContext
 	driver.Queryer
 	driver.QueryerContext
-	driver.ColumnConverter
+	cc driver.ColumnConverter
+}
+
+func (w *w_conn_ExecerContext_Queryer_QueryerContext_ColumnConverter) ColumnConverter(idx int) driver.ValueConverter {
+	return w.cc.ColumnConverter(idx)
 }
 
 // [driver.Execer driver.Queryer driver.ConnPrepareContext driver.NamedValueChecker]
@@ -533,7 +678,11 @@ type w_conn_ExecerContext_ConnPrepareContext_NamedValueChecker_ColumnConverter s
 	driver.ExecerContext
 	driver.ConnPrepareContext
 	driver.NamedValueChecker
-	driver.ColumnConverter
+	cc driver.ColumnConverter
+}
+
+func (w *w_conn_ExecerContext_ConnPrepareContext_NamedValueChecker_ColumnConverter) ColumnConverter(idx int) driver.ValueConverter {
+	return w.cc.ColumnConverter(idx)
 }
 
 // [driver.Execer driver.Queryer driver.QueryerContext driver.ColumnConverter]
@@ -542,7 +691,11 @@ type w_conn_Execer_Queryer_QueryerContext_ColumnConverter struct {
 	driver.Execer
 	driver.Queryer
 	driver.QueryerContext
-	driver.ColumnConverter
+	cc driver.ColumnConverter
+}
+
+func (w *w_conn_Execer_Queryer_QueryerContext_ColumnConverter) ColumnConverter(idx int) driver.ValueConverter {
+	return w.cc.ColumnConverter(idx)
 }
 
 // [driver.Execer driver.QueryerContext driver.ConnPrepareContext driver.NamedValueChecker]
@@ -569,7 +722,11 @@ type w_conn_Queryer_ConnPrepareContext_NamedValueChecker_ColumnConverter struct 
 	driver.Queryer
 	driver.ConnPrepareContext
 	driver.NamedValueChecker
-	driver.ColumnConverter
+	cc driver.ColumnConverter
+}
+
+func (w *w_conn_Queryer_ConnPrepareContext_NamedValueChecker_ColumnConverter) ColumnConverter(idx int) driver.ValueConverter {
+	return w.cc.ColumnConverter(idx)
 }
 
 // [driver.Queryer driver.QueryerContext driver.ConnPrepareContext driver.NamedValueChecker]
@@ -596,7 +753,11 @@ type w_conn_QueryerContext_ConnPrepareContext_NamedValueChecker_ColumnConverter 
 	driver.QueryerContext
 	driver.ConnPrepareContext
 	driver.NamedValueChecker
-	driver.ColumnConverter
+	cc driver.ColumnConverter
+}
+
+func (w *w_conn_QueryerContext_ConnPrepareContext_NamedValueChecker_ColumnConverter) ColumnConverter(idx int) driver.ValueConverter {
+	return w.cc.ColumnConverter(idx)
 }
 
 // [driver.Execer driver.ExecerContext driver.QueryerContext driver.ColumnConverter]
@@ -605,7 +766,11 @@ type w_conn_Execer_ExecerContext_QueryerContext_ColumnConverter struct {
 	driver.Execer
 	driver.ExecerContext
 	driver.QueryerContext
-	driver.ColumnConverter
+	cc driver.ColumnConverter
+}
+
+func (w *w_conn_Execer_ExecerContext_QueryerContext_ColumnConverter) ColumnConverter(idx int) driver.ValueConverter {
+	return w.cc.ColumnConverter(idx)
 }
 
 // [driver.Execer driver.ExecerContext driver.Queryer driver.ColumnConverter]
@@ -614,7 +779,11 @@ type w_conn_Execer_ExecerContext_Queryer_ColumnConverter struct {
 	driver.Execer
 	driver.ExecerContext
 	driver.Queryer
-	driver.ColumnConverter
+	cc driver.ColumnConverter
+}
+
+func (w *w_conn_Execer_ExecerContext_Queryer_ColumnConverter) ColumnConverter(idx int) driver.ValueConverter {
+	return w.cc.ColumnConverter(idx)
 }
 
 // [driver.Execer driver.QueryerContext driver.ColumnConverter]
@@ -622,7 +791,11 @@ type w_conn_Execer_QueryerContext_ColumnConverter struct {
 	driver.Conn
 	driver.Execer
 	driver.QueryerContext
-	driver.ColumnConverter
+	cc driver.ColumnConverter
+}
+
+func (w *w_conn_Execer_QueryerContext_ColumnConverter) ColumnConverter(idx int) driver.ValueConverter {
+	return w.cc.ColumnConverter(idx)
 }
 
 // [driver.Execer driver.ExecerContext driver.Queryer]
@@ -654,7 +827,11 @@ type w_conn_ExecerContext_Queryer_ColumnConverter struct {
 	driver.Conn
 	driver.ExecerContext
 	driver.Queryer
-	driver.ColumnConverter
+	cc driver.ColumnConverter
+}
+
+func (w *w_conn_ExecerContext_Queryer_ColumnConverter) ColumnConverter(idx int) driver.ValueConverter {
+	return w.cc.ColumnConverter(idx)
 }
 
 // [driver.Execer driver.Queryer driver.ColumnConverter]
@@ -662,7 +839,11 @@ type w_conn_Execer_Queryer_ColumnConverter struct {
 	driver.Conn
 	driver.Execer
 	driver.Queryer
-	driver.ColumnConverter
+	cc driver.ColumnConverter
+}
+
+func (w *w_conn_Execer_Queryer_ColumnConverter) ColumnConverter(idx int) driver.ValueConverter {
+	return w.cc.ColumnConverter(idx)
 }
 
 // [driver.ExecerContext driver.Queryer driver.QueryerContext]
@@ -694,7 +875,11 @@ type w_conn_ExecerContext_QueryerContext_ColumnConverter struct {
 	driver.Conn
 	driver.ExecerContext
 	driver.QueryerContext
-	driver.ColumnConverter
+	cc driver.ColumnConverter
+}
+
+func (w *w_conn_ExecerContext_QueryerContext_ColumnConverter) ColumnConverter(idx int) driver.ValueConverter {
+	return w.cc.ColumnConverter(idx)
 }
 
 // [driver.ConnPrepareContext driver.NamedValueChecker driver.ColumnConverter]
@@ -702,7 +887,11 @@ type w_conn_ConnPrepareContext_NamedValueChecker_ColumnConverter struct {
 	driver.Conn
 	driver.ConnPrepareContext
 	driver.NamedValueChecker
-	driver.ColumnConverter
+	cc driver.ColumnConverter
+}
+
+func (w *w_conn_ConnPrepareContext_NamedValueChecker_ColumnConverter) ColumnConverter(idx int) driver.ValueConverter {
+	return w.cc.ColumnConverter(idx)
 }
 
 // [driver.Queryer driver.QueryerContext driver.ColumnConverter]
@@ -710,7 +899,11 @@ type w_conn_Queryer_QueryerContext_ColumnConverter struct {
 	driver.Conn
 	driver.Queryer
 	driver.QueryerContext
-	driver.ColumnConverter
+	cc driver.ColumnConverter
+}
+
+func (w *w_conn_Queryer_QueryerContext_ColumnConverter) ColumnConverter(idx int) driver.ValueConverter {
+	return w.cc.ColumnConverter(idx)
 }
 
 // [driver.QueryerContext driver.ConnPrepareContext driver.NamedValueChecker]
@@ -750,7 +943,11 @@ type w_conn_Execer_ConnPrepareContext_ColumnConverter struct {
 	driver.Conn
 	driver.Execer
 	driver.ConnPrepareContext
-	driver.ColumnConverter
+	cc driver.ColumnConverter
+}
+
+func (w *w_conn_Execer_ConnPrepareContext_ColumnConverter) ColumnConverter(idx int) driver.ValueConverter {
+	return w.cc.ColumnConverter(idx)
 }
 
 // [driver.ExecerContext driver.ConnPrepareContext driver.ColumnConverter]
@@ -758,7 +955,11 @@ type w_conn_ExecerContext_ConnPrepareContext_ColumnConverter struct {
 	driver.Conn
 	driver.ExecerContext
 	driver.ConnPrepareContext
-	driver.ColumnConverter
+	cc driver.ColumnConverter
+}
+
+func (w *w_conn_ExecerContext_ConnPrepareContext_ColumnConverter) ColumnConverter(idx int) driver.ValueConverter {
+	return w.cc.ColumnConverter(idx)
 }
 
 // [driver.Execer driver.ConnPrepareContext driver.NamedValueChecker]
@@ -774,7 +975,11 @@ type w_conn_Queryer_ConnPrepareContext_ColumnConverter struct {
 	driver.Conn
 	driver.Queryer
 	driver.ConnPrepareContext
-	driver.ColumnConverter
+	cc driver.ColumnConverter
+}
+
+func (w *w_conn_Queryer_ConnPrepareContext_ColumnConverter) ColumnConverter(idx int) driver.ValueConverter {
+	return w.cc.ColumnConverter(idx)
 }
 
 // [driver.Execer driver.QueryerContext driver.ConnPrepareContext]
@@ -806,7 +1011,11 @@ type w_conn_QueryerContext_ConnPrepareContext_ColumnConverter struct {
 	driver.Conn
 	driver.QueryerContext
 	driver.ConnPrepareContext
-	driver.ColumnConverter
+	cc driver.ColumnConverter
+}
+
+func (w *w_conn_QueryerContext_ConnPrepareContext_ColumnConverter) ColumnConverter(idx int) driver.ValueConverter {
+	return w.cc.ColumnConverter(idx)
 }
 
 // [driver.Execer driver.QueryerContext driver.NamedValueChecker]
@@ -830,7 +1039,11 @@ type w_conn_Execer_ExecerContext_ColumnConverter struct {
 	driver.Conn
 	driver.Execer
 	driver.ExecerContext
-	driver.ColumnConverter
+	cc driver.ColumnConverter
+}
+
+func (w *w_conn_Execer_ExecerContext_ColumnConverter) ColumnConverter(idx int) driver.ValueConverter {
+	return w.cc.ColumnConverter(idx)
 }
 
 // [driver.ExecerContext driver.Queryer driver.NamedValueChecker]
@@ -862,7 +1075,11 @@ type w_conn_QueryerContext_NamedValueChecker_ColumnConverter struct {
 	driver.Conn
 	driver.QueryerContext
 	driver.NamedValueChecker
-	driver.ColumnConverter
+	cc driver.ColumnConverter
+}
+
+func (w *w_conn_QueryerContext_NamedValueChecker_ColumnConverter) ColumnConverter(idx int) driver.ValueConverter {
+	return w.cc.ColumnConverter(idx)
 }
 
 // [driver.Execer driver.ExecerContext driver.NamedValueChecker]
@@ -878,7 +1095,11 @@ type w_conn_Execer_NamedValueChecker_ColumnConverter struct {
 	driver.Conn
 	driver.Execer
 	driver.NamedValueChecker
-	driver.ColumnConverter
+	cc driver.ColumnConverter
+}
+
+func (w *w_conn_Execer_NamedValueChecker_ColumnConverter) ColumnConverter(idx int) driver.ValueConverter {
+	return w.cc.ColumnConverter(idx)
 }
 
 // [driver.ExecerContext driver.NamedValueChecker driver.ColumnConverter]
@@ -886,7 +1107,11 @@ type w_conn_ExecerContext_NamedValueChecker_ColumnConverter struct {
 	driver.Conn
 	driver.ExecerContext
 	driver.NamedValueChecker
-	driver.ColumnConverter
+	cc driver.ColumnConverter
+}
+
+func (w *w_conn_ExecerContext_NamedValueChecker_ColumnConverter) ColumnConverter(idx int) driver.ValueConverter {
+	return w.cc.ColumnConverter(idx)
 }
 
 // [driver.Queryer driver.NamedValueChecker driver.ColumnConverter]
@@ -894,7 +1119,11 @@ type w_conn_Queryer_NamedValueChecker_ColumnConverter struct {
 	driver.Conn
 	driver.Queryer
 	driver.NamedValueChecker
-	driver.ColumnConverter
+	cc driver.ColumnConverter
+}
+
+func (w *w_conn_Queryer_NamedValueChecker_ColumnConverter) ColumnConverter(idx int) driver.ValueConverter {
+	return w.cc.ColumnConverter(idx)
 }
 
 // [driver.Queryer driver.ConnPrepareContext]
@@ -943,7 +1172,11 @@ type w_conn_Execer_ExecerContext struct {
 type w_conn_Queryer_ColumnConverter struct {
 	driver.Conn
 	driver.Queryer
-	driver.ColumnConverter
+	cc driver.ColumnConverter
+}
+
+func (w *w_conn_Queryer_ColumnConverter) ColumnConverter(idx int) driver.ValueConverter {
+	return w.cc.ColumnConverter(idx)
 }
 
 // [driver.QueryerContext driver.NamedValueChecker]
@@ -971,21 +1204,33 @@ type w_conn_QueryerContext_ConnPrepareContext struct {
 type w_conn_ConnPrepareContext_ColumnConverter struct {
 	driver.Conn
 	driver.ConnPrepareContext
-	driver.ColumnConverter
+	cc driver.ColumnConverter
+}
+
+func (w *w_conn_ConnPrepareContext_ColumnConverter) ColumnConverter(idx int) driver.ValueConverter {
+	return w.cc.ColumnConverter(idx)
 }
 
 // [driver.ExecerContext driver.ColumnConverter]
 type w_conn_ExecerContext_ColumnConverter struct {
 	driver.Conn
 	driver.ExecerContext
-	driver.ColumnConverter
+	cc driver.ColumnConverter
+}
+
+func (w *w_conn_ExecerContext_ColumnConverter) ColumnConverter(idx int) driver.ValueConverter {
+	return w.cc.ColumnConverter(idx)
 }
 
 // [driver.Execer driver.ColumnConverter]
 type w_conn_Execer_ColumnConverter struct {
 	driver.Conn
 	driver.Execer
-	driver.ColumnConverter
+	cc driver.ColumnConverter
+}
+
+func (w *w_conn_Execer_ColumnConverter) ColumnConverter(idx int) driver.ValueConverter {
+	return w.cc.ColumnConverter(idx)
 }
 
 // [driver.Execer driver.Queryer]
@@ -1006,7 +1251,11 @@ type w_conn_Queryer_QueryerContext struct {
 type w_conn_QueryerContext_ColumnConverter struct {
 	driver.Conn
 	driver.QueryerContext
-	driver.ColumnConverter
+	cc driver.ColumnConverter
+}
+
+func (w *w_conn_QueryerContext_ColumnConverter) ColumnConverter(idx int) driver.ValueConverter {
+	return w.cc.ColumnConverter(idx)
 }
 
 // [driver.ExecerContext driver.ConnPrepareContext]
@@ -1034,7 +1283,11 @@ type w_conn_Queryer_NamedValueChecker struct {
 type w_conn_NamedValueChecker_ColumnConverter struct {
 	driver.Conn
 	driver.NamedValueChecker
-	driver.ColumnConverter
+	cc driver.ColumnConverter
+}
+
+func (w *w_conn_NamedValueChecker_ColumnConverter) ColumnConverter(idx int) driver.ValueConverter {
+	return w.cc.ColumnConverter(idx)
 }
 
 // [driver.ExecerContext driver.QueryerContext]
@@ -1047,7 +1300,11 @@ type w_conn_ExecerContext_QueryerContext struct {
 // [driver.ColumnConverter]
 type w_conn_ColumnConverter struct {
 	driver.Conn
-	driver.ColumnConverter
+	cc driver.ColumnConverter
+}
+
+func (w *w_conn_ColumnConverter) ColumnConverter(idx int) driver.ValueConverter {
+	return w.cc.ColumnConverter(idx)
 }
 
 // [driver.ConnPrepareContext]
@@ -1139,7 +1396,7 @@ func get_conn_Execer_ExecerContext_Queryer_QueryerContext_ConnPrepareContext_Nam
 			connDetails:        connDetails,
 			sensor:             sensor,
 		}, NamedValueChecker: NamedValueChecker,
-		ColumnConverter: ColumnConverter,
+		cc: ColumnConverter,
 	}
 }
 func get_conn_Execer_ExecerContext_Queryer_QueryerContext_ConnPrepareContext_NamedValueChecker(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
@@ -1194,7 +1451,7 @@ func get_conn_ExecerContext_Queryer_QueryerContext_ConnPrepareContext_NamedValue
 			connDetails:        connDetails,
 			sensor:             sensor,
 		}, NamedValueChecker: NamedValueChecker,
-		ColumnConverter: ColumnConverter,
+		cc: ColumnConverter,
 	}
 }
 func get_conn_Execer_Queryer_QueryerContext_ConnPrepareContext_NamedValueChecker_ColumnConverter(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
@@ -1220,7 +1477,7 @@ func get_conn_Execer_Queryer_QueryerContext_ConnPrepareContext_NamedValueChecker
 			connDetails:        connDetails,
 			sensor:             sensor,
 		}, NamedValueChecker: NamedValueChecker,
-		ColumnConverter: ColumnConverter,
+		cc: ColumnConverter,
 	}
 }
 func get_conn_Execer_ExecerContext_QueryerContext_ConnPrepareContext_NamedValueChecker_ColumnConverter(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
@@ -1246,7 +1503,7 @@ func get_conn_Execer_ExecerContext_QueryerContext_ConnPrepareContext_NamedValueC
 			connDetails:        connDetails,
 			sensor:             sensor,
 		}, NamedValueChecker: NamedValueChecker,
-		ColumnConverter: ColumnConverter,
+		cc: ColumnConverter,
 	}
 }
 func get_conn_Execer_ExecerContext_Queryer_ConnPrepareContext_NamedValueChecker_ColumnConverter(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
@@ -1272,7 +1529,7 @@ func get_conn_Execer_ExecerContext_Queryer_ConnPrepareContext_NamedValueChecker_
 			connDetails:        connDetails,
 			sensor:             sensor,
 		}, NamedValueChecker: NamedValueChecker,
-		ColumnConverter: ColumnConverter,
+		cc: ColumnConverter,
 	}
 }
 func get_conn_Execer_ExecerContext_Queryer_QueryerContext_NamedValueChecker_ColumnConverter(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
@@ -1298,7 +1555,7 @@ func get_conn_Execer_ExecerContext_Queryer_QueryerContext_NamedValueChecker_Colu
 			connDetails:    connDetails,
 			sensor:         sensor,
 		}, NamedValueChecker: NamedValueChecker,
-		ColumnConverter: ColumnConverter,
+		cc: ColumnConverter,
 	}
 }
 func get_conn_Execer_ExecerContext_Queryer_QueryerContext_ConnPrepareContext_ColumnConverter(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
@@ -1327,7 +1584,7 @@ func get_conn_Execer_ExecerContext_Queryer_QueryerContext_ConnPrepareContext_Col
 			ConnPrepareContext: ConnPrepareContext,
 			connDetails:        connDetails,
 			sensor:             sensor,
-		}, ColumnConverter: ColumnConverter,
+		}, cc: ColumnConverter,
 	}
 }
 func get_conn_Execer_Queryer_QueryerContext_ConnPrepareContext_ColumnConverter(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
@@ -1352,7 +1609,7 @@ func get_conn_Execer_Queryer_QueryerContext_ConnPrepareContext_ColumnConverter(c
 			ConnPrepareContext: ConnPrepareContext,
 			connDetails:        connDetails,
 			sensor:             sensor,
-		}, ColumnConverter: ColumnConverter,
+		}, cc: ColumnConverter,
 	}
 }
 func get_conn_Execer_ExecerContext_Queryer_QueryerContext_ConnPrepareContext(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
@@ -1402,7 +1659,7 @@ func get_conn_Queryer_QueryerContext_ConnPrepareContext_NamedValueChecker_Column
 			connDetails:        connDetails,
 			sensor:             sensor,
 		}, NamedValueChecker: NamedValueChecker,
-		ColumnConverter: ColumnConverter,
+		cc: ColumnConverter,
 	}
 }
 func get_conn_ExecerContext_QueryerContext_ConnPrepareContext_NamedValueChecker_ColumnConverter(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
@@ -1424,7 +1681,7 @@ func get_conn_ExecerContext_QueryerContext_ConnPrepareContext_NamedValueChecker_
 			connDetails:        connDetails,
 			sensor:             sensor,
 		}, NamedValueChecker: NamedValueChecker,
-		ColumnConverter: ColumnConverter,
+		cc: ColumnConverter,
 	}
 }
 func get_conn_Execer_QueryerContext_ConnPrepareContext_NamedValueChecker_ColumnConverter(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
@@ -1446,7 +1703,7 @@ func get_conn_Execer_QueryerContext_ConnPrepareContext_NamedValueChecker_ColumnC
 			connDetails:        connDetails,
 			sensor:             sensor,
 		}, NamedValueChecker: NamedValueChecker,
-		ColumnConverter: ColumnConverter,
+		cc: ColumnConverter,
 	}
 }
 func get_conn_ExecerContext_Queryer_QueryerContext_ConnPrepareContext_NamedValueChecker(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
@@ -1518,7 +1775,7 @@ func get_conn_ExecerContext_Queryer_ConnPrepareContext_NamedValueChecker_ColumnC
 			connDetails:        connDetails,
 			sensor:             sensor,
 		}, NamedValueChecker: NamedValueChecker,
-		ColumnConverter: ColumnConverter,
+		cc: ColumnConverter,
 	}
 }
 func get_conn_Execer_Queryer_ConnPrepareContext_NamedValueChecker_ColumnConverter(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
@@ -1540,7 +1797,7 @@ func get_conn_Execer_Queryer_ConnPrepareContext_NamedValueChecker_ColumnConverte
 			connDetails:        connDetails,
 			sensor:             sensor,
 		}, NamedValueChecker: NamedValueChecker,
-		ColumnConverter: ColumnConverter,
+		cc: ColumnConverter,
 	}
 }
 func get_conn_Execer_ExecerContext_QueryerContext_ConnPrepareContext_NamedValueChecker(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
@@ -1587,7 +1844,7 @@ func get_conn_Execer_ExecerContext_ConnPrepareContext_NamedValueChecker_ColumnCo
 			connDetails:        connDetails,
 			sensor:             sensor,
 		}, NamedValueChecker: NamedValueChecker,
-		ColumnConverter: ColumnConverter,
+		cc: ColumnConverter,
 	}
 }
 func get_conn_Execer_ExecerContext_Queryer_ConnPrepareContext_NamedValueChecker(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
@@ -1637,7 +1894,7 @@ func get_conn_Execer_ExecerContext_Queryer_QueryerContext_ColumnConverter(connDe
 			QueryerContext: QueryerContext,
 			connDetails:    connDetails,
 			sensor:         sensor,
-		}, ColumnConverter: ColumnConverter,
+		}, cc: ColumnConverter,
 	}
 }
 func get_conn_ExecerContext_Queryer_QueryerContext_NamedValueChecker_ColumnConverter(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
@@ -1659,7 +1916,7 @@ func get_conn_ExecerContext_Queryer_QueryerContext_NamedValueChecker_ColumnConve
 			connDetails:    connDetails,
 			sensor:         sensor,
 		}, NamedValueChecker: NamedValueChecker,
-		ColumnConverter: ColumnConverter,
+		cc: ColumnConverter,
 	}
 }
 func get_conn_Execer_ExecerContext_Queryer_QueryerContext_NamedValueChecker(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
@@ -1706,7 +1963,7 @@ func get_conn_Execer_Queryer_QueryerContext_NamedValueChecker_ColumnConverter(co
 			connDetails:    connDetails,
 			sensor:         sensor,
 		}, NamedValueChecker: NamedValueChecker,
-		ColumnConverter: ColumnConverter,
+		cc: ColumnConverter,
 	}
 }
 func get_conn_Execer_ExecerContext_Queryer_ConnPrepareContext_ColumnConverter(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
@@ -1731,7 +1988,7 @@ func get_conn_Execer_ExecerContext_Queryer_ConnPrepareContext_ColumnConverter(co
 			ConnPrepareContext: ConnPrepareContext,
 			connDetails:        connDetails,
 			sensor:             sensor,
-		}, ColumnConverter: ColumnConverter,
+		}, cc: ColumnConverter,
 	}
 }
 func get_conn_Execer_ExecerContext_QueryerContext_NamedValueChecker_ColumnConverter(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
@@ -1753,7 +2010,7 @@ func get_conn_Execer_ExecerContext_QueryerContext_NamedValueChecker_ColumnConver
 			connDetails:    connDetails,
 			sensor:         sensor,
 		}, NamedValueChecker: NamedValueChecker,
-		ColumnConverter: ColumnConverter,
+		cc: ColumnConverter,
 	}
 }
 func get_conn_ExecerContext_Queryer_QueryerContext_ConnPrepareContext_ColumnConverter(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
@@ -1778,7 +2035,7 @@ func get_conn_ExecerContext_Queryer_QueryerContext_ConnPrepareContext_ColumnConv
 			ConnPrepareContext: ConnPrepareContext,
 			connDetails:        connDetails,
 			sensor:             sensor,
-		}, ColumnConverter: ColumnConverter,
+		}, cc: ColumnConverter,
 	}
 }
 func get_conn_Execer_ExecerContext_QueryerContext_ConnPrepareContext_ColumnConverter(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
@@ -1803,7 +2060,7 @@ func get_conn_Execer_ExecerContext_QueryerContext_ConnPrepareContext_ColumnConve
 			ConnPrepareContext: ConnPrepareContext,
 			connDetails:        connDetails,
 			sensor:             sensor,
-		}, ColumnConverter: ColumnConverter,
+		}, cc: ColumnConverter,
 	}
 }
 func get_conn_Execer_ExecerContext_Queryer_NamedValueChecker_ColumnConverter(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
@@ -1825,7 +2082,7 @@ func get_conn_Execer_ExecerContext_Queryer_NamedValueChecker_ColumnConverter(con
 			connDetails: connDetails,
 			sensor:      sensor,
 		}, NamedValueChecker: NamedValueChecker,
-		ColumnConverter: ColumnConverter,
+		cc: ColumnConverter,
 	}
 }
 func get_conn_Execer_Queryer_NamedValueChecker_ColumnConverter(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
@@ -1843,7 +2100,7 @@ func get_conn_Execer_Queryer_NamedValueChecker_ColumnConverter(connDetails dbCon
 			connDetails: connDetails,
 			sensor:      sensor,
 		}, NamedValueChecker: NamedValueChecker,
-		ColumnConverter: ColumnConverter,
+		cc: ColumnConverter,
 	}
 }
 func get_conn_Execer_ExecerContext_Queryer_ConnPrepareContext(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
@@ -1885,7 +2142,7 @@ func get_conn_Execer_QueryerContext_NamedValueChecker_ColumnConverter(connDetail
 			connDetails:    connDetails,
 			sensor:         sensor,
 		}, NamedValueChecker: NamedValueChecker,
-		ColumnConverter: ColumnConverter,
+		cc: ColumnConverter,
 	}
 }
 func get_conn_Execer_Queryer_QueryerContext_ConnPrepareContext(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
@@ -1927,7 +2184,7 @@ func get_conn_ExecerContext_Queryer_NamedValueChecker_ColumnConverter(connDetail
 			connDetails: connDetails,
 			sensor:      sensor,
 		}, NamedValueChecker: NamedValueChecker,
-		ColumnConverter: ColumnConverter,
+		cc: ColumnConverter,
 	}
 }
 func get_conn_ExecerContext_QueryerContext_NamedValueChecker_ColumnConverter(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
@@ -1945,7 +2202,7 @@ func get_conn_ExecerContext_QueryerContext_NamedValueChecker_ColumnConverter(con
 			connDetails:    connDetails,
 			sensor:         sensor,
 		}, NamedValueChecker: NamedValueChecker,
-		ColumnConverter: ColumnConverter,
+		cc: ColumnConverter,
 	}
 }
 func get_conn_Execer_ExecerContext_NamedValueChecker_ColumnConverter(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
@@ -1963,7 +2220,7 @@ func get_conn_Execer_ExecerContext_NamedValueChecker_ColumnConverter(connDetails
 			connDetails:   connDetails,
 			sensor:        sensor,
 		}, NamedValueChecker: NamedValueChecker,
-		ColumnConverter: ColumnConverter,
+		cc: ColumnConverter,
 	}
 }
 func get_conn_Execer_ExecerContext_QueryerContext_ConnPrepareContext(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
@@ -2008,7 +2265,7 @@ func get_conn_Queryer_QueryerContext_ConnPrepareContext_ColumnConverter(connDeta
 			ConnPrepareContext: ConnPrepareContext,
 			connDetails:        connDetails,
 			sensor:             sensor,
-		}, ColumnConverter: ColumnConverter,
+		}, cc: ColumnConverter,
 	}
 }
 func get_conn_Execer_ExecerContext_Queryer_NamedValueChecker(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
@@ -2050,7 +2307,7 @@ func get_conn_ExecerContext_QueryerContext_ConnPrepareContext_ColumnConverter(co
 			ConnPrepareContext: ConnPrepareContext,
 			connDetails:        connDetails,
 			sensor:             sensor,
-		}, ColumnConverter: ColumnConverter,
+		}, cc: ColumnConverter,
 	}
 }
 func get_conn_Execer_QueryerContext_ConnPrepareContext_ColumnConverter(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
@@ -2071,7 +2328,7 @@ func get_conn_Execer_QueryerContext_ConnPrepareContext_ColumnConverter(connDetai
 			ConnPrepareContext: ConnPrepareContext,
 			connDetails:        connDetails,
 			sensor:             sensor,
-		}, ColumnConverter: ColumnConverter,
+		}, cc: ColumnConverter,
 	}
 }
 func get_conn_Queryer_QueryerContext_NamedValueChecker_ColumnConverter(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
@@ -2089,7 +2346,7 @@ func get_conn_Queryer_QueryerContext_NamedValueChecker_ColumnConverter(connDetai
 			connDetails:    connDetails,
 			sensor:         sensor,
 		}, NamedValueChecker: NamedValueChecker,
-		ColumnConverter: ColumnConverter,
+		cc: ColumnConverter,
 	}
 }
 func get_conn_Execer_ExecerContext_QueryerContext_NamedValueChecker(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
@@ -2131,7 +2388,7 @@ func get_conn_ExecerContext_Queryer_ConnPrepareContext_ColumnConverter(connDetai
 			ConnPrepareContext: ConnPrepareContext,
 			connDetails:        connDetails,
 			sensor:             sensor,
-		}, ColumnConverter: ColumnConverter,
+		}, cc: ColumnConverter,
 	}
 }
 func get_conn_Execer_Queryer_QueryerContext_NamedValueChecker(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
@@ -2218,7 +2475,7 @@ func get_conn_Execer_Queryer_ConnPrepareContext_ColumnConverter(connDetails dbCo
 			ConnPrepareContext: ConnPrepareContext,
 			connDetails:        connDetails,
 			sensor:             sensor,
-		}, ColumnConverter: ColumnConverter,
+		}, cc: ColumnConverter,
 	}
 }
 func get_conn_Execer_ExecerContext_ConnPrepareContext_ColumnConverter(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
@@ -2239,7 +2496,7 @@ func get_conn_Execer_ExecerContext_ConnPrepareContext_ColumnConverter(connDetail
 			ConnPrepareContext: ConnPrepareContext,
 			connDetails:        connDetails,
 			sensor:             sensor,
-		}, ColumnConverter: ColumnConverter,
+		}, cc: ColumnConverter,
 	}
 }
 func get_conn_Execer_ConnPrepareContext_NamedValueChecker_ColumnConverter(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
@@ -2257,7 +2514,7 @@ func get_conn_Execer_ConnPrepareContext_NamedValueChecker_ColumnConverter(connDe
 			connDetails:        connDetails,
 			sensor:             sensor,
 		}, NamedValueChecker: NamedValueChecker,
-		ColumnConverter: ColumnConverter,
+		cc: ColumnConverter,
 	}
 }
 func get_conn_Execer_ExecerContext_ConnPrepareContext_NamedValueChecker(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
@@ -2299,7 +2556,7 @@ func get_conn_ExecerContext_Queryer_QueryerContext_ColumnConverter(connDetails d
 			QueryerContext: QueryerContext,
 			connDetails:    connDetails,
 			sensor:         sensor,
-		}, ColumnConverter: ColumnConverter,
+		}, cc: ColumnConverter,
 	}
 }
 func get_conn_Execer_Queryer_ConnPrepareContext_NamedValueChecker(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
@@ -2359,7 +2616,7 @@ func get_conn_ExecerContext_ConnPrepareContext_NamedValueChecker_ColumnConverter
 			connDetails:        connDetails,
 			sensor:             sensor,
 		}, NamedValueChecker: NamedValueChecker,
-		ColumnConverter: ColumnConverter,
+		cc: ColumnConverter,
 	}
 }
 func get_conn_Execer_Queryer_QueryerContext_ColumnConverter(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
@@ -2380,7 +2637,7 @@ func get_conn_Execer_Queryer_QueryerContext_ColumnConverter(connDetails dbConnDe
 			QueryerContext: QueryerContext,
 			connDetails:    connDetails,
 			sensor:         sensor,
-		}, ColumnConverter: ColumnConverter,
+		}, cc: ColumnConverter,
 	}
 }
 func get_conn_Execer_QueryerContext_ConnPrepareContext_NamedValueChecker(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
@@ -2440,7 +2697,7 @@ func get_conn_Queryer_ConnPrepareContext_NamedValueChecker_ColumnConverter(connD
 			connDetails:        connDetails,
 			sensor:             sensor,
 		}, NamedValueChecker: NamedValueChecker,
-		ColumnConverter: ColumnConverter,
+		cc: ColumnConverter,
 	}
 }
 func get_conn_Queryer_QueryerContext_ConnPrepareContext_NamedValueChecker(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
@@ -2503,7 +2760,7 @@ func get_conn_QueryerContext_ConnPrepareContext_NamedValueChecker_ColumnConverte
 			connDetails:        connDetails,
 			sensor:             sensor,
 		}, NamedValueChecker: NamedValueChecker,
-		ColumnConverter: ColumnConverter,
+		cc: ColumnConverter,
 	}
 }
 func get_conn_Execer_ExecerContext_QueryerContext_ColumnConverter(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
@@ -2524,7 +2781,7 @@ func get_conn_Execer_ExecerContext_QueryerContext_ColumnConverter(connDetails db
 			QueryerContext: QueryerContext,
 			connDetails:    connDetails,
 			sensor:         sensor,
-		}, ColumnConverter: ColumnConverter,
+		}, cc: ColumnConverter,
 	}
 }
 func get_conn_Execer_ExecerContext_Queryer_ColumnConverter(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
@@ -2545,7 +2802,7 @@ func get_conn_Execer_ExecerContext_Queryer_ColumnConverter(connDetails dbConnDet
 			Queryer:     Queryer,
 			connDetails: connDetails,
 			sensor:      sensor,
-		}, ColumnConverter: ColumnConverter,
+		}, cc: ColumnConverter,
 	}
 }
 func get_conn_Execer_QueryerContext_ColumnConverter(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
@@ -2562,7 +2819,7 @@ func get_conn_Execer_QueryerContext_ColumnConverter(connDetails dbConnDetails, c
 			QueryerContext: QueryerContext,
 			connDetails:    connDetails,
 			sensor:         sensor,
-		}, ColumnConverter: ColumnConverter,
+		}, cc: ColumnConverter,
 	}
 }
 func get_conn_Execer_ExecerContext_Queryer(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
@@ -2639,7 +2896,7 @@ func get_conn_ExecerContext_Queryer_ColumnConverter(connDetails dbConnDetails, c
 			Queryer:     Queryer,
 			connDetails: connDetails,
 			sensor:      sensor,
-		}, ColumnConverter: ColumnConverter,
+		}, cc: ColumnConverter,
 	}
 }
 func get_conn_Execer_Queryer_ColumnConverter(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
@@ -2656,7 +2913,7 @@ func get_conn_Execer_Queryer_ColumnConverter(connDetails dbConnDetails, conn dri
 			Queryer:     Queryer,
 			connDetails: connDetails,
 			sensor:      sensor,
-		}, ColumnConverter: ColumnConverter,
+		}, cc: ColumnConverter,
 	}
 }
 func get_conn_ExecerContext_Queryer_QueryerContext(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
@@ -2733,7 +2990,7 @@ func get_conn_ExecerContext_QueryerContext_ColumnConverter(connDetails dbConnDet
 			QueryerContext: QueryerContext,
 			connDetails:    connDetails,
 			sensor:         sensor,
-		}, ColumnConverter: ColumnConverter,
+		}, cc: ColumnConverter,
 	}
 }
 func get_conn_ConnPrepareContext_NamedValueChecker_ColumnConverter(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
@@ -2747,7 +3004,7 @@ func get_conn_ConnPrepareContext_NamedValueChecker_ColumnConverter(connDetails d
 			connDetails:        connDetails,
 			sensor:             sensor,
 		}, NamedValueChecker: NamedValueChecker,
-		ColumnConverter: ColumnConverter,
+		cc: ColumnConverter,
 	}
 }
 func get_conn_Queryer_QueryerContext_ColumnConverter(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
@@ -2764,7 +3021,7 @@ func get_conn_Queryer_QueryerContext_ColumnConverter(connDetails dbConnDetails, 
 			QueryerContext: QueryerContext,
 			connDetails:    connDetails,
 			sensor:         sensor,
-		}, ColumnConverter: ColumnConverter,
+		}, cc: ColumnConverter,
 	}
 }
 func get_conn_QueryerContext_ConnPrepareContext_NamedValueChecker(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
@@ -2852,7 +3109,7 @@ func get_conn_Execer_ConnPrepareContext_ColumnConverter(connDetails dbConnDetail
 			ConnPrepareContext: ConnPrepareContext,
 			connDetails:        connDetails,
 			sensor:             sensor,
-		}, ColumnConverter: ColumnConverter,
+		}, cc: ColumnConverter,
 	}
 }
 func get_conn_ExecerContext_ConnPrepareContext_ColumnConverter(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
@@ -2869,7 +3126,7 @@ func get_conn_ExecerContext_ConnPrepareContext_ColumnConverter(connDetails dbCon
 			ConnPrepareContext: ConnPrepareContext,
 			connDetails:        connDetails,
 			sensor:             sensor,
-		}, ColumnConverter: ColumnConverter,
+		}, cc: ColumnConverter,
 	}
 }
 func get_conn_Execer_ConnPrepareContext_NamedValueChecker(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
@@ -2903,7 +3160,7 @@ func get_conn_Queryer_ConnPrepareContext_ColumnConverter(connDetails dbConnDetai
 			ConnPrepareContext: ConnPrepareContext,
 			connDetails:        connDetails,
 			sensor:             sensor,
-		}, ColumnConverter: ColumnConverter,
+		}, cc: ColumnConverter,
 	}
 }
 func get_conn_Execer_QueryerContext_ConnPrepareContext(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
@@ -2974,7 +3231,7 @@ func get_conn_QueryerContext_ConnPrepareContext_ColumnConverter(connDetails dbCo
 			ConnPrepareContext: ConnPrepareContext,
 			connDetails:        connDetails,
 			sensor:             sensor,
-		}, ColumnConverter: ColumnConverter,
+		}, cc: ColumnConverter,
 	}
 }
 func get_conn_Execer_QueryerContext_NamedValueChecker(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
@@ -3028,7 +3285,7 @@ func get_conn_Execer_ExecerContext_ColumnConverter(connDetails dbConnDetails, co
 			ExecerContext: ExecerContext,
 			connDetails:   connDetails,
 			sensor:        sensor,
-		}, ColumnConverter: ColumnConverter,
+		}, cc: ColumnConverter,
 	}
 }
 func get_conn_ExecerContext_Queryer_NamedValueChecker(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
@@ -3096,7 +3353,7 @@ func get_conn_QueryerContext_NamedValueChecker_ColumnConverter(connDetails dbCon
 			connDetails:    connDetails,
 			sensor:         sensor,
 		}, NamedValueChecker: NamedValueChecker,
-		ColumnConverter: ColumnConverter,
+		cc: ColumnConverter,
 	}
 }
 func get_conn_Execer_ExecerContext_NamedValueChecker(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
@@ -3127,7 +3384,7 @@ func get_conn_Execer_NamedValueChecker_ColumnConverter(connDetails dbConnDetails
 			connDetails: connDetails,
 			sensor:      sensor,
 		}, NamedValueChecker: NamedValueChecker,
-		ColumnConverter: ColumnConverter,
+		cc: ColumnConverter,
 	}
 }
 func get_conn_ExecerContext_NamedValueChecker_ColumnConverter(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
@@ -3141,7 +3398,7 @@ func get_conn_ExecerContext_NamedValueChecker_ColumnConverter(connDetails dbConn
 			connDetails:   connDetails,
 			sensor:        sensor,
 		}, NamedValueChecker: NamedValueChecker,
-		ColumnConverter: ColumnConverter,
+		cc: ColumnConverter,
 	}
 }
 func get_conn_Queryer_NamedValueChecker_ColumnConverter(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
@@ -3155,7 +3412,7 @@ func get_conn_Queryer_NamedValueChecker_ColumnConverter(connDetails dbConnDetail
 			connDetails: connDetails,
 			sensor:      sensor,
 		}, NamedValueChecker: NamedValueChecker,
-		ColumnConverter: ColumnConverter,
+		cc: ColumnConverter,
 	}
 }
 func get_conn_Queryer_ConnPrepareContext(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
@@ -3258,7 +3515,7 @@ func get_conn_Queryer_ColumnConverter(connDetails dbConnDetails, conn driver.Con
 			Queryer:     Queryer,
 			connDetails: connDetails,
 			sensor:      sensor,
-		}, ColumnConverter: ColumnConverter,
+		}, cc: ColumnConverter,
 	}
 }
 func get_conn_QueryerContext_NamedValueChecker(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
@@ -3313,7 +3570,7 @@ func get_conn_ConnPrepareContext_ColumnConverter(connDetails dbConnDetails, conn
 			ConnPrepareContext: ConnPrepareContext,
 			connDetails:        connDetails,
 			sensor:             sensor,
-		}, ColumnConverter: ColumnConverter,
+		}, cc: ColumnConverter,
 	}
 }
 func get_conn_ExecerContext_ColumnConverter(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
@@ -3326,7 +3583,7 @@ func get_conn_ExecerContext_ColumnConverter(connDetails dbConnDetails, conn driv
 			ExecerContext: ExecerContext,
 			connDetails:   connDetails,
 			sensor:        sensor,
-		}, ColumnConverter: ColumnConverter,
+		}, cc: ColumnConverter,
 	}
 }
 func get_conn_Execer_ColumnConverter(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
@@ -3339,7 +3596,7 @@ func get_conn_Execer_ColumnConverter(connDetails dbConnDetails, conn driver.Conn
 			Execer:      Execer,
 			connDetails: connDetails,
 			sensor:      sensor,
-		}, ColumnConverter: ColumnConverter,
+		}, cc: ColumnConverter,
 	}
 }
 func get_conn_Execer_Queryer(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
@@ -3384,7 +3641,7 @@ func get_conn_QueryerContext_ColumnConverter(connDetails dbConnDetails, conn dri
 			QueryerContext: QueryerContext,
 			connDetails:    connDetails,
 			sensor:         sensor,
-		}, ColumnConverter: ColumnConverter,
+		}, cc: ColumnConverter,
 	}
 }
 func get_conn_ExecerContext_ConnPrepareContext(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
@@ -3439,7 +3696,7 @@ func get_conn_NamedValueChecker_ColumnConverter(connDetails dbConnDetails, conn 
 			connDetails: connDetails,
 			sensor:      sensor,
 		}, NamedValueChecker: NamedValueChecker,
-		ColumnConverter: ColumnConverter,
+		cc: ColumnConverter,
 	}
 }
 func get_conn_ExecerContext_QueryerContext(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
@@ -3464,7 +3721,7 @@ func get_conn_ColumnConverter(connDetails dbConnDetails, conn driver.Conn, senso
 			Conn:        conn,
 			connDetails: connDetails,
 			sensor:      sensor,
-		}, ColumnConverter: ColumnConverter,
+		}, cc: ColumnConverter,
 	}
 }
 func get_conn_ConnPrepareContext(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
@@ -3543,7 +3800,11 @@ type w_stmt_StmtExecContext_StmtQueryContext_NamedValueChecker_ColumnConverter s
 	driver.StmtExecContext
 	driver.StmtQueryContext
 	driver.NamedValueChecker
-	driver.ColumnConverter
+	cc driver.ColumnConverter
+}
+
+func (w *w_stmt_StmtExecContext_StmtQueryContext_NamedValueChecker_ColumnConverter) ColumnConverter(idx int) driver.ValueConverter {
+	return w.cc.ColumnConverter(idx)
 }
 
 // [driver.StmtExecContext driver.StmtQueryContext driver.NamedValueChecker]
@@ -3559,7 +3820,11 @@ type w_stmt_StmtQueryContext_NamedValueChecker_ColumnConverter struct {
 	driver.Stmt
 	driver.StmtQueryContext
 	driver.NamedValueChecker
-	driver.ColumnConverter
+	cc driver.ColumnConverter
+}
+
+func (w *w_stmt_StmtQueryContext_NamedValueChecker_ColumnConverter) ColumnConverter(idx int) driver.ValueConverter {
+	return w.cc.ColumnConverter(idx)
 }
 
 // [driver.StmtExecContext driver.NamedValueChecker driver.ColumnConverter]
@@ -3567,7 +3832,11 @@ type w_stmt_StmtExecContext_NamedValueChecker_ColumnConverter struct {
 	driver.Stmt
 	driver.StmtExecContext
 	driver.NamedValueChecker
-	driver.ColumnConverter
+	cc driver.ColumnConverter
+}
+
+func (w *w_stmt_StmtExecContext_NamedValueChecker_ColumnConverter) ColumnConverter(idx int) driver.ValueConverter {
+	return w.cc.ColumnConverter(idx)
 }
 
 // [driver.StmtExecContext driver.StmtQueryContext driver.ColumnConverter]
@@ -3575,14 +3844,22 @@ type w_stmt_StmtExecContext_StmtQueryContext_ColumnConverter struct {
 	driver.Stmt
 	driver.StmtExecContext
 	driver.StmtQueryContext
-	driver.ColumnConverter
+	cc driver.ColumnConverter
+}
+
+func (w *w_stmt_StmtExecContext_StmtQueryContext_ColumnConverter) ColumnConverter(idx int) driver.ValueConverter {
+	return w.cc.ColumnConverter(idx)
 }
 
 // [driver.StmtQueryContext driver.ColumnConverter]
 type w_stmt_StmtQueryContext_ColumnConverter struct {
 	driver.Stmt
 	driver.StmtQueryContext
-	driver.ColumnConverter
+	cc driver.ColumnConverter
+}
+
+func (w *w_stmt_StmtQueryContext_ColumnConverter) ColumnConverter(idx int) driver.ValueConverter {
+	return w.cc.ColumnConverter(idx)
 }
 
 // [driver.StmtQueryContext driver.NamedValueChecker]
@@ -3596,7 +3873,11 @@ type w_stmt_StmtQueryContext_NamedValueChecker struct {
 type w_stmt_StmtExecContext_ColumnConverter struct {
 	driver.Stmt
 	driver.StmtExecContext
-	driver.ColumnConverter
+	cc driver.ColumnConverter
+}
+
+func (w *w_stmt_StmtExecContext_ColumnConverter) ColumnConverter(idx int) driver.ValueConverter {
+	return w.cc.ColumnConverter(idx)
 }
 
 // [driver.StmtExecContext driver.NamedValueChecker]
@@ -3610,7 +3891,11 @@ type w_stmt_StmtExecContext_NamedValueChecker struct {
 type w_stmt_NamedValueChecker_ColumnConverter struct {
 	driver.Stmt
 	driver.NamedValueChecker
-	driver.ColumnConverter
+	cc driver.ColumnConverter
+}
+
+func (w *w_stmt_NamedValueChecker_ColumnConverter) ColumnConverter(idx int) driver.ValueConverter {
+	return w.cc.ColumnConverter(idx)
 }
 
 // [driver.StmtExecContext driver.StmtQueryContext]
@@ -3623,7 +3908,11 @@ type w_stmt_StmtExecContext_StmtQueryContext struct {
 // [driver.ColumnConverter]
 type w_stmt_ColumnConverter struct {
 	driver.Stmt
-	driver.ColumnConverter
+	cc driver.ColumnConverter
+}
+
+func (w *w_stmt_ColumnConverter) ColumnConverter(idx int) driver.ValueConverter {
+	return w.cc.ColumnConverter(idx)
 }
 
 // [driver.StmtExecContext]
@@ -3686,7 +3975,7 @@ func get_stmt_StmtExecContext_StmtQueryContext_NamedValueChecker_ColumnConverter
 			sensor:           sensor,
 			query:            query,
 		}, NamedValueChecker: NamedValueChecker,
-		ColumnConverter: ColumnConverter,
+		cc: ColumnConverter,
 	}
 }
 func get_stmt_StmtExecContext_StmtQueryContext_NamedValueChecker(stmt driver.Stmt, query string, connDetails dbConnDetails, sensor *Sensor, StmtExecContext driver.StmtExecContext, StmtQueryContext driver.StmtQueryContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Stmt {
@@ -3722,7 +4011,7 @@ func get_stmt_StmtQueryContext_NamedValueChecker_ColumnConverter(stmt driver.Stm
 			sensor:           sensor,
 			query:            query,
 		}, NamedValueChecker: NamedValueChecker,
-		ColumnConverter: ColumnConverter,
+		cc: ColumnConverter,
 	}
 }
 func get_stmt_StmtExecContext_NamedValueChecker_ColumnConverter(stmt driver.Stmt, query string, connDetails dbConnDetails, sensor *Sensor, StmtExecContext driver.StmtExecContext, StmtQueryContext driver.StmtQueryContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Stmt {
@@ -3738,7 +4027,7 @@ func get_stmt_StmtExecContext_NamedValueChecker_ColumnConverter(stmt driver.Stmt
 			sensor:          sensor,
 			query:           query,
 		}, NamedValueChecker: NamedValueChecker,
-		ColumnConverter: ColumnConverter,
+		cc: ColumnConverter,
 	}
 }
 func get_stmt_StmtExecContext_StmtQueryContext_ColumnConverter(stmt driver.Stmt, query string, connDetails dbConnDetails, sensor *Sensor, StmtExecContext driver.StmtExecContext, StmtQueryContext driver.StmtQueryContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Stmt {
@@ -3758,7 +4047,7 @@ func get_stmt_StmtExecContext_StmtQueryContext_ColumnConverter(stmt driver.Stmt,
 			connDetails:      connDetails,
 			sensor:           sensor,
 			query:            query,
-		}, ColumnConverter: ColumnConverter,
+		}, cc: ColumnConverter,
 	}
 }
 func get_stmt_StmtQueryContext_ColumnConverter(stmt driver.Stmt, query string, connDetails dbConnDetails, sensor *Sensor, StmtExecContext driver.StmtExecContext, StmtQueryContext driver.StmtQueryContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Stmt {
@@ -3773,7 +4062,7 @@ func get_stmt_StmtQueryContext_ColumnConverter(stmt driver.Stmt, query string, c
 			connDetails:      connDetails,
 			sensor:           sensor,
 			query:            query,
-		}, ColumnConverter: ColumnConverter,
+		}, cc: ColumnConverter,
 	}
 }
 func get_stmt_StmtQueryContext_NamedValueChecker(stmt driver.Stmt, query string, connDetails dbConnDetails, sensor *Sensor, StmtExecContext driver.StmtExecContext, StmtQueryContext driver.StmtQueryContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Stmt {
@@ -3803,7 +4092,7 @@ func get_stmt_StmtExecContext_ColumnConverter(stmt driver.Stmt, query string, co
 			connDetails:     connDetails,
 			sensor:          sensor,
 			query:           query,
-		}, ColumnConverter: ColumnConverter,
+		}, cc: ColumnConverter,
 	}
 }
 func get_stmt_StmtExecContext_NamedValueChecker(stmt driver.Stmt, query string, connDetails dbConnDetails, sensor *Sensor, StmtExecContext driver.StmtExecContext, StmtQueryContext driver.StmtQueryContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Stmt {
@@ -3829,7 +4118,7 @@ func get_stmt_NamedValueChecker_ColumnConverter(stmt driver.Stmt, query string, 
 			query:       query,
 			sensor:      sensor,
 		}, NamedValueChecker: NamedValueChecker,
-		ColumnConverter: ColumnConverter,
+		cc: ColumnConverter,
 	}
 }
 func get_stmt_StmtExecContext_StmtQueryContext(stmt driver.Stmt, query string, connDetails dbConnDetails, sensor *Sensor, StmtExecContext driver.StmtExecContext, StmtQueryContext driver.StmtQueryContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Stmt {
@@ -3858,7 +4147,7 @@ func get_stmt_ColumnConverter(stmt driver.Stmt, query string, connDetails dbConn
 			connDetails: connDetails,
 			query:       query,
 			sensor:      sensor,
-		}, ColumnConverter: ColumnConverter,
+		}, cc: ColumnConverter,
 	}
 }
 func get_stmt_StmtExecContext(stmt driver.Stmt, query string, connDetails dbConnDetails, sensor *Sensor, StmtExecContext driver.StmtExecContext, StmtQueryContext driver.StmtQueryContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Stmt {
@@ -3900,151 +4189,151 @@ func get_stmt_StmtQueryContext(stmt driver.Stmt, query string, connDetails dbCon
 		}}
 }
 
-var _conn_n = map[int]func(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn{
-	0b1:       get_conn_ColumnConverter,
-	0b1111110: get_conn_Execer_ExecerContext_Queryer_QueryerContext_ConnPrepareContext_NamedValueChecker,
-	0b1111100: get_conn_Execer_ExecerContext_Queryer_QueryerContext_ConnPrepareContext,
-	0b101011:  get_conn_ExecerContext_QueryerContext_NamedValueChecker_ColumnConverter,
-	0b1110000: get_conn_Execer_ExecerContext_Queryer,
-	0b100111:  get_conn_ExecerContext_ConnPrepareContext_NamedValueChecker_ColumnConverter,
-	0b1001010: get_conn_Execer_QueryerContext_NamedValueChecker,
-	0b10010:   get_conn_Queryer_NamedValueChecker,
-	0b1111011: get_conn_Execer_ExecerContext_Queryer_QueryerContext_NamedValueChecker_ColumnConverter,
-	0b11111:   get_conn_Queryer_QueryerContext_ConnPrepareContext_NamedValueChecker_ColumnConverter,
-	0b1001101: get_conn_Execer_QueryerContext_ConnPrepareContext_ColumnConverter,
-	0b1100101: get_conn_Execer_ExecerContext_ConnPrepareContext_ColumnConverter,
-	0b1011101: get_conn_Execer_Queryer_QueryerContext_ConnPrepareContext_ColumnConverter,
-	0b101:     get_conn_ConnPrepareContext_ColumnConverter,
-	0b1101000: get_conn_Execer_ExecerContext_QueryerContext,
-	0b110111:  get_conn_ExecerContext_Queryer_ConnPrepareContext_NamedValueChecker_ColumnConverter,
-	0b1000101: get_conn_Execer_ConnPrepareContext_ColumnConverter,
-	0b1110010: get_conn_Execer_ExecerContext_Queryer_NamedValueChecker,
-	0b101110:  get_conn_ExecerContext_QueryerContext_ConnPrepareContext_NamedValueChecker,
-	0b1000010: get_conn_Execer_NamedValueChecker,
-	0b1110100: get_conn_Execer_ExecerContext_Queryer_ConnPrepareContext,
-	0b1010101: get_conn_Execer_Queryer_ConnPrepareContext_ColumnConverter,
-	0b1010110: get_conn_Execer_Queryer_ConnPrepareContext_NamedValueChecker,
-	0b110010:  get_conn_ExecerContext_Queryer_NamedValueChecker,
-	0b1100001: get_conn_Execer_ExecerContext_ColumnConverter,
-	0b1010111: get_conn_Execer_Queryer_ConnPrepareContext_NamedValueChecker_ColumnConverter,
-	0b11101:   get_conn_Queryer_QueryerContext_ConnPrepareContext_ColumnConverter,
-	0b101101:  get_conn_ExecerContext_QueryerContext_ConnPrepareContext_ColumnConverter,
-	0b1101010: get_conn_Execer_ExecerContext_QueryerContext_NamedValueChecker,
+var _conn_n = map[int]func(dbConnDetails, driver.Conn, *Sensor, driver.Execer, driver.ExecerContext, driver.Queryer, driver.QueryerContext, driver.ConnPrepareContext, driver.NamedValueChecker, driver.ColumnConverter) driver.Conn{
 	0b111110:  get_conn_ExecerContext_Queryer_QueryerContext_ConnPrepareContext_NamedValueChecker,
-	0b1011100: get_conn_Execer_Queryer_QueryerContext_ConnPrepareContext,
-	0b1001000: get_conn_Execer_QueryerContext,
-	0b11000:   get_conn_Queryer_QueryerContext,
-	0b111010:  get_conn_ExecerContext_Queryer_QueryerContext_NamedValueChecker,
-	0b1100110: get_conn_Execer_ExecerContext_ConnPrepareContext_NamedValueChecker,
-	0b1001100: get_conn_Execer_QueryerContext_ConnPrepareContext,
-	0b10100:   get_conn_Queryer_ConnPrepareContext,
-	0b1101111: get_conn_Execer_ExecerContext_QueryerContext_ConnPrepareContext_NamedValueChecker_ColumnConverter,
-	0b1001111: get_conn_Execer_QueryerContext_ConnPrepareContext_NamedValueChecker_ColumnConverter,
-	0b110011:  get_conn_ExecerContext_Queryer_NamedValueChecker_ColumnConverter,
-	0b11011:   get_conn_Queryer_QueryerContext_NamedValueChecker_ColumnConverter,
-	0b1000001: get_conn_Execer_ColumnConverter,
-	0b10011:   get_conn_Queryer_NamedValueChecker_ColumnConverter,
-	0b100010:  get_conn_ExecerContext_NamedValueChecker,
-	0b10:      get_conn_NamedValueChecker,
-	0b1101110: get_conn_Execer_ExecerContext_QueryerContext_ConnPrepareContext_NamedValueChecker,
-	0b1011001: get_conn_Execer_Queryer_QueryerContext_ColumnConverter,
-	0b11110:   get_conn_Queryer_QueryerContext_ConnPrepareContext_NamedValueChecker,
-	0b110001:  get_conn_ExecerContext_Queryer_ColumnConverter,
-	0b100110:  get_conn_ExecerContext_ConnPrepareContext_NamedValueChecker,
-	0b1000100: get_conn_Execer_ConnPrepareContext,
-	0b110:     get_conn_ConnPrepareContext_NamedValueChecker,
-	0b1001:    get_conn_QueryerContext_ColumnConverter,
-	0b1110111: get_conn_Execer_ExecerContext_Queryer_ConnPrepareContext_NamedValueChecker_ColumnConverter,
-	0b1011010: get_conn_Execer_Queryer_QueryerContext_NamedValueChecker,
-	0b111100:  get_conn_ExecerContext_Queryer_QueryerContext_ConnPrepareContext,
-	0b1010001: get_conn_Execer_Queryer_ColumnConverter,
-	0b1011011: get_conn_Execer_Queryer_QueryerContext_NamedValueChecker_ColumnConverter,
-	0b1001001: get_conn_Execer_QueryerContext_ColumnConverter,
-	0b100001:  get_conn_ExecerContext_ColumnConverter,
-	0b10000:   get_conn_Queryer,
-	0b1100111: get_conn_Execer_ExecerContext_ConnPrepareContext_NamedValueChecker_ColumnConverter,
-	0b1001110: get_conn_Execer_QueryerContext_ConnPrepareContext_NamedValueChecker,
-	0b1111:    get_conn_QueryerContext_ConnPrepareContext_NamedValueChecker_ColumnConverter,
-	0b101000:  get_conn_ExecerContext_QueryerContext,
-	0b1000:    get_conn_QueryerContext,
-	0b11001:   get_conn_Queryer_QueryerContext_ColumnConverter,
-	0b10110:   get_conn_Queryer_ConnPrepareContext_NamedValueChecker,
-	0b1000011: get_conn_Execer_NamedValueChecker_ColumnConverter,
-	0b1010000: get_conn_Execer_Queryer,
-	0b1010011: get_conn_Execer_Queryer_NamedValueChecker_ColumnConverter,
-	0b100101:  get_conn_ExecerContext_ConnPrepareContext_ColumnConverter,
-	0b1010:    get_conn_QueryerContext_NamedValueChecker,
-	0b11:      get_conn_NamedValueChecker_ColumnConverter,
-	0b101111:  get_conn_ExecerContext_QueryerContext_ConnPrepareContext_NamedValueChecker_ColumnConverter,
-	0b111011:  get_conn_ExecerContext_Queryer_QueryerContext_NamedValueChecker_ColumnConverter,
-	0b1110101: get_conn_Execer_ExecerContext_Queryer_ConnPrepareContext_ColumnConverter,
-	0b1110011: get_conn_Execer_ExecerContext_Queryer_NamedValueChecker_ColumnConverter,
-	0b100:     get_conn_ConnPrepareContext,
-	0b111111:  get_conn_ExecerContext_Queryer_QueryerContext_ConnPrepareContext_NamedValueChecker_ColumnConverter,
-	0b11010:   get_conn_Queryer_QueryerContext_NamedValueChecker,
-	0b1000000: get_conn_Execer,
-	0b110110:  get_conn_ExecerContext_Queryer_ConnPrepareContext_NamedValueChecker,
-	0b101100:  get_conn_ExecerContext_QueryerContext_ConnPrepareContext,
-	0b100000:  get_conn_ExecerContext,
-	0b111101:  get_conn_ExecerContext_Queryer_QueryerContext_ConnPrepareContext_ColumnConverter,
-	0b1101101: get_conn_Execer_ExecerContext_QueryerContext_ConnPrepareContext_ColumnConverter,
-	0b1111000: get_conn_Execer_ExecerContext_Queryer_QueryerContext,
-	0b1010010: get_conn_Execer_Queryer_NamedValueChecker,
-	0b1111111: get_conn_Execer_ExecerContext_Queryer_QueryerContext_ConnPrepareContext_NamedValueChecker_ColumnConverter,
-	0b1101100: get_conn_Execer_ExecerContext_QueryerContext_ConnPrepareContext,
-	0b10111:   get_conn_Queryer_ConnPrepareContext_NamedValueChecker_ColumnConverter,
-	0b1101:    get_conn_QueryerContext_ConnPrepareContext_ColumnConverter,
-	0b1010100: get_conn_Execer_Queryer_ConnPrepareContext,
-	0b11100:   get_conn_Queryer_QueryerContext_ConnPrepareContext,
-	0b10001:   get_conn_Queryer_ColumnConverter,
-	0b111000:  get_conn_ExecerContext_Queryer_QueryerContext,
-	0b111:     get_conn_ConnPrepareContext_NamedValueChecker_ColumnConverter,
-	0b1100000: get_conn_Execer_ExecerContext,
-	0b1011:    get_conn_QueryerContext_NamedValueChecker_ColumnConverter,
-	0b1011111: get_conn_Execer_Queryer_QueryerContext_ConnPrepareContext_NamedValueChecker_ColumnConverter,
-	0b1110110: get_conn_Execer_ExecerContext_Queryer_ConnPrepareContext_NamedValueChecker,
 	0b1111001: get_conn_Execer_ExecerContext_Queryer_QueryerContext_ColumnConverter,
-	0b111001:  get_conn_ExecerContext_Queryer_QueryerContext_ColumnConverter,
-	0b1101011: get_conn_Execer_ExecerContext_QueryerContext_NamedValueChecker_ColumnConverter,
-	0b101001:  get_conn_ExecerContext_QueryerContext_ColumnConverter,
-	0b110000:  get_conn_ExecerContext_Queryer,
-	0b1100:    get_conn_QueryerContext_ConnPrepareContext,
-	0b1011110: get_conn_Execer_Queryer_QueryerContext_ConnPrepareContext_NamedValueChecker,
-	0b100011:  get_conn_ExecerContext_NamedValueChecker_ColumnConverter,
-	0b100100:  get_conn_ExecerContext_ConnPrepareContext,
-	0b1110001: get_conn_Execer_ExecerContext_Queryer_ColumnConverter,
-	0b1100100: get_conn_Execer_ExecerContext_ConnPrepareContext,
-	0b1000110: get_conn_Execer_ConnPrepareContext_NamedValueChecker,
-	0b1100010: get_conn_Execer_ExecerContext_NamedValueChecker,
-	0b1111101: get_conn_Execer_ExecerContext_Queryer_QueryerContext_ConnPrepareContext_ColumnConverter,
-	0b1111010: get_conn_Execer_ExecerContext_Queryer_QueryerContext_NamedValueChecker,
-	0b110101:  get_conn_ExecerContext_Queryer_ConnPrepareContext_ColumnConverter,
-	0b1000111: get_conn_Execer_ConnPrepareContext_NamedValueChecker_ColumnConverter,
-	0b1110:    get_conn_QueryerContext_ConnPrepareContext_NamedValueChecker,
-	0b10101:   get_conn_Queryer_ConnPrepareContext_ColumnConverter,
-	0b101010:  get_conn_ExecerContext_QueryerContext_NamedValueChecker,
-	0b1001011: get_conn_Execer_QueryerContext_NamedValueChecker_ColumnConverter,
-	0b1100011: get_conn_Execer_ExecerContext_NamedValueChecker_ColumnConverter,
-	0b1101001: get_conn_Execer_ExecerContext_QueryerContext_ColumnConverter,
+	0b1011011: get_conn_Execer_Queryer_QueryerContext_NamedValueChecker_ColumnConverter,
+	0b1010011: get_conn_Execer_Queryer_NamedValueChecker_ColumnConverter,
+	0b1110010: get_conn_Execer_ExecerContext_Queryer_NamedValueChecker,
+	0b1011001: get_conn_Execer_Queryer_QueryerContext_ColumnConverter,
 	0b1011000: get_conn_Execer_Queryer_QueryerContext,
+	0b1001111: get_conn_Execer_QueryerContext_ConnPrepareContext_NamedValueChecker_ColumnConverter,
+	0b100:     get_conn_ConnPrepareContext,
+	0b100010:  get_conn_ExecerContext_NamedValueChecker,
+	0b1011:    get_conn_QueryerContext_NamedValueChecker_ColumnConverter,
+	0b1000111: get_conn_Execer_ConnPrepareContext_NamedValueChecker_ColumnConverter,
+	0b1100110: get_conn_Execer_ExecerContext_ConnPrepareContext_NamedValueChecker,
+	0b1010010: get_conn_Execer_Queryer_NamedValueChecker,
+	0b1001000: get_conn_Execer_QueryerContext,
+	0b111011:  get_conn_ExecerContext_Queryer_QueryerContext_NamedValueChecker_ColumnConverter,
+	0b101:     get_conn_ConnPrepareContext_ColumnConverter,
+	0b1010000: get_conn_Execer_Queryer,
+	0b100100:  get_conn_ExecerContext_ConnPrepareContext,
+	0b100011:  get_conn_ExecerContext_NamedValueChecker_ColumnConverter,
+	0b1010001: get_conn_Execer_Queryer_ColumnConverter,
+	0b1110:    get_conn_QueryerContext_ConnPrepareContext_NamedValueChecker,
+	0b101100:  get_conn_ExecerContext_QueryerContext_ConnPrepareContext,
+	0b1100010: get_conn_Execer_ExecerContext_NamedValueChecker,
+	0b1111010: get_conn_Execer_ExecerContext_Queryer_QueryerContext_NamedValueChecker,
+	0b1001001: get_conn_Execer_QueryerContext_ColumnConverter,
+	0b1001100: get_conn_Execer_QueryerContext_ConnPrepareContext,
+	0b110000:  get_conn_ExecerContext_Queryer,
+	0b1110100: get_conn_Execer_ExecerContext_Queryer_ConnPrepareContext,
+	0b11000:   get_conn_Queryer_QueryerContext,
+	0b11101:   get_conn_Queryer_QueryerContext_ConnPrepareContext_ColumnConverter,
+	0b1110111: get_conn_Execer_ExecerContext_Queryer_ConnPrepareContext_NamedValueChecker_ColumnConverter,
+	0b1101000: get_conn_Execer_ExecerContext_QueryerContext,
+	0b1000001: get_conn_Execer_ColumnConverter,
+	0b1101111: get_conn_Execer_ExecerContext_QueryerContext_ConnPrepareContext_NamedValueChecker_ColumnConverter,
+	0b1111101: get_conn_Execer_ExecerContext_Queryer_QueryerContext_ConnPrepareContext_ColumnConverter,
+	0b101001:  get_conn_ExecerContext_QueryerContext_ColumnConverter,
+	0b110010:  get_conn_ExecerContext_Queryer_NamedValueChecker,
+	0b1001:    get_conn_QueryerContext_ColumnConverter,
+	0b1000100: get_conn_Execer_ConnPrepareContext,
+	0b10000:   get_conn_Queryer,
+	0b1111111: get_conn_Execer_ExecerContext_Queryer_QueryerContext_ConnPrepareContext_NamedValueChecker_ColumnConverter,
 	0b110100:  get_conn_ExecerContext_Queryer_ConnPrepareContext,
+	0b1000010: get_conn_Execer_NamedValueChecker,
+	0b100110:  get_conn_ExecerContext_ConnPrepareContext_NamedValueChecker,
+	0b1001011: get_conn_Execer_QueryerContext_NamedValueChecker_ColumnConverter,
+	0b111010:  get_conn_ExecerContext_Queryer_QueryerContext_NamedValueChecker,
+	0b1100:    get_conn_QueryerContext_ConnPrepareContext,
+	0b1110110: get_conn_Execer_ExecerContext_Queryer_ConnPrepareContext_NamedValueChecker,
+	0b100000:  get_conn_ExecerContext,
+	0b111001:  get_conn_ExecerContext_Queryer_QueryerContext_ColumnConverter,
+	0b1111011: get_conn_Execer_ExecerContext_Queryer_QueryerContext_NamedValueChecker_ColumnConverter,
+	0b1000011: get_conn_Execer_NamedValueChecker_ColumnConverter,
+	0b1100000: get_conn_Execer_ExecerContext,
+	0b1000000: get_conn_Execer,
+	0b1111000: get_conn_Execer_ExecerContext_Queryer_QueryerContext,
+	0b1000101: get_conn_Execer_ConnPrepareContext_ColumnConverter,
+	0b110:     get_conn_ConnPrepareContext_NamedValueChecker,
+	0b1011100: get_conn_Execer_Queryer_QueryerContext_ConnPrepareContext,
+	0b1010111: get_conn_Execer_Queryer_ConnPrepareContext_NamedValueChecker_ColumnConverter,
+	0b110101:  get_conn_ExecerContext_Queryer_ConnPrepareContext_ColumnConverter,
+	0b1010110: get_conn_Execer_Queryer_ConnPrepareContext_NamedValueChecker,
+	0b111:     get_conn_ConnPrepareContext_NamedValueChecker_ColumnConverter,
+	0b11010:   get_conn_Queryer_QueryerContext_NamedValueChecker,
+	0b11100:   get_conn_Queryer_QueryerContext_ConnPrepareContext,
+	0b1010:    get_conn_QueryerContext_NamedValueChecker,
+	0b110111:  get_conn_ExecerContext_Queryer_ConnPrepareContext_NamedValueChecker_ColumnConverter,
+	0b1000:    get_conn_QueryerContext,
+	0b1101001: get_conn_Execer_ExecerContext_QueryerContext_ColumnConverter,
+	0b111000:  get_conn_ExecerContext_Queryer_QueryerContext,
+	0b101011:  get_conn_ExecerContext_QueryerContext_NamedValueChecker_ColumnConverter,
+	0b1111:    get_conn_QueryerContext_ConnPrepareContext_NamedValueChecker_ColumnConverter,
+	0b1100100: get_conn_Execer_ExecerContext_ConnPrepareContext,
+	0b11111:   get_conn_Queryer_QueryerContext_ConnPrepareContext_NamedValueChecker_ColumnConverter,
+	0b111101:  get_conn_ExecerContext_Queryer_QueryerContext_ConnPrepareContext_ColumnConverter,
+	0b1110011: get_conn_Execer_ExecerContext_Queryer_NamedValueChecker_ColumnConverter,
+	0b110011:  get_conn_ExecerContext_Queryer_NamedValueChecker_ColumnConverter,
+	0b100111:  get_conn_ExecerContext_ConnPrepareContext_NamedValueChecker_ColumnConverter,
+	0b1011110: get_conn_Execer_Queryer_QueryerContext_ConnPrepareContext_NamedValueChecker,
+	0b10010:   get_conn_Queryer_NamedValueChecker,
+	0b1001110: get_conn_Execer_QueryerContext_ConnPrepareContext_NamedValueChecker,
+	0b1101010: get_conn_Execer_ExecerContext_QueryerContext_NamedValueChecker,
+	0b11001:   get_conn_Queryer_QueryerContext_ColumnConverter,
+	0b1100001: get_conn_Execer_ExecerContext_ColumnConverter,
+	0b101000:  get_conn_ExecerContext_QueryerContext,
+	0b10:      get_conn_NamedValueChecker,
+	0b10111:   get_conn_Queryer_ConnPrepareContext_NamedValueChecker_ColumnConverter,
+	0b110110:  get_conn_ExecerContext_Queryer_ConnPrepareContext_NamedValueChecker,
+	0b1000110: get_conn_Execer_ConnPrepareContext_NamedValueChecker,
+	0b10100:   get_conn_Queryer_ConnPrepareContext,
+	0b1100101: get_conn_Execer_ExecerContext_ConnPrepareContext_ColumnConverter,
+	0b1110000: get_conn_Execer_ExecerContext_Queryer,
+	0b10101:   get_conn_Queryer_ConnPrepareContext_ColumnConverter,
+	0b1101:    get_conn_QueryerContext_ConnPrepareContext_ColumnConverter,
+	0b111100:  get_conn_ExecerContext_Queryer_QueryerContext_ConnPrepareContext,
+	0b1001101: get_conn_Execer_QueryerContext_ConnPrepareContext_ColumnConverter,
+	0b101110:  get_conn_ExecerContext_QueryerContext_ConnPrepareContext_NamedValueChecker,
+	0b100001:  get_conn_ExecerContext_ColumnConverter,
+	0b111111:  get_conn_ExecerContext_Queryer_QueryerContext_ConnPrepareContext_NamedValueChecker_ColumnConverter,
+	0b1:       get_conn_ColumnConverter,
+	0b1110001: get_conn_Execer_ExecerContext_Queryer_ColumnConverter,
+	0b1011111: get_conn_Execer_Queryer_QueryerContext_ConnPrepareContext_NamedValueChecker_ColumnConverter,
+	0b1101101: get_conn_Execer_ExecerContext_QueryerContext_ConnPrepareContext_ColumnConverter,
+	0b1010101: get_conn_Execer_Queryer_ConnPrepareContext_ColumnConverter,
+	0b100101:  get_conn_ExecerContext_ConnPrepareContext_ColumnConverter,
+	0b1111110: get_conn_Execer_ExecerContext_Queryer_QueryerContext_ConnPrepareContext_NamedValueChecker,
+	0b1100111: get_conn_Execer_ExecerContext_ConnPrepareContext_NamedValueChecker_ColumnConverter,
+	0b1101011: get_conn_Execer_ExecerContext_QueryerContext_NamedValueChecker_ColumnConverter,
+	0b110001:  get_conn_ExecerContext_Queryer_ColumnConverter,
+	0b1001010: get_conn_Execer_QueryerContext_NamedValueChecker,
+	0b101111:  get_conn_ExecerContext_QueryerContext_ConnPrepareContext_NamedValueChecker_ColumnConverter,
+	0b10110:   get_conn_Queryer_ConnPrepareContext_NamedValueChecker,
+	0b10001:   get_conn_Queryer_ColumnConverter,
+	0b1101110: get_conn_Execer_ExecerContext_QueryerContext_ConnPrepareContext_NamedValueChecker,
+	0b1110101: get_conn_Execer_ExecerContext_Queryer_ConnPrepareContext_ColumnConverter,
+	0b101101:  get_conn_ExecerContext_QueryerContext_ConnPrepareContext_ColumnConverter,
+	0b1011101: get_conn_Execer_Queryer_QueryerContext_ConnPrepareContext_ColumnConverter,
+	0b1010100: get_conn_Execer_Queryer_ConnPrepareContext,
+	0b1100011: get_conn_Execer_ExecerContext_NamedValueChecker_ColumnConverter,
+	0b1101100: get_conn_Execer_ExecerContext_QueryerContext_ConnPrepareContext,
+	0b11011:   get_conn_Queryer_QueryerContext_NamedValueChecker_ColumnConverter,
+	0b1011010: get_conn_Execer_Queryer_QueryerContext_NamedValueChecker,
+	0b11110:   get_conn_Queryer_QueryerContext_ConnPrepareContext_NamedValueChecker,
+	0b101010:  get_conn_ExecerContext_QueryerContext_NamedValueChecker,
+	0b10011:   get_conn_Queryer_NamedValueChecker_ColumnConverter,
+	0b1111100: get_conn_Execer_ExecerContext_Queryer_QueryerContext_ConnPrepareContext,
+	0b11:      get_conn_NamedValueChecker_ColumnConverter,
 }
 var _stmt_n = map[int]func(driver.Stmt, string, dbConnDetails, *Sensor, driver.StmtExecContext, driver.StmtQueryContext, driver.NamedValueChecker, driver.ColumnConverter) driver.Stmt{
-	0b1100: get_stmt_StmtExecContext_StmtQueryContext,
-	0b10:   get_stmt_NamedValueChecker,
-	0b100:  get_stmt_StmtQueryContext,
-	0b1101: get_stmt_StmtExecContext_StmtQueryContext_ColumnConverter,
-	0b1010: get_stmt_StmtExecContext_NamedValueChecker,
 	0b11:   get_stmt_NamedValueChecker_ColumnConverter,
-	0b111:  get_stmt_StmtQueryContext_NamedValueChecker_ColumnConverter,
+	0b1100: get_stmt_StmtExecContext_StmtQueryContext,
+	0b1110: get_stmt_StmtExecContext_StmtQueryContext_NamedValueChecker,
+	0b1101: get_stmt_StmtExecContext_StmtQueryContext_ColumnConverter,
 	0b101:  get_stmt_StmtQueryContext_ColumnConverter,
-	0b110:  get_stmt_StmtQueryContext_NamedValueChecker,
-	0b1001: get_stmt_StmtExecContext_ColumnConverter,
+	0b1010: get_stmt_StmtExecContext_NamedValueChecker,
 	0b1:    get_stmt_ColumnConverter,
 	0b1000: get_stmt_StmtExecContext,
-	0b1111: get_stmt_StmtExecContext_StmtQueryContext_NamedValueChecker_ColumnConverter,
-	0b1110: get_stmt_StmtExecContext_StmtQueryContext_NamedValueChecker,
+	0b111:  get_stmt_StmtQueryContext_NamedValueChecker_ColumnConverter,
 	0b1011: get_stmt_StmtExecContext_NamedValueChecker_ColumnConverter,
+	0b110:  get_stmt_StmtQueryContext_NamedValueChecker,
+	0b1001: get_stmt_StmtExecContext_ColumnConverter,
+	0b10:   get_stmt_NamedValueChecker,
+	0b1111: get_stmt_StmtExecContext_StmtQueryContext_NamedValueChecker_ColumnConverter,
+	0b100:  get_stmt_StmtQueryContext,
 }
 
 func convertBooleansToInt(args ...bool) int {

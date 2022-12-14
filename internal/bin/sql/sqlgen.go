@@ -139,15 +139,28 @@ func generateAndPrintConstructors(basicTypeForWrapper string, prefix string, fil
 }
 
 func genType(prefix string, filteredSubset []string, basicTypeForWrapper string) string {
+	isColumnConverter := false
+
 	name := strings.ReplaceAll(strings.Join(filteredSubset, "_"), "driver.", "")
 	fmt.Println("type " + prefix + name + " struct {")
 	fmt.Println(basicTypeForWrapper)
 	for _, v := range filteredSubset {
-		fmt.Println(v)
-
+		if v == "driver.ColumnConverter" {
+			isColumnConverter = true
+			fmt.Println("cc ", v)
+		} else {
+			fmt.Println(v)
+		}
 	}
 	fmt.Println("}")
 
+	if isColumnConverter {
+		fmt.Printf(`
+func (w *%s) ColumnConverter(idx int) driver.ValueConverter {
+	return w.cc.ColumnConverter(idx)
+}
+`, prefix+name)
+	}
 	return prefix + name
 }
 
@@ -262,7 +275,12 @@ func generateConstructors(prefix string, basicTypeForWrapper string, name string
 		n := strings.ReplaceAll(tt, "driver.", "")
 
 		// we do not use wrappers for ColumnConverter and NamedValueChecker
-		if n != "ColumnConverter" && n != "NamedValueChecker" {
+		switch n {
+		case "ColumnConverter":
+			res += fmt.Sprintf("cc: %s,\n", n)
+		case "NamedValueChecker":
+			res += fmt.Sprintf("%s: %s,\n", n, n)
+		default:
 			// add wrapper for a specific type
 			res += fmt.Sprintf("%s: &w%s{\n", n, n)
 			res += fmt.Sprintf("%s: %s,\n", n, n)
@@ -272,9 +290,6 @@ func generateConstructors(prefix string, basicTypeForWrapper string, name string
 				res += fmt.Sprintf("query: query,\n")
 			}
 			res += fmt.Sprintf("},")
-		} else {
-			// add types that we do not wrap (ColumnConverter and NamedValueChecker) currently
-			res += fmt.Sprintf("%s: %s,\n", n, n)
 		}
 	}
 
