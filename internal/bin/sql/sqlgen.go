@@ -60,13 +60,20 @@ func main() {
 	fmt.Println("package instana")
 	fmt.Println("import \"database/sql/driver\"")
 
+	arrayConnCopy := make([]string, len(arrayConn))
+	arrayStmtCopy := make([]string, len(arrayStmt))
+
+	copy(arrayStmtCopy, arrayStmt)
+	copy(arrayConnCopy, arrayConn)
+
 	gen("driver.Conn", "w_conn_", arrayConn)
 	gen(driverStmt, "w_stmt_", arrayStmt)
 
-	printFunctionMaps()
+	printFunctionMaps(arrayConnCopy, arrayStmtCopy)
 	printUtil()
 }
 
+// todo: use copy instead of modify input array
 func gen(basicTypeForWrapper, prefix string, listOfTheOriginalTypes []string) {
 	// generate all subsets of the interfaces
 	conn := combinations.All(listOfTheOriginalTypes)
@@ -312,14 +319,17 @@ func booleansToBinaryRepresentation(args ...bool) string {
 	return fmt.Sprintf("0b%b", res)
 }
 
-func printFunctionMaps() {
-	fmt.Println("var _conn_n = map[int]func(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {")
+func printFunctionMaps(connTypes []string, stmtTypes []string) {
+	ct := removeOnceFromArr("driver.Conn", connTypes)
+	st := removeOnceFromArr("driver.Stmt", stmtTypes)
+
+	fmt.Println("var _conn_n = map[int]func( dbConnDetails, driver.Conn, *Sensor," + strings.Join(ct, ",") + ") driver.Conn {")
 	for k, v := range _conn_m {
 		fmt.Println(k, ":", v, ",")
 	}
 	fmt.Println("}")
 
-	fmt.Println("var _stmt_n = map[int]func( driver.Stmt,  string,  dbConnDetails,  *Sensor,  driver.StmtExecContext,  driver.StmtQueryContext,  driver.NamedValueChecker,  driver.ColumnConverter) driver.Stmt {")
+	fmt.Println("var _stmt_n = map[int]func( driver.Stmt,  string,  dbConnDetails,  *Sensor,  " + strings.Join(st, ",") + ") driver.Stmt {")
 	for k, v := range _stmt_m {
 		fmt.Println(k, ":", v, ",")
 	}
