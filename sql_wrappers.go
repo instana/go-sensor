@@ -1,24 +1,7 @@
 // (c) Copyright IBM Corp. 2022
-
 package instana
 
 import "database/sql/driver"
-
-// [driver.Execer driver.ExecerContext driver.Queryer driver.QueryerContext driver.ConnPrepareContext driver.NamedValueChecker driver.ColumnConverter]
-type w_conn_Execer_ExecerContext_Queryer_QueryerContext_ConnPrepareContext_NamedValueChecker_ColumnConverter struct {
-	driver.Conn
-	driver.Execer
-	driver.ExecerContext
-	driver.Queryer
-	driver.QueryerContext
-	driver.ConnPrepareContext
-	driver.NamedValueChecker
-	cc driver.ColumnConverter
-}
-
-func (w *w_conn_Execer_ExecerContext_Queryer_QueryerContext_ConnPrepareContext_NamedValueChecker_ColumnConverter) ColumnConverter(idx int) driver.ValueConverter {
-	return w.cc.ColumnConverter(idx)
-}
 
 // [driver.Execer driver.ExecerContext driver.Queryer driver.QueryerContext driver.ConnPrepareContext driver.NamedValueChecker]
 type w_conn_Execer_ExecerContext_Queryer_QueryerContext_ConnPrepareContext_NamedValueChecker struct {
@@ -31,110 +14,6 @@ type w_conn_Execer_ExecerContext_Queryer_QueryerContext_ConnPrepareContext_Named
 	driver.NamedValueChecker
 }
 
-// [driver.ExecerContext driver.Queryer driver.QueryerContext driver.ConnPrepareContext driver.NamedValueChecker driver.ColumnConverter]
-type w_conn_ExecerContext_Queryer_QueryerContext_ConnPrepareContext_NamedValueChecker_ColumnConverter struct {
-	driver.Conn
-	driver.ExecerContext
-	driver.Queryer
-	driver.QueryerContext
-	driver.ConnPrepareContext
-	driver.NamedValueChecker
-	cc driver.ColumnConverter
-}
-
-func (w *w_conn_ExecerContext_Queryer_QueryerContext_ConnPrepareContext_NamedValueChecker_ColumnConverter) ColumnConverter(idx int) driver.ValueConverter {
-	return w.cc.ColumnConverter(idx)
-}
-
-// [driver.Execer driver.Queryer driver.QueryerContext driver.ConnPrepareContext driver.NamedValueChecker driver.ColumnConverter]
-type w_conn_Execer_Queryer_QueryerContext_ConnPrepareContext_NamedValueChecker_ColumnConverter struct {
-	driver.Conn
-	driver.Execer
-	driver.Queryer
-	driver.QueryerContext
-	driver.ConnPrepareContext
-	driver.NamedValueChecker
-	cc driver.ColumnConverter
-}
-
-func (w *w_conn_Execer_Queryer_QueryerContext_ConnPrepareContext_NamedValueChecker_ColumnConverter) ColumnConverter(idx int) driver.ValueConverter {
-	return w.cc.ColumnConverter(idx)
-}
-
-// [driver.Execer driver.ExecerContext driver.QueryerContext driver.ConnPrepareContext driver.NamedValueChecker driver.ColumnConverter]
-type w_conn_Execer_ExecerContext_QueryerContext_ConnPrepareContext_NamedValueChecker_ColumnConverter struct {
-	driver.Conn
-	driver.Execer
-	driver.ExecerContext
-	driver.QueryerContext
-	driver.ConnPrepareContext
-	driver.NamedValueChecker
-	cc driver.ColumnConverter
-}
-
-func (w *w_conn_Execer_ExecerContext_QueryerContext_ConnPrepareContext_NamedValueChecker_ColumnConverter) ColumnConverter(idx int) driver.ValueConverter {
-	return w.cc.ColumnConverter(idx)
-}
-
-// [driver.Execer driver.ExecerContext driver.Queryer driver.ConnPrepareContext driver.NamedValueChecker driver.ColumnConverter]
-type w_conn_Execer_ExecerContext_Queryer_ConnPrepareContext_NamedValueChecker_ColumnConverter struct {
-	driver.Conn
-	driver.Execer
-	driver.ExecerContext
-	driver.Queryer
-	driver.ConnPrepareContext
-	driver.NamedValueChecker
-	cc driver.ColumnConverter
-}
-
-func (w *w_conn_Execer_ExecerContext_Queryer_ConnPrepareContext_NamedValueChecker_ColumnConverter) ColumnConverter(idx int) driver.ValueConverter {
-	return w.cc.ColumnConverter(idx)
-}
-
-// [driver.Execer driver.ExecerContext driver.Queryer driver.QueryerContext driver.NamedValueChecker driver.ColumnConverter]
-type w_conn_Execer_ExecerContext_Queryer_QueryerContext_NamedValueChecker_ColumnConverter struct {
-	driver.Conn
-	driver.Execer
-	driver.ExecerContext
-	driver.Queryer
-	driver.QueryerContext
-	driver.NamedValueChecker
-	cc driver.ColumnConverter
-}
-
-func (w *w_conn_Execer_ExecerContext_Queryer_QueryerContext_NamedValueChecker_ColumnConverter) ColumnConverter(idx int) driver.ValueConverter {
-	return w.cc.ColumnConverter(idx)
-}
-
-// [driver.Execer driver.ExecerContext driver.Queryer driver.QueryerContext driver.ConnPrepareContext driver.ColumnConverter]
-type w_conn_Execer_ExecerContext_Queryer_QueryerContext_ConnPrepareContext_ColumnConverter struct {
-	driver.Conn
-	driver.Execer
-	driver.ExecerContext
-	driver.Queryer
-	driver.QueryerContext
-	driver.ConnPrepareContext
-	cc driver.ColumnConverter
-}
-
-func (w *w_conn_Execer_ExecerContext_Queryer_QueryerContext_ConnPrepareContext_ColumnConverter) ColumnConverter(idx int) driver.ValueConverter {
-	return w.cc.ColumnConverter(idx)
-}
-
-// [driver.Execer driver.Queryer driver.QueryerContext driver.ConnPrepareContext driver.ColumnConverter]
-type w_conn_Execer_Queryer_QueryerContext_ConnPrepareContext_ColumnConverter struct {
-	driver.Conn
-	driver.Execer
-	driver.Queryer
-	driver.QueryerContext
-	driver.ConnPrepareContext
-	cc driver.ColumnConverter
-}
-
-func (w *w_conn_Execer_Queryer_QueryerContext_ConnPrepareContext_ColumnConverter) ColumnConverter(idx int) driver.ValueConverter {
-	return w.cc.ColumnConverter(idx)
-}
-
 // [driver.Execer driver.ExecerContext driver.Queryer driver.QueryerContext driver.ConnPrepareContext]
 type w_conn_Execer_ExecerContext_Queryer_QueryerContext_ConnPrepareContext struct {
 	driver.Conn
@@ -143,48 +22,6 @@ type w_conn_Execer_ExecerContext_Queryer_QueryerContext_ConnPrepareContext struc
 	driver.Queryer
 	driver.QueryerContext
 	driver.ConnPrepareContext
-}
-
-// [driver.Queryer driver.QueryerContext driver.ConnPrepareContext driver.NamedValueChecker driver.ColumnConverter]
-type w_conn_Queryer_QueryerContext_ConnPrepareContext_NamedValueChecker_ColumnConverter struct {
-	driver.Conn
-	driver.Queryer
-	driver.QueryerContext
-	driver.ConnPrepareContext
-	driver.NamedValueChecker
-	cc driver.ColumnConverter
-}
-
-func (w *w_conn_Queryer_QueryerContext_ConnPrepareContext_NamedValueChecker_ColumnConverter) ColumnConverter(idx int) driver.ValueConverter {
-	return w.cc.ColumnConverter(idx)
-}
-
-// [driver.ExecerContext driver.QueryerContext driver.ConnPrepareContext driver.NamedValueChecker driver.ColumnConverter]
-type w_conn_ExecerContext_QueryerContext_ConnPrepareContext_NamedValueChecker_ColumnConverter struct {
-	driver.Conn
-	driver.ExecerContext
-	driver.QueryerContext
-	driver.ConnPrepareContext
-	driver.NamedValueChecker
-	cc driver.ColumnConverter
-}
-
-func (w *w_conn_ExecerContext_QueryerContext_ConnPrepareContext_NamedValueChecker_ColumnConverter) ColumnConverter(idx int) driver.ValueConverter {
-	return w.cc.ColumnConverter(idx)
-}
-
-// [driver.Execer driver.QueryerContext driver.ConnPrepareContext driver.NamedValueChecker driver.ColumnConverter]
-type w_conn_Execer_QueryerContext_ConnPrepareContext_NamedValueChecker_ColumnConverter struct {
-	driver.Conn
-	driver.Execer
-	driver.QueryerContext
-	driver.ConnPrepareContext
-	driver.NamedValueChecker
-	cc driver.ColumnConverter
-}
-
-func (w *w_conn_Execer_QueryerContext_ConnPrepareContext_NamedValueChecker_ColumnConverter) ColumnConverter(idx int) driver.ValueConverter {
-	return w.cc.ColumnConverter(idx)
 }
 
 // [driver.ExecerContext driver.Queryer driver.QueryerContext driver.ConnPrepareContext driver.NamedValueChecker]
@@ -207,34 +44,6 @@ type w_conn_Execer_Queryer_QueryerContext_ConnPrepareContext_NamedValueChecker s
 	driver.NamedValueChecker
 }
 
-// [driver.ExecerContext driver.Queryer driver.ConnPrepareContext driver.NamedValueChecker driver.ColumnConverter]
-type w_conn_ExecerContext_Queryer_ConnPrepareContext_NamedValueChecker_ColumnConverter struct {
-	driver.Conn
-	driver.ExecerContext
-	driver.Queryer
-	driver.ConnPrepareContext
-	driver.NamedValueChecker
-	cc driver.ColumnConverter
-}
-
-func (w *w_conn_ExecerContext_Queryer_ConnPrepareContext_NamedValueChecker_ColumnConverter) ColumnConverter(idx int) driver.ValueConverter {
-	return w.cc.ColumnConverter(idx)
-}
-
-// [driver.Execer driver.Queryer driver.ConnPrepareContext driver.NamedValueChecker driver.ColumnConverter]
-type w_conn_Execer_Queryer_ConnPrepareContext_NamedValueChecker_ColumnConverter struct {
-	driver.Conn
-	driver.Execer
-	driver.Queryer
-	driver.ConnPrepareContext
-	driver.NamedValueChecker
-	cc driver.ColumnConverter
-}
-
-func (w *w_conn_Execer_Queryer_ConnPrepareContext_NamedValueChecker_ColumnConverter) ColumnConverter(idx int) driver.ValueConverter {
-	return w.cc.ColumnConverter(idx)
-}
-
 // [driver.Execer driver.ExecerContext driver.QueryerContext driver.ConnPrepareContext driver.NamedValueChecker]
 type w_conn_Execer_ExecerContext_QueryerContext_ConnPrepareContext_NamedValueChecker struct {
 	driver.Conn
@@ -243,20 +52,6 @@ type w_conn_Execer_ExecerContext_QueryerContext_ConnPrepareContext_NamedValueChe
 	driver.QueryerContext
 	driver.ConnPrepareContext
 	driver.NamedValueChecker
-}
-
-// [driver.Execer driver.ExecerContext driver.ConnPrepareContext driver.NamedValueChecker driver.ColumnConverter]
-type w_conn_Execer_ExecerContext_ConnPrepareContext_NamedValueChecker_ColumnConverter struct {
-	driver.Conn
-	driver.Execer
-	driver.ExecerContext
-	driver.ConnPrepareContext
-	driver.NamedValueChecker
-	cc driver.ColumnConverter
-}
-
-func (w *w_conn_Execer_ExecerContext_ConnPrepareContext_NamedValueChecker_ColumnConverter) ColumnConverter(idx int) driver.ValueConverter {
-	return w.cc.ColumnConverter(idx)
 }
 
 // [driver.Execer driver.ExecerContext driver.Queryer driver.ConnPrepareContext driver.NamedValueChecker]
@@ -269,34 +64,6 @@ type w_conn_Execer_ExecerContext_Queryer_ConnPrepareContext_NamedValueChecker st
 	driver.NamedValueChecker
 }
 
-// [driver.Execer driver.ExecerContext driver.Queryer driver.QueryerContext driver.ColumnConverter]
-type w_conn_Execer_ExecerContext_Queryer_QueryerContext_ColumnConverter struct {
-	driver.Conn
-	driver.Execer
-	driver.ExecerContext
-	driver.Queryer
-	driver.QueryerContext
-	cc driver.ColumnConverter
-}
-
-func (w *w_conn_Execer_ExecerContext_Queryer_QueryerContext_ColumnConverter) ColumnConverter(idx int) driver.ValueConverter {
-	return w.cc.ColumnConverter(idx)
-}
-
-// [driver.ExecerContext driver.Queryer driver.QueryerContext driver.NamedValueChecker driver.ColumnConverter]
-type w_conn_ExecerContext_Queryer_QueryerContext_NamedValueChecker_ColumnConverter struct {
-	driver.Conn
-	driver.ExecerContext
-	driver.Queryer
-	driver.QueryerContext
-	driver.NamedValueChecker
-	cc driver.ColumnConverter
-}
-
-func (w *w_conn_ExecerContext_Queryer_QueryerContext_NamedValueChecker_ColumnConverter) ColumnConverter(idx int) driver.ValueConverter {
-	return w.cc.ColumnConverter(idx)
-}
-
 // [driver.Execer driver.ExecerContext driver.Queryer driver.QueryerContext driver.NamedValueChecker]
 type w_conn_Execer_ExecerContext_Queryer_QueryerContext_NamedValueChecker struct {
 	driver.Conn
@@ -305,265 +72,6 @@ type w_conn_Execer_ExecerContext_Queryer_QueryerContext_NamedValueChecker struct
 	driver.Queryer
 	driver.QueryerContext
 	driver.NamedValueChecker
-}
-
-// [driver.Execer driver.Queryer driver.QueryerContext driver.NamedValueChecker driver.ColumnConverter]
-type w_conn_Execer_Queryer_QueryerContext_NamedValueChecker_ColumnConverter struct {
-	driver.Conn
-	driver.Execer
-	driver.Queryer
-	driver.QueryerContext
-	driver.NamedValueChecker
-	cc driver.ColumnConverter
-}
-
-func (w *w_conn_Execer_Queryer_QueryerContext_NamedValueChecker_ColumnConverter) ColumnConverter(idx int) driver.ValueConverter {
-	return w.cc.ColumnConverter(idx)
-}
-
-// [driver.Execer driver.ExecerContext driver.Queryer driver.ConnPrepareContext driver.ColumnConverter]
-type w_conn_Execer_ExecerContext_Queryer_ConnPrepareContext_ColumnConverter struct {
-	driver.Conn
-	driver.Execer
-	driver.ExecerContext
-	driver.Queryer
-	driver.ConnPrepareContext
-	cc driver.ColumnConverter
-}
-
-func (w *w_conn_Execer_ExecerContext_Queryer_ConnPrepareContext_ColumnConverter) ColumnConverter(idx int) driver.ValueConverter {
-	return w.cc.ColumnConverter(idx)
-}
-
-// [driver.Execer driver.ExecerContext driver.QueryerContext driver.NamedValueChecker driver.ColumnConverter]
-type w_conn_Execer_ExecerContext_QueryerContext_NamedValueChecker_ColumnConverter struct {
-	driver.Conn
-	driver.Execer
-	driver.ExecerContext
-	driver.QueryerContext
-	driver.NamedValueChecker
-	cc driver.ColumnConverter
-}
-
-func (w *w_conn_Execer_ExecerContext_QueryerContext_NamedValueChecker_ColumnConverter) ColumnConverter(idx int) driver.ValueConverter {
-	return w.cc.ColumnConverter(idx)
-}
-
-// [driver.ExecerContext driver.Queryer driver.QueryerContext driver.ConnPrepareContext driver.ColumnConverter]
-type w_conn_ExecerContext_Queryer_QueryerContext_ConnPrepareContext_ColumnConverter struct {
-	driver.Conn
-	driver.ExecerContext
-	driver.Queryer
-	driver.QueryerContext
-	driver.ConnPrepareContext
-	cc driver.ColumnConverter
-}
-
-func (w *w_conn_ExecerContext_Queryer_QueryerContext_ConnPrepareContext_ColumnConverter) ColumnConverter(idx int) driver.ValueConverter {
-	return w.cc.ColumnConverter(idx)
-}
-
-// [driver.Execer driver.ExecerContext driver.QueryerContext driver.ConnPrepareContext driver.ColumnConverter]
-type w_conn_Execer_ExecerContext_QueryerContext_ConnPrepareContext_ColumnConverter struct {
-	driver.Conn
-	driver.Execer
-	driver.ExecerContext
-	driver.QueryerContext
-	driver.ConnPrepareContext
-	cc driver.ColumnConverter
-}
-
-func (w *w_conn_Execer_ExecerContext_QueryerContext_ConnPrepareContext_ColumnConverter) ColumnConverter(idx int) driver.ValueConverter {
-	return w.cc.ColumnConverter(idx)
-}
-
-// [driver.Execer driver.ExecerContext driver.Queryer driver.NamedValueChecker driver.ColumnConverter]
-type w_conn_Execer_ExecerContext_Queryer_NamedValueChecker_ColumnConverter struct {
-	driver.Conn
-	driver.Execer
-	driver.ExecerContext
-	driver.Queryer
-	driver.NamedValueChecker
-	cc driver.ColumnConverter
-}
-
-func (w *w_conn_Execer_ExecerContext_Queryer_NamedValueChecker_ColumnConverter) ColumnConverter(idx int) driver.ValueConverter {
-	return w.cc.ColumnConverter(idx)
-}
-
-// [driver.Execer driver.Queryer driver.NamedValueChecker driver.ColumnConverter]
-type w_conn_Execer_Queryer_NamedValueChecker_ColumnConverter struct {
-	driver.Conn
-	driver.Execer
-	driver.Queryer
-	driver.NamedValueChecker
-	cc driver.ColumnConverter
-}
-
-func (w *w_conn_Execer_Queryer_NamedValueChecker_ColumnConverter) ColumnConverter(idx int) driver.ValueConverter {
-	return w.cc.ColumnConverter(idx)
-}
-
-// [driver.Execer driver.ExecerContext driver.Queryer driver.ConnPrepareContext]
-type w_conn_Execer_ExecerContext_Queryer_ConnPrepareContext struct {
-	driver.Conn
-	driver.Execer
-	driver.ExecerContext
-	driver.Queryer
-	driver.ConnPrepareContext
-}
-
-// [driver.Execer driver.QueryerContext driver.NamedValueChecker driver.ColumnConverter]
-type w_conn_Execer_QueryerContext_NamedValueChecker_ColumnConverter struct {
-	driver.Conn
-	driver.Execer
-	driver.QueryerContext
-	driver.NamedValueChecker
-	cc driver.ColumnConverter
-}
-
-func (w *w_conn_Execer_QueryerContext_NamedValueChecker_ColumnConverter) ColumnConverter(idx int) driver.ValueConverter {
-	return w.cc.ColumnConverter(idx)
-}
-
-// [driver.Execer driver.Queryer driver.QueryerContext driver.ConnPrepareContext]
-type w_conn_Execer_Queryer_QueryerContext_ConnPrepareContext struct {
-	driver.Conn
-	driver.Execer
-	driver.Queryer
-	driver.QueryerContext
-	driver.ConnPrepareContext
-}
-
-// [driver.ExecerContext driver.Queryer driver.NamedValueChecker driver.ColumnConverter]
-type w_conn_ExecerContext_Queryer_NamedValueChecker_ColumnConverter struct {
-	driver.Conn
-	driver.ExecerContext
-	driver.Queryer
-	driver.NamedValueChecker
-	cc driver.ColumnConverter
-}
-
-func (w *w_conn_ExecerContext_Queryer_NamedValueChecker_ColumnConverter) ColumnConverter(idx int) driver.ValueConverter {
-	return w.cc.ColumnConverter(idx)
-}
-
-// [driver.ExecerContext driver.QueryerContext driver.NamedValueChecker driver.ColumnConverter]
-type w_conn_ExecerContext_QueryerContext_NamedValueChecker_ColumnConverter struct {
-	driver.Conn
-	driver.ExecerContext
-	driver.QueryerContext
-	driver.NamedValueChecker
-	cc driver.ColumnConverter
-}
-
-func (w *w_conn_ExecerContext_QueryerContext_NamedValueChecker_ColumnConverter) ColumnConverter(idx int) driver.ValueConverter {
-	return w.cc.ColumnConverter(idx)
-}
-
-// [driver.Execer driver.ExecerContext driver.NamedValueChecker driver.ColumnConverter]
-type w_conn_Execer_ExecerContext_NamedValueChecker_ColumnConverter struct {
-	driver.Conn
-	driver.Execer
-	driver.ExecerContext
-	driver.NamedValueChecker
-	cc driver.ColumnConverter
-}
-
-func (w *w_conn_Execer_ExecerContext_NamedValueChecker_ColumnConverter) ColumnConverter(idx int) driver.ValueConverter {
-	return w.cc.ColumnConverter(idx)
-}
-
-// [driver.Execer driver.ExecerContext driver.QueryerContext driver.ConnPrepareContext]
-type w_conn_Execer_ExecerContext_QueryerContext_ConnPrepareContext struct {
-	driver.Conn
-	driver.Execer
-	driver.ExecerContext
-	driver.QueryerContext
-	driver.ConnPrepareContext
-}
-
-// [driver.Queryer driver.QueryerContext driver.ConnPrepareContext driver.ColumnConverter]
-type w_conn_Queryer_QueryerContext_ConnPrepareContext_ColumnConverter struct {
-	driver.Conn
-	driver.Queryer
-	driver.QueryerContext
-	driver.ConnPrepareContext
-	cc driver.ColumnConverter
-}
-
-func (w *w_conn_Queryer_QueryerContext_ConnPrepareContext_ColumnConverter) ColumnConverter(idx int) driver.ValueConverter {
-	return w.cc.ColumnConverter(idx)
-}
-
-// [driver.Execer driver.ExecerContext driver.Queryer driver.NamedValueChecker]
-type w_conn_Execer_ExecerContext_Queryer_NamedValueChecker struct {
-	driver.Conn
-	driver.Execer
-	driver.ExecerContext
-	driver.Queryer
-	driver.NamedValueChecker
-}
-
-// [driver.ExecerContext driver.QueryerContext driver.ConnPrepareContext driver.ColumnConverter]
-type w_conn_ExecerContext_QueryerContext_ConnPrepareContext_ColumnConverter struct {
-	driver.Conn
-	driver.ExecerContext
-	driver.QueryerContext
-	driver.ConnPrepareContext
-	cc driver.ColumnConverter
-}
-
-func (w *w_conn_ExecerContext_QueryerContext_ConnPrepareContext_ColumnConverter) ColumnConverter(idx int) driver.ValueConverter {
-	return w.cc.ColumnConverter(idx)
-}
-
-// [driver.Execer driver.QueryerContext driver.ConnPrepareContext driver.ColumnConverter]
-type w_conn_Execer_QueryerContext_ConnPrepareContext_ColumnConverter struct {
-	driver.Conn
-	driver.Execer
-	driver.QueryerContext
-	driver.ConnPrepareContext
-	cc driver.ColumnConverter
-}
-
-func (w *w_conn_Execer_QueryerContext_ConnPrepareContext_ColumnConverter) ColumnConverter(idx int) driver.ValueConverter {
-	return w.cc.ColumnConverter(idx)
-}
-
-// [driver.Queryer driver.QueryerContext driver.NamedValueChecker driver.ColumnConverter]
-type w_conn_Queryer_QueryerContext_NamedValueChecker_ColumnConverter struct {
-	driver.Conn
-	driver.Queryer
-	driver.QueryerContext
-	driver.NamedValueChecker
-	cc driver.ColumnConverter
-}
-
-func (w *w_conn_Queryer_QueryerContext_NamedValueChecker_ColumnConverter) ColumnConverter(idx int) driver.ValueConverter {
-	return w.cc.ColumnConverter(idx)
-}
-
-// [driver.Execer driver.ExecerContext driver.QueryerContext driver.NamedValueChecker]
-type w_conn_Execer_ExecerContext_QueryerContext_NamedValueChecker struct {
-	driver.Conn
-	driver.Execer
-	driver.ExecerContext
-	driver.QueryerContext
-	driver.NamedValueChecker
-}
-
-// [driver.ExecerContext driver.Queryer driver.ConnPrepareContext driver.ColumnConverter]
-type w_conn_ExecerContext_Queryer_ConnPrepareContext_ColumnConverter struct {
-	driver.Conn
-	driver.ExecerContext
-	driver.Queryer
-	driver.ConnPrepareContext
-	cc driver.ColumnConverter
-}
-
-func (w *w_conn_ExecerContext_Queryer_ConnPrepareContext_ColumnConverter) ColumnConverter(idx int) driver.ValueConverter {
-	return w.cc.ColumnConverter(idx)
 }
 
 // [driver.Execer driver.Queryer driver.QueryerContext driver.NamedValueChecker]
@@ -575,133 +83,19 @@ type w_conn_Execer_Queryer_QueryerContext_NamedValueChecker struct {
 	driver.NamedValueChecker
 }
 
-// [driver.ExecerContext driver.Queryer driver.QueryerContext driver.NamedValueChecker]
-type w_conn_ExecerContext_Queryer_QueryerContext_NamedValueChecker struct {
-	driver.Conn
-	driver.ExecerContext
-	driver.Queryer
-	driver.QueryerContext
-	driver.NamedValueChecker
-}
-
-// [driver.ExecerContext driver.Queryer driver.QueryerContext driver.ConnPrepareContext]
-type w_conn_ExecerContext_Queryer_QueryerContext_ConnPrepareContext struct {
-	driver.Conn
-	driver.ExecerContext
-	driver.Queryer
-	driver.QueryerContext
-	driver.ConnPrepareContext
-}
-
-// [driver.Execer driver.Queryer driver.ConnPrepareContext driver.ColumnConverter]
-type w_conn_Execer_Queryer_ConnPrepareContext_ColumnConverter struct {
-	driver.Conn
-	driver.Execer
-	driver.Queryer
-	driver.ConnPrepareContext
-	cc driver.ColumnConverter
-}
-
-func (w *w_conn_Execer_Queryer_ConnPrepareContext_ColumnConverter) ColumnConverter(idx int) driver.ValueConverter {
-	return w.cc.ColumnConverter(idx)
-}
-
-// [driver.Execer driver.ExecerContext driver.ConnPrepareContext driver.ColumnConverter]
-type w_conn_Execer_ExecerContext_ConnPrepareContext_ColumnConverter struct {
+// [driver.Execer driver.ExecerContext driver.Queryer driver.ConnPrepareContext]
+type w_conn_Execer_ExecerContext_Queryer_ConnPrepareContext struct {
 	driver.Conn
 	driver.Execer
 	driver.ExecerContext
-	driver.ConnPrepareContext
-	cc driver.ColumnConverter
-}
-
-func (w *w_conn_Execer_ExecerContext_ConnPrepareContext_ColumnConverter) ColumnConverter(idx int) driver.ValueConverter {
-	return w.cc.ColumnConverter(idx)
-}
-
-// [driver.Execer driver.ConnPrepareContext driver.NamedValueChecker driver.ColumnConverter]
-type w_conn_Execer_ConnPrepareContext_NamedValueChecker_ColumnConverter struct {
-	driver.Conn
-	driver.Execer
-	driver.ConnPrepareContext
-	driver.NamedValueChecker
-	cc driver.ColumnConverter
-}
-
-func (w *w_conn_Execer_ConnPrepareContext_NamedValueChecker_ColumnConverter) ColumnConverter(idx int) driver.ValueConverter {
-	return w.cc.ColumnConverter(idx)
-}
-
-// [driver.Execer driver.ExecerContext driver.ConnPrepareContext driver.NamedValueChecker]
-type w_conn_Execer_ExecerContext_ConnPrepareContext_NamedValueChecker struct {
-	driver.Conn
-	driver.Execer
-	driver.ExecerContext
-	driver.ConnPrepareContext
-	driver.NamedValueChecker
-}
-
-// [driver.ExecerContext driver.Queryer driver.QueryerContext driver.ColumnConverter]
-type w_conn_ExecerContext_Queryer_QueryerContext_ColumnConverter struct {
-	driver.Conn
-	driver.ExecerContext
-	driver.Queryer
-	driver.QueryerContext
-	cc driver.ColumnConverter
-}
-
-func (w *w_conn_ExecerContext_Queryer_QueryerContext_ColumnConverter) ColumnConverter(idx int) driver.ValueConverter {
-	return w.cc.ColumnConverter(idx)
-}
-
-// [driver.Execer driver.Queryer driver.ConnPrepareContext driver.NamedValueChecker]
-type w_conn_Execer_Queryer_ConnPrepareContext_NamedValueChecker struct {
-	driver.Conn
-	driver.Execer
 	driver.Queryer
 	driver.ConnPrepareContext
-	driver.NamedValueChecker
 }
 
-// [driver.ExecerContext driver.Queryer driver.ConnPrepareContext driver.NamedValueChecker]
-type w_conn_ExecerContext_Queryer_ConnPrepareContext_NamedValueChecker struct {
+// [driver.Queryer driver.QueryerContext driver.ConnPrepareContext driver.NamedValueChecker]
+type w_conn_Queryer_QueryerContext_ConnPrepareContext_NamedValueChecker struct {
 	driver.Conn
-	driver.ExecerContext
 	driver.Queryer
-	driver.ConnPrepareContext
-	driver.NamedValueChecker
-}
-
-// [driver.ExecerContext driver.ConnPrepareContext driver.NamedValueChecker driver.ColumnConverter]
-type w_conn_ExecerContext_ConnPrepareContext_NamedValueChecker_ColumnConverter struct {
-	driver.Conn
-	driver.ExecerContext
-	driver.ConnPrepareContext
-	driver.NamedValueChecker
-	cc driver.ColumnConverter
-}
-
-func (w *w_conn_ExecerContext_ConnPrepareContext_NamedValueChecker_ColumnConverter) ColumnConverter(idx int) driver.ValueConverter {
-	return w.cc.ColumnConverter(idx)
-}
-
-// [driver.Execer driver.Queryer driver.QueryerContext driver.ColumnConverter]
-type w_conn_Execer_Queryer_QueryerContext_ColumnConverter struct {
-	driver.Conn
-	driver.Execer
-	driver.Queryer
-	driver.QueryerContext
-	cc driver.ColumnConverter
-}
-
-func (w *w_conn_Execer_Queryer_QueryerContext_ColumnConverter) ColumnConverter(idx int) driver.ValueConverter {
-	return w.cc.ColumnConverter(idx)
-}
-
-// [driver.Execer driver.QueryerContext driver.ConnPrepareContext driver.NamedValueChecker]
-type w_conn_Execer_QueryerContext_ConnPrepareContext_NamedValueChecker struct {
-	driver.Conn
-	driver.Execer
 	driver.QueryerContext
 	driver.ConnPrepareContext
 	driver.NamedValueChecker
@@ -716,24 +110,29 @@ type w_conn_ExecerContext_QueryerContext_ConnPrepareContext_NamedValueChecker st
 	driver.NamedValueChecker
 }
 
-// [driver.Queryer driver.ConnPrepareContext driver.NamedValueChecker driver.ColumnConverter]
-type w_conn_Queryer_ConnPrepareContext_NamedValueChecker_ColumnConverter struct {
+// [driver.Execer driver.QueryerContext driver.ConnPrepareContext driver.NamedValueChecker]
+type w_conn_Execer_QueryerContext_ConnPrepareContext_NamedValueChecker struct {
 	driver.Conn
+	driver.Execer
+	driver.QueryerContext
+	driver.ConnPrepareContext
+	driver.NamedValueChecker
+}
+
+// [driver.ExecerContext driver.Queryer driver.ConnPrepareContext driver.NamedValueChecker]
+type w_conn_ExecerContext_Queryer_ConnPrepareContext_NamedValueChecker struct {
+	driver.Conn
+	driver.ExecerContext
 	driver.Queryer
 	driver.ConnPrepareContext
 	driver.NamedValueChecker
-	cc driver.ColumnConverter
 }
 
-func (w *w_conn_Queryer_ConnPrepareContext_NamedValueChecker_ColumnConverter) ColumnConverter(idx int) driver.ValueConverter {
-	return w.cc.ColumnConverter(idx)
-}
-
-// [driver.Queryer driver.QueryerContext driver.ConnPrepareContext driver.NamedValueChecker]
-type w_conn_Queryer_QueryerContext_ConnPrepareContext_NamedValueChecker struct {
+// [driver.Execer driver.Queryer driver.ConnPrepareContext driver.NamedValueChecker]
+type w_conn_Execer_Queryer_ConnPrepareContext_NamedValueChecker struct {
 	driver.Conn
+	driver.Execer
 	driver.Queryer
-	driver.QueryerContext
 	driver.ConnPrepareContext
 	driver.NamedValueChecker
 }
@@ -747,71 +146,75 @@ type w_conn_Execer_ExecerContext_Queryer_QueryerContext struct {
 	driver.QueryerContext
 }
 
-// [driver.QueryerContext driver.ConnPrepareContext driver.NamedValueChecker driver.ColumnConverter]
-type w_conn_QueryerContext_ConnPrepareContext_NamedValueChecker_ColumnConverter struct {
+// [driver.Execer driver.ExecerContext driver.ConnPrepareContext driver.NamedValueChecker]
+type w_conn_Execer_ExecerContext_ConnPrepareContext_NamedValueChecker struct {
 	driver.Conn
-	driver.QueryerContext
+	driver.Execer
+	driver.ExecerContext
 	driver.ConnPrepareContext
 	driver.NamedValueChecker
-	cc driver.ColumnConverter
 }
 
-func (w *w_conn_QueryerContext_ConnPrepareContext_NamedValueChecker_ColumnConverter) ColumnConverter(idx int) driver.ValueConverter {
-	return w.cc.ColumnConverter(idx)
+// [driver.ExecerContext driver.Queryer driver.QueryerContext driver.NamedValueChecker]
+type w_conn_ExecerContext_Queryer_QueryerContext_NamedValueChecker struct {
+	driver.Conn
+	driver.ExecerContext
+	driver.Queryer
+	driver.QueryerContext
+	driver.NamedValueChecker
 }
 
-// [driver.Execer driver.ExecerContext driver.QueryerContext driver.ColumnConverter]
-type w_conn_Execer_ExecerContext_QueryerContext_ColumnConverter struct {
+// [driver.Execer driver.ExecerContext driver.QueryerContext driver.NamedValueChecker]
+type w_conn_Execer_ExecerContext_QueryerContext_NamedValueChecker struct {
 	driver.Conn
 	driver.Execer
 	driver.ExecerContext
 	driver.QueryerContext
-	cc driver.ColumnConverter
+	driver.NamedValueChecker
 }
 
-func (w *w_conn_Execer_ExecerContext_QueryerContext_ColumnConverter) ColumnConverter(idx int) driver.ValueConverter {
-	return w.cc.ColumnConverter(idx)
-}
-
-// [driver.Execer driver.ExecerContext driver.Queryer driver.ColumnConverter]
-type w_conn_Execer_ExecerContext_Queryer_ColumnConverter struct {
+// [driver.Execer driver.ExecerContext driver.Queryer driver.NamedValueChecker]
+type w_conn_Execer_ExecerContext_Queryer_NamedValueChecker struct {
 	driver.Conn
 	driver.Execer
 	driver.ExecerContext
 	driver.Queryer
-	cc driver.ColumnConverter
+	driver.NamedValueChecker
 }
 
-func (w *w_conn_Execer_ExecerContext_Queryer_ColumnConverter) ColumnConverter(idx int) driver.ValueConverter {
-	return w.cc.ColumnConverter(idx)
-}
-
-// [driver.Execer driver.QueryerContext driver.ColumnConverter]
-type w_conn_Execer_QueryerContext_ColumnConverter struct {
+// [driver.ExecerContext driver.Queryer driver.QueryerContext driver.ConnPrepareContext]
+type w_conn_ExecerContext_Queryer_QueryerContext_ConnPrepareContext struct {
 	driver.Conn
-	driver.Execer
-	driver.QueryerContext
-	cc driver.ColumnConverter
-}
-
-func (w *w_conn_Execer_QueryerContext_ColumnConverter) ColumnConverter(idx int) driver.ValueConverter {
-	return w.cc.ColumnConverter(idx)
-}
-
-// [driver.Execer driver.ExecerContext driver.Queryer]
-type w_conn_Execer_ExecerContext_Queryer struct {
-	driver.Conn
-	driver.Execer
 	driver.ExecerContext
 	driver.Queryer
+	driver.QueryerContext
+	driver.ConnPrepareContext
 }
 
-// [driver.Execer driver.ExecerContext driver.QueryerContext]
-type w_conn_Execer_ExecerContext_QueryerContext struct {
+// [driver.Execer driver.Queryer driver.QueryerContext driver.ConnPrepareContext]
+type w_conn_Execer_Queryer_QueryerContext_ConnPrepareContext struct {
+	driver.Conn
+	driver.Execer
+	driver.Queryer
+	driver.QueryerContext
+	driver.ConnPrepareContext
+}
+
+// [driver.Execer driver.ExecerContext driver.QueryerContext driver.ConnPrepareContext]
+type w_conn_Execer_ExecerContext_QueryerContext_ConnPrepareContext struct {
 	driver.Conn
 	driver.Execer
 	driver.ExecerContext
 	driver.QueryerContext
+	driver.ConnPrepareContext
+}
+
+// [driver.Execer driver.ConnPrepareContext driver.NamedValueChecker]
+type w_conn_Execer_ConnPrepareContext_NamedValueChecker struct {
+	driver.Conn
+	driver.Execer
+	driver.ConnPrepareContext
+	driver.NamedValueChecker
 }
 
 // [driver.Execer driver.Queryer driver.QueryerContext]
@@ -822,43 +225,35 @@ type w_conn_Execer_Queryer_QueryerContext struct {
 	driver.QueryerContext
 }
 
-// [driver.ExecerContext driver.Queryer driver.ColumnConverter]
-type w_conn_ExecerContext_Queryer_ColumnConverter struct {
-	driver.Conn
-	driver.ExecerContext
-	driver.Queryer
-	cc driver.ColumnConverter
-}
-
-func (w *w_conn_ExecerContext_Queryer_ColumnConverter) ColumnConverter(idx int) driver.ValueConverter {
-	return w.cc.ColumnConverter(idx)
-}
-
-// [driver.Execer driver.Queryer driver.ColumnConverter]
-type w_conn_Execer_Queryer_ColumnConverter struct {
+// [driver.Execer driver.QueryerContext driver.ConnPrepareContext]
+type w_conn_Execer_QueryerContext_ConnPrepareContext struct {
 	driver.Conn
 	driver.Execer
-	driver.Queryer
-	cc driver.ColumnConverter
+	driver.QueryerContext
+	driver.ConnPrepareContext
 }
 
-func (w *w_conn_Execer_Queryer_ColumnConverter) ColumnConverter(idx int) driver.ValueConverter {
-	return w.cc.ColumnConverter(idx)
-}
-
-// [driver.ExecerContext driver.Queryer driver.QueryerContext]
-type w_conn_ExecerContext_Queryer_QueryerContext struct {
+// [driver.ExecerContext driver.QueryerContext driver.ConnPrepareContext]
+type w_conn_ExecerContext_QueryerContext_ConnPrepareContext struct {
 	driver.Conn
 	driver.ExecerContext
+	driver.QueryerContext
+	driver.ConnPrepareContext
+}
+
+// [driver.ExecerContext driver.Queryer driver.ConnPrepareContext]
+type w_conn_ExecerContext_Queryer_ConnPrepareContext struct {
+	driver.Conn
+	driver.ExecerContext
+	driver.Queryer
+	driver.ConnPrepareContext
+}
+
+// [driver.Queryer driver.QueryerContext driver.ConnPrepareContext]
+type w_conn_Queryer_QueryerContext_ConnPrepareContext struct {
+	driver.Conn
 	driver.Queryer
 	driver.QueryerContext
-}
-
-// [driver.Execer driver.ExecerContext driver.ConnPrepareContext]
-type w_conn_Execer_ExecerContext_ConnPrepareContext struct {
-	driver.Conn
-	driver.Execer
-	driver.ExecerContext
 	driver.ConnPrepareContext
 }
 
@@ -870,40 +265,12 @@ type w_conn_Execer_Queryer_ConnPrepareContext struct {
 	driver.ConnPrepareContext
 }
 
-// [driver.ExecerContext driver.QueryerContext driver.ColumnConverter]
-type w_conn_ExecerContext_QueryerContext_ColumnConverter struct {
+// [driver.Execer driver.ExecerContext driver.QueryerContext]
+type w_conn_Execer_ExecerContext_QueryerContext struct {
 	driver.Conn
+	driver.Execer
 	driver.ExecerContext
 	driver.QueryerContext
-	cc driver.ColumnConverter
-}
-
-func (w *w_conn_ExecerContext_QueryerContext_ColumnConverter) ColumnConverter(idx int) driver.ValueConverter {
-	return w.cc.ColumnConverter(idx)
-}
-
-// [driver.ConnPrepareContext driver.NamedValueChecker driver.ColumnConverter]
-type w_conn_ConnPrepareContext_NamedValueChecker_ColumnConverter struct {
-	driver.Conn
-	driver.ConnPrepareContext
-	driver.NamedValueChecker
-	cc driver.ColumnConverter
-}
-
-func (w *w_conn_ConnPrepareContext_NamedValueChecker_ColumnConverter) ColumnConverter(idx int) driver.ValueConverter {
-	return w.cc.ColumnConverter(idx)
-}
-
-// [driver.Queryer driver.QueryerContext driver.ColumnConverter]
-type w_conn_Queryer_QueryerContext_ColumnConverter struct {
-	driver.Conn
-	driver.Queryer
-	driver.QueryerContext
-	cc driver.ColumnConverter
-}
-
-func (w *w_conn_Queryer_QueryerContext_ColumnConverter) ColumnConverter(idx int) driver.ValueConverter {
-	return w.cc.ColumnConverter(idx)
 }
 
 // [driver.QueryerContext driver.ConnPrepareContext driver.NamedValueChecker]
@@ -912,6 +279,14 @@ type w_conn_QueryerContext_ConnPrepareContext_NamedValueChecker struct {
 	driver.QueryerContext
 	driver.ConnPrepareContext
 	driver.NamedValueChecker
+}
+
+// [driver.ExecerContext driver.Queryer driver.QueryerContext]
+type w_conn_ExecerContext_Queryer_QueryerContext struct {
+	driver.Conn
+	driver.ExecerContext
+	driver.Queryer
+	driver.QueryerContext
 }
 
 // [driver.Queryer driver.ConnPrepareContext driver.NamedValueChecker]
@@ -930,63 +305,43 @@ type w_conn_ExecerContext_ConnPrepareContext_NamedValueChecker struct {
 	driver.NamedValueChecker
 }
 
-// [driver.ExecerContext driver.Queryer driver.ConnPrepareContext]
-type w_conn_ExecerContext_Queryer_ConnPrepareContext struct {
-	driver.Conn
-	driver.ExecerContext
-	driver.Queryer
-	driver.ConnPrepareContext
-}
-
-// [driver.Execer driver.ConnPrepareContext driver.ColumnConverter]
-type w_conn_Execer_ConnPrepareContext_ColumnConverter struct {
+// [driver.Execer driver.ExecerContext driver.NamedValueChecker]
+type w_conn_Execer_ExecerContext_NamedValueChecker struct {
 	driver.Conn
 	driver.Execer
-	driver.ConnPrepareContext
-	cc driver.ColumnConverter
-}
-
-func (w *w_conn_Execer_ConnPrepareContext_ColumnConverter) ColumnConverter(idx int) driver.ValueConverter {
-	return w.cc.ColumnConverter(idx)
-}
-
-// [driver.ExecerContext driver.ConnPrepareContext driver.ColumnConverter]
-type w_conn_ExecerContext_ConnPrepareContext_ColumnConverter struct {
-	driver.Conn
 	driver.ExecerContext
-	driver.ConnPrepareContext
-	cc driver.ColumnConverter
-}
-
-func (w *w_conn_ExecerContext_ConnPrepareContext_ColumnConverter) ColumnConverter(idx int) driver.ValueConverter {
-	return w.cc.ColumnConverter(idx)
-}
-
-// [driver.Execer driver.ConnPrepareContext driver.NamedValueChecker]
-type w_conn_Execer_ConnPrepareContext_NamedValueChecker struct {
-	driver.Conn
-	driver.Execer
-	driver.ConnPrepareContext
 	driver.NamedValueChecker
 }
 
-// [driver.Queryer driver.ConnPrepareContext driver.ColumnConverter]
-type w_conn_Queryer_ConnPrepareContext_ColumnConverter struct {
-	driver.Conn
-	driver.Queryer
-	driver.ConnPrepareContext
-	cc driver.ColumnConverter
-}
-
-func (w *w_conn_Queryer_ConnPrepareContext_ColumnConverter) ColumnConverter(idx int) driver.ValueConverter {
-	return w.cc.ColumnConverter(idx)
-}
-
-// [driver.Execer driver.QueryerContext driver.ConnPrepareContext]
-type w_conn_Execer_QueryerContext_ConnPrepareContext struct {
+// [driver.Execer driver.ExecerContext driver.Queryer]
+type w_conn_Execer_ExecerContext_Queryer struct {
 	driver.Conn
 	driver.Execer
-	driver.QueryerContext
+	driver.ExecerContext
+	driver.Queryer
+}
+
+// [driver.Execer driver.Queryer driver.NamedValueChecker]
+type w_conn_Execer_Queryer_NamedValueChecker struct {
+	driver.Conn
+	driver.Execer
+	driver.Queryer
+	driver.NamedValueChecker
+}
+
+// [driver.ExecerContext driver.Queryer driver.NamedValueChecker]
+type w_conn_ExecerContext_Queryer_NamedValueChecker struct {
+	driver.Conn
+	driver.ExecerContext
+	driver.Queryer
+	driver.NamedValueChecker
+}
+
+// [driver.Execer driver.ExecerContext driver.ConnPrepareContext]
+type w_conn_Execer_ExecerContext_ConnPrepareContext struct {
+	driver.Conn
+	driver.Execer
+	driver.ExecerContext
 	driver.ConnPrepareContext
 }
 
@@ -994,6 +349,14 @@ type w_conn_Execer_QueryerContext_ConnPrepareContext struct {
 type w_conn_Queryer_QueryerContext_NamedValueChecker struct {
 	driver.Conn
 	driver.Queryer
+	driver.QueryerContext
+	driver.NamedValueChecker
+}
+
+// [driver.Execer driver.QueryerContext driver.NamedValueChecker]
+type w_conn_Execer_QueryerContext_NamedValueChecker struct {
+	driver.Conn
+	driver.Execer
 	driver.QueryerContext
 	driver.NamedValueChecker
 }
@@ -1006,269 +369,10 @@ type w_conn_ExecerContext_QueryerContext_NamedValueChecker struct {
 	driver.NamedValueChecker
 }
 
-// [driver.QueryerContext driver.ConnPrepareContext driver.ColumnConverter]
-type w_conn_QueryerContext_ConnPrepareContext_ColumnConverter struct {
-	driver.Conn
-	driver.QueryerContext
-	driver.ConnPrepareContext
-	cc driver.ColumnConverter
-}
-
-func (w *w_conn_QueryerContext_ConnPrepareContext_ColumnConverter) ColumnConverter(idx int) driver.ValueConverter {
-	return w.cc.ColumnConverter(idx)
-}
-
-// [driver.Execer driver.QueryerContext driver.NamedValueChecker]
-type w_conn_Execer_QueryerContext_NamedValueChecker struct {
-	driver.Conn
-	driver.Execer
-	driver.QueryerContext
-	driver.NamedValueChecker
-}
-
-// [driver.ExecerContext driver.QueryerContext driver.ConnPrepareContext]
-type w_conn_ExecerContext_QueryerContext_ConnPrepareContext struct {
-	driver.Conn
-	driver.ExecerContext
-	driver.QueryerContext
-	driver.ConnPrepareContext
-}
-
-// [driver.Execer driver.ExecerContext driver.ColumnConverter]
-type w_conn_Execer_ExecerContext_ColumnConverter struct {
-	driver.Conn
-	driver.Execer
-	driver.ExecerContext
-	cc driver.ColumnConverter
-}
-
-func (w *w_conn_Execer_ExecerContext_ColumnConverter) ColumnConverter(idx int) driver.ValueConverter {
-	return w.cc.ColumnConverter(idx)
-}
-
-// [driver.ExecerContext driver.Queryer driver.NamedValueChecker]
-type w_conn_ExecerContext_Queryer_NamedValueChecker struct {
-	driver.Conn
-	driver.ExecerContext
-	driver.Queryer
-	driver.NamedValueChecker
-}
-
-// [driver.Queryer driver.QueryerContext driver.ConnPrepareContext]
-type w_conn_Queryer_QueryerContext_ConnPrepareContext struct {
-	driver.Conn
-	driver.Queryer
-	driver.QueryerContext
-	driver.ConnPrepareContext
-}
-
-// [driver.Execer driver.Queryer driver.NamedValueChecker]
-type w_conn_Execer_Queryer_NamedValueChecker struct {
-	driver.Conn
-	driver.Execer
-	driver.Queryer
-	driver.NamedValueChecker
-}
-
-// [driver.QueryerContext driver.NamedValueChecker driver.ColumnConverter]
-type w_conn_QueryerContext_NamedValueChecker_ColumnConverter struct {
-	driver.Conn
-	driver.QueryerContext
-	driver.NamedValueChecker
-	cc driver.ColumnConverter
-}
-
-func (w *w_conn_QueryerContext_NamedValueChecker_ColumnConverter) ColumnConverter(idx int) driver.ValueConverter {
-	return w.cc.ColumnConverter(idx)
-}
-
-// [driver.Execer driver.ExecerContext driver.NamedValueChecker]
-type w_conn_Execer_ExecerContext_NamedValueChecker struct {
-	driver.Conn
-	driver.Execer
-	driver.ExecerContext
-	driver.NamedValueChecker
-}
-
-// [driver.Execer driver.NamedValueChecker driver.ColumnConverter]
-type w_conn_Execer_NamedValueChecker_ColumnConverter struct {
-	driver.Conn
-	driver.Execer
-	driver.NamedValueChecker
-	cc driver.ColumnConverter
-}
-
-func (w *w_conn_Execer_NamedValueChecker_ColumnConverter) ColumnConverter(idx int) driver.ValueConverter {
-	return w.cc.ColumnConverter(idx)
-}
-
-// [driver.ExecerContext driver.NamedValueChecker driver.ColumnConverter]
-type w_conn_ExecerContext_NamedValueChecker_ColumnConverter struct {
-	driver.Conn
-	driver.ExecerContext
-	driver.NamedValueChecker
-	cc driver.ColumnConverter
-}
-
-func (w *w_conn_ExecerContext_NamedValueChecker_ColumnConverter) ColumnConverter(idx int) driver.ValueConverter {
-	return w.cc.ColumnConverter(idx)
-}
-
-// [driver.Queryer driver.NamedValueChecker driver.ColumnConverter]
-type w_conn_Queryer_NamedValueChecker_ColumnConverter struct {
-	driver.Conn
-	driver.Queryer
-	driver.NamedValueChecker
-	cc driver.ColumnConverter
-}
-
-func (w *w_conn_Queryer_NamedValueChecker_ColumnConverter) ColumnConverter(idx int) driver.ValueConverter {
-	return w.cc.ColumnConverter(idx)
-}
-
 // [driver.Queryer driver.ConnPrepareContext]
 type w_conn_Queryer_ConnPrepareContext struct {
 	driver.Conn
 	driver.Queryer
-	driver.ConnPrepareContext
-}
-
-// [driver.ExecerContext driver.Queryer]
-type w_conn_ExecerContext_Queryer struct {
-	driver.Conn
-	driver.ExecerContext
-	driver.Queryer
-}
-
-// [driver.ExecerContext driver.NamedValueChecker]
-type w_conn_ExecerContext_NamedValueChecker struct {
-	driver.Conn
-	driver.ExecerContext
-	driver.NamedValueChecker
-}
-
-// [driver.Execer driver.NamedValueChecker]
-type w_conn_Execer_NamedValueChecker struct {
-	driver.Conn
-	driver.Execer
-	driver.NamedValueChecker
-}
-
-// [driver.Execer driver.QueryerContext]
-type w_conn_Execer_QueryerContext struct {
-	driver.Conn
-	driver.Execer
-	driver.QueryerContext
-}
-
-// [driver.Execer driver.ExecerContext]
-type w_conn_Execer_ExecerContext struct {
-	driver.Conn
-	driver.Execer
-	driver.ExecerContext
-}
-
-// [driver.Queryer driver.ColumnConverter]
-type w_conn_Queryer_ColumnConverter struct {
-	driver.Conn
-	driver.Queryer
-	cc driver.ColumnConverter
-}
-
-func (w *w_conn_Queryer_ColumnConverter) ColumnConverter(idx int) driver.ValueConverter {
-	return w.cc.ColumnConverter(idx)
-}
-
-// [driver.QueryerContext driver.NamedValueChecker]
-type w_conn_QueryerContext_NamedValueChecker struct {
-	driver.Conn
-	driver.QueryerContext
-	driver.NamedValueChecker
-}
-
-// [driver.ConnPrepareContext driver.NamedValueChecker]
-type w_conn_ConnPrepareContext_NamedValueChecker struct {
-	driver.Conn
-	driver.ConnPrepareContext
-	driver.NamedValueChecker
-}
-
-// [driver.QueryerContext driver.ConnPrepareContext]
-type w_conn_QueryerContext_ConnPrepareContext struct {
-	driver.Conn
-	driver.QueryerContext
-	driver.ConnPrepareContext
-}
-
-// [driver.ConnPrepareContext driver.ColumnConverter]
-type w_conn_ConnPrepareContext_ColumnConverter struct {
-	driver.Conn
-	driver.ConnPrepareContext
-	cc driver.ColumnConverter
-}
-
-func (w *w_conn_ConnPrepareContext_ColumnConverter) ColumnConverter(idx int) driver.ValueConverter {
-	return w.cc.ColumnConverter(idx)
-}
-
-// [driver.ExecerContext driver.ColumnConverter]
-type w_conn_ExecerContext_ColumnConverter struct {
-	driver.Conn
-	driver.ExecerContext
-	cc driver.ColumnConverter
-}
-
-func (w *w_conn_ExecerContext_ColumnConverter) ColumnConverter(idx int) driver.ValueConverter {
-	return w.cc.ColumnConverter(idx)
-}
-
-// [driver.Execer driver.ColumnConverter]
-type w_conn_Execer_ColumnConverter struct {
-	driver.Conn
-	driver.Execer
-	cc driver.ColumnConverter
-}
-
-func (w *w_conn_Execer_ColumnConverter) ColumnConverter(idx int) driver.ValueConverter {
-	return w.cc.ColumnConverter(idx)
-}
-
-// [driver.Execer driver.Queryer]
-type w_conn_Execer_Queryer struct {
-	driver.Conn
-	driver.Execer
-	driver.Queryer
-}
-
-// [driver.Queryer driver.QueryerContext]
-type w_conn_Queryer_QueryerContext struct {
-	driver.Conn
-	driver.Queryer
-	driver.QueryerContext
-}
-
-// [driver.QueryerContext driver.ColumnConverter]
-type w_conn_QueryerContext_ColumnConverter struct {
-	driver.Conn
-	driver.QueryerContext
-	cc driver.ColumnConverter
-}
-
-func (w *w_conn_QueryerContext_ColumnConverter) ColumnConverter(idx int) driver.ValueConverter {
-	return w.cc.ColumnConverter(idx)
-}
-
-// [driver.ExecerContext driver.ConnPrepareContext]
-type w_conn_ExecerContext_ConnPrepareContext struct {
-	driver.Conn
-	driver.ExecerContext
-	driver.ConnPrepareContext
-}
-
-// [driver.Execer driver.ConnPrepareContext]
-type w_conn_Execer_ConnPrepareContext struct {
-	driver.Conn
-	driver.Execer
 	driver.ConnPrepareContext
 }
 
@@ -1279,15 +383,46 @@ type w_conn_Queryer_NamedValueChecker struct {
 	driver.NamedValueChecker
 }
 
-// [driver.NamedValueChecker driver.ColumnConverter]
-type w_conn_NamedValueChecker_ColumnConverter struct {
+// [driver.Execer driver.ExecerContext]
+type w_conn_Execer_ExecerContext struct {
 	driver.Conn
-	driver.NamedValueChecker
-	cc driver.ColumnConverter
+	driver.Execer
+	driver.ExecerContext
 }
 
-func (w *w_conn_NamedValueChecker_ColumnConverter) ColumnConverter(idx int) driver.ValueConverter {
-	return w.cc.ColumnConverter(idx)
+// [driver.ExecerContext driver.Queryer]
+type w_conn_ExecerContext_Queryer struct {
+	driver.Conn
+	driver.ExecerContext
+	driver.Queryer
+}
+
+// [driver.QueryerContext driver.ConnPrepareContext]
+type w_conn_QueryerContext_ConnPrepareContext struct {
+	driver.Conn
+	driver.QueryerContext
+	driver.ConnPrepareContext
+}
+
+// [driver.ConnPrepareContext driver.NamedValueChecker]
+type w_conn_ConnPrepareContext_NamedValueChecker struct {
+	driver.Conn
+	driver.ConnPrepareContext
+	driver.NamedValueChecker
+}
+
+// [driver.Execer driver.QueryerContext]
+type w_conn_Execer_QueryerContext struct {
+	driver.Conn
+	driver.Execer
+	driver.QueryerContext
+}
+
+// [driver.ExecerContext driver.NamedValueChecker]
+type w_conn_ExecerContext_NamedValueChecker struct {
+	driver.Conn
+	driver.ExecerContext
+	driver.NamedValueChecker
 }
 
 // [driver.ExecerContext driver.QueryerContext]
@@ -1297,14 +432,58 @@ type w_conn_ExecerContext_QueryerContext struct {
 	driver.QueryerContext
 }
 
-// [driver.ColumnConverter]
-type w_conn_ColumnConverter struct {
+// [driver.Execer driver.NamedValueChecker]
+type w_conn_Execer_NamedValueChecker struct {
 	driver.Conn
-	cc driver.ColumnConverter
+	driver.Execer
+	driver.NamedValueChecker
 }
 
-func (w *w_conn_ColumnConverter) ColumnConverter(idx int) driver.ValueConverter {
-	return w.cc.ColumnConverter(idx)
+// [driver.Execer driver.Queryer]
+type w_conn_Execer_Queryer struct {
+	driver.Conn
+	driver.Execer
+	driver.Queryer
+}
+
+// [driver.QueryerContext driver.NamedValueChecker]
+type w_conn_QueryerContext_NamedValueChecker struct {
+	driver.Conn
+	driver.QueryerContext
+	driver.NamedValueChecker
+}
+
+// [driver.Execer driver.ConnPrepareContext]
+type w_conn_Execer_ConnPrepareContext struct {
+	driver.Conn
+	driver.Execer
+	driver.ConnPrepareContext
+}
+
+// [driver.ExecerContext driver.ConnPrepareContext]
+type w_conn_ExecerContext_ConnPrepareContext struct {
+	driver.Conn
+	driver.ExecerContext
+	driver.ConnPrepareContext
+}
+
+// [driver.Queryer driver.QueryerContext]
+type w_conn_Queryer_QueryerContext struct {
+	driver.Conn
+	driver.Queryer
+	driver.QueryerContext
+}
+
+// [driver.QueryerContext]
+type w_conn_QueryerContext struct {
+	driver.Conn
+	driver.QueryerContext
+}
+
+// [driver.Execer]
+type w_conn_Execer struct {
+	driver.Conn
+	driver.Execer
 }
 
 // [driver.ConnPrepareContext]
@@ -1319,35 +498,23 @@ type w_conn_Queryer struct {
 	driver.Queryer
 }
 
-// [driver.ExecerContext]
-type w_conn_ExecerContext struct {
-	driver.Conn
-	driver.ExecerContext
-}
-
-// [driver.Execer]
-type w_conn_Execer struct {
-	driver.Conn
-	driver.Execer
-}
-
 // [driver.NamedValueChecker]
 type w_conn_NamedValueChecker struct {
 	driver.Conn
 	driver.NamedValueChecker
 }
 
-// [driver.QueryerContext]
-type w_conn_QueryerContext struct {
+// [driver.ExecerContext]
+type w_conn_ExecerContext struct {
 	driver.Conn
-	driver.QueryerContext
+	driver.ExecerContext
 }
 
 func connAlreadyWrapped(conn driver.Conn) bool {
 	switch conn.(type) {
-	case *wConn, *w_conn_Execer_ExecerContext_Queryer_QueryerContext_ConnPrepareContext_NamedValueChecker_ColumnConverter, *w_conn_Execer_ExecerContext_Queryer_QueryerContext_ConnPrepareContext_NamedValueChecker, *w_conn_ExecerContext_Queryer_QueryerContext_ConnPrepareContext_NamedValueChecker_ColumnConverter, *w_conn_Execer_Queryer_QueryerContext_ConnPrepareContext_NamedValueChecker_ColumnConverter, *w_conn_Execer_ExecerContext_QueryerContext_ConnPrepareContext_NamedValueChecker_ColumnConverter, *w_conn_Execer_ExecerContext_Queryer_ConnPrepareContext_NamedValueChecker_ColumnConverter, *w_conn_Execer_ExecerContext_Queryer_QueryerContext_NamedValueChecker_ColumnConverter, *w_conn_Execer_ExecerContext_Queryer_QueryerContext_ConnPrepareContext_ColumnConverter, *w_conn_Execer_Queryer_QueryerContext_ConnPrepareContext_ColumnConverter, *w_conn_Execer_ExecerContext_Queryer_QueryerContext_ConnPrepareContext, *w_conn_Queryer_QueryerContext_ConnPrepareContext_NamedValueChecker_ColumnConverter, *w_conn_ExecerContext_QueryerContext_ConnPrepareContext_NamedValueChecker_ColumnConverter, *w_conn_Execer_QueryerContext_ConnPrepareContext_NamedValueChecker_ColumnConverter, *w_conn_ExecerContext_Queryer_QueryerContext_ConnPrepareContext_NamedValueChecker, *w_conn_Execer_Queryer_QueryerContext_ConnPrepareContext_NamedValueChecker, *w_conn_ExecerContext_Queryer_ConnPrepareContext_NamedValueChecker_ColumnConverter, *w_conn_Execer_Queryer_ConnPrepareContext_NamedValueChecker_ColumnConverter, *w_conn_Execer_ExecerContext_QueryerContext_ConnPrepareContext_NamedValueChecker, *w_conn_Execer_ExecerContext_ConnPrepareContext_NamedValueChecker_ColumnConverter, *w_conn_Execer_ExecerContext_Queryer_ConnPrepareContext_NamedValueChecker, *w_conn_Execer_ExecerContext_Queryer_QueryerContext_ColumnConverter, *w_conn_ExecerContext_Queryer_QueryerContext_NamedValueChecker_ColumnConverter, *w_conn_Execer_ExecerContext_Queryer_QueryerContext_NamedValueChecker, *w_conn_Execer_Queryer_QueryerContext_NamedValueChecker_ColumnConverter, *w_conn_Execer_ExecerContext_Queryer_ConnPrepareContext_ColumnConverter, *w_conn_Execer_ExecerContext_QueryerContext_NamedValueChecker_ColumnConverter, *w_conn_ExecerContext_Queryer_QueryerContext_ConnPrepareContext_ColumnConverter, *w_conn_Execer_ExecerContext_QueryerContext_ConnPrepareContext_ColumnConverter, *w_conn_Execer_ExecerContext_Queryer_NamedValueChecker_ColumnConverter, *w_conn_Execer_Queryer_NamedValueChecker_ColumnConverter, *w_conn_Execer_ExecerContext_Queryer_ConnPrepareContext, *w_conn_Execer_QueryerContext_NamedValueChecker_ColumnConverter, *w_conn_Execer_Queryer_QueryerContext_ConnPrepareContext, *w_conn_ExecerContext_Queryer_NamedValueChecker_ColumnConverter, *w_conn_ExecerContext_QueryerContext_NamedValueChecker_ColumnConverter, *w_conn_Execer_ExecerContext_NamedValueChecker_ColumnConverter, *w_conn_Execer_ExecerContext_QueryerContext_ConnPrepareContext, *w_conn_Queryer_QueryerContext_ConnPrepareContext_ColumnConverter, *w_conn_Execer_ExecerContext_Queryer_NamedValueChecker, *w_conn_ExecerContext_QueryerContext_ConnPrepareContext_ColumnConverter, *w_conn_Execer_QueryerContext_ConnPrepareContext_ColumnConverter, *w_conn_Queryer_QueryerContext_NamedValueChecker_ColumnConverter, *w_conn_Execer_ExecerContext_QueryerContext_NamedValueChecker, *w_conn_ExecerContext_Queryer_ConnPrepareContext_ColumnConverter, *w_conn_Execer_Queryer_QueryerContext_NamedValueChecker, *w_conn_ExecerContext_Queryer_QueryerContext_NamedValueChecker, *w_conn_ExecerContext_Queryer_QueryerContext_ConnPrepareContext, *w_conn_Execer_Queryer_ConnPrepareContext_ColumnConverter, *w_conn_Execer_ExecerContext_ConnPrepareContext_ColumnConverter, *w_conn_Execer_ConnPrepareContext_NamedValueChecker_ColumnConverter, *w_conn_Execer_ExecerContext_ConnPrepareContext_NamedValueChecker, *w_conn_ExecerContext_Queryer_QueryerContext_ColumnConverter, *w_conn_Execer_Queryer_ConnPrepareContext_NamedValueChecker, *w_conn_ExecerContext_Queryer_ConnPrepareContext_NamedValueChecker, *w_conn_ExecerContext_ConnPrepareContext_NamedValueChecker_ColumnConverter, *w_conn_Execer_Queryer_QueryerContext_ColumnConverter, *w_conn_Execer_QueryerContext_ConnPrepareContext_NamedValueChecker, *w_conn_ExecerContext_QueryerContext_ConnPrepareContext_NamedValueChecker, *w_conn_Queryer_ConnPrepareContext_NamedValueChecker_ColumnConverter, *w_conn_Queryer_QueryerContext_ConnPrepareContext_NamedValueChecker, *w_conn_Execer_ExecerContext_Queryer_QueryerContext, *w_conn_QueryerContext_ConnPrepareContext_NamedValueChecker_ColumnConverter, *w_conn_Execer_ExecerContext_QueryerContext_ColumnConverter, *w_conn_Execer_ExecerContext_Queryer_ColumnConverter, *w_conn_Execer_QueryerContext_ColumnConverter, *w_conn_Execer_ExecerContext_Queryer, *w_conn_Execer_ExecerContext_QueryerContext, *w_conn_Execer_Queryer_QueryerContext, *w_conn_ExecerContext_Queryer_ColumnConverter, *w_conn_Execer_Queryer_ColumnConverter, *w_conn_ExecerContext_Queryer_QueryerContext, *w_conn_Execer_ExecerContext_ConnPrepareContext, *w_conn_Execer_Queryer_ConnPrepareContext, *w_conn_ExecerContext_QueryerContext_ColumnConverter, *w_conn_ConnPrepareContext_NamedValueChecker_ColumnConverter, *w_conn_Queryer_QueryerContext_ColumnConverter, *w_conn_QueryerContext_ConnPrepareContext_NamedValueChecker, *w_conn_Queryer_ConnPrepareContext_NamedValueChecker, *w_conn_ExecerContext_ConnPrepareContext_NamedValueChecker, *w_conn_ExecerContext_Queryer_ConnPrepareContext, *w_conn_Execer_ConnPrepareContext_ColumnConverter, *w_conn_ExecerContext_ConnPrepareContext_ColumnConverter, *w_conn_Execer_ConnPrepareContext_NamedValueChecker, *w_conn_Queryer_ConnPrepareContext_ColumnConverter, *w_conn_Execer_QueryerContext_ConnPrepareContext, *w_conn_Queryer_QueryerContext_NamedValueChecker, *w_conn_ExecerContext_QueryerContext_NamedValueChecker, *w_conn_QueryerContext_ConnPrepareContext_ColumnConverter, *w_conn_Execer_QueryerContext_NamedValueChecker, *w_conn_ExecerContext_QueryerContext_ConnPrepareContext, *w_conn_Execer_ExecerContext_ColumnConverter, *w_conn_ExecerContext_Queryer_NamedValueChecker, *w_conn_Queryer_QueryerContext_ConnPrepareContext, *w_conn_Execer_Queryer_NamedValueChecker, *w_conn_QueryerContext_NamedValueChecker_ColumnConverter, *w_conn_Execer_ExecerContext_NamedValueChecker, *w_conn_Execer_NamedValueChecker_ColumnConverter, *w_conn_ExecerContext_NamedValueChecker_ColumnConverter, *w_conn_Queryer_NamedValueChecker_ColumnConverter, *w_conn_Queryer_ConnPrepareContext, *w_conn_ExecerContext_Queryer, *w_conn_ExecerContext_NamedValueChecker, *w_conn_Execer_NamedValueChecker, *w_conn_Execer_QueryerContext, *w_conn_Execer_ExecerContext, *w_conn_Queryer_ColumnConverter, *w_conn_QueryerContext_NamedValueChecker, *w_conn_ConnPrepareContext_NamedValueChecker, *w_conn_QueryerContext_ConnPrepareContext, *w_conn_ConnPrepareContext_ColumnConverter, *w_conn_ExecerContext_ColumnConverter, *w_conn_Execer_ColumnConverter, *w_conn_Execer_Queryer, *w_conn_Queryer_QueryerContext, *w_conn_QueryerContext_ColumnConverter, *w_conn_ExecerContext_ConnPrepareContext, *w_conn_Execer_ConnPrepareContext, *w_conn_Queryer_NamedValueChecker, *w_conn_NamedValueChecker_ColumnConverter, *w_conn_ExecerContext_QueryerContext, *w_conn_ColumnConverter, *w_conn_ConnPrepareContext, *w_conn_Queryer, *w_conn_ExecerContext, *w_conn_Execer, *w_conn_NamedValueChecker, *w_conn_QueryerContext:
+	case *wConn, *w_conn_Execer_ExecerContext_Queryer_QueryerContext_ConnPrepareContext_NamedValueChecker, *w_conn_Execer_ExecerContext_Queryer_QueryerContext_ConnPrepareContext, *w_conn_ExecerContext_Queryer_QueryerContext_ConnPrepareContext_NamedValueChecker, *w_conn_Execer_Queryer_QueryerContext_ConnPrepareContext_NamedValueChecker, *w_conn_Execer_ExecerContext_QueryerContext_ConnPrepareContext_NamedValueChecker, *w_conn_Execer_ExecerContext_Queryer_ConnPrepareContext_NamedValueChecker, *w_conn_Execer_ExecerContext_Queryer_QueryerContext_NamedValueChecker, *w_conn_Execer_Queryer_QueryerContext_NamedValueChecker, *w_conn_Execer_ExecerContext_Queryer_ConnPrepareContext, *w_conn_Queryer_QueryerContext_ConnPrepareContext_NamedValueChecker, *w_conn_ExecerContext_QueryerContext_ConnPrepareContext_NamedValueChecker, *w_conn_Execer_QueryerContext_ConnPrepareContext_NamedValueChecker, *w_conn_ExecerContext_Queryer_ConnPrepareContext_NamedValueChecker, *w_conn_Execer_Queryer_ConnPrepareContext_NamedValueChecker, *w_conn_Execer_ExecerContext_Queryer_QueryerContext, *w_conn_Execer_ExecerContext_ConnPrepareContext_NamedValueChecker, *w_conn_ExecerContext_Queryer_QueryerContext_NamedValueChecker, *w_conn_Execer_ExecerContext_QueryerContext_NamedValueChecker, *w_conn_Execer_ExecerContext_Queryer_NamedValueChecker, *w_conn_ExecerContext_Queryer_QueryerContext_ConnPrepareContext, *w_conn_Execer_Queryer_QueryerContext_ConnPrepareContext, *w_conn_Execer_ExecerContext_QueryerContext_ConnPrepareContext, *w_conn_Execer_ConnPrepareContext_NamedValueChecker, *w_conn_Execer_Queryer_QueryerContext, *w_conn_Execer_QueryerContext_ConnPrepareContext, *w_conn_ExecerContext_QueryerContext_ConnPrepareContext, *w_conn_ExecerContext_Queryer_ConnPrepareContext, *w_conn_Queryer_QueryerContext_ConnPrepareContext, *w_conn_Execer_Queryer_ConnPrepareContext, *w_conn_Execer_ExecerContext_QueryerContext, *w_conn_QueryerContext_ConnPrepareContext_NamedValueChecker, *w_conn_ExecerContext_Queryer_QueryerContext, *w_conn_Queryer_ConnPrepareContext_NamedValueChecker, *w_conn_ExecerContext_ConnPrepareContext_NamedValueChecker, *w_conn_Execer_ExecerContext_NamedValueChecker, *w_conn_Execer_ExecerContext_Queryer, *w_conn_Execer_Queryer_NamedValueChecker, *w_conn_ExecerContext_Queryer_NamedValueChecker, *w_conn_Execer_ExecerContext_ConnPrepareContext, *w_conn_Queryer_QueryerContext_NamedValueChecker, *w_conn_Execer_QueryerContext_NamedValueChecker, *w_conn_ExecerContext_QueryerContext_NamedValueChecker, *w_conn_Queryer_ConnPrepareContext, *w_conn_Queryer_NamedValueChecker, *w_conn_Execer_ExecerContext, *w_conn_ExecerContext_Queryer, *w_conn_QueryerContext_ConnPrepareContext, *w_conn_ConnPrepareContext_NamedValueChecker, *w_conn_Execer_QueryerContext, *w_conn_ExecerContext_NamedValueChecker, *w_conn_ExecerContext_QueryerContext, *w_conn_Execer_NamedValueChecker, *w_conn_Execer_Queryer, *w_conn_QueryerContext_NamedValueChecker, *w_conn_Execer_ConnPrepareContext, *w_conn_ExecerContext_ConnPrepareContext, *w_conn_Queryer_QueryerContext, *w_conn_QueryerContext, *w_conn_Execer, *w_conn_ConnPrepareContext, *w_conn_Queryer, *w_conn_NamedValueChecker, *w_conn_ExecerContext:
 		return true
-	case w_conn_Execer_ExecerContext_Queryer_QueryerContext_ConnPrepareContext_NamedValueChecker_ColumnConverter, w_conn_Execer_ExecerContext_Queryer_QueryerContext_ConnPrepareContext_NamedValueChecker, w_conn_ExecerContext_Queryer_QueryerContext_ConnPrepareContext_NamedValueChecker_ColumnConverter, w_conn_Execer_Queryer_QueryerContext_ConnPrepareContext_NamedValueChecker_ColumnConverter, w_conn_Execer_ExecerContext_QueryerContext_ConnPrepareContext_NamedValueChecker_ColumnConverter, w_conn_Execer_ExecerContext_Queryer_ConnPrepareContext_NamedValueChecker_ColumnConverter, w_conn_Execer_ExecerContext_Queryer_QueryerContext_NamedValueChecker_ColumnConverter, w_conn_Execer_ExecerContext_Queryer_QueryerContext_ConnPrepareContext_ColumnConverter, w_conn_Execer_Queryer_QueryerContext_ConnPrepareContext_ColumnConverter, w_conn_Execer_ExecerContext_Queryer_QueryerContext_ConnPrepareContext, w_conn_Queryer_QueryerContext_ConnPrepareContext_NamedValueChecker_ColumnConverter, w_conn_ExecerContext_QueryerContext_ConnPrepareContext_NamedValueChecker_ColumnConverter, w_conn_Execer_QueryerContext_ConnPrepareContext_NamedValueChecker_ColumnConverter, w_conn_ExecerContext_Queryer_QueryerContext_ConnPrepareContext_NamedValueChecker, w_conn_Execer_Queryer_QueryerContext_ConnPrepareContext_NamedValueChecker, w_conn_ExecerContext_Queryer_ConnPrepareContext_NamedValueChecker_ColumnConverter, w_conn_Execer_Queryer_ConnPrepareContext_NamedValueChecker_ColumnConverter, w_conn_Execer_ExecerContext_QueryerContext_ConnPrepareContext_NamedValueChecker, w_conn_Execer_ExecerContext_ConnPrepareContext_NamedValueChecker_ColumnConverter, w_conn_Execer_ExecerContext_Queryer_ConnPrepareContext_NamedValueChecker, w_conn_Execer_ExecerContext_Queryer_QueryerContext_ColumnConverter, w_conn_ExecerContext_Queryer_QueryerContext_NamedValueChecker_ColumnConverter, w_conn_Execer_ExecerContext_Queryer_QueryerContext_NamedValueChecker, w_conn_Execer_Queryer_QueryerContext_NamedValueChecker_ColumnConverter, w_conn_Execer_ExecerContext_Queryer_ConnPrepareContext_ColumnConverter, w_conn_Execer_ExecerContext_QueryerContext_NamedValueChecker_ColumnConverter, w_conn_ExecerContext_Queryer_QueryerContext_ConnPrepareContext_ColumnConverter, w_conn_Execer_ExecerContext_QueryerContext_ConnPrepareContext_ColumnConverter, w_conn_Execer_ExecerContext_Queryer_NamedValueChecker_ColumnConverter, w_conn_Execer_Queryer_NamedValueChecker_ColumnConverter, w_conn_Execer_ExecerContext_Queryer_ConnPrepareContext, w_conn_Execer_QueryerContext_NamedValueChecker_ColumnConverter, w_conn_Execer_Queryer_QueryerContext_ConnPrepareContext, w_conn_ExecerContext_Queryer_NamedValueChecker_ColumnConverter, w_conn_ExecerContext_QueryerContext_NamedValueChecker_ColumnConverter, w_conn_Execer_ExecerContext_NamedValueChecker_ColumnConverter, w_conn_Execer_ExecerContext_QueryerContext_ConnPrepareContext, w_conn_Queryer_QueryerContext_ConnPrepareContext_ColumnConverter, w_conn_Execer_ExecerContext_Queryer_NamedValueChecker, w_conn_ExecerContext_QueryerContext_ConnPrepareContext_ColumnConverter, w_conn_Execer_QueryerContext_ConnPrepareContext_ColumnConverter, w_conn_Queryer_QueryerContext_NamedValueChecker_ColumnConverter, w_conn_Execer_ExecerContext_QueryerContext_NamedValueChecker, w_conn_ExecerContext_Queryer_ConnPrepareContext_ColumnConverter, w_conn_Execer_Queryer_QueryerContext_NamedValueChecker, w_conn_ExecerContext_Queryer_QueryerContext_NamedValueChecker, w_conn_ExecerContext_Queryer_QueryerContext_ConnPrepareContext, w_conn_Execer_Queryer_ConnPrepareContext_ColumnConverter, w_conn_Execer_ExecerContext_ConnPrepareContext_ColumnConverter, w_conn_Execer_ConnPrepareContext_NamedValueChecker_ColumnConverter, w_conn_Execer_ExecerContext_ConnPrepareContext_NamedValueChecker, w_conn_ExecerContext_Queryer_QueryerContext_ColumnConverter, w_conn_Execer_Queryer_ConnPrepareContext_NamedValueChecker, w_conn_ExecerContext_Queryer_ConnPrepareContext_NamedValueChecker, w_conn_ExecerContext_ConnPrepareContext_NamedValueChecker_ColumnConverter, w_conn_Execer_Queryer_QueryerContext_ColumnConverter, w_conn_Execer_QueryerContext_ConnPrepareContext_NamedValueChecker, w_conn_ExecerContext_QueryerContext_ConnPrepareContext_NamedValueChecker, w_conn_Queryer_ConnPrepareContext_NamedValueChecker_ColumnConverter, w_conn_Queryer_QueryerContext_ConnPrepareContext_NamedValueChecker, w_conn_Execer_ExecerContext_Queryer_QueryerContext, w_conn_QueryerContext_ConnPrepareContext_NamedValueChecker_ColumnConverter, w_conn_Execer_ExecerContext_QueryerContext_ColumnConverter, w_conn_Execer_ExecerContext_Queryer_ColumnConverter, w_conn_Execer_QueryerContext_ColumnConverter, w_conn_Execer_ExecerContext_Queryer, w_conn_Execer_ExecerContext_QueryerContext, w_conn_Execer_Queryer_QueryerContext, w_conn_ExecerContext_Queryer_ColumnConverter, w_conn_Execer_Queryer_ColumnConverter, w_conn_ExecerContext_Queryer_QueryerContext, w_conn_Execer_ExecerContext_ConnPrepareContext, w_conn_Execer_Queryer_ConnPrepareContext, w_conn_ExecerContext_QueryerContext_ColumnConverter, w_conn_ConnPrepareContext_NamedValueChecker_ColumnConverter, w_conn_Queryer_QueryerContext_ColumnConverter, w_conn_QueryerContext_ConnPrepareContext_NamedValueChecker, w_conn_Queryer_ConnPrepareContext_NamedValueChecker, w_conn_ExecerContext_ConnPrepareContext_NamedValueChecker, w_conn_ExecerContext_Queryer_ConnPrepareContext, w_conn_Execer_ConnPrepareContext_ColumnConverter, w_conn_ExecerContext_ConnPrepareContext_ColumnConverter, w_conn_Execer_ConnPrepareContext_NamedValueChecker, w_conn_Queryer_ConnPrepareContext_ColumnConverter, w_conn_Execer_QueryerContext_ConnPrepareContext, w_conn_Queryer_QueryerContext_NamedValueChecker, w_conn_ExecerContext_QueryerContext_NamedValueChecker, w_conn_QueryerContext_ConnPrepareContext_ColumnConverter, w_conn_Execer_QueryerContext_NamedValueChecker, w_conn_ExecerContext_QueryerContext_ConnPrepareContext, w_conn_Execer_ExecerContext_ColumnConverter, w_conn_ExecerContext_Queryer_NamedValueChecker, w_conn_Queryer_QueryerContext_ConnPrepareContext, w_conn_Execer_Queryer_NamedValueChecker, w_conn_QueryerContext_NamedValueChecker_ColumnConverter, w_conn_Execer_ExecerContext_NamedValueChecker, w_conn_Execer_NamedValueChecker_ColumnConverter, w_conn_ExecerContext_NamedValueChecker_ColumnConverter, w_conn_Queryer_NamedValueChecker_ColumnConverter, w_conn_Queryer_ConnPrepareContext, w_conn_ExecerContext_Queryer, w_conn_ExecerContext_NamedValueChecker, w_conn_Execer_NamedValueChecker, w_conn_Execer_QueryerContext, w_conn_Execer_ExecerContext, w_conn_Queryer_ColumnConverter, w_conn_QueryerContext_NamedValueChecker, w_conn_ConnPrepareContext_NamedValueChecker, w_conn_QueryerContext_ConnPrepareContext, w_conn_ConnPrepareContext_ColumnConverter, w_conn_ExecerContext_ColumnConverter, w_conn_Execer_ColumnConverter, w_conn_Execer_Queryer, w_conn_Queryer_QueryerContext, w_conn_QueryerContext_ColumnConverter, w_conn_ExecerContext_ConnPrepareContext, w_conn_Execer_ConnPrepareContext, w_conn_Queryer_NamedValueChecker, w_conn_NamedValueChecker_ColumnConverter, w_conn_ExecerContext_QueryerContext, w_conn_ColumnConverter, w_conn_ConnPrepareContext, w_conn_Queryer, w_conn_ExecerContext, w_conn_Execer, w_conn_NamedValueChecker, w_conn_QueryerContext:
+	case w_conn_Execer_ExecerContext_Queryer_QueryerContext_ConnPrepareContext_NamedValueChecker, w_conn_Execer_ExecerContext_Queryer_QueryerContext_ConnPrepareContext, w_conn_ExecerContext_Queryer_QueryerContext_ConnPrepareContext_NamedValueChecker, w_conn_Execer_Queryer_QueryerContext_ConnPrepareContext_NamedValueChecker, w_conn_Execer_ExecerContext_QueryerContext_ConnPrepareContext_NamedValueChecker, w_conn_Execer_ExecerContext_Queryer_ConnPrepareContext_NamedValueChecker, w_conn_Execer_ExecerContext_Queryer_QueryerContext_NamedValueChecker, w_conn_Execer_Queryer_QueryerContext_NamedValueChecker, w_conn_Execer_ExecerContext_Queryer_ConnPrepareContext, w_conn_Queryer_QueryerContext_ConnPrepareContext_NamedValueChecker, w_conn_ExecerContext_QueryerContext_ConnPrepareContext_NamedValueChecker, w_conn_Execer_QueryerContext_ConnPrepareContext_NamedValueChecker, w_conn_ExecerContext_Queryer_ConnPrepareContext_NamedValueChecker, w_conn_Execer_Queryer_ConnPrepareContext_NamedValueChecker, w_conn_Execer_ExecerContext_Queryer_QueryerContext, w_conn_Execer_ExecerContext_ConnPrepareContext_NamedValueChecker, w_conn_ExecerContext_Queryer_QueryerContext_NamedValueChecker, w_conn_Execer_ExecerContext_QueryerContext_NamedValueChecker, w_conn_Execer_ExecerContext_Queryer_NamedValueChecker, w_conn_ExecerContext_Queryer_QueryerContext_ConnPrepareContext, w_conn_Execer_Queryer_QueryerContext_ConnPrepareContext, w_conn_Execer_ExecerContext_QueryerContext_ConnPrepareContext, w_conn_Execer_ConnPrepareContext_NamedValueChecker, w_conn_Execer_Queryer_QueryerContext, w_conn_Execer_QueryerContext_ConnPrepareContext, w_conn_ExecerContext_QueryerContext_ConnPrepareContext, w_conn_ExecerContext_Queryer_ConnPrepareContext, w_conn_Queryer_QueryerContext_ConnPrepareContext, w_conn_Execer_Queryer_ConnPrepareContext, w_conn_Execer_ExecerContext_QueryerContext, w_conn_QueryerContext_ConnPrepareContext_NamedValueChecker, w_conn_ExecerContext_Queryer_QueryerContext, w_conn_Queryer_ConnPrepareContext_NamedValueChecker, w_conn_ExecerContext_ConnPrepareContext_NamedValueChecker, w_conn_Execer_ExecerContext_NamedValueChecker, w_conn_Execer_ExecerContext_Queryer, w_conn_Execer_Queryer_NamedValueChecker, w_conn_ExecerContext_Queryer_NamedValueChecker, w_conn_Execer_ExecerContext_ConnPrepareContext, w_conn_Queryer_QueryerContext_NamedValueChecker, w_conn_Execer_QueryerContext_NamedValueChecker, w_conn_ExecerContext_QueryerContext_NamedValueChecker, w_conn_Queryer_ConnPrepareContext, w_conn_Queryer_NamedValueChecker, w_conn_Execer_ExecerContext, w_conn_ExecerContext_Queryer, w_conn_QueryerContext_ConnPrepareContext, w_conn_ConnPrepareContext_NamedValueChecker, w_conn_Execer_QueryerContext, w_conn_ExecerContext_NamedValueChecker, w_conn_ExecerContext_QueryerContext, w_conn_Execer_NamedValueChecker, w_conn_Execer_Queryer, w_conn_QueryerContext_NamedValueChecker, w_conn_Execer_ConnPrepareContext, w_conn_ExecerContext_ConnPrepareContext, w_conn_Queryer_QueryerContext, w_conn_QueryerContext, w_conn_Execer, w_conn_ConnPrepareContext, w_conn_Queryer, w_conn_NamedValueChecker, w_conn_ExecerContext:
 		return true
 	}
 	return false
@@ -1359,9 +526,8 @@ func wrapConn(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor) drive
 	QueryerContext, isQueryerContext := conn.(driver.QueryerContext)
 	ConnPrepareContext, isConnPrepareContext := conn.(driver.ConnPrepareContext)
 	NamedValueChecker, isNamedValueChecker := conn.(driver.NamedValueChecker)
-	ColumnConverter, isColumnConverter := conn.(driver.ColumnConverter)
-	if f, ok := _conn_n[convertBooleansToInt(isExecer, isExecerContext, isQueryer, isQueryerContext, isConnPrepareContext, isNamedValueChecker, isColumnConverter)]; ok {
-		return f(connDetails, conn, sensor, Execer, ExecerContext, Queryer, QueryerContext, ConnPrepareContext, NamedValueChecker, ColumnConverter)
+	if f, ok := _conn_n[convertBooleansToInt(isExecer, isExecerContext, isQueryer, isQueryerContext, isConnPrepareContext, isNamedValueChecker)]; ok {
+		return f(connDetails, conn, sensor, Execer, ExecerContext, Queryer, QueryerContext, ConnPrepareContext, NamedValueChecker)
 	}
 	return &wConn{
 		Conn:        conn,
@@ -1369,37 +535,7 @@ func wrapConn(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor) drive
 		sensor:      sensor,
 	}
 }
-func get_conn_Execer_ExecerContext_Queryer_QueryerContext_ConnPrepareContext_NamedValueChecker_ColumnConverter(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
-	return &w_conn_Execer_ExecerContext_Queryer_QueryerContext_ConnPrepareContext_NamedValueChecker_ColumnConverter{
-		Conn: &wConn{
-			Conn:        conn,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, Execer: &wExecer{
-			Execer:      Execer,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, ExecerContext: &wExecerContext{
-			ExecerContext: ExecerContext,
-			connDetails:   connDetails,
-			sensor:        sensor,
-		}, Queryer: &wQueryer{
-			Queryer:     Queryer,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, QueryerContext: &wQueryerContext{
-			QueryerContext: QueryerContext,
-			connDetails:    connDetails,
-			sensor:         sensor,
-		}, ConnPrepareContext: &wConnPrepareContext{
-			ConnPrepareContext: ConnPrepareContext,
-			connDetails:        connDetails,
-			sensor:             sensor,
-		}, NamedValueChecker: NamedValueChecker,
-		cc: ColumnConverter,
-	}
-}
-func get_conn_Execer_ExecerContext_Queryer_QueryerContext_ConnPrepareContext_NamedValueChecker(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
+func get_conn_Execer_ExecerContext_Queryer_QueryerContext_ConnPrepareContext_NamedValueChecker(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker) driver.Conn {
 	return &w_conn_Execer_ExecerContext_Queryer_QueryerContext_ConnPrepareContext_NamedValueChecker{
 		Conn: &wConn{
 			Conn:        conn,
@@ -1428,191 +564,7 @@ func get_conn_Execer_ExecerContext_Queryer_QueryerContext_ConnPrepareContext_Nam
 		}, NamedValueChecker: NamedValueChecker,
 	}
 }
-func get_conn_ExecerContext_Queryer_QueryerContext_ConnPrepareContext_NamedValueChecker_ColumnConverter(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
-	return &w_conn_ExecerContext_Queryer_QueryerContext_ConnPrepareContext_NamedValueChecker_ColumnConverter{
-		Conn: &wConn{
-			Conn:        conn,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, ExecerContext: &wExecerContext{
-			ExecerContext: ExecerContext,
-			connDetails:   connDetails,
-			sensor:        sensor,
-		}, Queryer: &wQueryer{
-			Queryer:     Queryer,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, QueryerContext: &wQueryerContext{
-			QueryerContext: QueryerContext,
-			connDetails:    connDetails,
-			sensor:         sensor,
-		}, ConnPrepareContext: &wConnPrepareContext{
-			ConnPrepareContext: ConnPrepareContext,
-			connDetails:        connDetails,
-			sensor:             sensor,
-		}, NamedValueChecker: NamedValueChecker,
-		cc: ColumnConverter,
-	}
-}
-func get_conn_Execer_Queryer_QueryerContext_ConnPrepareContext_NamedValueChecker_ColumnConverter(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
-	return &w_conn_Execer_Queryer_QueryerContext_ConnPrepareContext_NamedValueChecker_ColumnConverter{
-		Conn: &wConn{
-			Conn:        conn,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, Execer: &wExecer{
-			Execer:      Execer,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, Queryer: &wQueryer{
-			Queryer:     Queryer,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, QueryerContext: &wQueryerContext{
-			QueryerContext: QueryerContext,
-			connDetails:    connDetails,
-			sensor:         sensor,
-		}, ConnPrepareContext: &wConnPrepareContext{
-			ConnPrepareContext: ConnPrepareContext,
-			connDetails:        connDetails,
-			sensor:             sensor,
-		}, NamedValueChecker: NamedValueChecker,
-		cc: ColumnConverter,
-	}
-}
-func get_conn_Execer_ExecerContext_QueryerContext_ConnPrepareContext_NamedValueChecker_ColumnConverter(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
-	return &w_conn_Execer_ExecerContext_QueryerContext_ConnPrepareContext_NamedValueChecker_ColumnConverter{
-		Conn: &wConn{
-			Conn:        conn,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, Execer: &wExecer{
-			Execer:      Execer,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, ExecerContext: &wExecerContext{
-			ExecerContext: ExecerContext,
-			connDetails:   connDetails,
-			sensor:        sensor,
-		}, QueryerContext: &wQueryerContext{
-			QueryerContext: QueryerContext,
-			connDetails:    connDetails,
-			sensor:         sensor,
-		}, ConnPrepareContext: &wConnPrepareContext{
-			ConnPrepareContext: ConnPrepareContext,
-			connDetails:        connDetails,
-			sensor:             sensor,
-		}, NamedValueChecker: NamedValueChecker,
-		cc: ColumnConverter,
-	}
-}
-func get_conn_Execer_ExecerContext_Queryer_ConnPrepareContext_NamedValueChecker_ColumnConverter(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
-	return &w_conn_Execer_ExecerContext_Queryer_ConnPrepareContext_NamedValueChecker_ColumnConverter{
-		Conn: &wConn{
-			Conn:        conn,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, Execer: &wExecer{
-			Execer:      Execer,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, ExecerContext: &wExecerContext{
-			ExecerContext: ExecerContext,
-			connDetails:   connDetails,
-			sensor:        sensor,
-		}, Queryer: &wQueryer{
-			Queryer:     Queryer,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, ConnPrepareContext: &wConnPrepareContext{
-			ConnPrepareContext: ConnPrepareContext,
-			connDetails:        connDetails,
-			sensor:             sensor,
-		}, NamedValueChecker: NamedValueChecker,
-		cc: ColumnConverter,
-	}
-}
-func get_conn_Execer_ExecerContext_Queryer_QueryerContext_NamedValueChecker_ColumnConverter(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
-	return &w_conn_Execer_ExecerContext_Queryer_QueryerContext_NamedValueChecker_ColumnConverter{
-		Conn: &wConn{
-			Conn:        conn,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, Execer: &wExecer{
-			Execer:      Execer,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, ExecerContext: &wExecerContext{
-			ExecerContext: ExecerContext,
-			connDetails:   connDetails,
-			sensor:        sensor,
-		}, Queryer: &wQueryer{
-			Queryer:     Queryer,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, QueryerContext: &wQueryerContext{
-			QueryerContext: QueryerContext,
-			connDetails:    connDetails,
-			sensor:         sensor,
-		}, NamedValueChecker: NamedValueChecker,
-		cc: ColumnConverter,
-	}
-}
-func get_conn_Execer_ExecerContext_Queryer_QueryerContext_ConnPrepareContext_ColumnConverter(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
-	return &w_conn_Execer_ExecerContext_Queryer_QueryerContext_ConnPrepareContext_ColumnConverter{
-		Conn: &wConn{
-			Conn:        conn,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, Execer: &wExecer{
-			Execer:      Execer,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, ExecerContext: &wExecerContext{
-			ExecerContext: ExecerContext,
-			connDetails:   connDetails,
-			sensor:        sensor,
-		}, Queryer: &wQueryer{
-			Queryer:     Queryer,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, QueryerContext: &wQueryerContext{
-			QueryerContext: QueryerContext,
-			connDetails:    connDetails,
-			sensor:         sensor,
-		}, ConnPrepareContext: &wConnPrepareContext{
-			ConnPrepareContext: ConnPrepareContext,
-			connDetails:        connDetails,
-			sensor:             sensor,
-		}, cc: ColumnConverter,
-	}
-}
-func get_conn_Execer_Queryer_QueryerContext_ConnPrepareContext_ColumnConverter(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
-	return &w_conn_Execer_Queryer_QueryerContext_ConnPrepareContext_ColumnConverter{
-		Conn: &wConn{
-			Conn:        conn,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, Execer: &wExecer{
-			Execer:      Execer,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, Queryer: &wQueryer{
-			Queryer:     Queryer,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, QueryerContext: &wQueryerContext{
-			QueryerContext: QueryerContext,
-			connDetails:    connDetails,
-			sensor:         sensor,
-		}, ConnPrepareContext: &wConnPrepareContext{
-			ConnPrepareContext: ConnPrepareContext,
-			connDetails:        connDetails,
-			sensor:             sensor,
-		}, cc: ColumnConverter,
-	}
-}
-func get_conn_Execer_ExecerContext_Queryer_QueryerContext_ConnPrepareContext(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
+func get_conn_Execer_ExecerContext_Queryer_QueryerContext_ConnPrepareContext(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker) driver.Conn {
 	return &w_conn_Execer_ExecerContext_Queryer_QueryerContext_ConnPrepareContext{
 		Conn: &wConn{
 			Conn:        conn,
@@ -1640,73 +592,7 @@ func get_conn_Execer_ExecerContext_Queryer_QueryerContext_ConnPrepareContext(con
 			sensor:             sensor,
 		}}
 }
-func get_conn_Queryer_QueryerContext_ConnPrepareContext_NamedValueChecker_ColumnConverter(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
-	return &w_conn_Queryer_QueryerContext_ConnPrepareContext_NamedValueChecker_ColumnConverter{
-		Conn: &wConn{
-			Conn:        conn,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, Queryer: &wQueryer{
-			Queryer:     Queryer,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, QueryerContext: &wQueryerContext{
-			QueryerContext: QueryerContext,
-			connDetails:    connDetails,
-			sensor:         sensor,
-		}, ConnPrepareContext: &wConnPrepareContext{
-			ConnPrepareContext: ConnPrepareContext,
-			connDetails:        connDetails,
-			sensor:             sensor,
-		}, NamedValueChecker: NamedValueChecker,
-		cc: ColumnConverter,
-	}
-}
-func get_conn_ExecerContext_QueryerContext_ConnPrepareContext_NamedValueChecker_ColumnConverter(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
-	return &w_conn_ExecerContext_QueryerContext_ConnPrepareContext_NamedValueChecker_ColumnConverter{
-		Conn: &wConn{
-			Conn:        conn,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, ExecerContext: &wExecerContext{
-			ExecerContext: ExecerContext,
-			connDetails:   connDetails,
-			sensor:        sensor,
-		}, QueryerContext: &wQueryerContext{
-			QueryerContext: QueryerContext,
-			connDetails:    connDetails,
-			sensor:         sensor,
-		}, ConnPrepareContext: &wConnPrepareContext{
-			ConnPrepareContext: ConnPrepareContext,
-			connDetails:        connDetails,
-			sensor:             sensor,
-		}, NamedValueChecker: NamedValueChecker,
-		cc: ColumnConverter,
-	}
-}
-func get_conn_Execer_QueryerContext_ConnPrepareContext_NamedValueChecker_ColumnConverter(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
-	return &w_conn_Execer_QueryerContext_ConnPrepareContext_NamedValueChecker_ColumnConverter{
-		Conn: &wConn{
-			Conn:        conn,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, Execer: &wExecer{
-			Execer:      Execer,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, QueryerContext: &wQueryerContext{
-			QueryerContext: QueryerContext,
-			connDetails:    connDetails,
-			sensor:         sensor,
-		}, ConnPrepareContext: &wConnPrepareContext{
-			ConnPrepareContext: ConnPrepareContext,
-			connDetails:        connDetails,
-			sensor:             sensor,
-		}, NamedValueChecker: NamedValueChecker,
-		cc: ColumnConverter,
-	}
-}
-func get_conn_ExecerContext_Queryer_QueryerContext_ConnPrepareContext_NamedValueChecker(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
+func get_conn_ExecerContext_Queryer_QueryerContext_ConnPrepareContext_NamedValueChecker(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker) driver.Conn {
 	return &w_conn_ExecerContext_Queryer_QueryerContext_ConnPrepareContext_NamedValueChecker{
 		Conn: &wConn{
 			Conn:        conn,
@@ -1731,7 +617,7 @@ func get_conn_ExecerContext_Queryer_QueryerContext_ConnPrepareContext_NamedValue
 		}, NamedValueChecker: NamedValueChecker,
 	}
 }
-func get_conn_Execer_Queryer_QueryerContext_ConnPrepareContext_NamedValueChecker(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
+func get_conn_Execer_Queryer_QueryerContext_ConnPrepareContext_NamedValueChecker(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker) driver.Conn {
 	return &w_conn_Execer_Queryer_QueryerContext_ConnPrepareContext_NamedValueChecker{
 		Conn: &wConn{
 			Conn:        conn,
@@ -1756,51 +642,7 @@ func get_conn_Execer_Queryer_QueryerContext_ConnPrepareContext_NamedValueChecker
 		}, NamedValueChecker: NamedValueChecker,
 	}
 }
-func get_conn_ExecerContext_Queryer_ConnPrepareContext_NamedValueChecker_ColumnConverter(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
-	return &w_conn_ExecerContext_Queryer_ConnPrepareContext_NamedValueChecker_ColumnConverter{
-		Conn: &wConn{
-			Conn:        conn,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, ExecerContext: &wExecerContext{
-			ExecerContext: ExecerContext,
-			connDetails:   connDetails,
-			sensor:        sensor,
-		}, Queryer: &wQueryer{
-			Queryer:     Queryer,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, ConnPrepareContext: &wConnPrepareContext{
-			ConnPrepareContext: ConnPrepareContext,
-			connDetails:        connDetails,
-			sensor:             sensor,
-		}, NamedValueChecker: NamedValueChecker,
-		cc: ColumnConverter,
-	}
-}
-func get_conn_Execer_Queryer_ConnPrepareContext_NamedValueChecker_ColumnConverter(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
-	return &w_conn_Execer_Queryer_ConnPrepareContext_NamedValueChecker_ColumnConverter{
-		Conn: &wConn{
-			Conn:        conn,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, Execer: &wExecer{
-			Execer:      Execer,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, Queryer: &wQueryer{
-			Queryer:     Queryer,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, ConnPrepareContext: &wConnPrepareContext{
-			ConnPrepareContext: ConnPrepareContext,
-			connDetails:        connDetails,
-			sensor:             sensor,
-		}, NamedValueChecker: NamedValueChecker,
-		cc: ColumnConverter,
-	}
-}
-func get_conn_Execer_ExecerContext_QueryerContext_ConnPrepareContext_NamedValueChecker(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
+func get_conn_Execer_ExecerContext_QueryerContext_ConnPrepareContext_NamedValueChecker(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker) driver.Conn {
 	return &w_conn_Execer_ExecerContext_QueryerContext_ConnPrepareContext_NamedValueChecker{
 		Conn: &wConn{
 			Conn:        conn,
@@ -1825,29 +667,7 @@ func get_conn_Execer_ExecerContext_QueryerContext_ConnPrepareContext_NamedValueC
 		}, NamedValueChecker: NamedValueChecker,
 	}
 }
-func get_conn_Execer_ExecerContext_ConnPrepareContext_NamedValueChecker_ColumnConverter(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
-	return &w_conn_Execer_ExecerContext_ConnPrepareContext_NamedValueChecker_ColumnConverter{
-		Conn: &wConn{
-			Conn:        conn,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, Execer: &wExecer{
-			Execer:      Execer,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, ExecerContext: &wExecerContext{
-			ExecerContext: ExecerContext,
-			connDetails:   connDetails,
-			sensor:        sensor,
-		}, ConnPrepareContext: &wConnPrepareContext{
-			ConnPrepareContext: ConnPrepareContext,
-			connDetails:        connDetails,
-			sensor:             sensor,
-		}, NamedValueChecker: NamedValueChecker,
-		cc: ColumnConverter,
-	}
-}
-func get_conn_Execer_ExecerContext_Queryer_ConnPrepareContext_NamedValueChecker(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
+func get_conn_Execer_ExecerContext_Queryer_ConnPrepareContext_NamedValueChecker(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker) driver.Conn {
 	return &w_conn_Execer_ExecerContext_Queryer_ConnPrepareContext_NamedValueChecker{
 		Conn: &wConn{
 			Conn:        conn,
@@ -1872,54 +692,7 @@ func get_conn_Execer_ExecerContext_Queryer_ConnPrepareContext_NamedValueChecker(
 		}, NamedValueChecker: NamedValueChecker,
 	}
 }
-func get_conn_Execer_ExecerContext_Queryer_QueryerContext_ColumnConverter(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
-	return &w_conn_Execer_ExecerContext_Queryer_QueryerContext_ColumnConverter{
-		Conn: &wConn{
-			Conn:        conn,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, Execer: &wExecer{
-			Execer:      Execer,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, ExecerContext: &wExecerContext{
-			ExecerContext: ExecerContext,
-			connDetails:   connDetails,
-			sensor:        sensor,
-		}, Queryer: &wQueryer{
-			Queryer:     Queryer,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, QueryerContext: &wQueryerContext{
-			QueryerContext: QueryerContext,
-			connDetails:    connDetails,
-			sensor:         sensor,
-		}, cc: ColumnConverter,
-	}
-}
-func get_conn_ExecerContext_Queryer_QueryerContext_NamedValueChecker_ColumnConverter(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
-	return &w_conn_ExecerContext_Queryer_QueryerContext_NamedValueChecker_ColumnConverter{
-		Conn: &wConn{
-			Conn:        conn,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, ExecerContext: &wExecerContext{
-			ExecerContext: ExecerContext,
-			connDetails:   connDetails,
-			sensor:        sensor,
-		}, Queryer: &wQueryer{
-			Queryer:     Queryer,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, QueryerContext: &wQueryerContext{
-			QueryerContext: QueryerContext,
-			connDetails:    connDetails,
-			sensor:         sensor,
-		}, NamedValueChecker: NamedValueChecker,
-		cc: ColumnConverter,
-	}
-}
-func get_conn_Execer_ExecerContext_Queryer_QueryerContext_NamedValueChecker(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
+func get_conn_Execer_ExecerContext_Queryer_QueryerContext_NamedValueChecker(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker) driver.Conn {
 	return &w_conn_Execer_ExecerContext_Queryer_QueryerContext_NamedValueChecker{
 		Conn: &wConn{
 			Conn:        conn,
@@ -1944,8 +717,8 @@ func get_conn_Execer_ExecerContext_Queryer_QueryerContext_NamedValueChecker(conn
 		}, NamedValueChecker: NamedValueChecker,
 	}
 }
-func get_conn_Execer_Queryer_QueryerContext_NamedValueChecker_ColumnConverter(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
-	return &w_conn_Execer_Queryer_QueryerContext_NamedValueChecker_ColumnConverter{
+func get_conn_Execer_Queryer_QueryerContext_NamedValueChecker(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker) driver.Conn {
+	return &w_conn_Execer_Queryer_QueryerContext_NamedValueChecker{
 		Conn: &wConn{
 			Conn:        conn,
 			connDetails: connDetails,
@@ -1963,147 +736,9 @@ func get_conn_Execer_Queryer_QueryerContext_NamedValueChecker_ColumnConverter(co
 			connDetails:    connDetails,
 			sensor:         sensor,
 		}, NamedValueChecker: NamedValueChecker,
-		cc: ColumnConverter,
 	}
 }
-func get_conn_Execer_ExecerContext_Queryer_ConnPrepareContext_ColumnConverter(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
-	return &w_conn_Execer_ExecerContext_Queryer_ConnPrepareContext_ColumnConverter{
-		Conn: &wConn{
-			Conn:        conn,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, Execer: &wExecer{
-			Execer:      Execer,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, ExecerContext: &wExecerContext{
-			ExecerContext: ExecerContext,
-			connDetails:   connDetails,
-			sensor:        sensor,
-		}, Queryer: &wQueryer{
-			Queryer:     Queryer,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, ConnPrepareContext: &wConnPrepareContext{
-			ConnPrepareContext: ConnPrepareContext,
-			connDetails:        connDetails,
-			sensor:             sensor,
-		}, cc: ColumnConverter,
-	}
-}
-func get_conn_Execer_ExecerContext_QueryerContext_NamedValueChecker_ColumnConverter(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
-	return &w_conn_Execer_ExecerContext_QueryerContext_NamedValueChecker_ColumnConverter{
-		Conn: &wConn{
-			Conn:        conn,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, Execer: &wExecer{
-			Execer:      Execer,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, ExecerContext: &wExecerContext{
-			ExecerContext: ExecerContext,
-			connDetails:   connDetails,
-			sensor:        sensor,
-		}, QueryerContext: &wQueryerContext{
-			QueryerContext: QueryerContext,
-			connDetails:    connDetails,
-			sensor:         sensor,
-		}, NamedValueChecker: NamedValueChecker,
-		cc: ColumnConverter,
-	}
-}
-func get_conn_ExecerContext_Queryer_QueryerContext_ConnPrepareContext_ColumnConverter(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
-	return &w_conn_ExecerContext_Queryer_QueryerContext_ConnPrepareContext_ColumnConverter{
-		Conn: &wConn{
-			Conn:        conn,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, ExecerContext: &wExecerContext{
-			ExecerContext: ExecerContext,
-			connDetails:   connDetails,
-			sensor:        sensor,
-		}, Queryer: &wQueryer{
-			Queryer:     Queryer,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, QueryerContext: &wQueryerContext{
-			QueryerContext: QueryerContext,
-			connDetails:    connDetails,
-			sensor:         sensor,
-		}, ConnPrepareContext: &wConnPrepareContext{
-			ConnPrepareContext: ConnPrepareContext,
-			connDetails:        connDetails,
-			sensor:             sensor,
-		}, cc: ColumnConverter,
-	}
-}
-func get_conn_Execer_ExecerContext_QueryerContext_ConnPrepareContext_ColumnConverter(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
-	return &w_conn_Execer_ExecerContext_QueryerContext_ConnPrepareContext_ColumnConverter{
-		Conn: &wConn{
-			Conn:        conn,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, Execer: &wExecer{
-			Execer:      Execer,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, ExecerContext: &wExecerContext{
-			ExecerContext: ExecerContext,
-			connDetails:   connDetails,
-			sensor:        sensor,
-		}, QueryerContext: &wQueryerContext{
-			QueryerContext: QueryerContext,
-			connDetails:    connDetails,
-			sensor:         sensor,
-		}, ConnPrepareContext: &wConnPrepareContext{
-			ConnPrepareContext: ConnPrepareContext,
-			connDetails:        connDetails,
-			sensor:             sensor,
-		}, cc: ColumnConverter,
-	}
-}
-func get_conn_Execer_ExecerContext_Queryer_NamedValueChecker_ColumnConverter(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
-	return &w_conn_Execer_ExecerContext_Queryer_NamedValueChecker_ColumnConverter{
-		Conn: &wConn{
-			Conn:        conn,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, Execer: &wExecer{
-			Execer:      Execer,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, ExecerContext: &wExecerContext{
-			ExecerContext: ExecerContext,
-			connDetails:   connDetails,
-			sensor:        sensor,
-		}, Queryer: &wQueryer{
-			Queryer:     Queryer,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, NamedValueChecker: NamedValueChecker,
-		cc: ColumnConverter,
-	}
-}
-func get_conn_Execer_Queryer_NamedValueChecker_ColumnConverter(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
-	return &w_conn_Execer_Queryer_NamedValueChecker_ColumnConverter{
-		Conn: &wConn{
-			Conn:        conn,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, Execer: &wExecer{
-			Execer:      Execer,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, Queryer: &wQueryer{
-			Queryer:     Queryer,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, NamedValueChecker: NamedValueChecker,
-		cc: ColumnConverter,
-	}
-}
-func get_conn_Execer_ExecerContext_Queryer_ConnPrepareContext(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
+func get_conn_Execer_ExecerContext_Queryer_ConnPrepareContext(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker) driver.Conn {
 	return &w_conn_Execer_ExecerContext_Queryer_ConnPrepareContext{
 		Conn: &wConn{
 			Conn:        conn,
@@ -2127,580 +762,7 @@ func get_conn_Execer_ExecerContext_Queryer_ConnPrepareContext(connDetails dbConn
 			sensor:             sensor,
 		}}
 }
-func get_conn_Execer_QueryerContext_NamedValueChecker_ColumnConverter(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
-	return &w_conn_Execer_QueryerContext_NamedValueChecker_ColumnConverter{
-		Conn: &wConn{
-			Conn:        conn,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, Execer: &wExecer{
-			Execer:      Execer,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, QueryerContext: &wQueryerContext{
-			QueryerContext: QueryerContext,
-			connDetails:    connDetails,
-			sensor:         sensor,
-		}, NamedValueChecker: NamedValueChecker,
-		cc: ColumnConverter,
-	}
-}
-func get_conn_Execer_Queryer_QueryerContext_ConnPrepareContext(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
-	return &w_conn_Execer_Queryer_QueryerContext_ConnPrepareContext{
-		Conn: &wConn{
-			Conn:        conn,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, Execer: &wExecer{
-			Execer:      Execer,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, Queryer: &wQueryer{
-			Queryer:     Queryer,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, QueryerContext: &wQueryerContext{
-			QueryerContext: QueryerContext,
-			connDetails:    connDetails,
-			sensor:         sensor,
-		}, ConnPrepareContext: &wConnPrepareContext{
-			ConnPrepareContext: ConnPrepareContext,
-			connDetails:        connDetails,
-			sensor:             sensor,
-		}}
-}
-func get_conn_ExecerContext_Queryer_NamedValueChecker_ColumnConverter(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
-	return &w_conn_ExecerContext_Queryer_NamedValueChecker_ColumnConverter{
-		Conn: &wConn{
-			Conn:        conn,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, ExecerContext: &wExecerContext{
-			ExecerContext: ExecerContext,
-			connDetails:   connDetails,
-			sensor:        sensor,
-		}, Queryer: &wQueryer{
-			Queryer:     Queryer,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, NamedValueChecker: NamedValueChecker,
-		cc: ColumnConverter,
-	}
-}
-func get_conn_ExecerContext_QueryerContext_NamedValueChecker_ColumnConverter(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
-	return &w_conn_ExecerContext_QueryerContext_NamedValueChecker_ColumnConverter{
-		Conn: &wConn{
-			Conn:        conn,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, ExecerContext: &wExecerContext{
-			ExecerContext: ExecerContext,
-			connDetails:   connDetails,
-			sensor:        sensor,
-		}, QueryerContext: &wQueryerContext{
-			QueryerContext: QueryerContext,
-			connDetails:    connDetails,
-			sensor:         sensor,
-		}, NamedValueChecker: NamedValueChecker,
-		cc: ColumnConverter,
-	}
-}
-func get_conn_Execer_ExecerContext_NamedValueChecker_ColumnConverter(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
-	return &w_conn_Execer_ExecerContext_NamedValueChecker_ColumnConverter{
-		Conn: &wConn{
-			Conn:        conn,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, Execer: &wExecer{
-			Execer:      Execer,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, ExecerContext: &wExecerContext{
-			ExecerContext: ExecerContext,
-			connDetails:   connDetails,
-			sensor:        sensor,
-		}, NamedValueChecker: NamedValueChecker,
-		cc: ColumnConverter,
-	}
-}
-func get_conn_Execer_ExecerContext_QueryerContext_ConnPrepareContext(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
-	return &w_conn_Execer_ExecerContext_QueryerContext_ConnPrepareContext{
-		Conn: &wConn{
-			Conn:        conn,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, Execer: &wExecer{
-			Execer:      Execer,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, ExecerContext: &wExecerContext{
-			ExecerContext: ExecerContext,
-			connDetails:   connDetails,
-			sensor:        sensor,
-		}, QueryerContext: &wQueryerContext{
-			QueryerContext: QueryerContext,
-			connDetails:    connDetails,
-			sensor:         sensor,
-		}, ConnPrepareContext: &wConnPrepareContext{
-			ConnPrepareContext: ConnPrepareContext,
-			connDetails:        connDetails,
-			sensor:             sensor,
-		}}
-}
-func get_conn_Queryer_QueryerContext_ConnPrepareContext_ColumnConverter(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
-	return &w_conn_Queryer_QueryerContext_ConnPrepareContext_ColumnConverter{
-		Conn: &wConn{
-			Conn:        conn,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, Queryer: &wQueryer{
-			Queryer:     Queryer,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, QueryerContext: &wQueryerContext{
-			QueryerContext: QueryerContext,
-			connDetails:    connDetails,
-			sensor:         sensor,
-		}, ConnPrepareContext: &wConnPrepareContext{
-			ConnPrepareContext: ConnPrepareContext,
-			connDetails:        connDetails,
-			sensor:             sensor,
-		}, cc: ColumnConverter,
-	}
-}
-func get_conn_Execer_ExecerContext_Queryer_NamedValueChecker(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
-	return &w_conn_Execer_ExecerContext_Queryer_NamedValueChecker{
-		Conn: &wConn{
-			Conn:        conn,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, Execer: &wExecer{
-			Execer:      Execer,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, ExecerContext: &wExecerContext{
-			ExecerContext: ExecerContext,
-			connDetails:   connDetails,
-			sensor:        sensor,
-		}, Queryer: &wQueryer{
-			Queryer:     Queryer,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, NamedValueChecker: NamedValueChecker,
-	}
-}
-func get_conn_ExecerContext_QueryerContext_ConnPrepareContext_ColumnConverter(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
-	return &w_conn_ExecerContext_QueryerContext_ConnPrepareContext_ColumnConverter{
-		Conn: &wConn{
-			Conn:        conn,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, ExecerContext: &wExecerContext{
-			ExecerContext: ExecerContext,
-			connDetails:   connDetails,
-			sensor:        sensor,
-		}, QueryerContext: &wQueryerContext{
-			QueryerContext: QueryerContext,
-			connDetails:    connDetails,
-			sensor:         sensor,
-		}, ConnPrepareContext: &wConnPrepareContext{
-			ConnPrepareContext: ConnPrepareContext,
-			connDetails:        connDetails,
-			sensor:             sensor,
-		}, cc: ColumnConverter,
-	}
-}
-func get_conn_Execer_QueryerContext_ConnPrepareContext_ColumnConverter(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
-	return &w_conn_Execer_QueryerContext_ConnPrepareContext_ColumnConverter{
-		Conn: &wConn{
-			Conn:        conn,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, Execer: &wExecer{
-			Execer:      Execer,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, QueryerContext: &wQueryerContext{
-			QueryerContext: QueryerContext,
-			connDetails:    connDetails,
-			sensor:         sensor,
-		}, ConnPrepareContext: &wConnPrepareContext{
-			ConnPrepareContext: ConnPrepareContext,
-			connDetails:        connDetails,
-			sensor:             sensor,
-		}, cc: ColumnConverter,
-	}
-}
-func get_conn_Queryer_QueryerContext_NamedValueChecker_ColumnConverter(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
-	return &w_conn_Queryer_QueryerContext_NamedValueChecker_ColumnConverter{
-		Conn: &wConn{
-			Conn:        conn,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, Queryer: &wQueryer{
-			Queryer:     Queryer,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, QueryerContext: &wQueryerContext{
-			QueryerContext: QueryerContext,
-			connDetails:    connDetails,
-			sensor:         sensor,
-		}, NamedValueChecker: NamedValueChecker,
-		cc: ColumnConverter,
-	}
-}
-func get_conn_Execer_ExecerContext_QueryerContext_NamedValueChecker(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
-	return &w_conn_Execer_ExecerContext_QueryerContext_NamedValueChecker{
-		Conn: &wConn{
-			Conn:        conn,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, Execer: &wExecer{
-			Execer:      Execer,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, ExecerContext: &wExecerContext{
-			ExecerContext: ExecerContext,
-			connDetails:   connDetails,
-			sensor:        sensor,
-		}, QueryerContext: &wQueryerContext{
-			QueryerContext: QueryerContext,
-			connDetails:    connDetails,
-			sensor:         sensor,
-		}, NamedValueChecker: NamedValueChecker,
-	}
-}
-func get_conn_ExecerContext_Queryer_ConnPrepareContext_ColumnConverter(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
-	return &w_conn_ExecerContext_Queryer_ConnPrepareContext_ColumnConverter{
-		Conn: &wConn{
-			Conn:        conn,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, ExecerContext: &wExecerContext{
-			ExecerContext: ExecerContext,
-			connDetails:   connDetails,
-			sensor:        sensor,
-		}, Queryer: &wQueryer{
-			Queryer:     Queryer,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, ConnPrepareContext: &wConnPrepareContext{
-			ConnPrepareContext: ConnPrepareContext,
-			connDetails:        connDetails,
-			sensor:             sensor,
-		}, cc: ColumnConverter,
-	}
-}
-func get_conn_Execer_Queryer_QueryerContext_NamedValueChecker(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
-	return &w_conn_Execer_Queryer_QueryerContext_NamedValueChecker{
-		Conn: &wConn{
-			Conn:        conn,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, Execer: &wExecer{
-			Execer:      Execer,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, Queryer: &wQueryer{
-			Queryer:     Queryer,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, QueryerContext: &wQueryerContext{
-			QueryerContext: QueryerContext,
-			connDetails:    connDetails,
-			sensor:         sensor,
-		}, NamedValueChecker: NamedValueChecker,
-	}
-}
-func get_conn_ExecerContext_Queryer_QueryerContext_NamedValueChecker(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
-	return &w_conn_ExecerContext_Queryer_QueryerContext_NamedValueChecker{
-		Conn: &wConn{
-			Conn:        conn,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, ExecerContext: &wExecerContext{
-			ExecerContext: ExecerContext,
-			connDetails:   connDetails,
-			sensor:        sensor,
-		}, Queryer: &wQueryer{
-			Queryer:     Queryer,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, QueryerContext: &wQueryerContext{
-			QueryerContext: QueryerContext,
-			connDetails:    connDetails,
-			sensor:         sensor,
-		}, NamedValueChecker: NamedValueChecker,
-	}
-}
-func get_conn_ExecerContext_Queryer_QueryerContext_ConnPrepareContext(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
-	return &w_conn_ExecerContext_Queryer_QueryerContext_ConnPrepareContext{
-		Conn: &wConn{
-			Conn:        conn,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, ExecerContext: &wExecerContext{
-			ExecerContext: ExecerContext,
-			connDetails:   connDetails,
-			sensor:        sensor,
-		}, Queryer: &wQueryer{
-			Queryer:     Queryer,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, QueryerContext: &wQueryerContext{
-			QueryerContext: QueryerContext,
-			connDetails:    connDetails,
-			sensor:         sensor,
-		}, ConnPrepareContext: &wConnPrepareContext{
-			ConnPrepareContext: ConnPrepareContext,
-			connDetails:        connDetails,
-			sensor:             sensor,
-		}}
-}
-func get_conn_Execer_Queryer_ConnPrepareContext_ColumnConverter(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
-	return &w_conn_Execer_Queryer_ConnPrepareContext_ColumnConverter{
-		Conn: &wConn{
-			Conn:        conn,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, Execer: &wExecer{
-			Execer:      Execer,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, Queryer: &wQueryer{
-			Queryer:     Queryer,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, ConnPrepareContext: &wConnPrepareContext{
-			ConnPrepareContext: ConnPrepareContext,
-			connDetails:        connDetails,
-			sensor:             sensor,
-		}, cc: ColumnConverter,
-	}
-}
-func get_conn_Execer_ExecerContext_ConnPrepareContext_ColumnConverter(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
-	return &w_conn_Execer_ExecerContext_ConnPrepareContext_ColumnConverter{
-		Conn: &wConn{
-			Conn:        conn,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, Execer: &wExecer{
-			Execer:      Execer,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, ExecerContext: &wExecerContext{
-			ExecerContext: ExecerContext,
-			connDetails:   connDetails,
-			sensor:        sensor,
-		}, ConnPrepareContext: &wConnPrepareContext{
-			ConnPrepareContext: ConnPrepareContext,
-			connDetails:        connDetails,
-			sensor:             sensor,
-		}, cc: ColumnConverter,
-	}
-}
-func get_conn_Execer_ConnPrepareContext_NamedValueChecker_ColumnConverter(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
-	return &w_conn_Execer_ConnPrepareContext_NamedValueChecker_ColumnConverter{
-		Conn: &wConn{
-			Conn:        conn,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, Execer: &wExecer{
-			Execer:      Execer,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, ConnPrepareContext: &wConnPrepareContext{
-			ConnPrepareContext: ConnPrepareContext,
-			connDetails:        connDetails,
-			sensor:             sensor,
-		}, NamedValueChecker: NamedValueChecker,
-		cc: ColumnConverter,
-	}
-}
-func get_conn_Execer_ExecerContext_ConnPrepareContext_NamedValueChecker(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
-	return &w_conn_Execer_ExecerContext_ConnPrepareContext_NamedValueChecker{
-		Conn: &wConn{
-			Conn:        conn,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, Execer: &wExecer{
-			Execer:      Execer,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, ExecerContext: &wExecerContext{
-			ExecerContext: ExecerContext,
-			connDetails:   connDetails,
-			sensor:        sensor,
-		}, ConnPrepareContext: &wConnPrepareContext{
-			ConnPrepareContext: ConnPrepareContext,
-			connDetails:        connDetails,
-			sensor:             sensor,
-		}, NamedValueChecker: NamedValueChecker,
-	}
-}
-func get_conn_ExecerContext_Queryer_QueryerContext_ColumnConverter(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
-	return &w_conn_ExecerContext_Queryer_QueryerContext_ColumnConverter{
-		Conn: &wConn{
-			Conn:        conn,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, ExecerContext: &wExecerContext{
-			ExecerContext: ExecerContext,
-			connDetails:   connDetails,
-			sensor:        sensor,
-		}, Queryer: &wQueryer{
-			Queryer:     Queryer,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, QueryerContext: &wQueryerContext{
-			QueryerContext: QueryerContext,
-			connDetails:    connDetails,
-			sensor:         sensor,
-		}, cc: ColumnConverter,
-	}
-}
-func get_conn_Execer_Queryer_ConnPrepareContext_NamedValueChecker(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
-	return &w_conn_Execer_Queryer_ConnPrepareContext_NamedValueChecker{
-		Conn: &wConn{
-			Conn:        conn,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, Execer: &wExecer{
-			Execer:      Execer,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, Queryer: &wQueryer{
-			Queryer:     Queryer,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, ConnPrepareContext: &wConnPrepareContext{
-			ConnPrepareContext: ConnPrepareContext,
-			connDetails:        connDetails,
-			sensor:             sensor,
-		}, NamedValueChecker: NamedValueChecker,
-	}
-}
-func get_conn_ExecerContext_Queryer_ConnPrepareContext_NamedValueChecker(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
-	return &w_conn_ExecerContext_Queryer_ConnPrepareContext_NamedValueChecker{
-		Conn: &wConn{
-			Conn:        conn,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, ExecerContext: &wExecerContext{
-			ExecerContext: ExecerContext,
-			connDetails:   connDetails,
-			sensor:        sensor,
-		}, Queryer: &wQueryer{
-			Queryer:     Queryer,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, ConnPrepareContext: &wConnPrepareContext{
-			ConnPrepareContext: ConnPrepareContext,
-			connDetails:        connDetails,
-			sensor:             sensor,
-		}, NamedValueChecker: NamedValueChecker,
-	}
-}
-func get_conn_ExecerContext_ConnPrepareContext_NamedValueChecker_ColumnConverter(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
-	return &w_conn_ExecerContext_ConnPrepareContext_NamedValueChecker_ColumnConverter{
-		Conn: &wConn{
-			Conn:        conn,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, ExecerContext: &wExecerContext{
-			ExecerContext: ExecerContext,
-			connDetails:   connDetails,
-			sensor:        sensor,
-		}, ConnPrepareContext: &wConnPrepareContext{
-			ConnPrepareContext: ConnPrepareContext,
-			connDetails:        connDetails,
-			sensor:             sensor,
-		}, NamedValueChecker: NamedValueChecker,
-		cc: ColumnConverter,
-	}
-}
-func get_conn_Execer_Queryer_QueryerContext_ColumnConverter(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
-	return &w_conn_Execer_Queryer_QueryerContext_ColumnConverter{
-		Conn: &wConn{
-			Conn:        conn,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, Execer: &wExecer{
-			Execer:      Execer,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, Queryer: &wQueryer{
-			Queryer:     Queryer,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, QueryerContext: &wQueryerContext{
-			QueryerContext: QueryerContext,
-			connDetails:    connDetails,
-			sensor:         sensor,
-		}, cc: ColumnConverter,
-	}
-}
-func get_conn_Execer_QueryerContext_ConnPrepareContext_NamedValueChecker(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
-	return &w_conn_Execer_QueryerContext_ConnPrepareContext_NamedValueChecker{
-		Conn: &wConn{
-			Conn:        conn,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, Execer: &wExecer{
-			Execer:      Execer,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, QueryerContext: &wQueryerContext{
-			QueryerContext: QueryerContext,
-			connDetails:    connDetails,
-			sensor:         sensor,
-		}, ConnPrepareContext: &wConnPrepareContext{
-			ConnPrepareContext: ConnPrepareContext,
-			connDetails:        connDetails,
-			sensor:             sensor,
-		}, NamedValueChecker: NamedValueChecker,
-	}
-}
-func get_conn_ExecerContext_QueryerContext_ConnPrepareContext_NamedValueChecker(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
-	return &w_conn_ExecerContext_QueryerContext_ConnPrepareContext_NamedValueChecker{
-		Conn: &wConn{
-			Conn:        conn,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, ExecerContext: &wExecerContext{
-			ExecerContext: ExecerContext,
-			connDetails:   connDetails,
-			sensor:        sensor,
-		}, QueryerContext: &wQueryerContext{
-			QueryerContext: QueryerContext,
-			connDetails:    connDetails,
-			sensor:         sensor,
-		}, ConnPrepareContext: &wConnPrepareContext{
-			ConnPrepareContext: ConnPrepareContext,
-			connDetails:        connDetails,
-			sensor:             sensor,
-		}, NamedValueChecker: NamedValueChecker,
-	}
-}
-func get_conn_Queryer_ConnPrepareContext_NamedValueChecker_ColumnConverter(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
-	return &w_conn_Queryer_ConnPrepareContext_NamedValueChecker_ColumnConverter{
-		Conn: &wConn{
-			Conn:        conn,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, Queryer: &wQueryer{
-			Queryer:     Queryer,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, ConnPrepareContext: &wConnPrepareContext{
-			ConnPrepareContext: ConnPrepareContext,
-			connDetails:        connDetails,
-			sensor:             sensor,
-		}, NamedValueChecker: NamedValueChecker,
-		cc: ColumnConverter,
-	}
-}
-func get_conn_Queryer_QueryerContext_ConnPrepareContext_NamedValueChecker(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
+func get_conn_Queryer_QueryerContext_ConnPrepareContext_NamedValueChecker(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker) driver.Conn {
 	return &w_conn_Queryer_QueryerContext_ConnPrepareContext_NamedValueChecker{
 		Conn: &wConn{
 			Conn:        conn,
@@ -2721,7 +783,91 @@ func get_conn_Queryer_QueryerContext_ConnPrepareContext_NamedValueChecker(connDe
 		}, NamedValueChecker: NamedValueChecker,
 	}
 }
-func get_conn_Execer_ExecerContext_Queryer_QueryerContext(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
+func get_conn_ExecerContext_QueryerContext_ConnPrepareContext_NamedValueChecker(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker) driver.Conn {
+	return &w_conn_ExecerContext_QueryerContext_ConnPrepareContext_NamedValueChecker{
+		Conn: &wConn{
+			Conn:        conn,
+			connDetails: connDetails,
+			sensor:      sensor,
+		}, ExecerContext: &wExecerContext{
+			ExecerContext: ExecerContext,
+			connDetails:   connDetails,
+			sensor:        sensor,
+		}, QueryerContext: &wQueryerContext{
+			QueryerContext: QueryerContext,
+			connDetails:    connDetails,
+			sensor:         sensor,
+		}, ConnPrepareContext: &wConnPrepareContext{
+			ConnPrepareContext: ConnPrepareContext,
+			connDetails:        connDetails,
+			sensor:             sensor,
+		}, NamedValueChecker: NamedValueChecker,
+	}
+}
+func get_conn_Execer_QueryerContext_ConnPrepareContext_NamedValueChecker(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker) driver.Conn {
+	return &w_conn_Execer_QueryerContext_ConnPrepareContext_NamedValueChecker{
+		Conn: &wConn{
+			Conn:        conn,
+			connDetails: connDetails,
+			sensor:      sensor,
+		}, Execer: &wExecer{
+			Execer:      Execer,
+			connDetails: connDetails,
+			sensor:      sensor,
+		}, QueryerContext: &wQueryerContext{
+			QueryerContext: QueryerContext,
+			connDetails:    connDetails,
+			sensor:         sensor,
+		}, ConnPrepareContext: &wConnPrepareContext{
+			ConnPrepareContext: ConnPrepareContext,
+			connDetails:        connDetails,
+			sensor:             sensor,
+		}, NamedValueChecker: NamedValueChecker,
+	}
+}
+func get_conn_ExecerContext_Queryer_ConnPrepareContext_NamedValueChecker(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker) driver.Conn {
+	return &w_conn_ExecerContext_Queryer_ConnPrepareContext_NamedValueChecker{
+		Conn: &wConn{
+			Conn:        conn,
+			connDetails: connDetails,
+			sensor:      sensor,
+		}, ExecerContext: &wExecerContext{
+			ExecerContext: ExecerContext,
+			connDetails:   connDetails,
+			sensor:        sensor,
+		}, Queryer: &wQueryer{
+			Queryer:     Queryer,
+			connDetails: connDetails,
+			sensor:      sensor,
+		}, ConnPrepareContext: &wConnPrepareContext{
+			ConnPrepareContext: ConnPrepareContext,
+			connDetails:        connDetails,
+			sensor:             sensor,
+		}, NamedValueChecker: NamedValueChecker,
+	}
+}
+func get_conn_Execer_Queryer_ConnPrepareContext_NamedValueChecker(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker) driver.Conn {
+	return &w_conn_Execer_Queryer_ConnPrepareContext_NamedValueChecker{
+		Conn: &wConn{
+			Conn:        conn,
+			connDetails: connDetails,
+			sensor:      sensor,
+		}, Execer: &wExecer{
+			Execer:      Execer,
+			connDetails: connDetails,
+			sensor:      sensor,
+		}, Queryer: &wQueryer{
+			Queryer:     Queryer,
+			connDetails: connDetails,
+			sensor:      sensor,
+		}, ConnPrepareContext: &wConnPrepareContext{
+			ConnPrepareContext: ConnPrepareContext,
+			connDetails:        connDetails,
+			sensor:             sensor,
+		}, NamedValueChecker: NamedValueChecker,
+	}
+}
+func get_conn_Execer_ExecerContext_Queryer_QueryerContext(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker) driver.Conn {
 	return &w_conn_Execer_ExecerContext_Queryer_QueryerContext{
 		Conn: &wConn{
 			Conn:        conn,
@@ -2745,10 +891,102 @@ func get_conn_Execer_ExecerContext_Queryer_QueryerContext(connDetails dbConnDeta
 			sensor:         sensor,
 		}}
 }
-func get_conn_QueryerContext_ConnPrepareContext_NamedValueChecker_ColumnConverter(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
-	return &w_conn_QueryerContext_ConnPrepareContext_NamedValueChecker_ColumnConverter{
+func get_conn_Execer_ExecerContext_ConnPrepareContext_NamedValueChecker(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker) driver.Conn {
+	return &w_conn_Execer_ExecerContext_ConnPrepareContext_NamedValueChecker{
 		Conn: &wConn{
 			Conn:        conn,
+			connDetails: connDetails,
+			sensor:      sensor,
+		}, Execer: &wExecer{
+			Execer:      Execer,
+			connDetails: connDetails,
+			sensor:      sensor,
+		}, ExecerContext: &wExecerContext{
+			ExecerContext: ExecerContext,
+			connDetails:   connDetails,
+			sensor:        sensor,
+		}, ConnPrepareContext: &wConnPrepareContext{
+			ConnPrepareContext: ConnPrepareContext,
+			connDetails:        connDetails,
+			sensor:             sensor,
+		}, NamedValueChecker: NamedValueChecker,
+	}
+}
+func get_conn_ExecerContext_Queryer_QueryerContext_NamedValueChecker(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker) driver.Conn {
+	return &w_conn_ExecerContext_Queryer_QueryerContext_NamedValueChecker{
+		Conn: &wConn{
+			Conn:        conn,
+			connDetails: connDetails,
+			sensor:      sensor,
+		}, ExecerContext: &wExecerContext{
+			ExecerContext: ExecerContext,
+			connDetails:   connDetails,
+			sensor:        sensor,
+		}, Queryer: &wQueryer{
+			Queryer:     Queryer,
+			connDetails: connDetails,
+			sensor:      sensor,
+		}, QueryerContext: &wQueryerContext{
+			QueryerContext: QueryerContext,
+			connDetails:    connDetails,
+			sensor:         sensor,
+		}, NamedValueChecker: NamedValueChecker,
+	}
+}
+func get_conn_Execer_ExecerContext_QueryerContext_NamedValueChecker(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker) driver.Conn {
+	return &w_conn_Execer_ExecerContext_QueryerContext_NamedValueChecker{
+		Conn: &wConn{
+			Conn:        conn,
+			connDetails: connDetails,
+			sensor:      sensor,
+		}, Execer: &wExecer{
+			Execer:      Execer,
+			connDetails: connDetails,
+			sensor:      sensor,
+		}, ExecerContext: &wExecerContext{
+			ExecerContext: ExecerContext,
+			connDetails:   connDetails,
+			sensor:        sensor,
+		}, QueryerContext: &wQueryerContext{
+			QueryerContext: QueryerContext,
+			connDetails:    connDetails,
+			sensor:         sensor,
+		}, NamedValueChecker: NamedValueChecker,
+	}
+}
+func get_conn_Execer_ExecerContext_Queryer_NamedValueChecker(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker) driver.Conn {
+	return &w_conn_Execer_ExecerContext_Queryer_NamedValueChecker{
+		Conn: &wConn{
+			Conn:        conn,
+			connDetails: connDetails,
+			sensor:      sensor,
+		}, Execer: &wExecer{
+			Execer:      Execer,
+			connDetails: connDetails,
+			sensor:      sensor,
+		}, ExecerContext: &wExecerContext{
+			ExecerContext: ExecerContext,
+			connDetails:   connDetails,
+			sensor:        sensor,
+		}, Queryer: &wQueryer{
+			Queryer:     Queryer,
+			connDetails: connDetails,
+			sensor:      sensor,
+		}, NamedValueChecker: NamedValueChecker,
+	}
+}
+func get_conn_ExecerContext_Queryer_QueryerContext_ConnPrepareContext(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker) driver.Conn {
+	return &w_conn_ExecerContext_Queryer_QueryerContext_ConnPrepareContext{
+		Conn: &wConn{
+			Conn:        conn,
+			connDetails: connDetails,
+			sensor:      sensor,
+		}, ExecerContext: &wExecerContext{
+			ExecerContext: ExecerContext,
+			connDetails:   connDetails,
+			sensor:        sensor,
+		}, Queryer: &wQueryer{
+			Queryer:     Queryer,
 			connDetails: connDetails,
 			sensor:      sensor,
 		}, QueryerContext: &wQueryerContext{
@@ -2759,110 +997,74 @@ func get_conn_QueryerContext_ConnPrepareContext_NamedValueChecker_ColumnConverte
 			ConnPrepareContext: ConnPrepareContext,
 			connDetails:        connDetails,
 			sensor:             sensor,
+		}}
+}
+func get_conn_Execer_Queryer_QueryerContext_ConnPrepareContext(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker) driver.Conn {
+	return &w_conn_Execer_Queryer_QueryerContext_ConnPrepareContext{
+		Conn: &wConn{
+			Conn:        conn,
+			connDetails: connDetails,
+			sensor:      sensor,
+		}, Execer: &wExecer{
+			Execer:      Execer,
+			connDetails: connDetails,
+			sensor:      sensor,
+		}, Queryer: &wQueryer{
+			Queryer:     Queryer,
+			connDetails: connDetails,
+			sensor:      sensor,
+		}, QueryerContext: &wQueryerContext{
+			QueryerContext: QueryerContext,
+			connDetails:    connDetails,
+			sensor:         sensor,
+		}, ConnPrepareContext: &wConnPrepareContext{
+			ConnPrepareContext: ConnPrepareContext,
+			connDetails:        connDetails,
+			sensor:             sensor,
+		}}
+}
+func get_conn_Execer_ExecerContext_QueryerContext_ConnPrepareContext(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker) driver.Conn {
+	return &w_conn_Execer_ExecerContext_QueryerContext_ConnPrepareContext{
+		Conn: &wConn{
+			Conn:        conn,
+			connDetails: connDetails,
+			sensor:      sensor,
+		}, Execer: &wExecer{
+			Execer:      Execer,
+			connDetails: connDetails,
+			sensor:      sensor,
+		}, ExecerContext: &wExecerContext{
+			ExecerContext: ExecerContext,
+			connDetails:   connDetails,
+			sensor:        sensor,
+		}, QueryerContext: &wQueryerContext{
+			QueryerContext: QueryerContext,
+			connDetails:    connDetails,
+			sensor:         sensor,
+		}, ConnPrepareContext: &wConnPrepareContext{
+			ConnPrepareContext: ConnPrepareContext,
+			connDetails:        connDetails,
+			sensor:             sensor,
+		}}
+}
+func get_conn_Execer_ConnPrepareContext_NamedValueChecker(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker) driver.Conn {
+	return &w_conn_Execer_ConnPrepareContext_NamedValueChecker{
+		Conn: &wConn{
+			Conn:        conn,
+			connDetails: connDetails,
+			sensor:      sensor,
+		}, Execer: &wExecer{
+			Execer:      Execer,
+			connDetails: connDetails,
+			sensor:      sensor,
+		}, ConnPrepareContext: &wConnPrepareContext{
+			ConnPrepareContext: ConnPrepareContext,
+			connDetails:        connDetails,
+			sensor:             sensor,
 		}, NamedValueChecker: NamedValueChecker,
-		cc: ColumnConverter,
 	}
 }
-func get_conn_Execer_ExecerContext_QueryerContext_ColumnConverter(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
-	return &w_conn_Execer_ExecerContext_QueryerContext_ColumnConverter{
-		Conn: &wConn{
-			Conn:        conn,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, Execer: &wExecer{
-			Execer:      Execer,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, ExecerContext: &wExecerContext{
-			ExecerContext: ExecerContext,
-			connDetails:   connDetails,
-			sensor:        sensor,
-		}, QueryerContext: &wQueryerContext{
-			QueryerContext: QueryerContext,
-			connDetails:    connDetails,
-			sensor:         sensor,
-		}, cc: ColumnConverter,
-	}
-}
-func get_conn_Execer_ExecerContext_Queryer_ColumnConverter(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
-	return &w_conn_Execer_ExecerContext_Queryer_ColumnConverter{
-		Conn: &wConn{
-			Conn:        conn,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, Execer: &wExecer{
-			Execer:      Execer,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, ExecerContext: &wExecerContext{
-			ExecerContext: ExecerContext,
-			connDetails:   connDetails,
-			sensor:        sensor,
-		}, Queryer: &wQueryer{
-			Queryer:     Queryer,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, cc: ColumnConverter,
-	}
-}
-func get_conn_Execer_QueryerContext_ColumnConverter(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
-	return &w_conn_Execer_QueryerContext_ColumnConverter{
-		Conn: &wConn{
-			Conn:        conn,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, Execer: &wExecer{
-			Execer:      Execer,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, QueryerContext: &wQueryerContext{
-			QueryerContext: QueryerContext,
-			connDetails:    connDetails,
-			sensor:         sensor,
-		}, cc: ColumnConverter,
-	}
-}
-func get_conn_Execer_ExecerContext_Queryer(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
-	return &w_conn_Execer_ExecerContext_Queryer{
-		Conn: &wConn{
-			Conn:        conn,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, Execer: &wExecer{
-			Execer:      Execer,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, ExecerContext: &wExecerContext{
-			ExecerContext: ExecerContext,
-			connDetails:   connDetails,
-			sensor:        sensor,
-		}, Queryer: &wQueryer{
-			Queryer:     Queryer,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}}
-}
-func get_conn_Execer_ExecerContext_QueryerContext(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
-	return &w_conn_Execer_ExecerContext_QueryerContext{
-		Conn: &wConn{
-			Conn:        conn,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, Execer: &wExecer{
-			Execer:      Execer,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, ExecerContext: &wExecerContext{
-			ExecerContext: ExecerContext,
-			connDetails:   connDetails,
-			sensor:        sensor,
-		}, QueryerContext: &wQueryerContext{
-			QueryerContext: QueryerContext,
-			connDetails:    connDetails,
-			sensor:         sensor,
-		}}
-}
-func get_conn_Execer_Queryer_QueryerContext(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
+func get_conn_Execer_Queryer_QueryerContext(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker) driver.Conn {
 	return &w_conn_Execer_Queryer_QueryerContext{
 		Conn: &wConn{
 			Conn:        conn,
@@ -2882,288 +1084,7 @@ func get_conn_Execer_Queryer_QueryerContext(connDetails dbConnDetails, conn driv
 			sensor:         sensor,
 		}}
 }
-func get_conn_ExecerContext_Queryer_ColumnConverter(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
-	return &w_conn_ExecerContext_Queryer_ColumnConverter{
-		Conn: &wConn{
-			Conn:        conn,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, ExecerContext: &wExecerContext{
-			ExecerContext: ExecerContext,
-			connDetails:   connDetails,
-			sensor:        sensor,
-		}, Queryer: &wQueryer{
-			Queryer:     Queryer,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, cc: ColumnConverter,
-	}
-}
-func get_conn_Execer_Queryer_ColumnConverter(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
-	return &w_conn_Execer_Queryer_ColumnConverter{
-		Conn: &wConn{
-			Conn:        conn,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, Execer: &wExecer{
-			Execer:      Execer,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, Queryer: &wQueryer{
-			Queryer:     Queryer,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, cc: ColumnConverter,
-	}
-}
-func get_conn_ExecerContext_Queryer_QueryerContext(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
-	return &w_conn_ExecerContext_Queryer_QueryerContext{
-		Conn: &wConn{
-			Conn:        conn,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, ExecerContext: &wExecerContext{
-			ExecerContext: ExecerContext,
-			connDetails:   connDetails,
-			sensor:        sensor,
-		}, Queryer: &wQueryer{
-			Queryer:     Queryer,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, QueryerContext: &wQueryerContext{
-			QueryerContext: QueryerContext,
-			connDetails:    connDetails,
-			sensor:         sensor,
-		}}
-}
-func get_conn_Execer_ExecerContext_ConnPrepareContext(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
-	return &w_conn_Execer_ExecerContext_ConnPrepareContext{
-		Conn: &wConn{
-			Conn:        conn,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, Execer: &wExecer{
-			Execer:      Execer,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, ExecerContext: &wExecerContext{
-			ExecerContext: ExecerContext,
-			connDetails:   connDetails,
-			sensor:        sensor,
-		}, ConnPrepareContext: &wConnPrepareContext{
-			ConnPrepareContext: ConnPrepareContext,
-			connDetails:        connDetails,
-			sensor:             sensor,
-		}}
-}
-func get_conn_Execer_Queryer_ConnPrepareContext(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
-	return &w_conn_Execer_Queryer_ConnPrepareContext{
-		Conn: &wConn{
-			Conn:        conn,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, Execer: &wExecer{
-			Execer:      Execer,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, Queryer: &wQueryer{
-			Queryer:     Queryer,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, ConnPrepareContext: &wConnPrepareContext{
-			ConnPrepareContext: ConnPrepareContext,
-			connDetails:        connDetails,
-			sensor:             sensor,
-		}}
-}
-func get_conn_ExecerContext_QueryerContext_ColumnConverter(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
-	return &w_conn_ExecerContext_QueryerContext_ColumnConverter{
-		Conn: &wConn{
-			Conn:        conn,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, ExecerContext: &wExecerContext{
-			ExecerContext: ExecerContext,
-			connDetails:   connDetails,
-			sensor:        sensor,
-		}, QueryerContext: &wQueryerContext{
-			QueryerContext: QueryerContext,
-			connDetails:    connDetails,
-			sensor:         sensor,
-		}, cc: ColumnConverter,
-	}
-}
-func get_conn_ConnPrepareContext_NamedValueChecker_ColumnConverter(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
-	return &w_conn_ConnPrepareContext_NamedValueChecker_ColumnConverter{
-		Conn: &wConn{
-			Conn:        conn,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, ConnPrepareContext: &wConnPrepareContext{
-			ConnPrepareContext: ConnPrepareContext,
-			connDetails:        connDetails,
-			sensor:             sensor,
-		}, NamedValueChecker: NamedValueChecker,
-		cc: ColumnConverter,
-	}
-}
-func get_conn_Queryer_QueryerContext_ColumnConverter(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
-	return &w_conn_Queryer_QueryerContext_ColumnConverter{
-		Conn: &wConn{
-			Conn:        conn,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, Queryer: &wQueryer{
-			Queryer:     Queryer,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, QueryerContext: &wQueryerContext{
-			QueryerContext: QueryerContext,
-			connDetails:    connDetails,
-			sensor:         sensor,
-		}, cc: ColumnConverter,
-	}
-}
-func get_conn_QueryerContext_ConnPrepareContext_NamedValueChecker(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
-	return &w_conn_QueryerContext_ConnPrepareContext_NamedValueChecker{
-		Conn: &wConn{
-			Conn:        conn,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, QueryerContext: &wQueryerContext{
-			QueryerContext: QueryerContext,
-			connDetails:    connDetails,
-			sensor:         sensor,
-		}, ConnPrepareContext: &wConnPrepareContext{
-			ConnPrepareContext: ConnPrepareContext,
-			connDetails:        connDetails,
-			sensor:             sensor,
-		}, NamedValueChecker: NamedValueChecker,
-	}
-}
-func get_conn_Queryer_ConnPrepareContext_NamedValueChecker(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
-	return &w_conn_Queryer_ConnPrepareContext_NamedValueChecker{
-		Conn: &wConn{
-			Conn:        conn,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, Queryer: &wQueryer{
-			Queryer:     Queryer,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, ConnPrepareContext: &wConnPrepareContext{
-			ConnPrepareContext: ConnPrepareContext,
-			connDetails:        connDetails,
-			sensor:             sensor,
-		}, NamedValueChecker: NamedValueChecker,
-	}
-}
-func get_conn_ExecerContext_ConnPrepareContext_NamedValueChecker(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
-	return &w_conn_ExecerContext_ConnPrepareContext_NamedValueChecker{
-		Conn: &wConn{
-			Conn:        conn,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, ExecerContext: &wExecerContext{
-			ExecerContext: ExecerContext,
-			connDetails:   connDetails,
-			sensor:        sensor,
-		}, ConnPrepareContext: &wConnPrepareContext{
-			ConnPrepareContext: ConnPrepareContext,
-			connDetails:        connDetails,
-			sensor:             sensor,
-		}, NamedValueChecker: NamedValueChecker,
-	}
-}
-func get_conn_ExecerContext_Queryer_ConnPrepareContext(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
-	return &w_conn_ExecerContext_Queryer_ConnPrepareContext{
-		Conn: &wConn{
-			Conn:        conn,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, ExecerContext: &wExecerContext{
-			ExecerContext: ExecerContext,
-			connDetails:   connDetails,
-			sensor:        sensor,
-		}, Queryer: &wQueryer{
-			Queryer:     Queryer,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, ConnPrepareContext: &wConnPrepareContext{
-			ConnPrepareContext: ConnPrepareContext,
-			connDetails:        connDetails,
-			sensor:             sensor,
-		}}
-}
-func get_conn_Execer_ConnPrepareContext_ColumnConverter(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
-	return &w_conn_Execer_ConnPrepareContext_ColumnConverter{
-		Conn: &wConn{
-			Conn:        conn,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, Execer: &wExecer{
-			Execer:      Execer,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, ConnPrepareContext: &wConnPrepareContext{
-			ConnPrepareContext: ConnPrepareContext,
-			connDetails:        connDetails,
-			sensor:             sensor,
-		}, cc: ColumnConverter,
-	}
-}
-func get_conn_ExecerContext_ConnPrepareContext_ColumnConverter(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
-	return &w_conn_ExecerContext_ConnPrepareContext_ColumnConverter{
-		Conn: &wConn{
-			Conn:        conn,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, ExecerContext: &wExecerContext{
-			ExecerContext: ExecerContext,
-			connDetails:   connDetails,
-			sensor:        sensor,
-		}, ConnPrepareContext: &wConnPrepareContext{
-			ConnPrepareContext: ConnPrepareContext,
-			connDetails:        connDetails,
-			sensor:             sensor,
-		}, cc: ColumnConverter,
-	}
-}
-func get_conn_Execer_ConnPrepareContext_NamedValueChecker(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
-	return &w_conn_Execer_ConnPrepareContext_NamedValueChecker{
-		Conn: &wConn{
-			Conn:        conn,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, Execer: &wExecer{
-			Execer:      Execer,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, ConnPrepareContext: &wConnPrepareContext{
-			ConnPrepareContext: ConnPrepareContext,
-			connDetails:        connDetails,
-			sensor:             sensor,
-		}, NamedValueChecker: NamedValueChecker,
-	}
-}
-func get_conn_Queryer_ConnPrepareContext_ColumnConverter(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
-	return &w_conn_Queryer_ConnPrepareContext_ColumnConverter{
-		Conn: &wConn{
-			Conn:        conn,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, Queryer: &wQueryer{
-			Queryer:     Queryer,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, ConnPrepareContext: &wConnPrepareContext{
-			ConnPrepareContext: ConnPrepareContext,
-			connDetails:        connDetails,
-			sensor:             sensor,
-		}, cc: ColumnConverter,
-	}
-}
-func get_conn_Execer_QueryerContext_ConnPrepareContext(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
+func get_conn_Execer_QueryerContext_ConnPrepareContext(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker) driver.Conn {
 	return &w_conn_Execer_QueryerContext_ConnPrepareContext{
 		Conn: &wConn{
 			Conn:        conn,
@@ -3183,75 +1104,7 @@ func get_conn_Execer_QueryerContext_ConnPrepareContext(connDetails dbConnDetails
 			sensor:             sensor,
 		}}
 }
-func get_conn_Queryer_QueryerContext_NamedValueChecker(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
-	return &w_conn_Queryer_QueryerContext_NamedValueChecker{
-		Conn: &wConn{
-			Conn:        conn,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, Queryer: &wQueryer{
-			Queryer:     Queryer,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, QueryerContext: &wQueryerContext{
-			QueryerContext: QueryerContext,
-			connDetails:    connDetails,
-			sensor:         sensor,
-		}, NamedValueChecker: NamedValueChecker,
-	}
-}
-func get_conn_ExecerContext_QueryerContext_NamedValueChecker(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
-	return &w_conn_ExecerContext_QueryerContext_NamedValueChecker{
-		Conn: &wConn{
-			Conn:        conn,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, ExecerContext: &wExecerContext{
-			ExecerContext: ExecerContext,
-			connDetails:   connDetails,
-			sensor:        sensor,
-		}, QueryerContext: &wQueryerContext{
-			QueryerContext: QueryerContext,
-			connDetails:    connDetails,
-			sensor:         sensor,
-		}, NamedValueChecker: NamedValueChecker,
-	}
-}
-func get_conn_QueryerContext_ConnPrepareContext_ColumnConverter(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
-	return &w_conn_QueryerContext_ConnPrepareContext_ColumnConverter{
-		Conn: &wConn{
-			Conn:        conn,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, QueryerContext: &wQueryerContext{
-			QueryerContext: QueryerContext,
-			connDetails:    connDetails,
-			sensor:         sensor,
-		}, ConnPrepareContext: &wConnPrepareContext{
-			ConnPrepareContext: ConnPrepareContext,
-			connDetails:        connDetails,
-			sensor:             sensor,
-		}, cc: ColumnConverter,
-	}
-}
-func get_conn_Execer_QueryerContext_NamedValueChecker(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
-	return &w_conn_Execer_QueryerContext_NamedValueChecker{
-		Conn: &wConn{
-			Conn:        conn,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, Execer: &wExecer{
-			Execer:      Execer,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, QueryerContext: &wQueryerContext{
-			QueryerContext: QueryerContext,
-			connDetails:    connDetails,
-			sensor:         sensor,
-		}, NamedValueChecker: NamedValueChecker,
-	}
-}
-func get_conn_ExecerContext_QueryerContext_ConnPrepareContext(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
+func get_conn_ExecerContext_QueryerContext_ConnPrepareContext(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker) driver.Conn {
 	return &w_conn_ExecerContext_QueryerContext_ConnPrepareContext{
 		Conn: &wConn{
 			Conn:        conn,
@@ -3271,25 +1124,8 @@ func get_conn_ExecerContext_QueryerContext_ConnPrepareContext(connDetails dbConn
 			sensor:             sensor,
 		}}
 }
-func get_conn_Execer_ExecerContext_ColumnConverter(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
-	return &w_conn_Execer_ExecerContext_ColumnConverter{
-		Conn: &wConn{
-			Conn:        conn,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, Execer: &wExecer{
-			Execer:      Execer,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, ExecerContext: &wExecerContext{
-			ExecerContext: ExecerContext,
-			connDetails:   connDetails,
-			sensor:        sensor,
-		}, cc: ColumnConverter,
-	}
-}
-func get_conn_ExecerContext_Queryer_NamedValueChecker(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
-	return &w_conn_ExecerContext_Queryer_NamedValueChecker{
+func get_conn_ExecerContext_Queryer_ConnPrepareContext(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker) driver.Conn {
+	return &w_conn_ExecerContext_Queryer_ConnPrepareContext{
 		Conn: &wConn{
 			Conn:        conn,
 			connDetails: connDetails,
@@ -3302,10 +1138,13 @@ func get_conn_ExecerContext_Queryer_NamedValueChecker(connDetails dbConnDetails,
 			Queryer:     Queryer,
 			connDetails: connDetails,
 			sensor:      sensor,
-		}, NamedValueChecker: NamedValueChecker,
-	}
+		}, ConnPrepareContext: &wConnPrepareContext{
+			ConnPrepareContext: ConnPrepareContext,
+			connDetails:        connDetails,
+			sensor:             sensor,
+		}}
 }
-func get_conn_Queryer_QueryerContext_ConnPrepareContext(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
+func get_conn_Queryer_QueryerContext_ConnPrepareContext(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker) driver.Conn {
 	return &w_conn_Queryer_QueryerContext_ConnPrepareContext{
 		Conn: &wConn{
 			Conn:        conn,
@@ -3325,8 +1164,8 @@ func get_conn_Queryer_QueryerContext_ConnPrepareContext(connDetails dbConnDetail
 			sensor:             sensor,
 		}}
 }
-func get_conn_Execer_Queryer_NamedValueChecker(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
-	return &w_conn_Execer_Queryer_NamedValueChecker{
+func get_conn_Execer_Queryer_ConnPrepareContext(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker) driver.Conn {
+	return &w_conn_Execer_Queryer_ConnPrepareContext{
 		Conn: &wConn{
 			Conn:        conn,
 			connDetails: connDetails,
@@ -3339,11 +1178,34 @@ func get_conn_Execer_Queryer_NamedValueChecker(connDetails dbConnDetails, conn d
 			Queryer:     Queryer,
 			connDetails: connDetails,
 			sensor:      sensor,
-		}, NamedValueChecker: NamedValueChecker,
-	}
+		}, ConnPrepareContext: &wConnPrepareContext{
+			ConnPrepareContext: ConnPrepareContext,
+			connDetails:        connDetails,
+			sensor:             sensor,
+		}}
 }
-func get_conn_QueryerContext_NamedValueChecker_ColumnConverter(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
-	return &w_conn_QueryerContext_NamedValueChecker_ColumnConverter{
+func get_conn_Execer_ExecerContext_QueryerContext(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker) driver.Conn {
+	return &w_conn_Execer_ExecerContext_QueryerContext{
+		Conn: &wConn{
+			Conn:        conn,
+			connDetails: connDetails,
+			sensor:      sensor,
+		}, Execer: &wExecer{
+			Execer:      Execer,
+			connDetails: connDetails,
+			sensor:      sensor,
+		}, ExecerContext: &wExecerContext{
+			ExecerContext: ExecerContext,
+			connDetails:   connDetails,
+			sensor:        sensor,
+		}, QueryerContext: &wQueryerContext{
+			QueryerContext: QueryerContext,
+			connDetails:    connDetails,
+			sensor:         sensor,
+		}}
+}
+func get_conn_QueryerContext_ConnPrepareContext_NamedValueChecker(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker) driver.Conn {
+	return &w_conn_QueryerContext_ConnPrepareContext_NamedValueChecker{
 		Conn: &wConn{
 			Conn:        conn,
 			connDetails: connDetails,
@@ -3352,11 +1214,68 @@ func get_conn_QueryerContext_NamedValueChecker_ColumnConverter(connDetails dbCon
 			QueryerContext: QueryerContext,
 			connDetails:    connDetails,
 			sensor:         sensor,
+		}, ConnPrepareContext: &wConnPrepareContext{
+			ConnPrepareContext: ConnPrepareContext,
+			connDetails:        connDetails,
+			sensor:             sensor,
 		}, NamedValueChecker: NamedValueChecker,
-		cc: ColumnConverter,
 	}
 }
-func get_conn_Execer_ExecerContext_NamedValueChecker(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
+func get_conn_ExecerContext_Queryer_QueryerContext(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker) driver.Conn {
+	return &w_conn_ExecerContext_Queryer_QueryerContext{
+		Conn: &wConn{
+			Conn:        conn,
+			connDetails: connDetails,
+			sensor:      sensor,
+		}, ExecerContext: &wExecerContext{
+			ExecerContext: ExecerContext,
+			connDetails:   connDetails,
+			sensor:        sensor,
+		}, Queryer: &wQueryer{
+			Queryer:     Queryer,
+			connDetails: connDetails,
+			sensor:      sensor,
+		}, QueryerContext: &wQueryerContext{
+			QueryerContext: QueryerContext,
+			connDetails:    connDetails,
+			sensor:         sensor,
+		}}
+}
+func get_conn_Queryer_ConnPrepareContext_NamedValueChecker(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker) driver.Conn {
+	return &w_conn_Queryer_ConnPrepareContext_NamedValueChecker{
+		Conn: &wConn{
+			Conn:        conn,
+			connDetails: connDetails,
+			sensor:      sensor,
+		}, Queryer: &wQueryer{
+			Queryer:     Queryer,
+			connDetails: connDetails,
+			sensor:      sensor,
+		}, ConnPrepareContext: &wConnPrepareContext{
+			ConnPrepareContext: ConnPrepareContext,
+			connDetails:        connDetails,
+			sensor:             sensor,
+		}, NamedValueChecker: NamedValueChecker,
+	}
+}
+func get_conn_ExecerContext_ConnPrepareContext_NamedValueChecker(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker) driver.Conn {
+	return &w_conn_ExecerContext_ConnPrepareContext_NamedValueChecker{
+		Conn: &wConn{
+			Conn:        conn,
+			connDetails: connDetails,
+			sensor:      sensor,
+		}, ExecerContext: &wExecerContext{
+			ExecerContext: ExecerContext,
+			connDetails:   connDetails,
+			sensor:        sensor,
+		}, ConnPrepareContext: &wConnPrepareContext{
+			ConnPrepareContext: ConnPrepareContext,
+			connDetails:        connDetails,
+			sensor:             sensor,
+		}, NamedValueChecker: NamedValueChecker,
+	}
+}
+func get_conn_Execer_ExecerContext_NamedValueChecker(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker) driver.Conn {
 	return &w_conn_Execer_ExecerContext_NamedValueChecker{
 		Conn: &wConn{
 			Conn:        conn,
@@ -3373,8 +1292,8 @@ func get_conn_Execer_ExecerContext_NamedValueChecker(connDetails dbConnDetails, 
 		}, NamedValueChecker: NamedValueChecker,
 	}
 }
-func get_conn_Execer_NamedValueChecker_ColumnConverter(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
-	return &w_conn_Execer_NamedValueChecker_ColumnConverter{
+func get_conn_Execer_ExecerContext_Queryer(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker) driver.Conn {
+	return &w_conn_Execer_ExecerContext_Queryer{
 		Conn: &wConn{
 			Conn:        conn,
 			connDetails: connDetails,
@@ -3383,12 +1302,35 @@ func get_conn_Execer_NamedValueChecker_ColumnConverter(connDetails dbConnDetails
 			Execer:      Execer,
 			connDetails: connDetails,
 			sensor:      sensor,
+		}, ExecerContext: &wExecerContext{
+			ExecerContext: ExecerContext,
+			connDetails:   connDetails,
+			sensor:        sensor,
+		}, Queryer: &wQueryer{
+			Queryer:     Queryer,
+			connDetails: connDetails,
+			sensor:      sensor,
+		}}
+}
+func get_conn_Execer_Queryer_NamedValueChecker(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker) driver.Conn {
+	return &w_conn_Execer_Queryer_NamedValueChecker{
+		Conn: &wConn{
+			Conn:        conn,
+			connDetails: connDetails,
+			sensor:      sensor,
+		}, Execer: &wExecer{
+			Execer:      Execer,
+			connDetails: connDetails,
+			sensor:      sensor,
+		}, Queryer: &wQueryer{
+			Queryer:     Queryer,
+			connDetails: connDetails,
+			sensor:      sensor,
 		}, NamedValueChecker: NamedValueChecker,
-		cc: ColumnConverter,
 	}
 }
-func get_conn_ExecerContext_NamedValueChecker_ColumnConverter(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
-	return &w_conn_ExecerContext_NamedValueChecker_ColumnConverter{
+func get_conn_ExecerContext_Queryer_NamedValueChecker(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker) driver.Conn {
+	return &w_conn_ExecerContext_Queryer_NamedValueChecker{
 		Conn: &wConn{
 			Conn:        conn,
 			connDetails: connDetails,
@@ -3397,12 +1339,35 @@ func get_conn_ExecerContext_NamedValueChecker_ColumnConverter(connDetails dbConn
 			ExecerContext: ExecerContext,
 			connDetails:   connDetails,
 			sensor:        sensor,
+		}, Queryer: &wQueryer{
+			Queryer:     Queryer,
+			connDetails: connDetails,
+			sensor:      sensor,
 		}, NamedValueChecker: NamedValueChecker,
-		cc: ColumnConverter,
 	}
 }
-func get_conn_Queryer_NamedValueChecker_ColumnConverter(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
-	return &w_conn_Queryer_NamedValueChecker_ColumnConverter{
+func get_conn_Execer_ExecerContext_ConnPrepareContext(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker) driver.Conn {
+	return &w_conn_Execer_ExecerContext_ConnPrepareContext{
+		Conn: &wConn{
+			Conn:        conn,
+			connDetails: connDetails,
+			sensor:      sensor,
+		}, Execer: &wExecer{
+			Execer:      Execer,
+			connDetails: connDetails,
+			sensor:      sensor,
+		}, ExecerContext: &wExecerContext{
+			ExecerContext: ExecerContext,
+			connDetails:   connDetails,
+			sensor:        sensor,
+		}, ConnPrepareContext: &wConnPrepareContext{
+			ConnPrepareContext: ConnPrepareContext,
+			connDetails:        connDetails,
+			sensor:             sensor,
+		}}
+}
+func get_conn_Queryer_QueryerContext_NamedValueChecker(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker) driver.Conn {
+	return &w_conn_Queryer_QueryerContext_NamedValueChecker{
 		Conn: &wConn{
 			Conn:        conn,
 			connDetails: connDetails,
@@ -3411,11 +1376,48 @@ func get_conn_Queryer_NamedValueChecker_ColumnConverter(connDetails dbConnDetail
 			Queryer:     Queryer,
 			connDetails: connDetails,
 			sensor:      sensor,
+		}, QueryerContext: &wQueryerContext{
+			QueryerContext: QueryerContext,
+			connDetails:    connDetails,
+			sensor:         sensor,
 		}, NamedValueChecker: NamedValueChecker,
-		cc: ColumnConverter,
 	}
 }
-func get_conn_Queryer_ConnPrepareContext(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
+func get_conn_Execer_QueryerContext_NamedValueChecker(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker) driver.Conn {
+	return &w_conn_Execer_QueryerContext_NamedValueChecker{
+		Conn: &wConn{
+			Conn:        conn,
+			connDetails: connDetails,
+			sensor:      sensor,
+		}, Execer: &wExecer{
+			Execer:      Execer,
+			connDetails: connDetails,
+			sensor:      sensor,
+		}, QueryerContext: &wQueryerContext{
+			QueryerContext: QueryerContext,
+			connDetails:    connDetails,
+			sensor:         sensor,
+		}, NamedValueChecker: NamedValueChecker,
+	}
+}
+func get_conn_ExecerContext_QueryerContext_NamedValueChecker(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker) driver.Conn {
+	return &w_conn_ExecerContext_QueryerContext_NamedValueChecker{
+		Conn: &wConn{
+			Conn:        conn,
+			connDetails: connDetails,
+			sensor:      sensor,
+		}, ExecerContext: &wExecerContext{
+			ExecerContext: ExecerContext,
+			connDetails:   connDetails,
+			sensor:        sensor,
+		}, QueryerContext: &wQueryerContext{
+			QueryerContext: QueryerContext,
+			connDetails:    connDetails,
+			sensor:         sensor,
+		}, NamedValueChecker: NamedValueChecker,
+	}
+}
+func get_conn_Queryer_ConnPrepareContext(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker) driver.Conn {
 	return &w_conn_Queryer_ConnPrepareContext{
 		Conn: &wConn{
 			Conn:        conn,
@@ -3431,65 +1433,20 @@ func get_conn_Queryer_ConnPrepareContext(connDetails dbConnDetails, conn driver.
 			sensor:             sensor,
 		}}
 }
-func get_conn_ExecerContext_Queryer(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
-	return &w_conn_ExecerContext_Queryer{
+func get_conn_Queryer_NamedValueChecker(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker) driver.Conn {
+	return &w_conn_Queryer_NamedValueChecker{
 		Conn: &wConn{
 			Conn:        conn,
 			connDetails: connDetails,
 			sensor:      sensor,
-		}, ExecerContext: &wExecerContext{
-			ExecerContext: ExecerContext,
-			connDetails:   connDetails,
-			sensor:        sensor,
 		}, Queryer: &wQueryer{
 			Queryer:     Queryer,
 			connDetails: connDetails,
 			sensor:      sensor,
-		}}
-}
-func get_conn_ExecerContext_NamedValueChecker(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
-	return &w_conn_ExecerContext_NamedValueChecker{
-		Conn: &wConn{
-			Conn:        conn,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, ExecerContext: &wExecerContext{
-			ExecerContext: ExecerContext,
-			connDetails:   connDetails,
-			sensor:        sensor,
 		}, NamedValueChecker: NamedValueChecker,
 	}
 }
-func get_conn_Execer_NamedValueChecker(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
-	return &w_conn_Execer_NamedValueChecker{
-		Conn: &wConn{
-			Conn:        conn,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, Execer: &wExecer{
-			Execer:      Execer,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, NamedValueChecker: NamedValueChecker,
-	}
-}
-func get_conn_Execer_QueryerContext(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
-	return &w_conn_Execer_QueryerContext{
-		Conn: &wConn{
-			Conn:        conn,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, Execer: &wExecer{
-			Execer:      Execer,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, QueryerContext: &wQueryerContext{
-			QueryerContext: QueryerContext,
-			connDetails:    connDetails,
-			sensor:         sensor,
-		}}
-}
-func get_conn_Execer_ExecerContext(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
+func get_conn_Execer_ExecerContext(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker) driver.Conn {
 	return &w_conn_Execer_ExecerContext{
 		Conn: &wConn{
 			Conn:        conn,
@@ -3505,46 +1462,23 @@ func get_conn_Execer_ExecerContext(connDetails dbConnDetails, conn driver.Conn, 
 			sensor:        sensor,
 		}}
 }
-func get_conn_Queryer_ColumnConverter(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
-	return &w_conn_Queryer_ColumnConverter{
+func get_conn_ExecerContext_Queryer(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker) driver.Conn {
+	return &w_conn_ExecerContext_Queryer{
 		Conn: &wConn{
 			Conn:        conn,
 			connDetails: connDetails,
 			sensor:      sensor,
+		}, ExecerContext: &wExecerContext{
+			ExecerContext: ExecerContext,
+			connDetails:   connDetails,
+			sensor:        sensor,
 		}, Queryer: &wQueryer{
 			Queryer:     Queryer,
 			connDetails: connDetails,
 			sensor:      sensor,
-		}, cc: ColumnConverter,
-	}
+		}}
 }
-func get_conn_QueryerContext_NamedValueChecker(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
-	return &w_conn_QueryerContext_NamedValueChecker{
-		Conn: &wConn{
-			Conn:        conn,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, QueryerContext: &wQueryerContext{
-			QueryerContext: QueryerContext,
-			connDetails:    connDetails,
-			sensor:         sensor,
-		}, NamedValueChecker: NamedValueChecker,
-	}
-}
-func get_conn_ConnPrepareContext_NamedValueChecker(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
-	return &w_conn_ConnPrepareContext_NamedValueChecker{
-		Conn: &wConn{
-			Conn:        conn,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, ConnPrepareContext: &wConnPrepareContext{
-			ConnPrepareContext: ConnPrepareContext,
-			connDetails:        connDetails,
-			sensor:             sensor,
-		}, NamedValueChecker: NamedValueChecker,
-	}
-}
-func get_conn_QueryerContext_ConnPrepareContext(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
+func get_conn_QueryerContext_ConnPrepareContext(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker) driver.Conn {
 	return &w_conn_QueryerContext_ConnPrepareContext{
 		Conn: &wConn{
 			Conn:        conn,
@@ -3560,8 +1494,8 @@ func get_conn_QueryerContext_ConnPrepareContext(connDetails dbConnDetails, conn 
 			sensor:             sensor,
 		}}
 }
-func get_conn_ConnPrepareContext_ColumnConverter(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
-	return &w_conn_ConnPrepareContext_ColumnConverter{
+func get_conn_ConnPrepareContext_NamedValueChecker(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker) driver.Conn {
+	return &w_conn_ConnPrepareContext_NamedValueChecker{
 		Conn: &wConn{
 			Conn:        conn,
 			connDetails: connDetails,
@@ -3570,59 +1504,17 @@ func get_conn_ConnPrepareContext_ColumnConverter(connDetails dbConnDetails, conn
 			ConnPrepareContext: ConnPrepareContext,
 			connDetails:        connDetails,
 			sensor:             sensor,
-		}, cc: ColumnConverter,
+		}, NamedValueChecker: NamedValueChecker,
 	}
 }
-func get_conn_ExecerContext_ColumnConverter(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
-	return &w_conn_ExecerContext_ColumnConverter{
-		Conn: &wConn{
-			Conn:        conn,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, ExecerContext: &wExecerContext{
-			ExecerContext: ExecerContext,
-			connDetails:   connDetails,
-			sensor:        sensor,
-		}, cc: ColumnConverter,
-	}
-}
-func get_conn_Execer_ColumnConverter(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
-	return &w_conn_Execer_ColumnConverter{
+func get_conn_Execer_QueryerContext(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker) driver.Conn {
+	return &w_conn_Execer_QueryerContext{
 		Conn: &wConn{
 			Conn:        conn,
 			connDetails: connDetails,
 			sensor:      sensor,
 		}, Execer: &wExecer{
 			Execer:      Execer,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, cc: ColumnConverter,
-	}
-}
-func get_conn_Execer_Queryer(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
-	return &w_conn_Execer_Queryer{
-		Conn: &wConn{
-			Conn:        conn,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, Execer: &wExecer{
-			Execer:      Execer,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, Queryer: &wQueryer{
-			Queryer:     Queryer,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}}
-}
-func get_conn_Queryer_QueryerContext(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
-	return &w_conn_Queryer_QueryerContext{
-		Conn: &wConn{
-			Conn:        conn,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, Queryer: &wQueryer{
-			Queryer:     Queryer,
 			connDetails: connDetails,
 			sensor:      sensor,
 		}, QueryerContext: &wQueryerContext{
@@ -3631,21 +1523,8 @@ func get_conn_Queryer_QueryerContext(connDetails dbConnDetails, conn driver.Conn
 			sensor:         sensor,
 		}}
 }
-func get_conn_QueryerContext_ColumnConverter(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
-	return &w_conn_QueryerContext_ColumnConverter{
-		Conn: &wConn{
-			Conn:        conn,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, QueryerContext: &wQueryerContext{
-			QueryerContext: QueryerContext,
-			connDetails:    connDetails,
-			sensor:         sensor,
-		}, cc: ColumnConverter,
-	}
-}
-func get_conn_ExecerContext_ConnPrepareContext(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
-	return &w_conn_ExecerContext_ConnPrepareContext{
+func get_conn_ExecerContext_NamedValueChecker(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker) driver.Conn {
+	return &w_conn_ExecerContext_NamedValueChecker{
 		Conn: &wConn{
 			Conn:        conn,
 			connDetails: connDetails,
@@ -3654,52 +1533,10 @@ func get_conn_ExecerContext_ConnPrepareContext(connDetails dbConnDetails, conn d
 			ExecerContext: ExecerContext,
 			connDetails:   connDetails,
 			sensor:        sensor,
-		}, ConnPrepareContext: &wConnPrepareContext{
-			ConnPrepareContext: ConnPrepareContext,
-			connDetails:        connDetails,
-			sensor:             sensor,
-		}}
-}
-func get_conn_Execer_ConnPrepareContext(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
-	return &w_conn_Execer_ConnPrepareContext{
-		Conn: &wConn{
-			Conn:        conn,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, Execer: &wExecer{
-			Execer:      Execer,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, ConnPrepareContext: &wConnPrepareContext{
-			ConnPrepareContext: ConnPrepareContext,
-			connDetails:        connDetails,
-			sensor:             sensor,
-		}}
-}
-func get_conn_Queryer_NamedValueChecker(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
-	return &w_conn_Queryer_NamedValueChecker{
-		Conn: &wConn{
-			Conn:        conn,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, Queryer: &wQueryer{
-			Queryer:     Queryer,
-			connDetails: connDetails,
-			sensor:      sensor,
 		}, NamedValueChecker: NamedValueChecker,
 	}
 }
-func get_conn_NamedValueChecker_ColumnConverter(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
-	return &w_conn_NamedValueChecker_ColumnConverter{
-		Conn: &wConn{
-			Conn:        conn,
-			connDetails: connDetails,
-			sensor:      sensor,
-		}, NamedValueChecker: NamedValueChecker,
-		cc: ColumnConverter,
-	}
-}
-func get_conn_ExecerContext_QueryerContext(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
+func get_conn_ExecerContext_QueryerContext(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker) driver.Conn {
 	return &w_conn_ExecerContext_QueryerContext{
 		Conn: &wConn{
 			Conn:        conn,
@@ -3715,31 +1552,27 @@ func get_conn_ExecerContext_QueryerContext(connDetails dbConnDetails, conn drive
 			sensor:         sensor,
 		}}
 }
-func get_conn_ColumnConverter(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
-	return &w_conn_ColumnConverter{
+func get_conn_Execer_NamedValueChecker(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker) driver.Conn {
+	return &w_conn_Execer_NamedValueChecker{
 		Conn: &wConn{
 			Conn:        conn,
 			connDetails: connDetails,
 			sensor:      sensor,
-		}, cc: ColumnConverter,
+		}, Execer: &wExecer{
+			Execer:      Execer,
+			connDetails: connDetails,
+			sensor:      sensor,
+		}, NamedValueChecker: NamedValueChecker,
 	}
 }
-func get_conn_ConnPrepareContext(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
-	return &w_conn_ConnPrepareContext{
+func get_conn_Execer_Queryer(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker) driver.Conn {
+	return &w_conn_Execer_Queryer{
 		Conn: &wConn{
 			Conn:        conn,
 			connDetails: connDetails,
 			sensor:      sensor,
-		}, ConnPrepareContext: &wConnPrepareContext{
-			ConnPrepareContext: ConnPrepareContext,
-			connDetails:        connDetails,
-			sensor:             sensor,
-		}}
-}
-func get_conn_Queryer(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
-	return &w_conn_Queryer{
-		Conn: &wConn{
-			Conn:        conn,
+		}, Execer: &wExecer{
+			Execer:      Execer,
 			connDetails: connDetails,
 			sensor:      sensor,
 		}, Queryer: &wQueryer{
@@ -3748,8 +1581,37 @@ func get_conn_Queryer(connDetails dbConnDetails, conn driver.Conn, sensor *Senso
 			sensor:      sensor,
 		}}
 }
-func get_conn_ExecerContext(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
-	return &w_conn_ExecerContext{
+func get_conn_QueryerContext_NamedValueChecker(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker) driver.Conn {
+	return &w_conn_QueryerContext_NamedValueChecker{
+		Conn: &wConn{
+			Conn:        conn,
+			connDetails: connDetails,
+			sensor:      sensor,
+		}, QueryerContext: &wQueryerContext{
+			QueryerContext: QueryerContext,
+			connDetails:    connDetails,
+			sensor:         sensor,
+		}, NamedValueChecker: NamedValueChecker,
+	}
+}
+func get_conn_Execer_ConnPrepareContext(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker) driver.Conn {
+	return &w_conn_Execer_ConnPrepareContext{
+		Conn: &wConn{
+			Conn:        conn,
+			connDetails: connDetails,
+			sensor:      sensor,
+		}, Execer: &wExecer{
+			Execer:      Execer,
+			connDetails: connDetails,
+			sensor:      sensor,
+		}, ConnPrepareContext: &wConnPrepareContext{
+			ConnPrepareContext: ConnPrepareContext,
+			connDetails:        connDetails,
+			sensor:             sensor,
+		}}
+}
+func get_conn_ExecerContext_ConnPrepareContext(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker) driver.Conn {
+	return &w_conn_ExecerContext_ConnPrepareContext{
 		Conn: &wConn{
 			Conn:        conn,
 			connDetails: connDetails,
@@ -3758,9 +1620,41 @@ func get_conn_ExecerContext(connDetails dbConnDetails, conn driver.Conn, sensor 
 			ExecerContext: ExecerContext,
 			connDetails:   connDetails,
 			sensor:        sensor,
+		}, ConnPrepareContext: &wConnPrepareContext{
+			ConnPrepareContext: ConnPrepareContext,
+			connDetails:        connDetails,
+			sensor:             sensor,
 		}}
 }
-func get_conn_Execer(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
+func get_conn_Queryer_QueryerContext(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker) driver.Conn {
+	return &w_conn_Queryer_QueryerContext{
+		Conn: &wConn{
+			Conn:        conn,
+			connDetails: connDetails,
+			sensor:      sensor,
+		}, Queryer: &wQueryer{
+			Queryer:     Queryer,
+			connDetails: connDetails,
+			sensor:      sensor,
+		}, QueryerContext: &wQueryerContext{
+			QueryerContext: QueryerContext,
+			connDetails:    connDetails,
+			sensor:         sensor,
+		}}
+}
+func get_conn_QueryerContext(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker) driver.Conn {
+	return &w_conn_QueryerContext{
+		Conn: &wConn{
+			Conn:        conn,
+			connDetails: connDetails,
+			sensor:      sensor,
+		}, QueryerContext: &wQueryerContext{
+			QueryerContext: QueryerContext,
+			connDetails:    connDetails,
+			sensor:         sensor,
+		}}
+}
+func get_conn_Execer(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker) driver.Conn {
 	return &w_conn_Execer{
 		Conn: &wConn{
 			Conn:        conn,
@@ -3772,7 +1666,31 @@ func get_conn_Execer(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor
 			sensor:      sensor,
 		}}
 }
-func get_conn_NamedValueChecker(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
+func get_conn_ConnPrepareContext(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker) driver.Conn {
+	return &w_conn_ConnPrepareContext{
+		Conn: &wConn{
+			Conn:        conn,
+			connDetails: connDetails,
+			sensor:      sensor,
+		}, ConnPrepareContext: &wConnPrepareContext{
+			ConnPrepareContext: ConnPrepareContext,
+			connDetails:        connDetails,
+			sensor:             sensor,
+		}}
+}
+func get_conn_Queryer(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker) driver.Conn {
+	return &w_conn_Queryer{
+		Conn: &wConn{
+			Conn:        conn,
+			connDetails: connDetails,
+			sensor:      sensor,
+		}, Queryer: &wQueryer{
+			Queryer:     Queryer,
+			connDetails: connDetails,
+			sensor:      sensor,
+		}}
+}
+func get_conn_NamedValueChecker(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker) driver.Conn {
 	return &w_conn_NamedValueChecker{
 		Conn: &wConn{
 			Conn:        conn,
@@ -3781,16 +1699,16 @@ func get_conn_NamedValueChecker(connDetails dbConnDetails, conn driver.Conn, sen
 		}, NamedValueChecker: NamedValueChecker,
 	}
 }
-func get_conn_QueryerContext(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Conn {
-	return &w_conn_QueryerContext{
+func get_conn_ExecerContext(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker) driver.Conn {
+	return &w_conn_ExecerContext{
 		Conn: &wConn{
 			Conn:        conn,
 			connDetails: connDetails,
 			sensor:      sensor,
-		}, QueryerContext: &wQueryerContext{
-			QueryerContext: QueryerContext,
-			connDetails:    connDetails,
-			sensor:         sensor,
+		}, ExecerContext: &wExecerContext{
+			ExecerContext: ExecerContext,
+			connDetails:   connDetails,
+			sensor:        sensor,
 		}}
 }
 
@@ -4189,150 +2107,86 @@ func get_stmt_StmtQueryContext(stmt driver.Stmt, query string, connDetails dbCon
 		}}
 }
 
-var _conn_n = map[int]func(dbConnDetails, driver.Conn, *Sensor, driver.Execer, driver.ExecerContext, driver.Queryer, driver.QueryerContext, driver.ConnPrepareContext, driver.NamedValueChecker, driver.ColumnConverter) driver.Conn{
-	0b111110:  get_conn_ExecerContext_Queryer_QueryerContext_ConnPrepareContext_NamedValueChecker,
-	0b1111001: get_conn_Execer_ExecerContext_Queryer_QueryerContext_ColumnConverter,
-	0b1011011: get_conn_Execer_Queryer_QueryerContext_NamedValueChecker_ColumnConverter,
-	0b1010011: get_conn_Execer_Queryer_NamedValueChecker_ColumnConverter,
-	0b1110010: get_conn_Execer_ExecerContext_Queryer_NamedValueChecker,
-	0b1011001: get_conn_Execer_Queryer_QueryerContext_ColumnConverter,
-	0b1011000: get_conn_Execer_Queryer_QueryerContext,
-	0b1001111: get_conn_Execer_QueryerContext_ConnPrepareContext_NamedValueChecker_ColumnConverter,
-	0b100:     get_conn_ConnPrepareContext,
-	0b100010:  get_conn_ExecerContext_NamedValueChecker,
-	0b1011:    get_conn_QueryerContext_NamedValueChecker_ColumnConverter,
-	0b1000111: get_conn_Execer_ConnPrepareContext_NamedValueChecker_ColumnConverter,
-	0b1100110: get_conn_Execer_ExecerContext_ConnPrepareContext_NamedValueChecker,
-	0b1010010: get_conn_Execer_Queryer_NamedValueChecker,
-	0b1001000: get_conn_Execer_QueryerContext,
-	0b111011:  get_conn_ExecerContext_Queryer_QueryerContext_NamedValueChecker_ColumnConverter,
-	0b101:     get_conn_ConnPrepareContext_ColumnConverter,
-	0b1010000: get_conn_Execer_Queryer,
-	0b100100:  get_conn_ExecerContext_ConnPrepareContext,
-	0b100011:  get_conn_ExecerContext_NamedValueChecker_ColumnConverter,
-	0b1010001: get_conn_Execer_Queryer_ColumnConverter,
-	0b1110:    get_conn_QueryerContext_ConnPrepareContext_NamedValueChecker,
-	0b101100:  get_conn_ExecerContext_QueryerContext_ConnPrepareContext,
-	0b1100010: get_conn_Execer_ExecerContext_NamedValueChecker,
-	0b1111010: get_conn_Execer_ExecerContext_Queryer_QueryerContext_NamedValueChecker,
-	0b1001001: get_conn_Execer_QueryerContext_ColumnConverter,
-	0b1001100: get_conn_Execer_QueryerContext_ConnPrepareContext,
-	0b110000:  get_conn_ExecerContext_Queryer,
-	0b1110100: get_conn_Execer_ExecerContext_Queryer_ConnPrepareContext,
-	0b11000:   get_conn_Queryer_QueryerContext,
-	0b11101:   get_conn_Queryer_QueryerContext_ConnPrepareContext_ColumnConverter,
-	0b1110111: get_conn_Execer_ExecerContext_Queryer_ConnPrepareContext_NamedValueChecker_ColumnConverter,
-	0b1101000: get_conn_Execer_ExecerContext_QueryerContext,
-	0b1000001: get_conn_Execer_ColumnConverter,
-	0b1101111: get_conn_Execer_ExecerContext_QueryerContext_ConnPrepareContext_NamedValueChecker_ColumnConverter,
-	0b1111101: get_conn_Execer_ExecerContext_Queryer_QueryerContext_ConnPrepareContext_ColumnConverter,
-	0b101001:  get_conn_ExecerContext_QueryerContext_ColumnConverter,
-	0b110010:  get_conn_ExecerContext_Queryer_NamedValueChecker,
-	0b1001:    get_conn_QueryerContext_ColumnConverter,
-	0b1000100: get_conn_Execer_ConnPrepareContext,
-	0b10000:   get_conn_Queryer,
-	0b1111111: get_conn_Execer_ExecerContext_Queryer_QueryerContext_ConnPrepareContext_NamedValueChecker_ColumnConverter,
-	0b110100:  get_conn_ExecerContext_Queryer_ConnPrepareContext,
-	0b1000010: get_conn_Execer_NamedValueChecker,
-	0b100110:  get_conn_ExecerContext_ConnPrepareContext_NamedValueChecker,
-	0b1001011: get_conn_Execer_QueryerContext_NamedValueChecker_ColumnConverter,
-	0b111010:  get_conn_ExecerContext_Queryer_QueryerContext_NamedValueChecker,
-	0b1100:    get_conn_QueryerContext_ConnPrepareContext,
-	0b1110110: get_conn_Execer_ExecerContext_Queryer_ConnPrepareContext_NamedValueChecker,
-	0b100000:  get_conn_ExecerContext,
-	0b111001:  get_conn_ExecerContext_Queryer_QueryerContext_ColumnConverter,
-	0b1111011: get_conn_Execer_ExecerContext_Queryer_QueryerContext_NamedValueChecker_ColumnConverter,
-	0b1000011: get_conn_Execer_NamedValueChecker_ColumnConverter,
-	0b1100000: get_conn_Execer_ExecerContext,
-	0b1000000: get_conn_Execer,
-	0b1111000: get_conn_Execer_ExecerContext_Queryer_QueryerContext,
-	0b1000101: get_conn_Execer_ConnPrepareContext_ColumnConverter,
-	0b110:     get_conn_ConnPrepareContext_NamedValueChecker,
-	0b1011100: get_conn_Execer_Queryer_QueryerContext_ConnPrepareContext,
-	0b1010111: get_conn_Execer_Queryer_ConnPrepareContext_NamedValueChecker_ColumnConverter,
-	0b110101:  get_conn_ExecerContext_Queryer_ConnPrepareContext_ColumnConverter,
-	0b1010110: get_conn_Execer_Queryer_ConnPrepareContext_NamedValueChecker,
-	0b111:     get_conn_ConnPrepareContext_NamedValueChecker_ColumnConverter,
-	0b11010:   get_conn_Queryer_QueryerContext_NamedValueChecker,
-	0b11100:   get_conn_Queryer_QueryerContext_ConnPrepareContext,
-	0b1010:    get_conn_QueryerContext_NamedValueChecker,
-	0b110111:  get_conn_ExecerContext_Queryer_ConnPrepareContext_NamedValueChecker_ColumnConverter,
-	0b1000:    get_conn_QueryerContext,
-	0b1101001: get_conn_Execer_ExecerContext_QueryerContext_ColumnConverter,
-	0b111000:  get_conn_ExecerContext_Queryer_QueryerContext,
-	0b101011:  get_conn_ExecerContext_QueryerContext_NamedValueChecker_ColumnConverter,
-	0b1111:    get_conn_QueryerContext_ConnPrepareContext_NamedValueChecker_ColumnConverter,
-	0b1100100: get_conn_Execer_ExecerContext_ConnPrepareContext,
-	0b11111:   get_conn_Queryer_QueryerContext_ConnPrepareContext_NamedValueChecker_ColumnConverter,
-	0b111101:  get_conn_ExecerContext_Queryer_QueryerContext_ConnPrepareContext_ColumnConverter,
-	0b1110011: get_conn_Execer_ExecerContext_Queryer_NamedValueChecker_ColumnConverter,
-	0b110011:  get_conn_ExecerContext_Queryer_NamedValueChecker_ColumnConverter,
-	0b100111:  get_conn_ExecerContext_ConnPrepareContext_NamedValueChecker_ColumnConverter,
-	0b1011110: get_conn_Execer_Queryer_QueryerContext_ConnPrepareContext_NamedValueChecker,
-	0b10010:   get_conn_Queryer_NamedValueChecker,
-	0b1001110: get_conn_Execer_QueryerContext_ConnPrepareContext_NamedValueChecker,
-	0b1101010: get_conn_Execer_ExecerContext_QueryerContext_NamedValueChecker,
-	0b11001:   get_conn_Queryer_QueryerContext_ColumnConverter,
-	0b1100001: get_conn_Execer_ExecerContext_ColumnConverter,
-	0b101000:  get_conn_ExecerContext_QueryerContext,
-	0b10:      get_conn_NamedValueChecker,
-	0b10111:   get_conn_Queryer_ConnPrepareContext_NamedValueChecker_ColumnConverter,
-	0b110110:  get_conn_ExecerContext_Queryer_ConnPrepareContext_NamedValueChecker,
-	0b1000110: get_conn_Execer_ConnPrepareContext_NamedValueChecker,
-	0b10100:   get_conn_Queryer_ConnPrepareContext,
-	0b1100101: get_conn_Execer_ExecerContext_ConnPrepareContext_ColumnConverter,
-	0b1110000: get_conn_Execer_ExecerContext_Queryer,
-	0b10101:   get_conn_Queryer_ConnPrepareContext_ColumnConverter,
-	0b1101:    get_conn_QueryerContext_ConnPrepareContext_ColumnConverter,
-	0b111100:  get_conn_ExecerContext_Queryer_QueryerContext_ConnPrepareContext,
-	0b1001101: get_conn_Execer_QueryerContext_ConnPrepareContext_ColumnConverter,
-	0b101110:  get_conn_ExecerContext_QueryerContext_ConnPrepareContext_NamedValueChecker,
-	0b100001:  get_conn_ExecerContext_ColumnConverter,
-	0b111111:  get_conn_ExecerContext_Queryer_QueryerContext_ConnPrepareContext_NamedValueChecker_ColumnConverter,
-	0b1:       get_conn_ColumnConverter,
-	0b1110001: get_conn_Execer_ExecerContext_Queryer_ColumnConverter,
-	0b1011111: get_conn_Execer_Queryer_QueryerContext_ConnPrepareContext_NamedValueChecker_ColumnConverter,
-	0b1101101: get_conn_Execer_ExecerContext_QueryerContext_ConnPrepareContext_ColumnConverter,
-	0b1010101: get_conn_Execer_Queryer_ConnPrepareContext_ColumnConverter,
-	0b100101:  get_conn_ExecerContext_ConnPrepareContext_ColumnConverter,
-	0b1111110: get_conn_Execer_ExecerContext_Queryer_QueryerContext_ConnPrepareContext_NamedValueChecker,
-	0b1100111: get_conn_Execer_ExecerContext_ConnPrepareContext_NamedValueChecker_ColumnConverter,
-	0b1101011: get_conn_Execer_ExecerContext_QueryerContext_NamedValueChecker_ColumnConverter,
-	0b110001:  get_conn_ExecerContext_Queryer_ColumnConverter,
-	0b1001010: get_conn_Execer_QueryerContext_NamedValueChecker,
-	0b101111:  get_conn_ExecerContext_QueryerContext_ConnPrepareContext_NamedValueChecker_ColumnConverter,
-	0b10110:   get_conn_Queryer_ConnPrepareContext_NamedValueChecker,
-	0b10001:   get_conn_Queryer_ColumnConverter,
-	0b1101110: get_conn_Execer_ExecerContext_QueryerContext_ConnPrepareContext_NamedValueChecker,
-	0b1110101: get_conn_Execer_ExecerContext_Queryer_ConnPrepareContext_ColumnConverter,
-	0b101101:  get_conn_ExecerContext_QueryerContext_ConnPrepareContext_ColumnConverter,
-	0b1011101: get_conn_Execer_Queryer_QueryerContext_ConnPrepareContext_ColumnConverter,
-	0b1010100: get_conn_Execer_Queryer_ConnPrepareContext,
-	0b1100011: get_conn_Execer_ExecerContext_NamedValueChecker_ColumnConverter,
-	0b1101100: get_conn_Execer_ExecerContext_QueryerContext_ConnPrepareContext,
-	0b11011:   get_conn_Queryer_QueryerContext_NamedValueChecker_ColumnConverter,
-	0b1011010: get_conn_Execer_Queryer_QueryerContext_NamedValueChecker,
-	0b11110:   get_conn_Queryer_QueryerContext_ConnPrepareContext_NamedValueChecker,
-	0b101010:  get_conn_ExecerContext_QueryerContext_NamedValueChecker,
-	0b10011:   get_conn_Queryer_NamedValueChecker_ColumnConverter,
-	0b1111100: get_conn_Execer_ExecerContext_Queryer_QueryerContext_ConnPrepareContext,
-	0b11:      get_conn_NamedValueChecker_ColumnConverter,
+var _conn_n = map[int]func(dbConnDetails, driver.Conn, *Sensor, driver.Execer, driver.ExecerContext, driver.Queryer, driver.QueryerContext, driver.ConnPrepareContext, driver.NamedValueChecker) driver.Conn{
+	0b1010:   get_conn_Queryer_ConnPrepareContext,
+	0b11:     get_conn_ConnPrepareContext_NamedValueChecker,
+	0b1111:   get_conn_Queryer_QueryerContext_ConnPrepareContext_NamedValueChecker,
+	0b111001: get_conn_Execer_ExecerContext_Queryer_NamedValueChecker,
+	0b1110:   get_conn_Queryer_QueryerContext_ConnPrepareContext,
+	0b11110:  get_conn_ExecerContext_Queryer_QueryerContext_ConnPrepareContext,
+	0b110010: get_conn_Execer_ExecerContext_ConnPrepareContext,
+	0b10010:  get_conn_ExecerContext_ConnPrepareContext,
+	0b111011: get_conn_Execer_ExecerContext_Queryer_ConnPrepareContext_NamedValueChecker,
+	0b110011: get_conn_Execer_ExecerContext_ConnPrepareContext_NamedValueChecker,
+	0b110101: get_conn_Execer_ExecerContext_QueryerContext_NamedValueChecker,
+	0b111111: get_conn_Execer_ExecerContext_Queryer_QueryerContext_ConnPrepareContext_NamedValueChecker,
+	0b110110: get_conn_Execer_ExecerContext_QueryerContext_ConnPrepareContext,
+	0b11001:  get_conn_ExecerContext_Queryer_NamedValueChecker,
+	0b100:    get_conn_QueryerContext,
+	0b10101:  get_conn_ExecerContext_QueryerContext_NamedValueChecker,
+	0b101110: get_conn_Execer_Queryer_QueryerContext_ConnPrepareContext,
+	0b11100:  get_conn_ExecerContext_Queryer_QueryerContext,
+	0b110001: get_conn_Execer_ExecerContext_NamedValueChecker,
+	0b1001:   get_conn_Queryer_NamedValueChecker,
+	0b110000: get_conn_Execer_ExecerContext,
+	0b10:     get_conn_ConnPrepareContext,
+	0b110:    get_conn_QueryerContext_ConnPrepareContext,
+	0b10001:  get_conn_ExecerContext_NamedValueChecker,
+	0b10100:  get_conn_ExecerContext_QueryerContext,
+	0b101:    get_conn_QueryerContext_NamedValueChecker,
+	0b11111:  get_conn_ExecerContext_Queryer_QueryerContext_ConnPrepareContext_NamedValueChecker,
+	0b101101: get_conn_Execer_Queryer_QueryerContext_NamedValueChecker,
+	0b11011:  get_conn_ExecerContext_Queryer_ConnPrepareContext_NamedValueChecker,
+	0b11010:  get_conn_ExecerContext_Queryer_ConnPrepareContext,
+	0b101001: get_conn_Execer_Queryer_NamedValueChecker,
+	0b10000:  get_conn_ExecerContext,
+	0b111010: get_conn_Execer_ExecerContext_Queryer_ConnPrepareContext,
+	0b10111:  get_conn_ExecerContext_QueryerContext_ConnPrepareContext_NamedValueChecker,
+	0b100110: get_conn_Execer_QueryerContext_ConnPrepareContext,
+	0b100111: get_conn_Execer_QueryerContext_ConnPrepareContext_NamedValueChecker,
+	0b101010: get_conn_Execer_Queryer_ConnPrepareContext,
+	0b11000:  get_conn_ExecerContext_Queryer,
+	0b100001: get_conn_Execer_NamedValueChecker,
+	0b1100:   get_conn_Queryer_QueryerContext,
+	0b111110: get_conn_Execer_ExecerContext_Queryer_QueryerContext_ConnPrepareContext,
+	0b110111: get_conn_Execer_ExecerContext_QueryerContext_ConnPrepareContext_NamedValueChecker,
+	0b111100: get_conn_Execer_ExecerContext_Queryer_QueryerContext,
+	0b111:    get_conn_QueryerContext_ConnPrepareContext_NamedValueChecker,
+	0b10011:  get_conn_ExecerContext_ConnPrepareContext_NamedValueChecker,
+	0b111101: get_conn_Execer_ExecerContext_Queryer_QueryerContext_NamedValueChecker,
+	0b100011: get_conn_Execer_ConnPrepareContext_NamedValueChecker,
+	0b110100: get_conn_Execer_ExecerContext_QueryerContext,
+	0b100010: get_conn_Execer_ConnPrepareContext,
+	0b11101:  get_conn_ExecerContext_Queryer_QueryerContext_NamedValueChecker,
+	0b1011:   get_conn_Queryer_ConnPrepareContext_NamedValueChecker,
+	0b100100: get_conn_Execer_QueryerContext,
+	0b101111: get_conn_Execer_Queryer_QueryerContext_ConnPrepareContext_NamedValueChecker,
+	0b101011: get_conn_Execer_Queryer_ConnPrepareContext_NamedValueChecker,
+	0b1000:   get_conn_Queryer,
+	0b1:      get_conn_NamedValueChecker,
+	0b101100: get_conn_Execer_Queryer_QueryerContext,
+	0b1101:   get_conn_Queryer_QueryerContext_NamedValueChecker,
+	0b100000: get_conn_Execer,
+	0b101000: get_conn_Execer_Queryer,
+	0b10110:  get_conn_ExecerContext_QueryerContext_ConnPrepareContext,
+	0b111000: get_conn_Execer_ExecerContext_Queryer,
+	0b100101: get_conn_Execer_QueryerContext_NamedValueChecker,
 }
 var _stmt_n = map[int]func(driver.Stmt, string, dbConnDetails, *Sensor, driver.StmtExecContext, driver.StmtQueryContext, driver.NamedValueChecker, driver.ColumnConverter) driver.Stmt{
+	0b110:  get_stmt_StmtQueryContext_NamedValueChecker,
 	0b11:   get_stmt_NamedValueChecker_ColumnConverter,
 	0b1100: get_stmt_StmtExecContext_StmtQueryContext,
-	0b1110: get_stmt_StmtExecContext_StmtQueryContext_NamedValueChecker,
-	0b1101: get_stmt_StmtExecContext_StmtQueryContext_ColumnConverter,
-	0b101:  get_stmt_StmtQueryContext_ColumnConverter,
-	0b1010: get_stmt_StmtExecContext_NamedValueChecker,
-	0b1:    get_stmt_ColumnConverter,
-	0b1000: get_stmt_StmtExecContext,
-	0b111:  get_stmt_StmtQueryContext_NamedValueChecker_ColumnConverter,
-	0b1011: get_stmt_StmtExecContext_NamedValueChecker_ColumnConverter,
-	0b110:  get_stmt_StmtQueryContext_NamedValueChecker,
-	0b1001: get_stmt_StmtExecContext_ColumnConverter,
 	0b10:   get_stmt_NamedValueChecker,
 	0b1111: get_stmt_StmtExecContext_StmtQueryContext_NamedValueChecker_ColumnConverter,
+	0b101:  get_stmt_StmtQueryContext_ColumnConverter,
+	0b1000: get_stmt_StmtExecContext,
+	0b1110: get_stmt_StmtExecContext_StmtQueryContext_NamedValueChecker,
+	0b1010: get_stmt_StmtExecContext_NamedValueChecker,
+	0b1:    get_stmt_ColumnConverter,
+	0b111:  get_stmt_StmtQueryContext_NamedValueChecker_ColumnConverter,
+	0b1011: get_stmt_StmtExecContext_NamedValueChecker_ColumnConverter,
+	0b1101: get_stmt_StmtExecContext_StmtQueryContext_ColumnConverter,
+	0b1001: get_stmt_StmtExecContext_ColumnConverter,
 	0b100:  get_stmt_StmtQueryContext,
 }
 

@@ -24,7 +24,6 @@ var arrayConn = []string{
 	"driver.QueryerContext",
 	"driver.ConnPrepareContext",
 	"driver.NamedValueChecker",
-	"driver.ColumnConverter",
 }
 
 var arrayStmt = []string{
