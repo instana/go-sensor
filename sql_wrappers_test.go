@@ -238,6 +238,22 @@ func Test_stmtAllInterfacesCase(t *testing.T) {
 	assert.IsType(t, &w_stmt_StmtExecContext_StmtQueryContext_NamedValueChecker_ColumnConverter{}, d)
 }
 
+func Test_stmtWrapOnlyStmt(t *testing.T) {
+	var a driver.Stmt
+
+	d := wrapStmt(a, "", dbConnDetails{}, nil)
+
+	assert.IsType(t, &wStmt{}, d)
+}
+
+func Test_connWrapOnlyConn(t *testing.T) {
+	var a driver.Conn
+
+	d := wrapConn(dbConnDetails{}, a, nil)
+
+	assert.IsType(t, &wConn{}, d)
+}
+
 type connAllInterfacesMock struct {
 }
 
