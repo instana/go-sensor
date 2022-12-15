@@ -300,6 +300,11 @@ func Test_convertBooleansToInt(t *testing.T) {
 			args: args{args: []bool{true, true, true, true}},
 			want: 0b1111,
 		},
+		{
+			name: "false true false",
+			args: args{args: []bool{false, true, false}},
+			want: 0b10,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
