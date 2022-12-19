@@ -12,6 +12,7 @@ import (
 )
 
 const driverStmt = "driver.Stmt"
+const driverConn = "driver.Conn"
 
 var _conn_m = map[string]string{}
 var _stmt_m = map[string]string{}
@@ -67,7 +68,7 @@ func main() {
 	copy(arrayStmtCopy, arrayStmt)
 	copy(arrayConnCopy, arrayConn)
 
-	gen("driver.Conn", "w_conn_", arrayConn)
+	gen(driverConn, "w_conn_", arrayConn)
 	gen(driverStmt, "w_stmt_", arrayStmt)
 
 	printFunctionMaps(arrayConnCopy, arrayStmtCopy)
@@ -77,22 +78,15 @@ func main() {
 // todo: use copy instead of modify input array
 func gen(basicTypeForWrapper, prefix string, listOfTheOriginalTypes []string) {
 	// generate all subsets of the interfaces
-	conn := combinations.All(listOfTheOriginalTypes)
+	typesCombinations := combinations.All(listOfTheOriginalTypes)
 	var filteredSubsets [][]string
 
-	for _, v := range conn {
-		if inArray(basicTypeForWrapper, v) {
-			//remove basic type
-			v = v[1:]
-			if len(v) == 0 {
-				continue
-			}
-			filteredSubsets = append(filteredSubsets, v)
+	for _, v := range typesCombinations {
+		if inArray(basicTypeForWrapper, v) && len(v) > 1 {
+			filteredSubsets = append(filteredSubsets, removeOnceFromArr(basicTypeForWrapper, v))
 		}
-
 	}
 
-	// not really important
 	sort.Slice(filteredSubsets, func(i, j int) bool {
 		return len(filteredSubsets[i]) > len(filteredSubsets[j])
 	})
@@ -336,8 +330,8 @@ func booleansToBinaryRepresentation(args ...bool) string {
 }
 
 func printFunctionMaps(connTypes []string, stmtTypes []string) {
-	ct := removeOnceFromArr("driver.Conn", connTypes)
-	st := removeOnceFromArr("driver.Stmt", stmtTypes)
+	ct := removeOnceFromArr(driverConn, connTypes)
+	st := removeOnceFromArr(driverStmt, stmtTypes)
 
 	fmt.Println("var _conn_n = map[int]func( dbConnDetails, driver.Conn, *Sensor," + strings.Join(ct, ",") + ") driver.Conn {")
 	for k, v := range _conn_m {
