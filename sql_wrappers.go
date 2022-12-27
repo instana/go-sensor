@@ -668,7 +668,7 @@ func wrapConn(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor) drive
 	QueryerContext, isQueryerContext := conn.(driver.QueryerContext)
 	ConnPrepareContext, isConnPrepareContext := conn.(driver.ConnPrepareContext)
 	NamedValueChecker, isNamedValueChecker := conn.(driver.NamedValueChecker)
-	
+
 	if f, ok := _conn_n[convertBooleansToInt(isExecer, isExecerContext, isQueryer, isQueryerContext, isConnPrepareContext, isNamedValueChecker)]; ok {
 		return f(connDetails, conn, sensor, Execer, ExecerContext, Queryer, QueryerContext, ConnPrepareContext, NamedValueChecker)
 	}
