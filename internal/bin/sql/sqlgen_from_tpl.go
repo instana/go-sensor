@@ -4,6 +4,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"sort"
 	"strings"
@@ -14,6 +15,9 @@ import (
 
 const driverStmt2 = "driver.Stmt"
 const driverConn2 = "driver.Conn"
+
+var _conn_m2 = map[string]string{}
+var _stmt_m2 = map[string]string{}
 
 var arrayConn2 = []string{
 	"driver.Conn",
@@ -81,6 +85,12 @@ func init() {
 		"stmtInterfaces": func() []string {
 			return stmtInterfacesNoBasicType
 		},
+		"stmtMap": func() map[string]string {
+			return _stmt_m2
+		},
+		"connMap": func() map[string]string {
+			return _conn_m2
+		},
 		"driverTypes": func(dc []DriverCombo, isConn bool) []string {
 			var drivers []string
 
@@ -95,7 +105,7 @@ func init() {
 	}
 }
 
-func main1() {
+func main() {
 	tpl, err := template.New("sql_wrappers.tpl").Funcs(funcMap).ParseFiles("sql_wrappers.tpl")
 
 	if err != nil {
@@ -115,6 +125,16 @@ func main1() {
 
 	connSubsets, connTypes, connInterfacesNoBasicType = getTypeCombinations(driverConn2, "conn_", arrayConn2)
 	stmtSubsets, stmtTypes, stmtInterfacesNoBasicType = getTypeCombinations(driverStmt2, "stmt_", arrayStmt2)
+
+	for _, subset := range connSubsets {
+		name := strings.ReplaceAll(strings.Join(subset, "_"), "driver.", "")
+		genConnMap2("w_conn_", connInterfacesNoBasicType, subset, "get_conn_"+name)
+	}
+
+	for _, subset := range stmtSubsets {
+		name := strings.ReplaceAll(strings.Join(subset, "_"), "driver.", "")
+		genConnMap2("w_stmt_", stmtInterfacesNoBasicType, subset, "get_stmt_"+name)
+	}
 
 	var drivers []DriverCombo
 
@@ -170,4 +190,38 @@ func getTypeCombinations(basicTypeForWrapper, prefix string, listOfTheOriginalTy
 	listOfTheInterfacesWithoutBasicType := removeOnceFromArr2(basicTypeForWrapper, listOfTheOriginalTypes)
 
 	return filteredSubsets, typeNames, listOfTheInterfacesWithoutBasicType
+}
+
+func genConnMap2(prefix string, listOfTheInterfacesWithoutBasicType, subset []string, funcName string) {
+	var mask []bool
+
+	for _, v := range listOfTheInterfacesWithoutBasicType {
+		if inArray2(v, subset) {
+			mask = append(mask, true)
+		} else {
+			mask = append(mask, false)
+		}
+	}
+
+	if prefix == "w_stmt_" {
+		_stmt_m2[booleansToBinaryRepresentation2(mask...)] = funcName
+	} else {
+		_conn_m2[booleansToBinaryRepresentation2(mask...)] = funcName
+	}
+}
+
+func booleansToBinaryRepresentation2(args ...bool) string {
+	res := 0
+
+	for k, v := range args {
+		if v {
+			res = res | 0x1
+		}
+
+		if len(args)-1 != k {
+			res = res << 1
+		}
+	}
+
+	return fmt.Sprintf("0b%b", res)
 }
