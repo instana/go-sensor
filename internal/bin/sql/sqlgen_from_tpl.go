@@ -105,7 +105,7 @@ func init() {
 	}
 }
 
-func main() {
+func main1() {
 	tpl, err := template.New("sql_wrappers.tpl").Funcs(funcMap).ParseFiles("sql_wrappers.tpl")
 
 	if err != nil {

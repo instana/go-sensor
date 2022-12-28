@@ -680,34 +680,40 @@ func wrapConn(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor) drive
 	}
 }
 
+// Conn Constructors
+
 func get_conn_Execer_ExecerContext_Queryer_QueryerContext_ConnPrepareContext_NamedValueChecker(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker) driver.Conn {
 	return &w_conn_Execer_ExecerContext_Queryer_QueryerContext_ConnPrepareContext_NamedValueChecker{
 		Conn: &wConn{
 			Conn:        conn,
 			connDetails: connDetails,
 			sensor:      sensor,
-		}, Execer: &wExecer{
+		},
+		Execer: &wExecer{
 			Execer:      Execer,
 			connDetails: connDetails,
 			sensor:      sensor,
-		}, ExecerContext: &wExecerContext{
+		},
+		ExecerContext: &wExecerContext{
 			ExecerContext: ExecerContext,
 			connDetails:   connDetails,
 			sensor:        sensor,
-		}, Queryer: &wQueryer{
+		},
+		Queryer: &wQueryer{
 			Queryer:     Queryer,
 			connDetails: connDetails,
 			sensor:      sensor,
-		}, QueryerContext: &wQueryerContext{
+		},
+		QueryerContext: &wQueryerContext{
 			QueryerContext: QueryerContext,
 			connDetails:    connDetails,
 			sensor:         sensor,
-		}, ConnPrepareContext: &wConnPrepareContext{
+		},
+		ConnPrepareContext: &wConnPrepareContext{
 			ConnPrepareContext: ConnPrepareContext,
 			connDetails:        connDetails,
 			sensor:             sensor,
-		}, NamedValueChecker: NamedValueChecker,
-	}
+		}, NamedValueChecker: NamedValueChecker}
 }
 
 func get_conn_Execer_ExecerContext_Queryer_QueryerContext_ConnPrepareContext(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker) driver.Conn {
@@ -716,28 +722,32 @@ func get_conn_Execer_ExecerContext_Queryer_QueryerContext_ConnPrepareContext(con
 			Conn:        conn,
 			connDetails: connDetails,
 			sensor:      sensor,
-		}, Execer: &wExecer{
+		},
+		Execer: &wExecer{
 			Execer:      Execer,
 			connDetails: connDetails,
 			sensor:      sensor,
-		}, ExecerContext: &wExecerContext{
+		},
+		ExecerContext: &wExecerContext{
 			ExecerContext: ExecerContext,
 			connDetails:   connDetails,
 			sensor:        sensor,
-		}, Queryer: &wQueryer{
+		},
+		Queryer: &wQueryer{
 			Queryer:     Queryer,
 			connDetails: connDetails,
 			sensor:      sensor,
-		}, QueryerContext: &wQueryerContext{
+		},
+		QueryerContext: &wQueryerContext{
 			QueryerContext: QueryerContext,
 			connDetails:    connDetails,
 			sensor:         sensor,
-		}, ConnPrepareContext: &wConnPrepareContext{
+		},
+		ConnPrepareContext: &wConnPrepareContext{
 			ConnPrepareContext: ConnPrepareContext,
 			connDetails:        connDetails,
 			sensor:             sensor,
-		},
-	}
+		}}
 }
 
 func get_conn_ExecerContext_Queryer_QueryerContext_ConnPrepareContext_NamedValueChecker(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker) driver.Conn {
@@ -746,24 +756,27 @@ func get_conn_ExecerContext_Queryer_QueryerContext_ConnPrepareContext_NamedValue
 			Conn:        conn,
 			connDetails: connDetails,
 			sensor:      sensor,
-		}, ExecerContext: &wExecerContext{
+		},
+		ExecerContext: &wExecerContext{
 			ExecerContext: ExecerContext,
 			connDetails:   connDetails,
 			sensor:        sensor,
-		}, Queryer: &wQueryer{
+		},
+		Queryer: &wQueryer{
 			Queryer:     Queryer,
 			connDetails: connDetails,
 			sensor:      sensor,
-		}, QueryerContext: &wQueryerContext{
+		},
+		QueryerContext: &wQueryerContext{
 			QueryerContext: QueryerContext,
 			connDetails:    connDetails,
 			sensor:         sensor,
-		}, ConnPrepareContext: &wConnPrepareContext{
+		},
+		ConnPrepareContext: &wConnPrepareContext{
 			ConnPrepareContext: ConnPrepareContext,
 			connDetails:        connDetails,
 			sensor:             sensor,
-		}, NamedValueChecker: NamedValueChecker,
-	}
+		}, NamedValueChecker: NamedValueChecker}
 }
 
 func get_conn_Execer_Queryer_QueryerContext_ConnPrepareContext_NamedValueChecker(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker) driver.Conn {
@@ -772,24 +785,27 @@ func get_conn_Execer_Queryer_QueryerContext_ConnPrepareContext_NamedValueChecker
 			Conn:        conn,
 			connDetails: connDetails,
 			sensor:      sensor,
-		}, Execer: &wExecer{
+		},
+		Execer: &wExecer{
 			Execer:      Execer,
 			connDetails: connDetails,
 			sensor:      sensor,
-		}, Queryer: &wQueryer{
+		},
+		Queryer: &wQueryer{
 			Queryer:     Queryer,
 			connDetails: connDetails,
 			sensor:      sensor,
-		}, QueryerContext: &wQueryerContext{
+		},
+		QueryerContext: &wQueryerContext{
 			QueryerContext: QueryerContext,
 			connDetails:    connDetails,
 			sensor:         sensor,
-		}, ConnPrepareContext: &wConnPrepareContext{
+		},
+		ConnPrepareContext: &wConnPrepareContext{
 			ConnPrepareContext: ConnPrepareContext,
 			connDetails:        connDetails,
 			sensor:             sensor,
-		}, NamedValueChecker: NamedValueChecker,
-	}
+		}, NamedValueChecker: NamedValueChecker}
 }
 
 func get_conn_Execer_ExecerContext_QueryerContext_ConnPrepareContext_NamedValueChecker(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker) driver.Conn {
@@ -798,24 +814,27 @@ func get_conn_Execer_ExecerContext_QueryerContext_ConnPrepareContext_NamedValueC
 			Conn:        conn,
 			connDetails: connDetails,
 			sensor:      sensor,
-		}, Execer: &wExecer{
+		},
+		Execer: &wExecer{
 			Execer:      Execer,
 			connDetails: connDetails,
 			sensor:      sensor,
-		}, ExecerContext: &wExecerContext{
+		},
+		ExecerContext: &wExecerContext{
 			ExecerContext: ExecerContext,
 			connDetails:   connDetails,
 			sensor:        sensor,
-		}, QueryerContext: &wQueryerContext{
+		},
+		QueryerContext: &wQueryerContext{
 			QueryerContext: QueryerContext,
 			connDetails:    connDetails,
 			sensor:         sensor,
-		}, ConnPrepareContext: &wConnPrepareContext{
+		},
+		ConnPrepareContext: &wConnPrepareContext{
 			ConnPrepareContext: ConnPrepareContext,
 			connDetails:        connDetails,
 			sensor:             sensor,
-		}, NamedValueChecker: NamedValueChecker,
-	}
+		}, NamedValueChecker: NamedValueChecker}
 }
 
 func get_conn_Execer_ExecerContext_Queryer_ConnPrepareContext_NamedValueChecker(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker) driver.Conn {
@@ -824,24 +843,27 @@ func get_conn_Execer_ExecerContext_Queryer_ConnPrepareContext_NamedValueChecker(
 			Conn:        conn,
 			connDetails: connDetails,
 			sensor:      sensor,
-		}, Execer: &wExecer{
+		},
+		Execer: &wExecer{
 			Execer:      Execer,
 			connDetails: connDetails,
 			sensor:      sensor,
-		}, ExecerContext: &wExecerContext{
+		},
+		ExecerContext: &wExecerContext{
 			ExecerContext: ExecerContext,
 			connDetails:   connDetails,
 			sensor:        sensor,
-		}, Queryer: &wQueryer{
+		},
+		Queryer: &wQueryer{
 			Queryer:     Queryer,
 			connDetails: connDetails,
 			sensor:      sensor,
-		}, ConnPrepareContext: &wConnPrepareContext{
+		},
+		ConnPrepareContext: &wConnPrepareContext{
 			ConnPrepareContext: ConnPrepareContext,
 			connDetails:        connDetails,
 			sensor:             sensor,
-		}, NamedValueChecker: NamedValueChecker,
-	}
+		}, NamedValueChecker: NamedValueChecker}
 }
 
 func get_conn_Execer_ExecerContext_Queryer_QueryerContext_NamedValueChecker(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker) driver.Conn {
@@ -850,24 +872,27 @@ func get_conn_Execer_ExecerContext_Queryer_QueryerContext_NamedValueChecker(conn
 			Conn:        conn,
 			connDetails: connDetails,
 			sensor:      sensor,
-		}, Execer: &wExecer{
+		},
+		Execer: &wExecer{
 			Execer:      Execer,
 			connDetails: connDetails,
 			sensor:      sensor,
-		}, ExecerContext: &wExecerContext{
+		},
+		ExecerContext: &wExecerContext{
 			ExecerContext: ExecerContext,
 			connDetails:   connDetails,
 			sensor:        sensor,
-		}, Queryer: &wQueryer{
+		},
+		Queryer: &wQueryer{
 			Queryer:     Queryer,
 			connDetails: connDetails,
 			sensor:      sensor,
-		}, QueryerContext: &wQueryerContext{
+		},
+		QueryerContext: &wQueryerContext{
 			QueryerContext: QueryerContext,
 			connDetails:    connDetails,
 			sensor:         sensor,
-		}, NamedValueChecker: NamedValueChecker,
-	}
+		}, NamedValueChecker: NamedValueChecker}
 }
 
 func get_conn_Execer_Queryer_QueryerContext_NamedValueChecker(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker) driver.Conn {
@@ -876,20 +901,22 @@ func get_conn_Execer_Queryer_QueryerContext_NamedValueChecker(connDetails dbConn
 			Conn:        conn,
 			connDetails: connDetails,
 			sensor:      sensor,
-		}, Execer: &wExecer{
+		},
+		Execer: &wExecer{
 			Execer:      Execer,
 			connDetails: connDetails,
 			sensor:      sensor,
-		}, Queryer: &wQueryer{
+		},
+		Queryer: &wQueryer{
 			Queryer:     Queryer,
 			connDetails: connDetails,
 			sensor:      sensor,
-		}, QueryerContext: &wQueryerContext{
+		},
+		QueryerContext: &wQueryerContext{
 			QueryerContext: QueryerContext,
 			connDetails:    connDetails,
 			sensor:         sensor,
-		}, NamedValueChecker: NamedValueChecker,
-	}
+		}, NamedValueChecker: NamedValueChecker}
 }
 
 func get_conn_Execer_ExecerContext_Queryer_ConnPrepareContext(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker) driver.Conn {
@@ -898,24 +925,27 @@ func get_conn_Execer_ExecerContext_Queryer_ConnPrepareContext(connDetails dbConn
 			Conn:        conn,
 			connDetails: connDetails,
 			sensor:      sensor,
-		}, Execer: &wExecer{
+		},
+		Execer: &wExecer{
 			Execer:      Execer,
 			connDetails: connDetails,
 			sensor:      sensor,
-		}, ExecerContext: &wExecerContext{
+		},
+		ExecerContext: &wExecerContext{
 			ExecerContext: ExecerContext,
 			connDetails:   connDetails,
 			sensor:        sensor,
-		}, Queryer: &wQueryer{
+		},
+		Queryer: &wQueryer{
 			Queryer:     Queryer,
 			connDetails: connDetails,
 			sensor:      sensor,
-		}, ConnPrepareContext: &wConnPrepareContext{
+		},
+		ConnPrepareContext: &wConnPrepareContext{
 			ConnPrepareContext: ConnPrepareContext,
 			connDetails:        connDetails,
 			sensor:             sensor,
-		},
-	}
+		}}
 }
 
 func get_conn_Queryer_QueryerContext_ConnPrepareContext_NamedValueChecker(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker) driver.Conn {
@@ -924,20 +954,22 @@ func get_conn_Queryer_QueryerContext_ConnPrepareContext_NamedValueChecker(connDe
 			Conn:        conn,
 			connDetails: connDetails,
 			sensor:      sensor,
-		}, Queryer: &wQueryer{
+		},
+		Queryer: &wQueryer{
 			Queryer:     Queryer,
 			connDetails: connDetails,
 			sensor:      sensor,
-		}, QueryerContext: &wQueryerContext{
+		},
+		QueryerContext: &wQueryerContext{
 			QueryerContext: QueryerContext,
 			connDetails:    connDetails,
 			sensor:         sensor,
-		}, ConnPrepareContext: &wConnPrepareContext{
+		},
+		ConnPrepareContext: &wConnPrepareContext{
 			ConnPrepareContext: ConnPrepareContext,
 			connDetails:        connDetails,
 			sensor:             sensor,
-		}, NamedValueChecker: NamedValueChecker,
-	}
+		}, NamedValueChecker: NamedValueChecker}
 }
 
 func get_conn_ExecerContext_QueryerContext_ConnPrepareContext_NamedValueChecker(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker) driver.Conn {
@@ -946,20 +978,22 @@ func get_conn_ExecerContext_QueryerContext_ConnPrepareContext_NamedValueChecker(
 			Conn:        conn,
 			connDetails: connDetails,
 			sensor:      sensor,
-		}, ExecerContext: &wExecerContext{
+		},
+		ExecerContext: &wExecerContext{
 			ExecerContext: ExecerContext,
 			connDetails:   connDetails,
 			sensor:        sensor,
-		}, QueryerContext: &wQueryerContext{
+		},
+		QueryerContext: &wQueryerContext{
 			QueryerContext: QueryerContext,
 			connDetails:    connDetails,
 			sensor:         sensor,
-		}, ConnPrepareContext: &wConnPrepareContext{
+		},
+		ConnPrepareContext: &wConnPrepareContext{
 			ConnPrepareContext: ConnPrepareContext,
 			connDetails:        connDetails,
 			sensor:             sensor,
-		}, NamedValueChecker: NamedValueChecker,
-	}
+		}, NamedValueChecker: NamedValueChecker}
 }
 
 func get_conn_Execer_QueryerContext_ConnPrepareContext_NamedValueChecker(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker) driver.Conn {
@@ -968,20 +1002,22 @@ func get_conn_Execer_QueryerContext_ConnPrepareContext_NamedValueChecker(connDet
 			Conn:        conn,
 			connDetails: connDetails,
 			sensor:      sensor,
-		}, Execer: &wExecer{
+		},
+		Execer: &wExecer{
 			Execer:      Execer,
 			connDetails: connDetails,
 			sensor:      sensor,
-		}, QueryerContext: &wQueryerContext{
+		},
+		QueryerContext: &wQueryerContext{
 			QueryerContext: QueryerContext,
 			connDetails:    connDetails,
 			sensor:         sensor,
-		}, ConnPrepareContext: &wConnPrepareContext{
+		},
+		ConnPrepareContext: &wConnPrepareContext{
 			ConnPrepareContext: ConnPrepareContext,
 			connDetails:        connDetails,
 			sensor:             sensor,
-		}, NamedValueChecker: NamedValueChecker,
-	}
+		}, NamedValueChecker: NamedValueChecker}
 }
 
 func get_conn_ExecerContext_Queryer_ConnPrepareContext_NamedValueChecker(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker) driver.Conn {
@@ -990,20 +1026,22 @@ func get_conn_ExecerContext_Queryer_ConnPrepareContext_NamedValueChecker(connDet
 			Conn:        conn,
 			connDetails: connDetails,
 			sensor:      sensor,
-		}, ExecerContext: &wExecerContext{
+		},
+		ExecerContext: &wExecerContext{
 			ExecerContext: ExecerContext,
 			connDetails:   connDetails,
 			sensor:        sensor,
-		}, Queryer: &wQueryer{
+		},
+		Queryer: &wQueryer{
 			Queryer:     Queryer,
 			connDetails: connDetails,
 			sensor:      sensor,
-		}, ConnPrepareContext: &wConnPrepareContext{
+		},
+		ConnPrepareContext: &wConnPrepareContext{
 			ConnPrepareContext: ConnPrepareContext,
 			connDetails:        connDetails,
 			sensor:             sensor,
-		}, NamedValueChecker: NamedValueChecker,
-	}
+		}, NamedValueChecker: NamedValueChecker}
 }
 
 func get_conn_Execer_Queryer_ConnPrepareContext_NamedValueChecker(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker) driver.Conn {
@@ -1012,20 +1050,22 @@ func get_conn_Execer_Queryer_ConnPrepareContext_NamedValueChecker(connDetails db
 			Conn:        conn,
 			connDetails: connDetails,
 			sensor:      sensor,
-		}, Execer: &wExecer{
+		},
+		Execer: &wExecer{
 			Execer:      Execer,
 			connDetails: connDetails,
 			sensor:      sensor,
-		}, Queryer: &wQueryer{
+		},
+		Queryer: &wQueryer{
 			Queryer:     Queryer,
 			connDetails: connDetails,
 			sensor:      sensor,
-		}, ConnPrepareContext: &wConnPrepareContext{
+		},
+		ConnPrepareContext: &wConnPrepareContext{
 			ConnPrepareContext: ConnPrepareContext,
 			connDetails:        connDetails,
 			sensor:             sensor,
-		}, NamedValueChecker: NamedValueChecker,
-	}
+		}, NamedValueChecker: NamedValueChecker}
 }
 
 func get_conn_Execer_ExecerContext_Queryer_QueryerContext(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker) driver.Conn {
@@ -1034,24 +1074,27 @@ func get_conn_Execer_ExecerContext_Queryer_QueryerContext(connDetails dbConnDeta
 			Conn:        conn,
 			connDetails: connDetails,
 			sensor:      sensor,
-		}, Execer: &wExecer{
+		},
+		Execer: &wExecer{
 			Execer:      Execer,
 			connDetails: connDetails,
 			sensor:      sensor,
-		}, ExecerContext: &wExecerContext{
+		},
+		ExecerContext: &wExecerContext{
 			ExecerContext: ExecerContext,
 			connDetails:   connDetails,
 			sensor:        sensor,
-		}, Queryer: &wQueryer{
+		},
+		Queryer: &wQueryer{
 			Queryer:     Queryer,
 			connDetails: connDetails,
 			sensor:      sensor,
-		}, QueryerContext: &wQueryerContext{
+		},
+		QueryerContext: &wQueryerContext{
 			QueryerContext: QueryerContext,
 			connDetails:    connDetails,
 			sensor:         sensor,
-		},
-	}
+		}}
 }
 
 func get_conn_Execer_ExecerContext_ConnPrepareContext_NamedValueChecker(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker) driver.Conn {
@@ -1060,20 +1103,22 @@ func get_conn_Execer_ExecerContext_ConnPrepareContext_NamedValueChecker(connDeta
 			Conn:        conn,
 			connDetails: connDetails,
 			sensor:      sensor,
-		}, Execer: &wExecer{
+		},
+		Execer: &wExecer{
 			Execer:      Execer,
 			connDetails: connDetails,
 			sensor:      sensor,
-		}, ExecerContext: &wExecerContext{
+		},
+		ExecerContext: &wExecerContext{
 			ExecerContext: ExecerContext,
 			connDetails:   connDetails,
 			sensor:        sensor,
-		}, ConnPrepareContext: &wConnPrepareContext{
+		},
+		ConnPrepareContext: &wConnPrepareContext{
 			ConnPrepareContext: ConnPrepareContext,
 			connDetails:        connDetails,
 			sensor:             sensor,
-		}, NamedValueChecker: NamedValueChecker,
-	}
+		}, NamedValueChecker: NamedValueChecker}
 }
 
 func get_conn_ExecerContext_Queryer_QueryerContext_NamedValueChecker(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker) driver.Conn {
@@ -1082,20 +1127,22 @@ func get_conn_ExecerContext_Queryer_QueryerContext_NamedValueChecker(connDetails
 			Conn:        conn,
 			connDetails: connDetails,
 			sensor:      sensor,
-		}, ExecerContext: &wExecerContext{
+		},
+		ExecerContext: &wExecerContext{
 			ExecerContext: ExecerContext,
 			connDetails:   connDetails,
 			sensor:        sensor,
-		}, Queryer: &wQueryer{
+		},
+		Queryer: &wQueryer{
 			Queryer:     Queryer,
 			connDetails: connDetails,
 			sensor:      sensor,
-		}, QueryerContext: &wQueryerContext{
+		},
+		QueryerContext: &wQueryerContext{
 			QueryerContext: QueryerContext,
 			connDetails:    connDetails,
 			sensor:         sensor,
-		}, NamedValueChecker: NamedValueChecker,
-	}
+		}, NamedValueChecker: NamedValueChecker}
 }
 
 func get_conn_Execer_ExecerContext_QueryerContext_NamedValueChecker(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker) driver.Conn {
@@ -1104,20 +1151,22 @@ func get_conn_Execer_ExecerContext_QueryerContext_NamedValueChecker(connDetails 
 			Conn:        conn,
 			connDetails: connDetails,
 			sensor:      sensor,
-		}, Execer: &wExecer{
+		},
+		Execer: &wExecer{
 			Execer:      Execer,
 			connDetails: connDetails,
 			sensor:      sensor,
-		}, ExecerContext: &wExecerContext{
+		},
+		ExecerContext: &wExecerContext{
 			ExecerContext: ExecerContext,
 			connDetails:   connDetails,
 			sensor:        sensor,
-		}, QueryerContext: &wQueryerContext{
+		},
+		QueryerContext: &wQueryerContext{
 			QueryerContext: QueryerContext,
 			connDetails:    connDetails,
 			sensor:         sensor,
-		}, NamedValueChecker: NamedValueChecker,
-	}
+		}, NamedValueChecker: NamedValueChecker}
 }
 
 func get_conn_Execer_ExecerContext_Queryer_NamedValueChecker(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker) driver.Conn {
@@ -1126,20 +1175,22 @@ func get_conn_Execer_ExecerContext_Queryer_NamedValueChecker(connDetails dbConnD
 			Conn:        conn,
 			connDetails: connDetails,
 			sensor:      sensor,
-		}, Execer: &wExecer{
+		},
+		Execer: &wExecer{
 			Execer:      Execer,
 			connDetails: connDetails,
 			sensor:      sensor,
-		}, ExecerContext: &wExecerContext{
+		},
+		ExecerContext: &wExecerContext{
 			ExecerContext: ExecerContext,
 			connDetails:   connDetails,
 			sensor:        sensor,
-		}, Queryer: &wQueryer{
+		},
+		Queryer: &wQueryer{
 			Queryer:     Queryer,
 			connDetails: connDetails,
 			sensor:      sensor,
-		}, NamedValueChecker: NamedValueChecker,
-	}
+		}, NamedValueChecker: NamedValueChecker}
 }
 
 func get_conn_ExecerContext_Queryer_QueryerContext_ConnPrepareContext(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker) driver.Conn {
@@ -1148,24 +1199,27 @@ func get_conn_ExecerContext_Queryer_QueryerContext_ConnPrepareContext(connDetail
 			Conn:        conn,
 			connDetails: connDetails,
 			sensor:      sensor,
-		}, ExecerContext: &wExecerContext{
+		},
+		ExecerContext: &wExecerContext{
 			ExecerContext: ExecerContext,
 			connDetails:   connDetails,
 			sensor:        sensor,
-		}, Queryer: &wQueryer{
+		},
+		Queryer: &wQueryer{
 			Queryer:     Queryer,
 			connDetails: connDetails,
 			sensor:      sensor,
-		}, QueryerContext: &wQueryerContext{
+		},
+		QueryerContext: &wQueryerContext{
 			QueryerContext: QueryerContext,
 			connDetails:    connDetails,
 			sensor:         sensor,
-		}, ConnPrepareContext: &wConnPrepareContext{
+		},
+		ConnPrepareContext: &wConnPrepareContext{
 			ConnPrepareContext: ConnPrepareContext,
 			connDetails:        connDetails,
 			sensor:             sensor,
-		},
-	}
+		}}
 }
 
 func get_conn_Execer_Queryer_QueryerContext_ConnPrepareContext(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker) driver.Conn {
@@ -1174,24 +1228,27 @@ func get_conn_Execer_Queryer_QueryerContext_ConnPrepareContext(connDetails dbCon
 			Conn:        conn,
 			connDetails: connDetails,
 			sensor:      sensor,
-		}, Execer: &wExecer{
+		},
+		Execer: &wExecer{
 			Execer:      Execer,
 			connDetails: connDetails,
 			sensor:      sensor,
-		}, Queryer: &wQueryer{
+		},
+		Queryer: &wQueryer{
 			Queryer:     Queryer,
 			connDetails: connDetails,
 			sensor:      sensor,
-		}, QueryerContext: &wQueryerContext{
+		},
+		QueryerContext: &wQueryerContext{
 			QueryerContext: QueryerContext,
 			connDetails:    connDetails,
 			sensor:         sensor,
-		}, ConnPrepareContext: &wConnPrepareContext{
+		},
+		ConnPrepareContext: &wConnPrepareContext{
 			ConnPrepareContext: ConnPrepareContext,
 			connDetails:        connDetails,
 			sensor:             sensor,
-		},
-	}
+		}}
 }
 
 func get_conn_Execer_ExecerContext_QueryerContext_ConnPrepareContext(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker) driver.Conn {
@@ -1200,24 +1257,27 @@ func get_conn_Execer_ExecerContext_QueryerContext_ConnPrepareContext(connDetails
 			Conn:        conn,
 			connDetails: connDetails,
 			sensor:      sensor,
-		}, Execer: &wExecer{
+		},
+		Execer: &wExecer{
 			Execer:      Execer,
 			connDetails: connDetails,
 			sensor:      sensor,
-		}, ExecerContext: &wExecerContext{
+		},
+		ExecerContext: &wExecerContext{
 			ExecerContext: ExecerContext,
 			connDetails:   connDetails,
 			sensor:        sensor,
-		}, QueryerContext: &wQueryerContext{
+		},
+		QueryerContext: &wQueryerContext{
 			QueryerContext: QueryerContext,
 			connDetails:    connDetails,
 			sensor:         sensor,
-		}, ConnPrepareContext: &wConnPrepareContext{
+		},
+		ConnPrepareContext: &wConnPrepareContext{
 			ConnPrepareContext: ConnPrepareContext,
 			connDetails:        connDetails,
 			sensor:             sensor,
-		},
-	}
+		}}
 }
 
 func get_conn_Execer_ConnPrepareContext_NamedValueChecker(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker) driver.Conn {
@@ -1226,16 +1286,17 @@ func get_conn_Execer_ConnPrepareContext_NamedValueChecker(connDetails dbConnDeta
 			Conn:        conn,
 			connDetails: connDetails,
 			sensor:      sensor,
-		}, Execer: &wExecer{
+		},
+		Execer: &wExecer{
 			Execer:      Execer,
 			connDetails: connDetails,
 			sensor:      sensor,
-		}, ConnPrepareContext: &wConnPrepareContext{
+		},
+		ConnPrepareContext: &wConnPrepareContext{
 			ConnPrepareContext: ConnPrepareContext,
 			connDetails:        connDetails,
 			sensor:             sensor,
-		}, NamedValueChecker: NamedValueChecker,
-	}
+		}, NamedValueChecker: NamedValueChecker}
 }
 
 func get_conn_Execer_Queryer_QueryerContext(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker) driver.Conn {
@@ -1244,20 +1305,22 @@ func get_conn_Execer_Queryer_QueryerContext(connDetails dbConnDetails, conn driv
 			Conn:        conn,
 			connDetails: connDetails,
 			sensor:      sensor,
-		}, Execer: &wExecer{
+		},
+		Execer: &wExecer{
 			Execer:      Execer,
 			connDetails: connDetails,
 			sensor:      sensor,
-		}, Queryer: &wQueryer{
+		},
+		Queryer: &wQueryer{
 			Queryer:     Queryer,
 			connDetails: connDetails,
 			sensor:      sensor,
-		}, QueryerContext: &wQueryerContext{
+		},
+		QueryerContext: &wQueryerContext{
 			QueryerContext: QueryerContext,
 			connDetails:    connDetails,
 			sensor:         sensor,
-		},
-	}
+		}}
 }
 
 func get_conn_Execer_QueryerContext_ConnPrepareContext(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker) driver.Conn {
@@ -1266,20 +1329,22 @@ func get_conn_Execer_QueryerContext_ConnPrepareContext(connDetails dbConnDetails
 			Conn:        conn,
 			connDetails: connDetails,
 			sensor:      sensor,
-		}, Execer: &wExecer{
+		},
+		Execer: &wExecer{
 			Execer:      Execer,
 			connDetails: connDetails,
 			sensor:      sensor,
-		}, QueryerContext: &wQueryerContext{
+		},
+		QueryerContext: &wQueryerContext{
 			QueryerContext: QueryerContext,
 			connDetails:    connDetails,
 			sensor:         sensor,
-		}, ConnPrepareContext: &wConnPrepareContext{
+		},
+		ConnPrepareContext: &wConnPrepareContext{
 			ConnPrepareContext: ConnPrepareContext,
 			connDetails:        connDetails,
 			sensor:             sensor,
-		},
-	}
+		}}
 }
 
 func get_conn_ExecerContext_QueryerContext_ConnPrepareContext(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker) driver.Conn {
@@ -1288,20 +1353,22 @@ func get_conn_ExecerContext_QueryerContext_ConnPrepareContext(connDetails dbConn
 			Conn:        conn,
 			connDetails: connDetails,
 			sensor:      sensor,
-		}, ExecerContext: &wExecerContext{
+		},
+		ExecerContext: &wExecerContext{
 			ExecerContext: ExecerContext,
 			connDetails:   connDetails,
 			sensor:        sensor,
-		}, QueryerContext: &wQueryerContext{
+		},
+		QueryerContext: &wQueryerContext{
 			QueryerContext: QueryerContext,
 			connDetails:    connDetails,
 			sensor:         sensor,
-		}, ConnPrepareContext: &wConnPrepareContext{
+		},
+		ConnPrepareContext: &wConnPrepareContext{
 			ConnPrepareContext: ConnPrepareContext,
 			connDetails:        connDetails,
 			sensor:             sensor,
-		},
-	}
+		}}
 }
 
 func get_conn_ExecerContext_Queryer_ConnPrepareContext(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker) driver.Conn {
@@ -1310,20 +1377,22 @@ func get_conn_ExecerContext_Queryer_ConnPrepareContext(connDetails dbConnDetails
 			Conn:        conn,
 			connDetails: connDetails,
 			sensor:      sensor,
-		}, ExecerContext: &wExecerContext{
+		},
+		ExecerContext: &wExecerContext{
 			ExecerContext: ExecerContext,
 			connDetails:   connDetails,
 			sensor:        sensor,
-		}, Queryer: &wQueryer{
+		},
+		Queryer: &wQueryer{
 			Queryer:     Queryer,
 			connDetails: connDetails,
 			sensor:      sensor,
-		}, ConnPrepareContext: &wConnPrepareContext{
+		},
+		ConnPrepareContext: &wConnPrepareContext{
 			ConnPrepareContext: ConnPrepareContext,
 			connDetails:        connDetails,
 			sensor:             sensor,
-		},
-	}
+		}}
 }
 
 func get_conn_Queryer_QueryerContext_ConnPrepareContext(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker) driver.Conn {
@@ -1332,20 +1401,22 @@ func get_conn_Queryer_QueryerContext_ConnPrepareContext(connDetails dbConnDetail
 			Conn:        conn,
 			connDetails: connDetails,
 			sensor:      sensor,
-		}, Queryer: &wQueryer{
+		},
+		Queryer: &wQueryer{
 			Queryer:     Queryer,
 			connDetails: connDetails,
 			sensor:      sensor,
-		}, QueryerContext: &wQueryerContext{
+		},
+		QueryerContext: &wQueryerContext{
 			QueryerContext: QueryerContext,
 			connDetails:    connDetails,
 			sensor:         sensor,
-		}, ConnPrepareContext: &wConnPrepareContext{
+		},
+		ConnPrepareContext: &wConnPrepareContext{
 			ConnPrepareContext: ConnPrepareContext,
 			connDetails:        connDetails,
 			sensor:             sensor,
-		},
-	}
+		}}
 }
 
 func get_conn_Execer_Queryer_ConnPrepareContext(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker) driver.Conn {
@@ -1354,20 +1425,22 @@ func get_conn_Execer_Queryer_ConnPrepareContext(connDetails dbConnDetails, conn 
 			Conn:        conn,
 			connDetails: connDetails,
 			sensor:      sensor,
-		}, Execer: &wExecer{
+		},
+		Execer: &wExecer{
 			Execer:      Execer,
 			connDetails: connDetails,
 			sensor:      sensor,
-		}, Queryer: &wQueryer{
+		},
+		Queryer: &wQueryer{
 			Queryer:     Queryer,
 			connDetails: connDetails,
 			sensor:      sensor,
-		}, ConnPrepareContext: &wConnPrepareContext{
+		},
+		ConnPrepareContext: &wConnPrepareContext{
 			ConnPrepareContext: ConnPrepareContext,
 			connDetails:        connDetails,
 			sensor:             sensor,
-		},
-	}
+		}}
 }
 
 func get_conn_Execer_ExecerContext_QueryerContext(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker) driver.Conn {
@@ -1376,20 +1449,22 @@ func get_conn_Execer_ExecerContext_QueryerContext(connDetails dbConnDetails, con
 			Conn:        conn,
 			connDetails: connDetails,
 			sensor:      sensor,
-		}, Execer: &wExecer{
+		},
+		Execer: &wExecer{
 			Execer:      Execer,
 			connDetails: connDetails,
 			sensor:      sensor,
-		}, ExecerContext: &wExecerContext{
+		},
+		ExecerContext: &wExecerContext{
 			ExecerContext: ExecerContext,
 			connDetails:   connDetails,
 			sensor:        sensor,
-		}, QueryerContext: &wQueryerContext{
+		},
+		QueryerContext: &wQueryerContext{
 			QueryerContext: QueryerContext,
 			connDetails:    connDetails,
 			sensor:         sensor,
-		},
-	}
+		}}
 }
 
 func get_conn_QueryerContext_ConnPrepareContext_NamedValueChecker(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker) driver.Conn {
@@ -1398,16 +1473,17 @@ func get_conn_QueryerContext_ConnPrepareContext_NamedValueChecker(connDetails db
 			Conn:        conn,
 			connDetails: connDetails,
 			sensor:      sensor,
-		}, QueryerContext: &wQueryerContext{
+		},
+		QueryerContext: &wQueryerContext{
 			QueryerContext: QueryerContext,
 			connDetails:    connDetails,
 			sensor:         sensor,
-		}, ConnPrepareContext: &wConnPrepareContext{
+		},
+		ConnPrepareContext: &wConnPrepareContext{
 			ConnPrepareContext: ConnPrepareContext,
 			connDetails:        connDetails,
 			sensor:             sensor,
-		}, NamedValueChecker: NamedValueChecker,
-	}
+		}, NamedValueChecker: NamedValueChecker}
 }
 
 func get_conn_ExecerContext_Queryer_QueryerContext(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker) driver.Conn {
@@ -1416,20 +1492,22 @@ func get_conn_ExecerContext_Queryer_QueryerContext(connDetails dbConnDetails, co
 			Conn:        conn,
 			connDetails: connDetails,
 			sensor:      sensor,
-		}, ExecerContext: &wExecerContext{
+		},
+		ExecerContext: &wExecerContext{
 			ExecerContext: ExecerContext,
 			connDetails:   connDetails,
 			sensor:        sensor,
-		}, Queryer: &wQueryer{
+		},
+		Queryer: &wQueryer{
 			Queryer:     Queryer,
 			connDetails: connDetails,
 			sensor:      sensor,
-		}, QueryerContext: &wQueryerContext{
+		},
+		QueryerContext: &wQueryerContext{
 			QueryerContext: QueryerContext,
 			connDetails:    connDetails,
 			sensor:         sensor,
-		},
-	}
+		}}
 }
 
 func get_conn_Queryer_ConnPrepareContext_NamedValueChecker(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker) driver.Conn {
@@ -1438,16 +1516,17 @@ func get_conn_Queryer_ConnPrepareContext_NamedValueChecker(connDetails dbConnDet
 			Conn:        conn,
 			connDetails: connDetails,
 			sensor:      sensor,
-		}, Queryer: &wQueryer{
+		},
+		Queryer: &wQueryer{
 			Queryer:     Queryer,
 			connDetails: connDetails,
 			sensor:      sensor,
-		}, ConnPrepareContext: &wConnPrepareContext{
+		},
+		ConnPrepareContext: &wConnPrepareContext{
 			ConnPrepareContext: ConnPrepareContext,
 			connDetails:        connDetails,
 			sensor:             sensor,
-		}, NamedValueChecker: NamedValueChecker,
-	}
+		}, NamedValueChecker: NamedValueChecker}
 }
 
 func get_conn_ExecerContext_ConnPrepareContext_NamedValueChecker(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker) driver.Conn {
@@ -1456,16 +1535,17 @@ func get_conn_ExecerContext_ConnPrepareContext_NamedValueChecker(connDetails dbC
 			Conn:        conn,
 			connDetails: connDetails,
 			sensor:      sensor,
-		}, ExecerContext: &wExecerContext{
+		},
+		ExecerContext: &wExecerContext{
 			ExecerContext: ExecerContext,
 			connDetails:   connDetails,
 			sensor:        sensor,
-		}, ConnPrepareContext: &wConnPrepareContext{
+		},
+		ConnPrepareContext: &wConnPrepareContext{
 			ConnPrepareContext: ConnPrepareContext,
 			connDetails:        connDetails,
 			sensor:             sensor,
-		}, NamedValueChecker: NamedValueChecker,
-	}
+		}, NamedValueChecker: NamedValueChecker}
 }
 
 func get_conn_Execer_ExecerContext_NamedValueChecker(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker) driver.Conn {
@@ -1474,16 +1554,17 @@ func get_conn_Execer_ExecerContext_NamedValueChecker(connDetails dbConnDetails, 
 			Conn:        conn,
 			connDetails: connDetails,
 			sensor:      sensor,
-		}, Execer: &wExecer{
+		},
+		Execer: &wExecer{
 			Execer:      Execer,
 			connDetails: connDetails,
 			sensor:      sensor,
-		}, ExecerContext: &wExecerContext{
+		},
+		ExecerContext: &wExecerContext{
 			ExecerContext: ExecerContext,
 			connDetails:   connDetails,
 			sensor:        sensor,
-		}, NamedValueChecker: NamedValueChecker,
-	}
+		}, NamedValueChecker: NamedValueChecker}
 }
 
 func get_conn_Execer_ExecerContext_Queryer(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker) driver.Conn {
@@ -1492,20 +1573,22 @@ func get_conn_Execer_ExecerContext_Queryer(connDetails dbConnDetails, conn drive
 			Conn:        conn,
 			connDetails: connDetails,
 			sensor:      sensor,
-		}, Execer: &wExecer{
+		},
+		Execer: &wExecer{
 			Execer:      Execer,
 			connDetails: connDetails,
 			sensor:      sensor,
-		}, ExecerContext: &wExecerContext{
+		},
+		ExecerContext: &wExecerContext{
 			ExecerContext: ExecerContext,
 			connDetails:   connDetails,
 			sensor:        sensor,
-		}, Queryer: &wQueryer{
+		},
+		Queryer: &wQueryer{
 			Queryer:     Queryer,
 			connDetails: connDetails,
 			sensor:      sensor,
-		},
-	}
+		}}
 }
 
 func get_conn_Execer_Queryer_NamedValueChecker(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker) driver.Conn {
@@ -1514,16 +1597,17 @@ func get_conn_Execer_Queryer_NamedValueChecker(connDetails dbConnDetails, conn d
 			Conn:        conn,
 			connDetails: connDetails,
 			sensor:      sensor,
-		}, Execer: &wExecer{
+		},
+		Execer: &wExecer{
 			Execer:      Execer,
 			connDetails: connDetails,
 			sensor:      sensor,
-		}, Queryer: &wQueryer{
+		},
+		Queryer: &wQueryer{
 			Queryer:     Queryer,
 			connDetails: connDetails,
 			sensor:      sensor,
-		}, NamedValueChecker: NamedValueChecker,
-	}
+		}, NamedValueChecker: NamedValueChecker}
 }
 
 func get_conn_ExecerContext_Queryer_NamedValueChecker(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker) driver.Conn {
@@ -1532,16 +1616,17 @@ func get_conn_ExecerContext_Queryer_NamedValueChecker(connDetails dbConnDetails,
 			Conn:        conn,
 			connDetails: connDetails,
 			sensor:      sensor,
-		}, ExecerContext: &wExecerContext{
+		},
+		ExecerContext: &wExecerContext{
 			ExecerContext: ExecerContext,
 			connDetails:   connDetails,
 			sensor:        sensor,
-		}, Queryer: &wQueryer{
+		},
+		Queryer: &wQueryer{
 			Queryer:     Queryer,
 			connDetails: connDetails,
 			sensor:      sensor,
-		}, NamedValueChecker: NamedValueChecker,
-	}
+		}, NamedValueChecker: NamedValueChecker}
 }
 
 func get_conn_Execer_ExecerContext_ConnPrepareContext(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker) driver.Conn {
@@ -1550,20 +1635,22 @@ func get_conn_Execer_ExecerContext_ConnPrepareContext(connDetails dbConnDetails,
 			Conn:        conn,
 			connDetails: connDetails,
 			sensor:      sensor,
-		}, Execer: &wExecer{
+		},
+		Execer: &wExecer{
 			Execer:      Execer,
 			connDetails: connDetails,
 			sensor:      sensor,
-		}, ExecerContext: &wExecerContext{
+		},
+		ExecerContext: &wExecerContext{
 			ExecerContext: ExecerContext,
 			connDetails:   connDetails,
 			sensor:        sensor,
-		}, ConnPrepareContext: &wConnPrepareContext{
+		},
+		ConnPrepareContext: &wConnPrepareContext{
 			ConnPrepareContext: ConnPrepareContext,
 			connDetails:        connDetails,
 			sensor:             sensor,
-		},
-	}
+		}}
 }
 
 func get_conn_Queryer_QueryerContext_NamedValueChecker(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker) driver.Conn {
@@ -1572,16 +1659,17 @@ func get_conn_Queryer_QueryerContext_NamedValueChecker(connDetails dbConnDetails
 			Conn:        conn,
 			connDetails: connDetails,
 			sensor:      sensor,
-		}, Queryer: &wQueryer{
+		},
+		Queryer: &wQueryer{
 			Queryer:     Queryer,
 			connDetails: connDetails,
 			sensor:      sensor,
-		}, QueryerContext: &wQueryerContext{
+		},
+		QueryerContext: &wQueryerContext{
 			QueryerContext: QueryerContext,
 			connDetails:    connDetails,
 			sensor:         sensor,
-		}, NamedValueChecker: NamedValueChecker,
-	}
+		}, NamedValueChecker: NamedValueChecker}
 }
 
 func get_conn_Execer_QueryerContext_NamedValueChecker(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker) driver.Conn {
@@ -1590,16 +1678,17 @@ func get_conn_Execer_QueryerContext_NamedValueChecker(connDetails dbConnDetails,
 			Conn:        conn,
 			connDetails: connDetails,
 			sensor:      sensor,
-		}, Execer: &wExecer{
+		},
+		Execer: &wExecer{
 			Execer:      Execer,
 			connDetails: connDetails,
 			sensor:      sensor,
-		}, QueryerContext: &wQueryerContext{
+		},
+		QueryerContext: &wQueryerContext{
 			QueryerContext: QueryerContext,
 			connDetails:    connDetails,
 			sensor:         sensor,
-		}, NamedValueChecker: NamedValueChecker,
-	}
+		}, NamedValueChecker: NamedValueChecker}
 }
 
 func get_conn_ExecerContext_QueryerContext_NamedValueChecker(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker) driver.Conn {
@@ -1608,16 +1697,17 @@ func get_conn_ExecerContext_QueryerContext_NamedValueChecker(connDetails dbConnD
 			Conn:        conn,
 			connDetails: connDetails,
 			sensor:      sensor,
-		}, ExecerContext: &wExecerContext{
+		},
+		ExecerContext: &wExecerContext{
 			ExecerContext: ExecerContext,
 			connDetails:   connDetails,
 			sensor:        sensor,
-		}, QueryerContext: &wQueryerContext{
+		},
+		QueryerContext: &wQueryerContext{
 			QueryerContext: QueryerContext,
 			connDetails:    connDetails,
 			sensor:         sensor,
-		}, NamedValueChecker: NamedValueChecker,
-	}
+		}, NamedValueChecker: NamedValueChecker}
 }
 
 func get_conn_Queryer_ConnPrepareContext(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker) driver.Conn {
@@ -1626,16 +1716,17 @@ func get_conn_Queryer_ConnPrepareContext(connDetails dbConnDetails, conn driver.
 			Conn:        conn,
 			connDetails: connDetails,
 			sensor:      sensor,
-		}, Queryer: &wQueryer{
+		},
+		Queryer: &wQueryer{
 			Queryer:     Queryer,
 			connDetails: connDetails,
 			sensor:      sensor,
-		}, ConnPrepareContext: &wConnPrepareContext{
+		},
+		ConnPrepareContext: &wConnPrepareContext{
 			ConnPrepareContext: ConnPrepareContext,
 			connDetails:        connDetails,
 			sensor:             sensor,
-		},
-	}
+		}}
 }
 
 func get_conn_Queryer_NamedValueChecker(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker) driver.Conn {
@@ -1644,12 +1735,12 @@ func get_conn_Queryer_NamedValueChecker(connDetails dbConnDetails, conn driver.C
 			Conn:        conn,
 			connDetails: connDetails,
 			sensor:      sensor,
-		}, Queryer: &wQueryer{
+		},
+		Queryer: &wQueryer{
 			Queryer:     Queryer,
 			connDetails: connDetails,
 			sensor:      sensor,
-		}, NamedValueChecker: NamedValueChecker,
-	}
+		}, NamedValueChecker: NamedValueChecker}
 }
 
 func get_conn_Execer_ExecerContext(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker) driver.Conn {
@@ -1658,16 +1749,17 @@ func get_conn_Execer_ExecerContext(connDetails dbConnDetails, conn driver.Conn, 
 			Conn:        conn,
 			connDetails: connDetails,
 			sensor:      sensor,
-		}, Execer: &wExecer{
+		},
+		Execer: &wExecer{
 			Execer:      Execer,
 			connDetails: connDetails,
 			sensor:      sensor,
-		}, ExecerContext: &wExecerContext{
+		},
+		ExecerContext: &wExecerContext{
 			ExecerContext: ExecerContext,
 			connDetails:   connDetails,
 			sensor:        sensor,
-		},
-	}
+		}}
 }
 
 func get_conn_ExecerContext_Queryer(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker) driver.Conn {
@@ -1676,16 +1768,17 @@ func get_conn_ExecerContext_Queryer(connDetails dbConnDetails, conn driver.Conn,
 			Conn:        conn,
 			connDetails: connDetails,
 			sensor:      sensor,
-		}, ExecerContext: &wExecerContext{
+		},
+		ExecerContext: &wExecerContext{
 			ExecerContext: ExecerContext,
 			connDetails:   connDetails,
 			sensor:        sensor,
-		}, Queryer: &wQueryer{
+		},
+		Queryer: &wQueryer{
 			Queryer:     Queryer,
 			connDetails: connDetails,
 			sensor:      sensor,
-		},
-	}
+		}}
 }
 
 func get_conn_QueryerContext_ConnPrepareContext(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker) driver.Conn {
@@ -1694,16 +1787,17 @@ func get_conn_QueryerContext_ConnPrepareContext(connDetails dbConnDetails, conn 
 			Conn:        conn,
 			connDetails: connDetails,
 			sensor:      sensor,
-		}, QueryerContext: &wQueryerContext{
+		},
+		QueryerContext: &wQueryerContext{
 			QueryerContext: QueryerContext,
 			connDetails:    connDetails,
 			sensor:         sensor,
-		}, ConnPrepareContext: &wConnPrepareContext{
+		},
+		ConnPrepareContext: &wConnPrepareContext{
 			ConnPrepareContext: ConnPrepareContext,
 			connDetails:        connDetails,
 			sensor:             sensor,
-		},
-	}
+		}}
 }
 
 func get_conn_ConnPrepareContext_NamedValueChecker(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker) driver.Conn {
@@ -1712,12 +1806,12 @@ func get_conn_ConnPrepareContext_NamedValueChecker(connDetails dbConnDetails, co
 			Conn:        conn,
 			connDetails: connDetails,
 			sensor:      sensor,
-		}, ConnPrepareContext: &wConnPrepareContext{
+		},
+		ConnPrepareContext: &wConnPrepareContext{
 			ConnPrepareContext: ConnPrepareContext,
 			connDetails:        connDetails,
 			sensor:             sensor,
-		}, NamedValueChecker: NamedValueChecker,
-	}
+		}, NamedValueChecker: NamedValueChecker}
 }
 
 func get_conn_Execer_QueryerContext(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker) driver.Conn {
@@ -1726,16 +1820,17 @@ func get_conn_Execer_QueryerContext(connDetails dbConnDetails, conn driver.Conn,
 			Conn:        conn,
 			connDetails: connDetails,
 			sensor:      sensor,
-		}, Execer: &wExecer{
+		},
+		Execer: &wExecer{
 			Execer:      Execer,
 			connDetails: connDetails,
 			sensor:      sensor,
-		}, QueryerContext: &wQueryerContext{
+		},
+		QueryerContext: &wQueryerContext{
 			QueryerContext: QueryerContext,
 			connDetails:    connDetails,
 			sensor:         sensor,
-		},
-	}
+		}}
 }
 
 func get_conn_ExecerContext_NamedValueChecker(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker) driver.Conn {
@@ -1744,12 +1839,12 @@ func get_conn_ExecerContext_NamedValueChecker(connDetails dbConnDetails, conn dr
 			Conn:        conn,
 			connDetails: connDetails,
 			sensor:      sensor,
-		}, ExecerContext: &wExecerContext{
+		},
+		ExecerContext: &wExecerContext{
 			ExecerContext: ExecerContext,
 			connDetails:   connDetails,
 			sensor:        sensor,
-		}, NamedValueChecker: NamedValueChecker,
-	}
+		}, NamedValueChecker: NamedValueChecker}
 }
 
 func get_conn_ExecerContext_QueryerContext(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker) driver.Conn {
@@ -1758,16 +1853,17 @@ func get_conn_ExecerContext_QueryerContext(connDetails dbConnDetails, conn drive
 			Conn:        conn,
 			connDetails: connDetails,
 			sensor:      sensor,
-		}, ExecerContext: &wExecerContext{
+		},
+		ExecerContext: &wExecerContext{
 			ExecerContext: ExecerContext,
 			connDetails:   connDetails,
 			sensor:        sensor,
-		}, QueryerContext: &wQueryerContext{
+		},
+		QueryerContext: &wQueryerContext{
 			QueryerContext: QueryerContext,
 			connDetails:    connDetails,
 			sensor:         sensor,
-		},
-	}
+		}}
 }
 
 func get_conn_Execer_NamedValueChecker(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker) driver.Conn {
@@ -1776,12 +1872,12 @@ func get_conn_Execer_NamedValueChecker(connDetails dbConnDetails, conn driver.Co
 			Conn:        conn,
 			connDetails: connDetails,
 			sensor:      sensor,
-		}, Execer: &wExecer{
+		},
+		Execer: &wExecer{
 			Execer:      Execer,
 			connDetails: connDetails,
 			sensor:      sensor,
-		}, NamedValueChecker: NamedValueChecker,
-	}
+		}, NamedValueChecker: NamedValueChecker}
 }
 
 func get_conn_Execer_Queryer(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker) driver.Conn {
@@ -1790,16 +1886,17 @@ func get_conn_Execer_Queryer(connDetails dbConnDetails, conn driver.Conn, sensor
 			Conn:        conn,
 			connDetails: connDetails,
 			sensor:      sensor,
-		}, Execer: &wExecer{
+		},
+		Execer: &wExecer{
 			Execer:      Execer,
 			connDetails: connDetails,
 			sensor:      sensor,
-		}, Queryer: &wQueryer{
+		},
+		Queryer: &wQueryer{
 			Queryer:     Queryer,
 			connDetails: connDetails,
 			sensor:      sensor,
-		},
-	}
+		}}
 }
 
 func get_conn_QueryerContext_NamedValueChecker(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker) driver.Conn {
@@ -1808,12 +1905,12 @@ func get_conn_QueryerContext_NamedValueChecker(connDetails dbConnDetails, conn d
 			Conn:        conn,
 			connDetails: connDetails,
 			sensor:      sensor,
-		}, QueryerContext: &wQueryerContext{
+		},
+		QueryerContext: &wQueryerContext{
 			QueryerContext: QueryerContext,
 			connDetails:    connDetails,
 			sensor:         sensor,
-		}, NamedValueChecker: NamedValueChecker,
-	}
+		}, NamedValueChecker: NamedValueChecker}
 }
 
 func get_conn_Execer_ConnPrepareContext(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker) driver.Conn {
@@ -1822,16 +1919,17 @@ func get_conn_Execer_ConnPrepareContext(connDetails dbConnDetails, conn driver.C
 			Conn:        conn,
 			connDetails: connDetails,
 			sensor:      sensor,
-		}, Execer: &wExecer{
+		},
+		Execer: &wExecer{
 			Execer:      Execer,
 			connDetails: connDetails,
 			sensor:      sensor,
-		}, ConnPrepareContext: &wConnPrepareContext{
+		},
+		ConnPrepareContext: &wConnPrepareContext{
 			ConnPrepareContext: ConnPrepareContext,
 			connDetails:        connDetails,
 			sensor:             sensor,
-		},
-	}
+		}}
 }
 
 func get_conn_ExecerContext_ConnPrepareContext(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker) driver.Conn {
@@ -1840,16 +1938,17 @@ func get_conn_ExecerContext_ConnPrepareContext(connDetails dbConnDetails, conn d
 			Conn:        conn,
 			connDetails: connDetails,
 			sensor:      sensor,
-		}, ExecerContext: &wExecerContext{
+		},
+		ExecerContext: &wExecerContext{
 			ExecerContext: ExecerContext,
 			connDetails:   connDetails,
 			sensor:        sensor,
-		}, ConnPrepareContext: &wConnPrepareContext{
+		},
+		ConnPrepareContext: &wConnPrepareContext{
 			ConnPrepareContext: ConnPrepareContext,
 			connDetails:        connDetails,
 			sensor:             sensor,
-		},
-	}
+		}}
 }
 
 func get_conn_Queryer_QueryerContext(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker) driver.Conn {
@@ -1858,16 +1957,17 @@ func get_conn_Queryer_QueryerContext(connDetails dbConnDetails, conn driver.Conn
 			Conn:        conn,
 			connDetails: connDetails,
 			sensor:      sensor,
-		}, Queryer: &wQueryer{
+		},
+		Queryer: &wQueryer{
 			Queryer:     Queryer,
 			connDetails: connDetails,
 			sensor:      sensor,
-		}, QueryerContext: &wQueryerContext{
+		},
+		QueryerContext: &wQueryerContext{
 			QueryerContext: QueryerContext,
 			connDetails:    connDetails,
 			sensor:         sensor,
-		},
-	}
+		}}
 }
 
 func get_conn_QueryerContext(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker) driver.Conn {
@@ -1876,12 +1976,12 @@ func get_conn_QueryerContext(connDetails dbConnDetails, conn driver.Conn, sensor
 			Conn:        conn,
 			connDetails: connDetails,
 			sensor:      sensor,
-		}, QueryerContext: &wQueryerContext{
+		},
+		QueryerContext: &wQueryerContext{
 			QueryerContext: QueryerContext,
 			connDetails:    connDetails,
 			sensor:         sensor,
-		},
-	}
+		}}
 }
 
 func get_conn_Execer(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker) driver.Conn {
@@ -1890,12 +1990,12 @@ func get_conn_Execer(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor
 			Conn:        conn,
 			connDetails: connDetails,
 			sensor:      sensor,
-		}, Execer: &wExecer{
+		},
+		Execer: &wExecer{
 			Execer:      Execer,
 			connDetails: connDetails,
 			sensor:      sensor,
-		},
-	}
+		}}
 }
 
 func get_conn_ConnPrepareContext(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker) driver.Conn {
@@ -1904,12 +2004,12 @@ func get_conn_ConnPrepareContext(connDetails dbConnDetails, conn driver.Conn, se
 			Conn:        conn,
 			connDetails: connDetails,
 			sensor:      sensor,
-		}, ConnPrepareContext: &wConnPrepareContext{
+		},
+		ConnPrepareContext: &wConnPrepareContext{
 			ConnPrepareContext: ConnPrepareContext,
 			connDetails:        connDetails,
 			sensor:             sensor,
-		},
-	}
+		}}
 }
 
 func get_conn_Queryer(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker) driver.Conn {
@@ -1918,12 +2018,12 @@ func get_conn_Queryer(connDetails dbConnDetails, conn driver.Conn, sensor *Senso
 			Conn:        conn,
 			connDetails: connDetails,
 			sensor:      sensor,
-		}, Queryer: &wQueryer{
+		},
+		Queryer: &wQueryer{
 			Queryer:     Queryer,
 			connDetails: connDetails,
 			sensor:      sensor,
-		},
-	}
+		}}
 }
 
 func get_conn_NamedValueChecker(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker) driver.Conn {
@@ -1932,8 +2032,7 @@ func get_conn_NamedValueChecker(connDetails dbConnDetails, conn driver.Conn, sen
 			Conn:        conn,
 			connDetails: connDetails,
 			sensor:      sensor,
-		}, NamedValueChecker: NamedValueChecker,
-	}
+		}, NamedValueChecker: NamedValueChecker}
 }
 
 func get_conn_ExecerContext(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker) driver.Conn {
@@ -1942,13 +2041,15 @@ func get_conn_ExecerContext(connDetails dbConnDetails, conn driver.Conn, sensor 
 			Conn:        conn,
 			connDetails: connDetails,
 			sensor:      sensor,
-		}, ExecerContext: &wExecerContext{
+		},
+		ExecerContext: &wExecerContext{
 			ExecerContext: ExecerContext,
 			connDetails:   connDetails,
 			sensor:        sensor,
-		},
-	}
+		}}
 }
+
+// Stmt Constructors
 
 func get_stmt_StmtExecContext_StmtQueryContext_NamedValueChecker_ColumnConverter(stmt driver.Stmt, query string, connDetails dbConnDetails, sensor *Sensor, StmtExecContext driver.StmtExecContext, StmtQueryContext driver.StmtQueryContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Stmt {
 	return &w_stmt_StmtExecContext_StmtQueryContext_NamedValueChecker_ColumnConverter{
@@ -1957,20 +2058,18 @@ func get_stmt_StmtExecContext_StmtQueryContext_NamedValueChecker_ColumnConverter
 			connDetails: connDetails,
 			query:       query,
 			sensor:      sensor,
-		},
-		StmtExecContext: &wStmtExecContext{
+		}, StmtExecContext: &wStmtExecContext{
 			StmtExecContext: StmtExecContext,
 			connDetails:     connDetails,
 			sensor:          sensor,
 			query:           query,
-		},
-		StmtQueryContext: &wStmtQueryContext{
+		}, StmtQueryContext: &wStmtQueryContext{
 			StmtQueryContext: StmtQueryContext,
 			connDetails:      connDetails,
 			sensor:           sensor,
 			query:            query,
-		}, NamedValueChecker: NamedValueChecker, cc: ColumnConverter,
-	}
+		}, NamedValueChecker: NamedValueChecker,
+		cc: ColumnConverter}
 }
 
 func get_stmt_StmtExecContext_StmtQueryContext_NamedValueChecker(stmt driver.Stmt, query string, connDetails dbConnDetails, sensor *Sensor, StmtExecContext driver.StmtExecContext, StmtQueryContext driver.StmtQueryContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Stmt {
@@ -1980,20 +2079,17 @@ func get_stmt_StmtExecContext_StmtQueryContext_NamedValueChecker(stmt driver.Stm
 			connDetails: connDetails,
 			query:       query,
 			sensor:      sensor,
-		},
-		StmtExecContext: &wStmtExecContext{
+		}, StmtExecContext: &wStmtExecContext{
 			StmtExecContext: StmtExecContext,
 			connDetails:     connDetails,
 			sensor:          sensor,
 			query:           query,
-		},
-		StmtQueryContext: &wStmtQueryContext{
+		}, StmtQueryContext: &wStmtQueryContext{
 			StmtQueryContext: StmtQueryContext,
 			connDetails:      connDetails,
 			sensor:           sensor,
 			query:            query,
-		}, NamedValueChecker: NamedValueChecker,
-	}
+		}, NamedValueChecker: NamedValueChecker}
 }
 
 func get_stmt_StmtQueryContext_NamedValueChecker_ColumnConverter(stmt driver.Stmt, query string, connDetails dbConnDetails, sensor *Sensor, StmtExecContext driver.StmtExecContext, StmtQueryContext driver.StmtQueryContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Stmt {
@@ -2003,14 +2099,13 @@ func get_stmt_StmtQueryContext_NamedValueChecker_ColumnConverter(stmt driver.Stm
 			connDetails: connDetails,
 			query:       query,
 			sensor:      sensor,
-		},
-		StmtQueryContext: &wStmtQueryContext{
+		}, StmtQueryContext: &wStmtQueryContext{
 			StmtQueryContext: StmtQueryContext,
 			connDetails:      connDetails,
 			sensor:           sensor,
 			query:            query,
-		}, NamedValueChecker: NamedValueChecker, cc: ColumnConverter,
-	}
+		}, NamedValueChecker: NamedValueChecker,
+		cc: ColumnConverter}
 }
 
 func get_stmt_StmtExecContext_NamedValueChecker_ColumnConverter(stmt driver.Stmt, query string, connDetails dbConnDetails, sensor *Sensor, StmtExecContext driver.StmtExecContext, StmtQueryContext driver.StmtQueryContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Stmt {
@@ -2020,14 +2115,13 @@ func get_stmt_StmtExecContext_NamedValueChecker_ColumnConverter(stmt driver.Stmt
 			connDetails: connDetails,
 			query:       query,
 			sensor:      sensor,
-		},
-		StmtExecContext: &wStmtExecContext{
+		}, StmtExecContext: &wStmtExecContext{
 			StmtExecContext: StmtExecContext,
 			connDetails:     connDetails,
 			sensor:          sensor,
 			query:           query,
-		}, NamedValueChecker: NamedValueChecker, cc: ColumnConverter,
-	}
+		}, NamedValueChecker: NamedValueChecker,
+		cc: ColumnConverter}
 }
 
 func get_stmt_StmtExecContext_StmtQueryContext_ColumnConverter(stmt driver.Stmt, query string, connDetails dbConnDetails, sensor *Sensor, StmtExecContext driver.StmtExecContext, StmtQueryContext driver.StmtQueryContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Stmt {
@@ -2037,20 +2131,18 @@ func get_stmt_StmtExecContext_StmtQueryContext_ColumnConverter(stmt driver.Stmt,
 			connDetails: connDetails,
 			query:       query,
 			sensor:      sensor,
-		},
-		StmtExecContext: &wStmtExecContext{
+		}, StmtExecContext: &wStmtExecContext{
 			StmtExecContext: StmtExecContext,
 			connDetails:     connDetails,
 			sensor:          sensor,
 			query:           query,
-		},
-		StmtQueryContext: &wStmtQueryContext{
+		}, StmtQueryContext: &wStmtQueryContext{
 			StmtQueryContext: StmtQueryContext,
 			connDetails:      connDetails,
 			sensor:           sensor,
 			query:            query,
-		}, cc: ColumnConverter,
-	}
+		},
+		cc: ColumnConverter}
 }
 
 func get_stmt_StmtQueryContext_ColumnConverter(stmt driver.Stmt, query string, connDetails dbConnDetails, sensor *Sensor, StmtExecContext driver.StmtExecContext, StmtQueryContext driver.StmtQueryContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Stmt {
@@ -2060,14 +2152,13 @@ func get_stmt_StmtQueryContext_ColumnConverter(stmt driver.Stmt, query string, c
 			connDetails: connDetails,
 			query:       query,
 			sensor:      sensor,
-		},
-		StmtQueryContext: &wStmtQueryContext{
+		}, StmtQueryContext: &wStmtQueryContext{
 			StmtQueryContext: StmtQueryContext,
 			connDetails:      connDetails,
 			sensor:           sensor,
 			query:            query,
-		}, cc: ColumnConverter,
-	}
+		},
+		cc: ColumnConverter}
 }
 
 func get_stmt_StmtQueryContext_NamedValueChecker(stmt driver.Stmt, query string, connDetails dbConnDetails, sensor *Sensor, StmtExecContext driver.StmtExecContext, StmtQueryContext driver.StmtQueryContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Stmt {
@@ -2077,14 +2168,12 @@ func get_stmt_StmtQueryContext_NamedValueChecker(stmt driver.Stmt, query string,
 			connDetails: connDetails,
 			query:       query,
 			sensor:      sensor,
-		},
-		StmtQueryContext: &wStmtQueryContext{
+		}, StmtQueryContext: &wStmtQueryContext{
 			StmtQueryContext: StmtQueryContext,
 			connDetails:      connDetails,
 			sensor:           sensor,
 			query:            query,
-		}, NamedValueChecker: NamedValueChecker,
-	}
+		}, NamedValueChecker: NamedValueChecker}
 }
 
 func get_stmt_StmtExecContext_ColumnConverter(stmt driver.Stmt, query string, connDetails dbConnDetails, sensor *Sensor, StmtExecContext driver.StmtExecContext, StmtQueryContext driver.StmtQueryContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Stmt {
@@ -2094,14 +2183,13 @@ func get_stmt_StmtExecContext_ColumnConverter(stmt driver.Stmt, query string, co
 			connDetails: connDetails,
 			query:       query,
 			sensor:      sensor,
-		},
-		StmtExecContext: &wStmtExecContext{
+		}, StmtExecContext: &wStmtExecContext{
 			StmtExecContext: StmtExecContext,
 			connDetails:     connDetails,
 			sensor:          sensor,
 			query:           query,
-		}, cc: ColumnConverter,
-	}
+		},
+		cc: ColumnConverter}
 }
 
 func get_stmt_StmtExecContext_NamedValueChecker(stmt driver.Stmt, query string, connDetails dbConnDetails, sensor *Sensor, StmtExecContext driver.StmtExecContext, StmtQueryContext driver.StmtQueryContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Stmt {
@@ -2111,14 +2199,12 @@ func get_stmt_StmtExecContext_NamedValueChecker(stmt driver.Stmt, query string, 
 			connDetails: connDetails,
 			query:       query,
 			sensor:      sensor,
-		},
-		StmtExecContext: &wStmtExecContext{
+		}, StmtExecContext: &wStmtExecContext{
 			StmtExecContext: StmtExecContext,
 			connDetails:     connDetails,
 			sensor:          sensor,
 			query:           query,
-		}, NamedValueChecker: NamedValueChecker,
-	}
+		}, NamedValueChecker: NamedValueChecker}
 }
 
 func get_stmt_NamedValueChecker_ColumnConverter(stmt driver.Stmt, query string, connDetails dbConnDetails, sensor *Sensor, StmtExecContext driver.StmtExecContext, StmtQueryContext driver.StmtQueryContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Stmt {
@@ -2128,8 +2214,8 @@ func get_stmt_NamedValueChecker_ColumnConverter(stmt driver.Stmt, query string, 
 			connDetails: connDetails,
 			query:       query,
 			sensor:      sensor,
-		}, NamedValueChecker: NamedValueChecker, cc: ColumnConverter,
-	}
+		}, NamedValueChecker: NamedValueChecker,
+		cc: ColumnConverter}
 }
 
 func get_stmt_StmtExecContext_StmtQueryContext(stmt driver.Stmt, query string, connDetails dbConnDetails, sensor *Sensor, StmtExecContext driver.StmtExecContext, StmtQueryContext driver.StmtQueryContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Stmt {
@@ -2139,20 +2225,17 @@ func get_stmt_StmtExecContext_StmtQueryContext(stmt driver.Stmt, query string, c
 			connDetails: connDetails,
 			query:       query,
 			sensor:      sensor,
-		},
-		StmtExecContext: &wStmtExecContext{
+		}, StmtExecContext: &wStmtExecContext{
 			StmtExecContext: StmtExecContext,
 			connDetails:     connDetails,
 			sensor:          sensor,
 			query:           query,
-		},
-		StmtQueryContext: &wStmtQueryContext{
+		}, StmtQueryContext: &wStmtQueryContext{
 			StmtQueryContext: StmtQueryContext,
 			connDetails:      connDetails,
 			sensor:           sensor,
 			query:            query,
-		},
-	}
+		}}
 }
 
 func get_stmt_ColumnConverter(stmt driver.Stmt, query string, connDetails dbConnDetails, sensor *Sensor, StmtExecContext driver.StmtExecContext, StmtQueryContext driver.StmtQueryContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Stmt {
@@ -2162,8 +2245,8 @@ func get_stmt_ColumnConverter(stmt driver.Stmt, query string, connDetails dbConn
 			connDetails: connDetails,
 			query:       query,
 			sensor:      sensor,
-		}, cc: ColumnConverter,
-	}
+		},
+		cc: ColumnConverter}
 }
 
 func get_stmt_StmtExecContext(stmt driver.Stmt, query string, connDetails dbConnDetails, sensor *Sensor, StmtExecContext driver.StmtExecContext, StmtQueryContext driver.StmtQueryContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Stmt {
@@ -2173,14 +2256,12 @@ func get_stmt_StmtExecContext(stmt driver.Stmt, query string, connDetails dbConn
 			connDetails: connDetails,
 			query:       query,
 			sensor:      sensor,
-		},
-		StmtExecContext: &wStmtExecContext{
+		}, StmtExecContext: &wStmtExecContext{
 			StmtExecContext: StmtExecContext,
 			connDetails:     connDetails,
 			sensor:          sensor,
 			query:           query,
-		},
-	}
+		}}
 }
 
 func get_stmt_NamedValueChecker(stmt driver.Stmt, query string, connDetails dbConnDetails, sensor *Sensor, StmtExecContext driver.StmtExecContext, StmtQueryContext driver.StmtQueryContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Stmt {
@@ -2190,8 +2271,7 @@ func get_stmt_NamedValueChecker(stmt driver.Stmt, query string, connDetails dbCo
 			connDetails: connDetails,
 			query:       query,
 			sensor:      sensor,
-		}, NamedValueChecker: NamedValueChecker,
-	}
+		}, NamedValueChecker: NamedValueChecker}
 }
 
 func get_stmt_StmtQueryContext(stmt driver.Stmt, query string, connDetails dbConnDetails, sensor *Sensor, StmtExecContext driver.StmtExecContext, StmtQueryContext driver.StmtQueryContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Stmt {
@@ -2201,14 +2281,12 @@ func get_stmt_StmtQueryContext(stmt driver.Stmt, query string, connDetails dbCon
 			connDetails: connDetails,
 			query:       query,
 			sensor:      sensor,
-		},
-		StmtQueryContext: &wStmtQueryContext{
+		}, StmtQueryContext: &wStmtQueryContext{
 			StmtQueryContext: StmtQueryContext,
 			connDetails:      connDetails,
 			sensor:           sensor,
 			query:            query,
-		},
-	}
+		}}
 }
 
 func stmtAlreadyWrapped(stmt driver.Stmt) bool {

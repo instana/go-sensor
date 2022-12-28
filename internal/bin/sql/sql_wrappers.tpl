@@ -51,19 +51,42 @@ func wrapConn(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor) drive
   }
 }
 
+// Conn Constructors
 {{range .Drivers}}
-func get_{{.TypeName}}(
-	{{- if .IsConn -}}
-		connDetails dbConnDetails, conn driver.Conn, sensor *Sensor{{range connInterfaces}}, {{replace . "driver." ""}} {{.}}{{end}}
-	{{- else -}}
-		stmt driver.Stmt, query string, connDetails dbConnDetails, sensor *Sensor{{range stmtInterfaces}}, {{replace . "driver." ""}} {{.}}{{end}}
-	{{- end}}) {{if .IsConn}}driver.Conn{{else}}driver.Stmt{{end}} {
-	return &w_{{.TypeName}}{
-		{{- /*TODO: refactor this piece*/ -}}
-		{{if .IsConn}}
+{{if .IsConn}}
+func get_{{.TypeName}}(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor{{range connInterfaces}}, {{replace . "driver." ""}} {{.}}{{end}}) driver.Conn {
+	return &w_{{.TypeName}} {
 		Conn: &wConn{
 			Conn:	conn,
 			connDetails:	connDetails,
+			sensor:	sensor,
+		},
+		{{- range .Interfaces -}}
+			{{$theType := replace . "driver." ""}}
+			{{- if eq $theType "NamedValueChecker"}} NamedValueChecker: NamedValueChecker,
+			{{- else if eq $theType "ColumnConverter"}} cc: ColumnConverter,
+			{{- else}}
+			{{$theType}}: &w{{$theType -}}{
+			{{$theType}}:	{{$theType}},
+			connDetails:	connDetails,
+			sensor:	sensor,
+		},
+			{{- end -}}
+		{{- end -}}
+	}
+}
+{{- end -}} {{- /* if .IsConn */ -}}
+{{- end -}} {{- /* range .Drivers*/ -}}
+
+// Stmt Constructors
+{{range .Drivers}}
+{{if eq .IsConn false}}
+func get_{{.TypeName}}(stmt driver.Stmt, query string, connDetails dbConnDetails, sensor *Sensor{{range stmtInterfaces}}, {{replace . "driver." ""}} {{.}}{{end}}) driver.Stmt {
+	return &w_{{.TypeName}} {
+		Stmt: &wStmt{
+			Stmt:	stmt,
+			connDetails:	connDetails,
+			query:	query,
 			sensor:	sensor,
 		},
 		{{- range .Interfaces -}}
@@ -75,33 +98,14 @@ func get_{{.TypeName}}(
 			{{$theType}}:	{{$theType}},
 			connDetails:	connDetails,
 			sensor:	sensor,
-		},
-			{{- end -}}
-		{{- end -}}
-		{{else}}
-		Stmt: &wStmt{
-			Stmt:	stmt,
-			connDetails:	connDetails,
 			query:	query,
-			sensor:	sensor,
-		},
-		{{- range .Interfaces -}}
-		  {{$theType := replace . "driver." ""}}
-		  {{- if eq $theType "NamedValueChecker"}} NamedValueChecker: NamedValueChecker,
-		  {{- else if eq $theType "ColumnConverter"}} cc: ColumnConverter,
-		  {{- else}}
-		  {{$theType}}:	&w{{$theType -}}{
-		  {{$theType}}:	{{$theType}},
-		  connDetails:	connDetails,
-		  sensor:	sensor,
-		  query:	query,
 		},
 			{{- end -}}
 		{{- end -}}
-		{{end}}
 	}
 }
-{{end}}
+{{- end -}} {{- /* if eq .IsConn false */ -}}
+{{- end -}} {{- /* range .Drivers*/}}
 
 func stmtAlreadyWrapped(stmt driver.Stmt) bool {
 	{{$stmtTypes := driverTypes .Drivers false -}}
