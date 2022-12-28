@@ -67,22 +67,30 @@ func removeOnceFromArr2(el string, arr []string) []string {
 	return arr
 }
 
-func replace(s, old, new string) string {
-	return strings.Replace(s, old, new, -1)
-}
-
 var funcMap template.FuncMap
 var connInterfacesNoBasicType []string
 var stmtInterfacesNoBasicType []string
 
 func init() {
 	funcMap = template.FuncMap{
-		"replace": replace,
+		"replace": strings.ReplaceAll,
+		"join":    strings.Join,
 		"connInterfaces": func() []string {
 			return connInterfacesNoBasicType
 		},
 		"stmtInterfaces": func() []string {
 			return stmtInterfacesNoBasicType
+		},
+		"driverTypes": func(dc []DriverCombo, isConn bool) []string {
+			var drivers []string
+
+			for _, d := range dc {
+				if d.IsConn == isConn {
+					drivers = append(drivers, d.TypeName)
+				}
+			}
+
+			return drivers
 		},
 	}
 }

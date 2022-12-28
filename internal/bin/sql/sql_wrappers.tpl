@@ -29,7 +29,7 @@ type w_{{.TypeName}} struct {
 }
 
 {{/* Cases with ColumnConverter are special and must be added.
-	Go gets confused with an embedded type whose name and method name are the same.
+Go gets confused with an embedded type whose name and method name are the same.
 Example:
 
 func (w *w_stmt_StmtExecContext_StmtQueryContext_NamedValueChecker_ColumnConverter) ColumnConverter(idx int) driver.ValueConverter {
@@ -40,8 +40,8 @@ func (w *w_stmt_StmtExecContext_StmtQueryContext_NamedValueChecker_ColumnConvert
 func (w *w_{{.TypeName}}) ColumnConverter(idx int) driver.ValueConverter {
 	return w.cc.ColumnConverter(idx)
 }
-{{end}}
-{{end}}
+{{- end -}}
+{{- end -}}
 
 {{/* function connAlreadyWrapped
 Example:
@@ -55,37 +55,36 @@ func connAlreadyWrapped(conn driver.Conn) bool {
 	}
 	return false
 }
-*/}}
+*/ -}}
+
 func connAlreadyWrapped(conn driver.Conn) bool {
+	{{$connTypes := driverTypes .Drivers true -}}
 	switch conn.(type) {
-	case *wConn{{range .Drivers -}}
-	  {{- if .IsConn -}}, *w_{{.TypeName}}{{end}}
-	{{- end}}:
+	case *wConn{{range $connTypes -}}, *w_{{.}}{{- end}}:
 		return true
-	{{- $firstDriver := index .Drivers 0}}
-	case w_{{$firstDriver.TypeName}}{{range slice .Drivers 1 -}}
-	  {{- if .IsConn -}}, w_{{.TypeName}}{{end}}
-	{{- end}}:
+	case w_{{index $connTypes 0}}{{range slice $connTypes 1 -}}, w_{{.}}{{- end}}:
 		return true
 	}
 	return false
 }
 
 func wrapConn(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor) driver.Conn {
-	Execer, isExecer := conn.(driver.Execer)
-	ExecerContext, isExecerContext := conn.(driver.ExecerContext)
-	Queryer, isQueryer := conn.(driver.Queryer)
-	QueryerContext, isQueryerContext := conn.(driver.QueryerContext)
-	ConnPrepareContext, isConnPrepareContext := conn.(driver.ConnPrepareContext)
-	NamedValueChecker, isNamedValueChecker := conn.(driver.NamedValueChecker)
-	if f, ok := _conn_n[convertBooleansToInt(isExecer, isExecerContext, isQueryer, isQueryerContext, isConnPrepareContext, isNamedValueChecker)]; ok {
-		return f(connDetails, conn, sensor, Execer, ExecerContext, Queryer, QueryerContext, ConnPrepareContext, NamedValueChecker)
-	}
-	return &wConn{
-		Conn:        conn,
-		connDetails: connDetails,
-		sensor:      sensor,
-	}
+	{{range connInterfaces -}}
+	{{replace . "driver." ""}}, is{{replace . "driver." ""}} := conn.({{.}})
+	{{end -}}
+
+	{{- $interfaceList := join connInterfaces ", "}}
+	{{- $isList := replace $interfaceList "driver." "is"}}
+	{{- $noPkgList := replace $interfaceList "driver." ""}}
+	if f, ok := _conn_n[convertBooleansToInt({{$isList}})]; ok {
+		return f(connDetails, conn, sensor, {{$noPkgList}})
+  }
+
+  return &wConn{
+    Conn:conn,
+    connDetails: connDetails,
+    sensor: sensor,
+  }
 }
 
 {{/* Getter functions for each driver combination.
@@ -174,6 +173,7 @@ func get_{{.TypeName}}(
 }
 {{end}}
 
+// TODO
 func stmtAlreadyWrapped(stmt driver.Stmt) bool {
 	switch stmt.(type) {
 	case *wStmt, *w_stmt_StmtExecContext_StmtQueryContext_NamedValueChecker_ColumnConverter, *w_stmt_StmtExecContext_StmtQueryContext_NamedValueChecker, *w_stmt_StmtQueryContext_NamedValueChecker_ColumnConverter, *w_stmt_StmtExecContext_NamedValueChecker_ColumnConverter, *w_stmt_StmtExecContext_StmtQueryContext_ColumnConverter, *w_stmt_StmtQueryContext_ColumnConverter, *w_stmt_StmtQueryContext_NamedValueChecker, *w_stmt_StmtExecContext_ColumnConverter, *w_stmt_StmtExecContext_NamedValueChecker, *w_stmt_NamedValueChecker_ColumnConverter, *w_stmt_StmtExecContext_StmtQueryContext, *w_stmt_ColumnConverter, *w_stmt_StmtExecContext, *w_stmt_NamedValueChecker, *w_stmt_StmtQueryContext:
@@ -185,13 +185,17 @@ func stmtAlreadyWrapped(stmt driver.Stmt) bool {
 }
 
 func wrapStmt(stmt driver.Stmt, query string, connDetails dbConnDetails, sensor *Sensor) driver.Stmt {
-	StmtExecContext, isStmtExecContext := stmt.(driver.StmtExecContext)
-	StmtQueryContext, isStmtQueryContext := stmt.(driver.StmtQueryContext)
-	NamedValueChecker, isNamedValueChecker := stmt.(driver.NamedValueChecker)
-	ColumnConverter, isColumnConverter := stmt.(driver.ColumnConverter)
-	if f, ok := _stmt_n[convertBooleansToInt(isStmtExecContext, isStmtQueryContext, isNamedValueChecker, isColumnConverter)]; ok {
-		return f(stmt, query, connDetails, sensor, StmtExecContext, StmtQueryContext, NamedValueChecker, ColumnConverter)
-	}
+	{{range stmtInterfaces -}}
+	{{replace . "driver." ""}}, is{{replace . "driver." ""}} := stmt.({{.}})
+	{{end -}}
+
+	{{- $interfaceList := join stmtInterfaces ", "}}
+	{{- $isList := replace $interfaceList "driver." "is"}}
+	{{- $noPkgList := replace $interfaceList "driver." ""}}
+	if f, ok := _stmt_n[convertBooleansToInt({{$isList}})]; ok {
+		return f(stmt, query, connDetails, sensor, {{$noPkgList}})
+  }
+
 	return &wStmt{
 		Stmt:        stmt,
 		connDetails: connDetails,
@@ -200,6 +204,7 @@ func wrapStmt(stmt driver.Stmt, query string, connDetails dbConnDetails, sensor 
 	}
 }
 
+// TODO
 var _conn_n = map[int]func(dbConnDetails, driver.Conn, *Sensor, driver.Execer, driver.ExecerContext, driver.Queryer, driver.QueryerContext, driver.ConnPrepareContext, driver.NamedValueChecker) driver.Conn{
 	0b111101: get_conn_Execer_ExecerContext_Queryer_QueryerContext_NamedValueChecker,
 	0b101011: get_conn_Execer_Queryer_ConnPrepareContext_NamedValueChecker,
