@@ -5,6 +5,8 @@ package instana
 
 import "database/sql/driver"
 
+// Types
+
 // [driver.Execer driver.ExecerContext driver.Queryer driver.QueryerContext driver.ConnPrepareContext driver.NamedValueChecker]
 type w_conn_Execer_ExecerContext_Queryer_QueryerContext_ConnPrepareContext_NamedValueChecker struct {
 	driver.Conn

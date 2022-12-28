@@ -5,6 +5,7 @@ package instana
 
 import "database/sql/driver"
 
+// Types
 {{range .Drivers}}
 // {{.Interfaces}}
 type w_{{.TypeName}} struct {
