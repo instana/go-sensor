@@ -653,6 +653,7 @@ type w_stmt_StmtQueryContext struct {
 	driver.StmtQueryContext
 }
 
+// connAlreadyWrapped returns true if conn is already instrumented
 func connAlreadyWrapped(conn driver.Conn) bool {
 	switch conn.(type) {
 	case *wConn, *w_conn_Execer_ExecerContext_Queryer_QueryerContext_ConnPrepareContext_NamedValueChecker, *w_conn_Execer_ExecerContext_Queryer_QueryerContext_ConnPrepareContext, *w_conn_ExecerContext_Queryer_QueryerContext_ConnPrepareContext_NamedValueChecker, *w_conn_Execer_Queryer_QueryerContext_ConnPrepareContext_NamedValueChecker, *w_conn_Execer_ExecerContext_QueryerContext_ConnPrepareContext_NamedValueChecker, *w_conn_Execer_ExecerContext_Queryer_ConnPrepareContext_NamedValueChecker, *w_conn_Execer_ExecerContext_Queryer_QueryerContext_NamedValueChecker, *w_conn_Execer_Queryer_QueryerContext_NamedValueChecker, *w_conn_Execer_ExecerContext_Queryer_ConnPrepareContext, *w_conn_Queryer_QueryerContext_ConnPrepareContext_NamedValueChecker, *w_conn_ExecerContext_QueryerContext_ConnPrepareContext_NamedValueChecker, *w_conn_Execer_QueryerContext_ConnPrepareContext_NamedValueChecker, *w_conn_ExecerContext_Queryer_ConnPrepareContext_NamedValueChecker, *w_conn_Execer_Queryer_ConnPrepareContext_NamedValueChecker, *w_conn_Execer_ExecerContext_Queryer_QueryerContext, *w_conn_Execer_ExecerContext_ConnPrepareContext_NamedValueChecker, *w_conn_ExecerContext_Queryer_QueryerContext_NamedValueChecker, *w_conn_Execer_ExecerContext_QueryerContext_NamedValueChecker, *w_conn_Execer_ExecerContext_Queryer_NamedValueChecker, *w_conn_ExecerContext_Queryer_QueryerContext_ConnPrepareContext, *w_conn_Execer_Queryer_QueryerContext_ConnPrepareContext, *w_conn_Execer_ExecerContext_QueryerContext_ConnPrepareContext, *w_conn_Execer_ConnPrepareContext_NamedValueChecker, *w_conn_Execer_Queryer_QueryerContext, *w_conn_Execer_QueryerContext_ConnPrepareContext, *w_conn_ExecerContext_QueryerContext_ConnPrepareContext, *w_conn_ExecerContext_Queryer_ConnPrepareContext, *w_conn_Queryer_QueryerContext_ConnPrepareContext, *w_conn_Execer_Queryer_ConnPrepareContext, *w_conn_Execer_ExecerContext_QueryerContext, *w_conn_QueryerContext_ConnPrepareContext_NamedValueChecker, *w_conn_ExecerContext_Queryer_QueryerContext, *w_conn_Queryer_ConnPrepareContext_NamedValueChecker, *w_conn_ExecerContext_ConnPrepareContext_NamedValueChecker, *w_conn_Execer_ExecerContext_NamedValueChecker, *w_conn_Execer_ExecerContext_Queryer, *w_conn_Execer_Queryer_NamedValueChecker, *w_conn_ExecerContext_Queryer_NamedValueChecker, *w_conn_Execer_ExecerContext_ConnPrepareContext, *w_conn_Queryer_QueryerContext_NamedValueChecker, *w_conn_Execer_QueryerContext_NamedValueChecker, *w_conn_ExecerContext_QueryerContext_NamedValueChecker, *w_conn_Queryer_ConnPrepareContext, *w_conn_Queryer_NamedValueChecker, *w_conn_Execer_ExecerContext, *w_conn_ExecerContext_Queryer, *w_conn_QueryerContext_ConnPrepareContext, *w_conn_ConnPrepareContext_NamedValueChecker, *w_conn_Execer_QueryerContext, *w_conn_ExecerContext_NamedValueChecker, *w_conn_ExecerContext_QueryerContext, *w_conn_Execer_NamedValueChecker, *w_conn_Execer_Queryer, *w_conn_QueryerContext_NamedValueChecker, *w_conn_Execer_ConnPrepareContext, *w_conn_ExecerContext_ConnPrepareContext, *w_conn_Queryer_QueryerContext, *w_conn_QueryerContext, *w_conn_Execer, *w_conn_ConnPrepareContext, *w_conn_Queryer, *w_conn_NamedValueChecker, *w_conn_ExecerContext:
@@ -663,6 +664,7 @@ func connAlreadyWrapped(conn driver.Conn) bool {
 	return false
 }
 
+// wrapConn wraps the matching type around the driver.Conn based on which interfaces the driver implements
 func wrapConn(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor) driver.Conn {
 	Execer, isExecer := conn.(driver.Execer)
 	ExecerContext, isExecerContext := conn.(driver.ExecerContext)
@@ -682,7 +684,7 @@ func wrapConn(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor) drive
 	}
 }
 
-// Conn Constructors
+// driver.Conn Constructors
 
 func get_conn_Execer_ExecerContext_Queryer_QueryerContext_ConnPrepareContext_NamedValueChecker(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor, Execer driver.Execer, ExecerContext driver.ExecerContext, Queryer driver.Queryer, QueryerContext driver.QueryerContext, ConnPrepareContext driver.ConnPrepareContext, NamedValueChecker driver.NamedValueChecker) driver.Conn {
 	return &w_conn_Execer_ExecerContext_Queryer_QueryerContext_ConnPrepareContext_NamedValueChecker{
@@ -2051,7 +2053,7 @@ func get_conn_ExecerContext(connDetails dbConnDetails, conn driver.Conn, sensor 
 		}}
 }
 
-// Stmt Constructors
+// driver.Stmt Constructors
 
 func get_stmt_StmtExecContext_StmtQueryContext_NamedValueChecker_ColumnConverter(stmt driver.Stmt, query string, connDetails dbConnDetails, sensor *Sensor, StmtExecContext driver.StmtExecContext, StmtQueryContext driver.StmtQueryContext, NamedValueChecker driver.NamedValueChecker, ColumnConverter driver.ColumnConverter) driver.Stmt {
 	return &w_stmt_StmtExecContext_StmtQueryContext_NamedValueChecker_ColumnConverter{
@@ -2291,6 +2293,7 @@ func get_stmt_StmtQueryContext(stmt driver.Stmt, query string, connDetails dbCon
 		}}
 }
 
+// stmtAlreadyWrapped returns true if stmt is already instrumented
 func stmtAlreadyWrapped(stmt driver.Stmt) bool {
 	switch stmt.(type) {
 	case *wStmt, *w_stmt_StmtExecContext_StmtQueryContext_NamedValueChecker_ColumnConverter, *w_stmt_StmtExecContext_StmtQueryContext_NamedValueChecker, *w_stmt_StmtQueryContext_NamedValueChecker_ColumnConverter, *w_stmt_StmtExecContext_NamedValueChecker_ColumnConverter, *w_stmt_StmtExecContext_StmtQueryContext_ColumnConverter, *w_stmt_StmtQueryContext_ColumnConverter, *w_stmt_StmtQueryContext_NamedValueChecker, *w_stmt_StmtExecContext_ColumnConverter, *w_stmt_StmtExecContext_NamedValueChecker, *w_stmt_NamedValueChecker_ColumnConverter, *w_stmt_StmtExecContext_StmtQueryContext, *w_stmt_ColumnConverter, *w_stmt_StmtExecContext, *w_stmt_NamedValueChecker, *w_stmt_StmtQueryContext:
@@ -2301,6 +2304,7 @@ func stmtAlreadyWrapped(stmt driver.Stmt) bool {
 	return false
 }
 
+// wrapStmt wraps the matching type around the driver.Stmt based on which interfaces the driver implements
 func wrapStmt(stmt driver.Stmt, query string, connDetails dbConnDetails, sensor *Sensor) driver.Stmt {
 	StmtExecContext, isStmtExecContext := stmt.(driver.StmtExecContext)
 	StmtQueryContext, isStmtQueryContext := stmt.(driver.StmtQueryContext)
@@ -2319,6 +2323,11 @@ func wrapStmt(stmt driver.Stmt, query string, connDetails dbConnDetails, sensor 
 	}
 }
 
+// A map of all possible driver.Conn types. The key represents which interfaces are "turned on". eg: 0b1001.
+//
+// In the example above, the following constructor is returned: get_conn_Queryer_NamedValueChecker
+//
+// Each bit sequentially represents the interfaces: Execer, ExecerContext, Queryer, QueryerContext, ConnPrepareContext, NamedValueChecker
 var _conn_n = map[int]func(dbConnDetails, driver.Conn, *Sensor, driver.Execer, driver.ExecerContext, driver.Queryer, driver.QueryerContext, driver.ConnPrepareContext, driver.NamedValueChecker) driver.Conn{
 	0b1:      get_conn_NamedValueChecker,
 	0b10:     get_conn_ConnPrepareContext,
@@ -2385,6 +2394,11 @@ var _conn_n = map[int]func(dbConnDetails, driver.Conn, *Sensor, driver.Execer, d
 	0b111111: get_conn_Execer_ExecerContext_Queryer_QueryerContext_ConnPrepareContext_NamedValueChecker,
 }
 
+// A map of all possible driver.Stmt types. The key represents which interfaces are "turned on". eg: 0b1001.
+//
+// In the example above, the following constructor is returned: get_stmt_StmtExecContext_ColumnConverter
+//
+// Each bit sequentially represents the interfaces: StmtExecContext, StmtQueryContext, NamedValueChecker, ColumnConverter
 var _stmt_n = map[int]func(driver.Stmt, string, dbConnDetails, *Sensor, driver.StmtExecContext, driver.StmtQueryContext, driver.NamedValueChecker, driver.ColumnConverter) driver.Stmt{
 	0b1:    get_stmt_ColumnConverter,
 	0b10:   get_stmt_NamedValueChecker,
@@ -2403,6 +2417,11 @@ var _stmt_n = map[int]func(driver.Stmt, string, dbConnDetails, *Sensor, driver.S
 	0b1111: get_stmt_StmtExecContext_StmtQueryContext_NamedValueChecker_ColumnConverter,
 }
 
+// convertBooleansToInt converts a slice of bools to a binary representation.
+//
+// Example:
+//
+//	convertBooleansToInt(true, false, true, true) = 0b1011
 func convertBooleansToInt(args ...bool) int {
 	res := 0
 

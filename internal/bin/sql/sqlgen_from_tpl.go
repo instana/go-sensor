@@ -1,6 +1,8 @@
 // (c) Copyright IBM Corp. 2022
 //go:build go1.18
 
+//go:generate sh -c "go run . > ../../../sql_wrappers.go && go fmt ../../../sql_wrappers.go"
+
 package main
 
 import (
@@ -119,12 +121,11 @@ func main1() {
 		panic(err)
 	}
 
+	// Builds type names for all combinations
 	connSubsets := getFilteredSubsets(driverConn2, arrayConn2)
 	stmtSubsets := getFilteredSubsets(driverStmt2, arrayStmt2)
 
-	connTypes := getTypeNames(driverConn2, "conn_", connSubsets)
-	stmtTypes := getTypeNames(driverStmt2, "stmt_", stmtSubsets)
-
+	// Feeds maps for conn and stmt where the key is a string (eg: 0b1001) and the value is the constructor name
 	for _, subset := range connSubsets {
 		name := strings.ReplaceAll(strings.Join(subset, "_"), "driver.", "")
 		_conn_m2[mapKey(connInterfacesNoBasicType, subset)] = "get_conn_" + name
@@ -136,6 +137,10 @@ func main1() {
 	}
 
 	var drivers []DriverCombo
+
+	// List of all possible types for driver.Conn and driver.Stmt
+	connTypes := getTypeNames(driverConn2, "conn_", connSubsets)
+	stmtTypes := getTypeNames(driverStmt2, "stmt_", stmtSubsets)
 
 	for i := 0; i < len(connTypes); i++ {
 		d := DriverCombo{

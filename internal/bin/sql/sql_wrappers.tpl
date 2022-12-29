@@ -22,6 +22,7 @@ func (w *w_{{.TypeName}}) ColumnConverter(idx int) driver.ValueConverter {
 {{- end -}}
 {{- end -}}
 
+// connAlreadyWrapped returns true if conn is already instrumented
 func connAlreadyWrapped(conn driver.Conn) bool {
 	{{$connTypes := driverTypes .Drivers true -}}
 	switch conn.(type) {
@@ -33,6 +34,7 @@ func connAlreadyWrapped(conn driver.Conn) bool {
 	return false
 }
 
+// wrapConn wraps the matching type around the driver.Conn based on which interfaces the driver implements
 func wrapConn(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor) driver.Conn {
 	{{range connInterfaces -}}
 	{{replace . "driver." ""}}, is{{replace . "driver." ""}} := conn.({{.}})
@@ -52,7 +54,7 @@ func wrapConn(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor) drive
   }
 }
 
-// Conn Constructors
+// driver.Conn Constructors
 {{range .Drivers}}
 {{if .IsConn}}
 func get_{{.TypeName}}(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor{{range connInterfaces}}, {{replace . "driver." ""}} {{.}}{{end}}) driver.Conn {
@@ -79,7 +81,7 @@ func get_{{.TypeName}}(connDetails dbConnDetails, conn driver.Conn, sensor *Sens
 {{- end -}} {{- /* if .IsConn */ -}}
 {{- end -}} {{- /* range .Drivers*/ -}}
 
-// Stmt Constructors
+// driver.Stmt Constructors
 {{range .Drivers}}
 {{if eq .IsConn false}}
 func get_{{.TypeName}}(stmt driver.Stmt, query string, connDetails dbConnDetails, sensor *Sensor{{range stmtInterfaces}}, {{replace . "driver." ""}} {{.}}{{end}}) driver.Stmt {
@@ -108,6 +110,7 @@ func get_{{.TypeName}}(stmt driver.Stmt, query string, connDetails dbConnDetails
 {{- end -}} {{- /* if eq .IsConn false */ -}}
 {{- end -}} {{- /* range .Drivers*/}}
 
+// stmtAlreadyWrapped returns true if stmt is already instrumented
 func stmtAlreadyWrapped(stmt driver.Stmt) bool {
 	{{$stmtTypes := driverTypes .Drivers false -}}
 	switch stmt.(type) {
@@ -119,6 +122,7 @@ func stmtAlreadyWrapped(stmt driver.Stmt) bool {
 	return false
 }
 
+// wrapStmt wraps the matching type around the driver.Stmt based on which interfaces the driver implements
 func wrapStmt(stmt driver.Stmt, query string, connDetails dbConnDetails, sensor *Sensor) driver.Stmt {
 	{{range stmtInterfaces -}}
 	{{replace . "driver." ""}}, is{{replace . "driver." ""}} := stmt.({{.}})
@@ -139,18 +143,32 @@ func wrapStmt(stmt driver.Stmt, query string, connDetails dbConnDetails, sensor 
 	}
 }
 
+// A map of all possible driver.Conn types. The key represents which interfaces are "turned on". eg: 0b1001.
+//
+// In the example above, the following constructor is returned: get_conn_Queryer_NamedValueChecker
+//
+// Each bit sequentially represents the interfaces: Execer, ExecerContext, Queryer, QueryerContext, ConnPrepareContext, NamedValueChecker
 var _conn_n = map[int]func(dbConnDetails, driver.Conn, *Sensor, {{join connInterfaces ", "}}) driver.Conn {
 	{{range $k, $v := connMap -}}
 	{{$k}}: {{$v}},
 	{{end}}
 }
 
+// A map of all possible driver.Stmt types. The key represents which interfaces are "turned on". eg: 0b1001.
+//
+// In the example above, the following constructor is returned: get_stmt_StmtExecContext_ColumnConverter
+//
+// Each bit sequentially represents the interfaces: StmtExecContext, StmtQueryContext, NamedValueChecker, ColumnConverter
 var _stmt_n = map[int]func(driver.Stmt, string, dbConnDetails, *Sensor, {{join stmtInterfaces ", "}}) driver.Stmt {
 	{{range $k, $v := stmtMap -}}
 	{{$k}}: {{$v}},
 	{{end}}
 }
 
+// convertBooleansToInt converts a slice of bools to a binary representation.
+//
+// Example:
+//	convertBooleansToInt(true, false, true, true) = 0b1011
 func convertBooleansToInt(args ...bool) int {
 	res := 0
 
