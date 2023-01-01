@@ -5,7 +5,7 @@ package instaamqp
 import (
 	instana "github.com/instana/go-sensor"
 	ot "github.com/opentracing/opentracing-go"
-	"github.com/streadway/amqp"
+	amqp "github.com/rabbitmq/amqp091-go"
 )
 
 // messageCarrier holds the data injected into and extracted from a span's context to assure span correlation

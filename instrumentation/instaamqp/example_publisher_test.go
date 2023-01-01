@@ -6,7 +6,7 @@ import (
 	instana "github.com/instana/go-sensor"
 	"github.com/instana/go-sensor/instrumentation/instaamqp"
 	"github.com/opentracing/opentracing-go/ext"
-	"github.com/streadway/amqp"
+	amqp "github.com/rabbitmq/amqp091-go"
 )
 
 func Example_publisher() {

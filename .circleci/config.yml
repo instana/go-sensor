@@ -95,12 +95,12 @@ workflows:
       - build:
           name: "go1.15"
           image: "circleci/golang:1.15"
-          exclude_dirs: "./instrumentation/instaredigo"
+          exclude_dirs: "./instrumentation/instaamqp ./instrumentation/instaredigo"
       - build:
           name: "go1.14"
           image: "circleci/golang:1.14"
-          exclude_dirs: "./instrumentation/instaecho ./instrumentation/instaredigo"
+          exclude_dirs: "./instrumentation/instaamqp ./instrumentation/instaecho ./instrumentation/instaredigo"
       - build:
           name: "go1.13"
           image: "circleci/golang:1.13"
-          exclude_dirs: "./instrumentation/instaecho ./instrumentation/instaredigo"
+          exclude_dirs: "./instrumentation/instaamqp ./instrumentation/instaecho ./instrumentation/instaredigo"

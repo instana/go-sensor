@@ -6,7 +6,7 @@ import (
 	"net/url"
 
 	instana "github.com/instana/go-sensor"
-	"github.com/streadway/amqp"
+	amqp "github.com/rabbitmq/amqp091-go"
 
 	ot "github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
