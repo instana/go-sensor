@@ -227,11 +227,33 @@ func (conn *wrappedSQLConn) ExecContext(ctx context.Context, query string, args 
 }
 
 func (conn *wrappedSQLConn) CheckNamedValue(d *driver.NamedValue) error {
+	defer func() {
+		if err := recover(); err != nil {
+			sensor.logger.Debug("Swallowing error: ", err)
+		}
+	}()
+
 	if c, ok := conn.Conn.(driver.NamedValueChecker); ok {
 		return c.CheckNamedValue(d)
 	}
 
-	return nil
+	q := "create table instanatemp (a varchar(1))"
+
+	stmt, err := conn.Prepare(q)
+
+	if err != nil {
+		sensor.logger.Debug("Database does not support temporary statement: ", q)
+	}
+
+	defer stmt.Close()
+
+	if s, ok := stmt.(driver.NamedValueChecker); ok {
+		return s.CheckNamedValue(d)
+	}
+
+	d.Value, err = driver.DefaultParameterConverter.ConvertValue(d.Value)
+
+	return err
 }
 
 type wrappedSQLStmt struct {
@@ -275,11 +297,20 @@ func (stmt *wrappedSQLStmt) ExecContext(ctx context.Context, args []driver.Named
 }
 
 func (stmt *wrappedSQLStmt) CheckNamedValue(d *driver.NamedValue) error {
+	defer func() {
+		if err := recover(); err != nil {
+			sensor.logger.Debug("Swallowing error: ", err)
+		}
+	}()
+
 	if s, ok := stmt.Stmt.(driver.NamedValueChecker); ok {
 		return s.CheckNamedValue(d)
 	}
 
-	return nil
+	var err error
+	d.Value, err = driver.DefaultParameterConverter.ConvertValue(d.Value)
+
+	return err
 }
 
 func (stmt *wrappedSQLStmt) QueryContext(ctx context.Context, args []driver.NamedValue) (driver.Rows, error) {

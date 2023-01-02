@@ -4,7 +4,7 @@ go 1.13
 
 require (
 	github.com/go-redis/redis/v8 v8.11.4
-	github.com/instana/go-sensor v1.47.0
+	github.com/instana/go-sensor v1.47.1
 	github.com/opentracing/opentracing-go v1.1.0
 	github.com/stretchr/testify v1.8.1
 )
