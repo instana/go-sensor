@@ -10,3 +10,9 @@ services:
       - POSTGRES_USER=postgres
       - POSTGRES_DB=postgres
       - POSTGRES_PASSWORD=mysecretpassword
+
+  rabbitmq:
+    image: rabbitmq:3.7.8-alpine
+    ports:
+      - 5671:5671
+      - 5672:5672
