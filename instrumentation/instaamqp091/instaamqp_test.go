@@ -1,5 +1,8 @@
 // (c) Copyright IBM Corp. 2023
 
+//go:build go1.16
+// +build go1.16
+
 package instaamqp091_test
 
 import (
