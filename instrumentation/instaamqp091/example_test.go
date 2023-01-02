@@ -5,7 +5,6 @@ package instaamqp091_test
 import (
 	"fmt"
 	"log"
-	"testing"
 	"time"
 
 	instana "github.com/instana/go-sensor"
@@ -98,7 +97,7 @@ func consume() {
 	<-forever
 }
 
-func TestAppExample(t *testing.T) {
+func AppExample() {
 	go consume()
 
 	// give consume some time to be ready to receive messages

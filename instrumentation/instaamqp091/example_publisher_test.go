@@ -4,7 +4,7 @@ package instaamqp091_test
 
 import (
 	instana "github.com/instana/go-sensor"
-	instaamqp "github.com/instana/go-sensor/instrumentation/instaamqp091"
+	"github.com/instana/go-sensor/instrumentation/instaamqp091"
 	"github.com/opentracing/opentracing-go/ext"
 	amqp "github.com/rabbitmq/amqp091-go"
 )
@@ -33,7 +33,7 @@ func Example_publisher() {
 	entrySpan := sensor.Tracer().StartSpan("my-publishing-method")
 	ext.SpanKind.Set(entrySpan, ext.SpanKindRPCServerEnum)
 
-	instaCh := instaamqp.WrapChannel(sensor, ch, url)
+	instaCh := instaamqp091.WrapChannel(sensor, ch, url)
 
 	// Use the Instana `Publish` method with the same arguments as the original `Publish` method, with the additional
 	// entrySpan argument.

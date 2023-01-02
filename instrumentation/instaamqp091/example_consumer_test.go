@@ -6,7 +6,7 @@ import (
 	"fmt"
 
 	instana "github.com/instana/go-sensor"
-	instaamqp "github.com/instana/go-sensor/instrumentation/instaamqp091"
+	"github.com/instana/go-sensor/instrumentation/instaamqp091"
 
 	amqp "github.com/rabbitmq/amqp091-go"
 )
@@ -35,7 +35,7 @@ func Example_consumer() {
 	err = ch.QueueBind(q.Name, "", exchangeName, false, nil)
 	failOnError(err, "Could not bind the queue to the exchange")
 
-	instaCh := instaamqp.WrapChannel(sensor, ch, url)
+	instaCh := instaamqp091.WrapChannel(sensor, ch, url)
 
 	// Use the Instana `Consume` method with the same arguments as the original `Consume` method.
 	msgs, err := instaCh.Consume(q.Name, "", true, false, false, false, nil)
