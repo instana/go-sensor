@@ -5,6 +5,22 @@ package instana
 
 import "database/sql/driver"
 
+const (
+	// Conn Interfaces
+	cExecer = 1 << iota
+	cExecerContext
+	cQueryer
+	cQueryerContext
+	cConnPrepareContext
+	cNamedValueChecker
+
+	// Stmt Interfaces
+	sStmtExecContext
+	sStmtQueryContext
+	sNamedValueChecker
+	sColumnConverter
+)
+
 // Types
 
 // [driver.Execer driver.ExecerContext driver.Queryer driver.QueryerContext driver.ConnPrepareContext driver.NamedValueChecker]
@@ -666,6 +682,8 @@ func connAlreadyWrapped(conn driver.Conn) bool {
 
 // wrapConn wraps the matching type around the driver.Conn based on which interfaces the driver implements
 func wrapConn(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor) driver.Conn {
+	var key int
+
 	Execer, isExecer := conn.(driver.Execer)
 	ExecerContext, isExecerContext := conn.(driver.ExecerContext)
 	Queryer, isQueryer := conn.(driver.Queryer)
@@ -673,7 +691,26 @@ func wrapConn(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor) drive
 	ConnPrepareContext, isConnPrepareContext := conn.(driver.ConnPrepareContext)
 	NamedValueChecker, isNamedValueChecker := conn.(driver.NamedValueChecker)
 
-	if f, ok := _conn_n[convertBooleansToInt(isExecer, isExecerContext, isQueryer, isQueryerContext, isConnPrepareContext, isNamedValueChecker)]; ok {
+	if isExecer {
+		key |= cExecer
+	}
+	if isExecerContext {
+		key |= cExecerContext
+	}
+	if isQueryer {
+		key |= cQueryer
+	}
+	if isQueryerContext {
+		key |= cQueryerContext
+	}
+	if isConnPrepareContext {
+		key |= cConnPrepareContext
+	}
+	if isNamedValueChecker {
+		key |= cNamedValueChecker
+	}
+
+	if f, ok := _conn_n[key]; ok {
 		return f(connDetails, conn, sensor, Execer, ExecerContext, Queryer, QueryerContext, ConnPrepareContext, NamedValueChecker)
 	}
 
@@ -2306,12 +2343,27 @@ func stmtAlreadyWrapped(stmt driver.Stmt) bool {
 
 // wrapStmt wraps the matching type around the driver.Stmt based on which interfaces the driver implements
 func wrapStmt(stmt driver.Stmt, query string, connDetails dbConnDetails, sensor *Sensor) driver.Stmt {
+	var key int
+
 	StmtExecContext, isStmtExecContext := stmt.(driver.StmtExecContext)
 	StmtQueryContext, isStmtQueryContext := stmt.(driver.StmtQueryContext)
 	NamedValueChecker, isNamedValueChecker := stmt.(driver.NamedValueChecker)
 	ColumnConverter, isColumnConverter := stmt.(driver.ColumnConverter)
 
-	if f, ok := _stmt_n[convertBooleansToInt(isStmtExecContext, isStmtQueryContext, isNamedValueChecker, isColumnConverter)]; ok {
+	if isStmtExecContext {
+		key |= sStmtExecContext
+	}
+	if isStmtQueryContext {
+		key |= sStmtQueryContext
+	}
+	if isNamedValueChecker {
+		key |= sNamedValueChecker
+	}
+	if isColumnConverter {
+		key |= sColumnConverter
+	}
+
+	if f, ok := _stmt_n[key]; ok {
 		return f(stmt, query, connDetails, sensor, StmtExecContext, StmtQueryContext, NamedValueChecker, ColumnConverter)
 	}
 
@@ -2329,69 +2381,69 @@ func wrapStmt(stmt driver.Stmt, query string, connDetails dbConnDetails, sensor 
 //
 // Each bit sequentially represents the interfaces: Execer, ExecerContext, Queryer, QueryerContext, ConnPrepareContext, NamedValueChecker
 var _conn_n = map[int]func(dbConnDetails, driver.Conn, *Sensor, driver.Execer, driver.ExecerContext, driver.Queryer, driver.QueryerContext, driver.ConnPrepareContext, driver.NamedValueChecker) driver.Conn{
-	0b1:      get_conn_NamedValueChecker,
-	0b10:     get_conn_ConnPrepareContext,
-	0b100:    get_conn_QueryerContext,
-	0b1000:   get_conn_Queryer,
-	0b10000:  get_conn_ExecerContext,
-	0b100000: get_conn_Execer,
-	0b100001: get_conn_Execer_NamedValueChecker,
-	0b10001:  get_conn_ExecerContext_NamedValueChecker,
-	0b100010: get_conn_Execer_ConnPrepareContext,
-	0b100011: get_conn_Execer_ConnPrepareContext_NamedValueChecker,
-	0b1001:   get_conn_Queryer_NamedValueChecker,
-	0b10010:  get_conn_ExecerContext_ConnPrepareContext,
-	0b100100: get_conn_Execer_QueryerContext,
-	0b100101: get_conn_Execer_QueryerContext_NamedValueChecker,
-	0b10011:  get_conn_ExecerContext_ConnPrepareContext_NamedValueChecker,
-	0b100110: get_conn_Execer_QueryerContext_ConnPrepareContext,
-	0b100111: get_conn_Execer_QueryerContext_ConnPrepareContext_NamedValueChecker,
-	0b101:    get_conn_QueryerContext_NamedValueChecker,
-	0b1010:   get_conn_Queryer_ConnPrepareContext,
-	0b10100:  get_conn_ExecerContext_QueryerContext,
-	0b101000: get_conn_Execer_Queryer,
-	0b101001: get_conn_Execer_Queryer_NamedValueChecker,
-	0b10101:  get_conn_ExecerContext_QueryerContext_NamedValueChecker,
-	0b101010: get_conn_Execer_Queryer_ConnPrepareContext,
-	0b101011: get_conn_Execer_Queryer_ConnPrepareContext_NamedValueChecker,
-	0b1011:   get_conn_Queryer_ConnPrepareContext_NamedValueChecker,
-	0b10110:  get_conn_ExecerContext_QueryerContext_ConnPrepareContext,
-	0b101100: get_conn_Execer_Queryer_QueryerContext,
-	0b101101: get_conn_Execer_Queryer_QueryerContext_NamedValueChecker,
-	0b10111:  get_conn_ExecerContext_QueryerContext_ConnPrepareContext_NamedValueChecker,
-	0b101110: get_conn_Execer_Queryer_QueryerContext_ConnPrepareContext,
-	0b101111: get_conn_Execer_Queryer_QueryerContext_ConnPrepareContext_NamedValueChecker,
-	0b11:     get_conn_ConnPrepareContext_NamedValueChecker,
-	0b110:    get_conn_QueryerContext_ConnPrepareContext,
-	0b1100:   get_conn_Queryer_QueryerContext,
-	0b11000:  get_conn_ExecerContext_Queryer,
-	0b110000: get_conn_Execer_ExecerContext,
-	0b110001: get_conn_Execer_ExecerContext_NamedValueChecker,
-	0b11001:  get_conn_ExecerContext_Queryer_NamedValueChecker,
-	0b110010: get_conn_Execer_ExecerContext_ConnPrepareContext,
-	0b110011: get_conn_Execer_ExecerContext_ConnPrepareContext_NamedValueChecker,
-	0b1101:   get_conn_Queryer_QueryerContext_NamedValueChecker,
-	0b11010:  get_conn_ExecerContext_Queryer_ConnPrepareContext,
-	0b110100: get_conn_Execer_ExecerContext_QueryerContext,
-	0b110101: get_conn_Execer_ExecerContext_QueryerContext_NamedValueChecker,
-	0b11011:  get_conn_ExecerContext_Queryer_ConnPrepareContext_NamedValueChecker,
-	0b110110: get_conn_Execer_ExecerContext_QueryerContext_ConnPrepareContext,
-	0b110111: get_conn_Execer_ExecerContext_QueryerContext_ConnPrepareContext_NamedValueChecker,
-	0b111:    get_conn_QueryerContext_ConnPrepareContext_NamedValueChecker,
-	0b1110:   get_conn_Queryer_QueryerContext_ConnPrepareContext,
-	0b11100:  get_conn_ExecerContext_Queryer_QueryerContext,
-	0b111000: get_conn_Execer_ExecerContext_Queryer,
-	0b111001: get_conn_Execer_ExecerContext_Queryer_NamedValueChecker,
-	0b11101:  get_conn_ExecerContext_Queryer_QueryerContext_NamedValueChecker,
-	0b111010: get_conn_Execer_ExecerContext_Queryer_ConnPrepareContext,
-	0b111011: get_conn_Execer_ExecerContext_Queryer_ConnPrepareContext_NamedValueChecker,
-	0b1111:   get_conn_Queryer_QueryerContext_ConnPrepareContext_NamedValueChecker,
-	0b11110:  get_conn_ExecerContext_Queryer_QueryerContext_ConnPrepareContext,
-	0b111100: get_conn_Execer_ExecerContext_Queryer_QueryerContext,
-	0b111101: get_conn_Execer_ExecerContext_Queryer_QueryerContext_NamedValueChecker,
-	0b11111:  get_conn_ExecerContext_Queryer_QueryerContext_ConnPrepareContext_NamedValueChecker,
-	0b111110: get_conn_Execer_ExecerContext_Queryer_QueryerContext_ConnPrepareContext,
-	0b111111: get_conn_Execer_ExecerContext_Queryer_QueryerContext_ConnPrepareContext_NamedValueChecker,
+	cExecer | cExecerContext | cQueryer | cQueryerContext | cConnPrepareContext | cNamedValueChecker: get_conn_Execer_ExecerContext_Queryer_QueryerContext_ConnPrepareContext_NamedValueChecker,
+	cExecer | cExecerContext | cQueryer | cQueryerContext | cConnPrepareContext:                      get_conn_Execer_ExecerContext_Queryer_QueryerContext_ConnPrepareContext,
+	cExecerContext | cQueryer | cQueryerContext | cConnPrepareContext | cNamedValueChecker:           get_conn_ExecerContext_Queryer_QueryerContext_ConnPrepareContext_NamedValueChecker,
+	cExecer | cQueryer | cQueryerContext | cConnPrepareContext | cNamedValueChecker:                  get_conn_Execer_Queryer_QueryerContext_ConnPrepareContext_NamedValueChecker,
+	cExecer | cExecerContext | cQueryerContext | cConnPrepareContext | cNamedValueChecker:            get_conn_Execer_ExecerContext_QueryerContext_ConnPrepareContext_NamedValueChecker,
+	cExecer | cExecerContext | cQueryer | cConnPrepareContext | cNamedValueChecker:                   get_conn_Execer_ExecerContext_Queryer_ConnPrepareContext_NamedValueChecker,
+	cExecer | cExecerContext | cQueryer | cQueryerContext | cNamedValueChecker:                       get_conn_Execer_ExecerContext_Queryer_QueryerContext_NamedValueChecker,
+	cExecer | cQueryer | cQueryerContext | cNamedValueChecker:                                        get_conn_Execer_Queryer_QueryerContext_NamedValueChecker,
+	cExecer | cExecerContext | cQueryer | cConnPrepareContext:                                        get_conn_Execer_ExecerContext_Queryer_ConnPrepareContext,
+	cQueryer | cQueryerContext | cConnPrepareContext | cNamedValueChecker:                            get_conn_Queryer_QueryerContext_ConnPrepareContext_NamedValueChecker,
+	cExecerContext | cQueryerContext | cConnPrepareContext | cNamedValueChecker:                      get_conn_ExecerContext_QueryerContext_ConnPrepareContext_NamedValueChecker,
+	cExecer | cQueryerContext | cConnPrepareContext | cNamedValueChecker:                             get_conn_Execer_QueryerContext_ConnPrepareContext_NamedValueChecker,
+	cExecerContext | cQueryer | cConnPrepareContext | cNamedValueChecker:                             get_conn_ExecerContext_Queryer_ConnPrepareContext_NamedValueChecker,
+	cExecer | cQueryer | cConnPrepareContext | cNamedValueChecker:                                    get_conn_Execer_Queryer_ConnPrepareContext_NamedValueChecker,
+	cExecer | cExecerContext | cQueryer | cQueryerContext:                                            get_conn_Execer_ExecerContext_Queryer_QueryerContext,
+	cExecer | cExecerContext | cConnPrepareContext | cNamedValueChecker:                              get_conn_Execer_ExecerContext_ConnPrepareContext_NamedValueChecker,
+	cExecerContext | cQueryer | cQueryerContext | cNamedValueChecker:                                 get_conn_ExecerContext_Queryer_QueryerContext_NamedValueChecker,
+	cExecer | cExecerContext | cQueryerContext | cNamedValueChecker:                                  get_conn_Execer_ExecerContext_QueryerContext_NamedValueChecker,
+	cExecer | cExecerContext | cQueryer | cNamedValueChecker:                                         get_conn_Execer_ExecerContext_Queryer_NamedValueChecker,
+	cExecerContext | cQueryer | cQueryerContext | cConnPrepareContext:                                get_conn_ExecerContext_Queryer_QueryerContext_ConnPrepareContext,
+	cExecer | cQueryer | cQueryerContext | cConnPrepareContext:                                       get_conn_Execer_Queryer_QueryerContext_ConnPrepareContext,
+	cExecer | cExecerContext | cQueryerContext | cConnPrepareContext:                                 get_conn_Execer_ExecerContext_QueryerContext_ConnPrepareContext,
+	cExecer | cConnPrepareContext | cNamedValueChecker:                                               get_conn_Execer_ConnPrepareContext_NamedValueChecker,
+	cExecer | cQueryer | cQueryerContext:                                                             get_conn_Execer_Queryer_QueryerContext,
+	cExecer | cQueryerContext | cConnPrepareContext:                                                  get_conn_Execer_QueryerContext_ConnPrepareContext,
+	cExecerContext | cQueryerContext | cConnPrepareContext:                                           get_conn_ExecerContext_QueryerContext_ConnPrepareContext,
+	cExecerContext | cQueryer | cConnPrepareContext:                                                  get_conn_ExecerContext_Queryer_ConnPrepareContext,
+	cQueryer | cQueryerContext | cConnPrepareContext:                                                 get_conn_Queryer_QueryerContext_ConnPrepareContext,
+	cExecer | cQueryer | cConnPrepareContext:                                                         get_conn_Execer_Queryer_ConnPrepareContext,
+	cExecer | cExecerContext | cQueryerContext:                                                       get_conn_Execer_ExecerContext_QueryerContext,
+	cQueryerContext | cConnPrepareContext | cNamedValueChecker:                                       get_conn_QueryerContext_ConnPrepareContext_NamedValueChecker,
+	cExecerContext | cQueryer | cQueryerContext:                                                      get_conn_ExecerContext_Queryer_QueryerContext,
+	cQueryer | cConnPrepareContext | cNamedValueChecker:                                              get_conn_Queryer_ConnPrepareContext_NamedValueChecker,
+	cExecerContext | cConnPrepareContext | cNamedValueChecker:                                        get_conn_ExecerContext_ConnPrepareContext_NamedValueChecker,
+	cExecer | cExecerContext | cNamedValueChecker:                                                    get_conn_Execer_ExecerContext_NamedValueChecker,
+	cExecer | cExecerContext | cQueryer:                                                              get_conn_Execer_ExecerContext_Queryer,
+	cExecer | cQueryer | cNamedValueChecker:                                                          get_conn_Execer_Queryer_NamedValueChecker,
+	cExecerContext | cQueryer | cNamedValueChecker:                                                   get_conn_ExecerContext_Queryer_NamedValueChecker,
+	cExecer | cExecerContext | cConnPrepareContext:                                                   get_conn_Execer_ExecerContext_ConnPrepareContext,
+	cQueryer | cQueryerContext | cNamedValueChecker:                                                  get_conn_Queryer_QueryerContext_NamedValueChecker,
+	cExecer | cQueryerContext | cNamedValueChecker:                                                   get_conn_Execer_QueryerContext_NamedValueChecker,
+	cExecerContext | cQueryerContext | cNamedValueChecker:                                            get_conn_ExecerContext_QueryerContext_NamedValueChecker,
+	cQueryer | cConnPrepareContext:                                                                   get_conn_Queryer_ConnPrepareContext,
+	cQueryer | cNamedValueChecker:                                                                    get_conn_Queryer_NamedValueChecker,
+	cExecer | cExecerContext:                                                                         get_conn_Execer_ExecerContext,
+	cExecerContext | cQueryer:                                                                        get_conn_ExecerContext_Queryer,
+	cQueryerContext | cConnPrepareContext:                                                            get_conn_QueryerContext_ConnPrepareContext,
+	cConnPrepareContext | cNamedValueChecker:                                                         get_conn_ConnPrepareContext_NamedValueChecker,
+	cExecer | cQueryerContext:                                                                        get_conn_Execer_QueryerContext,
+	cExecerContext | cNamedValueChecker:                                                              get_conn_ExecerContext_NamedValueChecker,
+	cExecerContext | cQueryerContext:                                                                 get_conn_ExecerContext_QueryerContext,
+	cExecer | cNamedValueChecker:                                                                     get_conn_Execer_NamedValueChecker,
+	cExecer | cQueryer:                                                                               get_conn_Execer_Queryer,
+	cQueryerContext | cNamedValueChecker:                                                             get_conn_QueryerContext_NamedValueChecker,
+	cExecer | cConnPrepareContext:                                                                    get_conn_Execer_ConnPrepareContext,
+	cExecerContext | cConnPrepareContext:                                                             get_conn_ExecerContext_ConnPrepareContext,
+	cQueryer | cQueryerContext:                                                                       get_conn_Queryer_QueryerContext,
+	cQueryerContext:                                                                                  get_conn_QueryerContext,
+	cExecer:                                                                                          get_conn_Execer,
+	cConnPrepareContext:                                                                              get_conn_ConnPrepareContext,
+	cQueryer:                                                                                         get_conn_Queryer,
+	cNamedValueChecker:                                                                               get_conn_NamedValueChecker,
+	cExecerContext:                                                                                   get_conn_ExecerContext,
 }
 
 // A map of all possible driver.Stmt types. The key represents which interfaces are "turned on". eg: 0b1001.
@@ -2400,40 +2452,19 @@ var _conn_n = map[int]func(dbConnDetails, driver.Conn, *Sensor, driver.Execer, d
 //
 // Each bit sequentially represents the interfaces: StmtExecContext, StmtQueryContext, NamedValueChecker, ColumnConverter
 var _stmt_n = map[int]func(driver.Stmt, string, dbConnDetails, *Sensor, driver.StmtExecContext, driver.StmtQueryContext, driver.NamedValueChecker, driver.ColumnConverter) driver.Stmt{
-	0b1:    get_stmt_ColumnConverter,
-	0b10:   get_stmt_NamedValueChecker,
-	0b100:  get_stmt_StmtQueryContext,
-	0b1000: get_stmt_StmtExecContext,
-	0b1001: get_stmt_StmtExecContext_ColumnConverter,
-	0b101:  get_stmt_StmtQueryContext_ColumnConverter,
-	0b1010: get_stmt_StmtExecContext_NamedValueChecker,
-	0b1011: get_stmt_StmtExecContext_NamedValueChecker_ColumnConverter,
-	0b11:   get_stmt_NamedValueChecker_ColumnConverter,
-	0b110:  get_stmt_StmtQueryContext_NamedValueChecker,
-	0b1100: get_stmt_StmtExecContext_StmtQueryContext,
-	0b1101: get_stmt_StmtExecContext_StmtQueryContext_ColumnConverter,
-	0b111:  get_stmt_StmtQueryContext_NamedValueChecker_ColumnConverter,
-	0b1110: get_stmt_StmtExecContext_StmtQueryContext_NamedValueChecker,
-	0b1111: get_stmt_StmtExecContext_StmtQueryContext_NamedValueChecker_ColumnConverter,
-}
-
-// convertBooleansToInt converts a slice of bools to a binary representation.
-//
-// Example:
-//
-//	convertBooleansToInt(true, false, true, true) = 0b1011
-func convertBooleansToInt(args ...bool) int {
-	res := 0
-
-	for k, v := range args {
-		if v {
-			res = res | 0x1
-		}
-
-		if len(args)-1 != k {
-			res = res << 1
-		}
-	}
-
-	return res
+	sStmtExecContext | sStmtQueryContext | sNamedValueChecker | sColumnConverter: get_stmt_StmtExecContext_StmtQueryContext_NamedValueChecker_ColumnConverter,
+	sStmtExecContext | sStmtQueryContext | sNamedValueChecker:                    get_stmt_StmtExecContext_StmtQueryContext_NamedValueChecker,
+	sStmtQueryContext | sNamedValueChecker | sColumnConverter:                    get_stmt_StmtQueryContext_NamedValueChecker_ColumnConverter,
+	sStmtExecContext | sNamedValueChecker | sColumnConverter:                     get_stmt_StmtExecContext_NamedValueChecker_ColumnConverter,
+	sStmtExecContext | sStmtQueryContext | sColumnConverter:                      get_stmt_StmtExecContext_StmtQueryContext_ColumnConverter,
+	sStmtQueryContext | sColumnConverter:                                         get_stmt_StmtQueryContext_ColumnConverter,
+	sStmtQueryContext | sNamedValueChecker:                                       get_stmt_StmtQueryContext_NamedValueChecker,
+	sStmtExecContext | sColumnConverter:                                          get_stmt_StmtExecContext_ColumnConverter,
+	sStmtExecContext | sNamedValueChecker:                                        get_stmt_StmtExecContext_NamedValueChecker,
+	sNamedValueChecker | sColumnConverter:                                        get_stmt_NamedValueChecker_ColumnConverter,
+	sStmtExecContext | sStmtQueryContext:                                         get_stmt_StmtExecContext_StmtQueryContext,
+	sColumnConverter:                                                             get_stmt_ColumnConverter,
+	sStmtExecContext:                                                             get_stmt_StmtExecContext,
+	sNamedValueChecker:                                                           get_stmt_NamedValueChecker,
+	sStmtQueryContext:                                                            get_stmt_StmtQueryContext,
 }

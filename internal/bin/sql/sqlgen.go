@@ -6,7 +6,6 @@
 package main
 
 import (
-	"fmt"
 	"os"
 	"sort"
 	"strings"
@@ -17,9 +16,6 @@ import (
 
 const driverStmt = "driver.Stmt"
 const driverConn = "driver.Conn"
-
-var _conn_m = map[string]string{}
-var _stmt_m = map[string]string{}
 
 var arrayConn = []string{
 	"driver.Conn",
@@ -94,12 +90,6 @@ func init() {
 		"stmtInterfaces": func() []string {
 			return stmtInterfacesNoBasicType
 		},
-		"stmtMap": func() map[string]string {
-			return _stmt_m
-		},
-		"connMap": func() map[string]string {
-			return _conn_m
-		},
 		"driverTypes": func(dc []DriverCombo, isConn bool) []string {
 			var drivers []string
 
@@ -124,17 +114,6 @@ func main() {
 	// Builds type names for all combinations
 	connSubsets := getFilteredSubsets(driverConn, arrayConn)
 	stmtSubsets := getFilteredSubsets(driverStmt, arrayStmt)
-
-	// Feeds maps for conn and stmt where the key is a string (eg: 0b1001) and the value is the constructor name
-	for _, subset := range connSubsets {
-		name := strings.ReplaceAll(strings.Join(subset, "_"), "driver.", "")
-		_conn_m[mapKey(connInterfacesNoBasicType, subset)] = "get_conn_" + name
-	}
-
-	for _, subset := range stmtSubsets {
-		name := strings.ReplaceAll(strings.Join(subset, "_"), "driver.", "")
-		_stmt_m[mapKey(stmtInterfacesNoBasicType, subset)] = "get_stmt_" + name
-	}
 
 	var drivers []DriverCombo
 
@@ -203,36 +182,4 @@ func getFilteredSubsets(basicTypeForWrapper string, listOfTheOriginalTypes []str
 	})
 
 	return filteredSubsets
-}
-
-// Identifies which interfaces the type implements and returns a binary key used in the maps
-func mapKey(listOfTheInterfacesWithoutBasicType, subset []string) string {
-	var mask []bool
-
-	for _, v := range listOfTheInterfacesWithoutBasicType {
-		if inSlice(v, subset) {
-			mask = append(mask, true)
-		} else {
-			mask = append(mask, false)
-		}
-	}
-
-	return booleansToBinaryRepresentation(mask...)
-}
-
-// Receives an array of booleans and returns a binary representation as string. eg: [true, false, false, true] = "1001"
-func booleansToBinaryRepresentation(args ...bool) string {
-	res := 0
-
-	for k, v := range args {
-		if v {
-			res = res | 0x1
-		}
-
-		if len(args)-1 != k {
-			res = res << 1
-		}
-	}
-
-	return fmt.Sprintf("0b%b", res)
 }

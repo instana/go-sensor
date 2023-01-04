@@ -5,6 +5,20 @@ package instana
 
 import "database/sql/driver"
 
+const (
+	// Conn Interfaces
+	{{- $firstConnInt := index connInterfaces 0}}
+	{{replace $firstConnInt "driver." "c"}} = 1 << iota
+	{{range slice connInterfaces 1 -}}
+	{{replace . "driver." "c"}}
+	{{end}}
+
+	// Stmt Interfaces
+	{{range stmtInterfaces -}}
+	{{replace . "driver." "s"}}
+	{{end -}}
+)
+
 // Types
 {{range .Drivers}}
 // {{.Interfaces}}
@@ -36,14 +50,21 @@ func connAlreadyWrapped(conn driver.Conn) bool {
 
 // wrapConn wraps the matching type around the driver.Conn based on which interfaces the driver implements
 func wrapConn(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor) driver.Conn {
+	var key int
+
 	{{range connInterfaces -}}
 	{{replace . "driver." ""}}, is{{replace . "driver." ""}} := conn.({{.}})
-	{{end -}}
+	{{end}}
+
+	{{range connInterfaces -}}
+	if is{{replace . "driver." ""}} {
+		key |= {{replace . "driver." "c"}}
+	}
+	{{end}}
 
 	{{- $interfaceList := join connInterfaces ", "}}
-	{{- $isList := replace $interfaceList "driver." "is"}}
 	{{- $noPkgList := replace $interfaceList "driver." ""}}
-	if f, ok := _conn_n[convertBooleansToInt({{$isList}})]; ok {
+	if f, ok := _conn_n[key]; ok {
 		return f(connDetails, conn, sensor, {{$noPkgList}})
   }
 
@@ -124,14 +145,21 @@ func stmtAlreadyWrapped(stmt driver.Stmt) bool {
 
 // wrapStmt wraps the matching type around the driver.Stmt based on which interfaces the driver implements
 func wrapStmt(stmt driver.Stmt, query string, connDetails dbConnDetails, sensor *Sensor) driver.Stmt {
+	var key int
+
 	{{range stmtInterfaces -}}
 	{{replace . "driver." ""}}, is{{replace . "driver." ""}} := stmt.({{.}})
-	{{end -}}
+	{{end}}
+
+	{{range stmtInterfaces -}}
+	if is{{replace . "driver." ""}} {
+		key |= {{replace . "driver." "s"}}
+	}
+	{{end}}
 
 	{{- $interfaceList := join stmtInterfaces ", "}}
-	{{- $isList := replace $interfaceList "driver." "is"}}
 	{{- $noPkgList := replace $interfaceList "driver." ""}}
-	if f, ok := _stmt_n[convertBooleansToInt({{$isList}})]; ok {
+	if f, ok := _stmt_n[key]; ok {
 		return f(stmt, query, connDetails, sensor, {{$noPkgList}})
   }
 
@@ -149,10 +177,15 @@ func wrapStmt(stmt driver.Stmt, query string, connDetails dbConnDetails, sensor 
 //
 // Each bit sequentially represents the interfaces: Execer, ExecerContext, Queryer, QueryerContext, ConnPrepareContext, NamedValueChecker
 var _conn_n = map[int]func(dbConnDetails, driver.Conn, *Sensor, {{join connInterfaces ", "}}) driver.Conn {
-	{{range $k, $v := connMap -}}
-	{{$k}}: {{$v}},
-	{{end}}
-}
+	{{- range .Drivers -}}
+	{{if eq .IsConn true}}
+	{{$tmp1 := replace .TypeName "conn_" "c" -}}
+	{{$tmp1 := replace $tmp1 "_" "| c" -}}
+		{{$tmp1}}: get_{{.TypeName}},
+	{{- end -}}
+	{{- end}}
+	
+	}
 
 // A map of all possible driver.Stmt types. The key represents which interfaces are "turned on". eg: 0b1001.
 //
@@ -160,27 +193,12 @@ var _conn_n = map[int]func(dbConnDetails, driver.Conn, *Sensor, {{join connInter
 //
 // Each bit sequentially represents the interfaces: StmtExecContext, StmtQueryContext, NamedValueChecker, ColumnConverter
 var _stmt_n = map[int]func(driver.Stmt, string, dbConnDetails, *Sensor, {{join stmtInterfaces ", "}}) driver.Stmt {
-	{{range $k, $v := stmtMap -}}
-	{{$k}}: {{$v}},
-	{{end}}
-}
+{{- range .Drivers -}}
+{{if eq .IsConn false}}
+{{$tmp1 := replace .TypeName "stmt_" "s" -}}
+{{$tmp1 := replace $tmp1 "_" "| s" -}}
+	{{$tmp1}}: get_{{.TypeName}},
+{{- end -}}
+{{- end}}
 
-// convertBooleansToInt converts a slice of bools to a binary representation.
-//
-// Example:
-//	convertBooleansToInt(true, false, true, true) = 0b1011
-func convertBooleansToInt(args ...bool) int {
-	res := 0
-
-	for k, v := range args {
-		if v {
-			res = res | 0x1
-		}
-
-		if len(args)-1 != k {
-			res = res << 1
-		}
-	}
-
-	return res
 }
