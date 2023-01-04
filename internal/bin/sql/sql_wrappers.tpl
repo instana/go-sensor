@@ -57,7 +57,7 @@ func wrapConn(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor) drive
 	{{end}}
 
 	{{range connInterfaces -}}
-	if is{{replace . "driver." ""}} {
+	if {{replace . "driver." "is"}} {
 		key |= {{replace . "driver." "c"}}
 	}
 	{{end}}
@@ -152,7 +152,7 @@ func wrapStmt(stmt driver.Stmt, query string, connDetails dbConnDetails, sensor 
 	{{end}}
 
 	{{range stmtInterfaces -}}
-	if is{{replace . "driver." ""}} {
+	if {{replace . "driver." "is"}} {
 		key |= {{replace . "driver." "s"}}
 	}
 	{{end}}
