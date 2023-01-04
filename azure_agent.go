@@ -184,19 +184,24 @@ func (a *azureAgent) collectSnapshot() {
 	}
 
 	var subscriptionID, resourceGrp, functionApp string
-	if val, ok := os.LookupEnv("WEBSITE_OWNER_NAME"); ok {
-		arr := strings.Split(val, "+")
+	var ok bool
+	if websiteOwnerName, ok := os.LookupEnv("WEBSITE_OWNER_NAME"); ok {
+		arr := strings.Split(websiteOwnerName, "+")
 		if len(arr) > 1 {
 			subscriptionID = arr[0]
+		} else {
+			a.logger.Warn("failed to retrieve the subscription id. This will affect the correlation metrics.")
 		}
+	} else {
+		a.logger.Warn("failed to retrieve the subscription id. This will affect the correlation metrics.")
 	}
 
-	if val, ok := os.LookupEnv("WEBSITE_RESOURCE_GROUP"); ok {
-		resourceGrp = val
+	if resourceGrp, ok = os.LookupEnv("WEBSITE_RESOURCE_GROUP"); !ok {
+		a.logger.Warn("failed to retrieve the resource group. This will affect the correlation metrics.")
 	}
 
-	if val, ok := os.LookupEnv("APPSETTING_WEBSITE_SITE_NAME"); ok {
-		functionApp = val
+	if functionApp, ok = os.LookupEnv("APPSETTING_WEBSITE_SITE_NAME"); !ok {
+		a.logger.Warn("failed to retrieve the function app. This will affect the correlation metrics.")
 	}
 
 	entityID := fmt.Sprintf("/subscriptions/%s/resourceGroups/%s/providers/Microsoft.Web/sites/%s",
