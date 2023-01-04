@@ -57,8 +57,8 @@ run_release() {
       VERSION="0.0.0"
     fi
 
-    MINOR_VERSION=$(echo $VERSION | sed -En 's/[0-9]+\.([0-9]+)\.[0-9]+/\1/p')
-    MAJOR_VERSION=$(echo $VERSION | sed -En 's/([0-9]+)\.[0-9]+\.[0-9]+/\1/p')
+    MINOR_VERSION=$(echo "$VERSION" | sed -En 's/[0-9]+\.([0-9]+)\.[0-9]+/\1/p')
+    MAJOR_VERSION=$(echo "$VERSION" | sed -En 's/([0-9]+)\.[0-9]+\.[0-9]+/\1/p')
     MINOR_VERSION=$((MINOR_VERSION+1))
     NEW_VERSION="$MAJOR_VERSION.$MINOR_VERSION.0"
 
@@ -66,7 +66,7 @@ run_release() {
     sed -i '' -E "s/[0-9]+\.[0-9]+\.[0-9]+/${NEW_VERSION}/" "$lib"/version.go | tail -1
 
     # Tags to be created after version.go is merged to the master branch with the new version
-    TAGS="$TAGS $LIB_PATH@v$MAJOR_VERSION.$MINOR_VERSION.0"
+    TAGS="$TAGS $LIB_PATH/v$MAJOR_VERSION.$MINOR_VERSION.0"
   done
 
   # Commit all version.go files to the master branch
