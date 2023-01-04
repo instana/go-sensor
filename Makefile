@@ -2,7 +2,7 @@ MODULES = $(filter-out $(EXCLUDE_DIRS), $(shell find . -name go.mod -exec dirnam
 LINTER ?= $(shell go env GOPATH)/bin/golangci-lint
 
 # The list of Go build tags as they are specified in respective integration test files
-INTEGRATION_TESTS = fargate gcr lambda
+INTEGRATION_TESTS = fargate gcr lambda azure
 
 ifeq ($(RUN_LINTER),yes)
 test: $(LINTER)
