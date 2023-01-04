@@ -7,7 +7,6 @@ import (
 	"context"
 	"database/sql"
 	"database/sql/driver"
-	"errors"
 	"net/url"
 	"regexp"
 	"strings"
@@ -267,22 +266,6 @@ func parseMySQLConnDetailsKV(connStr string) (dbConnDetails, bool) {
 	details.RawString = mysqlKVPasswordRegex.ReplaceAllString(connStr, ";")
 
 	return details, true
-}
-
-// The following code is ported from $GOROOT/src/database/sql/ctxutil.go
-//
-// Copyright 2019 The Go Authors. All rights reserved.
-// Use of this source code is governed by a BSD-style
-// license that can be found in the LICENSE file.
-func sqlNamedValuesToValues(named []driver.NamedValue) ([]driver.Value, error) {
-	dargs := make([]driver.Value, len(named))
-	for n, param := range named {
-		if len(param.Name) > 0 {
-			return nil, errors.New("sql: driver does not support the use of Named Parameters")
-		}
-		dargs[n] = param.Value
-	}
-	return dargs, nil
 }
 
 type dsnConnector struct {
