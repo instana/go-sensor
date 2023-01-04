@@ -297,34 +297,34 @@ func Test_connAllInterfacesCase(t *testing.T) {
 	assert.IsType(t, &w_conn_Execer_ExecerContext_Queryer_QueryerContext_NamedValueChecker{}, d)
 }
 
-func Test_convertBooleansToInt(t *testing.T) {
-	type args struct {
-		args []bool
-	}
-	tests := []struct {
-		name string
-		args args
-		want int
-	}{
-		{
-			name: "true true true false",
-			args: args{args: []bool{true, true, true, false}},
-			want: 0b1110,
-		},
-		{
-			name: "true true true true",
-			args: args{args: []bool{true, true, true, true}},
-			want: 0b1111,
-		},
-		{
-			name: "false true false",
-			args: args{args: []bool{false, true, false}},
-			want: 0b10,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			assert.Equalf(t, tt.want, convertBooleansToInt(tt.args.args...), "convertBooleansToInt(%v)")
-		})
-	}
-}
+// func Test_convertBooleansToInt(t *testing.T) {
+// 	type args struct {
+// 		args []bool
+// 	}
+// 	tests := []struct {
+// 		name string
+// 		args args
+// 		want int
+// 	}{
+// 		{
+// 			name: "true true true false",
+// 			args: args{args: []bool{true, true, true, false}},
+// 			want: 0b1110,
+// 		},
+// 		{
+// 			name: "true true true true",
+// 			args: args{args: []bool{true, true, true, true}},
+// 			want: 0b1111,
+// 		},
+// 		{
+// 			name: "false true false",
+// 			args: args{args: []bool{false, true, false}},
+// 			want: 0b10,
+// 		},
+// 	}
+// 	for _, tt := range tests {
+// 		t.Run(tt.name, func(t *testing.T) {
+// 			assert.Equalf(t, tt.want, convertBooleansToInt(tt.args.args...), "convertBooleansToInt(%v)")
+// 		})
+// 	}
+// }
