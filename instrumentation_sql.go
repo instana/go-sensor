@@ -7,17 +7,15 @@ import (
 	"context"
 	"database/sql"
 	"database/sql/driver"
-	"errors"
 	"net/url"
 	"regexp"
 	"strings"
 	"sync"
 
+	_ "unsafe"
+
 	ot "github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
-	otlog "github.com/opentracing/opentracing-go/log"
-
-	_ "unsafe"
 )
 
 var (
@@ -91,258 +89,13 @@ func (drv *wrappedSQLDriver) Open(name string) (driver.Conn, error) {
 		return conn, err
 	}
 
-	if conn, ok := conn.(*wrappedSQLConn); ok {
+	if connAlreadyWrapped(conn) {
 		return conn, nil
 	}
 
-	return &wrappedSQLConn{
-		Conn:    conn,
-		details: parseDBConnDetails(name),
-		sensor:  drv.sensor,
-	}, nil
-}
+	w := wrapConn(parseDBConnDetails(name), conn, drv.sensor)
 
-type wrappedSQLConn struct {
-	driver.Conn
-
-	details dbConnDetails
-	sensor  *Sensor
-}
-
-func (conn *wrappedSQLConn) QueryContext(ctx context.Context, query string, args []driver.NamedValue) (driver.Rows, error) {
-	sp := startSQLSpan(ctx, conn.details, query, conn.sensor)
-	defer sp.Finish()
-
-	if c, ok := conn.Conn.(driver.QueryerContext); ok {
-		res, err := c.QueryContext(ctx, query, args)
-		if err != nil && err != driver.ErrSkip {
-			sp.LogFields(otlog.Error(err))
-		}
-
-		return res, err
-	}
-
-	if c, ok := conn.Conn.(driver.Queryer); ok { //nolint:staticcheck
-		values, err := sqlNamedValuesToValues(args)
-		if err != nil {
-			return nil, err
-		}
-
-		select {
-		default:
-		case <-ctx.Done():
-			return nil, ctx.Err()
-		}
-
-		res, err := c.Query(query, values)
-		if err != nil && err != driver.ErrSkip {
-			sp.LogFields(otlog.Error(err))
-		}
-
-		return res, err
-	}
-
-	return nil, driver.ErrSkip
-}
-
-func (conn *wrappedSQLConn) Prepare(query string) (driver.Stmt, error) {
-	stmt, err := conn.Conn.Prepare(query)
-	if err != nil {
-		return stmt, err
-	}
-
-	if stmt, ok := stmt.(*wrappedSQLStmt); ok {
-		return stmt, nil
-	}
-
-	return &wrappedSQLStmt{
-		Stmt:        stmt,
-		connDetails: conn.details,
-		query:       query,
-		sensor:      conn.sensor,
-	}, nil
-}
-
-func (conn *wrappedSQLConn) PrepareContext(ctx context.Context, query string) (driver.Stmt, error) {
-	var (
-		stmt driver.Stmt
-		err  error
-	)
-	if c, ok := conn.Conn.(driver.ConnPrepareContext); ok {
-		stmt, err = c.PrepareContext(ctx, query)
-	} else {
-		stmt, err = conn.Prepare(query)
-	}
-
-	if err != nil {
-		return stmt, err
-	}
-
-	if stmt, ok := stmt.(*wrappedSQLStmt); ok {
-		return stmt, nil
-	}
-
-	return &wrappedSQLStmt{
-		Stmt:        stmt,
-		connDetails: conn.details,
-		query:       query,
-		sensor:      conn.sensor,
-	}, nil
-}
-
-func (conn *wrappedSQLConn) ExecContext(ctx context.Context, query string, args []driver.NamedValue) (driver.Result, error) {
-	sp := startSQLSpan(ctx, conn.details, query, conn.sensor)
-	defer sp.Finish()
-
-	if c, ok := conn.Conn.(driver.ExecerContext); ok {
-		res, err := c.ExecContext(ctx, query, args)
-		if err != nil && err != driver.ErrSkip {
-			sp.LogFields(otlog.Error(err))
-		}
-
-		return res, err
-	}
-
-	if c, ok := conn.Conn.(driver.Execer); ok { //nolint:staticcheck
-		values, err := sqlNamedValuesToValues(args)
-		if err != nil {
-			return nil, err
-		}
-
-		select {
-		default:
-		case <-ctx.Done():
-			return nil, ctx.Err()
-		}
-
-		res, err := c.Exec(query, values)
-		if err != nil && err != driver.ErrSkip {
-			sp.LogFields(otlog.Error(err))
-		}
-
-		return res, err
-	}
-
-	return nil, driver.ErrSkip
-}
-
-func (conn *wrappedSQLConn) CheckNamedValue(d *driver.NamedValue) error {
-	defer func() {
-		if err := recover(); err != nil {
-			sensor.logger.Debug("Swallowing error: ", err)
-		}
-	}()
-
-	if c, ok := conn.Conn.(driver.NamedValueChecker); ok {
-		return c.CheckNamedValue(d)
-	}
-
-	q := "create table instanatemp (a varchar(1))"
-
-	stmt, err := conn.Prepare(q)
-
-	if err != nil {
-		sensor.logger.Debug("Database does not support temporary statement: ", q)
-	}
-
-	defer stmt.Close()
-
-	if s, ok := stmt.(driver.NamedValueChecker); ok {
-		return s.CheckNamedValue(d)
-	}
-
-	d.Value, err = driver.DefaultParameterConverter.ConvertValue(d.Value)
-
-	return err
-}
-
-type wrappedSQLStmt struct {
-	driver.Stmt
-
-	connDetails dbConnDetails
-	query       string
-	sensor      *Sensor
-}
-
-func (stmt *wrappedSQLStmt) ExecContext(ctx context.Context, args []driver.NamedValue) (driver.Result, error) {
-	sp := startSQLSpan(ctx, stmt.connDetails, stmt.query, stmt.sensor)
-	defer sp.Finish()
-
-	if s, ok := stmt.Stmt.(driver.StmtExecContext); ok {
-		res, err := s.ExecContext(ctx, args)
-		if err != nil && err != driver.ErrSkip {
-			sp.LogFields(otlog.Error(err))
-		}
-
-		return res, err
-	}
-
-	values, err := sqlNamedValuesToValues(args)
-	if err != nil {
-		return nil, err
-	}
-
-	select {
-	default:
-	case <-ctx.Done():
-		return nil, ctx.Err()
-	}
-
-	res, err := stmt.Exec(values) //nolint:staticcheck
-	if err != nil && err != driver.ErrSkip {
-		sp.LogFields(otlog.Error(err))
-	}
-
-	return res, err
-}
-
-func (stmt *wrappedSQLStmt) CheckNamedValue(d *driver.NamedValue) error {
-	defer func() {
-		if err := recover(); err != nil {
-			sensor.logger.Debug("Swallowing error: ", err)
-		}
-	}()
-
-	if s, ok := stmt.Stmt.(driver.NamedValueChecker); ok {
-		return s.CheckNamedValue(d)
-	}
-
-	var err error
-	d.Value, err = driver.DefaultParameterConverter.ConvertValue(d.Value)
-
-	return err
-}
-
-func (stmt *wrappedSQLStmt) QueryContext(ctx context.Context, args []driver.NamedValue) (driver.Rows, error) {
-	sp := startSQLSpan(ctx, stmt.connDetails, stmt.query, stmt.sensor)
-	defer sp.Finish()
-
-	if s, ok := stmt.Stmt.(driver.StmtQueryContext); ok {
-		res, err := s.QueryContext(ctx, args)
-		if err != nil && err != driver.ErrSkip {
-			sp.LogFields(otlog.Error(err))
-		}
-
-		return res, err
-	}
-
-	values, err := sqlNamedValuesToValues(args)
-	if err != nil {
-		return nil, err
-	}
-
-	select {
-	default:
-	case <-ctx.Done():
-		return nil, ctx.Err()
-	}
-
-	res, err := stmt.Stmt.Query(values) //nolint:staticcheck
-	if err != nil && err != driver.ErrSkip {
-		sp.LogFields(otlog.Error(err))
-	}
-
-	return res, err
+	return w, nil
 }
 
 func startSQLSpan(ctx context.Context, conn dbConnDetails, query string, sensor *Sensor) ot.Span {
@@ -513,22 +266,6 @@ func parseMySQLConnDetailsKV(connStr string) (dbConnDetails, bool) {
 	details.RawString = mysqlKVPasswordRegex.ReplaceAllString(connStr, ";")
 
 	return details, true
-}
-
-// The following code is ported from $GOROOT/src/database/sql/ctxutil.go
-//
-// Copyright 2019 The Go Authors. All rights reserved.
-// Use of this source code is governed by a BSD-style
-// license that can be found in the LICENSE file.
-func sqlNamedValuesToValues(named []driver.NamedValue) ([]driver.Value, error) {
-	dargs := make([]driver.Value, len(named))
-	for n, param := range named {
-		if len(param.Name) > 0 {
-			return nil, errors.New("sql: driver does not support the use of Named Parameters")
-		}
-		dargs[n] = param.Value
-	}
-	return dargs, nil
 }
 
 type dsnConnector struct {

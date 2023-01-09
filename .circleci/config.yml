@@ -89,18 +89,20 @@ workflows:
       - build:
           name: "go1.17"
           image: "circleci/golang:1.17"
+          exclude_dirs: "./internal/bin/sql"
       - build:
           name: "go1.16"
           image: "circleci/golang:1.16"
+          exclude_dirs: "./internal/bin/sql"
       - build:
           name: "go1.15"
           image: "circleci/golang:1.15"
-          exclude_dirs: "./instrumentation/instaredigo"
+          exclude_dirs: "./instrumentation/instaredigo ./internal/bin/sql"
       - build:
           name: "go1.14"
           image: "circleci/golang:1.14"
-          exclude_dirs: "./instrumentation/instaecho ./instrumentation/instaredigo"
+          exclude_dirs: "./instrumentation/instaecho ./instrumentation/instaredigo ./internal/bin/sql"
       - build:
           name: "go1.13"
           image: "circleci/golang:1.13"
-          exclude_dirs: "./instrumentation/instaecho ./instrumentation/instaredigo"
+          exclude_dirs: "./instrumentation/instaecho ./instrumentation/instaredigo ./internal/bin/sql"

@@ -33,6 +33,31 @@ func TestInstrumentSQLDriver(t *testing.T) {
 	})
 }
 
+func BenchmarkSQLOpenAndExec(b *testing.B) {
+	recorder := instana.NewTestRecorder()
+	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{
+		Service:     "go-sensor-test",
+		AgentClient: alwaysReadyClient{},
+	}, recorder))
+	defer instana.ShutdownSensor()
+
+	instana.InstrumentSQLDriver(s, "test_driver", sqlDriver{})
+
+	b.ResetTimer()
+	b.ReportAllocs()
+
+	for i := 0; i < b.N; i++ {
+		db, err := instana.SQLOpen("test_driver", "connection string")
+		if err != nil {
+			b.Fatal(err)
+		}
+		_, err = db.Exec("TEST QUERY")
+		if err != nil {
+			b.Fatal(err)
+		}
+	}
+}
+
 func TestOpenSQLDB(t *testing.T) {
 	recorder := instana.NewTestRecorder()
 	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{
