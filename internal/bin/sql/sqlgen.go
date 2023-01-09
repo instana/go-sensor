@@ -1,4 +1,4 @@
-// (c) Copyright IBM Corp. 2022
+// (c) Copyright IBM Corp. 2023
 //go:build go1.18
 
 //go:generate sh -c "go run . > ../../../sql_wrappers.go && go fmt ../../../sql_wrappers.go"
