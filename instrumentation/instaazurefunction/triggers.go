@@ -10,45 +10,49 @@ const (
 	queueStorageTrigger string = "Queue"
 )
 
-type spanData struct {
-	FunctionName string
-	TriggerType  string
+type Metadata struct {
+	//queueStorage fields
+	DequeueCount  int    `json:"DequeueCount,string"`
+	PopReceipt    string `json:"PopReceipt"`
+	InsertionTime string `json:"InsertionTime"`
+	//http fields
+	Headers struct {
+		UserAgent string `json:"User-Agent"`
+	} `json:"Headers"`
+	//common info with method name
+	Sys struct {
+		MethodName string `json:"MethodName"`
+	} `json:"sys"`
 }
 
 // Extracts the trigger type and method name from the payload
-func extractSpanData(payload []byte) (spanData, error) {
-	var s spanData
+func extractSpanData(payload []byte) (Metadata, error) {
 	var v struct {
-		Metadata struct {
-			//queueStorage fields
-			DequeueCount  int    `json:"DequeueCount,string"`
-			PopReceipt    string `json:"PopReceipt"`
-			InsertionTime string `json:"InsertionTime"`
-			//http fields
-			Headers struct {
-				UserAgent string `json:"User-Agent"`
-			} `json:"Headers"`
-			//common info with method name
-			Sys struct {
-				MethodName string `json:"MethodName"`
-			} `json:"sys"`
-		} `json:"MetaData"`
+		Meta Metadata `json:"MetaData"`
 	}
 
 	if err := json.Unmarshal(payload, &v); err != nil {
-		return s, err
+		return v.Meta, err
 	}
 
-	s.FunctionName = v.Metadata.Sys.MethodName
+	return v.Meta, nil
+}
+
+func (v Metadata) triggerName() string {
+	var triggerType string
 
 	switch {
-	case v.Metadata.InsertionTime != "":
-		s.TriggerType = queueStorageTrigger
-	case v.Metadata.Headers.UserAgent != "":
-		s.TriggerType = httpTrigger
+	case v.InsertionTime != "":
+		triggerType = queueStorageTrigger
+	case v.Headers.UserAgent != "":
+		triggerType = httpTrigger
 	default:
-		s.TriggerType = unknownType
+		triggerType = unknownType
 	}
 
-	return s, nil
+	return triggerType
+}
+
+func (v Metadata) functionName() string {
+	return v.Sys.MethodName
 }

@@ -18,10 +18,10 @@ import (
 )
 
 const (
-	customRuntime       string = "custom"
-	azfFlushMaxRetries         = 5
-	azfFlushRetryPeriod        = 50 * time.Millisecond
-	azfTimeoutThreshold        = 2 * 100 * time.Millisecond
+	customRuntime    string = "custom"
+	flushMaxRetries         = 5
+	flushRetryPeriod        = 50 * time.Millisecond
+	timeoutThreshold        = 100 * time.Millisecond
 )
 
 // WrapFunctionHandler wraps the http handler and add instrumentation data for the specified handlers
@@ -64,26 +64,26 @@ func WrapFunctionHandler(sensor *instana.Sensor, handler http.HandlerFunc) http.
 		if err != nil {
 			span.SetTag("azf.error", err.Error())
 			span.LogFields(otlog.Object("error", err.Error()))
-		}
+		} else {
+			metaData, err := extractSpanData(body)
+			if err != nil {
+				span.SetTag("azf.error", err.Error())
+				span.LogFields(otlog.Object("error", err.Error()))
+			}
 
-		spanData, err := extractSpanData(body)
-		if err != nil {
-			span.SetTag("azf.error", err.Error())
-			span.LogFields(otlog.Object("error", err.Error()))
+			span.SetTag("azf.functionname", metaData.functionName())
+			span.SetTag("azf.triggername", metaData.triggerName())
 		}
-
-		span.SetTag("azf.functionname", spanData.FunctionName)
-		span.SetTag("azf.triggername", spanData.TriggerType)
 
 		// Here we create a separate context.Context to finalize and send the span. This context
 		// supposed to be canceled once the wrapped handler is done.
-		traceCtx, cancelTraceCtx := context.WithCancel(ctx)
+		traceCtx, cancelTraceCtx := context.WithTimeout(ctx, 1*time.Second)
 
-		// In case there is a deadline defined for this invocation, we should finish the span just before
+		// In case there is a deadline/timeout defined for this invocation, we should finish the span just before
 		// the function times out to send the span data.
 		originalDeadline, deadlineDefined := ctx.Deadline()
 		if deadlineDefined {
-			traceCtx, cancelTraceCtx = context.WithDeadline(ctx, originalDeadline.Add(-azfTimeoutThreshold))
+			traceCtx, cancelTraceCtx = context.WithDeadline(ctx, originalDeadline.Add(-timeoutThreshold))
 		}
 
 		var wg sync.WaitGroup
@@ -100,7 +100,7 @@ func WrapFunctionHandler(sensor *instana.Sensor, handler http.HandlerFunc) http.
 			}
 
 			span.Finish()
-			flushAgent(sensor, azfFlushRetryPeriod, azfFlushMaxRetries)
+			flushAgent(sensor, flushRetryPeriod, flushMaxRetries)
 		}()
 
 		handler(w, req.WithContext(instana.ContextWithSpan(ctx, span)))
@@ -114,22 +114,33 @@ func WrapFunctionHandler(sensor *instana.Sensor, handler http.HandlerFunc) http.
 func flushAgent(sensor *instana.Sensor, retryPeriod time.Duration, maxRetries int) {
 	sensor.Logger().Debug("flushing trace data to the endpoint")
 
-	if tr, ok := sensor.Tracer().(instana.Tracer); ok {
-		var i int
-		for {
-			if err := tr.Flush(context.Background()); err != nil {
-				if err == instana.ErrAgentNotReady && i < maxRetries {
-					i++
-					time.Sleep(retryPeriod)
-					continue
-				}
+	var tr instana.Tracer
+	var ok bool
+	var i int
+	var err error
 
-				sensor.Logger().Error("failed to send traces to the endpoint. Error:", err)
-			}
+	if tr, ok = sensor.Tracer().(instana.Tracer); !ok {
+		return
+	}
 
+	for {
+		if err = tr.Flush(context.Background()); err == nil {
 			sensor.Logger().Debug("data sent to the endpoint")
 			break
 		}
+
+		if err != instana.ErrAgentNotReady {
+			sensor.Logger().Error("failed to send traces to the endpoint. Error:", err)
+			break
+		}
+
+		i++
+		if i >= maxRetries {
+			sensor.Logger().Error("reached retry limit. Failed to send traces to the endpoint. Error:", err)
+			break
+		}
+
+		time.Sleep(retryPeriod)
 	}
 }
 

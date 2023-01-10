@@ -28,9 +28,6 @@ func TestHttpTrigger(t *testing.T) {
 		_, _ = fmt.Fprintln(writer, "Ok")
 	})
 
-	//sp := sensor.Tracer().StartSpan("testing")
-	//sp.Finish()
-
 	bodyReader := strings.NewReader(`{"Metadata":{"Headers":{"User-Agent":"curl/7.79.1"},"sys":{"MethodName":"roboshop"}}}`)
 	req := httptest.NewRequest(http.MethodPost, "/roboshop", bodyReader)
 	rec := httptest.NewRecorder()
@@ -41,7 +38,7 @@ func TestHttpTrigger(t *testing.T) {
 
 	assert.Equal(t, http.StatusOK, rec.Code)
 	assert.Equal(t, "Ok\n", rec.Body.String())
-	assert.Equal(t, 1, len(spans))
+	assert.Len(t, spans, 1)
 
 	azSpan := spans[0]
 	data := azSpan.Data.(instana.AZFSpanData)
@@ -56,7 +53,7 @@ func TestHttpTrigger(t *testing.T) {
 func TestMultiTriggers(t *testing.T) {
 	testcases := map[string]struct {
 		TargetUrl string
-		Payload   interface{}
+		Payload   string
 		Expected  instana.AZFSpanTags
 	}{
 		"httpTrigger": {
@@ -89,7 +86,7 @@ func TestMultiTriggers(t *testing.T) {
 				_, _ = fmt.Fprintln(writer, "Ok")
 			})
 
-			bodyReader := strings.NewReader(testcase.Payload.(string))
+			bodyReader := strings.NewReader(testcase.Payload)
 			req := httptest.NewRequest(http.MethodPost, testcase.TargetUrl, bodyReader)
 			rec := httptest.NewRecorder()
 
@@ -99,7 +96,7 @@ func TestMultiTriggers(t *testing.T) {
 
 			assert.Equal(t, http.StatusOK, rec.Code)
 			assert.Equal(t, "Ok\n", rec.Body.String())
-			assert.Equal(t, 1, len(spans))
+			assert.Len(t, spans, 1)
 
 			azSpan := spans[0]
 			data := azSpan.Data.(instana.AZFSpanData)
