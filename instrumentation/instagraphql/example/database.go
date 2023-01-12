@@ -1,0 +1,57 @@
+package main
+
+import (
+	"encoding/json"
+	"os"
+)
+
+type data struct {
+	Chars []character `json:"characters"`
+	Ships []ship      `json:"ships"`
+}
+
+func (d data) findChar(id int) *character {
+	for _, cr := range d.Chars {
+		if cr.Id == id {
+			return &cr
+		}
+	}
+
+	return nil
+}
+
+func (d *data) addChar(c character) {
+	c.Id = len(d.Chars) + 1
+	d.Chars = append(d.Chars, c)
+}
+
+func (d *data) addShip(s ship) {
+	s.Id = len(d.Ships) + 1
+	d.Ships = append(d.Ships, s)
+}
+
+func (d data) findShip(id int) *ship {
+	for _, sh := range d.Ships {
+		if sh.Id == id {
+			return &sh
+		}
+	}
+
+	return nil
+}
+
+func loadData() (*data, error) {
+	jsonData, err := os.ReadFile("data.json")
+
+	if err != nil {
+		return nil, err
+	}
+
+	var dt data
+
+	if err = json.Unmarshal(jsonData, &dt); err != nil {
+		return nil, err
+	}
+
+	return &dt, nil
+}
