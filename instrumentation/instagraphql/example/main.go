@@ -9,7 +9,6 @@ import (
 
 	"github.com/graphql-go/graphql"
 	instana "github.com/instana/go-sensor"
-	// ot "github.com/opentracing/opentracing-go"
 )
 
 /*
@@ -47,17 +46,7 @@ type payload struct {
 }
 
 func handleGraphQLQuery(schema graphql.Schema, sensor *instana.Sensor) http.HandlerFunc {
-
 	fn := func(w http.ResponseWriter, req *http.Request) {
-
-		sp, ok := instana.SpanFromContext(req.Context())
-
-		if ok {
-			sp.SetOperationName("graphql")
-			sp.SetTag("http.params", "changed span tag")
-			sp.SetTag("http.header", map[string]string{"test": "test value"})
-		}
-
 		var query string
 
 		if req.Method == http.MethodGet {
@@ -95,7 +84,32 @@ func handleGraphQLQuery(schema graphql.Schema, sensor *instana.Sensor) http.Hand
 		}
 
 		params := graphql.Params{Schema: schema, RequestString: query}
+		detailQuery(params.RequestString)
 		r := graphql.Do(params)
+
+		if sp, ok := instana.SpanFromContext(req.Context()); ok {
+			sp.SetOperationName("graphql.server")
+			sp.SetTag("graphql.operationType", "query")
+			sp.SetTag("graphql.operationName", "query someQuery")
+
+			sp.SetTag("http", nil)
+			sp.SetTag("http.url", nil)
+			sp.SetTag("http.status", nil)
+			sp.SetTag("http.method", nil)
+			sp.SetTag("http.path", nil)
+			sp.SetTag("http.params", nil)
+			sp.SetTag("http.header", nil)
+			sp.SetTag("http.path_tpl", nil)
+			sp.SetTag("http.route_id", nil)
+			sp.SetTag("http.host", nil)
+			sp.SetTag("http.protocol", nil)
+			sp.SetTag("http.error", nil)
+
+			sp.SetTag("graphql.fields", map[string][]string{
+				"field1": {"aaa", "bbb", "ccc"},
+				"field2": {"ddd", "eee"},
+			})
+		}
 
 		w.Header().Add("Content-Type", "application/json")
 

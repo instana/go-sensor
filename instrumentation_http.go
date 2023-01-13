@@ -127,7 +127,12 @@ func processResponseStatus(response wrappedResponseWriter, span ot.Span) {
 			span.LogFields(otlog.Object("error", statusText))
 		}
 
-		span.SetTag("http.status", response.Status())
+		// We don't set the status if the span was repurposed to be a GraphQL span
+		if spS, ok := span.(*spanS); ok {
+			if spS.Operation != "graphql.server" {
+				span.SetTag("http.status", response.Status())
+			}
+		}
 	}
 }
 

@@ -56,6 +56,8 @@ const (
 	RabbitMQSpanType = RegisteredSpanType("rabbitmq")
 	// Azure function span
 	AzureFunctionType = RegisteredSpanType("azf")
+	// Azure function span
+	GraphQLServerType = RegisteredSpanType("graphql.server")
 )
 
 // RegisteredSpanType represents the span type supported by Instana
@@ -98,6 +100,8 @@ func (st RegisteredSpanType) extractData(span *spanS) typedSpanData {
 		return newRabbitMQSpanData(span)
 	case AzureFunctionType:
 		return newAZFSpanData(span)
+	case GraphQLServerType:
+		return newGraphQLSpanData(span)
 	default:
 		return newSDKSpanData(span)
 	}
@@ -263,6 +267,14 @@ func (st RegisteredSpanType) TagsNames() map[string]struct{} {
 			"azf.triggername":  yes,
 			"azf.runtime":      yes,
 			"azf.error":        yes,
+		}
+	case GraphQLServerType:
+		return map[string]struct{}{
+			"graphql.operationName": yes,
+			"graphql.operationType": yes,
+			"graphql.fields":        yes,
+			"graphql.args":          yes,
+			"graphql.error":         yes,
 		}
 	default:
 		return nil
@@ -1540,4 +1552,62 @@ func newAZFSpanData(span *spanS) AZFSpanData {
 // Kind returns instana.EntrySpanKind for server spans and instana.ExitSpanKind otherwise
 func (d AZFSpanData) Kind() SpanKind {
 	return EntrySpanKind
+}
+
+// GraphQLSpanData represents the `data` section of a GraphQL span sent within an OT span document
+type GraphQLSpanData struct {
+	SpanData
+	Tags GraphQLSpanTags `json:"graphql"`
+
+	clientSpan bool
+}
+
+// newGraphQLSpanData initializes a new HTTP span data from tracer span
+func newGraphQLSpanData(span *spanS) GraphQLSpanData {
+	data := GraphQLSpanData{
+		SpanData: NewSpanData(span, RegisteredSpanType(span.Operation)),
+		Tags:     newGraphQLSpanTags(span),
+	}
+
+	kindTag := span.Tags[string(ext.SpanKind)]
+	data.clientSpan = kindTag == ext.SpanKindRPCClientEnum || kindTag == string(ext.SpanKindRPCClientEnum)
+
+	return data
+}
+
+// Kind returns instana.EntrySpanKind for server spans and instana.ExitSpanKind otherwise
+func (d GraphQLSpanData) Kind() SpanKind {
+	if d.clientSpan {
+		return ExitSpanKind
+	}
+
+	return EntrySpanKind
+}
+
+// GraphQLSpanTags contains fields within the `data.graphql` section of an OT span document
+type GraphQLSpanTags struct {
+	OperationName string              `json:"operationName,omitempty"`
+	OperationType string              `json:"operationType,omitempty"`
+	Fields        map[string][]string `json:"fields,omitempty"`
+
+	Error string `json:"error,omitempty"`
+}
+
+// newGraphQLSpanTags extracts GraphQL-specific span tags from a tracer span
+func newGraphQLSpanTags(span *spanS) GraphQLSpanTags {
+	var tags GraphQLSpanTags
+	for k, v := range span.Tags {
+		switch k {
+		case "graphql.operationName":
+			readStringTag(&tags.OperationName, v)
+		case "graphql.operationTypr":
+			readStringTag(&tags.OperationType, v)
+		case "graphql.error":
+			readStringTag(&tags.Error, v)
+		case "graphql.fields":
+			readMapOfStringSlices(&tags.Fields, v)
+		}
+	}
+
+	return tags
 }
