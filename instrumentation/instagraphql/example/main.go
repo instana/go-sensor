@@ -8,6 +8,8 @@ import (
 	"net/http"
 
 	"github.com/graphql-go/graphql"
+	instana "github.com/instana/go-sensor"
+	// ot "github.com/opentracing/opentracing-go"
 )
 
 /*
@@ -44,8 +46,18 @@ type payload struct {
 	Variables     string `json:"variables"`
 }
 
-func handleGraphQLQuery(schema graphql.Schema) http.HandlerFunc {
-	return func(w http.ResponseWriter, req *http.Request) {
+func handleGraphQLQuery(schema graphql.Schema, sensor *instana.Sensor) http.HandlerFunc {
+
+	fn := func(w http.ResponseWriter, req *http.Request) {
+
+		sp, ok := instana.SpanFromContext(req.Context())
+
+		if ok {
+			sp.SetOperationName("graphql")
+			sp.SetTag("http.params", "changed span tag")
+			sp.SetTag("http.header", map[string]string{"test": "test value"})
+		}
+
 		var query string
 
 		if req.Method == http.MethodGet {
@@ -90,9 +102,13 @@ func handleGraphQLQuery(schema graphql.Schema) http.HandlerFunc {
 		rJSON, _ := json.Marshal(r)
 		w.Write(rJSON)
 	}
+
+	return instana.TracingHandlerFunc(sensor, "/graphql", fn)
 }
 
 func main() {
+	sensor := instana.NewSensor("go-graphql-test")
+
 	dt, err := loadData()
 
 	if err != nil {
@@ -181,7 +197,7 @@ func main() {
 		log.Fatalf("failed to create new schema, error: %v", err)
 	}
 
-	http.HandleFunc("/graphql", handleGraphQLQuery(schema))
+	http.HandleFunc("/graphql", handleGraphQLQuery(schema, sensor))
 
 	if err := http.ListenAndServe("0.0.0.0:9191", nil); err != nil {
 		log.Fatal(err)
