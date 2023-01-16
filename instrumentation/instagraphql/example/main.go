@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -10,6 +11,14 @@ import (
 	"github.com/graphql-go/graphql"
 	instana "github.com/instana/go-sensor"
 )
+
+/*
+Query with multiple entities
+curl -X POST \
+-H "Content-Type: application/json" \
+-d '{"query": "query myQuery { characters {id name profession crewMember} ships {name}}"}' \
+http://localhost:9191/graphql | jq
+*/
 
 /*
 curl -X POST \
@@ -84,7 +93,9 @@ func handleGraphQLQuery(schema graphql.Schema, sensor *instana.Sensor) http.Hand
 		}
 
 		params := graphql.Params{Schema: schema, RequestString: query}
-		detailQuery(params.RequestString)
+		dt := detailQuery(params.RequestString)
+
+		fmt.Println("span data", dt)
 		r := graphql.Do(params)
 
 		if sp, ok := instana.SpanFromContext(req.Context()); ok {
