@@ -311,6 +311,14 @@ func readArrayStringTag(dst *[]string, tag interface{}) {
 	}
 }
 
+func readMapOfStringSlices(dst *map[string][]string, tag interface{}) {
+	if m, ok := tag.(map[string][]string); ok {
+		*dst = m
+	} else {
+		*dst = nil
+	}
+}
+
 // readBoolTag populates the &dst with the tag value if it's either bool, string, byte array or numeric type
 func readBoolTag(dst *bool, tag interface{}) {
 	switch s := tag.(type) {
