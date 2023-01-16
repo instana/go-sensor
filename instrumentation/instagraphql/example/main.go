@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -95,7 +94,7 @@ func handleGraphQLQuery(schema graphql.Schema, sensor *instana.Sensor) http.Hand
 		params := graphql.Params{Schema: schema, RequestString: query}
 		dt := detailQuery(params.RequestString)
 
-		fmt.Println("span data", dt)
+		// fmt.Println("span data", dt)
 		r := graphql.Do(params)
 
 		if sp, ok := instana.SpanFromContext(req.Context()); ok {
@@ -109,17 +108,19 @@ func handleGraphQLQuery(schema graphql.Schema, sensor *instana.Sensor) http.Hand
 			sp.SetTag("http.header", nil)
 
 			sp.SetOperationName("graphql.server")
-			sp.SetTag("graphql.operationType", "query")
-			sp.SetTag("graphql.operationName", "someQuery")
+			sp.SetTag("graphql.operationType", dt.opType)
+			sp.SetTag("graphql.operationName", dt.opName)
 
-			sp.SetTag("graphql.fields", map[string][]string{
-				"field1": {"aaa", "bbb", "ccc"},
-				"field2": {"ddd", "eee"},
-			})
+			sp.SetTag("graphql.fields", dt.fieldMap)
+			// sp.SetTag("graphql.fields", map[string][]string{
+			// 	"field1": {"aaa", "bbb", "ccc"},
+			// 	"field2": {"ddd", "eee"},
+			// })
 
-			sp.SetTag("graphql.args", map[string][]string{
-				"arg1": {"value 1", "value two", "value drei"},
-			})
+			sp.SetTag("graphql.args", dt.argMap)
+			// sp.SetTag("graphql.args", map[string][]string{
+			// 	"arg1": {"value 1", "value two", "value drei"},
+			// })
 		}
 
 		w.Header().Add("Content-Type", "application/json")
