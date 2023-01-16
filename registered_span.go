@@ -56,7 +56,7 @@ const (
 	RabbitMQSpanType = RegisteredSpanType("rabbitmq")
 	// Azure function span
 	AzureFunctionType = RegisteredSpanType("azf")
-	// Azure function span
+	// GraphQL server span
 	GraphQLServerType = RegisteredSpanType("graphql.server")
 )
 
@@ -1603,9 +1603,9 @@ func newGraphQLSpanTags(span *spanS) GraphQLSpanTags {
 		case "graphql.operationType":
 			readStringTag(&tags.OperationType, v)
 		case "graphql.fields":
-			readMapOfStringSlices(&tags.Fields, v)
+			readMapOfStringSlicesTag(&tags.Fields, v)
 		case "graphql.args":
-			readMapOfStringSlices(&tags.Args, v)
+			readMapOfStringSlicesTag(&tags.Args, v)
 		case "graphql.error":
 			readStringTag(&tags.Error, v)
 		}
