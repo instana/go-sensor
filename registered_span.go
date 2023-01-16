@@ -1589,8 +1589,8 @@ type GraphQLSpanTags struct {
 	OperationName string              `json:"operationName,omitempty"`
 	OperationType string              `json:"operationType,omitempty"`
 	Fields        map[string][]string `json:"fields,omitempty"`
-
-	Error string `json:"error,omitempty"`
+	Args          map[string][]string `json:"args,omitempty"`
+	Error         string              `json:"error,omitempty"`
 }
 
 // newGraphQLSpanTags extracts GraphQL-specific span tags from a tracer span
@@ -1600,12 +1600,14 @@ func newGraphQLSpanTags(span *spanS) GraphQLSpanTags {
 		switch k {
 		case "graphql.operationName":
 			readStringTag(&tags.OperationName, v)
-		case "graphql.operationTypr":
+		case "graphql.operationType":
 			readStringTag(&tags.OperationType, v)
-		case "graphql.error":
-			readStringTag(&tags.Error, v)
 		case "graphql.fields":
 			readMapOfStringSlices(&tags.Fields, v)
+		case "graphql.args":
+			readMapOfStringSlices(&tags.Args, v)
+		case "graphql.error":
+			readStringTag(&tags.Error, v)
 		}
 	}
 
