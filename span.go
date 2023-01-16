@@ -171,10 +171,6 @@ func (r *spanS) SetTag(key string, value interface{}) ot.Span {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	if value == nil {
-		delete(r.Tags, key)
-	}
-
 	if r.Tags == nil {
 		r.Tags = ot.Tags{}
 	}

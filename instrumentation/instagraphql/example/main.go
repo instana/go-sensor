@@ -88,26 +88,26 @@ func handleGraphQLQuery(schema graphql.Schema, sensor *instana.Sensor) http.Hand
 		r := graphql.Do(params)
 
 		if sp, ok := instana.SpanFromContext(req.Context()); ok {
+
+			// Remove http tags from the span to guarantee that the repurposed span will behave accordingly
+			sp.SetTag("http.route_id", nil)
+			sp.SetTag("http.method", nil)
+			sp.SetTag("http.protocol", nil)
+			sp.SetTag("http.host", nil)
+			sp.SetTag("http.path", nil)
+			sp.SetTag("http.header", nil)
+
 			sp.SetOperationName("graphql.server")
 			sp.SetTag("graphql.operationType", "query")
-			sp.SetTag("graphql.operationName", "query someQuery")
-
-			sp.SetTag("http", nil)
-			sp.SetTag("http.url", nil)
-			sp.SetTag("http.status", nil)
-			sp.SetTag("http.method", nil)
-			sp.SetTag("http.path", nil)
-			sp.SetTag("http.params", nil)
-			sp.SetTag("http.header", nil)
-			sp.SetTag("http.path_tpl", nil)
-			sp.SetTag("http.route_id", nil)
-			sp.SetTag("http.host", nil)
-			sp.SetTag("http.protocol", nil)
-			sp.SetTag("http.error", nil)
+			sp.SetTag("graphql.operationName", "someQuery")
 
 			sp.SetTag("graphql.fields", map[string][]string{
 				"field1": {"aaa", "bbb", "ccc"},
 				"field2": {"ddd", "eee"},
+			})
+
+			sp.SetTag("graphql.args", map[string][]string{
+				"arg1": {"value 1", "value two", "value drei"},
 			})
 		}
 
