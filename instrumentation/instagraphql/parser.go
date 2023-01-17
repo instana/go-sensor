@@ -17,8 +17,7 @@ type fieldsEntity []string
 type argsEntity []string
 
 func parseEntities(f *ast.Field) (fieldsEntity, argsEntity) {
-	fieldMap := []string{}
-	argMap := []string{}
+	var fieldMap, argMap []string
 
 	for _, arg := range f.Arguments {
 		if arg.Name != nil {
@@ -39,7 +38,7 @@ func parseEntities(f *ast.Field) (fieldsEntity, argsEntity) {
 	return fieldMap, argMap
 }
 
-func parseQuery(q string) gqlData {
+func parseQuery(q string) (*gqlData, error) {
 	var data gqlData = gqlData{
 		fieldMap: make(map[string][]string),
 		argMap:   make(map[string][]string),
@@ -52,9 +51,10 @@ func parseQuery(q string) gqlData {
 	astDoc, err := parser.Parse(parser.ParseParams{Source: src})
 
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
+defLoop:
 	for _, def := range astDoc.Definitions {
 		switch df := def.(type) {
 		case *ast.OperationDefinition:
@@ -65,17 +65,21 @@ func parseQuery(q string) gqlData {
 
 			data.opType = df.Operation
 
-			for _, s := range df.GetSelectionSet().Selections {
-				switch field := s.(type) {
-				case *ast.Field:
-					fm, am := parseEntities(field)
+			if sel := df.GetSelectionSet().Selections; sel != nil {
+				for _, s := range sel {
+					switch field := s.(type) {
+					case *ast.Field:
+						fm, am := parseEntities(field)
 
-					data.fieldMap[field.Name.Value] = fm
-					data.argMap[field.Name.Value] = am
+						data.fieldMap[field.Name.Value] = fm
+						data.argMap[field.Name.Value] = am
+					}
 				}
 			}
+
+			break defLoop
 		}
 	}
 
-	return data
+	return &data, nil
 }

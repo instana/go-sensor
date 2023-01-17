@@ -4,22 +4,24 @@ package instagraphql
 
 import (
 	"context"
+	"strings"
 
 	"github.com/graphql-go/graphql"
 	instana "github.com/instana/go-sensor"
 	ot "github.com/opentracing/opentracing-go"
-	// ot "github.com/opentracing/opentracing-go"
-	// otlog "github.com/opentracing/opentracing-go/log"
+	otlog "github.com/opentracing/opentracing-go/log"
 )
 
 func Do(ctx context.Context, p graphql.Params) *graphql.Result {
-	dt := parseQuery(p.RequestString)
+	dt, err := parseQuery(p.RequestString)
 
 	var sp ot.Span
 	var ok bool
 
 	if sp, ok = instana.SpanFromContext(ctx); ok {
-		// TODO: check if parent span is actually an HTTP span
+		// We repurpose the http span to become a GraphQL span. This way we trace only one entry span instead of two
+		sp.SetOperationName("graphql.server")
+
 		// Remove http tags from the span to guarantee that the repurposed span will behave accordingly
 		sp.SetTag("http.route_id", nil)
 		sp.SetTag("http.method", nil)
@@ -29,22 +31,37 @@ func Do(ctx context.Context, p graphql.Params) *graphql.Result {
 		sp.SetTag("http.header", nil)
 	} else {
 		sp = ot.StartSpan("graphql.server")
+
+		// The GraphQL span is supposed to always be related to an HTTP parent span.
+		// If for whatever reason there was not a parent HTTP span, we finish the GraphQL span.
+		// Otherwise, we leave it to the HTTP span to be finished when done.
+		defer sp.Finish()
 	}
 
-	sp.SetOperationName("graphql.server")
+	if err != nil {
+		sp.SetTag("graphql.error", err.Error())
+		sp.LogFields(otlog.Object("error", err))
+
+		return graphql.Do(p)
+	}
+
 	sp.SetTag("graphql.operationType", dt.opType)
 	sp.SetTag("graphql.operationName", dt.opName)
 	sp.SetTag("graphql.fields", dt.fieldMap)
 	sp.SetTag("graphql.args", dt.argMap)
 
-	// The GraphQL span is supposed to always be related to an HTTP parent span.
-	// If for whatever reason there was not a parent HTTP span, we finish the GraphQL span.
-	// Otherwise, we leave it to the HTTP span to be finished when done.
-	if !ok {
-		sp.Finish()
+	res := graphql.Do(p)
+
+	if len(res.Errors) > 0 {
+		var err []string
+
+		for _, e := range res.Errors {
+			err = append(err, e.Error())
+		}
+
+		sp.SetTag("graphql.error", strings.Join(err, ", "))
+		sp.LogFields(otlog.Object("error", err))
 	}
 
-	// todo: check for errors and add them to the span
-
-	return graphql.Do(p)
+	return res
 }

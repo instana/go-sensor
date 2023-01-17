@@ -48,6 +48,15 @@ curl -X POST \
 http://localhost:9191/graphql | jq
 */
 
+/*
+query with error:
+
+curl -X POST \
+-H "Content-Type: application/json" \
+-d '{"query": "query myQuery { characters {id name profession crewMember naotem } ships {name origin}}"}' \
+http://localhost:9191/graphql | jq
+*/
+
 type payload struct {
 	Query         string `json:"query"`
 	OperationName string `json:"operationName"`
