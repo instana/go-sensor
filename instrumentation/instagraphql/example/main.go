@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
+	"io/ioutil"
 	"log"
 	"net/http"
 
@@ -72,7 +73,7 @@ func handleGraphQLQuery(schema graphql.Schema, sensor *instana.Sensor) http.Hand
 		}
 
 		if req.Method == http.MethodPost {
-			b, err := io.ReadAll(req.Body)
+			b, err := ioutil.ReadAll(req.Body)
 
 			if err != nil {
 				w.WriteHeader(http.StatusInternalServerError)
@@ -81,7 +82,7 @@ func handleGraphQLQuery(schema graphql.Schema, sensor *instana.Sensor) http.Hand
 			}
 
 			defer req.Body.Close()
-			io.CopyN(io.Discard, req.Body, 1<<62)
+			io.CopyN(ioutil.Discard, req.Body, 1<<62)
 
 			var p payload
 
