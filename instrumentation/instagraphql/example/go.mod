@@ -2,7 +2,10 @@ module example.com
 
 go 1.19
 
-require github.com/graphql-go/graphql v0.8.0
+require (
+	github.com/graphql-go/graphql v0.8.0
+	github.com/instana/go-sensor/instrumentation/instagraphql v0.0.0-00010101000000-000000000000
+)
 
 require (
 	github.com/instana/go-sensor v1.49.0
@@ -11,3 +14,5 @@ require (
 )
 
 replace github.com/instana/go-sensor => ../../..
+
+replace github.com/instana/go-sensor/instrumentation/instagraphql => ../

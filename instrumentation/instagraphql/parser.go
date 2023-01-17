@@ -1,8 +1,6 @@
-package main
+package instagraphql
 
 import (
-	"fmt"
-
 	"github.com/graphql-go/graphql/language/ast"
 	"github.com/graphql-go/graphql/language/parser"
 	"github.com/graphql-go/graphql/language/source"
@@ -15,13 +13,17 @@ type gqlData struct {
 	argMap   map[string][]string
 }
 
-func handleField(f *ast.Field) ([]string, []string) {
+type fieldsEntity []string
+type argsEntity []string
+
+func parseEntities(f *ast.Field) (fieldsEntity, argsEntity) {
 	fieldMap := []string{}
 	argMap := []string{}
 
 	for _, arg := range f.Arguments {
-		// TODO: check if arg.Name is not nil
-		argMap = append(argMap, arg.Name.Value)
+		if arg.Name != nil {
+			argMap = append(argMap, arg.Name.Value)
+		}
 	}
 
 	sset := f.GetSelectionSet()
@@ -37,13 +39,11 @@ func handleField(f *ast.Field) ([]string, []string) {
 	return fieldMap, argMap
 }
 
-func detailQuery(q string) gqlData {
+func parseQuery(q string) gqlData {
 	var data gqlData = gqlData{
 		fieldMap: make(map[string][]string),
 		argMap:   make(map[string][]string),
 	}
-
-	var opName, opType string
 
 	src := source.NewSource(&source.Source{
 		Body: []byte(q),
@@ -56,34 +56,24 @@ func detailQuery(q string) gqlData {
 	}
 
 	for _, def := range astDoc.Definitions {
-		def := def
 		switch df := def.(type) {
 		case *ast.OperationDefinition:
 
 			if df.GetName() != nil {
-				opName = df.GetName().Value
+				data.opName = df.GetName().Value
 			}
 
-			opType = df.Operation
-
-			data.opName = opName
-			data.opType = opType
+			data.opType = df.Operation
 
 			for _, s := range df.GetSelectionSet().Selections {
-				s := s
 				switch field := s.(type) {
 				case *ast.Field:
-					fm, am := handleField(field)
+					fm, am := parseEntities(field)
 
 					data.fieldMap[field.Name.Value] = fm
 					data.argMap[field.Name.Value] = am
-				default:
-					fmt.Printf("type is %T\n", field)
 				}
 			}
-
-		default:
-			fmt.Printf("GraphQL cannot execute a request containing a %v\n", def.GetKind())
 		}
 	}
 
