@@ -3,8 +3,14 @@
 package instagraphql_test
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
+	"io"
+	"io/ioutil"
 	"log"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 	"time"
 
@@ -17,16 +23,6 @@ import (
 	"github.com/instana/go-sensor/instrumentation/instagraphql"
 	"github.com/stretchr/testify/require"
 )
-
-// type user struct {
-// 	ID   int    `json:"id"`
-// 	Name string `json:"name"`
-// }
-
-// type city struct {
-// 	ID   int    `json:"id"`
-// 	Name string `json:"name"`
-// }
 
 type sampleData struct {
 	query     string
@@ -65,12 +61,7 @@ func createField(name string, tp graphql.Output, resolveVal interface{}, args gr
 	}
 }
 
-func TestGraphQLServer(t *testing.T) {
-	recorder := instana.NewTestRecorder()
-	sensor := instana.NewSensorWithTracer(
-		instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder),
-	)
-
+func getSchema() (graphql.Schema, error) {
 	qFields := graphql.Fields{
 		"aaa": createField("someString", graphql.String, "some string value", nil),
 		"row": createField("The row", rowType, row{1, "Row Name", true}, nil),
@@ -95,7 +86,16 @@ func TestGraphQLServer(t *testing.T) {
 		Mutation: graphql.NewObject(rootMutation),
 	}
 
-	schema, err := graphql.NewSchema(schemaConfig)
+	return graphql.NewSchema(schemaConfig)
+}
+
+func TestGraphQLServer(t *testing.T) {
+	recorder := instana.NewTestRecorder()
+	sensor := instana.NewSensorWithTracer(
+		instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder),
+	)
+
+	schema, err := getSchema()
 
 	if err != nil {
 		log.Fatalf("failed to create new schema, error: %v", err)
@@ -166,6 +166,123 @@ func TestGraphQLServer(t *testing.T) {
 
 			assert.Eventually(t, func() bool {
 				return recorder.QueuedSpansCount() == sample.spanCount
+			}, time.Second*2, time.Millisecond*500)
+
+			spans = recorder.GetQueuedSpans()
+			assert.Len(t, spans, sample.spanCount)
+
+			require.IsType(t, instana.GraphQLSpanData{}, spans[0].Data)
+
+			data := spans[0].Data.(instana.GraphQLSpanData)
+
+			assert.Equal(t, sample.spanKind, data.Kind())
+			assert.Equal(t, sample.opName, data.Tags.OperationName)
+			assert.Equal(t, sample.opType, data.Tags.OperationType)
+			assert.Equal(t, sample.hasError, data.Tags.Error != "")
+			assert.Equal(t, sample.fields, data.Tags.Fields)
+			assert.Equal(t, sample.args, data.Tags.Args)
+		})
+	}
+}
+
+func TestGraphQLServerWithHTTP(t *testing.T) {
+	recorder := instana.NewTestRecorder()
+	sensor := instana.NewSensorWithTracer(
+		instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder),
+	)
+
+	schema, err := getSchema()
+
+	if err != nil {
+		log.Fatalf("failed to create new schema, error: %v", err)
+	}
+
+	samples := map[string]sampleData{
+		"query success": {
+			query:     `{"query": "query myQuery {aaa}"}`,
+			hasError:  false,
+			spanCount: 1,
+			spanKind:  instana.EntrySpanKind,
+			opName:    "myQuery",
+			opType:    "query",
+			fields:    map[string][]string{"aaa": nil},
+			args:      map[string][]string{"aaa": nil},
+		},
+		"query error": {
+			query:     `{"query": "query myQuery {aaa { invalidField }}"}`,
+			hasError:  true,
+			spanCount: 2,
+			spanKind:  instana.EntrySpanKind,
+			opName:    "myQuery",
+			opType:    "query",
+			fields:    map[string][]string{"aaa": {"invalidField"}},
+			args:      map[string][]string{"aaa": nil},
+		},
+		"query object type": {
+			query:     `{"query": "query getRow {row { id name active }}"}`,
+			hasError:  false,
+			spanCount: 1,
+			spanKind:  instana.EntrySpanKind,
+			opName:    "getRow",
+			opType:    "query",
+			fields:    map[string][]string{"row": {"id", "name", "active"}},
+			args:      map[string][]string{"row": nil},
+		},
+		"mutation object type": {
+			query:     `{"query": "mutation newRow {insertRow(name: \"row two\", active: true) {id name active}}"}`,
+			hasError:  false,
+			spanCount: 1,
+			spanKind:  instana.EntrySpanKind,
+			opName:    "newRow",
+			opType:    "mutation",
+			fields:    map[string][]string{"insertRow": {"id", "name", "active"}},
+			args:      map[string][]string{"insertRow": {"name", "active"}},
+		},
+	}
+
+	for title, sample := range samples {
+		t.Run(title, func(t *testing.T) {
+			srv := httptest.NewServer(instana.TracingHandlerFunc(sensor, "/graphql", http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+				b, err := ioutil.ReadAll(req.Body)
+
+				if err != nil {
+					w.WriteHeader(http.StatusInternalServerError)
+					io.WriteString(w, err.Error())
+					return
+				}
+
+				defer req.Body.Close()
+				io.CopyN(ioutil.Discard, req.Body, 1<<62)
+
+				var p struct {
+					Query         string `json:"query"`
+					OperationName string `json:"operationName"`
+					Variables     string `json:"variables"`
+				}
+
+				err = json.Unmarshal(b, &p)
+
+				if err != nil {
+					io.WriteString(w, err.Error())
+					return
+				}
+
+				params := graphql.Params{Schema: schema, RequestString: p.Query}
+
+				instagraphql.Do(req.Context(), sensor, params)
+			})))
+
+			defer srv.Close()
+
+			c := http.DefaultClient
+			r := bytes.NewReader([]byte(sample.query))
+			req, _ := http.NewRequest(http.MethodPost, srv.URL, r)
+			c.Do(req)
+
+			var spans []instana.Span
+
+			assert.Eventually(t, func() bool {
+				return recorder.QueuedSpansCount() >= sample.spanCount
 			}, time.Second*2, time.Millisecond*500)
 
 			spans = recorder.GetQueuedSpans()

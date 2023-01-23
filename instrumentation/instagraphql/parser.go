@@ -15,12 +15,7 @@ type gqlData struct {
 	argMap   map[string][]string
 }
 
-type fieldsEntity []string
-type argsEntity []string
-
-func parseEntities(f *ast.Field) (fieldsEntity, argsEntity) {
-	var fieldMap, argMap []string
-
+func parseEntities(f *ast.Field) (fieldMap, argMap []string) {
 	for _, arg := range f.Arguments {
 		if arg.Name != nil {
 			argMap = append(argMap, arg.Name.Value)
@@ -37,7 +32,7 @@ func parseEntities(f *ast.Field) (fieldsEntity, argsEntity) {
 		}
 	}
 
-	return fieldMap, argMap
+	return // fieldMap, argMap
 }
 
 func parseQuery(q string) (*gqlData, error) {
