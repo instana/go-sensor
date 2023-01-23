@@ -12,7 +12,7 @@ import (
 	otlog "github.com/opentracing/opentracing-go/log"
 )
 
-func Do(ctx context.Context, p graphql.Params) *graphql.Result {
+func Do(ctx context.Context, sensor *instana.Sensor, p graphql.Params) *graphql.Result {
 	dt, err := parseQuery(p.RequestString)
 
 	var sp ot.Span
@@ -30,7 +30,8 @@ func Do(ctx context.Context, p graphql.Params) *graphql.Result {
 		sp.SetTag("http.path", nil)
 		sp.SetTag("http.header", nil)
 	} else {
-		sp = ot.StartSpan("graphql.server")
+		t := sensor.Tracer()
+		sp = t.StartSpan("graphql.server")
 
 		// The GraphQL span is supposed to always be related to an HTTP parent span.
 		// If for whatever reason there was not a parent HTTP span, we finish the GraphQL span.

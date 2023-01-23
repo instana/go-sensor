@@ -103,8 +103,9 @@ func handleGraphQLQuery(schema graphql.Schema, sensor *instana.Sensor) http.Hand
 		}
 
 		params := graphql.Params{Schema: schema, RequestString: query}
+		sensor := instana.NewSensor("graphql-server")
 
-		r := instagraphql.Do(req.Context(), params)
+		r := instagraphql.Do(req.Context(), sensor, params)
 
 		w.Header().Add("Content-Type", "application/json")
 

@@ -2,7 +2,7 @@ package main
 
 import (
 	"encoding/json"
-	"os"
+	"io/ioutil"
 )
 
 type data struct {
@@ -41,7 +41,7 @@ func (d data) findShip(id int) *ship {
 }
 
 func loadData() (*data, error) {
-	jsonData, err := os.ReadFile("data.json")
+	jsonData, err := ioutil.ReadFile("data.json")
 
 	if err != nil {
 		return nil, err
