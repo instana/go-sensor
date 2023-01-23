@@ -6,11 +6,13 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
@@ -33,6 +35,69 @@ type sampleData struct {
 	opType    string
 	fields    map[string][]string
 	args      map[string][]string
+}
+
+var samples = map[string]sampleData{
+	"query success": {
+		query: `query myQuery {
+			aaa
+		}`,
+		hasError:  false,
+		spanCount: 1,
+		spanKind:  instana.EntrySpanKind,
+		opName:    "myQuery",
+		opType:    "query",
+		fields:    map[string][]string{"aaa": nil},
+		args:      map[string][]string{"aaa": nil},
+	},
+	"query error": {
+		query: `query myQuery {
+			aaa { invalidField }
+		}`,
+		hasError:  true,
+		spanCount: 2,
+		spanKind:  instana.EntrySpanKind,
+		opName:    "myQuery",
+		opType:    "query",
+		fields:    map[string][]string{"aaa": {"invalidField"}},
+		args:      map[string][]string{"aaa": nil},
+	},
+	"query object type": {
+		query: `query getRow {
+			row { id name active }
+		}`,
+		hasError:  false,
+		spanCount: 1,
+		spanKind:  instana.EntrySpanKind,
+		opName:    "getRow",
+		opType:    "query",
+		fields:    map[string][]string{"row": {"id", "name", "active"}},
+		args:      map[string][]string{"row": nil},
+	},
+	"mutation object type": {
+		query: `mutation newRow {
+			insertRow(name: "row two", active: true) {
+				id
+				name
+				active
+			}
+		}`,
+		hasError:  false,
+		spanCount: 1,
+		spanKind:  instana.EntrySpanKind,
+		opName:    "newRow",
+		opType:    "mutation",
+		fields:    map[string][]string{"insertRow": {"id", "name", "active"}},
+		args:      map[string][]string{"insertRow": {"name", "active"}},
+	},
+}
+
+func (s sampleData) queryAsJSON() string {
+	q := strings.ReplaceAll(s.query, "\n", " ")
+	q = strings.ReplaceAll(q, `"`, `\"`)
+	q = strings.ReplaceAll(q, "\t", "")
+
+	return fmt.Sprintf(`{"query": "%s"}`, q)
 }
 
 type row struct {
@@ -101,61 +166,6 @@ func TestGraphQLServer(t *testing.T) {
 		log.Fatalf("failed to create new schema, error: %v", err)
 	}
 
-	samples := map[string]sampleData{
-		"query success": {
-			query: `query myQuery {
-				aaa
-			}`,
-			hasError:  false,
-			spanCount: 1,
-			spanKind:  instana.EntrySpanKind,
-			opName:    "myQuery",
-			opType:    "query",
-			fields:    map[string][]string{"aaa": nil},
-			args:      map[string][]string{"aaa": nil},
-		},
-		"query error": {
-			query: `query myQuery {
-				aaa { invalidField }
-			}`,
-			hasError:  true,
-			spanCount: 2,
-			spanKind:  instana.EntrySpanKind,
-			opName:    "myQuery",
-			opType:    "query",
-			fields:    map[string][]string{"aaa": {"invalidField"}},
-			args:      map[string][]string{"aaa": nil},
-		},
-		"query object type": {
-			query: `query getRow {
-				row { id name active }
-			}`,
-			hasError:  false,
-			spanCount: 1,
-			spanKind:  instana.EntrySpanKind,
-			opName:    "getRow",
-			opType:    "query",
-			fields:    map[string][]string{"row": {"id", "name", "active"}},
-			args:      map[string][]string{"row": nil},
-		},
-		"mutation object type": {
-			query: `mutation newRow {
-				insertRow(name: "row two", active: true) {
-					id
-					name
-					active
-				}
-			}`,
-			hasError:  false,
-			spanCount: 1,
-			spanKind:  instana.EntrySpanKind,
-			opName:    "newRow",
-			opType:    "mutation",
-			fields:    map[string][]string{"insertRow": {"id", "name", "active"}},
-			args:      map[string][]string{"insertRow": {"name", "active"}},
-		},
-	}
-
 	for title, sample := range samples {
 		t.Run(title, func(t *testing.T) {
 			params := graphql.Params{Schema: schema, RequestString: sample.query}
@@ -197,49 +207,6 @@ func TestGraphQLServerWithHTTP(t *testing.T) {
 		log.Fatalf("failed to create new schema, error: %v", err)
 	}
 
-	samples := map[string]sampleData{
-		"query success": {
-			query:     `{"query": "query myQuery {aaa}"}`,
-			hasError:  false,
-			spanCount: 1,
-			spanKind:  instana.EntrySpanKind,
-			opName:    "myQuery",
-			opType:    "query",
-			fields:    map[string][]string{"aaa": nil},
-			args:      map[string][]string{"aaa": nil},
-		},
-		"query error": {
-			query:     `{"query": "query myQuery {aaa { invalidField }}"}`,
-			hasError:  true,
-			spanCount: 2,
-			spanKind:  instana.EntrySpanKind,
-			opName:    "myQuery",
-			opType:    "query",
-			fields:    map[string][]string{"aaa": {"invalidField"}},
-			args:      map[string][]string{"aaa": nil},
-		},
-		"query object type": {
-			query:     `{"query": "query getRow {row { id name active }}"}`,
-			hasError:  false,
-			spanCount: 1,
-			spanKind:  instana.EntrySpanKind,
-			opName:    "getRow",
-			opType:    "query",
-			fields:    map[string][]string{"row": {"id", "name", "active"}},
-			args:      map[string][]string{"row": nil},
-		},
-		"mutation object type": {
-			query:     `{"query": "mutation newRow {insertRow(name: \"row two\", active: true) {id name active}}"}`,
-			hasError:  false,
-			spanCount: 1,
-			spanKind:  instana.EntrySpanKind,
-			opName:    "newRow",
-			opType:    "mutation",
-			fields:    map[string][]string{"insertRow": {"id", "name", "active"}},
-			args:      map[string][]string{"insertRow": {"name", "active"}},
-		},
-	}
-
 	for title, sample := range samples {
 		t.Run(title, func(t *testing.T) {
 			srv := httptest.NewServer(instana.TracingHandlerFunc(sensor, "/graphql", http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
@@ -275,7 +242,7 @@ func TestGraphQLServerWithHTTP(t *testing.T) {
 			defer srv.Close()
 
 			c := http.DefaultClient
-			r := bytes.NewReader([]byte(sample.query))
+			r := bytes.NewReader([]byte(sample.queryAsJSON()))
 			req, _ := http.NewRequest(http.MethodPost, srv.URL, r)
 			c.Do(req)
 
