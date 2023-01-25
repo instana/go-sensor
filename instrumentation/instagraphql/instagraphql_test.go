@@ -154,6 +154,15 @@ func getSchema() (graphql.Schema, error) {
 	return graphql.NewSchema(schemaConfig)
 }
 
+func assertSample(t *testing.T, sample sampleData, data instana.GraphQLSpanData) {
+	assert.Equal(t, sample.spanKind, data.Kind())
+	assert.Equal(t, sample.opName, data.Tags.OperationName)
+	assert.Equal(t, sample.opType, data.Tags.OperationType)
+	assert.Equal(t, sample.hasError, data.Tags.Error != "")
+	assert.Equal(t, sample.fields, data.Tags.Fields)
+	assert.Equal(t, sample.args, data.Tags.Args)
+}
+
 func TestGraphQLServer(t *testing.T) {
 	recorder := instana.NewTestRecorder()
 	sensor := instana.NewSensorWithTracer(
@@ -185,12 +194,7 @@ func TestGraphQLServer(t *testing.T) {
 
 			data := spans[0].Data.(instana.GraphQLSpanData)
 
-			assert.Equal(t, sample.spanKind, data.Kind())
-			assert.Equal(t, sample.opName, data.Tags.OperationName)
-			assert.Equal(t, sample.opType, data.Tags.OperationType)
-			assert.Equal(t, sample.hasError, data.Tags.Error != "")
-			assert.Equal(t, sample.fields, data.Tags.Fields)
-			assert.Equal(t, sample.args, data.Tags.Args)
+			assertSample(t, sample, data)
 		})
 	}
 }
@@ -259,12 +263,7 @@ func TestGraphQLServerWithHTTP(t *testing.T) {
 
 			data := spans[0].Data.(instana.GraphQLSpanData)
 
-			assert.Equal(t, sample.spanKind, data.Kind())
-			assert.Equal(t, sample.opName, data.Tags.OperationName)
-			assert.Equal(t, sample.opType, data.Tags.OperationType)
-			assert.Equal(t, sample.hasError, data.Tags.Error != "")
-			assert.Equal(t, sample.fields, data.Tags.Fields)
-			assert.Equal(t, sample.args, data.Tags.Args)
+			assertSample(t, sample, data)
 		})
 	}
 }
