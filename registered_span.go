@@ -1562,7 +1562,7 @@ type GraphQLSpanData struct {
 	clientSpan bool
 }
 
-// newGraphQLSpanData initializes a new HTTP span data from tracer span
+// newGraphQLSpanData initializes a new GraphQL span data from tracer span
 func newGraphQLSpanData(span *spanS) GraphQLSpanData {
 	data := GraphQLSpanData{
 		SpanData: NewSpanData(span, RegisteredSpanType(span.Operation)),
