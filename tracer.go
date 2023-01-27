@@ -109,16 +109,18 @@ func (r *tracerS) StartSpanWithOptions(operationName string, opts ot.StartSpanOp
 		delete(opts.Tags, suppressTracingTag)
 	}
 
-	return &spanS{
-		context:     sc,
-		tracer:      r,
-		Service:     sensor.options.Service,
-		Operation:   operationName,
-		Start:       startTime,
-		Duration:    -1,
-		Correlation: corrData,
-		Tags:        opts.Tags,
-	}
+	sp := &InstanaSpan{}
+	sp.context = sc
+
+	sp.tracer = r
+	sp.Service = sensor.options.Service
+	sp.Operation = operationName
+	sp.Start = startTime
+	sp.Duration = -1
+	sp.Correlation = corrData
+	sp.Tags = opts.Tags
+
+	return sp
 }
 
 // Options returns current tracer options

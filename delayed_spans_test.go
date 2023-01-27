@@ -18,12 +18,12 @@ import (
 
 func TestAppendALotDelayedSpans(t *testing.T) {
 	ds := &delayedSpans{
-		spans: make(chan *spanS, maxDelayedSpans),
+		spans: make(chan *InstanaSpan, maxDelayedSpans),
 	}
 
 	i := 0
 	for i <= 2*maxDelayedSpans {
-		ds.append(&spanS{})
+		ds.append(&InstanaSpan{})
 		i++
 	}
 
@@ -32,7 +32,7 @@ func TestAppendALotDelayedSpans(t *testing.T) {
 
 func resetDelayedSpans() {
 	delayed = &delayedSpans{
-		spans: make(chan *spanS, maxDelayedSpans),
+		spans: make(chan *InstanaSpan, maxDelayedSpans),
 	}
 }
 

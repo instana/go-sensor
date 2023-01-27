@@ -20,7 +20,7 @@ func TestRegisteredSpanType_ExtractData(t *testing.T) {
 	}{
 		"net/http.Server": {
 			Operation: "g.http",
-			Expected:  instana.HTTPSpanData{},
+			Expected:  instana.HTTPServerSpanData{},
 		},
 		"net/http.Client": {
 			Operation: "http",

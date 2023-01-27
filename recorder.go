@@ -15,7 +15,7 @@ import (
 // the containing process and provides access to a straightforward tag map.
 type SpanRecorder interface {
 	// Implementations must determine whether and where to store `span`.
-	RecordSpan(span *spanS)
+	RecordSpan(span *InstanaSpan)
 	// Flush forces sending any buffered finished spans
 	Flush(context.Context) error
 }
@@ -54,7 +54,7 @@ func NewTestRecorder() *Recorder {
 
 // RecordSpan accepts spans to be recorded and added to the span queue
 // for eventual reporting to the host agent.
-func (r *Recorder) RecordSpan(span *spanS) {
+func (r *Recorder) RecordSpan(span *InstanaSpan) {
 	// If we're not announced and not in test mode then just
 	// return
 	if !r.testMode && !sensor.Agent().Ready() {

@@ -10,7 +10,7 @@ import (
 )
 
 type SpanRegistry interface {
-	ExtractData(span *spanS) TypedSpanData
+	ExtractData(span *InstanaSpan) TypedSpanData
 	TagsNames() map[string]struct{}
 }
 
@@ -76,7 +76,7 @@ const (
 type RegisteredSpanType string
 
 // extractData is a factory method to create the `data` section for a typed span
-func (st RegisteredSpanType) extractData(span *spanS) typedSpanData {
+func (st RegisteredSpanType) extractData(span *InstanaSpan) typedSpanData {
 	switch st {
 	// case HTTPServerSpanType, HTTPClientSpanType:
 	case HTTPClientSpanType:
@@ -304,7 +304,7 @@ type HTTPSpanData struct {
 }
 
 // newHTTPSpanData initializes a new HTTP span data from tracer span
-func newHTTPSpanData(span *spanS) HTTPSpanData {
+func newHTTPSpanData(span *InstanaSpan) HTTPSpanData {
 	data := HTTPSpanData{
 		SpanData: NewSpanData(span, RegisteredSpanType(span.Operation)),
 		Tags:     newHTTPSpanTags(span),
@@ -352,7 +352,7 @@ type HTTPSpanTags struct {
 }
 
 // newHTTPSpanTags extracts HTTP-specific span tags from a tracer span
-func newHTTPSpanTags(span *spanS) HTTPSpanTags {
+func newHTTPSpanTags(span *InstanaSpan) HTTPSpanTags {
 	var tags HTTPSpanTags
 	for k, v := range span.Tags {
 		switch k {
@@ -395,7 +395,7 @@ type RPCSpanData struct {
 }
 
 // newRPCSpanData initializes a new RPC span data from tracer span
-func newRPCSpanData(span *spanS) RPCSpanData {
+func newRPCSpanData(span *InstanaSpan) RPCSpanData {
 	data := RPCSpanData{
 		SpanData: NewSpanData(span, RegisteredSpanType(span.Operation)),
 		Tags:     newRPCSpanTags(span),
@@ -433,7 +433,7 @@ type RPCSpanTags struct {
 }
 
 // newRPCSpanTags extracts RPC-specific span tags from a tracer span
-func newRPCSpanTags(span *spanS) RPCSpanTags {
+func newRPCSpanTags(span *InstanaSpan) RPCSpanTags {
 	var tags RPCSpanTags
 	for k, v := range span.Tags {
 		switch k {
@@ -464,7 +464,7 @@ type KafkaSpanData struct {
 }
 
 // newKafkaSpanData initializes a new Kafka span data from tracer span
-func newKafkaSpanData(span *spanS) KafkaSpanData {
+func newKafkaSpanData(span *InstanaSpan) KafkaSpanData {
 	data := KafkaSpanData{
 		SpanData: NewSpanData(span, RegisteredSpanType(span.Operation)),
 		Tags:     newKafkaSpanTags(span),
@@ -494,7 +494,7 @@ type KafkaSpanTags struct {
 }
 
 // newKafkaSpanTags extracts Kafka-specific span tags from a tracer span
-func newKafkaSpanTags(span *spanS) KafkaSpanTags {
+func newKafkaSpanTags(span *InstanaSpan) KafkaSpanTags {
 	var tags KafkaSpanTags
 	for k, v := range span.Tags {
 		switch k {
@@ -517,7 +517,7 @@ type RabbitMQSpanData struct {
 }
 
 // newRabbitMQSpanData initializes a new RabbitMQ span data from tracer span
-func newRabbitMQSpanData(span *spanS) RabbitMQSpanData {
+func newRabbitMQSpanData(span *InstanaSpan) RabbitMQSpanData {
 	data := RabbitMQSpanData{
 		SpanData: NewSpanData(span, RegisteredSpanType(span.Operation)),
 		Tags:     newRabbitMQSpanTags(span),
@@ -553,7 +553,7 @@ type RabbitMQSpanTags struct {
 }
 
 // newRabbitMQSpanTags extracts RabbitMQ-specific span tags from a tracer span
-func newRabbitMQSpanTags(span *spanS) RabbitMQSpanTags {
+func newRabbitMQSpanTags(span *InstanaSpan) RabbitMQSpanTags {
 	var tags RabbitMQSpanTags
 	for k, v := range span.Tags {
 		switch k {
@@ -580,7 +580,7 @@ type GCPStorageSpanData struct {
 }
 
 // newGCPStorageSpanData initializes a new Google Cloud Storage span data from tracer span
-func newGCPStorageSpanData(span *spanS) GCPStorageSpanData {
+func newGCPStorageSpanData(span *InstanaSpan) GCPStorageSpanData {
 	data := GCPStorageSpanData{
 		SpanData: NewSpanData(span, GCPStorageSpanType),
 		Tags:     newGCPStorageSpanTags(span),
@@ -611,7 +611,7 @@ type GCPStorageSpanTags struct {
 }
 
 // newGCPStorageSpanTags extracts Google Cloud Storage span tags from a tracer span
-func newGCPStorageSpanTags(span *spanS) GCPStorageSpanTags {
+func newGCPStorageSpanTags(span *InstanaSpan) GCPStorageSpanTags {
 	var tags GCPStorageSpanTags
 	for k, v := range span.Tags {
 		switch k {
@@ -652,7 +652,7 @@ type GCPPubSubSpanData struct {
 }
 
 // newGCPPubSubSpanData initializes a new Google Cloud Pub/Span span data from tracer span
-func newGCPPubSubSpanData(span *spanS) GCPPubSubSpanData {
+func newGCPPubSubSpanData(span *InstanaSpan) GCPPubSubSpanData {
 	data := GCPPubSubSpanData{
 		SpanData: NewSpanData(span, GCPPubSubSpanType),
 		Tags:     newGCPPubSubSpanTags(span),
@@ -681,7 +681,7 @@ type GCPPubSubSpanTags struct {
 }
 
 // newGCPPubSubSpanTags extracts Google Cloud Pub/Sub span tags from a tracer span
-func newGCPPubSubSpanTags(span *spanS) GCPPubSubSpanTags {
+func newGCPPubSubSpanTags(span *InstanaSpan) GCPPubSubSpanTags {
 	var tags GCPPubSubSpanTags
 	for k, v := range span.Tags {
 		switch k {
@@ -708,7 +708,7 @@ type AWSLambdaCloudWatchSpanTags struct {
 }
 
 // newAWSLambdaCloudWatchSpanTags extracts CloudWatch tags for an AWS Lambda entry span
-func newAWSLambdaCloudWatchSpanTags(span *spanS) AWSLambdaCloudWatchSpanTags {
+func newAWSLambdaCloudWatchSpanTags(span *InstanaSpan) AWSLambdaCloudWatchSpanTags {
 	var tags AWSLambdaCloudWatchSpanTags
 
 	if events := newAWSLambdaCloudWatchEventTags(span); !events.IsZero() {
@@ -740,7 +740,7 @@ type AWSLambdaCloudWatchEventTags struct {
 // newAWSLambdaCloudWatchEventTags extracts CloudWatch event tags for an AWS Lambda entry span. It truncates
 // the resources list to the first 3 items, populating the `data.lambda.cw.events.more` tag and limits each
 // resource string to the first 200 characters to reduce the payload.
-func newAWSLambdaCloudWatchEventTags(span *spanS) AWSLambdaCloudWatchEventTags {
+func newAWSLambdaCloudWatchEventTags(span *InstanaSpan) AWSLambdaCloudWatchEventTags {
 	var tags AWSLambdaCloudWatchEventTags
 
 	if v, ok := span.Tags["cloudwatch.events.id"]; ok {
@@ -794,7 +794,7 @@ type AWSLambdaCloudWatchLogsTags struct {
 // newAWSLambdaCloudWatchLogsTags extracts CloudWatch Logs tags for an AWS Lambda entry span. It truncates
 // the log events list to the first 3 items, populating the `data.lambda.cw.logs.more` tag and limits each
 // log string to the first 200 characters to reduce the payload.
-func newAWSLambdaCloudWatchLogsTags(span *spanS) AWSLambdaCloudWatchLogsTags {
+func newAWSLambdaCloudWatchLogsTags(span *InstanaSpan) AWSLambdaCloudWatchLogsTags {
 	var tags AWSLambdaCloudWatchLogsTags
 
 	if v, ok := span.Tags["cloudwatch.logs.group"]; ok {
@@ -863,7 +863,7 @@ type AWSLambdaS3SpanTags struct {
 
 // newAWSLambdaS3SpanTags extracts S3 Event tags for an AWS Lambda entry span. It truncates
 // the events list to the first 3 items and limits each object names to the first 200 characters to reduce the payload.
-func newAWSLambdaS3SpanTags(span *spanS) AWSLambdaS3SpanTags {
+func newAWSLambdaS3SpanTags(span *InstanaSpan) AWSLambdaS3SpanTags {
 	var tags AWSLambdaS3SpanTags
 
 	if events, ok := span.Tags["s3.events"]; ok {
@@ -904,7 +904,7 @@ type AWSLambdaSQSSpanTags struct {
 
 // newAWSLambdaSQSSpanTags extracts SQS event tags for an AWS Lambda entry span. It truncates
 // the events list to the first 3 items to reduce the payload.
-func newAWSLambdaSQSSpanTags(span *spanS) AWSLambdaSQSSpanTags {
+func newAWSLambdaSQSSpanTags(span *InstanaSpan) AWSLambdaSQSSpanTags {
 	var tags AWSLambdaSQSSpanTags
 
 	if msgs, ok := span.Tags["sqs.messages"]; ok {
@@ -953,7 +953,7 @@ type AWSLambdaSpanTags struct {
 }
 
 // newAWSLambdaSpanTags extracts AWS Lambda entry span tags from a tracer span
-func newAWSLambdaSpanTags(span *spanS) AWSLambdaSpanTags {
+func newAWSLambdaSpanTags(span *InstanaSpan) AWSLambdaSpanTags {
 	tags := AWSLambdaSpanTags{Runtime: "go"}
 
 	if v, ok := span.Tags["lambda.arn"]; ok {
@@ -1006,7 +1006,7 @@ type AWSLambdaSpanData struct {
 }
 
 // newAWSLambdaSpanData initializes a new AWSLambdaSpanData from span
-func newAWSLambdaSpanData(span *spanS) AWSLambdaSpanData {
+func newAWSLambdaSpanData(span *InstanaSpan) AWSLambdaSpanData {
 	d := AWSLambdaSpanData{
 		Snapshot: newAWSLambdaSpanTags(span),
 	}
@@ -1037,7 +1037,7 @@ type AWSS3SpanData struct {
 }
 
 // newAWSS3SpanData initializes a new AWS S3 span data from tracer span
-func newAWSS3SpanData(span *spanS) AWSS3SpanData {
+func newAWSS3SpanData(span *InstanaSpan) AWSS3SpanData {
 	data := AWSS3SpanData{
 		SpanData: NewSpanData(span, AWSS3SpanType),
 		Tags:     newAWSS3SpanTags(span),
@@ -1066,7 +1066,7 @@ type AWSS3SpanTags struct {
 }
 
 // newAWSS3SpanTags extracts AWS S3 span tags from a tracer span
-func newAWSS3SpanTags(span *spanS) AWSS3SpanTags {
+func newAWSS3SpanTags(span *InstanaSpan) AWSS3SpanTags {
 	var tags AWSS3SpanTags
 	for k, v := range span.Tags {
 		switch k {
@@ -1093,7 +1093,7 @@ type AWSSQSSpanData struct {
 }
 
 // newAWSSQSSpanData initializes a new AWS SQS span data from tracer span
-func newAWSSQSSpanData(span *spanS) AWSSQSSpanData {
+func newAWSSQSSpanData(span *InstanaSpan) AWSSQSSpanData {
 	data := AWSSQSSpanData{
 		SpanData: NewSpanData(span, AWSSQSSpanType),
 		Tags:     newAWSSQSSpanTags(span),
@@ -1131,7 +1131,7 @@ type AWSSQSSpanTags struct {
 }
 
 // newAWSSQSSpanTags extracts AWS SQS span tags from a tracer span
-func newAWSSQSSpanTags(span *spanS) AWSSQSSpanTags {
+func newAWSSQSSpanTags(span *InstanaSpan) AWSSQSSpanTags {
 	var tags AWSSQSSpanTags
 	for k, v := range span.Tags {
 		switch k {
@@ -1160,7 +1160,7 @@ type AWSSNSSpanData struct {
 }
 
 // newAWSSNSSpanData initializes a new AWS SNS span data from tracer span
-func newAWSSNSSpanData(span *spanS) AWSSNSSpanData {
+func newAWSSNSSpanData(span *InstanaSpan) AWSSNSSpanData {
 	data := AWSSNSSpanData{
 		SpanData: NewSpanData(span, AWSSNSSpanType),
 		Tags:     newAWSSNSSpanTags(span),
@@ -1189,7 +1189,7 @@ type AWSSNSSpanTags struct {
 }
 
 // newAWSSNSSpanTags extracts AWS SNS span tags from a tracer span
-func newAWSSNSSpanTags(span *spanS) AWSSNSSpanTags {
+func newAWSSNSSpanTags(span *InstanaSpan) AWSSNSSpanTags {
 	var tags AWSSNSSpanTags
 	for k, v := range span.Tags {
 		switch k {
@@ -1216,7 +1216,7 @@ type AWSDynamoDBSpanData struct {
 }
 
 // newAWSDynamoDBSpanData initializes a new AWS DynamoDB span data from tracer span
-func newAWSDynamoDBSpanData(span *spanS) AWSDynamoDBSpanData {
+func newAWSDynamoDBSpanData(span *InstanaSpan) AWSDynamoDBSpanData {
 	data := AWSDynamoDBSpanData{
 		SpanData: NewSpanData(span, AWSDynamoDBSpanType),
 		Tags:     newAWSDynamoDBSpanTags(span),
@@ -1243,7 +1243,7 @@ type AWSDynamoDBSpanTags struct {
 }
 
 // newAWSDynamoDBSpanTags extracts AWS DynamoDB span tags from a tracer span
-func newAWSDynamoDBSpanTags(span *spanS) AWSDynamoDBSpanTags {
+func newAWSDynamoDBSpanTags(span *InstanaSpan) AWSDynamoDBSpanTags {
 	var tags AWSDynamoDBSpanTags
 	for k, v := range span.Tags {
 		switch k {
@@ -1271,7 +1271,7 @@ type AWSInvokeSpanTags struct {
 	Error string `json:"error,omitempty"`
 }
 
-func newAWSDInvokeSpanTags(span *spanS) AWSInvokeSpanTags {
+func newAWSDInvokeSpanTags(span *InstanaSpan) AWSInvokeSpanTags {
 	var tags AWSInvokeSpanTags
 	for k, v := range span.Tags {
 		switch k {
@@ -1304,7 +1304,7 @@ func (d AWSLambdaInvokeSpanData) Type() RegisteredSpanType {
 }
 
 // newAWSLambdaInvokeSpanData initializes a new AWS Invoke span data from tracer span
-func newAWSLambdaInvokeSpanData(span *spanS) AWSLambdaInvokeSpanData {
+func newAWSLambdaInvokeSpanData(span *InstanaSpan) AWSLambdaInvokeSpanData {
 	data := AWSLambdaInvokeSpanData{
 		SpanData: NewSpanData(span, AWSLambdaInvokeSpanType),
 		Tags:     newAWSDInvokeSpanTags(span),
@@ -1320,7 +1320,7 @@ type LogSpanData struct {
 }
 
 // newLogSpanData initializes a new logging span data from tracer span
-func newLogSpanData(span *spanS) LogSpanData {
+func newLogSpanData(span *InstanaSpan) LogSpanData {
 	return LogSpanData{
 		SpanData: NewSpanData(span, LogSpanType),
 		Tags:     newLogSpanTags(span),
@@ -1344,7 +1344,7 @@ type LogSpanTags struct {
 	Error string `json:"parameters,omitempty"`
 }
 
-func newLogSpanTags(span *spanS) LogSpanTags {
+func newLogSpanTags(span *InstanaSpan) LogSpanTags {
 	var tags LogSpanTags
 	for k, v := range span.Tags {
 		switch k {
@@ -1369,7 +1369,7 @@ type MongoDBSpanData struct {
 }
 
 // newMongoDBSpanData initializes a new MongoDB clientspan data from tracer span
-func newMongoDBSpanData(span *spanS) MongoDBSpanData {
+func newMongoDBSpanData(span *InstanaSpan) MongoDBSpanData {
 	return MongoDBSpanData{
 		SpanData: NewSpanData(span, MongoDBSpanType),
 		Tags:     newMongoDBSpanTags(span),
@@ -1383,7 +1383,7 @@ type RedisSpanData struct {
 }
 
 // newRedisSpanData initializes a new Redis clientspan data from tracer span
-func newRedisSpanData(span *spanS) RedisSpanData {
+func newRedisSpanData(span *InstanaSpan) RedisSpanData {
 	return RedisSpanData{
 		SpanData: NewSpanData(span, RedisSpanType),
 		Tags:     newRedisSpanTags(span),
@@ -1418,7 +1418,7 @@ type MongoDBSpanTags struct {
 	Error string `json:"error,omitempty"`
 }
 
-func newMongoDBSpanTags(span *spanS) MongoDBSpanTags {
+func newMongoDBSpanTags(span *InstanaSpan) MongoDBSpanTags {
 	var tags MongoDBSpanTags
 	for k, v := range span.Tags {
 		switch k {
@@ -1449,7 +1449,7 @@ type PostgreSQLSpanData struct {
 }
 
 // newPostgreSQLSpanData initializes a new PostgreSQL client span data from tracer span
-func newPostgreSQLSpanData(span *spanS) PostgreSQLSpanData {
+func newPostgreSQLSpanData(span *InstanaSpan) PostgreSQLSpanData {
 	return PostgreSQLSpanData{
 		SpanData: NewSpanData(span, PostgreSQLSpanType),
 		Tags:     newPostgreSQLSpanTags(span),
@@ -1472,7 +1472,7 @@ type postgreSQLSpanTags struct {
 	Error string `json:"error,omitempty"`
 }
 
-func newPostgreSQLSpanTags(span *spanS) postgreSQLSpanTags {
+func newPostgreSQLSpanTags(span *InstanaSpan) postgreSQLSpanTags {
 	var tags postgreSQLSpanTags
 	for k, v := range span.Tags {
 		switch k {
@@ -1504,7 +1504,7 @@ type RedisSpanTags struct {
 	Error string `json:"error,omitempty"`
 }
 
-func newRedisSpanTags(span *spanS) RedisSpanTags {
+func newRedisSpanTags(span *InstanaSpan) RedisSpanTags {
 	var tags RedisSpanTags
 	for k, v := range span.Tags {
 		switch k {
@@ -1531,7 +1531,7 @@ type AZFSpanTags struct {
 	Error        string `json:"error,omitempty"`
 }
 
-func newAZFSpanTags(span *spanS) AZFSpanTags {
+func newAZFSpanTags(span *InstanaSpan) AZFSpanTags {
 	var tags AZFSpanTags
 	for k, v := range span.Tags {
 		switch k {
@@ -1556,7 +1556,7 @@ type AZFSpanData struct {
 	Tags AZFSpanTags `json:"azf"`
 }
 
-func newAZFSpanData(span *spanS) AZFSpanData {
+func newAZFSpanData(span *InstanaSpan) AZFSpanData {
 	return AZFSpanData{
 		SpanData: NewSpanData(span, AzureFunctionType),
 		Tags:     newAZFSpanTags(span),
@@ -1577,7 +1577,7 @@ type GraphQLSpanData struct {
 }
 
 // newGraphQLSpanData initializes a new HTTP span data from tracer span
-func newGraphQLSpanData(span *spanS) GraphQLSpanData {
+func newGraphQLSpanData(span *InstanaSpan) GraphQLSpanData {
 	data := GraphQLSpanData{
 		SpanData: NewSpanData(span, RegisteredSpanType(span.Operation)),
 		Tags:     newGraphQLSpanTags(span),
@@ -1608,7 +1608,7 @@ type GraphQLSpanTags struct {
 }
 
 // newGraphQLSpanTags extracts GraphQL-specific span tags from a tracer span
-func newGraphQLSpanTags(span *spanS) GraphQLSpanTags {
+func newGraphQLSpanTags(span *InstanaSpan) GraphQLSpanTags {
 	var tags GraphQLSpanTags
 	for k, v := range span.Tags {
 		switch k {

@@ -93,11 +93,11 @@ func TestSpanData_CustomTags(t *testing.T) {
 	require.Len(t, spans, 1)
 
 	span := spans[0]
-	require.IsType(t, instana.HTTPSpanData{}, span.Data)
+	require.IsType(t, instana.HTTPServerSpanData{}, span.Data)
 
-	data := span.Data.(instana.HTTPSpanData)
+	data := span.Data.(instana.HTTPServerSpanData)
 
-	assert.Equal(t, instana.HTTPSpanTags{
+	assert.Equal(t, instana.HTTPServerSpanTags{
 		Host: "localhost",
 		Path: "/",
 	}, data.Tags)

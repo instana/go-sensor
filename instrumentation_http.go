@@ -17,7 +17,7 @@ import (
 	otlog "github.com/opentracing/opentracing-go/log"
 )
 
-func NewHTTPSpanTags(span *spanS) HTTPServerSpanTags {
+func NewHTTPSpanTags(span *InstanaSpan) HTTPServerSpanTags {
 	var tags HTTPServerSpanTags
 	for k, v := range span.Tags {
 		switch k {
@@ -93,7 +93,7 @@ func (d HTTPServerSpanData) Kind() SpanKind {
 	return EntrySpanKind
 }
 
-func (s *SpanHTTPServer) ExtractData(span *spanS) TypedSpanData {
+func (s *SpanHTTPServer) ExtractData(span *InstanaSpan) TypedSpanData {
 	data := HTTPServerSpanData{
 		SpanData: NewSpanData(span, RegisteredSpanType(span.Operation)),
 		Tags:     NewHTTPSpanTags(span),

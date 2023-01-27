@@ -85,10 +85,10 @@ func TestTracingNamedHandlerFunc_Write(t *testing.T) {
 	assert.False(t, span.ForeignTrace)
 	assert.Empty(t, span.Ancestor)
 
-	require.IsType(t, instana.HTTPSpanData{}, span.Data)
-	data := span.Data.(instana.HTTPSpanData)
+	require.IsType(t, instana.HTTPServerSpanData{}, span.Data)
+	data := span.Data.(instana.HTTPServerSpanData)
 
-	assert.Equal(t, instana.HTTPSpanTags{
+	assert.Equal(t, instana.HTTPServerSpanTags{
 		Host:   "example.com",
 		Status: http.StatusOK,
 		Method: "GET",
@@ -214,10 +214,10 @@ func TestTracingNamedHandlerFunc_WriteHeaders(t *testing.T) {
 	assert.False(t, span.ForeignTrace)
 	assert.Empty(t, span.Ancestor)
 
-	require.IsType(t, instana.HTTPSpanData{}, span.Data)
-	data := span.Data.(instana.HTTPSpanData)
+	require.IsType(t, instana.HTTPServerSpanData{}, span.Data)
+	data := span.Data.(instana.HTTPServerSpanData)
 
-	assert.Equal(t, instana.HTTPSpanTags{
+	assert.Equal(t, instana.HTTPServerSpanTags{
 		Status:  http.StatusNotFound,
 		Method:  "GET",
 		Host:    "example.com",
@@ -281,10 +281,10 @@ func TestTracingNamedHandlerFunc_W3CTraceContext(t *testing.T) {
 		ParentID: "5678",
 	}, span.Ancestor)
 
-	require.IsType(t, instana.HTTPSpanData{}, span.Data)
-	data := span.Data.(instana.HTTPSpanData)
+	require.IsType(t, instana.HTTPServerSpanData{}, span.Data)
+	data := span.Data.(instana.HTTPServerSpanData)
 
-	assert.Equal(t, instana.HTTPSpanTags{
+	assert.Equal(t, instana.HTTPServerSpanTags{
 		Host:    "example.com",
 		Status:  http.StatusOK,
 		Method:  "GET",
@@ -338,10 +338,10 @@ func TestTracingHandlerFunc_SecretsFiltering(t *testing.T) {
 	assert.Empty(t, span.CorrelationType)
 	assert.Empty(t, span.CorrelationID)
 
-	require.IsType(t, instana.HTTPSpanData{}, span.Data)
-	data := span.Data.(instana.HTTPSpanData)
+	require.IsType(t, instana.HTTPServerSpanData{}, span.Data)
+	data := span.Data.(instana.HTTPServerSpanData)
 
-	assert.Equal(t, instana.HTTPSpanTags{
+	assert.Equal(t, instana.HTTPServerSpanTags{
 		Host:         "example.com",
 		Status:       http.StatusOK,
 		Method:       "GET",
@@ -378,10 +378,10 @@ func TestTracingHandlerFunc_Error(t *testing.T) {
 	assert.EqualValues(t, instana.EntrySpanKind, span.Kind)
 	assert.False(t, span.Synthetic)
 
-	require.IsType(t, instana.HTTPSpanData{}, span.Data)
-	data := span.Data.(instana.HTTPSpanData)
+	require.IsType(t, instana.HTTPServerSpanData{}, span.Data)
+	data := span.Data.(instana.HTTPServerSpanData)
 
-	assert.Equal(t, instana.HTTPSpanTags{
+	assert.Equal(t, instana.HTTPServerSpanTags{
 		Status:  http.StatusInternalServerError,
 		Method:  "GET",
 		Host:    "example.com",
@@ -476,10 +476,10 @@ func TestTracingHandlerFunc_PanicHandling(t *testing.T) {
 	assert.EqualValues(t, instana.EntrySpanKind, span.Kind)
 	assert.False(t, span.Synthetic)
 
-	require.IsType(t, instana.HTTPSpanData{}, span.Data)
-	data := span.Data.(instana.HTTPSpanData)
+	require.IsType(t, instana.HTTPServerSpanData{}, span.Data)
+	data := span.Data.(instana.HTTPServerSpanData)
 
-	assert.Equal(t, instana.HTTPSpanTags{
+	assert.Equal(t, instana.HTTPServerSpanTags{
 		Status:  http.StatusInternalServerError,
 		Method:  "GET",
 		Host:    "example.com",

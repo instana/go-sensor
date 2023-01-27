@@ -69,7 +69,7 @@ type Span struct {
 	ForeignTrace    bool
 }
 
-func newSpan(span *spanS) Span {
+func newSpan(span *InstanaSpan) Span {
 	st, ok := registeredSpans[span.Operation]
 	var data typedSpanData
 
@@ -224,7 +224,7 @@ type SpanData struct {
 }
 
 // NewSpanData initializes a new span data from tracer span
-func NewSpanData(span *spanS, st RegisteredSpanType) SpanData {
+func NewSpanData(span *InstanaSpan, st RegisteredSpanType) SpanData {
 	data := SpanData{
 		Service: span.Service,
 		st:      st,
@@ -254,7 +254,7 @@ type SDKSpanData struct {
 }
 
 // newSDKSpanData initializes a new SDK span data from a tracer span
-func newSDKSpanData(span *spanS) SDKSpanData {
+func newSDKSpanData(span *InstanaSpan) SDKSpanData {
 	sk := IntermediateSpanKind
 
 	switch span.Tags[string(ext.SpanKind)] {
@@ -296,7 +296,7 @@ type SDKSpanTags struct {
 }
 
 // newSDKSpanTags extracts SDK span tags from a tracer span
-func newSDKSpanTags(span *spanS, spanType string) SDKSpanTags {
+func newSDKSpanTags(span *InstanaSpan, spanType string) SDKSpanTags {
 	tags := SDKSpanTags{
 		Name:   span.Operation,
 		Type:   spanType,

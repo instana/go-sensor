@@ -9,15 +9,15 @@ import (
 const maxDelayedSpans = 500
 
 var delayed = &delayedSpans{
-	spans: make(chan *spanS, maxDelayedSpans),
+	spans: make(chan *InstanaSpan, maxDelayedSpans),
 }
 
 type delayedSpans struct {
-	spans chan *spanS
+	spans chan *InstanaSpan
 }
 
 // append add a span to the buffer if buffer is not full yet
-func (ds *delayedSpans) append(span *spanS) bool {
+func (ds *delayedSpans) append(span *InstanaSpan) bool {
 	select {
 	case ds.spans <- span:
 		return true
@@ -55,7 +55,7 @@ func (ds *delayedSpans) flush() {
 }
 
 // processSpan applies secret filtering to the buffered http span http.params tag
-func (ds *delayedSpans) processSpan(s *spanS, opts TracerOptions) error {
+func (ds *delayedSpans) processSpan(s *InstanaSpan, opts TracerOptions) error {
 	newParams := url.Values{}
 	if paramsTag, ok := s.Tags["http.params"]; ok {
 		if httpParams, ok := paramsTag.(string); ok {

@@ -16,7 +16,7 @@ import (
 
 const minSpanLogLevel = logger.WarnLevel
 
-var _ ot.Span = (*spanS)(nil)
+var _ ot.Span = (*InstanaSpan)(nil)
 
 type spanS struct {
 	Service     string
@@ -34,14 +34,18 @@ type spanS struct {
 	context SpanContext
 }
 
-func (r *spanS) BaggageItem(key string) string {
+type InstanaSpan struct {
+	spanS
+}
+
+func (r *InstanaSpan) BaggageItem(key string) string {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
 	return r.context.Baggage[key]
 }
 
-func (r *spanS) SetBaggageItem(key, val string) ot.Span {
+func (r *InstanaSpan) SetBaggageItem(key, val string) ot.Span {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	r.context = r.context.WithBaggageItem(key, val)
@@ -49,15 +53,15 @@ func (r *spanS) SetBaggageItem(key, val string) ot.Span {
 	return r
 }
 
-func (r *spanS) Context() ot.SpanContext {
+func (r *InstanaSpan) Context() ot.SpanContext {
 	return r.context
 }
 
-func (r *spanS) Finish() {
+func (r *InstanaSpan) Finish() {
 	r.FinishWithOptions(ot.FinishOptions{})
 }
 
-func (r *spanS) FinishWithOptions(opts ot.FinishOptions) {
+func (r *InstanaSpan) FinishWithOptions(opts ot.FinishOptions) {
 	finishTime := opts.FinishTime
 	if finishTime.IsZero() {
 		finishTime = time.Now()
@@ -87,14 +91,14 @@ func (r *spanS) FinishWithOptions(opts ot.FinishOptions) {
 	}
 }
 
-func (r *spanS) appendLog(lr ot.LogRecord) {
+func (r *InstanaSpan) appendLog(lr ot.LogRecord) {
 	maxLogs := r.tracer.Options().MaxLogsPerSpan
 	if maxLogs == 0 || len(r.Logs) < maxLogs {
 		r.Logs = append(r.Logs, lr)
 	}
 }
 
-func (r *spanS) Log(ld ot.LogData) {
+func (r *InstanaSpan) Log(ld ot.LogData) {
 	if r.tracer.Options().DropAllLogs {
 		return
 	}
@@ -109,18 +113,18 @@ func (r *spanS) Log(ld ot.LogData) {
 	r.appendLog(ld.ToLogRecord())
 }
 
-func (r *spanS) LogEvent(event string) {
+func (r *InstanaSpan) LogEvent(event string) {
 	r.Log(ot.LogData{
 		Event: event})
 }
 
-func (r *spanS) LogEventWithPayload(event string, payload interface{}) {
+func (r *InstanaSpan) LogEventWithPayload(event string, payload interface{}) {
 	r.Log(ot.LogData{
 		Event:   event,
 		Payload: payload})
 }
 
-func (r *spanS) LogFields(fields ...otlog.Field) {
+func (r *InstanaSpan) LogFields(fields ...otlog.Field) {
 
 	for _, v := range fields {
 		// If this tag indicates an error, increase the error count
@@ -147,7 +151,7 @@ func (r *spanS) LogFields(fields ...otlog.Field) {
 	r.appendLog(lr)
 }
 
-func (r *spanS) LogKV(keyValues ...interface{}) {
+func (r *InstanaSpan) LogKV(keyValues ...interface{}) {
 	fields, err := otlog.InterleavedKVToFields(keyValues...)
 	if err != nil {
 		r.LogFields(otlog.Error(err), otlog.String("function", "LogKV"))
@@ -158,7 +162,7 @@ func (r *spanS) LogKV(keyValues ...interface{}) {
 	r.LogFields(fields...)
 }
 
-func (r *spanS) SetOperationName(operationName string) ot.Span {
+func (r *InstanaSpan) SetOperationName(operationName string) ot.Span {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
@@ -167,7 +171,7 @@ func (r *spanS) SetOperationName(operationName string) ot.Span {
 	return r
 }
 
-func (r *spanS) SetTag(key string, value interface{}) ot.Span {
+func (r *InstanaSpan) SetTag(key string, value interface{}) ot.Span {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
@@ -190,19 +194,19 @@ func (r *spanS) SetTag(key string, value interface{}) ot.Span {
 	return r
 }
 
-func (r *spanS) Tracer() ot.Tracer {
+func (r *InstanaSpan) Tracer() ot.Tracer {
 	return r.tracer
 }
 
 // sendOpenTracingLogRecords converts OpenTracing log records that contain errors
 // to Instana log spans and sends them to the agent
-func (r *spanS) sendOpenTracingLogRecords() {
+func (r *InstanaSpan) sendOpenTracingLogRecords() {
 	for _, lr := range r.Logs {
 		r.sendOpenTracingLogRecord(lr)
 	}
 }
 
-func (r *spanS) sendOpenTracingLogRecord(lr ot.LogRecord) {
+func (r *InstanaSpan) sendOpenTracingLogRecord(lr ot.LogRecord) {
 	lvl := openTracingHighestLogRecordLevel(lr)
 
 	if lvl.Less(minSpanLogLevel) {
