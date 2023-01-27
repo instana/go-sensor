@@ -16,6 +16,11 @@ type typedSpanData interface {
 	Kind() SpanKind
 }
 
+type TypedSpanData interface {
+	Type() RegisteredSpanType
+	Kind() SpanKind
+}
+
 // SpanKind represents values of field `k` in OpenTracing span representation. It represents
 // the direction of the call associated with a span.
 type SpanKind uint8
@@ -65,7 +70,16 @@ type Span struct {
 }
 
 func newSpan(span *spanS) Span {
-	data := RegisteredSpanType(span.Operation).extractData(span)
+	st, ok := registeredSpans[span.Operation]
+	var data typedSpanData
+
+	if ok {
+		data = st.ExtractData(span)
+		// fmt.Println("using new http span data")
+	} else {
+		data = RegisteredSpanType(span.Operation).extractData(span)
+	}
+
 	sp := Span{
 		TraceID:         span.context.TraceID,
 		TraceIDHi:       span.context.TraceIDHi,
@@ -174,7 +188,15 @@ type CustomSpanData struct {
 }
 
 func filterCustomSpanTags(tags map[string]interface{}, st RegisteredSpanType) map[string]interface{} {
-	knownTags := st.TagsNames()
+	var knownTags map[string]struct{}
+
+	if newSt, ok := registeredSpans[string(st)]; ok {
+		// fmt.Println("using new http span tag names")
+		knownTags = newSt.TagsNames()
+	} else {
+		knownTags = st.TagsNames()
+	}
+
 	customTags := make(map[string]interface{})
 
 	for k, v := range tags {
@@ -294,6 +316,16 @@ func newSDKSpanTags(span *spanS, spanType string) SDKSpanTags {
 
 // readStringTag populates the &dst with the tag value if it's of either string or []byte type
 func readStringTag(dst *string, tag interface{}) {
+	switch s := tag.(type) {
+	case string:
+		*dst = s
+	case []byte:
+		*dst = string(s)
+	}
+}
+
+// ReadStringTag populates the &dst with the tag value if it's of either string or []byte type
+func ReadStringTag(dst *string, tag interface{}) {
 	switch s := tag.(type) {
 	case string:
 		*dst = s

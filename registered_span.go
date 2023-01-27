@@ -9,6 +9,18 @@ import (
 	"github.com/opentracing/opentracing-go/ext"
 )
 
+type SpanRegistry interface {
+	ExtractData(span *spanS) TypedSpanData
+	TagsNames() map[string]struct{}
+}
+
+var registeredSpans map[string]SpanRegistry = map[string]SpanRegistry{}
+
+func RegisterSpan(n string, sr SpanRegistry) {
+	// fmt.Println("registering span", n, sr)
+	registeredSpans[n] = sr
+}
+
 // Registered types supported by Instana. The span type is determined based on
 // the operation name passed to the `StartSpan()` call of a tracer.
 //
@@ -21,7 +33,7 @@ const (
 	// attached tags to the agent
 	SDKSpanType = RegisteredSpanType("sdk")
 	// HTTP server and client spans
-	HTTPServerSpanType = RegisteredSpanType("g.http")
+	// HTTPServerSpanType = RegisteredSpanType("g.http")
 	HTTPClientSpanType = RegisteredSpanType("http")
 	// RPC server and client spans
 	RPCServerSpanType = RegisteredSpanType("rpc-server")
@@ -66,7 +78,8 @@ type RegisteredSpanType string
 // extractData is a factory method to create the `data` section for a typed span
 func (st RegisteredSpanType) extractData(span *spanS) typedSpanData {
 	switch st {
-	case HTTPServerSpanType, HTTPClientSpanType:
+	// case HTTPServerSpanType, HTTPClientSpanType:
+	case HTTPClientSpanType:
 		return newHTTPSpanData(span)
 	case RPCServerSpanType, RPCClientSpanType:
 		return newRPCSpanData(span)
@@ -112,7 +125,8 @@ func (st RegisteredSpanType) TagsNames() map[string]struct{} {
 	var yes struct{}
 
 	switch st {
-	case HTTPServerSpanType, HTTPClientSpanType:
+	// case HTTPServerSpanType, HTTPClientSpanType:
+	case HTTPClientSpanType:
 		return map[string]struct{}{
 			"http.url": yes, string(ext.HTTPUrl): yes,
 			"http.status": yes, "http.status_code": yes,

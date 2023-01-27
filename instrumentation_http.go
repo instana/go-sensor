@@ -17,6 +17,119 @@ import (
 	otlog "github.com/opentracing/opentracing-go/log"
 )
 
+func NewHTTPSpanTags(span *spanS) HTTPServerSpanTags {
+	var tags HTTPServerSpanTags
+	for k, v := range span.Tags {
+		switch k {
+		case "http.url", string(ext.HTTPUrl):
+			ReadStringTag(&tags.URL, v)
+		case "http.status", "http.status_code":
+			readIntTag(&tags.Status, v)
+		case "http.method", string(ext.HTTPMethod):
+			ReadStringTag(&tags.Method, v)
+		case "http.path":
+			ReadStringTag(&tags.Path, v)
+		case "http.params":
+			ReadStringTag(&tags.Params, v)
+		case "http.header":
+			if m, ok := v.(map[string]string); ok {
+				tags.Headers = m
+			}
+		case "http.path_tpl":
+			ReadStringTag(&tags.PathTemplate, v)
+		case "http.route_id":
+			ReadStringTag(&tags.RouteID, v)
+		case "http.host":
+			ReadStringTag(&tags.Host, v)
+		case "http.protocol":
+			ReadStringTag(&tags.Protocol, v)
+		case "http.error":
+			ReadStringTag(&tags.Error, v)
+		}
+	}
+
+	return tags
+}
+
+type SpanHTTPServer struct{}
+
+type HTTPServerSpanTags struct {
+	// Full request/response URL
+	URL string `json:"url,omitempty"`
+	// The HTTP status code returned with client/server response
+	Status int `json:"status,omitempty"`
+	// The HTTP method of the request
+	Method string `json:"method,omitempty"`
+	// Path is the path part of the request URL
+	Path string `json:"path,omitempty"`
+	// Params are the request query string parameters
+	Params string `json:"params,omitempty"`
+	// Headers are the captured request/response headers
+	Headers map[string]string `json:"header,omitempty"`
+	// PathTemplate is the raw template string used to route the request
+	PathTemplate string `json:"path_tpl,omitempty"`
+	// RouteID is an optional name/identifier for the matched route
+	RouteID string `json:"route_id,omitempty"`
+	// The name:port of the host to which the request had been sent
+	Host string `json:"host,omitempty"`
+	// The name of the protocol used for request ("http" or "https")
+	Protocol string `json:"protocol,omitempty"`
+	// The message describing an error occurred during the request handling
+	Error string `json:"error,omitempty"`
+}
+
+type HTTPServerSpanData struct {
+	SpanData
+	Tags HTTPServerSpanTags `json:"http"`
+
+	clientSpan bool
+}
+
+func (d HTTPServerSpanData) Kind() SpanKind {
+	if d.clientSpan {
+		return ExitSpanKind
+	}
+
+	return EntrySpanKind
+}
+
+func (s *SpanHTTPServer) ExtractData(span *spanS) TypedSpanData {
+	data := HTTPServerSpanData{
+		SpanData: NewSpanData(span, RegisteredSpanType(span.Operation)),
+		Tags:     NewHTTPSpanTags(span),
+	}
+
+	kindTag := span.Tags[string(ext.SpanKind)]
+	data.clientSpan = kindTag == ext.SpanKindRPCClientEnum || kindTag == string(ext.SpanKindRPCClientEnum)
+
+	return data
+}
+
+func (s *SpanHTTPServer) TagsNames() map[string]struct{} {
+	var yes struct{}
+
+	return map[string]struct{}{
+		"http.url": yes, string(ext.HTTPUrl): yes,
+		"http.status": yes, "http.status_code": yes,
+		"http.method": yes, string(ext.HTTPMethod): yes,
+		"http.path":     yes,
+		"http.params":   yes,
+		"http.header":   yes,
+		"http.path_tpl": yes,
+		"http.route_id": yes,
+		"http.host":     yes,
+		"http.protocol": yes,
+		"http.error":    yes,
+	}
+}
+
+var sr SpanRegistry = (*SpanHTTPServer)(nil)
+
+func init() {
+	sr = &SpanHTTPServer{}
+	RegisterSpan("g.http", sr)
+}
+
 // TracingHandlerFunc is an HTTP middleware that captures the tracing data and ensures
 // trace context propagation via OpenTracing headers. The pathTemplate parameter, when provided,
 // will be added to the span as a template string used to match the route containing variables, regular

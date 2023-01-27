@@ -124,7 +124,7 @@ func TestParallelFlushDelayedSpans(t *testing.T) {
 	assert.Equal(t, maxDelayedSpans, len(recordedSpans))
 
 	for _, v := range recordedSpans {
-		if v, ok := v.Data.(HTTPSpanData); ok {
+		if v, ok := v.Data.(HTTPServerSpanData); ok {
 			assert.Equal(t, "q=%3Credacted%3E&secret=%3Credacted%3E", v.Tags.Params)
 		} else {
 			assert.Fail(t, "wrong span type")
