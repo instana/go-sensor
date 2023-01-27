@@ -247,7 +247,7 @@ func processResponseStatus(response wrappedResponseWriter, span ot.Span) {
 		// Due to a design limitation, the graphql instrumentation doesn't have access to the instana.spanS struct. Plus,
 		// we are unable to control the span finishing from the graphql instrumentation, which leads us to add this workaround
 		// here.
-		if spS, ok := span.(*spanS); ok {
+		if spS, ok := span.(*InstanaSpan); ok {
 			if spS.Operation != "graphql.server" {
 				span.SetTag("http.status", response.Status())
 			}
