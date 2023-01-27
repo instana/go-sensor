@@ -127,7 +127,18 @@ func processResponseStatus(response wrappedResponseWriter, span ot.Span) {
 			span.LogFields(otlog.Object("error", statusText))
 		}
 
-		span.SetTag("http.status", response.Status())
+		// GraphQL queries received by a webserver are HTTP incoming requests that must be "merged" into one single entry
+		// span, as we cannot have two entry spans (http and graphql).
+		// Our UI will render a span as HTTP if the http.status tag is present, so in the case of a GraphQL span, we must
+		// ensure that this status is not provided.
+		// Due to a design limitation, the graphql instrumentation doesn't have access to the instana.spanS struct. Plus,
+		// we are unable to control the span finishing from the graphql instrumentation, which leads us to add this workaround
+		// here.
+		if spS, ok := span.(*spanS); ok {
+			if spS.Operation != "graphql.server" {
+				span.SetTag("http.status", response.Status())
+			}
+		}
 	}
 }
 
