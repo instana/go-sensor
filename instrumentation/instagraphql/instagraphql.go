@@ -12,9 +12,16 @@ import (
 	otlog "github.com/opentracing/opentracing-go/log"
 )
 
-func Do(ctx context.Context, sensor *instana.Sensor, p graphql.Params) *graphql.Result {
-	dt, err := parseQuery(p.RequestString)
+func removeHTTPTags(sp ot.Span) {
+	sp.SetTag("http.route_id", nil)
+	sp.SetTag("http.method", nil)
+	sp.SetTag("http.protocol", nil)
+	sp.SetTag("http.host", nil)
+	sp.SetTag("http.path", nil)
+	sp.SetTag("http.header", nil)
+}
 
+func Do(ctx context.Context, sensor *instana.Sensor, p graphql.Params) *graphql.Result {
 	var sp ot.Span
 	var ok bool
 
@@ -23,12 +30,7 @@ func Do(ctx context.Context, sensor *instana.Sensor, p graphql.Params) *graphql.
 		sp.SetOperationName("graphql.server")
 
 		// Remove http tags from the span to guarantee that the repurposed span will behave accordingly
-		sp.SetTag("http.route_id", nil)
-		sp.SetTag("http.method", nil)
-		sp.SetTag("http.protocol", nil)
-		sp.SetTag("http.host", nil)
-		sp.SetTag("http.path", nil)
-		sp.SetTag("http.header", nil)
+		removeHTTPTags(sp)
 	} else {
 		t := sensor.Tracer()
 		sp = t.StartSpan("graphql.server")
@@ -38,6 +40,8 @@ func Do(ctx context.Context, sensor *instana.Sensor, p graphql.Params) *graphql.
 		// Otherwise, we leave it to the HTTP span to be finished when done.
 		defer sp.Finish()
 	}
+
+	dt, err := parseQuery(p.RequestString)
 
 	if err != nil {
 		sp.SetTag("graphql.error", err.Error())
