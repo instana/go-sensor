@@ -1,0 +1,40 @@
+{
+  "characters": [
+    {
+      "id": 1,
+      "name": "James Holden",
+      "profession": "Captain",
+      "crewMember": true
+    },
+    {
+      "id": 2,
+      "name": "Naomi Nagata",
+      "profession": "Executive Officer",
+      "crewMember": true
+    },
+    {
+      "id": 3,
+      "name": "Amos Burton",
+      "profession": "Mechanic",
+      "crewMember": true
+    },
+    {
+      "id": 4,
+      "name": "Josephus Miller",
+      "profession": "Detective",
+      "crewMember": false
+    }
+  ],
+  "ships": [
+    {
+      "id": 1,
+      "name": "Canterbury",
+      "origin": "Ceres"
+    },
+    {
+      "id": 2,
+      "name": "Roccinante",
+      "origin": "Mars"
+    }
+  ]
+}
