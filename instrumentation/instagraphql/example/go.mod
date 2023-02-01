@@ -8,7 +8,7 @@ require (
 )
 
 require (
-	github.com/graphql-go/handler v0.2.3
+	github.com/graphql-go/handler v0.2.3 // indirect
 	github.com/instana/go-sensor v1.50.0
 )
 
