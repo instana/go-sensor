@@ -4,6 +4,7 @@ package main
 
 import (
 	"errors"
+	"time"
 
 	"github.com/graphql-go/graphql"
 )
@@ -141,6 +142,47 @@ func mutations(dt *data) graphql.Fields {
 				dt.addShip(s)
 
 				return s, nil
+			},
+		},
+	}
+
+	return fields
+}
+
+func subscriptions(dt *data) graphql.Fields {
+	fields := graphql.Fields{
+		"newCharacterSubscription": &graphql.Field{
+			Name: "character",
+			Type: characterType,
+			Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				return p.Source, nil
+			},
+			Subscribe: func(p graphql.ResolveParams) (interface{}, error) {
+				ch := make(chan interface{})
+
+				go func() {
+
+					for i := 0; i < 2; i++ {
+						time.Sleep(time.Second)
+
+						c := character{
+							Id:         999 + i,
+							Name:       "char from sub",
+							Profession: "shoemaker",
+							CrewMember: false,
+						}
+
+						select {
+						case <-p.Context.Done():
+							close(ch)
+							return
+						default:
+							ch <- c
+						}
+					}
+				}()
+
+				return ch, nil
 			},
 		},
 	}

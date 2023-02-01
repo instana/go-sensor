@@ -3,7 +3,6 @@
 package main
 
 import (
-	"context"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -137,12 +136,16 @@ func main() {
 	// Schema
 	qFields := queries(dt)
 	mFields := mutations(dt)
+	sFields := subscriptions(dt)
 
 	rootQuery := graphql.ObjectConfig{Name: "RootQuery", Fields: qFields}
 	rootMutation := graphql.ObjectConfig{Name: "RootMutation", Fields: mFields}
+	rootSubscription := graphql.ObjectConfig{Name: "RootSubscription", Fields: sFields}
+
 	schemaConfig := graphql.SchemaConfig{
-		Query:    graphql.NewObject(rootQuery),
-		Mutation: graphql.NewObject(rootMutation),
+		Query:        graphql.NewObject(rootQuery),
+		Mutation:     graphql.NewObject(rootMutation),
+		Subscription: graphql.NewObject(rootSubscription),
 	}
 	schema, err := graphql.NewSchema(schemaConfig)
 
@@ -151,18 +154,16 @@ func main() {
 	}
 
 	if withHandler {
-		var fn handler.ResultCallbackFn = func(ctx context.Context, params *graphql.Params, result *graphql.Result, responseBody []byte) {
-			fmt.Println("I am the original callback function")
-		}
-
 		h := handler.New(&handler.Config{
 			Schema:           &schema,
 			Pretty:           true,
-			GraphiQL:         true,
-			ResultCallbackFn: instagraphql.ResultCallbackFn(sensor, fn),
+			GraphiQL:         false,
+			Playground:       true,
+			ResultCallbackFn: instagraphql.ResultCallbackFn(sensor, nil),
 		})
 
 		http.Handle("/graphql", h)
+		http.HandleFunc("/subscriptions", SubsHandlerWithSchema(schema))
 	} else {
 		http.HandleFunc("/graphql", handleGraphQLQuery(schema, sensor))
 	}
