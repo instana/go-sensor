@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/graphql-go/graphql"
+	"github.com/graphql-go/handler"
 	instana "github.com/instana/go-sensor"
 	ot "github.com/opentracing/opentracing-go"
 	otlog "github.com/opentracing/opentracing-go/log"
@@ -21,7 +22,7 @@ func removeHTTPTags(sp ot.Span) {
 	sp.SetTag("http.header", nil)
 }
 
-func Do(ctx context.Context, sensor *instana.Sensor, p graphql.Params) *graphql.Result {
+func instrument(ctx context.Context, sensor *instana.Sensor, p *graphql.Params, res *graphql.Result) *graphql.Result {
 	var sp ot.Span
 	var ok bool
 
@@ -43,19 +44,21 @@ func Do(ctx context.Context, sensor *instana.Sensor, p graphql.Params) *graphql.
 
 	dt, err := parseQuery(p.RequestString)
 
+	if res == nil {
+		res = graphql.Do(*p)
+	}
+
 	if err != nil {
 		sp.SetTag("graphql.error", err.Error())
 		sp.LogFields(otlog.Object("error", err))
 
-		return graphql.Do(p)
+		return res
 	}
 
 	sp.SetTag("graphql.operationType", dt.opType)
 	sp.SetTag("graphql.operationName", dt.opName)
 	sp.SetTag("graphql.fields", dt.fieldMap)
 	sp.SetTag("graphql.args", dt.argMap)
-
-	res := graphql.Do(p)
 
 	if len(res.Errors) > 0 {
 		var err []string
@@ -69,4 +72,20 @@ func Do(ctx context.Context, sensor *instana.Sensor, p graphql.Params) *graphql.
 	}
 
 	return res
+}
+
+// Do wraps the original graphql.Do, traces the GraphQL query and returns the result of the original graphql.Do
+func Do(ctx context.Context, sensor *instana.Sensor, p graphql.Params) *graphql.Result {
+	return instrument(ctx, sensor, &p, nil)
+}
+
+// ResultCallbackFn traces the GraphQL query and executes the original handler.ResultCallbackFn if fn is provided.
+func ResultCallbackFn(sensor *instana.Sensor, fn handler.ResultCallbackFn) handler.ResultCallbackFn {
+	return func(ctx context.Context, p *graphql.Params, res *graphql.Result, responseBody []byte) {
+		instrument(ctx, sensor, p, res)
+
+		if fn != nil {
+			fn(ctx, p, res, responseBody)
+		}
+	}
 }

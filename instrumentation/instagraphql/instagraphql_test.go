@@ -17,6 +17,7 @@ import (
 	"time"
 
 	"github.com/graphql-go/graphql"
+	"github.com/graphql-go/handler"
 	"github.com/stretchr/testify/assert"
 
 	instana "github.com/instana/go-sensor"
@@ -199,7 +200,7 @@ func TestGraphQLServer(t *testing.T) {
 	}
 }
 
-func TestGraphQLServerWithHTTP(t *testing.T) {
+func TestGraphQLServerWithCustomHTTP(t *testing.T) {
 	recorder := instana.NewTestRecorder()
 	sensor := instana.NewSensorWithTracer(
 		instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder),
@@ -242,6 +243,58 @@ func TestGraphQLServerWithHTTP(t *testing.T) {
 
 				instagraphql.Do(req.Context(), sensor, params)
 			})))
+
+			defer srv.Close()
+
+			c := http.DefaultClient
+			r := bytes.NewReader([]byte(sample.queryAsJSON()))
+			req, _ := http.NewRequest(http.MethodPost, srv.URL, r)
+			c.Do(req)
+
+			var spans []instana.Span
+
+			assert.Eventually(t, func() bool {
+				return recorder.QueuedSpansCount() >= sample.spanCount
+			}, time.Second*2, time.Millisecond*500)
+
+			spans = recorder.GetQueuedSpans()
+			assert.Len(t, spans, sample.spanCount)
+
+			require.IsType(t, instana.GraphQLSpanData{}, spans[0].Data)
+
+			data := spans[0].Data.(instana.GraphQLSpanData)
+
+			assertSample(t, sample, data)
+		})
+	}
+}
+func TestGraphQLServerWithBuiltinHTTP(t *testing.T) {
+	recorder := instana.NewTestRecorder()
+	sensor := instana.NewSensorWithTracer(
+		instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder),
+	)
+
+	schema, err := getSchema()
+
+	if err != nil {
+		log.Fatalf("failed to create new schema, error: %v", err)
+	}
+
+	for title, sample := range samples {
+		t.Run(title, func(t *testing.T) {
+
+			var fn handler.ResultCallbackFn = func(ctx context.Context, params *graphql.Params, result *graphql.Result, responseBody []byte) {
+				fmt.Println("I am the original callback function")
+			}
+
+			h := handler.New(&handler.Config{
+				Schema:           &schema,
+				Pretty:           true,
+				GraphiQL:         true,
+				ResultCallbackFn: instagraphql.ResultCallbackFn(sensor, fn),
+			})
+
+			srv := httptest.NewServer(h)
 
 			defer srv.Close()
 
