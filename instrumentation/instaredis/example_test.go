@@ -9,9 +9,9 @@ import (
 	"context"
 	"time"
 
-	"github.com/go-redis/redis/v8"
 	instana "github.com/instana/go-sensor"
 	"github.com/instana/go-sensor/instrumentation/instaredis"
+	"github.com/redis/go-redis/v9"
 )
 
 func Example() {
