@@ -7,12 +7,13 @@ package instaredis
 
 import (
 	"context"
+	"net"
 	"strings"
 
-	"github.com/go-redis/redis/v8"
 	instana "github.com/instana/go-sensor"
 	ot "github.com/opentracing/opentracing-go"
 	otlog "github.com/opentracing/opentracing-go/log"
+	"github.com/redis/go-redis/v9"
 )
 
 type commandCaptureHook struct {
@@ -126,27 +127,32 @@ func (h commandCaptureHook) handleHook(ctx context.Context, cmd redis.Cmder, cmd
 	span.Finish()
 }
 
-func (h commandCaptureHook) BeforeProcess(ctx context.Context, cmd redis.Cmder) (context.Context, error) {
-	return ctx, nil
-}
-
-func (h commandCaptureHook) AfterProcess(ctx context.Context, cmd redis.Cmder) error {
-	h.handleHook(ctx, cmd, []redis.Cmder{})
-	return nil
-}
-
-func (h commandCaptureHook) BeforeProcessPipeline(ctx context.Context, cmds []redis.Cmder) (context.Context, error) {
-	return ctx, nil
-}
-
-func (h commandCaptureHook) AfterProcessPipeline(ctx context.Context, cmds []redis.Cmder) error {
-	h.handleHook(ctx, nil, cmds)
-	return nil
-}
-
 type InstanaRedisClient interface {
 	AddHook(hook redis.Hook)
 	Options() *redis.Options
+}
+
+func (h commandCaptureHook) DialHook(next redis.DialHook) redis.DialHook {
+	return func(ctx context.Context, network, addr string) (net.Conn, error) {
+		conn, err := next(ctx, network, addr)
+		return conn, err
+	}
+}
+
+func (h commandCaptureHook) ProcessHook(next redis.ProcessHook) redis.ProcessHook {
+	return func(ctx context.Context, cmd redis.Cmder) error {
+		h.handleHook(ctx, cmd, []redis.Cmder{})
+		err := next(ctx, cmd)
+		return err
+	}
+}
+
+func (h commandCaptureHook) ProcessPipelineHook(next redis.ProcessPipelineHook) redis.ProcessPipelineHook {
+	return func(ctx context.Context, cmds []redis.Cmder) error {
+		h.handleHook(ctx, nil, cmds)
+		err := next(ctx, cmds)
+		return err
+	}
 }
 
 type InstanaRedisClusterClient interface {

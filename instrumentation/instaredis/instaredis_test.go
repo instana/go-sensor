@@ -7,22 +7,24 @@ package instaredis_test
 
 import (
 	"context"
+	"errors"
 	"net"
 	"testing"
 	"time"
 
-	"github.com/go-redis/redis/v8"
 	instana "github.com/instana/go-sensor"
 	"github.com/instana/go-sensor/acceptor"
 	"github.com/instana/go-sensor/autoprofile"
 	"github.com/instana/go-sensor/instrumentation/instaredis"
+	"github.com/redis/go-redis/v9"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 type mockPipeline struct {
-	cmds  []redis.Cmder
-	hooks []redis.Hook
+	cmds    []redis.Cmder
+	hooks   []redis.Hook
+	current hooks
 }
 
 func (p *mockPipeline) Set(ctx context.Context, key string, value interface{}, expiration time.Duration) *redis.StatusCmd {
@@ -43,31 +45,77 @@ func (p *mockPipeline) Do(ctx context.Context, args ...interface{}) *redis.Cmd {
 	return cmd
 }
 
-func (p mockPipeline) Exec(ctx context.Context) ([]redis.Cmder, error) {
-	for _, hook := range p.hooks {
-		hook.BeforeProcessPipeline(ctx, p.cmds)
-		hook.AfterProcessPipeline(ctx, p.cmds)
+func (p *mockPipeline) Exec(ctx context.Context) {
+	p.process(ctx, p.cmds)
+}
+
+func (p *mockPipeline) process(ctx context.Context, cmds []redis.Cmder) (net.Conn, error) {
+	switch ctx.Value("pipe_type") {
+	case "processPipelineHook":
+		return nil, p.current.pipeline(ctx, cmds)
+	case "processTxPipelineHook":
+		return nil, p.current.txPipeline(ctx, cmds)
 	}
-	return p.cmds, nil
+	return nil, errors.New("unidentified pipe type")
 }
 
 type mockClient struct {
 	hooks   []redis.Hook
 	options *redis.Options
+	current hooks
+}
+
+type hooks struct {
+	dial       redis.DialHook
+	process    redis.ProcessHook
+	pipeline   redis.ProcessPipelineHook
+	txPipeline redis.ProcessPipelineHook
+}
+
+func newHooks() hooks {
+	return hooks{
+		dial:       func(ctx context.Context, network, addr string) (net.Conn, error) { return nil, nil },
+		process:    func(ctx context.Context, cmd redis.Cmder) error { return nil },
+		pipeline:   func(ctx context.Context, cmds []redis.Cmder) error { return nil },
+		txPipeline: func(ctx context.Context, cmds []redis.Cmder) error { return nil },
+	}
+}
+
+func (c *mockClient) chain() {
+	for i := len(c.hooks) - 1; i >= 0; i-- {
+		if wrapped := c.hooks[i].DialHook(c.current.dial); wrapped != nil {
+			c.current.dial = wrapped
+		}
+		if wrapped := c.hooks[i].ProcessHook(c.current.process); wrapped != nil {
+			c.current.process = wrapped
+		}
+		if wrapped := c.hooks[i].ProcessPipelineHook(c.current.pipeline); wrapped != nil {
+			c.current.pipeline = wrapped
+		}
+		if wrapped := c.hooks[i].ProcessPipelineHook(c.current.txPipeline); wrapped != nil {
+			c.current.txPipeline = wrapped
+		}
+	}
 }
 
 func newMockClient(options *redis.Options, foOptions *redis.FailoverOptions) *mockClient {
 	if options != nil {
-		return &mockClient{options: options}
+		return &mockClient{
+			options: options,
+			current: newHooks(),
+		}
 	}
 
-	return &mockClient{options: &redis.Options{
-		Addr: "FailoverClient",
-		Dialer: func(ctx context.Context, network string, addr string) (net.Conn, error) {
-			netConn := getMockConn(Single, ctx, network, addr)
-			return netConn, nil
+	return &mockClient{
+		options: &redis.Options{
+			Addr: "FailoverClient",
+			Dialer: func(ctx context.Context, network string, addr string) (net.Conn, error) {
+				netConn := getMockConn(Single, ctx, network, addr)
+				return netConn, nil
+			},
 		},
-	}}
+		current: newHooks(),
+	}
 }
 
 func (c *mockClient) Close() error {
@@ -76,6 +124,7 @@ func (c *mockClient) Close() error {
 
 func (c *mockClient) AddHook(hook redis.Hook) {
 	c.hooks = append(c.hooks, hook)
+	c.chain()
 }
 
 func (c mockClient) Options() *redis.Options {
@@ -95,33 +144,43 @@ func (c mockClient) Get(ctx context.Context, key string) *redis.StringCmd {
 }
 
 func (c mockClient) Pipeline() mockPipeline {
-	return mockPipeline{hooks: c.hooks}
+	return mockPipeline{
+		hooks:   c.hooks,
+		current: c.current,
+	}
 }
 
 func (c mockClient) TxPipeline() mockPipeline {
-	return mockPipeline{hooks: c.hooks}
+	return mockPipeline{
+		hooks:   c.hooks,
+		current: c.current,
+	}
 }
 
 func (c mockClient) runHooks(ctx context.Context, cmd redis.Cmder) {
-	for _, h := range c.hooks {
-		h.BeforeProcess(ctx, cmd)
-		h.AfterProcess(ctx, cmd)
-	}
+	c.current.process(ctx, cmd)
 }
 
 type mockClusterClient struct {
 	hooks   []redis.Hook
 	options *redis.ClusterOptions
+	current hooks
 }
 
 func newMockClusterClient(options *redis.ClusterOptions, foOptions *redis.FailoverOptions) *mockClusterClient {
 	if options != nil {
-		return &mockClusterClient{options: options}
+		return &mockClusterClient{
+			options: options,
+			current: newHooks(),
+		}
 	}
 
-	return &mockClusterClient{options: &redis.ClusterOptions{
-		Dialer: foOptions.Dialer,
-	}}
+	return &mockClusterClient{
+		options: &redis.ClusterOptions{
+			Dialer: foOptions.Dialer,
+		},
+		current: newHooks(),
+	}
 }
 
 func (c *mockClusterClient) Close() error {
@@ -130,6 +189,7 @@ func (c *mockClusterClient) Close() error {
 
 func (c *mockClusterClient) AddHook(hook redis.Hook) {
 	c.hooks = append(c.hooks, hook)
+	c.chain()
 }
 
 func (c mockClusterClient) Options() *redis.ClusterOptions {
@@ -149,18 +209,38 @@ func (c mockClusterClient) Get(ctx context.Context, key string) *redis.StringCmd
 }
 
 func (c mockClusterClient) Pipeline() mockPipeline {
-	return mockPipeline{hooks: c.hooks}
+	return mockPipeline{
+		hooks:   c.hooks,
+		current: c.current,
+	}
 }
 
 func (c mockClusterClient) TxPipeline() mockPipeline {
-	return mockPipeline{hooks: c.hooks}
+	return mockPipeline{
+		hooks:   c.hooks,
+		current: c.current,
+	}
+}
+
+func (c *mockClusterClient) chain() {
+	for i := len(c.hooks) - 1; i >= 0; i-- {
+		if wrapped := c.hooks[i].DialHook(c.current.dial); wrapped != nil {
+			c.current.dial = wrapped
+		}
+		if wrapped := c.hooks[i].ProcessHook(c.current.process); wrapped != nil {
+			c.current.process = wrapped
+		}
+		if wrapped := c.hooks[i].ProcessPipelineHook(c.current.pipeline); wrapped != nil {
+			c.current.pipeline = wrapped
+		}
+		if wrapped := c.hooks[i].ProcessPipelineHook(c.current.txPipeline); wrapped != nil {
+			c.current.txPipeline = wrapped
+		}
+	}
 }
 
 func (c mockClusterClient) runHooks(ctx context.Context, cmd redis.Cmder) {
-	for _, h := range c.hooks {
-		h.BeforeProcess(ctx, cmd)
-		h.AfterProcess(ctx, cmd)
-	}
+	c.current.process(ctx, cmd)
 }
 
 type redisType int
@@ -182,7 +262,6 @@ var redisTypeMap = map[redisType]string{
 func buildNewClient(hasSentinel bool) *mockClient {
 	if hasSentinel {
 		return newMockClient(nil, &redis.FailoverOptions{
-			SlaveOnly:     true,
 			RouteRandomly: false,
 			MasterName:    "redis1",
 			MaxRetries:    1,
@@ -353,6 +432,7 @@ func TestClient(t *testing.T) {
 						for _, doCmd := range example.DoPipeCommand {
 							pipe.Do(ctx, doCmd...)
 						}
+						ctx = context.WithValue(ctx, "pipe_type", "processPipelineHook")
 						pipe.Exec(ctx)
 					} else if len(example.DoTxPipeCommand) > 0 {
 						pipe := rdb.TxPipeline()
@@ -360,6 +440,7 @@ func TestClient(t *testing.T) {
 						for _, doCmd := range example.DoTxPipeCommand {
 							pipe.Do(ctx, doCmd...)
 						}
+						ctx = context.WithValue(ctx, "pipe_type", "processTxPipelineHook")
 						pipe.Exec(ctx)
 					}
 					rdb.Close()
@@ -375,6 +456,7 @@ func TestClient(t *testing.T) {
 						for _, doCmd := range example.DoPipeCommand {
 							pipe.Do(ctx, doCmd...)
 						}
+						ctx = context.WithValue(ctx, "pipe_type", "processPipelineHook")
 						pipe.Exec(ctx)
 					} else if len(example.DoTxPipeCommand) > 0 {
 						pipe := rdb.TxPipeline()
@@ -382,6 +464,7 @@ func TestClient(t *testing.T) {
 						for _, doCmd := range example.DoTxPipeCommand {
 							pipe.Do(ctx, doCmd...)
 						}
+						ctx = context.WithValue(ctx, "pipe_type", "processTxPipelineHook")
 						pipe.Exec(ctx)
 					}
 					rdb.Close()
