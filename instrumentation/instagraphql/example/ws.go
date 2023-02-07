@@ -58,14 +58,13 @@ func SubsHandlerWithSchema(schema graphql.Schema) http.HandlerFunc {
 			return
 		}
 
-		go handleSubscription(r.Context(), conn, schema)
+		go handleSubscription(conn, schema)
 	}
 }
 
-func handleSubscription(ctx context.Context, conn *websocket.Conn, schema graphql.Schema) {
+func handleSubscription(conn *websocket.Conn, schema graphql.Schema) {
 	var subscriber *Subscriber
 	subscriptionCtx, subscriptionCancelFn := context.WithCancel(context.Background())
-	// subscriptionCtx, subscriptionCancelFn := context.WithCancel(ctx)
 
 	handleClosedConnection := func() {
 		log.Println("[SubscriptionsHandler] subscriber closed connection")
@@ -159,7 +158,6 @@ func subscribe(ctx context.Context, subscriptionCancelFn context.CancelFunc, con
 		}
 
 		subscribeChannel := instagraphql.Subscribe(ctx, sensor, subscribeParams)
-		// subscribeChannel := graphql.Subscribe(subscribeParams)
 
 		for {
 			select {
@@ -172,6 +170,7 @@ func subscribe(ctx context.Context, subscriptionCancelFn context.CancelFunc, con
 					unsubscribe(subscriptionCancelFn, subscriber)
 					return
 				}
+
 				if err := sendMessage(r); err != nil {
 					if err == websocket.ErrCloseSent {
 						unsubscribe(subscriptionCancelFn, subscriber)
