@@ -79,10 +79,38 @@ func Do(ctx context.Context, sensor *instana.Sensor, p graphql.Params) *graphql.
 	return instrument(ctx, sensor, &p, nil)
 }
 
+// Subscribe wraps the original graphql.Subscribe, traces the GraphQL query and returns the result of the original graphql.Subscribe
+func Subscribe(ctx context.Context, sensor *instana.Sensor, p graphql.Params) chan *graphql.Result {
+	originalCh := graphql.Subscribe(p)
+	ch := make(chan *graphql.Result, len(originalCh))
+
+	go func() {
+	loop:
+		for {
+			select {
+			case res, isOpen := <-originalCh:
+				if !isOpen {
+					close(ch)
+					break loop
+				}
+
+				_ = instrument(ctx, sensor, &p, res)
+
+				ch <- res
+
+			case <-ctx.Done():
+				break loop
+			}
+		}
+	}()
+
+	return ch
+}
+
 // ResultCallbackFn traces the GraphQL query and executes the original handler.ResultCallbackFn if fn is provided.
 func ResultCallbackFn(sensor *instana.Sensor, fn handler.ResultCallbackFn) handler.ResultCallbackFn {
 	return func(ctx context.Context, p *graphql.Params, res *graphql.Result, responseBody []byte) {
-		instrument(ctx, sensor, p, res)
+		_ = instrument(ctx, sensor, p, res)
 
 		if fn != nil {
 			fn(ctx, p, res, responseBody)

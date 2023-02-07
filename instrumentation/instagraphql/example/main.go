@@ -62,13 +62,22 @@ curl -X POST \
 http://localhost:9191/graphql | jq
 */
 
+var (
+	sensor      *instana.Sensor
+	withHandler bool
+)
+
+func init() {
+	sensor = instana.NewSensor("go-graphql-test")
+}
+
 type payload struct {
 	Query         string `json:"query"`
 	OperationName string `json:"operationName"`
 	Variables     string `json:"variables"`
 }
 
-func handleGraphQLQuery(schema graphql.Schema, sensor *instana.Sensor) http.HandlerFunc {
+func handleGraphQLQuery(schema graphql.Schema) http.HandlerFunc {
 	fn := func(w http.ResponseWriter, req *http.Request) {
 		var query string
 
@@ -119,13 +128,9 @@ func handleGraphQLQuery(schema graphql.Schema, sensor *instana.Sensor) http.Hand
 	return instana.TracingHandlerFunc(sensor, "/graphql", fn)
 }
 
-var withHandler bool
-
 func main() {
 	flag.BoolVar(&withHandler, "handler", false, "enables the built-in handler from the graphql API")
 	flag.Parse()
-
-	sensor := instana.NewSensor("go-graphql-test")
 
 	dt, err := loadData()
 
@@ -165,7 +170,7 @@ func main() {
 		http.Handle("/graphql", h)
 		http.HandleFunc("/subscriptions", SubsHandlerWithSchema(schema))
 	} else {
-		http.HandleFunc("/graphql", handleGraphQLQuery(schema, sensor))
+		http.HandleFunc("/graphql", handleGraphQLQuery(schema))
 	}
 
 	fmt.Println("Starting app with graphql handler:", withHandler)

@@ -13,6 +13,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 	"github.com/graphql-go/graphql"
+	"github.com/instana/go-sensor/instrumentation/instagraphql"
 )
 
 var upgrader = websocket.Upgrader{
@@ -44,6 +45,7 @@ func SubsHandlerWithSchema(schema graphql.Schema) http.HandlerFunc {
 		connectionACK, err := json.Marshal(map[string]string{
 			"type": "connection_ack",
 		})
+
 		if err != nil {
 			log.Printf("failed to marshal ws connection ack: %v", err)
 			w.WriteHeader(http.StatusInternalServerError)
@@ -56,13 +58,14 @@ func SubsHandlerWithSchema(schema graphql.Schema) http.HandlerFunc {
 			return
 		}
 
-		go handleSubscription(conn, schema)
+		go handleSubscription(r.Context(), conn, schema)
 	}
 }
 
-func handleSubscription(conn *websocket.Conn, schema graphql.Schema) {
+func handleSubscription(ctx context.Context, conn *websocket.Conn, schema graphql.Schema) {
 	var subscriber *Subscriber
 	subscriptionCtx, subscriptionCancelFn := context.WithCancel(context.Background())
+	// subscriptionCtx, subscriptionCancelFn := context.WithCancel(ctx)
 
 	handleClosedConnection := func() {
 		log.Println("[SubscriptionsHandler] subscriber closed connection")
@@ -155,7 +158,8 @@ func subscribe(ctx context.Context, subscriptionCancelFn context.CancelFunc, con
 			Schema:        schema,
 		}
 
-		subscribeChannel := graphql.Subscribe(subscribeParams)
+		subscribeChannel := instagraphql.Subscribe(ctx, sensor, subscribeParams)
+		// subscribeChannel := graphql.Subscribe(subscribeParams)
 
 		for {
 			select {
