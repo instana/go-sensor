@@ -2,7 +2,11 @@
 
 package main
 
-import "github.com/graphql-go/graphql"
+import (
+	"errors"
+
+	"github.com/graphql-go/graphql"
+)
 
 var characterType = graphql.NewObject(graphql.ObjectConfig{
 	Name: "Character",
@@ -23,7 +27,7 @@ var shipType = graphql.NewObject(graphql.ObjectConfig{
 	},
 })
 
-func queriesWithoutResolve() graphql.Fields {
+func queries(dt *data) graphql.Fields {
 	fields := graphql.Fields{
 		"characters": &graphql.Field{
 			Args: graphql.FieldConfigArgument{
@@ -32,6 +36,13 @@ func queriesWithoutResolve() graphql.Fields {
 				},
 			},
 			Type: &graphql.List{OfType: characterType},
+			Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				if id, ok := p.Args["id"].(int); ok {
+					return []*character{dt.findChar(id)}, nil
+				}
+
+				return dt.Chars, nil
+			},
 		},
 		"ships": &graphql.Field{
 			Args: graphql.FieldConfigArgument{
@@ -42,13 +53,20 @@ func queriesWithoutResolve() graphql.Fields {
 			Type: &graphql.List{
 				OfType: shipType,
 			},
+			Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				if id, ok := p.Args["id"].(int); ok {
+					return []*ship{dt.findShip(id)}, nil
+				}
+
+				return dt.Ships, nil
+			},
 		},
 	}
 
 	return fields
 }
 
-func mutationsWithoutResolve() graphql.Fields {
+func mutations(dt *data) graphql.Fields {
 	fields := graphql.Fields{
 		"insertCharacter": &graphql.Field{
 			Name: "InsertCharacter",
@@ -64,6 +82,32 @@ func mutationsWithoutResolve() graphql.Fields {
 					Type: graphql.Boolean,
 				},
 			},
+			Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				var name, profession string
+				var ok, crewMember bool
+
+				if name, ok = p.Args["name"].(string); !ok {
+					return nil, errors.New("name not found")
+				}
+
+				if profession, ok = p.Args["profession"].(string); !ok {
+					return nil, errors.New("profession not found")
+				}
+
+				if crewMember, ok = p.Args["crewMember"].(bool); !ok {
+					return nil, errors.New("crewMember not found")
+				}
+
+				c := character{
+					Name:       name,
+					Profession: profession,
+					CrewMember: crewMember,
+				}
+
+				dt.addChar(c)
+
+				return c, nil
+			},
 		},
 
 		"insertShip": &graphql.Field{
@@ -76,6 +120,27 @@ func mutationsWithoutResolve() graphql.Fields {
 				"origin": &graphql.ArgumentConfig{
 					Type: graphql.String,
 				},
+			},
+			Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				var name, origin string
+				var ok bool
+
+				if name, ok = p.Args["name"].(string); !ok {
+					return nil, errors.New("name not found")
+				}
+
+				if origin, ok = p.Args["origin"].(string); !ok {
+					return nil, errors.New("origin not found")
+				}
+
+				s := ship{
+					Name:   name,
+					Origin: origin,
+				}
+
+				dt.addShip(s)
+
+				return s, nil
 			},
 		},
 	}

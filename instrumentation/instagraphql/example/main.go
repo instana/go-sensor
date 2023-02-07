@@ -3,14 +3,17 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
-	"errors"
+	"flag"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
 
 	"github.com/graphql-go/graphql"
+	"github.com/graphql-go/handler"
 	instana "github.com/instana/go-sensor"
 	"github.com/instana/go-sensor/instrumentation/instagraphql"
 )
@@ -27,7 +30,7 @@ http://localhost:9191/graphql | jq
 curl -X POST \
 -H "Content-Type: application/json" \
 -d '{"query": "{ characters {id name profession crewMember} }"}' \
-http://localhost:9191/graphql
+http://localhost:9191/graphql | jq
 */
 
 /*
@@ -117,7 +120,12 @@ func handleGraphQLQuery(schema graphql.Schema, sensor *instana.Sensor) http.Hand
 	return instana.TracingHandlerFunc(sensor, "/graphql", fn)
 }
 
+var withHandler bool
+
 func main() {
+	flag.BoolVar(&withHandler, "handler", false, "enables the built-in handler from the graphql API")
+	flag.Parse()
+
 	sensor := instana.NewSensor("go-graphql-test")
 
 	dt, err := loadData()
@@ -127,74 +135,8 @@ func main() {
 	}
 
 	// Schema
-	qFields := queriesWithoutResolve()
-
-	qFields["characters"].Resolve = func(p graphql.ResolveParams) (interface{}, error) {
-		if id, ok := p.Args["id"].(int); ok {
-			return []*character{dt.findChar(id)}, nil
-		}
-
-		return dt.Chars, nil
-	}
-
-	qFields["ships"].Resolve = func(p graphql.ResolveParams) (interface{}, error) {
-		if id, ok := p.Args["id"].(int); ok {
-			return []*ship{dt.findShip(id)}, nil
-		}
-
-		return dt.Ships, nil
-	}
-
-	mFields := mutationsWithoutResolve()
-
-	mFields["insertCharacter"].Resolve = func(p graphql.ResolveParams) (interface{}, error) {
-		var name, profession string
-		var ok, crewMember bool
-
-		if name, ok = p.Args["name"].(string); !ok {
-			return nil, errors.New("name not found")
-		}
-
-		if profession, ok = p.Args["profession"].(string); !ok {
-			return nil, errors.New("profession not found")
-		}
-
-		if crewMember, ok = p.Args["crewMember"].(bool); !ok {
-			return nil, errors.New("crewMember not found")
-		}
-
-		c := character{
-			Name:       name,
-			Profession: profession,
-			CrewMember: crewMember,
-		}
-
-		dt.addChar(c)
-
-		return c, nil
-	}
-
-	mFields["insertShip"].Resolve = func(p graphql.ResolveParams) (interface{}, error) {
-		var name, origin string
-		var ok bool
-
-		if name, ok = p.Args["name"].(string); !ok {
-			return nil, errors.New("name not found")
-		}
-
-		if origin, ok = p.Args["origin"].(string); !ok {
-			return nil, errors.New("origin not found")
-		}
-
-		s := ship{
-			Name:   name,
-			Origin: origin,
-		}
-
-		dt.addShip(s)
-
-		return s, nil
-	}
+	qFields := queries(dt)
+	mFields := mutations(dt)
 
 	rootQuery := graphql.ObjectConfig{Name: "RootQuery", Fields: qFields}
 	rootMutation := graphql.ObjectConfig{Name: "RootMutation", Fields: mFields}
@@ -208,7 +150,24 @@ func main() {
 		log.Fatalf("failed to create new schema, error: %v", err)
 	}
 
-	http.HandleFunc("/graphql", handleGraphQLQuery(schema, sensor))
+	if withHandler {
+		var fn handler.ResultCallbackFn = func(ctx context.Context, params *graphql.Params, result *graphql.Result, responseBody []byte) {
+			fmt.Println("I am the original callback function")
+		}
+
+		h := handler.New(&handler.Config{
+			Schema:           &schema,
+			Pretty:           true,
+			GraphiQL:         true,
+			ResultCallbackFn: instagraphql.ResultCallbackFn(sensor, fn),
+		})
+
+		http.Handle("/graphql", h)
+	} else {
+		http.HandleFunc("/graphql", handleGraphQLQuery(schema, sensor))
+	}
+
+	fmt.Println("Starting app with graphql handler:", withHandler)
 
 	if err := http.ListenAndServe("0.0.0.0:9191", nil); err != nil {
 		log.Fatal(err)
