@@ -10,6 +10,7 @@ import (
 	"github.com/graphql-go/handler"
 	instana "github.com/instana/go-sensor"
 	ot "github.com/opentracing/opentracing-go"
+	"github.com/opentracing/opentracing-go/ext"
 	otlog "github.com/opentracing/opentracing-go/log"
 )
 
@@ -22,7 +23,7 @@ func removeHTTPTags(sp ot.Span) {
 	sp.SetTag("http.header", nil)
 }
 
-func instrument(ctx context.Context, sensor *instana.Sensor, p *graphql.Params, res *graphql.Result) *graphql.Result {
+func instrument(ctx context.Context, sensor *instana.Sensor, p *graphql.Params, res *graphql.Result, isSubscribe bool) *graphql.Result {
 	var sp ot.Span
 	var ok bool
 
@@ -34,7 +35,16 @@ func instrument(ctx context.Context, sensor *instana.Sensor, p *graphql.Params, 
 		removeHTTPTags(sp)
 	} else {
 		t := sensor.Tracer()
-		sp = t.StartSpan("graphql.server")
+
+		if isSubscribe {
+			opts := []ot.StartSpanOption{
+				ext.SpanKindRPCClient,
+			}
+
+			sp = t.StartSpan("graphql.client", opts...)
+		} else {
+			sp = t.StartSpan("graphql.server")
+		}
 
 		// The GraphQL span is supposed to always be related to an HTTP parent span.
 		// If for whatever reason there was not a parent HTTP span, we finish the GraphQL span.
@@ -76,7 +86,7 @@ func instrument(ctx context.Context, sensor *instana.Sensor, p *graphql.Params, 
 
 // Do wraps the original graphql.Do, traces the GraphQL query and returns the result of the original graphql.Do
 func Do(ctx context.Context, sensor *instana.Sensor, p graphql.Params) *graphql.Result {
-	return instrument(ctx, sensor, &p, nil)
+	return instrument(ctx, sensor, &p, nil, false)
 }
 
 // Subscribe wraps the original graphql.Subscribe, traces the GraphQL query and returns the result of the original graphql.Subscribe
@@ -94,7 +104,7 @@ func Subscribe(ctx context.Context, sensor *instana.Sensor, p graphql.Params) ch
 					break loop
 				}
 
-				_ = instrument(ctx, sensor, &p, res)
+				_ = instrument(ctx, sensor, &p, res, true)
 
 				ch <- res
 
@@ -110,7 +120,7 @@ func Subscribe(ctx context.Context, sensor *instana.Sensor, p graphql.Params) ch
 // ResultCallbackFn traces the GraphQL query and executes the original handler.ResultCallbackFn if fn is provided.
 func ResultCallbackFn(sensor *instana.Sensor, fn handler.ResultCallbackFn) handler.ResultCallbackFn {
 	return func(ctx context.Context, p *graphql.Params, res *graphql.Result, responseBody []byte) {
-		_ = instrument(ctx, sensor, p, res)
+		_ = instrument(ctx, sensor, p, res, false)
 
 		if fn != nil {
 			fn(ctx, p, res, responseBody)

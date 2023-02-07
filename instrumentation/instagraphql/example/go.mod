@@ -15,3 +15,5 @@ require (
 )
 
 replace github.com/instana/go-sensor/instrumentation/instagraphql => ../
+
+replace github.com/instana/go-sensor => ../../../

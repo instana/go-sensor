@@ -4,10 +4,11 @@ package main
 
 import (
 	"errors"
-	"time"
 
 	"github.com/graphql-go/graphql"
 )
+
+var chPool []chan interface{}
 
 var characterType = graphql.NewObject(graphql.ObjectConfig{
 	Name: "Character",
@@ -107,6 +108,14 @@ func mutations(dt *data) graphql.Fields {
 
 				dt.addChar(c)
 
+				for idx, ch := range chPool {
+					select {
+					case ch <- c:
+					default:
+						chPool = append(chPool[:idx], chPool[idx+1:]...)
+					}
+				}
+
 				return c, nil
 			},
 		},
@@ -159,28 +168,7 @@ func subscriptions(dt *data) graphql.Fields {
 			},
 			Subscribe: func(p graphql.ResolveParams) (interface{}, error) {
 				ch := make(chan interface{})
-
-				go func() {
-
-					for i := 0; i < 2; i++ {
-						time.Sleep(time.Second)
-
-						c := character{
-							Id:         999 + i,
-							Name:       "char from sub",
-							Profession: "shoemaker",
-							CrewMember: false,
-						}
-
-						select {
-						case <-p.Context.Done():
-							close(ch)
-							return
-						default:
-							ch <- c
-						}
-					}
-				}()
+				chPool = append(chPool, ch)
 
 				return ch, nil
 			},
