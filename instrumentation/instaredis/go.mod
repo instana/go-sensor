@@ -1,6 +1,6 @@
 module github.com/instana/go-sensor/instrumentation/instaredis
 
-go 1.17
+go 1.18
 
 require (
 	github.com/instana/go-sensor v1.49.0
