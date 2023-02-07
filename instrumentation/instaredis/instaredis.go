@@ -1,7 +1,7 @@
 // (c) Copyright IBM Corp. 2022
 
-//go:build go1.13
-// +build go1.13
+//go:build go1.17
+// +build go1.17
 
 package instaredis
 
