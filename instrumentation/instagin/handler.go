@@ -16,7 +16,7 @@ func AddMiddleware(sensor *instana.Sensor, engine *gin.Engine) {
 	f := middleware(sensor)
 	engine.Handlers = append([]gin.HandlerFunc{f}, engine.Handlers...)
 
-	// trigger engine.rebuild404Handlers and engine.rebuild405Handlers
+	// Trigger engine.rebuild404Handlers and engine.rebuild405Handlers
 	engine.Use()
 }
 
