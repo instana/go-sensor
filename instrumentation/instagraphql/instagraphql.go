@@ -23,9 +23,20 @@ func removeHTTPTags(sp ot.Span) {
 	sp.SetTag("http.header", nil)
 }
 
+var mutationSpans map[string]ot.Span = make(map[string]ot.Span)
+
 func instrument(ctx context.Context, sensor *instana.Sensor, p *graphql.Params, res *graphql.Result, isSubscribe bool) *graphql.Result {
 	var sp ot.Span
 	var ok bool
+
+	dt, err := parseQuery(p.RequestString)
+
+	if err != nil {
+		sp.SetTag("graphql.error", err.Error())
+		sp.LogFields(otlog.Object("error", err))
+
+		return res
+	}
 
 	if sp, ok = instana.SpanFromContext(ctx); ok {
 		// We repurpose the http span to become a GraphQL span. This way we trace only one entry span instead of two
@@ -40,35 +51,65 @@ func instrument(ctx context.Context, sensor *instana.Sensor, p *graphql.Params, 
 			opts := []ot.StartSpanOption{
 				ext.SpanKindRPCClient,
 			}
-
 			sp = t.StartSpan("graphql.client", opts...)
+
+			st := p.Schema.SubscriptionType().Fields()
+
+			var ps ot.Span
+
+			// The key of dt.fieldMap should match a key in st, which should give us the name of the type being "mutated".
+			// We will need this info to correlate the mutation to subscriptions.
+			for k := range dt.fieldMap {
+				if mutType, ok := st[k]; ok {
+					ps = mutationSpans[mutType.Type.Name()]
+					break
+				}
+			}
+
+			if ps != nil {
+				opts := []ot.StartSpanOption{
+					ext.SpanKindRPCClient,
+				}
+
+				opts = append(opts, ot.ChildOf(ps.Context()))
+
+				sp = ps.Tracer().StartSpan("graphql.client", opts...)
+				// defer sp.Finish()
+			}
+
 		} else {
 			sp = t.StartSpan("graphql.server")
 		}
 
-		// The GraphQL span is supposed to always be related to an HTTP parent span.
-		// If for whatever reason there was not a parent HTTP span, we finish the GraphQL span.
-		// Otherwise, we leave it to the HTTP span to be finished when done.
 		defer sp.Finish()
 	}
-
-	dt, err := parseQuery(p.RequestString)
 
 	if res == nil {
 		res = graphql.Do(*p)
 	}
 
-	if err != nil {
-		sp.SetTag("graphql.error", err.Error())
-		sp.LogFields(otlog.Object("error", err))
+	// if err != nil {
+	// 	sp.SetTag("graphql.error", err.Error())
+	// 	sp.LogFields(otlog.Object("error", err))
 
-		return res
-	}
+	// 	return res
+	// }
 
 	sp.SetTag("graphql.operationType", dt.opType)
 	sp.SetTag("graphql.operationName", dt.opName)
 	sp.SetTag("graphql.fields", dt.fieldMap)
 	sp.SetTag("graphql.args", dt.argMap)
+
+	if dt.opType == "mutation" {
+		mt := p.Schema.MutationType().Fields()
+
+		for k := range dt.fieldMap {
+			if mutType, ok := mt[k]; ok {
+				mutationSpans[mutType.Type.Name()] = sp
+				break
+			}
+		}
+	}
 
 	if len(res.Errors) > 0 {
 		var err []string
@@ -100,7 +141,7 @@ func Subscribe(ctx context.Context, sensor *instana.Sensor, p graphql.Params) ch
 			select {
 			case res, isOpen := <-originalCh:
 				if !isOpen {
-					close(ch)
+					// close(ch)
 					break loop
 				}
 
