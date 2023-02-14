@@ -132,6 +132,7 @@ type InstanaRedisClient interface {
 	Options() *redis.Options
 }
 
+// DialHook adds a middleware to the existing DialHook. This is required to satisfy Hook interface.
 func (h commandCaptureHook) DialHook(next redis.DialHook) redis.DialHook {
 	return func(ctx context.Context, network, addr string) (net.Conn, error) {
 		conn, err := next(ctx, network, addr)
@@ -139,6 +140,7 @@ func (h commandCaptureHook) DialHook(next redis.DialHook) redis.DialHook {
 	}
 }
 
+// ProcessHook adds an instrumentation middleware to the existing ProcessHook
 func (h commandCaptureHook) ProcessHook(next redis.ProcessHook) redis.ProcessHook {
 	return func(ctx context.Context, cmd redis.Cmder) error {
 		h.handleHook(ctx, cmd, []redis.Cmder{})
@@ -147,6 +149,7 @@ func (h commandCaptureHook) ProcessHook(next redis.ProcessHook) redis.ProcessHoo
 	}
 }
 
+// ProcessPipelineHook adds an instrumentation middleware to the existing ProcessPipelineHook
 func (h commandCaptureHook) ProcessPipelineHook(next redis.ProcessPipelineHook) redis.ProcessPipelineHook {
 	return func(ctx context.Context, cmds []redis.Cmder) error {
 		h.handleHook(ctx, nil, cmds)
