@@ -86,6 +86,10 @@ func TestRegisteredSpanType_ExtractData(t *testing.T) {
 			Operation: "graphql.server",
 			Expected:  instana.GraphQLSpanData{},
 		},
+		"graphql client": {
+			Operation: "graphql.client",
+			Expected:  instana.GraphQLSpanData{},
+		},
 	}
 
 	for name, example := range examples {
