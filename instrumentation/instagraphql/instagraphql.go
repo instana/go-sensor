@@ -23,11 +23,27 @@ func removeHTTPTags(sp ot.Span) {
 	sp.SetTag("http.header", nil)
 }
 
-var mutationSpans map[string]ot.Span = make(map[string]ot.Span)
+// mutationSpans is a map of spans originated from mutations where the key is the object type name set in the schema.
+// Example for the key "Character":
+//
+//	var characterType = graphql.NewObject(graphql.ObjectConfig{
+//		Name: "Character",
+//		Fields: ...
+//	})
+//
+// This is our best guess at linking a mutation to a subscription, as they are by no means related via anything else.
+// There will be also an obvious chance that a mutation is not the original parent of subscriptions, as we keep track
+// of only one mutation (parent span) per type. But technically, this should not be an issue, as the mutation will still
+// refer to the same type.
+var mutationSpans = make(map[string]ot.Span)
 
 func instrument(ctx context.Context, sensor *instana.Sensor, p *graphql.Params, res *graphql.Result, isSubscribe bool) *graphql.Result {
 	var sp ot.Span
 	var ok bool
+
+	if res == nil {
+		res = graphql.Do(*p)
+	}
 
 	dt, err := parseQuery(p.RequestString)
 
@@ -51,6 +67,7 @@ func instrument(ctx context.Context, sensor *instana.Sensor, p *graphql.Params, 
 			opts := []ot.StartSpanOption{
 				ext.SpanKindRPCClient,
 			}
+
 			sp = t.StartSpan("graphql.client", opts...)
 
 			st := p.Schema.SubscriptionType().Fields()
@@ -74,7 +91,6 @@ func instrument(ctx context.Context, sensor *instana.Sensor, p *graphql.Params, 
 				opts = append(opts, ot.ChildOf(ps.Context()))
 
 				sp = ps.Tracer().StartSpan("graphql.client", opts...)
-				// defer sp.Finish()
 			}
 
 		} else {
@@ -83,17 +99,6 @@ func instrument(ctx context.Context, sensor *instana.Sensor, p *graphql.Params, 
 
 		defer sp.Finish()
 	}
-
-	if res == nil {
-		res = graphql.Do(*p)
-	}
-
-	// if err != nil {
-	// 	sp.SetTag("graphql.error", err.Error())
-	// 	sp.LogFields(otlog.Object("error", err))
-
-	// 	return res
-	// }
 
 	sp.SetTag("graphql.operationType", dt.opType)
 	sp.SetTag("graphql.operationName", dt.opName)
