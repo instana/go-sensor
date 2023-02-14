@@ -58,6 +58,8 @@ const (
 	AzureFunctionType = RegisteredSpanType("azf")
 	// GraphQL server span
 	GraphQLServerType = RegisteredSpanType("graphql.server")
+	// GraphQL client span
+	GraphQLClientType = RegisteredSpanType("graphql.client")
 )
 
 // RegisteredSpanType represents the span type supported by Instana
@@ -100,7 +102,7 @@ func (st RegisteredSpanType) extractData(span *spanS) typedSpanData {
 		return newRabbitMQSpanData(span)
 	case AzureFunctionType:
 		return newAZFSpanData(span)
-	case GraphQLServerType:
+	case GraphQLServerType, GraphQLClientType:
 		return newGraphQLSpanData(span)
 	default:
 		return newSDKSpanData(span)
@@ -268,7 +270,7 @@ func (st RegisteredSpanType) TagsNames() map[string]struct{} {
 			"azf.runtime":      yes,
 			"azf.error":        yes,
 		}
-	case GraphQLServerType:
+	case GraphQLServerType, GraphQLClientType:
 		return map[string]struct{}{
 			"graphql.operationName": yes,
 			"graphql.operationType": yes,
