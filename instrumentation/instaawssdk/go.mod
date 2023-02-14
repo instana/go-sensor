@@ -3,7 +3,7 @@ module github.com/instana/go-sensor/instrumentation/instaawssdk
 go 1.13
 
 require (
-	github.com/aws/aws-sdk-go v1.33.0
+	github.com/aws/aws-sdk-go v1.34.0
 	github.com/instana/go-sensor v1.49.0
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/kr/pretty v0.1.0 // indirect
