@@ -36,5 +36,5 @@ See the [`instaredis` package documentation][godoc] for detailed examples.
 
 
 [godoc]: https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instaredis/v2
-[instaredis.WrapClient]: https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instaredis#WrapClient
-[instaredis.WrapClusterClient]: https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instaredis#WrapClusterClient
+[instaredis.WrapClient]: https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instaredis/v2#WrapClient
+[instaredis.WrapClusterClient]: https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instaredis/v2#WrapClusterClient
