@@ -8,7 +8,7 @@ import (
 	"github.com/graphql-go/graphql"
 )
 
-var chPool []chan interface{}
+var chPool = make(map[string][]chan interface{})
 
 var characterType = graphql.NewObject(graphql.ObjectConfig{
 	Name: "Character",
@@ -108,11 +108,13 @@ func mutations(dt *data) graphql.Fields {
 
 				dt.addChar(c)
 
-				for idx, ch := range chPool {
+				cName := characterType.Name()
+
+				for idx, ch := range chPool[cName] {
 					select {
 					case ch <- c:
 					default:
-						chPool = append(chPool[:idx], chPool[idx+1:]...)
+						chPool[cName] = append(chPool[cName][:idx], chPool[cName][idx+1:]...)
 					}
 				}
 
@@ -150,6 +152,16 @@ func mutations(dt *data) graphql.Fields {
 
 				dt.addShip(s)
 
+				sName := shipType.Name()
+
+				for idx, ch := range chPool[sName] {
+					select {
+					case ch <- s:
+					default:
+						chPool[sName] = append(chPool[sName][:idx], chPool[sName][idx+1:]...)
+					}
+				}
+
 				return s, nil
 			},
 		},
@@ -168,7 +180,24 @@ func subscriptions(dt *data) graphql.Fields {
 			},
 			Subscribe: func(p graphql.ResolveParams) (interface{}, error) {
 				ch := make(chan interface{})
-				chPool = append(chPool, ch)
+				cName := characterType.Name()
+
+				chPool[cName] = append(chPool[cName], ch)
+
+				return ch, nil
+			},
+		},
+		"newShipSubscription": &graphql.Field{
+			Name: "ship",
+			Type: shipType,
+			Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				return p.Source, nil
+			},
+			Subscribe: func(p graphql.ResolveParams) (interface{}, error) {
+				ch := make(chan interface{})
+				sName := shipType.Name()
+
+				chPool[sName] = append(chPool[sName], ch)
 
 				return ch, nil
 			},
