@@ -41,12 +41,84 @@ func removeHTTPTags(sp ot.Span) {
 // refer to the same type.
 var mutationSpans = make(map[string]ot.Span)
 
-func instrument(ctx context.Context, sensor *instana.Sensor, p *graphql.Params, res *graphql.Result, isSubscribe bool) *graphql.Result {
+func instrumentCallback(ctx context.Context, sensor *instana.Sensor, p *graphql.Params, res *graphql.Result) {
 	var sp ot.Span
 	var ok bool
 
-	if res == nil {
-		res = graphql.Do(*p)
+	if sp, ok = instana.SpanFromContext(ctx); ok {
+		// We repurpose the http span to become a GraphQL span. This way we trace only one entry span instead of two
+		sp.SetOperationName("graphql.server")
+
+		// Remove http tags from the span to guarantee that the repurposed span will behave accordingly
+		removeHTTPTags(sp)
+	} else {
+		sp = sensor.Tracer().StartSpan("graphql.server")
+		defer sp.Finish()
+	}
+
+	dt, err := parseQuery(p.RequestString)
+
+	if err != nil {
+		sp.SetTag("graphql.error", err.Error())
+		sp.LogFields(otlog.Object("error", err))
+		return
+	}
+
+	sp.SetTag("graphql.operationType", dt.opType)
+	sp.SetTag("graphql.operationName", dt.opName)
+	sp.SetTag("graphql.fields", dt.fieldMap)
+	sp.SetTag("graphql.args", dt.argMap)
+
+	if dt.opType == "mutation" {
+		mt := p.Schema.MutationType().Fields()
+
+		for k := range dt.fieldMap {
+			if mutType, ok := mt[k]; ok {
+				mu.Lock()
+				mutationSpans[mutType.Type.Name()] = sp
+				mu.Unlock()
+
+				// cleanup the map after one second
+				go func(n string) {
+					time.Sleep(time.Second)
+
+					mu.Lock()
+					delete(mutationSpans, n)
+					mu.Unlock()
+				}(mutType.Type.Name())
+
+				break
+			}
+		}
+	}
+
+	if len(res.Errors) > 0 {
+		var err []string
+
+		for _, e := range res.Errors {
+			err = append(err, e.Error())
+		}
+
+		sp.SetTag("graphql.error", strings.Join(err, ", "))
+		sp.LogFields(otlog.Object("error", err))
+	}
+}
+
+func instrumentDo(ctx context.Context, sensor *instana.Sensor, p *graphql.Params) *graphql.Result {
+	var sp ot.Span
+	var ok bool
+
+	res := graphql.Do(*p)
+
+	if sp, ok = instana.SpanFromContext(ctx); ok {
+		// We repurpose the http span to become a GraphQL span. This way we trace only one entry span instead of two
+		sp.SetOperationName("graphql.server")
+
+		// Remove http tags from the span to guarantee that the repurposed span will behave accordingly
+		removeHTTPTags(sp)
+	} else {
+		sp = sensor.Tracer().StartSpan("graphql.server")
+		defer sp.Finish()
 	}
 
 	dt, err := parseQuery(p.RequestString)
@@ -56,66 +128,6 @@ func instrument(ctx context.Context, sensor *instana.Sensor, p *graphql.Params, 
 		sp.LogFields(otlog.Object("error", err))
 
 		return res
-	}
-
-	if sp, ok = instana.SpanFromContext(ctx); ok {
-		// We repurpose the http span to become a GraphQL span. This way we trace only one entry span instead of two
-		sp.SetOperationName("graphql.server")
-
-		// Remove http tags from the span to guarantee that the repurposed span will behave accordingly
-		removeHTTPTags(sp)
-	} else {
-		t := sensor.Tracer()
-
-		if !isSubscribe {
-			sp = t.StartSpan("graphql.server")
-		} else {
-			opts := []ot.StartSpanOption{
-				ext.SpanKindRPCClient,
-			}
-
-			sp = t.StartSpan("graphql.client", opts...)
-
-			st := p.Schema.SubscriptionType().Fields()
-
-			var ps ot.Span
-
-			// The key of dt.fieldMap should match a key in st, which should give us the name of the type being "mutated".
-			// We will need this info to correlate the mutation to subscriptions.
-			var mutKey string
-			for k := range dt.fieldMap {
-				if mutType, ok := st[k]; ok {
-					mutKey = mutType.Type.Name()
-					break
-				}
-			}
-
-			if mutKey != "" {
-				// We lookup for a matching key in mutationSpan for a few millisencods.
-				// This is needed because the subscription runs in a go routine and may be triggered before the mutationSpans
-				// map received a reference to the mutation span
-				for i := 0; i < 3; i++ {
-					time.Sleep(time.Millisecond * 1)
-					mu.RLock()
-					ps = mutationSpans[mutKey]
-					mu.RUnlock()
-					if ps != nil {
-						break
-					}
-				}
-			}
-
-			if ps != nil {
-				opts := []ot.StartSpanOption{
-					ext.SpanKindRPCClient,
-				}
-
-				opts = append(opts, ot.ChildOf(ps.Context()))
-				sp = ps.Tracer().StartSpan("graphql.client", opts...)
-			}
-		}
-
-		defer sp.Finish()
 	}
 
 	sp.SetTag("graphql.operationType", dt.opType)
@@ -160,9 +172,84 @@ func instrument(ctx context.Context, sensor *instana.Sensor, p *graphql.Params, 
 	return res
 }
 
+func instrumentSubscription(sensor *instana.Sensor, p *graphql.Params, res *graphql.Result) {
+	var sp, ps ot.Span
+
+	dt, err := parseQuery(p.RequestString)
+
+	if err != nil {
+		sp.SetTag("graphql.error", err.Error())
+		sp.LogFields(otlog.Object("error", err))
+		sp.Finish()
+		return
+	}
+
+	t := sensor.Tracer()
+
+	opts := []ot.StartSpanOption{
+		ext.SpanKindRPCClient,
+	}
+
+	sp = t.StartSpan("graphql.client", opts...)
+
+	subFields := p.Schema.SubscriptionType().Fields()
+
+	// The key of dt.fieldMap should match a key in st, which should give us the name of the type being "mutated".
+	// We will need this info to correlate the mutation to subscriptions.
+	var mutKey string
+	for k := range dt.fieldMap {
+		if mutType, ok := subFields[k]; ok {
+			mutKey = mutType.Type.Name()
+			break
+		}
+	}
+
+	if mutKey != "" {
+		// We lookup for a matching key in mutationSpan for a few millisencods.
+		// This is needed because the subscription runs in a go routine and may be triggered before the mutationSpans
+		// map received a reference to the mutation span
+		for i := 0; i < 3; i++ {
+			time.Sleep(time.Millisecond * 1)
+			mu.RLock()
+			ps = mutationSpans[mutKey]
+			mu.RUnlock()
+			if ps != nil {
+				break
+			}
+		}
+	}
+
+	if ps != nil {
+		opts := []ot.StartSpanOption{
+			ext.SpanKindRPCClient,
+		}
+
+		opts = append(opts, ot.ChildOf(ps.Context()))
+		sp = ps.Tracer().StartSpan("graphql.client", opts...)
+	}
+
+	sp.SetTag("graphql.operationType", dt.opType)
+	sp.SetTag("graphql.operationName", dt.opName)
+	sp.SetTag("graphql.fields", dt.fieldMap)
+	sp.SetTag("graphql.args", dt.argMap)
+
+	if len(res.Errors) > 0 {
+		var err []string
+
+		for _, e := range res.Errors {
+			err = append(err, e.Error())
+		}
+
+		sp.SetTag("graphql.error", strings.Join(err, ", "))
+		sp.LogFields(otlog.Object("error", err))
+	}
+
+	sp.Finish()
+}
+
 // Do wraps the original graphql.Do, traces the GraphQL query and returns the result of the original graphql.Do
 func Do(ctx context.Context, sensor *instana.Sensor, p graphql.Params) *graphql.Result {
-	return instrument(ctx, sensor, &p, nil, false)
+	return instrumentDo(ctx, sensor, &p)
 }
 
 // Subscribe wraps the original graphql.Subscribe, traces the GraphQL query and returns the result of the original graphql.Subscribe
@@ -179,7 +266,7 @@ func Subscribe(ctx context.Context, sensor *instana.Sensor, p graphql.Params) ch
 					break loop
 				}
 
-				_ = instrument(ctx, sensor, &p, res, true)
+				instrumentSubscription(sensor, &p, res)
 
 				ch <- res
 
@@ -195,7 +282,7 @@ func Subscribe(ctx context.Context, sensor *instana.Sensor, p graphql.Params) ch
 // ResultCallbackFn traces the GraphQL query and executes the original handler.ResultCallbackFn if fn is provided.
 func ResultCallbackFn(sensor *instana.Sensor, fn handler.ResultCallbackFn) handler.ResultCallbackFn {
 	return func(ctx context.Context, p *graphql.Params, res *graphql.Result, responseBody []byte) {
-		_ = instrument(ctx, sensor, p, res, false)
+		instrumentCallback(ctx, sensor, p, res)
 
 		if fn != nil {
 			fn(ctx, p, res, responseBody)

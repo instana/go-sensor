@@ -108,9 +108,7 @@ func mutations(dt *data) graphql.Fields {
 
 				dt.addChar(c)
 
-				cName := characterType.Name()
-
-				pool.pub(cName, c)
+				pool.pub(characterType.Name(), c)
 
 				return c, nil
 			},
@@ -146,9 +144,7 @@ func mutations(dt *data) graphql.Fields {
 
 				dt.addShip(s)
 
-				sName := shipType.Name()
-
-				pool.pub(sName, s)
+				pool.pub(shipType.Name(), s)
 
 				return s, nil
 			},
@@ -168,9 +164,7 @@ func subscriptions(dt *data) graphql.Fields {
 			},
 			Subscribe: func(p graphql.ResolveParams) (interface{}, error) {
 				ch := make(chan interface{})
-				cName := characterType.Name()
-
-				pool.sub(cName, ch)
+				pool.sub(characterType.Name(), ch)
 
 				return ch, nil
 			},
@@ -183,9 +177,7 @@ func subscriptions(dt *data) graphql.Fields {
 			},
 			Subscribe: func(p graphql.ResolveParams) (interface{}, error) {
 				ch := make(chan interface{})
-				sName := shipType.Name()
-
-				pool.sub(sName, ch)
+				pool.sub(shipType.Name(), ch)
 
 				return ch, nil
 			},
