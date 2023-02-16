@@ -4,6 +4,8 @@ package instagraphql_test
 
 import "sync"
 
+// pubsub is a basic Pub Sub implementation that helps test GraphQL's subscription.
+// its existence is not relevant for the instrumentation, but helpful for tests and mocks
 type pubsub struct {
 	sync.Mutex
 	pool map[string][]chan interface{}

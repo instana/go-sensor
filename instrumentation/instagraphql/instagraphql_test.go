@@ -452,6 +452,51 @@ func TestGraphQLWithSubscription(t *testing.T) {
 	assertSample(t, subSample, data)
 }
 
+func TestGraphQLQueryParseError(t *testing.T) {
+	recorder := instana.NewTestRecorder()
+	sensor := instana.NewSensorWithTracer(
+		instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder),
+	)
+
+	schema, err := getSchema(false)
+
+	if err != nil {
+		log.Fatalf("failed to create new schema, error: %v", err)
+	}
+
+	sample := sampleData{
+		query: `query myBrokenQuery {
+			someField
+		`,
+		hasError:  true,
+		spanCount: 2,
+		spanKind:  instana.EntrySpanKind,
+		opName:    "",
+		opType:    "",
+		fields:    nil,
+		args:      nil,
+	}
+
+	params := graphql.Params{Schema: schema, RequestString: sample.query}
+
+	instagraphql.Do(context.Background(), sensor, params)
+
+	var spans []instana.Span
+
+	assert.Eventually(t, func() bool {
+		return recorder.QueuedSpansCount() == sample.spanCount
+	}, time.Second*2, time.Millisecond*500)
+
+	spans = recorder.GetQueuedSpans()
+	assert.Len(t, spans, sample.spanCount)
+
+	require.IsType(t, instana.GraphQLSpanData{}, spans[0].Data)
+
+	data := spans[0].Data.(instana.GraphQLSpanData)
+
+	assertSample(t, sample, data)
+}
+
 type alwaysReadyClient struct{}
 
 func (alwaysReadyClient) Ready() bool                                       { return true }

@@ -129,20 +129,20 @@ func instrumentDo(ctx context.Context, sensor *instana.Sensor, p *graphql.Params
 		defer sp.Finish()
 	}
 
-	res := graphql.Do(*p)
-
 	dt, err := parseQuery(p.RequestString)
 
 	if err != nil {
 		sp.SetTag("graphql.error", err.Error())
 		sp.LogFields(otlog.Object("error", err))
 
-		return res
+		return graphql.Do(*p)
 	}
 
 	if dt.opType == "mutation" {
 		cacheMutationSpan(sp, dt, p)
 	}
+
+	res := graphql.Do(*p)
 
 	feedTags(sp, dt, res)
 
