@@ -27,6 +27,62 @@ func removeHTTPTags(sp ot.Span) {
 	sp.SetTag("http.header", nil)
 }
 
+func feedTags(sp ot.Span, dt *gqlData, res *graphql.Result) {
+	sp.SetTag("graphql.operationType", dt.opType)
+	sp.SetTag("graphql.operationName", dt.opName)
+	sp.SetTag("graphql.fields", dt.fieldMap)
+	sp.SetTag("graphql.args", dt.argMap)
+
+	if len(res.Errors) > 0 {
+		var err []string
+
+		for _, e := range res.Errors {
+			err = append(err, e.Error())
+		}
+
+		sp.SetTag("graphql.error", strings.Join(err, ", "))
+		sp.LogFields(otlog.Object("error", err))
+	}
+}
+
+func cacheMutationSpan(sp ot.Span, dt *gqlData, p *graphql.Params) {
+	mt := p.Schema.MutationType().Fields()
+
+	for k := range dt.fieldMap {
+		if mutType, ok := mt[k]; ok {
+			mu.Lock()
+			mutationSpans[mutType.Type.Name()] = sp
+			mu.Unlock()
+
+			// cleanup the map after one second
+			go func(n string) {
+				time.Sleep(time.Second)
+
+				mu.Lock()
+				delete(mutationSpans, n)
+				mu.Unlock()
+			}(mutType.Type.Name())
+
+			break
+		}
+	}
+}
+
+func extractSpan(ctx context.Context, sensor *instana.Sensor) (span ot.Span, repurposed bool) {
+	if span, repurposed = instana.SpanFromContext(ctx); repurposed {
+		// We repurpose the http span to become a GraphQL span. This way we trace only one entry span instead of two
+		span.SetOperationName("graphql.server")
+
+		// Remove http tags from the span to guarantee that the repurposed span will behave accordingly
+		removeHTTPTags(span)
+	} else {
+		span = sensor.Tracer().StartSpan("graphql.server")
+		// defer sp.Finish()
+	}
+
+	return // span, repurposed
+}
+
 // mutationSpans is a map of spans originated from mutations where the key is the object type name set in the schema.
 // Example for the key "Character":
 //
@@ -43,16 +99,9 @@ var mutationSpans = make(map[string]ot.Span)
 
 func instrumentCallback(ctx context.Context, sensor *instana.Sensor, p *graphql.Params, res *graphql.Result) {
 	var sp ot.Span
-	var ok bool
+	var repurposed bool
 
-	if sp, ok = instana.SpanFromContext(ctx); ok {
-		// We repurpose the http span to become a GraphQL span. This way we trace only one entry span instead of two
-		sp.SetOperationName("graphql.server")
-
-		// Remove http tags from the span to guarantee that the repurposed span will behave accordingly
-		removeHTTPTags(sp)
-	} else {
-		sp = sensor.Tracer().StartSpan("graphql.server")
+	if sp, repurposed = extractSpan(ctx, sensor); !repurposed {
 		defer sp.Finish()
 	}
 
@@ -61,65 +110,26 @@ func instrumentCallback(ctx context.Context, sensor *instana.Sensor, p *graphql.
 	if err != nil {
 		sp.SetTag("graphql.error", err.Error())
 		sp.LogFields(otlog.Object("error", err))
+
 		return
 	}
 
-	sp.SetTag("graphql.operationType", dt.opType)
-	sp.SetTag("graphql.operationName", dt.opName)
-	sp.SetTag("graphql.fields", dt.fieldMap)
-	sp.SetTag("graphql.args", dt.argMap)
-
 	if dt.opType == "mutation" {
-		mt := p.Schema.MutationType().Fields()
-
-		for k := range dt.fieldMap {
-			if mutType, ok := mt[k]; ok {
-				mu.Lock()
-				mutationSpans[mutType.Type.Name()] = sp
-				mu.Unlock()
-
-				// cleanup the map after one second
-				go func(n string) {
-					time.Sleep(time.Second)
-
-					mu.Lock()
-					delete(mutationSpans, n)
-					mu.Unlock()
-				}(mutType.Type.Name())
-
-				break
-			}
-		}
+		cacheMutationSpan(sp, dt, p)
 	}
 
-	if len(res.Errors) > 0 {
-		var err []string
-
-		for _, e := range res.Errors {
-			err = append(err, e.Error())
-		}
-
-		sp.SetTag("graphql.error", strings.Join(err, ", "))
-		sp.LogFields(otlog.Object("error", err))
-	}
+	feedTags(sp, dt, res)
 }
 
 func instrumentDo(ctx context.Context, sensor *instana.Sensor, p *graphql.Params) *graphql.Result {
 	var sp ot.Span
-	var ok bool
+	var repurposed bool
 
-	res := graphql.Do(*p)
-
-	if sp, ok = instana.SpanFromContext(ctx); ok {
-		// We repurpose the http span to become a GraphQL span. This way we trace only one entry span instead of two
-		sp.SetOperationName("graphql.server")
-
-		// Remove http tags from the span to guarantee that the repurposed span will behave accordingly
-		removeHTTPTags(sp)
-	} else {
-		sp = sensor.Tracer().StartSpan("graphql.server")
+	if sp, repurposed = extractSpan(ctx, sensor); !repurposed {
 		defer sp.Finish()
 	}
+
+	res := graphql.Do(*p)
 
 	dt, err := parseQuery(p.RequestString)
 
@@ -130,44 +140,11 @@ func instrumentDo(ctx context.Context, sensor *instana.Sensor, p *graphql.Params
 		return res
 	}
 
-	sp.SetTag("graphql.operationType", dt.opType)
-	sp.SetTag("graphql.operationName", dt.opName)
-	sp.SetTag("graphql.fields", dt.fieldMap)
-	sp.SetTag("graphql.args", dt.argMap)
-
 	if dt.opType == "mutation" {
-		mt := p.Schema.MutationType().Fields()
-
-		for k := range dt.fieldMap {
-			if mutType, ok := mt[k]; ok {
-				mu.Lock()
-				mutationSpans[mutType.Type.Name()] = sp
-				mu.Unlock()
-
-				// cleanup the map after one second
-				go func(n string) {
-					time.Sleep(time.Second)
-
-					mu.Lock()
-					delete(mutationSpans, n)
-					mu.Unlock()
-				}(mutType.Type.Name())
-
-				break
-			}
-		}
+		cacheMutationSpan(sp, dt, p)
 	}
 
-	if len(res.Errors) > 0 {
-		var err []string
-
-		for _, e := range res.Errors {
-			err = append(err, e.Error())
-		}
-
-		sp.SetTag("graphql.error", strings.Join(err, ", "))
-		sp.LogFields(otlog.Object("error", err))
-	}
+	feedTags(sp, dt, res)
 
 	return res
 }
@@ -228,21 +205,7 @@ func instrumentSubscription(sensor *instana.Sensor, p *graphql.Params, res *grap
 		sp = ps.Tracer().StartSpan("graphql.client", opts...)
 	}
 
-	sp.SetTag("graphql.operationType", dt.opType)
-	sp.SetTag("graphql.operationName", dt.opName)
-	sp.SetTag("graphql.fields", dt.fieldMap)
-	sp.SetTag("graphql.args", dt.argMap)
-
-	if len(res.Errors) > 0 {
-		var err []string
-
-		for _, e := range res.Errors {
-			err = append(err, e.Error())
-		}
-
-		sp.SetTag("graphql.error", strings.Join(err, ", "))
-		sp.LogFields(otlog.Object("error", err))
-	}
+	feedTags(sp, dt, res)
 
 	sp.Finish()
 }
@@ -250,6 +213,17 @@ func instrumentSubscription(sensor *instana.Sensor, p *graphql.Params, res *grap
 // Do wraps the original graphql.Do, traces the GraphQL query and returns the result of the original graphql.Do
 func Do(ctx context.Context, sensor *instana.Sensor, p graphql.Params) *graphql.Result {
 	return instrumentDo(ctx, sensor, &p)
+}
+
+// ResultCallbackFn traces the GraphQL query and executes the original handler.ResultCallbackFn if fn is provided.
+func ResultCallbackFn(sensor *instana.Sensor, fn handler.ResultCallbackFn) handler.ResultCallbackFn {
+	return func(ctx context.Context, p *graphql.Params, res *graphql.Result, responseBody []byte) {
+		instrumentCallback(ctx, sensor, p, res)
+
+		if fn != nil {
+			fn(ctx, p, res, responseBody)
+		}
+	}
 }
 
 // Subscribe wraps the original graphql.Subscribe, traces the GraphQL query and returns the result of the original graphql.Subscribe
@@ -277,15 +251,4 @@ func Subscribe(ctx context.Context, sensor *instana.Sensor, p graphql.Params) ch
 	}()
 
 	return ch
-}
-
-// ResultCallbackFn traces the GraphQL query and executes the original handler.ResultCallbackFn if fn is provided.
-func ResultCallbackFn(sensor *instana.Sensor, fn handler.ResultCallbackFn) handler.ResultCallbackFn {
-	return func(ctx context.Context, p *graphql.Params, res *graphql.Result, responseBody []byte) {
-		instrumentCallback(ctx, sensor, p, res)
-
-		if fn != nil {
-			fn(ctx, p, res, responseBody)
-		}
-	}
 }
