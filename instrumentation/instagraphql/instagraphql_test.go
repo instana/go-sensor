@@ -27,6 +27,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+var pool = &pubsub{}
+
 type sampleData struct {
 	query     string
 	hasError  bool
@@ -121,13 +123,19 @@ func createField(name string, tp graphql.Output, resolveVal interface{}, args gr
 		Name: name,
 		Type: tp,
 		Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+
+			// if args is provided, we assume that it is a mutation
+			if args != nil {
+				pool.pub(tp.Name(), resolveVal)
+			}
+
 			return resolveVal, nil
 		},
 		Args: args,
 	}
 }
 
-func getSchema() (graphql.Schema, error) {
+func getSchema(hasSubscription bool) (graphql.Schema, error) {
 	qFields := graphql.Fields{
 		"aaa": createField("someString", graphql.String, "some string value", nil),
 		"row": createField("The row", rowType, row{1, "Row Name", true}, nil),
@@ -152,6 +160,29 @@ func getSchema() (graphql.Schema, error) {
 		Mutation: graphql.NewObject(rootMutation),
 	}
 
+	if hasSubscription {
+		sFields := graphql.Fields{
+			"newRowSubscription": &graphql.Field{
+				Name: "row",
+				Type: rowType,
+				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+					return p.Source, nil
+				},
+				Subscribe: func(p graphql.ResolveParams) (interface{}, error) {
+					ch := make(chan interface{})
+					rName := rowType.Name()
+
+					pool.sub(rName, ch)
+
+					return ch, nil
+				},
+			},
+		}
+
+		rootSubscription := graphql.ObjectConfig{Name: "RootSubscription", Fields: sFields}
+		schemaConfig.Subscription = graphql.NewObject(rootSubscription)
+	}
+
 	return graphql.NewSchema(schemaConfig)
 }
 
@@ -164,13 +195,13 @@ func assertSample(t *testing.T, sample sampleData, data instana.GraphQLSpanData)
 	assert.Equal(t, sample.args, data.Tags.Args)
 }
 
-func TestGraphQLServer(t *testing.T) {
+func TestGraphQLWithoutHTTP(t *testing.T) {
 	recorder := instana.NewTestRecorder()
 	sensor := instana.NewSensorWithTracer(
 		instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder),
 	)
 
-	schema, err := getSchema()
+	schema, err := getSchema(false)
 
 	if err != nil {
 		log.Fatalf("failed to create new schema, error: %v", err)
@@ -200,13 +231,13 @@ func TestGraphQLServer(t *testing.T) {
 	}
 }
 
-func TestGraphQLServerWithCustomHTTP(t *testing.T) {
+func TestGraphQLWithCustomHTTP(t *testing.T) {
 	recorder := instana.NewTestRecorder()
 	sensor := instana.NewSensorWithTracer(
 		instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder),
 	)
 
-	schema, err := getSchema()
+	schema, err := getSchema(false)
 
 	if err != nil {
 		log.Fatalf("failed to create new schema, error: %v", err)
@@ -268,13 +299,13 @@ func TestGraphQLServerWithCustomHTTP(t *testing.T) {
 		})
 	}
 }
-func TestGraphQLServerWithBuiltinHTTP(t *testing.T) {
+func TestGraphQLWithBuiltinHTTP(t *testing.T) {
 	recorder := instana.NewTestRecorder()
 	sensor := instana.NewSensorWithTracer(
 		instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder),
 	)
 
-	schema, err := getSchema()
+	schema, err := getSchema(false)
 
 	if err != nil {
 		log.Fatalf("failed to create new schema, error: %v", err)
@@ -319,6 +350,106 @@ func TestGraphQLServerWithBuiltinHTTP(t *testing.T) {
 			assertSample(t, sample, data)
 		})
 	}
+}
+
+func TestGraphQLWithSubscription(t *testing.T) {
+	recorder := instana.NewTestRecorder()
+	sensor := instana.NewSensorWithTracer(
+		instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder),
+	)
+
+	schema, err := getSchema(true)
+
+	if err != nil {
+		log.Fatalf("failed to create new schema, error: %v", err)
+	}
+
+	h := handler.New(&handler.Config{
+		Schema:           &schema,
+		Pretty:           true,
+		GraphiQL:         true,
+		ResultCallbackFn: instagraphql.ResultCallbackFn(sensor, nil),
+	})
+
+	srv := httptest.NewServer(h)
+
+	defer srv.Close()
+
+	mutSample := sampleData{
+		query: `mutation newRow {
+			insertRow(name: "row two", active: true) {
+				id
+				name
+				active
+			}
+		}`,
+		hasError:  false,
+		spanCount: 1,
+		spanKind:  instana.EntrySpanKind,
+		opName:    "newRow",
+		opType:    "mutation",
+		fields:    map[string][]string{"insertRow": {"id", "name", "active"}},
+		args:      map[string][]string{"insertRow": {"name", "active"}},
+	}
+
+	subSample := sampleData{
+		query: `subscription myRowSubs {
+			newRowSubscription {
+				name
+				active
+			}
+		}`,
+		hasError:  false,
+		spanCount: 1,
+		spanKind:  instana.ExitSpanKind,
+		opName:    "myRowSubs",
+		opType:    "subscription",
+		fields:    map[string][]string{"newRowSubscription": {"name", "active"}},
+		args:      map[string][]string{"newRowSubscription": []string(nil)},
+	}
+
+	go func() {
+		ctx := context.Background()
+		q := subSample.query
+
+		subscribeParams := graphql.Params{
+			Context:       ctx,
+			RequestString: q,
+			Schema:        schema,
+		}
+
+		instagraphql.Subscribe(ctx, sensor, subscribeParams)
+	}()
+
+	c := http.DefaultClient
+	r := bytes.NewReader([]byte(mutSample.queryAsJSON()))
+	req, _ := http.NewRequest(http.MethodPost, srv.URL, r)
+	c.Do(req)
+
+	var spans []instana.Span
+
+	assert.Eventually(t, func() bool {
+		return recorder.QueuedSpansCount() == 2
+	}, time.Second*2, time.Millisecond*500)
+
+	spans = recorder.GetQueuedSpans()
+	assert.Len(t, spans, 2)
+
+	var mutSpan, subSpan instana.Span
+
+	if spans[0].SpanID == spans[0].TraceID {
+		mutSpan, subSpan = spans[0], spans[1]
+	} else {
+		mutSpan, subSpan = spans[1], spans[0]
+	}
+
+	require.IsType(t, instana.GraphQLSpanData{}, mutSpan.Data)
+	data := mutSpan.Data.(instana.GraphQLSpanData)
+	assertSample(t, mutSample, data)
+
+	require.IsType(t, instana.GraphQLSpanData{}, subSpan.Data)
+	data = subSpan.Data.(instana.GraphQLSpanData)
+	assertSample(t, subSample, data)
 }
 
 type alwaysReadyClient struct{}

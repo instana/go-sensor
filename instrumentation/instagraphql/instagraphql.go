@@ -5,6 +5,8 @@ package instagraphql
 import (
 	"context"
 	"strings"
+	"sync"
+	"time"
 
 	"github.com/graphql-go/graphql"
 	"github.com/graphql-go/handler"
@@ -13,6 +15,8 @@ import (
 	"github.com/opentracing/opentracing-go/ext"
 	otlog "github.com/opentracing/opentracing-go/log"
 )
+
+var mu sync.RWMutex
 
 func removeHTTPTags(sp ot.Span) {
 	sp.SetTag("http.route_id", nil)
@@ -63,7 +67,9 @@ func instrument(ctx context.Context, sensor *instana.Sensor, p *graphql.Params, 
 	} else {
 		t := sensor.Tracer()
 
-		if isSubscribe {
+		if !isSubscribe {
+			sp = t.StartSpan("graphql.server")
+		} else {
 			opts := []ot.StartSpanOption{
 				ext.SpanKindRPCClient,
 			}
@@ -76,10 +82,26 @@ func instrument(ctx context.Context, sensor *instana.Sensor, p *graphql.Params, 
 
 			// The key of dt.fieldMap should match a key in st, which should give us the name of the type being "mutated".
 			// We will need this info to correlate the mutation to subscriptions.
+			var mutKey string
 			for k := range dt.fieldMap {
 				if mutType, ok := st[k]; ok {
-					ps = mutationSpans[mutType.Type.Name()]
+					mutKey = mutType.Type.Name()
 					break
+				}
+			}
+
+			if mutKey != "" {
+				// We lookup for a matching key in mutationSpan for a few millisencods.
+				// This is needed because the subscription runs in a go routine and may be triggered before the mutationSpans
+				// map received a reference to the mutation span
+				for i := 0; i < 3; i++ {
+					time.Sleep(time.Millisecond * 1)
+					mu.RLock()
+					ps = mutationSpans[mutKey]
+					mu.RUnlock()
+					if ps != nil {
+						break
+					}
 				}
 			}
 
@@ -89,12 +111,8 @@ func instrument(ctx context.Context, sensor *instana.Sensor, p *graphql.Params, 
 				}
 
 				opts = append(opts, ot.ChildOf(ps.Context()))
-
 				sp = ps.Tracer().StartSpan("graphql.client", opts...)
 			}
-
-		} else {
-			sp = t.StartSpan("graphql.server")
 		}
 
 		defer sp.Finish()
@@ -110,7 +128,19 @@ func instrument(ctx context.Context, sensor *instana.Sensor, p *graphql.Params, 
 
 		for k := range dt.fieldMap {
 			if mutType, ok := mt[k]; ok {
+				mu.Lock()
 				mutationSpans[mutType.Type.Name()] = sp
+				mu.Unlock()
+
+				// cleanup the map after one second
+				go func(n string) {
+					time.Sleep(time.Second)
+
+					mu.Lock()
+					delete(mutationSpans, n)
+					mu.Unlock()
+				}(mutType.Type.Name())
+
 				break
 			}
 		}
@@ -146,7 +176,6 @@ func Subscribe(ctx context.Context, sensor *instana.Sensor, p graphql.Params) ch
 			select {
 			case res, isOpen := <-originalCh:
 				if !isOpen {
-					// close(ch)
 					break loop
 				}
 

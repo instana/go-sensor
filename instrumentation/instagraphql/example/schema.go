@@ -8,7 +8,7 @@ import (
 	"github.com/graphql-go/graphql"
 )
 
-var chPool = make(map[string][]chan interface{})
+var pool = &pubsub{}
 
 var characterType = graphql.NewObject(graphql.ObjectConfig{
 	Name: "Character",
@@ -110,13 +110,7 @@ func mutations(dt *data) graphql.Fields {
 
 				cName := characterType.Name()
 
-				for idx, ch := range chPool[cName] {
-					select {
-					case ch <- c:
-					default:
-						chPool[cName] = append(chPool[cName][:idx], chPool[cName][idx+1:]...)
-					}
-				}
+				pool.pub(cName, c)
 
 				return c, nil
 			},
@@ -154,13 +148,7 @@ func mutations(dt *data) graphql.Fields {
 
 				sName := shipType.Name()
 
-				for idx, ch := range chPool[sName] {
-					select {
-					case ch <- s:
-					default:
-						chPool[sName] = append(chPool[sName][:idx], chPool[sName][idx+1:]...)
-					}
-				}
+				pool.pub(sName, s)
 
 				return s, nil
 			},
@@ -182,7 +170,7 @@ func subscriptions(dt *data) graphql.Fields {
 				ch := make(chan interface{})
 				cName := characterType.Name()
 
-				chPool[cName] = append(chPool[cName], ch)
+				pool.sub(cName, ch)
 
 				return ch, nil
 			},
@@ -197,7 +185,7 @@ func subscriptions(dt *data) graphql.Fields {
 				ch := make(chan interface{})
 				sName := shipType.Name()
 
-				chPool[sName] = append(chPool[sName], ch)
+				pool.sub(sName, ch)
 
 				return ch, nil
 			},
