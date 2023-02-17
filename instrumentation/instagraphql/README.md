@@ -3,6 +3,8 @@ Instana instrumentation for graphql
 
 This module contains instrumentation code for the [`graphql API`](https://pkg.go.dev/github.com/graphql-go/graphql).
 
+The instrumentation is compatible with `graphql v0.8.0`. If you need support for newer versions, file an issue on this repository.
+
 [![GoDoc](https://pkg.go.dev/badge/github.com/instana/go-sensor/instrumentation/instagraphql)][godoc]
 
 Installation
@@ -19,13 +21,13 @@ Usage
 
 A complete working example can be found [here](example).
 
-`instagraphql` offers the following method wrappers capable of collecting data about the GraphQL query:
+`instagraphql` offers the following method wrappers able to collect GraphQL query data:
 
-  * [`graphql.Do()`][instagraphql.Do]
-  * [`graphql.Subscribe()`][instagraphql.Subscribe]
-  * [`handler.ResultCallbackFn()`][instagraphql.ResultCallbackFn]
+  * [graphql.Do()][instagraphql.Do]
+  * [graphql.Subscribe()][instagraphql.Subscribe]
+  * [handler.ResultCallbackFn()][instagraphql.ResultCallbackFn]
 
-### instagraphql.Do Usage example
+### `instagraphql.Do` usage example
 
 ```go
 // create an instance of the Instana sensor
@@ -51,8 +53,7 @@ r := instagraphql.Do(context.Background(), sensor, params)
 fmt.Println("do something with the result", r)
 ```
 
-
-### instagraphql.Subscribe Usage example
+### `instagraphql.Subscribe` usage example
 
 ```go
 // create an instance of the Instana sensor
@@ -71,10 +72,12 @@ go func() {
 
   instagraphql.Subscribe(ctx, sensor, subscribeParams)
 }()
-
 ```
 
-### instagraphql.ResultCallbackFn Usage example
+### `instagraphql.ResultCallbackFn` usage example
+
+The `instagraphql.ResultCallbackFn` depends on the [handler.ResultCallbackFn](https://pkg.go.dev/github.com/graphql-go/handler#ResultCallbackFn) function from the [handler API](https://github.com/graphql-go/handler), which provides a convenient HTTP handler, as well as a GraphQL playground and more.
+
 
 ```go
 // create an instance of the Instana sensor
@@ -96,9 +99,7 @@ if err := http.ListenAndServe("0.0.0.0:9191", nil); err != nil {
 }
 ```
 
-
 See the [`instagraphql` package documentation][godoc] for detailed examples.
-
 
 [godoc]: https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instagraphql
 [instagraphql.Do]: https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instagraphql#Do
