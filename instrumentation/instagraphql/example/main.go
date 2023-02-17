@@ -128,6 +128,14 @@ func handleGraphQLQuery(schema graphql.Schema) http.HandlerFunc {
 	return instana.TracingHandlerFunc(sensor, "/graphql", fn)
 }
 
+// This test application can be started in two different ways:
+// * Without a handler: This will start a custom HTTP handler. It can be tested by making HTTP calls to the server.
+// Some cRUL examples are provided at the beginning of this file.
+// * With a handler from https://github.com/graphql-go/handler: This provides a GraphiQL UI and/or a Playground where
+// it makes it easier to test GraphQL queries, including subscriptions.
+//
+// To start with the handler, run `go run . -handler`
+// To start with the custom HTTP handler, run `go run .`
 func main() {
 	flag.BoolVar(&withHandler, "handler", false, "enables the built-in handler from the graphql API")
 	flag.Parse()
