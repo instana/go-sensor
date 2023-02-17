@@ -403,7 +403,7 @@ func TestGraphQLWithSubscription(t *testing.T) {
 		spanCount: 1,
 		spanKind:  instana.ExitSpanKind,
 		opName:    "myRowSubs",
-		opType:    "subscription",
+		opType:    "subscription-update",
 		fields:    map[string][]string{"newRowSubscription": {"name", "active"}},
 		args:      map[string][]string{"newRowSubscription": []string(nil)},
 	}

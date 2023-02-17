@@ -207,6 +207,10 @@ func instrumentSubscription(sensor *instana.Sensor, p *graphql.Params, res *grap
 
 	feedTags(sp, dt, res)
 
+	// "subscription-update" is used instead of "subscription" as the operation type.
+	// It's a special case that renders all subscriptions grouped into one service called "GraphQL Subscribers" in the UI.
+	sp.SetTag("graphql.operationType", "subscription-update")
+
 	sp.Finish()
 }
 
