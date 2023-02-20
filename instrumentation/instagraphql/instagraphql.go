@@ -33,6 +33,33 @@ var mu sync.RWMutex
 // var mutationSpans = make(map[string]ot.Span)
 var mutationSpans = ExpiringMap{}
 
+// retry returns a channel that is fulfilled after `wait` is reached or if `fn` returns true.
+// it retries after `every` time.
+func retry(wait, every time.Duration, fn func() bool) chan struct{} {
+	res := struct{}{}
+	done := make(chan struct{})
+	timer := time.NewTimer(wait)
+
+	go func() {
+	loop:
+		for {
+			time.Sleep(every)
+			select {
+			case <-timer.C:
+				done <- res
+				break loop
+			default:
+				if fn() {
+					done <- res
+					break loop
+				}
+			}
+		}
+	}()
+
+	return done
+}
+
 func removeHTTPTags(sp ot.Span) {
 	sp.SetTag("http.route_id", nil)
 	sp.SetTag("http.method", nil)
@@ -170,10 +197,13 @@ func instrumentSubscription(sensor *instana.Sensor, p *graphql.Params, res *grap
 	}
 
 	if mutKey != "" {
-		// todo: fix this delay for something better
-		time.Sleep(time.Millisecond * 1)
 		mu.Lock()
-		ps = mutationSpans.Get(mutKey)
+
+		<-retry(time.Millisecond*200, time.Millisecond*1, func() bool {
+			ps = mutationSpans.Get(mutKey)
+			return ps != nil
+		})
+
 		mu.Unlock()
 	}
 
