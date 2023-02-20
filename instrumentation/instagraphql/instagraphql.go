@@ -18,6 +18,21 @@ import (
 
 var mu sync.RWMutex
 
+// mutationSpans is an expiring map of spans originated from mutations where the key is the object type name set in the schema.
+// Example for the key "Character":
+//
+//	var characterType = graphql.NewObject(graphql.ObjectConfig{
+//		Name: "Character",
+//		Fields: ...
+//	})
+//
+// This is our best guess at linking a mutation to a subscription, as they are by no means related via anything else.
+// There will be also an obvious chance that a mutation is not the original parent of subscriptions, as we keep track
+// of only one mutation (parent span) per type. But technically, this should not be an issue, as the mutation will still
+// refer to the same type.
+// var mutationSpans = make(map[string]ot.Span)
+var mutationSpans = ExpiringMap{}
+
 func removeHTTPTags(sp ot.Span) {
 	sp.SetTag("http.route_id", nil)
 	sp.SetTag("http.method", nil)
@@ -46,23 +61,11 @@ func feedTags(sp ot.Span, dt *gqlData, res *graphql.Result) {
 }
 
 func cacheMutationSpan(sp ot.Span, dt *gqlData, p *graphql.Params) {
-	mt := p.Schema.MutationType().Fields()
+	fields := p.Schema.MutationType().Fields()
 
 	for k := range dt.fieldMap {
-		if mutType, ok := mt[k]; ok {
-			mu.Lock()
-			mutationSpans[mutType.Type.Name()] = sp
-			mu.Unlock()
-
-			// cleanup the map after one second
-			go func(n string) {
-				time.Sleep(time.Second)
-
-				mu.Lock()
-				delete(mutationSpans, n)
-				mu.Unlock()
-			}(mutType.Type.Name())
-
+		if mutType, ok := fields[k]; ok {
+			mutationSpans.Set(mutType.Type.Name(), sp, time.Second)
 			break
 		}
 	}
@@ -77,25 +80,10 @@ func extractSpan(ctx context.Context, sensor *instana.Sensor) (span ot.Span, rep
 		removeHTTPTags(span)
 	} else {
 		span = sensor.Tracer().StartSpan("graphql.server")
-		// defer sp.Finish()
 	}
 
 	return // span, repurposed
 }
-
-// mutationSpans is a map of spans originated from mutations where the key is the object type name set in the schema.
-// Example for the key "Character":
-//
-//	var characterType = graphql.NewObject(graphql.ObjectConfig{
-//		Name: "Character",
-//		Fields: ...
-//	})
-//
-// This is our best guess at linking a mutation to a subscription, as they are by no means related via anything else.
-// There will be also an obvious chance that a mutation is not the original parent of subscriptions, as we keep track
-// of only one mutation (parent span) per type. But technically, this should not be an issue, as the mutation will still
-// refer to the same type.
-var mutationSpans = make(map[string]ot.Span)
 
 func instrumentCallback(ctx context.Context, sensor *instana.Sensor, p *graphql.Params, res *graphql.Result) {
 	var sp ot.Span
@@ -182,18 +170,11 @@ func instrumentSubscription(sensor *instana.Sensor, p *graphql.Params, res *grap
 	}
 
 	if mutKey != "" {
-		// We lookup for a matching key in mutationSpan for a few millisencods.
-		// This is needed because the subscription runs in a go routine and may be triggered before the mutationSpans
-		// map received a reference to the mutation span
-		for i := 0; i < 3; i++ {
-			time.Sleep(time.Millisecond * 1)
-			mu.RLock()
-			ps = mutationSpans[mutKey]
-			mu.RUnlock()
-			if ps != nil {
-				break
-			}
-		}
+		// todo: fix this delay for something better
+		time.Sleep(time.Millisecond * 1)
+		mu.Lock()
+		ps = mutationSpans.Get(mutKey)
+		mu.Unlock()
 	}
 
 	if ps != nil {
