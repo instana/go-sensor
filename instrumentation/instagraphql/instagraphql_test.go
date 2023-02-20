@@ -201,6 +201,8 @@ func TestGraphQLWithoutHTTP(t *testing.T) {
 		instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder),
 	)
 
+	defer instana.ShutdownSensor()
+
 	schema, err := getSchema(false)
 
 	if err != nil {
@@ -236,6 +238,7 @@ func TestGraphQLWithCustomHTTP(t *testing.T) {
 	sensor := instana.NewSensorWithTracer(
 		instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder),
 	)
+	defer instana.ShutdownSensor()
 
 	schema, err := getSchema(false)
 
@@ -304,6 +307,7 @@ func TestGraphQLWithBuiltinHTTP(t *testing.T) {
 	sensor := instana.NewSensorWithTracer(
 		instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder),
 	)
+	defer instana.ShutdownSensor()
 
 	schema, err := getSchema(false)
 
@@ -357,6 +361,7 @@ func TestGraphQLWithSubscription(t *testing.T) {
 	sensor := instana.NewSensorWithTracer(
 		instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder),
 	)
+	defer instana.ShutdownSensor()
 
 	schema, err := getSchema(true)
 
@@ -457,6 +462,7 @@ func TestGraphQLQueryParseError(t *testing.T) {
 	sensor := instana.NewSensorWithTracer(
 		instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder),
 	)
+	defer instana.ShutdownSensor()
 
 	schema, err := getSchema(false)
 
