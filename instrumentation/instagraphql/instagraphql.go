@@ -5,7 +5,6 @@ package instagraphql
 import (
 	"context"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/graphql-go/graphql"
@@ -15,8 +14,6 @@ import (
 	"github.com/opentracing/opentracing-go/ext"
 	otlog "github.com/opentracing/opentracing-go/log"
 )
-
-var mu sync.RWMutex
 
 // mutationSpans is an expiring map of spans originated from mutations where the key is the object type name set in the schema.
 // Example for the key "Character":
@@ -33,10 +30,14 @@ var mu sync.RWMutex
 // var mutationSpans = make(map[string]ot.Span)
 var mutationSpans = ExpiringMap{}
 
-// retry returns a channel that is fulfilled after `wait` is reached or if `fn` returns true.
-// it retries after `every` time.
-func retry(wait, every time.Duration, fn func() bool) chan struct{} {
-	res := struct{}{}
+// retry returns a channel that is fulfilled after `wait` is reached or `fn` returns true.
+// It retries after `every` time.
+func retry(wait, every time.Duration, fn func() bool) {
+	// attempts to resolve fn right away
+	if fn() {
+		return
+	}
+
 	done := make(chan struct{})
 	timer := time.NewTimer(wait)
 
@@ -46,18 +47,18 @@ func retry(wait, every time.Duration, fn func() bool) chan struct{} {
 			time.Sleep(every)
 			select {
 			case <-timer.C:
-				done <- res
+				done <- struct{}{}
 				break loop
 			default:
 				if fn() {
-					done <- res
+					done <- struct{}{}
 					break loop
 				}
 			}
 		}
 	}()
 
-	return done
+	<-done
 }
 
 func removeHTTPTags(sp ot.Span) {
@@ -197,14 +198,16 @@ func instrumentSubscription(sensor *instana.Sensor, p *graphql.Params, res *grap
 	}
 
 	if mutKey != "" {
-		mu.Lock()
-
-		<-retry(time.Millisecond*200, time.Millisecond*1, func() bool {
+		// Sometimes a mutation is triggered but a span was not yet created and the subscription span is
+		// already "looking for" its parent. That's because these operations run concurrently.
+		// We can retry to recover the belated mutation span for a while.
+		// Eg: if the mutation is instrumented via ResultCallbackFn, the mutation has already happened when we start to
+		// create the span, which could be caught concurrently by the subscription instrumentation.
+		// Important: make sure to keep the wait short
+		retry(time.Millisecond*50, time.Millisecond*1, func() bool {
 			ps = mutationSpans.Get(mutKey)
 			return ps != nil
 		})
-
-		mu.Unlock()
 	}
 
 	if ps != nil {
