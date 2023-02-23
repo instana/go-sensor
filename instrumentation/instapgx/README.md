@@ -1,13 +1,13 @@
 Instana instrumentation for pgx
 =============================================
 
-This module contains middleware to instrument services written with [`github.com/jackc/pgx/v4`](https://github.com/jackc/pgx/v4).
+This module contains the middleware to instrument services written with [`github.com/jackc/pgx/v4`](https://github.com/jackc/pgx/v4).
 
 [![PkgGoDev](https://pkg.go.dev/badge/github.com/instana/go-sensor/instrumentation/instapgx)](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instapgx)
 
 The API of this instrumentation might change in the future.
 
-The current version contains instrumentation for most of the methods defined for `pgx.Tx` and `*pg.Conn`.
+The current version contains the instrumentation for most of the methods defined for `pgx.Tx` and `*pg.Conn`.
 
 ### Known limitation:
 
