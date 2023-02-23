@@ -104,8 +104,8 @@ workflows:
       - build:
           name: "go1.14"
           image: "circleci/golang:1.14"
-          exclude_dirs: "./instrumentation/instaecho ./instrumentation/instaredigo ./internal/bin/sql"
+          exclude_dirs: "./instrumentation/instaecho ./instrumentation/instaredigo ./internal/bin/sql ./instrumentation/cloud.google.com"
       - build:
           name: "go1.13"
           image: "circleci/golang:1.13"
-          exclude_dirs: "./instrumentation/instaecho ./instrumentation/instaredigo ./internal/bin/sql"
+          exclude_dirs: "./instrumentation/instaecho ./instrumentation/instaredigo ./internal/bin/sql ./instrumentation/cloud.google.com"
