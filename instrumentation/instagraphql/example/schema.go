@@ -106,7 +106,7 @@ func mutations(dt *data) graphql.Fields {
 					CrewMember: crewMember,
 				}
 
-				dt.addChar(c)
+				c = dt.addChar(c)
 
 				pool.pub(characterType.Name(), c)
 

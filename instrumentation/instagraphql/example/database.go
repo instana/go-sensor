@@ -22,14 +22,16 @@ func (d data) findChar(id int) *character {
 	return nil
 }
 
-func (d *data) addChar(c character) {
+func (d *data) addChar(c character) character {
 	c.Id = len(d.Chars) + 1
 	d.Chars = append(d.Chars, c)
+	return c
 }
 
-func (d *data) addShip(s ship) {
+func (d *data) addShip(s ship) ship {
 	s.Id = len(d.Ships) + 1
 	d.Ships = append(d.Ships, s)
+	return s
 }
 
 func (d data) findShip(id int) *ship {

@@ -24,8 +24,6 @@ func TestExpiringMap(t *testing.T) {
 
 	tracer := sensor.Tracer()
 
-	defer instana.ShutdownSensor()
-
 	m := instagraphql.ExpiringMap{}
 
 	m.Set("key1", tracer.StartSpan("span1"), time.Second)

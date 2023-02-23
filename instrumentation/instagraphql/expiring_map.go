@@ -24,25 +24,30 @@ type ExpiringMap struct {
 // Set will set the span which will expire after d is reached.
 // If a span is set with the same key before the original one expires, the time will be renewed.
 func (em *ExpiringMap) Set(k string, v ot.Span, d time.Duration) {
+	em.Lock()
 	if em.m == nil {
 		em.m = make(map[string]spanWithTimer)
 	}
+	em.Unlock()
 
-	if _, ok := em.m[k]; !ok {
+	var ok bool
+
+	em.RLock()
+	_, ok = em.m[k]
+	em.RUnlock()
+
+	if !ok {
 		em.Lock()
 		newWrapper := spanWithTimer{
 			sp: v,
-			t:  time.NewTimer(d),
+			t: time.AfterFunc(d, func() {
+				em.Lock()
+				delete(em.m, k)
+				em.Unlock()
+			}),
 		}
 
 		em.m[k] = newWrapper
-
-		go func(k string) {
-			<-newWrapper.t.C
-			em.Lock()
-			delete(em.m, k)
-			em.Unlock()
-		}(k)
 
 		em.Unlock()
 		return
@@ -57,12 +62,14 @@ func (em *ExpiringMap) Set(k string, v ot.Span, d time.Duration) {
 
 // Get returns the span for the given k or nil if not found.
 func (em *ExpiringMap) Get(k string) ot.Span {
+	em.Lock()
+	defer em.Unlock()
+
 	if em.m == nil {
 		em.m = make(map[string]spanWithTimer)
+		return nil
 	}
 
-	em.RLock()
-	defer em.RUnlock()
 	iw, ok := em.m[k]
 
 	if !ok {
