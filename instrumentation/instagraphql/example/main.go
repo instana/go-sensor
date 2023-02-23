@@ -3,7 +3,6 @@
 package main
 
 import (
-	"context"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -63,13 +62,22 @@ curl -X POST \
 http://localhost:9191/graphql | jq
 */
 
+var (
+	sensor      *instana.Sensor
+	withHandler bool
+)
+
+func init() {
+	sensor = instana.NewSensor("go-graphql-test")
+}
+
 type payload struct {
 	Query         string `json:"query"`
 	OperationName string `json:"operationName"`
 	Variables     string `json:"variables"`
 }
 
-func handleGraphQLQuery(schema graphql.Schema, sensor *instana.Sensor) http.HandlerFunc {
+func handleGraphQLQuery(schema graphql.Schema) http.HandlerFunc {
 	fn := func(w http.ResponseWriter, req *http.Request) {
 		var query string
 
@@ -120,13 +128,17 @@ func handleGraphQLQuery(schema graphql.Schema, sensor *instana.Sensor) http.Hand
 	return instana.TracingHandlerFunc(sensor, "/graphql", fn)
 }
 
-var withHandler bool
-
+// This test application can be started in two different ways:
+// * Without a handler: This will start a custom HTTP handler. It can be tested by making HTTP calls to the server.
+// Some cRUL examples are provided at the beginning of this file.
+// * With a handler from https://github.com/graphql-go/handler: This provides a GraphiQL UI and/or a Playground where
+// it makes it easier to test GraphQL queries, including subscriptions.
+//
+// To start with the handler, run `go run . -handler`
+// To start with the custom HTTP handler, run `go run .`
 func main() {
 	flag.BoolVar(&withHandler, "handler", false, "enables the built-in handler from the graphql API")
 	flag.Parse()
-
-	sensor := instana.NewSensor("go-graphql-test")
 
 	dt, err := loadData()
 
@@ -137,12 +149,16 @@ func main() {
 	// Schema
 	qFields := queries(dt)
 	mFields := mutations(dt)
+	sFields := subscriptions(dt)
 
 	rootQuery := graphql.ObjectConfig{Name: "RootQuery", Fields: qFields}
 	rootMutation := graphql.ObjectConfig{Name: "RootMutation", Fields: mFields}
+	rootSubscription := graphql.ObjectConfig{Name: "RootSubscription", Fields: sFields}
+
 	schemaConfig := graphql.SchemaConfig{
-		Query:    graphql.NewObject(rootQuery),
-		Mutation: graphql.NewObject(rootMutation),
+		Query:        graphql.NewObject(rootQuery),
+		Mutation:     graphql.NewObject(rootMutation),
+		Subscription: graphql.NewObject(rootSubscription),
 	}
 	schema, err := graphql.NewSchema(schemaConfig)
 
@@ -151,20 +167,18 @@ func main() {
 	}
 
 	if withHandler {
-		var fn handler.ResultCallbackFn = func(ctx context.Context, params *graphql.Params, result *graphql.Result, responseBody []byte) {
-			fmt.Println("I am the original callback function")
-		}
-
 		h := handler.New(&handler.Config{
 			Schema:           &schema,
 			Pretty:           true,
-			GraphiQL:         true,
-			ResultCallbackFn: instagraphql.ResultCallbackFn(sensor, fn),
+			GraphiQL:         false,
+			Playground:       true,
+			ResultCallbackFn: instagraphql.ResultCallbackFn(sensor, nil),
 		})
 
 		http.Handle("/graphql", h)
+		http.HandleFunc("/subscriptions", SubsHandlerWithSchema(schema))
 	} else {
-		http.HandleFunc("/graphql", handleGraphQLQuery(schema, sensor))
+		http.HandleFunc("/graphql", handleGraphQLQuery(schema))
 	}
 
 	fmt.Println("Starting app with graphql handler:", withHandler)

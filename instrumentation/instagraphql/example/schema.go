@@ -8,6 +8,8 @@ import (
 	"github.com/graphql-go/graphql"
 )
 
+var pool = &pubsub{}
+
 var characterType = graphql.NewObject(graphql.ObjectConfig{
 	Name: "Character",
 	Fields: graphql.Fields{
@@ -104,7 +106,9 @@ func mutations(dt *data) graphql.Fields {
 					CrewMember: crewMember,
 				}
 
-				dt.addChar(c)
+				c = dt.addChar(c)
+
+				pool.pub(characterType.Name(), c)
 
 				return c, nil
 			},
@@ -138,9 +142,44 @@ func mutations(dt *data) graphql.Fields {
 					Origin: origin,
 				}
 
-				dt.addShip(s)
+				s = dt.addShip(s)
+
+				pool.pub(shipType.Name(), s)
 
 				return s, nil
+			},
+		},
+	}
+
+	return fields
+}
+
+func subscriptions(dt *data) graphql.Fields {
+	fields := graphql.Fields{
+		"newCharacterSubscription": &graphql.Field{
+			Name: "character",
+			Type: characterType,
+			Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				return p.Source, nil
+			},
+			Subscribe: func(p graphql.ResolveParams) (interface{}, error) {
+				ch := make(chan interface{})
+				pool.sub(characterType.Name(), ch)
+
+				return ch, nil
+			},
+		},
+		"newShipSubscription": &graphql.Field{
+			Name: "ship",
+			Type: shipType,
+			Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				return p.Source, nil
+			},
+			Subscribe: func(p graphql.ResolveParams) (interface{}, error) {
+				ch := make(chan interface{})
+				pool.sub(shipType.Name(), ch)
+
+				return ch, nil
 			},
 		},
 	}
