@@ -142,7 +142,7 @@ func mutations(dt *data) graphql.Fields {
 					Origin: origin,
 				}
 
-				dt.addShip(s)
+				s = dt.addShip(s)
 
 				pool.pub(shipType.Name(), s)
 
