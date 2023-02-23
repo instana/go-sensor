@@ -20,7 +20,7 @@ The current version contains the instrumentation for most of the methods defined
 Installation
 ------------
 
-To add the module to your `go.mod` file run the following command in your project directory:
+To add the module to your `go.mod` file, run the following command in your project directory:
 
 ```bash
 $ go get github.com/instana/go-sensor/instrumentation/instapgx
