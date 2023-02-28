@@ -45,6 +45,8 @@ dynamoDBClient := dynamodb.New(sess)
 // ...
 ```
 
+Important Note:
+---------------
 Instana tracer uses `context.Context` to propagate the trace context. To ensure trace continuation within
 the instrumented service **use AWS SDK client methods that take `context.Context` as an argument**.
 Usually these method names end with `WithContext` suffix, e.g.
