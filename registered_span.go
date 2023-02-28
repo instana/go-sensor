@@ -1200,7 +1200,7 @@ func newAWSSNSSpanTags(span *spanS) AWSSNSSpanTags {
 // AWSDynamoDBSpanData represents the `data` section of a AWS DynamoDB span sent within an OT span document
 type AWSDynamoDBSpanData struct {
 	SpanData
-	Tags AWSDynamoDBSpanTags `json:"sns"`
+	Tags AWSDynamoDBSpanTags `json:"dynamodb"`
 }
 
 // newAWSDynamoDBSpanData initializes a new AWS DynamoDB span data from tracer span
