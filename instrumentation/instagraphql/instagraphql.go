@@ -204,7 +204,7 @@ func instrumentSubscription(sensor *instana.Sensor, p *graphql.Params, res *grap
 		// Eg: if the mutation is instrumented via ResultCallbackFn, the mutation has already happened when we start to
 		// create the span, which could be caught concurrently by the subscription instrumentation.
 		// Important: make sure to keep the wait short
-		retry(time.Millisecond*50, time.Millisecond*1, func() bool {
+		retry(time.Millisecond*100, time.Millisecond*1, func() bool {
 			ps = mutationSpans.Get(mutKey)
 			return ps != nil
 		})

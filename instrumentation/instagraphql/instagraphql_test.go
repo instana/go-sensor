@@ -27,8 +27,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var pool = &pubsub{}
-
 type sampleData struct {
 	query     string
 	hasError  bool
@@ -118,7 +116,7 @@ var rowType = graphql.NewObject(graphql.ObjectConfig{
 	},
 })
 
-func createField(name string, tp graphql.Output, resolveVal interface{}, args graphql.FieldConfigArgument) *graphql.Field {
+func createField(name string, tp graphql.Output, resolveVal interface{}, args graphql.FieldConfigArgument, pool *pubsub) *graphql.Field {
 	return &graphql.Field{
 		Name: name,
 		Type: tp,
@@ -135,10 +133,10 @@ func createField(name string, tp graphql.Output, resolveVal interface{}, args gr
 	}
 }
 
-func getSchema(hasSubscription bool) (graphql.Schema, error) {
+func getSchema(hasSubscription bool, pool *pubsub) (graphql.Schema, error) {
 	qFields := graphql.Fields{
-		"aaa": createField("someString", graphql.String, "some string value", nil),
-		"row": createField("The row", rowType, row{1, "Row Name", true}, nil),
+		"aaa": createField("someString", graphql.String, "some string value", nil, pool),
+		"row": createField("The row", rowType, row{1, "Row Name", true}, nil, pool),
 	}
 
 	mFields := graphql.Fields{
@@ -149,7 +147,7 @@ func getSchema(hasSubscription bool) (graphql.Schema, error) {
 			"active": &graphql.ArgumentConfig{
 				Type: graphql.Boolean,
 			},
-		}),
+		}, pool),
 	}
 
 	rootQuery := graphql.ObjectConfig{Name: "RootQuery", Fields: qFields}
@@ -196,6 +194,7 @@ func assertSample(t *testing.T, sample sampleData, data instana.GraphQLSpanData)
 }
 
 func TestGraphQLWithoutHTTP(t *testing.T) {
+	pool := &pubsub{}
 	recorder := instana.NewTestRecorder()
 	sensor := instana.NewSensorWithTracer(
 		instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder),
@@ -203,7 +202,7 @@ func TestGraphQLWithoutHTTP(t *testing.T) {
 
 	defer instana.ShutdownSensor()
 
-	schema, err := getSchema(false)
+	schema, err := getSchema(false, pool)
 
 	if err != nil {
 		log.Fatalf("failed to create new schema, error: %v", err)
@@ -234,13 +233,14 @@ func TestGraphQLWithoutHTTP(t *testing.T) {
 }
 
 func TestGraphQLWithCustomHTTP(t *testing.T) {
+	pool := &pubsub{}
 	recorder := instana.NewTestRecorder()
 	sensor := instana.NewSensorWithTracer(
 		instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder),
 	)
 	defer instana.ShutdownSensor()
 
-	schema, err := getSchema(false)
+	schema, err := getSchema(false, pool)
 
 	if err != nil {
 		log.Fatalf("failed to create new schema, error: %v", err)
@@ -303,13 +303,14 @@ func TestGraphQLWithCustomHTTP(t *testing.T) {
 	}
 }
 func TestGraphQLWithBuiltinHTTP(t *testing.T) {
+	pool := &pubsub{}
 	recorder := instana.NewTestRecorder()
 	sensor := instana.NewSensorWithTracer(
 		instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder),
 	)
 	defer instana.ShutdownSensor()
 
-	schema, err := getSchema(false)
+	schema, err := getSchema(false, pool)
 
 	if err != nil {
 		log.Fatalf("failed to create new schema, error: %v", err)
@@ -357,13 +358,14 @@ func TestGraphQLWithBuiltinHTTP(t *testing.T) {
 }
 
 func TestGraphQLWithSubscription(t *testing.T) {
+	pool := &pubsub{}
 	recorder := instana.NewTestRecorder()
 	sensor := instana.NewSensorWithTracer(
 		instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder),
 	)
 	defer instana.ShutdownSensor()
 
-	schema, err := getSchema(true)
+	schema, err := getSchema(true, pool)
 
 	if err != nil {
 		log.Fatalf("failed to create new schema, error: %v", err)
@@ -435,7 +437,7 @@ func TestGraphQLWithSubscription(t *testing.T) {
 
 	assert.Eventually(t, func() bool {
 		return recorder.QueuedSpansCount() == 2
-	}, time.Second*2, time.Millisecond*500)
+	}, time.Second*2, time.Millisecond*50)
 
 	spans = recorder.GetQueuedSpans()
 	assert.Len(t, spans, 2)
@@ -458,13 +460,14 @@ func TestGraphQLWithSubscription(t *testing.T) {
 }
 
 func TestGraphQLQueryParseError(t *testing.T) {
+	pool := &pubsub{}
 	recorder := instana.NewTestRecorder()
 	sensor := instana.NewSensorWithTracer(
 		instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder),
 	)
 	defer instana.ShutdownSensor()
 
-	schema, err := getSchema(false)
+	schema, err := getSchema(false, pool)
 
 	if err != nil {
 		log.Fatalf("failed to create new schema, error: %v", err)
