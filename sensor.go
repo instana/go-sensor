@@ -52,6 +52,7 @@ type sensorS struct {
 	logger      LeveledLogger
 	options     *Options
 	serviceName string
+	binaryName  string
 
 	mu    sync.RWMutex
 	agent AgentClient
@@ -70,9 +71,7 @@ func newSensor(options *Options) *sensorS {
 	s := &sensorS{
 		options:     options,
 		serviceName: options.Service,
-	}
-	if s.serviceName == "" {
-		s.serviceName = binaryName
+		binaryName:  binaryName,
 	}
 
 	s.setLogger(defaultLogger)
@@ -117,11 +116,11 @@ func newSensor(options *Options) *sensorS {
 			}
 		}
 
-		agent = newServerlessAgent(s.serviceName, agentEndpoint, os.Getenv("INSTANA_AGENT_KEY"), client, s.logger)
+		agent = newServerlessAgent(s.serviceOrBinaryName(), agentEndpoint, os.Getenv("INSTANA_AGENT_KEY"), client, s.logger)
 	}
 
 	if agent == nil {
-		agent = newAgent(s.serviceName, s.options.AgentHost, s.options.AgentPort, s.logger)
+		agent = newAgent(s.serviceOrBinaryName(), s.options.AgentHost, s.options.AgentPort, s.logger)
 	}
 
 	s.setAgent(agent)
@@ -160,6 +159,16 @@ func (r *sensorS) Agent() AgentClient {
 	}
 
 	return r.agent
+}
+
+func (r *sensorS) serviceOrBinaryName() string {
+	if r == nil {
+		return ""
+	}
+	if r.serviceName != "" {
+		return r.serviceName
+	}
+	return r.binaryName
 }
 
 // InitSensor intializes the sensor (without tracing) to begin collecting
