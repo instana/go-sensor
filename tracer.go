@@ -112,7 +112,7 @@ func (r *tracerS) StartSpanWithOptions(operationName string, opts ot.StartSpanOp
 	return &spanS{
 		context:     sc,
 		tracer:      r,
-		Service:     sensor.options.Service,
+		Service:     sensor.serviceName,
 		Operation:   operationName,
 		Start:       startTime,
 		Duration:    -1,
