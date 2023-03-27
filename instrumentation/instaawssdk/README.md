@@ -12,7 +12,7 @@ Following services are currently instrumented:
 * [SNS](https://docs.aws.amazon.com/sdk-for-go/api/service/sns/)
 * [SQS](https://docs.aws.amazon.com/sdk-for-go/api/service/sqs/)
 * [Lambda](https://docs.aws.amazon.com/sdk-for-go/api/service/lambda/) 
-  - Read about usage and limitations [here](https://github.com/instana/go-sensor/tree/master/instrumentation/instaawssdk#instrumenting-lambda)
+  - Read about usage and limitations [here](https://github.com/instana/go-sensor/tree/main/instrumentation/instaawssdk#instrumenting-lambda)
 
 Installation
 ------------

@@ -1,7 +1,7 @@
 An Instrumented github.com/julienschmidt/httprouter Server Example
 ==================================================================
 
-An example of instrumenting a `github.com/julienschmidt/httprouter` HTTP service with Instana using [`github.com/instana/go-sensor/tree/master/instrumentation/instahttprouter`](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instahttprouter).
+An example of instrumenting a `github.com/julienschmidt/httprouter` HTTP service with Instana using [`github.com/instana/go-sensor/tree/main/instrumentation/instahttprouter`](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instahttprouter).
 
 An example of usage of Instana tracer to instrument an HTTP server written with [`github.com/julienschmidt/httprouter`](https://github.com/julienschmidt/httprouter)
 

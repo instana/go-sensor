@@ -37,4 +37,4 @@ engine.GET("/api", func(c *gin.Context) {}
 
 
 [godoc]: https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instagin
-[fullExample]: https://github.com/instana/go-sensor/blob/master/example/gin/main.go
+[fullExample]: https://github.com/instana/go-sensor/blob/main/example/gin/main.go
