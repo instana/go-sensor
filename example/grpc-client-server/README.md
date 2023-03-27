@@ -1,7 +1,7 @@
 A gRPC Server/Client Example
 ============================
 
-An example of instrumenting a gRPC client and server with Instana using [`github.com/instana/go-sensor/tree/master/instrumentation/instagrpc`](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instagrpc).
+An example of instrumenting a gRPC client and server with Instana using [`github.com/instana/go-sensor/tree/main/instrumentation/instagrpc`](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instagrpc).
 
 Usage
 -----

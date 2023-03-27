@@ -9,7 +9,7 @@
 # 1. Run `./instrumentations.sh update`. This will update all instrumentations to reference the latest core module.
 # 2. Run `make test` to ensure that all instrumentations work with the latest core.
 # 3. If any errors are detected in some instrumentation, fix them.
-# 4. If everything is fine, commit your changes, open a PR and get it merged into the master branch.
+# 4. If everything is fine, commit your changes, open a PR and get it merged into the main branch.
 #
 # Release phase
 # 1. Run `./instrumentations.sh release` to create tags for each instrumentation with a new minor version, and update all version.go files.
@@ -65,15 +65,15 @@ run_release() {
     # Updates the minor version in version.go
     sed -i '' -E "s/[0-9]+\.[0-9]+\.[0-9]+/${NEW_VERSION}/" "$lib"/version.go | tail -1
 
-    # Tags to be created after version.go is merged to the master branch with the new version
+    # Tags to be created after version.go is merged to the main branch with the new version
     TAGS="$TAGS $LIB_PATH/v$MAJOR_VERSION.$MINOR_VERSION.0"
   done
 
-  # Commit all version.go files to the master branch
+  # Commit all version.go files to the main branch
   git add ./instrumentation/**/version.go
   git add ./instrumentation/**/**/version.go
   git commit -m "Bumping new version of the instrumentation"
-  git push origin master
+  git push origin main
 
   echo "Creating tags for each instrumentation"
 
