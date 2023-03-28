@@ -45,7 +45,7 @@ func Test_fsmS_testAgent(t *testing.T) {
 	res := make(chan bool, 1)
 
 	r := &fsmS{
-		agentComm: newAgentCommunicator(u.Hostname(), u.Port(), &fromS{}),
+		agentComm: newAgentCommunicator(u.Hostname(), u.Port(), &fromS{}, defaultLogger),
 		fsm: f.NewFSM(
 			"announced",
 			f.Events{
@@ -85,7 +85,7 @@ func Test_fsmS_testAgent_Error(t *testing.T) {
 	res := make(chan bool, 1)
 
 	r := &fsmS{
-		agentComm: newAgentCommunicator(u.Hostname(), u.Port(), &fromS{}),
+		agentComm: newAgentCommunicator(u.Hostname(), u.Port(), &fromS{}, defaultLogger),
 		fsm: f.NewFSM(
 			"announced",
 			f.Events{
@@ -135,7 +135,7 @@ func Test_fsmS_announceSensor(t *testing.T) {
 	res := make(chan bool, 1)
 
 	r := &fsmS{
-		agentComm: newAgentCommunicator(u.Hostname(), u.Port(), &fromS{}),
+		agentComm: newAgentCommunicator(u.Hostname(), u.Port(), &fromS{}, defaultLogger),
 		fsm: f.NewFSM(
 			"unannounced",
 			f.Events{
@@ -172,7 +172,7 @@ func Test_fsmS_announceSensor_Error(t *testing.T) {
 	res := make(chan bool, 1)
 
 	r := &fsmS{
-		agentComm: newAgentCommunicator(u.Hostname(), u.Port(), &fromS{}),
+		agentComm: newAgentCommunicator(u.Hostname(), u.Port(), &fromS{}, defaultLogger),
 		fsm: f.NewFSM(
 			"unannounced",
 			f.Events{
@@ -218,7 +218,7 @@ func Test_fsmS_lookupAgentHost(t *testing.T) {
 	res := make(chan bool, 1)
 
 	r := &fsmS{
-		agentComm:                  newAgentCommunicator(u.Hostname(), u.Port(), &fromS{}),
+		agentComm:                  newAgentCommunicator(u.Hostname(), u.Port(), &fromS{}, defaultLogger),
 		lookupAgentHostRetryPeriod: 0,
 		fsm: f.NewFSM(
 			"init",

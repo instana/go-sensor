@@ -89,10 +89,11 @@ func (r *fsmS) scheduleRetryWithExponentialDelay(e *f.Event, cb func(e *f.Event)
 }
 
 func (r *fsmS) lookupAgentHost(e *f.Event) {
-	go r.checkHost(e, r.agentComm.host)
+	go r.checkHost(e)
 }
 
-func (r *fsmS) checkHost(e *f.Event, host string) {
+func (r *fsmS) checkHost(e *f.Event) {
+	host := r.agentComm.host
 	r.logger.Debug("checking host ", r.agentComm.host)
 
 	header := r.agentComm.serverHeader()
@@ -102,9 +103,11 @@ func (r *fsmS) checkHost(e *f.Event, host string) {
 	// Agent host is found through the checkHost method, that attempts to read "Instana Agent" from the response header.
 	if found {
 		r.lookupSuccess(host)
+		r.logger.Debug("Agent host is found through the checkHost method, that attempts to read 'Instana Agent' from the response header.")
 		return
 	}
 
+	r.logger.Debug("Lookup failed for expected host:", host, ", actual host:", r.agentComm.host, ". Will attempt to read host from /proc/net/route")
 	if _, fileNotFoundErr := os.Stat("/proc/net/route"); fileNotFoundErr == nil {
 		gateway, err := getDefaultGateway("/proc/net/route")
 		if err != nil {
@@ -123,14 +126,14 @@ func (r *fsmS) checkHost(e *f.Event, host string) {
 			return
 		}
 
-		header = r.agentComm.serverHeader()
+		// header = r.agentComm.serverHeader()
 
-		found := err == nil && header == agentHeader
+		// found := header == agentHeader
 
-		if found {
-			r.lookupSuccess(gateway)
-			return
-		}
+		// if found {
+		// 	r.lookupSuccess(gateway)
+		// 	return
+		// }
 
 		r.logger.Error("Cannot connect to the agent through localhost or default gateway. Scheduling retry.")
 		r.scheduleRetry(e, r.lookupAgentHost)
