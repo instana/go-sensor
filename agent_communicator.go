@@ -48,14 +48,14 @@ func (a *agentCommunicator) serverHeader() string {
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 
 	if err != nil {
-		a.l.Debug("Error creating request to get the agent header:", err.Error())
+		a.l.Debug("Error creating request to get the agent header: ", err.Error())
 		return ""
 	}
 
 	resp, err := a.client.Do(req)
 
 	if resp == nil {
-		a.l.Debug("No response from the agent. error: ", err.Error())
+		a.l.Debug("No response from the agent. Error: ", err.Error())
 		return ""
 	}
 
@@ -68,7 +68,7 @@ func (a *agentCommunicator) serverHeader() string {
 		return resp.Header.Get("Server")
 	}
 
-	a.l.Debug("Error requesting header from the agent:", err.Error())
+	a.l.Debug("Error requesting header from the agent: ", err.Error())
 
 	return ""
 }
@@ -91,7 +91,7 @@ func (a *agentCommunicator) agentResponse(d *discoveryS) *agentResponse {
 	res, err := a.client.Do(req)
 
 	if res == nil {
-		a.l.Debug("No response from the agent. error:", err.Error())
+		a.l.Debug("No response from the agent. Error:", err.Error())
 		return nil
 	}
 
