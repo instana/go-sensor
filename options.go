@@ -45,6 +45,9 @@ type Options struct {
 	// If it is nil the default implementation will be used.
 	AgentClient AgentClient
 
+	// Recorder records and manages spans. When this option is not set, instana.NewRecorder() will be used.
+	Recorder SpanRecorder
+
 	disableW3CTraceCorrelation bool
 }
 

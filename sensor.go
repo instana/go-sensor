@@ -8,6 +8,7 @@ import (
 	"errors"
 	"net/http"
 	"os"
+	"path"
 	"path/filepath"
 	"strings"
 	"sync"
@@ -63,7 +64,12 @@ var (
 	muSensor         sync.Mutex
 	binaryName       = filepath.Base(os.Args[0])
 	processStartedAt = time.Now()
+	C                TracerLogger
 )
+
+func init() {
+	C = newNoopCollector()
+}
 
 func newSensor(options *Options) *sensorS {
 	options.setDefaults()
@@ -79,6 +85,13 @@ func newSensor(options *Options) *sensorS {
 	// override service name with an env value if set
 	if name, ok := os.LookupEnv("INSTANA_SERVICE_NAME"); ok {
 		s.serviceName = name
+	}
+
+	// if no service name is provided, we use the executable name
+	if "" == strings.TrimSpace(s.serviceName) {
+		sn := path.Base(os.Args[0])
+		s.logger.Debug("Using args[0] as service name: ", sn)
+		s.serviceName = sn
 	}
 
 	// handle the legacy (instana.Options).LogLevel value if we use logger.Logger to log
@@ -171,8 +184,10 @@ func (r *sensorS) serviceOrBinaryName() string {
 	return r.binaryName
 }
 
-// InitSensor intializes the sensor (without tracing) to begin collecting
+// InitSensor initializes the sensor (without tracing) to begin collecting
 // and reporting metrics.
+//
+// Deprecated: Use [StartMetrics] instead.
 func InitSensor(options *Options) {
 	if sensor != nil {
 		return
@@ -215,6 +230,13 @@ func InitSensor(options *Options) {
 	go sensor.meter.Run(1 * time.Second)
 
 	sensor.logger.Debug("initialized Instana sensor v", Version)
+}
+
+// StartMetrics initializes the communication with the agent. Then it starts collecting and reporting metrics to the agent.
+// Calling StartMetrics multiple times has no effect and the function will simply return, and provided options will not
+// be reapplied.
+func StartMetrics(options *Options) {
+	InitSensor(options)
 }
 
 // Ready returns whether the Instana collector is ready to collect and send data to the agent

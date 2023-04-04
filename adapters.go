@@ -32,6 +32,8 @@ type Tracer interface {
 	Options() TracerOptions
 	// Flush sends all finished spans to the agent
 	Flush(context.Context) error
+	// StartSpanWithOptions starts a span with the given options and return the span reference
+	StartSpanWithOptions(string, ot.StartSpanOptions) ot.Span
 }
 
 // Sensor is used to inject tracing information into requests
@@ -40,7 +42,7 @@ type Sensor struct {
 	logger LeveledLogger
 }
 
-// NewSensor creates a new instana.Sensor
+// NewSensor creates a new [Sensor]
 func NewSensor(serviceName string) *Sensor {
 	return NewSensorWithTracer(NewTracerWithOptions(
 		&Options{
@@ -49,7 +51,7 @@ func NewSensor(serviceName string) *Sensor {
 	))
 }
 
-// NewSensorWithTracer returns a new instana.Sensor that uses provided tracer to report spans
+// NewSensorWithTracer returns a new [Sensor] that uses provided tracer to report spans
 func NewSensorWithTracer(tracer ot.Tracer) *Sensor {
 	return &Sensor{
 		tracer: tracer,
@@ -167,4 +169,89 @@ func (s *Sensor) WithTracingContext(name string, w http.ResponseWriter, req *htt
 	s.WithTracingSpan(name, w, req, func(span ot.Span) {
 		f(span, ContextWithSpan(req.Context(), span))
 	})
+}
+
+// Compliance with TracerLogger
+
+// Extract() returns a SpanContext instance given `format` and `carrier`. It matches [opentracing.Tracer.Extract].
+func (s *Sensor) Extract(format interface{}, carrier interface{}) (ot.SpanContext, error) {
+	return s.tracer.Extract(format, carrier)
+}
+
+// Inject() takes the `sm` SpanContext instance and injects it for
+// propagation within `carrier`. The actual type of `carrier` depends on
+// the value of `format`. It matches [opentracing.Tracer.Inject]
+func (s *Sensor) Inject(sm ot.SpanContext, format interface{}, carrier interface{}) error {
+	return s.tracer.Inject(sm, format, carrier)
+}
+
+// Create, start, and return a new Span with the given `operationName` and
+// incorporate the given StartSpanOption `opts`. (Note that `opts` borrows
+// from the "functional options" pattern, per
+// http://dave.cheney.net/2014/10/17/functional-options-for-friendly-apis)
+//
+// It matches [opentracing.Tracer.StartSpan].
+func (s *Sensor) StartSpan(operationName string, opts ...ot.StartSpanOption) ot.Span {
+	return s.tracer.StartSpan(operationName, opts...)
+}
+
+// StartSpanWithOptions creates and starts a span by setting Instana relevant data within the span.
+// It matches [instana.Tracer.StartSpanWithOptions].
+func (s *Sensor) StartSpanWithOptions(operationName string, opts ot.StartSpanOptions) ot.Span {
+	if t, ok := s.tracer.(Tracer); ok {
+		return t.StartSpanWithOptions(operationName, opts)
+	}
+
+	s.logger.Warn("Sensor.StartSpanWithOptions() not implemented by interface: ", s.tracer, " - returning nil")
+
+	return nil
+}
+
+// Options gets the current tracer options
+// It matches [instana.Tracer.Options].
+func (s *Sensor) Options() TracerOptions {
+	if t, ok := s.tracer.(Tracer); ok {
+		return t.Options()
+	}
+
+	s.logger.Warn("Sensor.Options() not implemented by interface: ", s.tracer, " - returning DefaultTracerOptions()")
+
+	return DefaultTracerOptions()
+}
+
+// Flush sends all finished spans to the agent
+// It matches [instana.Tracer.Flush].
+func (s *Sensor) Flush(ctx context.Context) error {
+	if t, ok := s.tracer.(Tracer); ok {
+		return t.Flush(ctx)
+	}
+
+	s.logger.Warn("Sensor.Flush() not implemented by interface: ", s.tracer, " - returning nil")
+
+	return nil
+}
+
+// Debug logs a debug message by calling [LeveledLogger] underneath
+func (s *Sensor) Debug(v ...interface{}) {
+	s.logger.Debug(v...)
+}
+
+// Info logs an info message by calling [LeveledLogger] underneath
+func (s *Sensor) Info(v ...interface{}) {
+	s.logger.Info(v...)
+}
+
+// Warn logs a warning message by calling [LeveledLogger] underneath
+func (s *Sensor) Warn(v ...interface{}) {
+	s.logger.Warn(v...)
+}
+
+// Error logs a error message by calling [LeveledLogger] underneath
+func (s *Sensor) Error(v ...interface{}) {
+	s.logger.Error(v...)
+}
+
+// LegacySensor returns a reference to [Sensor].
+func (s *Sensor) LegacySensor() *Sensor {
+	return s
 }

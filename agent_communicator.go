@@ -199,7 +199,7 @@ func (a *agentCommunicator) sendDataToAgent(suffix string, data interface{}) err
 	if resp != nil {
 		respCode := resp.StatusCode
 		if respCode < 200 || respCode >= 300 {
-			a.l.Debug("Sending data to agent: response code: ", resp.StatusCode, "-", resp.Status)
+			a.l.Debug("Sending data to agent: response code: ", resp.StatusCode, "-", resp.Status, "; ", url)
 		}
 
 		io.CopyN(ioutil.Discard, resp.Body, 256<<10)

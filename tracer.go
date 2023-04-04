@@ -15,7 +15,6 @@ const (
 	MaxLogsPerSpan = 2
 )
 
-var _ ot.Tracer = (*tracerS)(nil)
 var _ Tracer = (*tracerS)(nil)
 
 type tracerS struct {
