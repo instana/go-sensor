@@ -7,6 +7,7 @@ import (
 	"context"
 	"database/sql"
 	"database/sql/driver"
+	"encoding/json"
 	"net/url"
 	"regexp"
 	"strings"
@@ -146,6 +147,31 @@ func ParseDBConnDetails(connStr string) DbConnDetails {
 	}
 
 	return DbConnDetails{RawString: connStr}
+}
+
+func GetDBConnectDetails(connStr string) string {
+	strategies := [...]func(string) (dbConnDetails, bool){
+		parseDBConnDetailsURI,
+		parsePostgresConnDetailsKV,
+		parseMySQLConnDetailsKV,
+	}
+
+	details := dbConnDetails{RawString: connStr}
+
+	for _, parseFn := range strategies {
+		if d, ok := parseFn(connStr); ok {
+			details = d
+			break
+		}
+	}
+
+	data, err := json.Marshal(details)
+
+	if err != nil {
+		return ""
+	}
+
+	return string(data)
 }
 
 // parseDBConnDetailsURI attempts to parse a connection string as an URI, assuming that it has
