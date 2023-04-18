@@ -7,6 +7,7 @@ import (
 	"context"
 	"database/sql"
 	"database/sql/driver"
+	"fmt"
 	"net/url"
 	"regexp"
 	"strings"
@@ -99,6 +100,7 @@ func (drv *wrappedSQLDriver) Open(name string) (driver.Conn, error) {
 }
 
 func startSQLSpan(ctx context.Context, conn dbConnDetails, query string, sensor *Sensor) ot.Span {
+	fmt.Println("vem aqui")
 	tags := ot.Tags{
 		string(ext.DBType):      "sql",
 		string(ext.DBStatement): query,
