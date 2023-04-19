@@ -126,14 +126,14 @@ func (r *fsmS) checkHost(e *f.Event) {
 			return
 		}
 
-		// header = r.agentComm.serverHeader()
+		header = r.agentComm.serverHeader()
 
-		// found := header == agentHeader
+		found := header == agentHeader
 
-		// if found {
-		// 	r.lookupSuccess(gateway)
-		// 	return
-		// }
+		if found {
+			r.lookupSuccess(gateway)
+			return
+		}
 
 		r.logger.Error("Cannot connect to the agent through localhost or default gateway. Scheduling retry.")
 		r.scheduleRetry(e, r.lookupAgentHost)
@@ -192,7 +192,7 @@ func (r *fsmS) announceSensor(e *f.Event) {
 			}
 		}()
 
-		retryFailedMsg := "Couldn't announce the sensor after reaching the maximum amount of attempts."
+		retryFailedMsg := "announceSensor: Couldn't announce the sensor after reaching the maximum amount of attempts."
 		retryMsg := "Cannot announce sensor. Scheduling retry."
 
 		d := r.getDiscoveryS()
@@ -263,7 +263,7 @@ func (r *fsmS) testAgent(e *f.Event) {
 	r.logger.Debug("testing communication with the agent")
 	go func() {
 		if !r.agentComm.pingAgent() {
-			r.handleRetries(e, r.testAgent, "Couldn't announce the sensor after reaching the maximum amount of attempts.", "Agent is not yet ready. Scheduling retry.")
+			r.handleRetries(e, r.testAgent, "testAgent: Couldn't announce the sensor after reaching the maximum amount of attempts.", "Agent is not yet ready. Scheduling retry.")
 			return
 		}
 
