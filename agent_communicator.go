@@ -194,10 +194,14 @@ func (a *agentCommunicator) sendDataToAgent(suffix string, data interface{}) err
 
 	resp, err := a.client.Do(req)
 
-	if resp.StatusCode != 200 {
-		a.l.Debug("sendDataToAgent: response code != 200: ", resp)
-		if _, ok := os.LookupEnv("INSTANA_GO_FIX"); ok {
-			return errors.New("sendDataToAgent: response code != 200: " + resp.Status)
+	if resp == nil {
+		a.l.Debug("sendDataToAgent: response nil for ", url)
+	} else {
+		if resp.StatusCode != 200 {
+			a.l.Debug("sendDataToAgent: response code != 200: ", resp)
+			if _, ok := os.LookupEnv("INSTANA_GO_FIX"); ok {
+				return errors.New("sendDataToAgent: response code != 200: " + resp.Status)
+			}
 		}
 	}
 

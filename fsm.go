@@ -72,6 +72,17 @@ func newFSM(ahd *agentCommunicator, logger LeveledLogger) *fsmS {
 		})
 	ret.fsm.Event(eInit)
 
+	go func() {
+		t := time.NewTicker(time.Second * 10)
+
+		for {
+			select {
+			case <-t.C:
+				logger.Debug("INSTANA: STATE CHECK", ret.fsm.Current())
+			}
+		}
+	}()
+
 	return ret
 }
 
