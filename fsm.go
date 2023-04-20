@@ -78,7 +78,7 @@ func newFSM(ahd *agentCommunicator, logger LeveledLogger) *fsmS {
 		for {
 			select {
 			case <-t.C:
-				logger.Debug("INSTANA: STATE CHECK", ret.fsm.Current())
+				logger.Debug("INSTANA: STATE CHECK: ", ret.fsm.Current())
 			}
 		}
 	}()
