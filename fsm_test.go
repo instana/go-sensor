@@ -52,7 +52,7 @@ func Test_fsmS_testAgent(t *testing.T) {
 			f.Events{
 				{Name: eTest, Src: []string{"announced"}, Dst: "ready"}},
 			f.Callbacks{
-				"ready": func(ctx context.Context, event *f.Event) {
+				"ready": func(_ context.Context, event *f.Event) {
 					res <- true
 				},
 			}),
@@ -92,7 +92,7 @@ func Test_fsmS_testAgent_Error(t *testing.T) {
 			f.Events{
 				{Name: eInit, Src: []string{"announced"}, Dst: "init"}},
 			f.Callbacks{
-				"init": func(ctx context.Context, event *f.Event) {
+				"init": func(_ context.Context, event *f.Event) {
 					res <- true
 				},
 			}),
@@ -142,7 +142,7 @@ func Test_fsmS_announceSensor(t *testing.T) {
 			f.Events{
 				{Name: eAnnounce, Src: []string{"unannounced"}, Dst: "announced"}},
 			f.Callbacks{
-				"announced": func(ctx context.Context, event *f.Event) {
+				"announced": func(_ context.Context, event *f.Event) {
 					res <- true
 				},
 			}),
@@ -179,7 +179,7 @@ func Test_fsmS_announceSensor_Error(t *testing.T) {
 			f.Events{
 				{Name: eInit, Src: []string{"unannounced"}, Dst: "init"}},
 			f.Callbacks{
-				"init": func(ctx context.Context, event *f.Event) {
+				"init": func(_ context.Context, event *f.Event) {
 					res <- true
 				},
 			}),
@@ -226,7 +226,7 @@ func Test_fsmS_lookupAgentHost(t *testing.T) {
 			f.Events{
 				{Name: eLookup, Src: []string{"init"}, Dst: "unannounced"}},
 			f.Callbacks{
-				"enter_unannounced": func(ctx context.Context, event *f.Event) {
+				"enter_unannounced": func(_ context.Context, event *f.Event) {
 					res <- true
 				},
 			}),

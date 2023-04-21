@@ -76,7 +76,7 @@ func newFSM(ahd *agentCommunicator, logger LeveledLogger) *fsmS {
 	return ret
 }
 
-func (r *fsmS) scheduleRetry(e *f.Event, cb func(ctx context.Context, e *f.Event)) {
+func (r *fsmS) scheduleRetry(e *f.Event, cb func(_ context.Context, e *f.Event)) {
 	r.timer = time.NewTimer(r.lookupAgentHostRetryPeriod)
 	go func() {
 		<-r.timer.C
@@ -84,12 +84,12 @@ func (r *fsmS) scheduleRetry(e *f.Event, cb func(ctx context.Context, e *f.Event
 	}()
 }
 
-func (r *fsmS) scheduleRetryWithExponentialDelay(e *f.Event, cb func(ctx context.Context, e *f.Event), retryNumber int) {
+func (r *fsmS) scheduleRetryWithExponentialDelay(e *f.Event, cb func(_ context.Context, e *f.Event), retryNumber int) {
 	time.Sleep(r.expDelayFunc(retryNumber))
 	cb(context.Background(), e)
 }
 
-func (r *fsmS) lookupAgentHost(ctx context.Context, e *f.Event) {
+func (r *fsmS) lookupAgentHost(_ context.Context, e *f.Event) {
 	go r.checkHost(e, r.agentComm.host)
 }
 
@@ -150,7 +150,7 @@ func (r *fsmS) lookupSuccess(host string) {
 	r.fsm.Event(context.Background(), eLookup)
 }
 
-func (r *fsmS) handleRetries(e *f.Event, cb func(ctx context.Context, e *f.Event), retryFailMsg, retryMsg string) {
+func (r *fsmS) handleRetries(e *f.Event, cb func(_ context.Context, e *f.Event), retryFailMsg, retryMsg string) {
 	r.retriesLeft--
 	if r.retriesLeft == 0 {
 		r.logger.Error(retryFailMsg)
@@ -180,7 +180,7 @@ func (r *fsmS) applyHostAgentSettings(resp agentResponse) {
 	}
 }
 
-func (r *fsmS) announceSensor(ctx context.Context, e *f.Event) {
+func (r *fsmS) announceSensor(_ context.Context, e *f.Event) {
 	r.logger.Debug("announcing sensor to the agent")
 
 	go func() {
@@ -257,7 +257,7 @@ func (r *fsmS) getDiscoveryS() *discoveryS {
 	return d
 }
 
-func (r *fsmS) testAgent(ctx context.Context, e *f.Event) {
+func (r *fsmS) testAgent(_ context.Context, e *f.Event) {
 	r.logger.Debug("testing communication with the agent")
 	go func() {
 		if !r.agentComm.pingAgent() {
@@ -275,7 +275,7 @@ func (r *fsmS) reset() {
 	r.fsm.Event(context.Background(), eInit)
 }
 
-func (r *fsmS) ready(ctx context.Context, e *f.Event) {
+func (r *fsmS) ready(_ context.Context, e *f.Event) {
 	go delayed.flush()
 }
 
