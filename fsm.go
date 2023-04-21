@@ -72,17 +72,6 @@ func newFSM(ahd *agentCommunicator, logger LeveledLogger) *fsmS {
 		})
 	ret.fsm.Event(eInit)
 
-	go func() {
-		t := time.NewTicker(time.Second * 10)
-
-		for {
-			select {
-			case <-t.C:
-				logger.Debug("INSTANA: STATE CHECK: ", ret.fsm.Current())
-			}
-		}
-	}()
-
 	return ret
 }
 
@@ -118,9 +107,32 @@ func (r *fsmS) checkHost(e *f.Event) {
 		return
 	}
 
-	r.logger.Debug("Lookup failed for expected host:", host, ", actual host:", r.agentComm.host, ". Will attempt to read host from /proc/net/route")
-	if _, fileNotFoundErr := os.Stat("/proc/net/route"); fileNotFoundErr == nil {
-		gateway, err := getDefaultGateway("/proc/net/route")
+	// check env var again
+	r.logger.Debug("Attempting env var INSTANA_AGENT_HOST **may be the same when the app started**")
+	hostFromEnv, ok := os.LookupEnv("INSTANA_AGENT_HOST")
+
+	if !ok {
+		r.logger.Debug("No env var INSTANA_AGENT_HOST present")
+	} else {
+		r.logger.Debug("Trying to reach the agent with host from INSTANA_AGENT_HOST: ", hostFromEnv)
+		originalHost := r.agentComm.host
+		r.agentComm.host = hostFromEnv
+		header = r.agentComm.serverHeader()
+
+		if header == agentHeader {
+			r.lookupSuccess(hostFromEnv)
+			return
+		}
+
+		r.agentComm.host = originalHost
+	}
+
+	routeFilename := "/proc/net/route"
+	// routeFilename := "/Users/willian/projects/go-sensor/proc_net_route.txt"
+	r.logger.Debug("Lookup failed for expected host: ", r.agentComm.host, ". Will attempt to read host from /proc/net/route")
+	if _, fileNotFoundErr := os.Stat(routeFilename); fileNotFoundErr == nil {
+		gateway, err := getDefaultGateway(routeFilename)
+		r.logger.Debug("Identified the gateway: ", gateway)
 		if err != nil {
 			// This will be always the "failed to open /proc/net/route: no such file or directory" error.
 			// As this info is not relevant to the customer, we can remove it from the message.
@@ -137,8 +149,9 @@ func (r *fsmS) checkHost(e *f.Event) {
 			return
 		}
 
+		originalHost := r.agentComm.host
+		r.agentComm.host = gateway
 		header = r.agentComm.serverHeader()
-
 		found := header == agentHeader
 
 		if found {
@@ -146,7 +159,9 @@ func (r *fsmS) checkHost(e *f.Event) {
 			return
 		}
 
-		r.logger.Error("Cannot connect to the agent through localhost or default gateway. Scheduling retry.")
+		r.agentComm.host = originalHost
+
+		r.logger.Error("Cannot connect to the agent through default gateway. Scheduling retry.")
 		r.scheduleRetry(e, r.lookupAgentHost)
 	} else {
 		r.logger.Error("Cannot connect to the agent. Scheduling retry.")

@@ -6,11 +6,9 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
 	"io"
 	"io/ioutil"
 	"net/http"
-	"os"
 )
 
 // agentCommunicator is a collection of data and actions to be executed against the agent.
@@ -196,16 +194,14 @@ func (a *agentCommunicator) sendDataToAgent(suffix string, data interface{}) err
 
 	if resp == nil {
 		a.l.Debug("sendDataToAgent: response nil for ", url)
-	} else {
-		if resp.StatusCode != 200 {
-			a.l.Debug("sendDataToAgent: response code != 200: ", resp)
-			if _, ok := os.LookupEnv("INSTANA_GO_FIX"); ok {
-				return errors.New("sendDataToAgent: response code != 200: " + resp.Status)
-			}
-		}
 	}
 
 	if resp != nil {
+		respCode := resp.StatusCode
+		if respCode < 200 || respCode >= 300 {
+			a.l.Debug("sendDataToAgent: response code: ", resp)
+		}
+
 		io.CopyN(ioutil.Discard, resp.Body, 256<<10)
 		resp.Body.Close()
 	}
