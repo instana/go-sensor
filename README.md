@@ -10,7 +10,9 @@
 The Go Collector is a runtime metrics collector, code execution tracer and profiler for applications and services written in Go. This module
 is a part of [Instana](https://instana.com) APM solution.
 
-Since version 1.47 the Go Collector requires Go version 1.13 or later.
+## Dependency
+- Since version 1.47 the Go Collector requires Go version 1.13 or later.
+- Since version 1.53, the Go Collector requires github.com/looplab/fsm v1.0.1 or later.
 
 ## Installation
 
