@@ -103,47 +103,49 @@ func (r *fsmS) checkHost(e *f.Event) {
 	// Agent host is found through the checkHost method, that attempts to read "Instana Agent" from the response header.
 	if found {
 		r.lookupSuccess(host)
-		r.logger.Debug("Agent host is found through the checkHost method, that attempts to read 'Instana Agent' from the response header.")
+		r.logger.Debug("Agent host found: '", host, "' when attempting to read the string 'Instana Agent' from the response header.")
 		return
 	}
 
 	// check env var again
-	r.logger.Debug("Attempting env var INSTANA_AGENT_HOST **may be the same when the app started**")
+	r.logger.Debug("Attempting to retrieve host from the INSTANA_AGENT_HOST environment variable")
 	hostFromEnv, ok := os.LookupEnv("INSTANA_AGENT_HOST")
 
 	if !ok {
-		r.logger.Debug("No env var INSTANA_AGENT_HOST present")
+		r.logger.Debug("No INSTANA_AGENT_HOST environment variable present")
 	} else {
-		r.logger.Debug("Trying to reach the agent with host from INSTANA_AGENT_HOST: ", hostFromEnv)
+		r.logger.Debug("Attempting to reach the agent with host found from the INSTANA_AGENT_HOST environment variable: ", hostFromEnv)
 		originalHost := r.agentComm.host
 		r.agentComm.host = hostFromEnv
 		header = r.agentComm.serverHeader()
 
 		if header == agentHeader {
+			r.logger.Debug("Lookup successful with host from the INSTANA_AGENT_HOST environment variable: ", hostFromEnv)
 			r.lookupSuccess(hostFromEnv)
 			return
 		}
+
+		r.logger.Debug("Lookup failed with host from the INSTANA_AGENT_HOST environment variable: ", hostFromEnv, ". Updating host back to the original: ", originalHost)
 
 		r.agentComm.host = originalHost
 	}
 
 	routeFilename := "/proc/net/route"
-	// routeFilename := "/Users/willian/projects/go-sensor/proc_net_route.txt"
-	r.logger.Debug("Lookup failed for expected host: ", r.agentComm.host, ". Will attempt to read host from /proc/net/route")
+	r.logger.Debug("Lookup failed for expected host: ", r.agentComm.host, ". Will attempt to read host from ", routeFilename)
 	if _, fileNotFoundErr := os.Stat(routeFilename); fileNotFoundErr == nil {
 		gateway, err := getDefaultGateway(routeFilename)
 		r.logger.Debug("Identified the gateway: ", gateway)
 		if err != nil {
 			// This will be always the "failed to open /proc/net/route: no such file or directory" error.
 			// As this info is not relevant to the customer, we can remove it from the message.
-			r.logger.Error("Couldn't open the /proc/net/route file in order to retrieve the default gateway. Scheduling retry.")
+			r.logger.Error("Couldn't open the ", routeFilename, " file in order to retrieve the default gateway. Scheduling retry.")
 			r.scheduleRetry(e, r.lookupAgentHost)
 
 			return
 		}
 
 		if gateway == "" {
-			r.logger.Error("Couldn't parse the default gateway address from /proc/net/route. Scheduling retry.")
+			r.logger.Error("Couldn't parse the default gateway address from ", routeFilename, ". Scheduling retry.")
 			r.scheduleRetry(e, r.lookupAgentHost)
 
 			return
@@ -155,9 +157,12 @@ func (r *fsmS) checkHost(e *f.Event) {
 		found := header == agentHeader
 
 		if found {
+			r.logger.Debug("Lookup successful with host from ", routeFilename, ": ", gateway)
 			r.lookupSuccess(gateway)
 			return
 		}
+
+		r.logger.Debug("Lookup failed with host from ", routeFilename, ": ", gateway, ". Updating host back to the original: ", originalHost)
 
 		r.agentComm.host = originalHost
 
@@ -165,7 +170,7 @@ func (r *fsmS) checkHost(e *f.Event) {
 		r.scheduleRetry(e, r.lookupAgentHost)
 	} else {
 		r.logger.Error("Cannot connect to the agent. Scheduling retry.")
-		r.logger.Debug("Connecting through the default gateway has not been attempted because proc/net/route does not exist.")
+		r.logger.Debug("Connecting through the default gateway has not been attempted because ", routeFilename, " does not exist.")
 		r.scheduleRetry(e, r.lookupAgentHost)
 	}
 }
