@@ -4,6 +4,7 @@
 package instana
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"math"
@@ -70,25 +71,25 @@ func newFSM(ahd *agentCommunicator, logger LeveledLogger) *fsmS {
 			"enter_announced":   ret.testAgent,
 			"ready":             ret.ready,
 		})
-	ret.fsm.Event(eInit)
+	ret.fsm.Event(context.Background(), eInit)
 
 	return ret
 }
 
-func (r *fsmS) scheduleRetry(e *f.Event, cb func(e *f.Event)) {
+func (r *fsmS) scheduleRetry(e *f.Event, cb func(_ context.Context, e *f.Event)) {
 	r.timer = time.NewTimer(r.lookupAgentHostRetryPeriod)
 	go func() {
 		<-r.timer.C
-		cb(e)
+		cb(context.Background(), e)
 	}()
 }
 
-func (r *fsmS) scheduleRetryWithExponentialDelay(e *f.Event, cb func(e *f.Event), retryNumber int) {
+func (r *fsmS) scheduleRetryWithExponentialDelay(e *f.Event, cb func(_ context.Context, e *f.Event), retryNumber int) {
 	time.Sleep(r.expDelayFunc(retryNumber))
-	cb(e)
+	cb(context.Background(), e)
 }
 
-func (r *fsmS) lookupAgentHost(e *f.Event) {
+func (r *fsmS) lookupAgentHost(_ context.Context, e *f.Event) {
 	go r.checkHost(e)
 }
 
@@ -180,14 +181,14 @@ func (r *fsmS) lookupSuccess(host string) {
 
 	r.agentComm.host = host
 	r.retriesLeft = maximumRetries
-	r.fsm.Event(eLookup)
+	r.fsm.Event(context.Background(), eLookup)
 }
 
-func (r *fsmS) handleRetries(e *f.Event, cb func(e *f.Event), retryFailMsg, retryMsg string) {
+func (r *fsmS) handleRetries(e *f.Event, cb func(_ context.Context, e *f.Event), retryFailMsg, retryMsg string) {
 	r.retriesLeft--
 	if r.retriesLeft == 0 {
 		r.logger.Error(retryFailMsg)
-		r.fsm.Event(eInit)
+		r.fsm.Event(context.Background(), eInit)
 		return
 	}
 
@@ -213,7 +214,7 @@ func (r *fsmS) applyHostAgentSettings(resp agentResponse) {
 	}
 }
 
-func (r *fsmS) announceSensor(e *f.Event) {
+func (r *fsmS) announceSensor(_ context.Context, e *f.Event) {
 	r.logger.Debug("announcing sensor to the agent")
 
 	go func() {
@@ -240,7 +241,7 @@ func (r *fsmS) announceSensor(e *f.Event) {
 		r.applyHostAgentSettings(*resp)
 
 		r.retriesLeft = maximumRetries
-		r.fsm.Event(eAnnounce)
+		r.fsm.Event(context.Background(), eAnnounce)
 	}()
 }
 
@@ -290,7 +291,7 @@ func (r *fsmS) getDiscoveryS() *discoveryS {
 	return d
 }
 
-func (r *fsmS) testAgent(e *f.Event) {
+func (r *fsmS) testAgent(_ context.Context, e *f.Event) {
 	r.logger.Debug("testing communication with the agent")
 	go func() {
 		if !r.agentComm.pingAgent() {
@@ -299,16 +300,16 @@ func (r *fsmS) testAgent(e *f.Event) {
 		}
 
 		r.retriesLeft = maximumRetries
-		r.fsm.Event(eTest)
+		r.fsm.Event(context.Background(), eTest)
 	}()
 }
 
 func (r *fsmS) reset() {
 	r.retriesLeft = maximumRetries
-	r.fsm.Event(eInit)
+	r.fsm.Event(context.Background(), eInit)
 }
 
-func (r *fsmS) ready(e *f.Event) {
+func (r *fsmS) ready(_ context.Context, e *f.Event) {
 	go delayed.flush()
 }
 
