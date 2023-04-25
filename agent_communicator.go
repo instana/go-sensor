@@ -26,6 +26,9 @@ type agentCommunicator struct {
 
 	// client is an HTTP client
 	client httpClient
+
+	// l is the Instana logger
+	l LeveledLogger
 }
 
 // buildURL builds an Agent URL based on the sufix for the different Agent services.
@@ -45,12 +48,14 @@ func (a *agentCommunicator) serverHeader() string {
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 
 	if err != nil {
+		a.l.Debug("Error creating request while attempting to retrieve the 'Server' header: ", err.Error())
 		return ""
 	}
 
 	resp, err := a.client.Do(req)
 
 	if resp == nil {
+		a.l.Debug("No response from the agent while attempting to retrieve the 'Server' header: ", err.Error())
 		return ""
 	}
 
@@ -62,6 +67,8 @@ func (a *agentCommunicator) serverHeader() string {
 	if err == nil {
 		return resp.Header.Get("Server")
 	}
+
+	a.l.Debug("Error requesting header from the agent while attempting to retrieve the 'Server' header: ", err.Error())
 
 	return ""
 }
@@ -77,12 +84,14 @@ func (a *agentCommunicator) agentResponse(d *discoveryS) *agentResponse {
 	req, err := http.NewRequest(http.MethodPut, u, bytes.NewBuffer(jsonData))
 
 	if err != nil {
+		a.l.Debug("Error creating request to the agent while attempting to get the response: ", err.Error())
 		return nil
 	}
 
 	res, err := a.client.Do(req)
 
 	if res == nil {
+		a.l.Debug("No response from the agent while attempting to get the response: ", err.Error())
 		return nil
 	}
 
@@ -94,18 +103,21 @@ func (a *agentCommunicator) agentResponse(d *discoveryS) *agentResponse {
 	badResponse := res.StatusCode < 200 || res.StatusCode >= 300
 
 	if err != nil || badResponse {
+		a.l.Debug("Error requesting response data from the agent: ", err, "; Bad response: ", badResponse)
 		return nil
 	}
 
 	respBytes, err := ioutil.ReadAll(res.Body)
 
 	if err != nil {
+		a.l.Debug("Error reading res.Body while attempting to get response data from the agent: ", err.Error())
 		return nil
 	}
 
 	err = json.Unmarshal(respBytes, &resp)
 
 	if err != nil {
+		a.l.Debug("Error unmarshaling body while attempting to get response data from the agent: ", err.Error())
 		return nil
 	}
 
@@ -118,12 +130,14 @@ func (a *agentCommunicator) pingAgent() bool {
 	req, err := http.NewRequest(http.MethodHead, u, nil)
 
 	if err != nil {
+		a.l.Debug("Error preparing request while attempting to ping the agent: ", err.Error())
 		return false
 	}
 
 	resp, err := a.client.Do(req)
 
 	if err != nil || resp == nil {
+		a.l.Debug("Error pinging the agent: ", err.Error(), ", response: ", resp)
 		return false
 	}
 
@@ -133,8 +147,11 @@ func (a *agentCommunicator) pingAgent() bool {
 	}()
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		a.l.Debug("Agent ping failed, response: ", resp.StatusCode, " with message ", resp.Status)
 		return false
 	}
+
+	a.l.Debug("Agent ping ok!")
 
 	return true
 }
@@ -151,6 +168,7 @@ func (a *agentCommunicator) sendDataToAgent(suffix string, data interface{}) err
 		b, err := json.Marshal(data)
 
 		if err != nil {
+			a.l.Debug("Sending data to agent marshaling failed: ", err.Error())
 			return err
 		}
 
@@ -164,6 +182,7 @@ func (a *agentCommunicator) sendDataToAgent(suffix string, data interface{}) err
 	req, err := http.NewRequest(http.MethodPost, url, r)
 
 	if err != nil {
+		a.l.Debug("Sending data to agent request creation failed: ", err.Error())
 		return err
 	}
 
@@ -173,15 +192,28 @@ func (a *agentCommunicator) sendDataToAgent(suffix string, data interface{}) err
 
 	resp, err := a.client.Do(req)
 
+	if resp == nil {
+		a.l.Debug("Sending data to agent: response nil for URL ", url)
+	}
+
 	if resp != nil {
+		respCode := resp.StatusCode
+		if respCode < 200 || respCode >= 300 {
+			a.l.Debug("Sending data to agent: response code: ", resp.StatusCode, "-", resp.Status)
+		}
+
 		io.CopyN(ioutil.Discard, resp.Body, 256<<10)
 		resp.Body.Close()
+	}
+
+	if err != nil {
+		a.l.Debug("Sending data to agent request failed: ", err.Error())
 	}
 
 	return err
 }
 
-func newAgentCommunicator(host, port string, from *fromS) *agentCommunicator {
+func newAgentCommunicator(host, port string, from *fromS, logger LeveledLogger) *agentCommunicator {
 	return &agentCommunicator{
 		host: host,
 		port: port,
@@ -189,5 +221,6 @@ func newAgentCommunicator(host, port string, from *fromS) *agentCommunicator {
 		client: &http.Client{
 			Timeout: announceTimeout,
 		},
+		l: logger,
 	}
 }

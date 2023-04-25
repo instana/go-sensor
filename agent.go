@@ -117,7 +117,7 @@ func newAgent(serviceName, host string, port int, logger LeveledLogger) *agentS 
 	logger.Debug("initializing agent")
 
 	agent := &agentS{
-		agentComm: newAgentCommunicator(host, strconv.Itoa(port), &fromS{}),
+		agentComm: newAgentCommunicator(host, strconv.Itoa(port), &fromS{}, logger),
 		port:      strconv.Itoa(port),
 		snapshot: &SnapshotCollector{
 			CollectionInterval: snapshotCollectionInterval,

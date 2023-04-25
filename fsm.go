@@ -90,10 +90,11 @@ func (r *fsmS) scheduleRetryWithExponentialDelay(e *f.Event, cb func(_ context.C
 }
 
 func (r *fsmS) lookupAgentHost(_ context.Context, e *f.Event) {
-	go r.checkHost(e, r.agentComm.host)
+	go r.checkHost(e)
 }
 
-func (r *fsmS) checkHost(e *f.Event, host string) {
+func (r *fsmS) checkHost(e *f.Event) {
+	host := r.agentComm.host
 	r.logger.Debug("checking host ", r.agentComm.host)
 
 	header := r.agentComm.serverHeader()
@@ -103,41 +104,74 @@ func (r *fsmS) checkHost(e *f.Event, host string) {
 	// Agent host is found through the checkHost method, that attempts to read "Instana Agent" from the response header.
 	if found {
 		r.lookupSuccess(host)
+		r.logger.Debug("Agent host found: '", host, "' when attempting to read the string 'Instana Agent' from the response header.")
 		return
 	}
 
-	if _, fileNotFoundErr := os.Stat("/proc/net/route"); fileNotFoundErr == nil {
-		gateway, err := getDefaultGateway("/proc/net/route")
+	// check env var again
+	r.logger.Debug("Attempting to retrieve host from the INSTANA_AGENT_HOST environment variable")
+	hostFromEnv, ok := os.LookupEnv("INSTANA_AGENT_HOST")
+
+	if !ok {
+		r.logger.Debug("No INSTANA_AGENT_HOST environment variable present")
+	} else {
+		r.logger.Debug("Attempting to reach the agent with host found from the INSTANA_AGENT_HOST environment variable: ", hostFromEnv)
+		originalHost := r.agentComm.host
+		r.agentComm.host = hostFromEnv
+		header = r.agentComm.serverHeader()
+
+		if header == agentHeader {
+			r.logger.Debug("Lookup successful with host from the INSTANA_AGENT_HOST environment variable: ", hostFromEnv)
+			r.lookupSuccess(hostFromEnv)
+			return
+		}
+
+		r.logger.Debug("Lookup failed with host from the INSTANA_AGENT_HOST environment variable: ", hostFromEnv, ". Updating host back to the original: ", originalHost)
+
+		r.agentComm.host = originalHost
+	}
+
+	routeFilename := "/proc/net/route"
+	r.logger.Debug("Lookup failed for expected host: ", r.agentComm.host, ". Will attempt to read host from ", routeFilename)
+	if _, fileNotFoundErr := os.Stat(routeFilename); fileNotFoundErr == nil {
+		gateway, err := getDefaultGateway(routeFilename)
+		r.logger.Debug("Identified the gateway: ", gateway)
 		if err != nil {
 			// This will be always the "failed to open /proc/net/route: no such file or directory" error.
 			// As this info is not relevant to the customer, we can remove it from the message.
-			r.logger.Error("Couldn't open the /proc/net/route file in order to retrieve the default gateway. Scheduling retry.")
+			r.logger.Error("Couldn't open the ", routeFilename, " file in order to retrieve the default gateway. Scheduling retry.")
 			r.scheduleRetry(e, r.lookupAgentHost)
 
 			return
 		}
 
 		if gateway == "" {
-			r.logger.Error("Couldn't parse the default gateway address from /proc/net/route. Scheduling retry.")
+			r.logger.Error("Couldn't parse the default gateway address from ", routeFilename, ". Scheduling retry.")
 			r.scheduleRetry(e, r.lookupAgentHost)
 
 			return
 		}
 
+		originalHost := r.agentComm.host
+		r.agentComm.host = gateway
 		header = r.agentComm.serverHeader()
-
-		found := err == nil && header == agentHeader
+		found := header == agentHeader
 
 		if found {
+			r.logger.Debug("Lookup successful with host from ", routeFilename, ": ", gateway)
 			r.lookupSuccess(gateway)
 			return
 		}
 
-		r.logger.Error("Cannot connect to the agent through localhost or default gateway. Scheduling retry.")
+		r.logger.Debug("Lookup failed with host from ", routeFilename, ": ", gateway, ". Updating host back to the original: ", originalHost)
+
+		r.agentComm.host = originalHost
+
+		r.logger.Error("Cannot connect to the agent through default gateway. Scheduling retry.")
 		r.scheduleRetry(e, r.lookupAgentHost)
 	} else {
 		r.logger.Error("Cannot connect to the agent. Scheduling retry.")
-		r.logger.Debug("Connecting through the default gateway has not been attempted because proc/net/route does not exist.")
+		r.logger.Debug("Connecting through the default gateway has not been attempted because ", routeFilename, " does not exist.")
 		r.scheduleRetry(e, r.lookupAgentHost)
 	}
 }
@@ -190,7 +224,7 @@ func (r *fsmS) announceSensor(_ context.Context, e *f.Event) {
 			}
 		}()
 
-		retryFailedMsg := "Couldn't announce the sensor after reaching the maximum amount of attempts."
+		retryFailedMsg := "announceSensor: Couldn't announce the sensor after reaching the maximum amount of attempts."
 		retryMsg := "Cannot announce sensor. Scheduling retry."
 
 		d := r.getDiscoveryS()
@@ -261,7 +295,7 @@ func (r *fsmS) testAgent(_ context.Context, e *f.Event) {
 	r.logger.Debug("testing communication with the agent")
 	go func() {
 		if !r.agentComm.pingAgent() {
-			r.handleRetries(e, r.testAgent, "Couldn't announce the sensor after reaching the maximum amount of attempts.", "Agent is not yet ready. Scheduling retry.")
+			r.handleRetries(e, r.testAgent, "testAgent: Couldn't announce the sensor after reaching the maximum amount of attempts.", "Agent is not yet ready. Scheduling retry.")
 			return
 		}
 
