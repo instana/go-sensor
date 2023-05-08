@@ -83,29 +83,32 @@ workflows:
       - build:
           name: "go1.20"
           image: "cimg/go:1.20"
+          exclude_dirs: "./example/gin"
       - build:
           name: "go1.19"
           image: "cimg/go:1.19"
+          exclude_dirs: "./example/gin"
       - build:
           name: "go1.18"
           image: "cimg/go:1.18"
+          exclude_dirs: "./example/gin"
       - build:
           name: "go1.17"
           image: "circleci/golang:1.17"
-          exclude_dirs: "./internal/bin/sql"
+          exclude_dirs: "./internal/bin/sql ./example/gin"
       - build:
           name: "go1.16"
           image: "circleci/golang:1.16"
-          exclude_dirs: "./internal/bin/sql"
+          exclude_dirs: "./internal/bin/sql ./example/gin"
       - build:
           name: "go1.15"
           image: "circleci/golang:1.15"
-          exclude_dirs: "./instrumentation/instaredigo ./internal/bin/sql"
+          exclude_dirs: "./instrumentation/instaredigo ./internal/bin/sql ./example/gin"
       - build:
           name: "go1.14"
           image: "circleci/golang:1.14"
-          exclude_dirs: "./instrumentation/instaecho ./instrumentation/instaredigo ./internal/bin/sql ./instrumentation/cloud.google.com/go"
+          exclude_dirs: "./instrumentation/instaecho ./instrumentation/instaredigo ./internal/bin/sql ./instrumentation/cloud.google.com/go ./example/gin"
       - build:
           name: "go1.13"
           image: "circleci/golang:1.13"
-          exclude_dirs: "./instrumentation/instaecho ./instrumentation/instaredigo ./internal/bin/sql ./instrumentation/cloud.google.com/go"
+          exclude_dirs: "./instrumentation/instaecho ./instrumentation/instaredigo ./internal/bin/sql ./instrumentation/cloud.google.com/go ./example/gin"
