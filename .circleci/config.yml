@@ -83,19 +83,16 @@ workflows:
       - build:
           name: "go1.20"
           image: "cimg/go:1.20"
-          exclude_dirs: "./example/gin"
       - build:
           name: "go1.19"
           image: "cimg/go:1.19"
-          exclude_dirs: "./example/gin"
       - build:
           name: "go1.18"
           image: "cimg/go:1.18"
-          exclude_dirs: "./example/gin"
       - build:
           name: "go1.17"
           image: "circleci/golang:1.17"
-          exclude_dirs: "./internal/bin/sql ./example/gin"
+          exclude_dirs: "./internal/bin/sql"
       - build:
           name: "go1.16"
           image: "circleci/golang:1.16"
