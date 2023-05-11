@@ -8,4 +8,3 @@ require (
 	github.com/instana/go-sensor/instrumentation/instagin v1.5.0
 )
 
-require github.com/looplab/fsm v1.0.1 // indirect

@@ -5,6 +5,11 @@ This module contains middleware to instrument HTTP services written with [github
 
 [![GoDoc](https://img.shields.io/static/v1?label=godoc&message=reference&color=blue)][godoc]
 
+Compatibility
+-------------
+
+ * Starting at version 1.6.0 of instagin, gin v1.9.0 is used, which requires Go v1.18 or higher
+
 
 Installation
 ------------
