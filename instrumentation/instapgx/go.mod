@@ -3,7 +3,7 @@ module github.com/instana/go-sensor/instrumentation/instapgx
 go 1.17
 
 require (
-	github.com/instana/go-sensor v1.49.0
+	github.com/instana/go-sensor v1.53.0
 	github.com/jackc/pgconn v1.10.1
 	github.com/jackc/pgx/v4 v4.14.1
 	github.com/lib/pq v1.10.2
@@ -20,7 +20,7 @@ require (
 	github.com/jackc/pgservicefile v0.0.0-20200714003250-2b9c44734f2b // indirect
 	github.com/jackc/pgtype v1.9.1 // indirect
 	github.com/kr/pretty v0.2.1 // indirect
-	github.com/looplab/fsm v0.1.0 // indirect
+	github.com/looplab/fsm v1.0.1 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	golang.org/x/crypto v0.1.0 // indirect
