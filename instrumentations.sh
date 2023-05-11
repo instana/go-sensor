@@ -51,7 +51,7 @@ run_release() {
   TAGS=""
   for lib in $LIB_LIST
     do LIB_PATH="$(echo "$lib" | sed 's/\.\///')"
-    VERSION=$(git tag -l "$LIB_PATH*" | sort -V | tail -n1 | sed "s/.*v//")
+    VERSION=$(git tag -l "$LIB_PATH/v*" | sort -V | tail -n1 | sed "s/.*v//")
 
     if [ -z "$VERSION" ]; then
       VERSION="0.0.0"
