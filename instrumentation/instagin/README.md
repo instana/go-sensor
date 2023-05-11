@@ -8,7 +8,7 @@ This module contains middleware to instrument HTTP services written with [github
 Compatibility
 -------------
 
- * Starting at version 1.6.0 of instagin, gin v1.9.0 is used, which requires Go v1.18 or higher
+ * Starting at version 1.6.0 of instagin, [gin v1.9.0](https://github.com/gin-gonic/gin/releases/tag/v1.9.0) is used, which requires Go v1.18 or higher
 
 
 Installation
