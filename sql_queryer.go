@@ -11,7 +11,7 @@ import (
 
 type wQueryer struct {
 	driver.Queryer
-	connDetails dbConnDetails
+	connDetails DbConnDetails
 	sensor      *Sensor
 }
 

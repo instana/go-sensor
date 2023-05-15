@@ -93,12 +93,12 @@ func (drv *wrappedSQLDriver) Open(name string) (driver.Conn, error) {
 		return conn, nil
 	}
 
-	w := wrapConn(parseDBConnDetails(name), conn, drv.sensor)
+	w := wrapConn(ParseDBConnDetails(name), conn, drv.sensor)
 
 	return w, nil
 }
 
-func startSQLSpan(ctx context.Context, conn dbConnDetails, query string, sensor *Sensor) ot.Span {
+func startSQLSpan(ctx context.Context, conn DbConnDetails, query string, sensor *Sensor) ot.Span {
 	tags := ot.Tags{
 		string(ext.DBType):      "sql",
 		string(ext.DBStatement): query,
@@ -127,15 +127,15 @@ func startSQLSpan(ctx context.Context, conn dbConnDetails, query string, sensor 
 	return sensor.Tracer().StartSpan("sdk.database", opts...)
 }
 
-type dbConnDetails struct {
+type DbConnDetails struct {
 	RawString  string
 	Host, Port string
 	Schema     string
 	User       string
 }
 
-func parseDBConnDetails(connStr string) dbConnDetails {
-	strategies := [...]func(string) (dbConnDetails, bool){
+func ParseDBConnDetails(connStr string) DbConnDetails {
+	strategies := [...]func(string) (DbConnDetails, bool){
 		parseDBConnDetailsURI,
 		parsePostgresConnDetailsKV,
 		parseMySQLConnDetailsKV,
@@ -146,19 +146,19 @@ func parseDBConnDetails(connStr string) dbConnDetails {
 		}
 	}
 
-	return dbConnDetails{RawString: connStr}
+	return DbConnDetails{RawString: connStr}
 }
 
 // parseDBConnDetailsURI attempts to parse a connection string as an URI, assuming that it has
 // following format: [scheme://][user[:[password]]@]host[:port][/schema][?attribute1=value1&attribute2=value2...]
-func parseDBConnDetailsURI(connStr string) (dbConnDetails, bool) {
+func parseDBConnDetailsURI(connStr string) (DbConnDetails, bool) {
 	u, err := url.Parse(connStr)
 	if err != nil {
-		return dbConnDetails{}, false
+		return DbConnDetails{}, false
 	}
 
 	if u.Scheme == "" {
-		return dbConnDetails{}, false
+		return DbConnDetails{}, false
 	}
 
 	path := ""
@@ -166,7 +166,7 @@ func parseDBConnDetailsURI(connStr string) (dbConnDetails, bool) {
 		path = u.Path[1:]
 	}
 
-	details := dbConnDetails{
+	details := DbConnDetails{
 		RawString: connStr,
 		Host:      u.Hostname(),
 		Port:      u.Port(),
@@ -188,8 +188,8 @@ func parseDBConnDetailsURI(connStr string) (dbConnDetails, bool) {
 var postgresKVPasswordRegex = regexp.MustCompile(`(^|\s)password=[^\s]+(\s|$)`)
 
 // parsePostgresConnDetailsKV parses a space-separated PostgreSQL-style connection string
-func parsePostgresConnDetailsKV(connStr string) (dbConnDetails, bool) {
-	var details dbConnDetails
+func parsePostgresConnDetailsKV(connStr string) (DbConnDetails, bool) {
+	var details DbConnDetails
 
 	for _, field := range strings.Split(connStr, " ") {
 		fieldNorm := strings.ToLower(field)
@@ -222,7 +222,7 @@ func parsePostgresConnDetailsKV(connStr string) (dbConnDetails, bool) {
 	}
 
 	if details.Schema == "" {
-		return dbConnDetails{}, false
+		return DbConnDetails{}, false
 	}
 
 	details.RawString = postgresKVPasswordRegex.ReplaceAllString(connStr, " ")
@@ -233,8 +233,8 @@ func parsePostgresConnDetailsKV(connStr string) (dbConnDetails, bool) {
 var mysqlKVPasswordRegex = regexp.MustCompile(`(?i)(^|;)Pwd=[^;]+(;|$)`)
 
 // parseMySQLConnDetailsKV parses a semicolon-separated MySQL-style connection string
-func parseMySQLConnDetailsKV(connStr string) (dbConnDetails, bool) {
-	details := dbConnDetails{RawString: connStr}
+func parseMySQLConnDetailsKV(connStr string) (DbConnDetails, bool) {
+	details := DbConnDetails{RawString: connStr}
 
 	for _, field := range strings.Split(connStr, ";") {
 		fieldNorm := strings.ToLower(field)
@@ -260,7 +260,7 @@ func parseMySQLConnDetailsKV(connStr string) (dbConnDetails, bool) {
 	}
 
 	if details.Schema == "" {
-		return dbConnDetails{}, false
+		return DbConnDetails{}, false
 	}
 
 	details.RawString = mysqlKVPasswordRegex.ReplaceAllString(connStr, ";")
@@ -269,13 +269,13 @@ func parseMySQLConnDetailsKV(connStr string) (dbConnDetails, bool) {
 }
 
 func GetDBConnectDetails(connStr string) string {
-	strategies := [...]func(string) (dbConnDetails, bool){
+	strategies := [...]func(string) (DbConnDetails, bool){
 		parseDBConnDetailsURI,
 		parsePostgresConnDetailsKV,
 		parseMySQLConnDetailsKV,
 	}
 
-	details := dbConnDetails{RawString: connStr}
+	details := DbConnDetails{RawString: connStr}
 
 	for _, parseFn := range strategies {
 		if d, ok := parseFn(connStr); ok {

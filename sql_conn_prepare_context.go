@@ -9,7 +9,7 @@ import (
 
 type wConnPrepareContext struct {
 	driver.ConnPrepareContext
-	connDetails dbConnDetails
+	connDetails DbConnDetails
 	sensor      *Sensor
 }
 

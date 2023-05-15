@@ -11,7 +11,7 @@ import (
 
 type wExecer struct {
 	driver.Execer
-	connDetails dbConnDetails
+	connDetails DbConnDetails
 	sensor      *Sensor
 }
 
