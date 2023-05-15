@@ -7,11 +7,11 @@ import (
 	"context"
 	"database/sql"
 	"database/sql/driver"
+	"encoding/json"
 	"net/url"
 	"regexp"
 	"strings"
 	"sync"
-
 	_ "unsafe"
 
 	ot "github.com/opentracing/opentracing-go"
@@ -266,6 +266,31 @@ func parseMySQLConnDetailsKV(connStr string) (dbConnDetails, bool) {
 	details.RawString = mysqlKVPasswordRegex.ReplaceAllString(connStr, ";")
 
 	return details, true
+}
+
+func GetDBConnectDetails(connStr string) string {
+	strategies := [...]func(string) (dbConnDetails, bool){
+		parseDBConnDetailsURI,
+		parsePostgresConnDetailsKV,
+		parseMySQLConnDetailsKV,
+	}
+
+	details := dbConnDetails{RawString: connStr}
+
+	for _, parseFn := range strategies {
+		if d, ok := parseFn(connStr); ok {
+			details = d
+			break
+		}
+	}
+
+	data, err := json.Marshal(details)
+
+	if err != nil {
+		return ""
+	}
+
+	return string(data)
 }
 
 type dsnConnector struct {
