@@ -7,7 +7,6 @@ import (
 	"context"
 	"database/sql"
 	"database/sql/driver"
-	"encoding/json"
 	"net/url"
 	"regexp"
 	"strings"
@@ -266,31 +265,6 @@ func parseMySQLConnDetailsKV(connStr string) (DbConnDetails, bool) {
 	details.RawString = mysqlKVPasswordRegex.ReplaceAllString(connStr, ";")
 
 	return details, true
-}
-
-func GetDBConnectDetails(connStr string) string {
-	strategies := [...]func(string) (DbConnDetails, bool){
-		parseDBConnDetailsURI,
-		parsePostgresConnDetailsKV,
-		parseMySQLConnDetailsKV,
-	}
-
-	details := DbConnDetails{RawString: connStr}
-
-	for _, parseFn := range strategies {
-		if d, ok := parseFn(connStr); ok {
-			details = d
-			break
-		}
-	}
-
-	data, err := json.Marshal(details)
-
-	if err != nil {
-		return ""
-	}
-
-	return string(data)
 }
 
 type dsnConnector struct {
