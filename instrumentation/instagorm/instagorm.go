@@ -148,7 +148,6 @@ func (wdB *wrappedDB) generateTags() ot.Tags {
 
 	tags := ot.Tags{
 		string(ext.DBType):      "sql",
-		string(ext.DBStatement): wdB.db.Statement.SQL.String(),
 		string(ext.PeerAddress): wdB.connDetails.RawString,
 	}
 
