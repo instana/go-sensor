@@ -14,7 +14,6 @@ import (
 
 func Example() {
 	s := instana.NewSensor("go-sensor-gorm")
-	defer instana.ShutdownSensor()
 
 	dsn := "<DSN information for database>"
 

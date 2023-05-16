@@ -17,7 +17,7 @@ import (
 type wrappedDB struct {
 	connDetails instana.DbConnDetails
 	sensor      *instana.Sensor
-	db          *gorm.DB
+	*gorm.DB
 }
 
 // Instrument adds instrumentation for the specified gorm database instance.
@@ -26,7 +26,7 @@ func Instrument(db *gorm.DB, s *instana.Sensor, dsn string) {
 	wdB := wrappedDB{
 		connDetails: instana.ParseDBConnDetails(dsn),
 		sensor:      s,
-		db:          db,
+		DB:          db,
 	}
 
 	wdB.registerCreateCallbacks()
@@ -44,52 +44,52 @@ func Instrument(db *gorm.DB, s *instana.Sensor, dsn string) {
 }
 
 func (wdB *wrappedDB) registerCreateCallbacks() {
-	wdB.logError(wdB.db.Callback().Create().Before("gorm:create").Register("instagorm:before_create",
+	wdB.logError(wdB.Callback().Create().Before("gorm:create").Register("instagorm:before_create",
 		preOpCb(wdB)))
 
-	wdB.logError(wdB.db.Callback().Create().After("gorm:create").Register("instagorm:after_create",
+	wdB.logError(wdB.Callback().Create().After("gorm:create").Register("instagorm:after_create",
 		postOpCb()))
 }
 
 func (wdB *wrappedDB) registerUpdateCallbacks() {
-	wdB.logError(wdB.db.Callback().Update().Before("gorm:update").Register("instagorm:before_update",
+	wdB.logError(wdB.Callback().Update().Before("gorm:update").Register("instagorm:before_update",
 		preOpCb(wdB)))
 
-	wdB.logError(wdB.db.Callback().Update().After("gorm:update").Register("instagorm:after_update",
+	wdB.logError(wdB.Callback().Update().After("gorm:update").Register("instagorm:after_update",
 		postOpCb()))
 }
 
 func (wdB *wrappedDB) registerDeleteCallbacks() {
-	wdB.logError(wdB.db.Callback().Delete().Before("gorm:delete").Register("instagorm:before_delete",
+	wdB.logError(wdB.Callback().Delete().Before("gorm:delete").Register("instagorm:before_delete",
 		preOpCb(wdB)))
 
-	wdB.logError(wdB.db.Callback().Delete().After("gorm:delete").Register("instagorm:after_delete",
+	wdB.logError(wdB.Callback().Delete().After("gorm:delete").Register("instagorm:after_delete",
 		postOpCb()))
 
 }
 
 func (wdB *wrappedDB) registerQueryCallbacks() {
-	wdB.logError(wdB.db.Callback().Query().Before("gorm:query").Register("instagorm:before_query",
+	wdB.logError(wdB.Callback().Query().Before("gorm:query").Register("instagorm:before_query",
 		preOpCb(wdB)))
 
-	wdB.logError(wdB.db.Callback().Query().After("gorm:query").Register("instagorm:after_query",
+	wdB.logError(wdB.Callback().Query().After("gorm:query").Register("instagorm:after_query",
 		postOpCb()))
 
 }
 
 func (wdB *wrappedDB) registerRowCallbacks() {
-	wdB.logError(wdB.db.Callback().Raw().Before("gorm:row").Register("instagorm:before_row",
+	wdB.logError(wdB.Callback().Raw().Before("gorm:row").Register("instagorm:before_row",
 		preOpCb(wdB)))
 
-	wdB.logError(wdB.db.Callback().Raw().After("gorm:row").Register("instagorm:after_row",
+	wdB.logError(wdB.Callback().Raw().After("gorm:row").Register("instagorm:after_row",
 		postOpCb()))
 }
 
 func (wdB *wrappedDB) registerRawCallbacks() {
-	wdB.logError(wdB.db.Callback().Raw().Before("gorm:raw").Register("instagorm:before_raw",
+	wdB.logError(wdB.Callback().Raw().Before("gorm:raw").Register("instagorm:before_raw",
 		preOpCb(wdB)))
 
-	wdB.logError(wdB.db.Callback().Raw().After("gorm:raw").Register("instagorm:after_raw",
+	wdB.logError(wdB.Callback().Raw().After("gorm:raw").Register("instagorm:after_raw",
 		postOpCb()))
 }
 
@@ -131,6 +131,7 @@ func postOpCb() func(db *gorm.DB) {
 		defer sp.Finish()
 
 		sp.SetTag(string(ext.DBStatement), db.Statement.SQL.String())
+		sp.SetTag(string(ext.DBType), db.Dialector.Name())
 
 		if err := db.Statement.Error; err != nil {
 			sp.SetTag("error", err.Error())
@@ -141,7 +142,6 @@ func postOpCb() func(db *gorm.DB) {
 
 func (wdB *wrappedDB) generateTags() ot.Tags {
 	tags := ot.Tags{
-		string(ext.DBType):      "sql",
 		string(ext.PeerAddress): wdB.connDetails.RawString,
 	}
 

@@ -26,11 +26,12 @@ import (
 )
 
 const (
-	INSERT = "INSERT INTO `products` (`created_at`,`updated_at`,`deleted_at`,`code`,`price`) VALUES (?,?,?,?,?) RETURNING `id`"
-	UPDATE = "UPDATE `products` SET `price`=?,`updated_at`=? WHERE `products`.`deleted_at` IS NULL AND `id` = ?"
-	DELETE = "DELETE FROM `products` WHERE `products`.`id` = ?"
-	SELECT = "SELECT * FROM `products` WHERE code = ? AND `products`.`deleted_at` IS NULL ORDER BY `products`.`id` LIMIT 1"
-	RAWSQL = "SELECT * FROM products"
+	INSERT  = "INSERT INTO `products` (`created_at`,`updated_at`,`deleted_at`,`code`,`price`) VALUES (?,?,?,?,?) RETURNING `id`"
+	UPDATE  = "UPDATE `products` SET `price`=?,`updated_at`=? WHERE `products`.`deleted_at` IS NULL AND `id` = ?"
+	DELETE  = "DELETE FROM `products` WHERE `products`.`id` = ?"
+	SELECT  = "SELECT * FROM `products` WHERE code = ? AND `products`.`deleted_at` IS NULL ORDER BY `products`.`id` LIMIT 1"
+	RAWSQL  = "SELECT * FROM products"
+	DB_TYPE = "sqlite"
 )
 
 type product struct {
@@ -81,7 +82,7 @@ func TestInsertRecord(t *testing.T) {
 					"span.kind":    ext.SpanKindRPCClientEnum,
 					"db.instance":  dsn,
 					"db.statement": INSERT,
-					"db.type":      "sql",
+					"db.type":      DB_TYPE,
 					"peer.address": dsn,
 				},
 			},
@@ -137,7 +138,7 @@ func TestUpdateRecord(t *testing.T) {
 					"span.kind":    ext.SpanKindRPCClientEnum,
 					"db.instance":  dsn,
 					"db.statement": UPDATE,
-					"db.type":      "sql",
+					"db.type":      DB_TYPE,
 					"peer.address": dsn,
 				},
 			},
@@ -191,7 +192,7 @@ func TestSelectRecord(t *testing.T) {
 					"span.kind":    ext.SpanKindRPCClientEnum,
 					"db.instance":  dsn,
 					"db.statement": SELECT,
-					"db.type":      "sql",
+					"db.type":      DB_TYPE,
 					"peer.address": dsn,
 				},
 			},
@@ -243,7 +244,7 @@ func TestDeleteRecord(t *testing.T) {
 					"span.kind":    ext.SpanKindRPCClientEnum,
 					"db.instance":  dsn,
 					"db.statement": DELETE,
-					"db.type":      "sql",
+					"db.type":      DB_TYPE,
 					"peer.address": dsn,
 				},
 			},
@@ -299,7 +300,7 @@ func TestRawSQL(t *testing.T) {
 					"span.kind":    ext.SpanKindRPCClientEnum,
 					"db.instance":  dsn,
 					"db.statement": RawSqlOutput,
-					"db.type":      "sql",
+					"db.type":      DB_TYPE,
 					"peer.address": dsn,
 				},
 			},
