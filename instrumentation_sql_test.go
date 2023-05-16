@@ -139,6 +139,57 @@ func TestOpenSQLDB(t *testing.T) {
 	})
 }
 
+func TestDSNParing(t *testing.T) {
+	testcases := map[string]struct {
+		DSN            string
+		ExpectedConfig instana.DbConnDetails
+	}{
+		"URI": {
+			DSN: "db://user1:p@55w0rd@db-host:1234/test-schema?param=value",
+			ExpectedConfig: instana.DbConnDetails{
+				Schema:    "test-schema",
+				RawString: "db://user1@db-host:1234/test-schema?param=value",
+				Host:      "db-host",
+				Port:      "1234",
+				User:      "user1",
+			},
+		},
+		"Postgres": {
+			DSN: "host=db-host1,db-host-2 hostaddr=1.2.3.4,2.3.4.5 connect_timeout=10  port=1234 user=user1 password=p@55w0rd dbname=test-schema",
+			ExpectedConfig: instana.DbConnDetails{
+				RawString: "host=db-host1,db-host-2 hostaddr=1.2.3.4,2.3.4.5 connect_timeout=10  port=1234 user=user1 dbname=test-schema",
+				Host:      "1.2.3.4,2.3.4.5",
+				Port:      "1234",
+				Schema:    "test-schema",
+				User:      "user1",
+			},
+		},
+		"MySQL": {
+			DSN: "Server=db-host1, db-host2;Database=test-schema;Port=1234;Uid=user1;Pwd=p@55w0rd;",
+			ExpectedConfig: instana.DbConnDetails{
+				RawString: "Server=db-host1, db-host2;Database=test-schema;Port=1234;Uid=user1;",
+				Host:      "db-host1, db-host2",
+				Port:      "1234",
+				Schema:    "test-schema",
+				User:      "user1",
+			},
+		},
+		"SQLite": {
+			DSN: "/home/user/products.db",
+			ExpectedConfig: instana.DbConnDetails{
+				RawString: "/home/user/products.db",
+			},
+		},
+	}
+
+	for name, testcase := range testcases {
+		t.Run(name, func(t *testing.T) {
+			connDetails := instana.ParseDBConnDetails(testcase.DSN)
+			assert.Equal(t, testcase.ExpectedConfig, connDetails)
+		})
+	}
+}
+
 func TestOpenSQLDB_URIConnString(t *testing.T) {
 	recorder := instana.NewTestRecorder()
 	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{

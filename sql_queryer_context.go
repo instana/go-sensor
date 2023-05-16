@@ -11,7 +11,7 @@ import (
 
 type wQueryerContext struct {
 	driver.QueryerContext
-	connDetails dbConnDetails
+	connDetails DbConnDetails
 	sensor      *Sensor
 }
 

@@ -9,7 +9,7 @@ import (
 type wConn struct {
 	driver.Conn
 
-	connDetails dbConnDetails
+	connDetails DbConnDetails
 	sensor      *Sensor
 }
 
