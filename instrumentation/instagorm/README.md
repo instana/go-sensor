@@ -1,7 +1,7 @@
 Instana instrumentation for gorm
 =============================================
 
-This module provides the instrumentation for database handling using [`gorm`](https://github.com/go-gorm/gorm) library.
+This module provides Instana instrumentation for database operations using [`gorm`](https://github.com/go-gorm/gorm) library.
 
 [![GoDoc](https://img.shields.io/static/v1?label=godoc&message=reference&color=blue)][godoc]
 
@@ -20,7 +20,7 @@ Usage
 
 ```go
 // create a sensor
-sensor := instana.NewSensor("gin-sensor")
+sensor := instana.NewSensor("gorm-sensor")
 
 dsn := "<relevant DSN information for the database>"
 
@@ -28,8 +28,7 @@ dsn := "<relevant DSN information for the database>"
 db, err := gorm.Open(sqlite.Open(dsn), &gorm.Config{})
 
 // instrument the GORM database handle
-instagorm.Instrument(sensor, db, dsn)
-
+instagorm.Instrument(db, sensor, dsn)
 
 ...
 ```
