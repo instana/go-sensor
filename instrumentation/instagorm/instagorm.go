@@ -16,6 +16,7 @@ import (
 	"gorm.io/gorm"
 )
 
+// TODO: Remove the redundant struct
 type dbConnectionConfig struct {
 	RawString  string
 	Host, Port string
@@ -23,7 +24,7 @@ type dbConnectionConfig struct {
 	User       string
 }
 
-type dbManager struct {
+type wrappedDB struct {
 	config dbConnectionConfig
 	sensor *instana.Sensor
 	db     *gorm.DB
@@ -32,23 +33,23 @@ type dbManager struct {
 // Instrument adds instrumentation for the specified gorm database instance.
 func Instrument(db *gorm.DB, s *instana.Sensor, dsn string) {
 
-	dbMgr := dbManager{
+	wdB := wrappedDB{
 		config: parseDSN(dsn),
 		sensor: s,
 		db:     db,
 	}
 
-	dbMgr.registerCreateCallbacks()
+	wdB.registerCreateCallbacks()
 
-	dbMgr.queryCallbacks()
+	wdB.queryCallbacks()
 
-	dbMgr.rowCallbacks()
+	wdB.rowCallbacks()
 
-	dbMgr.rawCallbacks()
+	wdB.rawCallbacks()
 
-	dbMgr.deleteCallbacks()
+	wdB.deleteCallbacks()
 
-	dbMgr.updateCallbacks()
+	wdB.updateCallbacks()
 
 }
 
@@ -56,6 +57,7 @@ func parseDSN(dsn string) dbConnectionConfig {
 	var cfg dbConnectionConfig
 	var cfgStr string
 
+	//TODO: Replace with instana.ParseDbConnectionDetails
 	if cfgStr = instana.GetDBConnectDetails(dsn); cfgStr == "" {
 		return dbConnectionConfig{RawString: dsn}
 	}
@@ -67,102 +69,102 @@ func parseDSN(dsn string) dbConnectionConfig {
 	return cfg
 }
 
-func (dbMgr *dbManager) registerCreateCallbacks() {
+func (wdB *wrappedDB) registerCreateCallbacks() {
 
-	dbMgr.checkForSuccessfulRegn(dbMgr.db.Callback().Create().Before("gorm:before_create").Register("instagorm:before_create",
-		dbMgr.startCb()))
+	wdB.checkForSuccessfulRegn(wdB.db.Callback().Create().Before("gorm:before_create").Register("instagorm:before_create",
+		wdB.startCb()))
 
-	dbMgr.checkForSuccessfulRegn(dbMgr.db.Callback().Create().After("gorm:after_create").Register("instagorm:after_create",
-		dbMgr.stopCb()))
-
-}
-
-func (dbMgr *dbManager) updateCallbacks() {
-
-	dbMgr.checkForSuccessfulRegn(dbMgr.db.Callback().Update().Before("gorm:before_update").Register("instagorm:before_update",
-		dbMgr.startCb()))
-
-	dbMgr.checkForSuccessfulRegn(dbMgr.db.Callback().Update().After("gorm:after_update").Register("instagorm:after_update",
-		dbMgr.stopCb()))
-}
-
-func (dbMgr *dbManager) deleteCallbacks() {
-
-	dbMgr.checkForSuccessfulRegn(dbMgr.db.Callback().Delete().After("gorm:before_delete").Register("instagorm:before_delete",
-		dbMgr.startCb()))
-
-	dbMgr.checkForSuccessfulRegn(dbMgr.db.Callback().Delete().After("gorm:after_delete").Register("instagorm:after_delete",
-		dbMgr.stopCb()))
+	wdB.checkForSuccessfulRegn(wdB.db.Callback().Create().After("gorm:after_create").Register("instagorm:after_create",
+		wdB.stopCb()))
 
 }
 
-func (dbMgr *dbManager) queryCallbacks() {
+func (wdB *wrappedDB) updateCallbacks() {
 
-	dbMgr.checkForSuccessfulRegn(dbMgr.db.Callback().Query().Before("gorm:query").Register("instagorm:before_query",
-		dbMgr.startCb()))
+	wdB.checkForSuccessfulRegn(wdB.db.Callback().Update().Before("gorm:before_update").Register("instagorm:before_update",
+		wdB.startCb()))
 
-	dbMgr.checkForSuccessfulRegn(dbMgr.db.Callback().Query().After("gorm:after_query").Register("instagorm:after_query",
-		dbMgr.stopCb()))
+	wdB.checkForSuccessfulRegn(wdB.db.Callback().Update().After("gorm:after_update").Register("instagorm:after_update",
+		wdB.stopCb()))
+}
+
+func (wdB *wrappedDB) deleteCallbacks() {
+
+	wdB.checkForSuccessfulRegn(wdB.db.Callback().Delete().After("gorm:before_delete").Register("instagorm:before_delete",
+		wdB.startCb()))
+
+	wdB.checkForSuccessfulRegn(wdB.db.Callback().Delete().After("gorm:after_delete").Register("instagorm:after_delete",
+		wdB.stopCb()))
 
 }
 
-func (dbMgr *dbManager) rowCallbacks() {
-	dbMgr.checkForSuccessfulRegn(dbMgr.db.Callback().Raw().Before("gorm:row").Register("instagorm:before_row",
-		dbMgr.startCb()))
-	dbMgr.checkForSuccessfulRegn(dbMgr.db.Callback().Raw().After("gorm:row").Register("instagorm:after_row",
-		dbMgr.stopCb()))
+func (wdB *wrappedDB) queryCallbacks() {
+
+	wdB.checkForSuccessfulRegn(wdB.db.Callback().Query().Before("gorm:query").Register("instagorm:before_query",
+		wdB.startCb()))
+
+	wdB.checkForSuccessfulRegn(wdB.db.Callback().Query().After("gorm:after_query").Register("instagorm:after_query",
+		wdB.stopCb()))
+
 }
 
-func (dbMgr *dbManager) rawCallbacks() {
-	dbMgr.checkForSuccessfulRegn(dbMgr.db.Callback().Raw().Before("gorm:raw").Register("instagorm:before_raw",
-		dbMgr.startCb()))
-	dbMgr.checkForSuccessfulRegn(dbMgr.db.Callback().Raw().After("gorm:raw").Register("instagorm:after_raw",
-		dbMgr.stopCb()))
+func (wdB *wrappedDB) rowCallbacks() {
+	wdB.checkForSuccessfulRegn(wdB.db.Callback().Raw().Before("gorm:row").Register("instagorm:before_row",
+		wdB.startCb()))
+	wdB.checkForSuccessfulRegn(wdB.db.Callback().Raw().After("gorm:row").Register("instagorm:after_row",
+		wdB.stopCb()))
 }
 
-func (dbMgr *dbManager) checkForSuccessfulRegn(err error) {
+func (wdB *wrappedDB) rawCallbacks() {
+	wdB.checkForSuccessfulRegn(wdB.db.Callback().Raw().Before("gorm:raw").Register("instagorm:before_raw",
+		wdB.startCb()))
+	wdB.checkForSuccessfulRegn(wdB.db.Callback().Raw().After("gorm:raw").Register("instagorm:after_raw",
+		wdB.stopCb()))
+}
+
+func (wdB *wrappedDB) checkForSuccessfulRegn(err error) {
 	if err != nil {
-		dbMgr.sensor.Logger().Error("unable to register callback for gorm create")
+		wdB.sensor.Logger().Error("unable to register callback for gorm create")
 	}
 }
 
-func (dbMgr *dbManager) startCb() func(db *gorm.DB) {
+func (wdB *wrappedDB) startCb() func(db *gorm.DB) {
 	return func(db *gorm.DB) {
 
-		dbMgr.startSpan()
+		wdB.startSpan()
 	}
 }
 
-func (dbMgr *dbManager) stopCb() func(db *gorm.DB) {
+func (wdB *wrappedDB) stopCb() func(db *gorm.DB) {
 	return func(db *gorm.DB) {
 
-		dbMgr.stopSpan(db)
+		wdB.stopSpan(db)
 	}
 }
 
-func (dbMgr *dbManager) startSpan() {
+func (wdB *wrappedDB) startSpan() {
 	var sp ot.Span
 
-	ctx := dbMgr.db.Statement.Context
+	ctx := wdB.db.Statement.Context
 
 	tags := ot.Tags{
 		string(ext.DBType):      "sql",
-		string(ext.DBStatement): dbMgr.db.Statement.SQL.String(),
-		string(ext.PeerAddress): dbMgr.config.RawString,
+		string(ext.DBStatement): wdB.db.Statement.SQL.String(),
+		string(ext.PeerAddress): wdB.config.RawString,
 	}
 
-	if dbMgr.config.Schema != "" {
-		tags[string(ext.DBInstance)] = dbMgr.config.Schema
+	if wdB.config.Schema != "" {
+		tags[string(ext.DBInstance)] = wdB.config.Schema
 	} else {
-		tags[string(ext.DBInstance)] = dbMgr.config.RawString
+		tags[string(ext.DBInstance)] = wdB.config.RawString
 	}
 
-	if dbMgr.config.Host != "" {
-		tags[string(ext.PeerHostname)] = dbMgr.config.Host
+	if wdB.config.Host != "" {
+		tags[string(ext.PeerHostname)] = wdB.config.Host
 	}
 
-	if dbMgr.config.Port != "" {
-		tags[string(ext.PeerPort)] = dbMgr.config.Port
+	if wdB.config.Port != "" {
+		tags[string(ext.PeerPort)] = wdB.config.Port
 	}
 
 	opts := []ot.StartSpanOption{ext.SpanKindRPCClient, tags}
@@ -170,13 +172,13 @@ func (dbMgr *dbManager) startSpan() {
 		opts = append(opts, ot.ChildOf(parentSpan.Context()))
 	}
 
-	sp = dbMgr.sensor.Tracer().StartSpan("sdk.database", opts...)
+	sp = wdB.sensor.Tracer().StartSpan("sdk.database", opts...)
 	ctx = instana.ContextWithSpan(ctx, sp)
-	dbMgr.db.Statement.Context = ctx
+	wdB.db.Statement.Context = ctx
 }
 
-func (dbMgr *dbManager) stopSpan(db *gorm.DB) {
-	sp, ok := instana.SpanFromContext(dbMgr.db.Statement.Context)
+func (wdB *wrappedDB) stopSpan(db *gorm.DB) {
+	sp, ok := instana.SpanFromContext(wdB.db.Statement.Context)
 	if !ok {
 		return
 	}
