@@ -100,12 +100,12 @@ workflows:
       - build:
           name: "go1.15"
           image: "circleci/golang:1.15"
-          exclude_dirs: "./instrumentation/instaredigo ./internal/bin/sql ./example/gin"
+          exclude_dirs: "./instrumentation/instaredigo ./internal/bin/sql ./example/gin ./instrumentation/instagorm"
       - build:
           name: "go1.14"
           image: "circleci/golang:1.14"
-          exclude_dirs: "./instrumentation/instaecho ./instrumentation/instaredigo ./internal/bin/sql ./instrumentation/cloud.google.com/go ./example/gin"
+          exclude_dirs: "./instrumentation/instaecho ./instrumentation/instaredigo ./internal/bin/sql ./instrumentation/cloud.google.com/go ./example/gin ./instrumentation/instagorm"
       - build:
           name: "go1.13"
           image: "circleci/golang:1.13"
-          exclude_dirs: "./instrumentation/instaecho ./instrumentation/instaredigo ./internal/bin/sql ./instrumentation/cloud.google.com/go ./example/gin"
+          exclude_dirs: "./instrumentation/instaecho ./instrumentation/instaredigo ./internal/bin/sql ./instrumentation/cloud.google.com/go ./example/gin ./instrumentation/instagorm"

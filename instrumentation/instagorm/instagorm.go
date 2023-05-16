@@ -7,8 +7,6 @@
 package instagorm
 
 import (
-	"sync"
-
 	instana "github.com/instana/go-sensor"
 	ot "github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
@@ -20,7 +18,6 @@ type wrappedDB struct {
 	connDetails instana.DbConnDetails
 	sensor      *instana.Sensor
 	db          *gorm.DB
-	mu          sync.Mutex
 }
 
 // Instrument adds instrumentation for the specified gorm database instance.
@@ -143,9 +140,6 @@ func postOpCb() func(db *gorm.DB) {
 }
 
 func (wdB *wrappedDB) generateTags() ot.Tags {
-	wdB.mu.Lock()
-	defer wdB.mu.Unlock()
-
 	tags := ot.Tags{
 		string(ext.DBType):      "sql",
 		string(ext.PeerAddress): wdB.connDetails.RawString,

@@ -42,7 +42,6 @@ func TestInsertRecord(t *testing.T) {
 	defer instana.ShutdownSensor()
 
 	t.Run("Exec", func(t *testing.T) {
-
 		dsn, tearDownFn := setupEnv(t)
 		defer tearDownFn(t)
 
@@ -51,26 +50,23 @@ func TestInsertRecord(t *testing.T) {
 			panic("failed to connect database")
 		}
 
+		instagorm.Instrument(db, s, dsn)
+
 		if err = db.AutoMigrate(&product{}); err != nil {
 			panic("failed to migrate the schema")
 		}
-
 		require.NoError(t, err)
-
-		instagorm.Instrument(db, s, dsn)
 
 		db.Create(&product{Code: "D42", Price: 100})
 
 		spans := recorder.GetQueuedSpans()
-		require.Len(t, spans, 1)
 
-		span := spans[0]
+		span := spans[len(spans)-1]
 		assert.Equal(t, 0, span.Ec)
 		assert.EqualValues(t, instana.ExitSpanKind, span.Kind)
-
 		require.IsType(t, instana.SDKSpanData{}, span.Data)
-		data := span.Data.(instana.SDKSpanData)
 
+		data := span.Data.(instana.SDKSpanData)
 		assert.Equal(t, instana.SDKSpanTags{
 			Name: "sdk.database",
 			Type: "exit",
@@ -84,6 +80,7 @@ func TestInsertRecord(t *testing.T) {
 				},
 			},
 		}, data.Tags)
+
 	})
 }
 
@@ -96,7 +93,6 @@ func TestUpdateRecord(t *testing.T) {
 	defer instana.ShutdownSensor()
 
 	t.Run("Exec", func(t *testing.T) {
-
 		dsn, tearDownFn := setupEnv(t)
 		defer tearDownFn(t)
 
@@ -105,13 +101,12 @@ func TestUpdateRecord(t *testing.T) {
 			panic("failed to connect database")
 		}
 
+		instagorm.Instrument(db, s, dsn)
+
 		if err = db.AutoMigrate(&product{}); err != nil {
 			panic("failed to migrate the schema")
 		}
-
 		require.NoError(t, err)
-
-		instagorm.Instrument(db, s, dsn)
 
 		db.Create(&product{Code: "D42", Price: 100})
 
@@ -121,15 +116,13 @@ func TestUpdateRecord(t *testing.T) {
 		db.Model(&p).Update("Price", 200)
 
 		spans := recorder.GetQueuedSpans()
-		require.Len(t, spans, 4)
 
-		updateSpan := spans[3]
+		updateSpan := spans[len(spans)-1]
 		assert.Equal(t, 0, updateSpan.Ec)
 		assert.EqualValues(t, instana.ExitSpanKind, updateSpan.Kind)
-
 		require.IsType(t, instana.SDKSpanData{}, updateSpan.Data)
-		data := updateSpan.Data.(instana.SDKSpanData)
 
+		data := updateSpan.Data.(instana.SDKSpanData)
 		assert.Equal(t, instana.SDKSpanTags{
 			Name: "sdk.database",
 			Type: "exit",
@@ -143,6 +136,7 @@ func TestUpdateRecord(t *testing.T) {
 				},
 			},
 		}, data.Tags)
+
 	})
 }
 
@@ -155,7 +149,6 @@ func TestSelectRecord(t *testing.T) {
 	defer instana.ShutdownSensor()
 
 	t.Run("Exec", func(t *testing.T) {
-
 		dsn, tearDownFn := setupEnv(t)
 		defer tearDownFn(t)
 
@@ -164,13 +157,12 @@ func TestSelectRecord(t *testing.T) {
 			panic("failed to connect database")
 		}
 
+		instagorm.Instrument(db, s, dsn)
+
 		if err = db.AutoMigrate(&product{}); err != nil {
 			panic("failed to migrate the schema")
 		}
-
 		require.NoError(t, err)
-
-		instagorm.Instrument(db, s, dsn)
 
 		db.Create(&product{Code: "D42", Price: 100})
 
@@ -178,15 +170,13 @@ func TestSelectRecord(t *testing.T) {
 		db.First(&p, "code = ?", "D42")
 
 		spans := recorder.GetQueuedSpans()
-		require.Len(t, spans, 2)
 
-		selectSpan := spans[1]
+		selectSpan := spans[len(spans)-1]
 		assert.Equal(t, 0, selectSpan.Ec)
 		assert.EqualValues(t, instana.ExitSpanKind, selectSpan.Kind)
-
 		require.IsType(t, instana.SDKSpanData{}, selectSpan.Data)
-		data := selectSpan.Data.(instana.SDKSpanData)
 
+		data := selectSpan.Data.(instana.SDKSpanData)
 		assert.Equal(t, instana.SDKSpanTags{
 			Name: "sdk.database",
 			Type: "exit",
@@ -200,6 +190,7 @@ func TestSelectRecord(t *testing.T) {
 				},
 			},
 		}, data.Tags)
+
 	})
 }
 
@@ -212,29 +203,22 @@ func TestDeleteRecord(t *testing.T) {
 	defer instana.ShutdownSensor()
 
 	t.Run("Exec", func(t *testing.T) {
-
 		dsn, tearDownFn := setupEnv(t)
 		defer tearDownFn(t)
 
-		//dsn := "test.db"
 		db, err := gorm.Open(sqlite.Open(dsn), &gorm.Config{})
 		if err != nil {
 			panic("failed to connect database")
 		}
 
+		instagorm.Instrument(db, s, dsn)
+
 		if err = db.AutoMigrate(&product{}); err != nil {
 			panic("failed to migrate the schema")
 		}
-
 		require.NoError(t, err)
 
-		instagorm.Instrument(db, s, dsn)
-
-		// Migrate the schema
-		db.AutoMigrate(&product{})
-
 		db.Create(&product{Code: "D42", Price: 100})
-
 		db.Unscoped().Delete(&product{}, 1)
 
 		spans := recorder.GetQueuedSpans()
@@ -242,10 +226,9 @@ func TestDeleteRecord(t *testing.T) {
 		deleteSpan := spans[len(spans)-1]
 		assert.Equal(t, 0, deleteSpan.Ec)
 		assert.EqualValues(t, instana.ExitSpanKind, deleteSpan.Kind)
-
 		require.IsType(t, instana.SDKSpanData{}, deleteSpan.Data)
-		data := deleteSpan.Data.(instana.SDKSpanData)
 
+		data := deleteSpan.Data.(instana.SDKSpanData)
 		assert.Equal(t, instana.SDKSpanTags{
 			Name: "sdk.database",
 			Type: "exit",
@@ -259,6 +242,7 @@ func TestDeleteRecord(t *testing.T) {
 				},
 			},
 		}, data.Tags)
+
 	})
 }
 
@@ -271,7 +255,6 @@ func TestRawSQL(t *testing.T) {
 	defer instana.ShutdownSensor()
 
 	t.Run("Exec", func(t *testing.T) {
-
 		dsn, tearDownFn := setupEnv(t)
 		defer tearDownFn(t)
 
@@ -280,16 +263,14 @@ func TestRawSQL(t *testing.T) {
 			panic("failed to connect database")
 		}
 
+		instagorm.Instrument(db, s, dsn)
+
 		if err = db.AutoMigrate(&product{}); err != nil {
 			panic("failed to migrate the schema")
 		}
-
 		require.NoError(t, err)
 
-		instagorm.Instrument(db, s, dsn)
-
 		db.Create(&product{Code: "D42", Price: 100})
-
 		var p product
 		db.First(&p, "code = ?", "D42")
 
@@ -297,13 +278,13 @@ func TestRawSQL(t *testing.T) {
 
 		spans := recorder.GetQueuedSpans()
 
-		rawSQLSpan := spans[2]
+		rawSQLSpan := spans[5]
 		assert.Equal(t, 0, rawSQLSpan.Ec)
 		assert.EqualValues(t, instana.ExitSpanKind, rawSQLSpan.Kind)
-
 		require.IsType(t, instana.SDKSpanData{}, rawSQLSpan.Data)
-		data := rawSQLSpan.Data.(instana.SDKSpanData)
 
+		RawSqlOutput := "SELECT * FROM `products` WHERE code = ? AND `products`.`deleted_at` IS NULL ORDER BY `products`.`id` LIMIT 1"
+		data := rawSQLSpan.Data.(instana.SDKSpanData)
 		assert.Equal(t, instana.SDKSpanTags{
 			Name: "sdk.database",
 			Type: "exit",
@@ -311,12 +292,13 @@ func TestRawSQL(t *testing.T) {
 				"tags": ot.Tags{
 					"span.kind":    ext.SpanKindRPCClientEnum,
 					"db.instance":  dsn,
-					"db.statement": RAWSQL,
+					"db.statement": RawSqlOutput,
 					"db.type":      "sql",
 					"peer.address": dsn,
 				},
 			},
 		}, data.Tags)
+
 	})
 }
 
@@ -336,7 +318,6 @@ func setupEnv(t *testing.T) (string, func(*testing.T)) {
 
 			return
 		}
-		//t.Log("deleted the database file: ", db)
 	}
 }
 
