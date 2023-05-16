@@ -7,7 +7,6 @@
 package instagorm
 
 import (
-	"encoding/json"
 	"sync"
 
 	instana "github.com/instana/go-sensor"
@@ -17,30 +16,20 @@ import (
 	"gorm.io/gorm"
 )
 
-// TODO: Remove the redundant struct
-type dbConnectionConfig struct {
-	RawString  string
-	Host, Port string
-	Schema     string
-	User       string
-}
-
 type wrappedDB struct {
-	// TODO: Change config to instana.DbConnectionDetails
-	config dbConnectionConfig
-	sensor *instana.Sensor
-	db     *gorm.DB
-	mu     sync.Mutex
+	connDetails instana.DbConnDetails
+	sensor      *instana.Sensor
+	db          *gorm.DB
+	mu          sync.Mutex
 }
 
 // Instrument adds instrumentation for the specified gorm database instance.
 func Instrument(db *gorm.DB, s *instana.Sensor, dsn string) {
 
 	wdB := wrappedDB{
-		// TODO: Replace with instana.ParseDbConnectionDetails.
-		config: parseDSN(dsn),
-		sensor: s,
-		db:     db,
+		connDetails: instana.ParseDBConnDetails(dsn),
+		sensor:      s,
+		db:          db,
 	}
 
 	wdB.registerCreateCallbacks()
@@ -55,22 +44,6 @@ func Instrument(db *gorm.DB, s *instana.Sensor, dsn string) {
 
 	wdB.registerUpdateCallbacks()
 
-}
-
-// TODO: Remove the redundant function.
-func parseDSN(dsn string) dbConnectionConfig {
-	var cfg dbConnectionConfig
-	var cfgStr string
-
-	if cfgStr = instana.GetDBConnectDetails(dsn); cfgStr == "" {
-		return dbConnectionConfig{RawString: dsn}
-	}
-
-	if err := json.Unmarshal([]byte(cfgStr), &cfg); err != nil {
-		return dbConnectionConfig{RawString: dsn}
-	}
-
-	return cfg
 }
 
 func (wdB *wrappedDB) registerCreateCallbacks() {
@@ -176,21 +149,21 @@ func (wdB *wrappedDB) generateTags() ot.Tags {
 	tags := ot.Tags{
 		string(ext.DBType):      "sql",
 		string(ext.DBStatement): wdB.db.Statement.SQL.String(),
-		string(ext.PeerAddress): wdB.config.RawString,
+		string(ext.PeerAddress): wdB.connDetails.RawString,
 	}
 
-	if wdB.config.Schema != "" {
-		tags[string(ext.DBInstance)] = wdB.config.Schema
+	if wdB.connDetails.Schema != "" {
+		tags[string(ext.DBInstance)] = wdB.connDetails.Schema
 	} else {
-		tags[string(ext.DBInstance)] = wdB.config.RawString
+		tags[string(ext.DBInstance)] = wdB.connDetails.RawString
 	}
 
-	if wdB.config.Host != "" {
-		tags[string(ext.PeerHostname)] = wdB.config.Host
+	if wdB.connDetails.Host != "" {
+		tags[string(ext.PeerHostname)] = wdB.connDetails.Host
 	}
 
-	if wdB.config.Port != "" {
-		tags[string(ext.PeerPort)] = wdB.config.Port
+	if wdB.connDetails.Port != "" {
+		tags[string(ext.PeerPort)] = wdB.connDetails.Port
 	}
 
 	return tags
