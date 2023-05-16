@@ -8,6 +8,7 @@ package instagorm
 
 import (
 	"encoding/json"
+	"sync"
 
 	instana "github.com/instana/go-sensor"
 	ot "github.com/opentracing/opentracing-go"
@@ -25,9 +26,11 @@ type dbConnectionConfig struct {
 }
 
 type wrappedDB struct {
+	// TODO: Change config to instana.DbConnectionDetails
 	config dbConnectionConfig
 	sensor *instana.Sensor
 	db     *gorm.DB
+	mu     sync.Mutex
 }
 
 // Instrument adds instrumentation for the specified gorm database instance.
@@ -71,56 +74,53 @@ func parseDSN(dsn string) dbConnectionConfig {
 }
 
 func (wdB *wrappedDB) registerCreateCallbacks() {
-
 	wdB.logError(wdB.db.Callback().Create().Before("gorm:before_create").Register("instagorm:before_create",
-		wdB.preOpCb()))
+		preOpCb(wdB)))
 
 	wdB.logError(wdB.db.Callback().Create().After("gorm:after_create").Register("instagorm:after_create",
-		wdB.postOpCb()))
-
+		postOpCb()))
 }
 
 func (wdB *wrappedDB) registerUpdateCallbacks() {
-
 	wdB.logError(wdB.db.Callback().Update().Before("gorm:before_update").Register("instagorm:before_update",
-		wdB.preOpCb()))
+		preOpCb(wdB)))
 
 	wdB.logError(wdB.db.Callback().Update().After("gorm:after_update").Register("instagorm:after_update",
-		wdB.postOpCb()))
+		postOpCb()))
 }
 
 func (wdB *wrappedDB) registerDeleteCallbacks() {
-
 	wdB.logError(wdB.db.Callback().Delete().After("gorm:before_delete").Register("instagorm:before_delete",
-		wdB.preOpCb()))
+		preOpCb(wdB)))
 
 	wdB.logError(wdB.db.Callback().Delete().After("gorm:after_delete").Register("instagorm:after_delete",
-		wdB.postOpCb()))
+		postOpCb()))
 
 }
 
 func (wdB *wrappedDB) registerQueryCallbacks() {
-
 	wdB.logError(wdB.db.Callback().Query().Before("gorm:query").Register("instagorm:before_query",
-		wdB.preOpCb()))
+		preOpCb(wdB)))
 
 	wdB.logError(wdB.db.Callback().Query().After("gorm:after_query").Register("instagorm:after_query",
-		wdB.postOpCb()))
+		postOpCb()))
 
 }
 
 func (wdB *wrappedDB) registerRowCallbacks() {
 	wdB.logError(wdB.db.Callback().Raw().Before("gorm:row").Register("instagorm:before_row",
-		wdB.preOpCb()))
+		preOpCb(wdB)))
+
 	wdB.logError(wdB.db.Callback().Raw().After("gorm:row").Register("instagorm:after_row",
-		wdB.postOpCb()))
+		postOpCb()))
 }
 
 func (wdB *wrappedDB) registerRawCallbacks() {
 	wdB.logError(wdB.db.Callback().Raw().Before("gorm:raw").Register("instagorm:before_raw",
-		wdB.preOpCb()))
+		preOpCb(wdB)))
+
 	wdB.logError(wdB.db.Callback().Raw().After("gorm:raw").Register("instagorm:after_raw",
-		wdB.postOpCb()))
+		postOpCb()))
 }
 
 func (wdB *wrappedDB) logError(err error) {
@@ -129,24 +129,49 @@ func (wdB *wrappedDB) logError(err error) {
 	}
 }
 
-func (wdB *wrappedDB) preOpCb() func(db *gorm.DB) {
+func preOpCb(wdB *wrappedDB) func(db *gorm.DB) {
+
 	return func(db *gorm.DB) {
 
-		wdB.startSpan()
+		var sp ot.Span
+
+		ctx := db.Statement.Context
+
+		tags := wdB.generateTags()
+
+		opts := []ot.StartSpanOption{ext.SpanKindRPCClient, tags}
+		if parentSpan, ok := instana.SpanFromContext(ctx); ok {
+			opts = append(opts, ot.ChildOf(parentSpan.Context()))
+		}
+
+		sp = wdB.sensor.Tracer().StartSpan("sdk.database", opts...)
+		ctx = instana.ContextWithSpan(ctx, sp)
+		db.Statement.Context = ctx
 	}
 }
 
-func (wdB *wrappedDB) postOpCb() func(db *gorm.DB) {
-	return func(db *gorm.DB) {
+func postOpCb() func(db *gorm.DB) {
 
-		wdB.finishSpan(db)
+	return func(db *gorm.DB) {
+		sp, ok := instana.SpanFromContext(db.Statement.Context)
+		if !ok {
+			return
+		}
+
+		defer sp.Finish()
+
+		sp.SetTag(string(ext.DBStatement), db.Statement.SQL.String())
+
+		if err := db.Statement.Error; err != nil {
+			sp.SetTag("error", err.Error())
+			sp.LogFields(otlog.Error(err))
+		}
 	}
 }
 
-func (wdB *wrappedDB) startSpan() {
-	var sp ot.Span
-
-	ctx := wdB.db.Statement.Context
+func (wdB *wrappedDB) generateTags() ot.Tags {
+	wdB.mu.Lock()
+	defer wdB.mu.Unlock()
 
 	tags := ot.Tags{
 		string(ext.DBType):      "sql",
@@ -168,28 +193,5 @@ func (wdB *wrappedDB) startSpan() {
 		tags[string(ext.PeerPort)] = wdB.config.Port
 	}
 
-	opts := []ot.StartSpanOption{ext.SpanKindRPCClient, tags}
-	if parentSpan, ok := instana.SpanFromContext(ctx); ok {
-		opts = append(opts, ot.ChildOf(parentSpan.Context()))
-	}
-
-	sp = wdB.sensor.Tracer().StartSpan("sdk.database", opts...)
-	ctx = instana.ContextWithSpan(ctx, sp)
-	wdB.db.Statement.Context = ctx
-}
-
-func (wdB *wrappedDB) finishSpan(db *gorm.DB) {
-	sp, ok := instana.SpanFromContext(wdB.db.Statement.Context)
-	if !ok {
-		return
-	}
-
-	defer sp.Finish()
-
-	sp.SetTag(string(ext.DBStatement), db.Statement.SQL.String())
-
-	if err := db.Statement.Error; err != nil {
-		sp.SetTag("error", err.Error())
-		sp.LogFields(otlog.Error(err))
-	}
+	return tags
 }
