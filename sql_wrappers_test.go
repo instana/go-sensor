@@ -135,7 +135,7 @@ func Test_stmtWrap(t *testing.T) {
 
 	var stmts []driver.Stmt
 	for _, f := range _stmt_n {
-		stmts = append(stmts, f(nil, "", dbConnDetails{}, nil, nil, nil, nil, nil))
+		stmts = append(stmts, f(nil, "", DbConnDetails{}, nil, nil, nil, nil, nil))
 	}
 
 	for _, v := range stmts {
@@ -154,7 +154,7 @@ func Test_stmtWrap(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert.IsType(t, tt.want, wrapStmt(tt.args.stmt, "", dbConnDetails{}, nil), tt.name)
+			assert.IsType(t, tt.want, wrapStmt(tt.args.stmt, "", DbConnDetails{}, nil), tt.name)
 		})
 	}
 }
@@ -171,7 +171,7 @@ func Test_connWrap(t *testing.T) {
 
 	var conns []driver.Conn
 	for _, f := range _conn_n {
-		conns = append(conns, f(dbConnDetails{}, nil, nil, nil, nil, nil, nil, nil, nil))
+		conns = append(conns, f(DbConnDetails{}, nil, nil, nil, nil, nil, nil, nil, nil))
 	}
 
 	for _, v := range conns {
@@ -190,7 +190,7 @@ func Test_connWrap(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert.IsType(t, tt.want, wrapConn(dbConnDetails{}, tt.args.conn, nil), tt.name)
+			assert.IsType(t, tt.want, wrapConn(DbConnDetails{}, tt.args.conn, nil), tt.name)
 		})
 	}
 }
@@ -233,7 +233,7 @@ func (s *stmtAllInterfacesMock) Query(args []driver.Value) (driver.Rows, error) 
 func Test_stmtAllInterfacesCase(t *testing.T) {
 	mock := &stmtAllInterfacesMock{}
 
-	d := wrapStmt(mock, "", dbConnDetails{}, nil)
+	d := wrapStmt(mock, "", DbConnDetails{}, nil)
 
 	assert.IsType(t, &w_stmt_StmtExecContext_StmtQueryContext_NamedValueChecker_ColumnConverter{}, d)
 }
@@ -241,7 +241,7 @@ func Test_stmtAllInterfacesCase(t *testing.T) {
 func Test_stmtWrapOnlyStmt(t *testing.T) {
 	var a driver.Stmt
 
-	d := wrapStmt(a, "", dbConnDetails{}, nil)
+	d := wrapStmt(a, "", DbConnDetails{}, nil)
 
 	assert.IsType(t, &wStmt{}, d)
 }
@@ -249,7 +249,7 @@ func Test_stmtWrapOnlyStmt(t *testing.T) {
 func Test_connWrapOnlyConn(t *testing.T) {
 	var a driver.Conn
 
-	d := wrapConn(dbConnDetails{}, a, nil)
+	d := wrapConn(DbConnDetails{}, a, nil)
 
 	assert.IsType(t, &wConn{}, d)
 }
@@ -292,7 +292,7 @@ func (c *connAllInterfacesMock) Begin() (driver.Tx, error) {
 func Test_connAllInterfacesCase(t *testing.T) {
 	mock := &connAllInterfacesMock{}
 
-	d := wrapConn(dbConnDetails{}, mock, nil)
+	d := wrapConn(DbConnDetails{}, mock, nil)
 
 	assert.IsType(t, &w_conn_Execer_ExecerContext_Queryer_QueryerContext_NamedValueChecker{}, d)
 }

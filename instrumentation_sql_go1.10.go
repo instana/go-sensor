@@ -11,7 +11,7 @@ import (
 type wrappedSQLConnector struct {
 	driver.Connector
 
-	connDetails dbConnDetails
+	connDetails DbConnDetails
 	sensor      *Sensor
 }
 
@@ -23,7 +23,7 @@ func WrapSQLConnector(sensor *Sensor, name string, connector driver.Connector) *
 
 	return &wrappedSQLConnector{
 		Connector:   connector,
-		connDetails: parseDBConnDetails(name),
+		connDetails: ParseDBConnDetails(name),
 		sensor:      sensor,
 	}
 }

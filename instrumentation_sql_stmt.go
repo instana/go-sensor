@@ -12,7 +12,7 @@ import (
 type wStmt struct {
 	driver.Stmt
 
-	connDetails dbConnDetails
+	connDetails DbConnDetails
 	query       string
 	sensor      *Sensor
 }
