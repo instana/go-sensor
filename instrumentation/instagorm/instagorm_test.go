@@ -33,6 +33,12 @@ const (
 	RAWSQL = "SELECT * FROM products"
 )
 
+type product struct {
+	gorm.Model
+	Code  string
+	Price uint
+}
+
 func TestInsertRecord(t *testing.T) {
 	recorder := instana.NewTestRecorder()
 	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{
@@ -300,12 +306,6 @@ func TestRawSQL(t *testing.T) {
 		}, data.Tags)
 
 	})
-}
-
-type product struct {
-	gorm.Model
-	Code  string
-	Price uint
 }
 
 func setupEnv(t *testing.T) (string, func(*testing.T)) {
