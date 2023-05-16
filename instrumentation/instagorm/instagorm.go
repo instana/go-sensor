@@ -44,26 +44,26 @@ func Instrument(db *gorm.DB, s *instana.Sensor, dsn string) {
 }
 
 func (wdB *wrappedDB) registerCreateCallbacks() {
-	wdB.logError(wdB.db.Callback().Create().Before("gorm:before_create").Register("instagorm:before_create",
+	wdB.logError(wdB.db.Callback().Create().Before("gorm:create").Register("instagorm:before_create",
 		preOpCb(wdB)))
 
-	wdB.logError(wdB.db.Callback().Create().After("gorm:after_create").Register("instagorm:after_create",
+	wdB.logError(wdB.db.Callback().Create().After("gorm:create").Register("instagorm:after_create",
 		postOpCb()))
 }
 
 func (wdB *wrappedDB) registerUpdateCallbacks() {
-	wdB.logError(wdB.db.Callback().Update().Before("gorm:before_update").Register("instagorm:before_update",
+	wdB.logError(wdB.db.Callback().Update().Before("gorm:update").Register("instagorm:before_update",
 		preOpCb(wdB)))
 
-	wdB.logError(wdB.db.Callback().Update().After("gorm:after_update").Register("instagorm:after_update",
+	wdB.logError(wdB.db.Callback().Update().After("gorm:update").Register("instagorm:after_update",
 		postOpCb()))
 }
 
 func (wdB *wrappedDB) registerDeleteCallbacks() {
-	wdB.logError(wdB.db.Callback().Delete().After("gorm:before_delete").Register("instagorm:before_delete",
+	wdB.logError(wdB.db.Callback().Delete().Before("gorm:delete").Register("instagorm:before_delete",
 		preOpCb(wdB)))
 
-	wdB.logError(wdB.db.Callback().Delete().After("gorm:after_delete").Register("instagorm:after_delete",
+	wdB.logError(wdB.db.Callback().Delete().After("gorm:delete").Register("instagorm:after_delete",
 		postOpCb()))
 
 }
@@ -72,7 +72,7 @@ func (wdB *wrappedDB) registerQueryCallbacks() {
 	wdB.logError(wdB.db.Callback().Query().Before("gorm:query").Register("instagorm:before_query",
 		preOpCb(wdB)))
 
-	wdB.logError(wdB.db.Callback().Query().After("gorm:after_query").Register("instagorm:after_query",
+	wdB.logError(wdB.db.Callback().Query().After("gorm:query").Register("instagorm:after_query",
 		postOpCb()))
 
 }
