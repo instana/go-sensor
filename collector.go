@@ -13,8 +13,7 @@ type TracerLogger interface {
 	Tracer
 	LeveledLogger
 	LegacySensor() *Sensor
-	Tracer() ot.Tracer
-	Logger() LeveledLogger
+	SensorLogger
 }
 
 // Collector is used to inject tracing information into requests
@@ -129,14 +128,4 @@ func (c *Collector) Error(v ...interface{}) {
 //	http.HandleFunc("/", instana.TracingNamedHandlerFunc(c.LegacySensor(), "", "/{name}", handle))
 func (c *Collector) LegacySensor() *Sensor {
 	return c.Sensor
-}
-
-// Tracer returns an implementation of [opentracing.Tracer]
-func (c *Collector) Tracer() ot.Tracer {
-	return c.t
-}
-
-// Logger returns an implementation of [LeveledLogger]
-func (c *Collector) Logger() LeveledLogger {
-	return c.LeveledLogger
 }

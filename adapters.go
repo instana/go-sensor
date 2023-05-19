@@ -14,6 +14,14 @@ import (
 	otlog "github.com/opentracing/opentracing-go/log"
 )
 
+var _ TracerLogger = (*Sensor)(nil)
+
+type SensorLogger interface {
+	Tracer() ot.Tracer
+	Logger() LeveledLogger
+	SetLogger(l LeveledLogger)
+}
+
 // SpanSensitiveFunc is a function executed within a span context
 //
 // Deprecated: use instana.ContextWithSpan() and instana.SpanFromContext() to inject and retrieve spans

@@ -84,3 +84,6 @@ func (c *noopCollector) Logger() LeveledLogger {
 	c.l.Error(noopCollectorErrMsg)
 	return nil
 }
+
+// SetLogger sets the logger
+func (c *noopCollector) SetLogger(l LeveledLogger) {}
