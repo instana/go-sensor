@@ -106,7 +106,7 @@ func TestAzureAgent_SpanDetails(t *testing.T) {
           "functionname": "testfunction",
           "triggername": "HTTP",
           "runtime": "custom"
-        } }`, string(spans[0]["data"]))
+        }, "service": "instana.test"}`, string(spans[0]["data"]))
 }
 
 func setupAzureFunctionEnv() func() {
