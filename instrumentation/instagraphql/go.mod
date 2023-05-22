@@ -3,7 +3,7 @@ module github.com/instana/go-sensor/instrumentation/instagraphql
 go 1.13
 
 require (
-	github.com/graphql-go/graphql v0.8.0
+	github.com/graphql-go/graphql v0.8.1
 	github.com/instana/go-sensor v1.53.0
 	github.com/stretchr/testify v1.8.1
 )
