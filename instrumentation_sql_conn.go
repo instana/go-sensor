@@ -10,7 +10,7 @@ type wConn struct {
 	driver.Conn
 
 	connDetails DbConnDetails
-	sensor      *Sensor
+	sensor      TracerLogger
 }
 
 func (conn *wConn) Prepare(query string) (driver.Stmt, error) {

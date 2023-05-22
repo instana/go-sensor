@@ -11,7 +11,7 @@ import (
 type wStmtQueryContext struct {
 	driver.StmtQueryContext
 	connDetails DbConnDetails
-	sensor      *Sensor
+	sensor      TracerLogger
 	query       string
 }
 

@@ -12,7 +12,7 @@ import (
 type wExecer struct {
 	driver.Execer
 	connDetails DbConnDetails
-	sensor      *Sensor
+	sensor      TracerLogger
 }
 
 func (conn *wExecer) Exec(query string, args []driver.Value) (driver.Result, error) {

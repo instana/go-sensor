@@ -24,13 +24,13 @@ import (
 //
 // The wrapped handler will also propagate the W3C trace context (https://www.w3.org/TR/trace-context/)
 // if found in request.
-func TracingHandlerFunc(sensor *Sensor, pathTemplate string, handler http.HandlerFunc) http.HandlerFunc {
+func TracingHandlerFunc(sensor TracerLogger, pathTemplate string, handler http.HandlerFunc) http.HandlerFunc {
 	return TracingNamedHandlerFunc(sensor, "", pathTemplate, handler)
 }
 
 // TracingNamedHandlerFunc is an HTTP middleware that similarly to instana.TracingHandlerFunc() captures the tracing data,
 // while allowing to provide a unique route indetifier to be associated with each request.
-func TracingNamedHandlerFunc(sensor *Sensor, routeID, pathTemplate string, handler http.HandlerFunc) http.HandlerFunc {
+func TracingNamedHandlerFunc(sensor TracerLogger, routeID, pathTemplate string, handler http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		ctx := req.Context()
 
@@ -158,7 +158,7 @@ func collectRequestHeaders(req *http.Request, collectableHTTPHeaders []string, c
 	}
 }
 
-func extractStartSpanOptionsFromHeaders(tracer ot.Tracer, req *http.Request, sensor *Sensor) []ot.StartSpanOption {
+func extractStartSpanOptionsFromHeaders(tracer ot.Tracer, req *http.Request, sensor TracerLogger) []ot.StartSpanOption {
 	var opts []ot.StartSpanOption
 	wireContext, err := tracer.Extract(ot.HTTPHeaders, ot.HTTPHeadersCarrier(req.Header))
 	switch err {
@@ -176,7 +176,7 @@ func extractStartSpanOptionsFromHeaders(tracer ot.Tracer, req *http.Request, sen
 
 // RoundTripper wraps an existing http.RoundTripper and injects the tracing headers into the outgoing request.
 // If the original RoundTripper is nil, the http.DefaultTransport will be used.
-func RoundTripper(sensor *Sensor, original http.RoundTripper) http.RoundTripper {
+func RoundTripper(sensor TracerLogger, original http.RoundTripper) http.RoundTripper {
 	return tracingRoundTripper(func(req *http.Request) (*http.Response, error) {
 		if original == nil {
 			original = http.DefaultTransport

@@ -10,7 +10,7 @@ import (
 type wConnPrepareContext struct {
 	driver.ConnPrepareContext
 	connDetails DbConnDetails
-	sensor      *Sensor
+	sensor      TracerLogger
 }
 
 func (conn *wConnPrepareContext) PrepareContext(ctx context.Context, query string) (driver.Stmt, error) {

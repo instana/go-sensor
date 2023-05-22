@@ -12,11 +12,11 @@ type wrappedSQLConnector struct {
 	driver.Connector
 
 	connDetails DbConnDetails
-	sensor      *Sensor
+	sensor      TracerLogger
 }
 
 // WrapSQLConnector wraps an existing sql.Connector and instruments the DB calls made using it
-func WrapSQLConnector(sensor *Sensor, name string, connector driver.Connector) *wrappedSQLConnector {
+func WrapSQLConnector(sensor TracerLogger, name string, connector driver.Connector) *wrappedSQLConnector {
 	if c, ok := connector.(*wrappedSQLConnector); ok {
 		return c
 	}

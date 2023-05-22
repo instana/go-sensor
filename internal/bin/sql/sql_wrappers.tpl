@@ -35,7 +35,7 @@ func connAlreadyWrapped(conn driver.Conn) bool {
 }
 
 // wrapConn wraps the matching type around the driver.Conn based on which interfaces the driver implements
-func wrapConn(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor) driver.Conn {
+func wrapConn(connDetails DbConnDetails, conn driver.Conn, sensor TracerLogger) driver.Conn {
 	{{range connInterfaces -}}
 	{{replace . "driver." ""}}, is{{replace . "driver." ""}} := conn.({{.}})
 	{{end -}}
@@ -57,7 +57,7 @@ func wrapConn(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor) drive
 // driver.Conn Constructors
 {{range .Drivers}}
 {{if .IsConn}}
-func get_{{.TypeName}}(connDetails dbConnDetails, conn driver.Conn, sensor *Sensor{{range connInterfaces}}, {{replace . "driver." ""}} {{.}}{{end}}) driver.Conn {
+func get_{{.TypeName}}(connDetails DbConnDetails, conn driver.Conn, sensor TracerLogger{{range connInterfaces}}, {{replace . "driver." ""}} {{.}}{{end}}) driver.Conn {
 	return &w_{{.TypeName}} {
 		Conn: &wConn{
 			Conn:	conn,
@@ -84,7 +84,7 @@ func get_{{.TypeName}}(connDetails dbConnDetails, conn driver.Conn, sensor *Sens
 // driver.Stmt Constructors
 {{range .Drivers}}
 {{if eq .IsConn false}}
-func get_{{.TypeName}}(stmt driver.Stmt, query string, connDetails dbConnDetails, sensor *Sensor{{range stmtInterfaces}}, {{replace . "driver." ""}} {{.}}{{end}}) driver.Stmt {
+func get_{{.TypeName}}(stmt driver.Stmt, query string, connDetails DbConnDetails, sensor TracerLogger{{range stmtInterfaces}}, {{replace . "driver." ""}} {{.}}{{end}}) driver.Stmt {
 	return &w_{{.TypeName}} {
 		Stmt: &wStmt{
 			Stmt:	stmt,
@@ -123,7 +123,7 @@ func stmtAlreadyWrapped(stmt driver.Stmt) bool {
 }
 
 // wrapStmt wraps the matching type around the driver.Stmt based on which interfaces the driver implements
-func wrapStmt(stmt driver.Stmt, query string, connDetails dbConnDetails, sensor *Sensor) driver.Stmt {
+func wrapStmt(stmt driver.Stmt, query string, connDetails DbConnDetails, sensor TracerLogger) driver.Stmt {
 	{{range stmtInterfaces -}}
 	{{replace . "driver." ""}}, is{{replace . "driver." ""}} := stmt.({{.}})
 	{{end -}}
@@ -148,7 +148,7 @@ func wrapStmt(stmt driver.Stmt, query string, connDetails dbConnDetails, sensor 
 // In the example above, the following constructor is returned: get_conn_Queryer_NamedValueChecker
 //
 // Each bit sequentially represents the interfaces: Execer, ExecerContext, Queryer, QueryerContext, ConnPrepareContext, NamedValueChecker
-var _conn_n = map[int]func(dbConnDetails, driver.Conn, *Sensor, {{join connInterfaces ", "}}) driver.Conn {
+var _conn_n = map[int]func(DbConnDetails, driver.Conn, TracerLogger, {{join connInterfaces ", "}}) driver.Conn {
 	{{range $k, $v := connMap -}}
 	{{$k}}: {{$v}},
 	{{end}}
@@ -159,7 +159,7 @@ var _conn_n = map[int]func(dbConnDetails, driver.Conn, *Sensor, {{join connInter
 // In the example above, the following constructor is returned: get_stmt_StmtExecContext_ColumnConverter
 //
 // Each bit sequentially represents the interfaces: StmtExecContext, StmtQueryContext, NamedValueChecker, ColumnConverter
-var _stmt_n = map[int]func(driver.Stmt, string, dbConnDetails, *Sensor, {{join stmtInterfaces ", "}}) driver.Stmt {
+var _stmt_n = map[int]func(driver.Stmt, string, DbConnDetails, TracerLogger, {{join stmtInterfaces ", "}}) driver.Stmt {
 	{{range $k, $v := stmtMap -}}
 	{{$k}}: {{$v}},
 	{{end}}
