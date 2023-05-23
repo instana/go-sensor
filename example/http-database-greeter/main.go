@@ -28,6 +28,12 @@ var (
 	}
 )
 
+// How to run the test:
+// 1. Make sure the agent is running, so you can see traces in the dashboard
+// 2. Start Postgres from the root folder running docker-compose up postgres
+// 3. Run the app with go run . -l 0.0.0.0:9090 -db="postgres://postgres:mysecretpassword@localhost:5432/postgres?sslmode=disable"
+// 4. Test the app by calling http://localhost:9090/John
+
 func main() {
 	flag.StringVar(&args.DBConnStr, "db", os.Getenv("POSTGRES"), "PostgreSQL connection string")
 	flag.StringVar(&args.ListenAddr, "l", os.Getenv("LISTEN_ADDR"), "Server listen address")

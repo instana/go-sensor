@@ -27,7 +27,7 @@ var (
 // The instrumented version is registered with `_with_instana` suffix, e.g.
 // if `postgres` provided as a name, the instrumented version is registered as
 // `postgres_with_instana`.
-func InstrumentSQLDriver(sensor *Sensor, name string, driver driver.Driver) {
+func InstrumentSQLDriver(sensor TracerLogger, name string, driver driver.Driver) {
 	sqlDriverRegistrationMu.Lock()
 	defer sqlDriverRegistrationMu.Unlock()
 
@@ -68,7 +68,7 @@ var drivers map[string]driver.Driver
 // This function can be used as a convenient shortcut for InstrumentSQLDriver and SQLOpen functions.
 // The main difference is that this approach will use the already registered driver and using InstrumentSQLDriver
 // requires to explicitly provide an instance of the driver to instrument.
-func SQLInstrumentAndOpen(sensor *Sensor, driverName, dataSourceName string) (*sql.DB, error) {
+func SQLInstrumentAndOpen(sensor TracerLogger, driverName, dataSourceName string) (*sql.DB, error) {
 	if d, ok := drivers[driverName]; ok {
 		InstrumentSQLDriver(sensor, driverName, d)
 	}
@@ -79,7 +79,7 @@ func SQLInstrumentAndOpen(sensor *Sensor, driverName, dataSourceName string) (*s
 type wrappedSQLDriver struct {
 	driver.Driver
 
-	sensor *Sensor
+	sensor TracerLogger
 }
 
 func (drv *wrappedSQLDriver) Open(name string) (driver.Conn, error) {
@@ -97,7 +97,7 @@ func (drv *wrappedSQLDriver) Open(name string) (driver.Conn, error) {
 	return w, nil
 }
 
-func startSQLSpan(ctx context.Context, conn DbConnDetails, query string, sensor *Sensor) ot.Span {
+func startSQLSpan(ctx context.Context, conn DbConnDetails, query string, sensor TracerLogger) ot.Span {
 	tags := ot.Tags{
 		string(ext.DBType):      "sql",
 		string(ext.DBStatement): query,

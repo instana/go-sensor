@@ -12,7 +12,7 @@ import (
 type wQueryerContext struct {
 	driver.QueryerContext
 	connDetails DbConnDetails
-	sensor      *Sensor
+	sensor      TracerLogger
 }
 
 func (conn *wQueryerContext) QueryContext(ctx context.Context, query string, args []driver.NamedValue) (driver.Rows, error) {

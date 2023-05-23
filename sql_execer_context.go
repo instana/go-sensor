@@ -13,7 +13,7 @@ type wExecerContext struct {
 	driver.ExecerContext
 
 	connDetails DbConnDetails
-	sensor      *Sensor
+	sensor      TracerLogger
 }
 
 func (conn *wExecerContext) ExecContext(ctx context.Context, query string, args []driver.NamedValue) (driver.Result, error) {
