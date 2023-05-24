@@ -93,22 +93,22 @@ func (r *fsmS) lookupAgentHost(_ context.Context, e *f.Event) {
 	go r.checkHost(e)
 }
 
+// checkHost will try to verify whether agent host is found or not. The procedure for this is explained below,
 func (r *fsmS) checkHost(e *f.Event) {
+
+	// Look for a successful ping from the configured host
 	host := r.agentComm.host
 	r.logger.Debug("checking host ", r.agentComm.host)
 
-	header := r.agentComm.serverHeader()
+	found := r.agentComm.checkForSuccessResponse()
 
-	found := header == agentHeader
-
-	// Agent host is found through the checkHost method, that attempts to read "Instana Agent" from the response header.
 	if found {
 		r.lookupSuccess(host)
 		r.logger.Debug("Agent host found: '", host, "' when attempting to read the string 'Instana Agent' from the response header.")
 		return
 	}
 
-	// check env var again
+	// Check whether agent host is configured in env variable and look for a successful ping from the configured host
 	r.logger.Debug("Attempting to retrieve host from the INSTANA_AGENT_HOST environment variable")
 	hostFromEnv, ok := os.LookupEnv("INSTANA_AGENT_HOST")
 
@@ -118,9 +118,9 @@ func (r *fsmS) checkHost(e *f.Event) {
 		r.logger.Debug("Attempting to reach the agent with host found from the INSTANA_AGENT_HOST environment variable: ", hostFromEnv)
 		originalHost := r.agentComm.host
 		r.agentComm.host = hostFromEnv
-		header = r.agentComm.serverHeader()
+		found = r.agentComm.checkForSuccessResponse()
 
-		if header == agentHeader {
+		if found {
 			r.logger.Debug("Lookup successful with host from the INSTANA_AGENT_HOST environment variable: ", hostFromEnv)
 			r.lookupSuccess(hostFromEnv)
 			return
@@ -131,6 +131,7 @@ func (r *fsmS) checkHost(e *f.Event) {
 		r.agentComm.host = originalHost
 	}
 
+	// Look for a successful ping for the configured default gateway
 	routeFilename := "/proc/net/route"
 	r.logger.Debug("Lookup failed for expected host: ", r.agentComm.host, ". Will attempt to read host from ", routeFilename)
 	if _, fileNotFoundErr := os.Stat(routeFilename); fileNotFoundErr == nil {
@@ -154,8 +155,7 @@ func (r *fsmS) checkHost(e *f.Event) {
 
 		originalHost := r.agentComm.host
 		r.agentComm.host = gateway
-		header = r.agentComm.serverHeader()
-		found := header == agentHeader
+		found := r.agentComm.checkForSuccessResponse()
 
 		if found {
 			r.logger.Debug("Lookup successful with host from ", routeFilename, ": ", gateway)

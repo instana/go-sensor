@@ -73,6 +73,32 @@ func (a *agentCommunicator) serverHeader() string {
 	return ""
 }
 
+// checkForSuccessResponse checks for a success HEAD operation with the agent
+func (a *agentCommunicator) checkForSuccessResponse() bool {
+	url := a.buildURL("/")
+	req, err := http.NewRequest(http.MethodHead, url, nil)
+
+	if err != nil {
+		a.l.Debug("Error creating request while attempting to retrieve the 'Server' response: ", err.Error())
+		return false
+	}
+
+	resp, err := a.client.Do(req)
+
+	if resp == nil {
+		a.l.Debug("No response from the agent while attempting to retrieve the 'Server' response: ", err.Error())
+		return false
+	}
+
+	if err == nil && (resp.StatusCode >= 200 && resp.StatusCode <= 299) {
+		return true
+	}
+
+	a.l.Debug("Error requesting header from the agent while attempting to retrieve the 'Server' response: ", err.Error())
+
+	return false
+}
+
 // agentResponse attempts to retrieve the agent response containing its configuration
 func (a *agentCommunicator) agentResponse(d *discoveryS) *agentResponse {
 	jsonData, _ := json.Marshal(d)
