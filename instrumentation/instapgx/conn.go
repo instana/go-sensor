@@ -23,7 +23,7 @@ func EnableDetailedBatchMode() {
 // Conn wraps *pgx.Conn and adds tracing to it.
 type Conn struct {
 	*pgx.Conn
-	sensor *instana.Sensor
+	sensor instana.TracerLogger
 	config *pgx.ConnConfig
 }
 

@@ -33,7 +33,7 @@ func Example_consumer() {
 	}
 }
 
-func processMessage(msg *sarama.ConsumerMessage, sensor *instana.Sensor) {
+func processMessage(msg *sarama.ConsumerMessage, sensor instana.TracerLogger) {
 	// extract trace context and start a new span
 	parentCtx, _ := instasarama.SpanContextFromConsumerMessage(msg, sensor)
 

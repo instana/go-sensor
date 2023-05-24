@@ -13,7 +13,7 @@ import (
 
 // Wrap returns an instrumented instance of a httprouter.Router that
 // instruments HTTP handlers with Instana upon registration.
-func Wrap(r *httprouter.Router, sensor *instana.Sensor) *WrappedRouter {
+func Wrap(r *httprouter.Router, sensor instana.TracerLogger) *WrappedRouter {
 	return &WrappedRouter{
 		Router: r,
 		sensor: sensor,
@@ -22,7 +22,7 @@ func Wrap(r *httprouter.Router, sensor *instana.Sensor) *WrappedRouter {
 
 type WrappedRouter struct {
 	*httprouter.Router
-	sensor *instana.Sensor
+	sensor instana.TracerLogger
 }
 
 // GET is a shortcut for router.Handle(http.MethodGet, path, handle)

@@ -3,11 +3,11 @@ module github.com/instana/go-sensor/instrumentation/instapgx
 go 1.17
 
 require (
-	github.com/instana/go-sensor v1.53.0
+	github.com/instana/go-sensor v1.55.0
 	github.com/jackc/pgconn v1.10.1
 	github.com/jackc/pgx/v4 v4.14.1
 	github.com/lib/pq v1.10.2
-	github.com/opentracing/opentracing-go v1.1.0
+	github.com/opentracing/opentracing-go v1.2.0
 	github.com/stretchr/testify v1.8.1
 )
 

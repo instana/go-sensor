@@ -15,7 +15,7 @@ import (
 
 // StartInvokeLambdaSpan initiates a new span from an AWS Invoke request and injects it into the
 // request.Request context
-func StartInvokeLambdaSpan(req *request.Request, sensor *instana.Sensor) {
+func StartInvokeLambdaSpan(req *request.Request, sensor instana.TracerLogger) {
 	parent, ok := instana.SpanFromContext(req.Context())
 	if !ok {
 		return

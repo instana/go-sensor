@@ -37,7 +37,7 @@ func Example_consumerGroup() {
 }
 
 type Consumer struct {
-	sensor *instana.Sensor
+	sensor instana.TracerLogger
 }
 
 func (*Consumer) Setup(sarama.ConsumerGroupSession) error {

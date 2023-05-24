@@ -643,7 +643,7 @@ func TestRoundTripper_Error(t *testing.T) {
 
 	assert.Equal(t, instana.LogSpanTags{
 		Level:   "ERROR",
-		Message: `error: "something went wrong"`,
+		Message: `error.object: "something went wrong"`,
 	}, logData.Tags)
 }
 

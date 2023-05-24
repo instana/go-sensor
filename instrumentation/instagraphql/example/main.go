@@ -63,7 +63,7 @@ http://localhost:9191/graphql | jq
 */
 
 var (
-	sensor      *instana.Sensor
+	sensor      instana.TracerLogger
 	withHandler bool
 )
 

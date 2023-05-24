@@ -24,7 +24,7 @@ import (
 //	}
 //
 // If the handler returns an error or panics, the error message is then attached to the span logs.
-func UnaryServerInterceptor(sensor *instana.Sensor) grpc.UnaryServerInterceptor {
+func UnaryServerInterceptor(sensor instana.TracerLogger) grpc.UnaryServerInterceptor {
 	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
 		sp := startServerSpan(ctx, info.FullMethod, "unary", sensor)
 		defer sp.Finish()
@@ -57,7 +57,7 @@ func UnaryServerInterceptor(sensor *instana.Sensor) grpc.UnaryServerInterceptor 
 //	}
 //
 // If the handler returns an error or panics, the error message is then attached to the span logs.
-func StreamServerInterceptor(sensor *instana.Sensor) grpc.StreamServerInterceptor {
+func StreamServerInterceptor(sensor instana.TracerLogger) grpc.StreamServerInterceptor {
 	return func(srv interface{}, ss grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
 		sp := startServerSpan(ss.Context(), info.FullMethod, "stream", sensor)
 		defer sp.Finish()
@@ -81,7 +81,7 @@ func StreamServerInterceptor(sensor *instana.Sensor) grpc.StreamServerIntercepto
 	}
 }
 
-func startServerSpan(ctx context.Context, method, callType string, sensor *instana.Sensor) ot.Span {
+func startServerSpan(ctx context.Context, method, callType string, sensor instana.TracerLogger) ot.Span {
 	tracer := sensor.Tracer()
 	opts := []ot.StartSpanOption{
 		ext.SpanKindRPCServer,

@@ -30,7 +30,7 @@ var defaultLogger LeveledLogger = logger.New(nil)
 
 // SetLogger configures the default logger to be used by Instana go-sensor. Note that changing the logger
 // will not affect already initialized instana.Sensor instances. To make them use the new logger please call
-// (*instana.Sensor).SetLogger() explicitly.
+// (instana.TracerLogger).SetLogger() explicitly.
 func SetLogger(l LeveledLogger) {
 	defaultLogger = l
 

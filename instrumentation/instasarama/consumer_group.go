@@ -10,7 +10,7 @@ import (
 )
 
 // NewConsumerGroup creates an instrumented sarama.ConsumerGroup
-func NewConsumerGroup(addrs []string, groupID string, config *sarama.Config, sensor *instana.Sensor) (sarama.ConsumerGroup, error) {
+func NewConsumerGroup(addrs []string, groupID string, config *sarama.Config, sensor instana.TracerLogger) (sarama.ConsumerGroup, error) {
 	c, err := sarama.NewConsumerGroup(addrs, groupID, config)
 	if err != nil {
 		return nil, err
@@ -20,7 +20,7 @@ func NewConsumerGroup(addrs []string, groupID string, config *sarama.Config, sen
 }
 
 // NewConsumerGroupFromClient creates an instrumented sarama.ConsumerGroup from sarama.Client
-func NewConsumerGroupFromClient(groupID string, client sarama.Client, sensor *instana.Sensor) (sarama.ConsumerGroup, error) {
+func NewConsumerGroupFromClient(groupID string, client sarama.Client, sensor instana.TracerLogger) (sarama.ConsumerGroup, error) {
 	c, err := sarama.NewConsumerGroupFromClient(groupID, client)
 	if err != nil {
 		return nil, err
@@ -31,7 +31,7 @@ func NewConsumerGroupFromClient(groupID string, client sarama.Client, sensor *in
 
 type consumerGroup struct {
 	sarama.ConsumerGroup
-	sensor *instana.Sensor
+	sensor instana.TracerLogger
 }
 
 func (c consumerGroup) Errors() <-chan error {

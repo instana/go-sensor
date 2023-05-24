@@ -99,7 +99,7 @@ func cacheMutationSpan(sp ot.Span, dt *gqlData, p *graphql.Params) {
 	}
 }
 
-func extractSpan(ctx context.Context, sensor *instana.Sensor) (span ot.Span, repurposed bool) {
+func extractSpan(ctx context.Context, sensor instana.TracerLogger) (span ot.Span, repurposed bool) {
 	if span, repurposed = instana.SpanFromContext(ctx); repurposed {
 		// We repurpose the http span to become a GraphQL span. This way we trace only one entry span instead of two
 		span.SetOperationName("graphql.server")
@@ -113,7 +113,7 @@ func extractSpan(ctx context.Context, sensor *instana.Sensor) (span ot.Span, rep
 	return // span, repurposed
 }
 
-func instrumentCallback(ctx context.Context, sensor *instana.Sensor, p *graphql.Params, res *graphql.Result) {
+func instrumentCallback(ctx context.Context, sensor instana.TracerLogger, p *graphql.Params, res *graphql.Result) {
 	var sp ot.Span
 	var repurposed bool
 
@@ -137,7 +137,7 @@ func instrumentCallback(ctx context.Context, sensor *instana.Sensor, p *graphql.
 	feedTags(sp, dt, res)
 }
 
-func instrumentDo(ctx context.Context, sensor *instana.Sensor, p *graphql.Params) *graphql.Result {
+func instrumentDo(ctx context.Context, sensor instana.TracerLogger, p *graphql.Params) *graphql.Result {
 	var sp ot.Span
 	var repurposed bool
 
@@ -165,7 +165,7 @@ func instrumentDo(ctx context.Context, sensor *instana.Sensor, p *graphql.Params
 	return res
 }
 
-func instrumentSubscription(sensor *instana.Sensor, p *graphql.Params, res *graphql.Result) {
+func instrumentSubscription(sensor instana.TracerLogger, p *graphql.Params, res *graphql.Result) {
 	var sp, ps ot.Span
 
 	dt, err := parseQuery(p.RequestString)
@@ -229,12 +229,12 @@ func instrumentSubscription(sensor *instana.Sensor, p *graphql.Params, res *grap
 }
 
 // Do wraps the original graphql.Do, traces the GraphQL query and returns the result of the original graphql.Do
-func Do(ctx context.Context, sensor *instana.Sensor, p graphql.Params) *graphql.Result {
+func Do(ctx context.Context, sensor instana.TracerLogger, p graphql.Params) *graphql.Result {
 	return instrumentDo(ctx, sensor, &p)
 }
 
 // ResultCallbackFn traces the GraphQL query and executes the original handler.ResultCallbackFn if fn is provided.
-func ResultCallbackFn(sensor *instana.Sensor, fn handler.ResultCallbackFn) handler.ResultCallbackFn {
+func ResultCallbackFn(sensor instana.TracerLogger, fn handler.ResultCallbackFn) handler.ResultCallbackFn {
 	return func(ctx context.Context, p *graphql.Params, res *graphql.Result, responseBody []byte) {
 		instrumentCallback(ctx, sensor, p, res)
 
@@ -245,7 +245,7 @@ func ResultCallbackFn(sensor *instana.Sensor, fn handler.ResultCallbackFn) handl
 }
 
 // Subscribe wraps the original graphql.Subscribe, traces the GraphQL query and returns the result of the original graphql.Subscribe
-func Subscribe(ctx context.Context, sensor *instana.Sensor, p graphql.Params) chan *graphql.Result {
+func Subscribe(ctx context.Context, sensor instana.TracerLogger, p graphql.Params) chan *graphql.Result {
 	originalCh := graphql.Subscribe(p)
 	ch := make(chan *graphql.Result, len(originalCh))
 

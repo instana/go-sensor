@@ -14,7 +14,7 @@ import (
 )
 
 // NewRouter is wrapper for mux.NewRouter()
-func NewRouter(sensor *instana.Sensor) *mux.Router {
+func NewRouter(sensor instana.TracerLogger) *mux.Router {
 	r := mux.NewRouter()
 	AddMiddleware(sensor, r)
 
@@ -22,7 +22,7 @@ func NewRouter(sensor *instana.Sensor) *mux.Router {
 }
 
 // AddMiddleware instruments the mux.Router instance with Instana
-func AddMiddleware(sensor *instana.Sensor, router *mux.Router) {
+func AddMiddleware(sensor instana.TracerLogger, router *mux.Router) {
 	router.Use(func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 			r := mux.CurrentRoute(req)

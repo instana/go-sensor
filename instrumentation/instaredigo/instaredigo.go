@@ -21,7 +21,7 @@ import (
 
 type instaRedigoConn struct {
 	redis.Conn
-	sensor   *instana.Sensor
+	sensor   instana.TracerLogger
 	address  string
 	prevSpan *prevSpan
 	mu       sync.Mutex
@@ -34,7 +34,7 @@ type prevSpan struct {
 
 // Dial connects to the Redis server at the given network and address using the
 // specified options along with instrumentation code.
-func Dial(sensor *instana.Sensor, network, address string, options ...redis.DialOption) (redis.Conn, error) {
+func Dial(sensor instana.TracerLogger, network, address string, options ...redis.DialOption) (redis.Conn, error) {
 	conn, err := redis.Dial(network, address, options...)
 	if err != nil {
 		return conn, err
@@ -48,7 +48,7 @@ func Dial(sensor *instana.Sensor, network, address string, options ...redis.Dial
 
 // DialContext connects to the Redis server at the given network and
 // address using the specified options and context along with instrumentation code.
-func DialContext(sensor *instana.Sensor, ctx context.Context, network, address string, options ...redis.DialOption) (redis.Conn, error) {
+func DialContext(sensor instana.TracerLogger, ctx context.Context, network, address string, options ...redis.DialOption) (redis.Conn, error) {
 	conn, err := redis.DialContext(ctx, network, address, options...)
 	if err != nil {
 		return conn, err
@@ -61,7 +61,7 @@ func DialContext(sensor *instana.Sensor, ctx context.Context, network, address s
 }
 
 // DialURL wraps DialURLContext using context.Background along with the instrumentation code.
-func DialURL(sensor *instana.Sensor, rawurl string, options ...redis.DialOption) (redis.Conn, error) {
+func DialURL(sensor instana.TracerLogger, rawurl string, options ...redis.DialOption) (redis.Conn, error) {
 	conn, err := redis.DialURL(rawurl, options...)
 	if err != nil {
 		return conn, err
@@ -72,7 +72,7 @@ func DialURL(sensor *instana.Sensor, rawurl string, options ...redis.DialOption)
 
 // DialURLContext connects to a Redis server at the given URL using the Redis
 // URI scheme along with the instrumentation code.
-func DialURLContext(sensor *instana.Sensor, ctx context.Context, rawurl string, options ...redis.DialOption) (redis.Conn, error) {
+func DialURLContext(sensor instana.TracerLogger, ctx context.Context, rawurl string, options ...redis.DialOption) (redis.Conn, error) {
 	conn, err := redis.DialURLContext(ctx, rawurl, options...)
 	if err != nil {
 		return conn, err
@@ -82,7 +82,7 @@ func DialURLContext(sensor *instana.Sensor, ctx context.Context, rawurl string, 
 }
 
 // NewConn returns a new Redigo connection for the given net connection along with the instrumentation code.
-func NewConn(sensor *instana.Sensor, netConn net.Conn, readTimeout, writeTimeout time.Duration) redis.Conn {
+func NewConn(sensor instana.TracerLogger, netConn net.Conn, readTimeout, writeTimeout time.Duration) redis.Conn {
 	addr := netConn.LocalAddr().String()
 	conn := redis.NewConn(netConn, readTimeout, writeTimeout)
 

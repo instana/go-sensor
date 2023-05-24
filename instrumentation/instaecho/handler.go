@@ -14,7 +14,7 @@ import (
 )
 
 // New returns an instrumented Echo.
-func New(sensor *instana.Sensor) *echo.Echo {
+func New(sensor instana.TracerLogger) *echo.Echo {
 	engine := echo.New()
 	engine.Use(Middleware(sensor))
 
@@ -23,7 +23,7 @@ func New(sensor *instana.Sensor) *echo.Echo {
 
 // Middleware wraps Echo's handlers execution. Adds tracing context and handles entry span.
 // It should be added as a first Middleware to the Echo, before defining handlers.
-func Middleware(sensor *instana.Sensor) echo.MiddlewareFunc {
+func Middleware(sensor instana.TracerLogger) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
 			r := lookupMatchedRoute(c)

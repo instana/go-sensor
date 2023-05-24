@@ -447,7 +447,7 @@ func (conn *MockConn) Flush() error {
 }
 
 // Helper function to retrieve a connection for the redis.Pool
-func newPool(sensor *instana.Sensor) *redis.Pool {
+func newPool(sensor instana.TracerLogger) *redis.Pool {
 	return &redis.Pool{
 		MaxIdle:     3,
 		IdleTimeout: 200 * time.Second,

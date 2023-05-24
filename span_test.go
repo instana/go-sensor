@@ -206,18 +206,18 @@ func TestSpan_LogFields(t *testing.T) {
 			ExpectedErrorCount: 1,
 			ExpectedTags: instana.LogSpanTags{
 				Level:   "ERROR",
-				Message: `error: "simulated error" function: "ErrorFunc"`,
+				Message: `error.object: "simulated error" function: "ErrorFunc"`,
 			},
 		},
 		"error log": {
 			Fields: []log.Field{
-				log.String("error", "simulated error"),
+				log.String("error.object", "simulated error"),
 				log.String("function", "ErrorFunc"),
 			},
 			ExpectedErrorCount: 1,
 			ExpectedTags: instana.LogSpanTags{
 				Level:   "ERROR",
-				Message: `error: "simulated error" function: "ErrorFunc"`,
+				Message: `error.object: "simulated error" function: "ErrorFunc"`,
 			},
 		},
 		"warn log": {
