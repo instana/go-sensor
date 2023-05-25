@@ -73,12 +73,11 @@ func (a *agentCommunicator) serverHeader() string {
 	return ""
 }
 
-// TODO: If the URL can be agentDataURL, there is already a pingAgent() API which can be made use of
-// checkForSuccessResponse checks for a success HEAD operation with the agent
+// checkForSuccessResponse checks for a successful GET operation with the agent host
 func (a *agentCommunicator) checkForSuccessResponse() bool {
 	url := a.buildURL("/")
 
-	req, err := http.NewRequest(http.MethodHead, url, nil)
+	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
 		a.l.Debug("Error creating request while attempting to retrieve the 'Server' response: ", err.Error())
 		return false
@@ -89,6 +88,11 @@ func (a *agentCommunicator) checkForSuccessResponse() bool {
 		a.l.Debug("No response from the agent while attempting to retrieve the 'Server' response: ", err.Error())
 		return false
 	}
+
+	defer func() {
+		io.CopyN(ioutil.Discard, resp.Body, 256<<10)
+		resp.Body.Close()
+	}()
 
 	if resp.StatusCode < 200 || resp.StatusCode > 299 {
 		a.l.Debug("Unexpected response from the agent host server. Status code: ", resp.StatusCode)

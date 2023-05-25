@@ -93,7 +93,7 @@ func (r *fsmS) lookupAgentHost(_ context.Context, e *f.Event) {
 	go r.checkHost(e)
 }
 
-// checkHost will try to verify whether agent host is found or not. The procedure for this is explained below,
+// checkHost verifies and set the agent host address
 func (r *fsmS) checkHost(e *f.Event) {
 
 	// Look for a successful ping from the configured host
