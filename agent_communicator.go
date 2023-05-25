@@ -73,6 +73,37 @@ func (a *agentCommunicator) serverHeader() string {
 	return ""
 }
 
+// checkForSuccessResponse checks for a successful GET operation with the agent host
+func (a *agentCommunicator) checkForSuccessResponse() bool {
+	url := a.buildURL("/")
+
+	req, err := http.NewRequest(http.MethodGet, url, nil)
+	if err != nil {
+		a.l.Debug("Error creating request while attempting to retrieve the 'Server' response: ", err.Error())
+		return false
+	}
+
+	resp, err := a.client.Do(req)
+	if err != nil || resp == nil {
+		a.l.Debug("No response from the agent while attempting to retrieve the 'Server' response: ", err.Error())
+		return false
+	}
+
+	defer func() {
+		io.CopyN(ioutil.Discard, resp.Body, 256<<10)
+		resp.Body.Close()
+	}()
+
+	if resp.StatusCode < 200 || resp.StatusCode > 299 {
+		a.l.Debug("Unexpected response from the agent host server. Status code: ", resp.StatusCode)
+		return false
+	}
+
+	a.l.Debug("Expected response from Agent! Status code: ", resp.StatusCode)
+
+	return true
+}
+
 // agentResponse attempts to retrieve the agent response containing its configuration
 func (a *agentCommunicator) agentResponse(d *discoveryS) *agentResponse {
 	jsonData, _ := json.Marshal(d)
