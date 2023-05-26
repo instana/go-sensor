@@ -29,7 +29,7 @@ You can create a new instance of Instana sensor using `instana.NewSensor()`.
 
 `instasarama` provides a set of convenience wrappers for constructor functions exported by `github.com/Shopify/sarama`. These
 wrappers are named the same way as their origins and use the same set of arguments. In most cases it's enough to replace
-`sarama` with `instasarama` in the constructor call and append an instance of `*instana.Sensor` to the argument list.
+`sarama` with `instasarama` in the constructor call and append an instance of `instana.TracerLogger` to the argument list.
 
 **Note**: Kafka supports record headers starting from v0.11.0. In order to enable trace context propagation, you need to make sure
 that your `(sarama.Config).Version` is set to at least `sarama.V0_11_0_0`.

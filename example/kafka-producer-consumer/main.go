@@ -82,7 +82,7 @@ type Doubler struct {
 	Out string
 
 	producer sarama.AsyncProducer
-	sensor   *instana.Sensor
+	sensor   instana.TracerLogger
 }
 
 // ProcessMessage processes messages consumed from Kafka

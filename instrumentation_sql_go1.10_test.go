@@ -96,7 +96,7 @@ func TestWrapSQLConnector_Exec_Error(t *testing.T) {
 
 	assert.Equal(t, instana.LogSpanTags{
 		Level:   "ERROR",
-		Message: `error: "something went wrong"`,
+		Message: `error.object: "something went wrong"`,
 	}, logData.Tags)
 }
 
@@ -180,7 +180,7 @@ func TestWrapSQLConnector_Query_Error(t *testing.T) {
 
 	assert.Equal(t, instana.LogSpanTags{
 		Level:   "ERROR",
-		Message: `error: "something went wrong"`,
+		Message: `error.object: "something went wrong"`,
 	}, logData.Tags)
 }
 

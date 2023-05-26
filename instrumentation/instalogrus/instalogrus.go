@@ -10,11 +10,11 @@ import (
 )
 
 type hook struct {
-	sensor *instana.Sensor
+	sensor instana.TracerLogger
 }
 
 // NewHook returns a new logrus.Hook to instrument logger with Instana
-func NewHook(sensor *instana.Sensor) *hook {
+func NewHook(sensor instana.TracerLogger) *hook {
 	return &hook{
 		sensor: sensor,
 	}

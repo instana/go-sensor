@@ -25,7 +25,7 @@ const (
 )
 
 // WrapFunctionHandler wraps the http handler and add instrumentation data for the specified handlers
-func WrapFunctionHandler(sensor *instana.Sensor, handler http.HandlerFunc) http.HandlerFunc {
+func WrapFunctionHandler(sensor instana.TracerLogger, handler http.HandlerFunc) http.HandlerFunc {
 
 	return func(w http.ResponseWriter, req *http.Request) {
 
@@ -111,7 +111,7 @@ func WrapFunctionHandler(sensor *instana.Sensor, handler http.HandlerFunc) http.
 }
 
 // flushAgent sends the instrumentation data to the serverless endpoint
-func flushAgent(sensor *instana.Sensor, retryPeriod time.Duration, maxRetries int) {
+func flushAgent(sensor instana.TracerLogger, retryPeriod time.Duration, maxRetries int) {
 	sensor.Logger().Debug("flushing trace data to the endpoint")
 
 	var tr instana.Tracer

@@ -14,7 +14,7 @@ import (
 // provided instana.Sensor
 type AsyncProducer struct {
 	sarama.AsyncProducer
-	sensor *instana.Sensor
+	sensor instana.TracerLogger
 
 	awaitResult    bool
 	propageContext bool
@@ -36,7 +36,7 @@ const (
 
 // NewAsyncProducer creates a new sarama.AsyncProducer using the given broker addresses and configuration, and
 // instruments its calls
-func NewAsyncProducer(addrs []string, conf *sarama.Config, sensor *instana.Sensor) (sarama.AsyncProducer, error) {
+func NewAsyncProducer(addrs []string, conf *sarama.Config, sensor instana.TracerLogger) (sarama.AsyncProducer, error) {
 	ap, err := sarama.NewAsyncProducer(addrs, conf)
 	if err != nil {
 		return ap, err
@@ -47,7 +47,7 @@ func NewAsyncProducer(addrs []string, conf *sarama.Config, sensor *instana.Senso
 
 // NewAsyncProducerFromClient creates a new sarama.AsyncProducer using the given client, and
 // instruments its calls
-func NewAsyncProducerFromClient(client sarama.Client, sensor *instana.Sensor) (sarama.AsyncProducer, error) {
+func NewAsyncProducerFromClient(client sarama.Client, sensor instana.TracerLogger) (sarama.AsyncProducer, error) {
 	ap, err := sarama.NewAsyncProducerFromClient(client)
 	if err != nil {
 		return ap, err
@@ -60,7 +60,7 @@ func NewAsyncProducerFromClient(client sarama.Client, sensor *instana.Sensor) (s
 // config that was used to create this producer to detect the Kafka version and whether it's supposed to return
 // successes/errors. To initialize a new  sync producer instance use instasarama.NewAsyncProducer() and
 // instasarama.NewAsyncProducerFromClient() convenience methods instead
-func WrapAsyncProducer(p sarama.AsyncProducer, conf *sarama.Config, sensor *instana.Sensor) *AsyncProducer {
+func WrapAsyncProducer(p sarama.AsyncProducer, conf *sarama.Config, sensor instana.TracerLogger) *AsyncProducer {
 	ap := &AsyncProducer{
 		AsyncProducer: p,
 		sensor:        sensor,

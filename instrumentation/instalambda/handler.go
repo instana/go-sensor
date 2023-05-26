@@ -34,17 +34,17 @@ var errHandlerTimedOut = errors.New("handler has timed out")
 type wrappedHandler struct {
 	lambda.Handler
 
-	sensor      *instana.Sensor
+	sensor      instana.TracerLogger
 	onColdStart sync.Once
 }
 
 // NewHandler creates a new instrumented handler that can be used with `lambda.StartHandler()` from a handler function
-func NewHandler(handlerFunc interface{}, sensor *instana.Sensor) *wrappedHandler {
+func NewHandler(handlerFunc interface{}, sensor instana.TracerLogger) *wrappedHandler {
 	return WrapHandler(lambda.NewHandler(handlerFunc), sensor)
 }
 
 // WrapHandler instruments a lambda.Handler to trace the invokations with Instana
-func WrapHandler(h lambda.Handler, sensor *instana.Sensor) *wrappedHandler {
+func WrapHandler(h lambda.Handler, sensor instana.TracerLogger) *wrappedHandler {
 	return &wrappedHandler{
 		Handler: h,
 		sensor:  sensor,

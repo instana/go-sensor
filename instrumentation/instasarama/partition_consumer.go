@@ -14,12 +14,12 @@ import (
 // provided instana.Sensor
 type PartitionConsumer struct {
 	sarama.PartitionConsumer
-	sensor   *instana.Sensor
+	sensor   instana.TracerLogger
 	messages chan *sarama.ConsumerMessage
 }
 
 // WrapPartitionConsumer wraps sarama.PartitionConsumer instance and instruments its calls
-func WrapPartitionConsumer(c sarama.PartitionConsumer, sensor *instana.Sensor) *PartitionConsumer {
+func WrapPartitionConsumer(c sarama.PartitionConsumer, sensor instana.TracerLogger) *PartitionConsumer {
 	pc := &PartitionConsumer{
 		PartitionConsumer: c,
 		sensor:            sensor,

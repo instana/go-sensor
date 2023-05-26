@@ -19,18 +19,18 @@ import (
 type commandCaptureHook struct {
 	options        *redis.Options
 	clusterOptions *redis.ClusterOptions
-	sensor         *instana.Sensor
+	sensor         instana.TracerLogger
 	connection     string
 }
 
-func newCommandCapture(s instana.Sensor, o *redis.Options, co *redis.ClusterOptions) *commandCaptureHook {
+func newCommandCapture(s instana.TracerLogger, o *redis.Options, co *redis.ClusterOptions) *commandCaptureHook {
 	var cch *commandCaptureHook
 
 	if o != nil {
-		cch = &commandCaptureHook{options: o, sensor: &s, connection: ""}
+		cch = &commandCaptureHook{options: o, sensor: s, connection: ""}
 		cch.connection = cch.options.Addr
 	} else {
-		cch = &commandCaptureHook{clusterOptions: co, sensor: &s, connection: ""}
+		cch = &commandCaptureHook{clusterOptions: co, sensor: s, connection: ""}
 
 		if cch.clusterOptions != nil && len(cch.clusterOptions.Addrs) > 0 {
 			cch.connection = cch.clusterOptions.Addrs[0]
@@ -164,15 +164,15 @@ type InstanaRedisClusterClient interface {
 }
 
 // WrapClient wraps the Redis client instance in order to add the instrumentation
-func WrapClient(client InstanaRedisClient, sensor *instana.Sensor) InstanaRedisClient {
+func WrapClient(client InstanaRedisClient, sensor instana.TracerLogger) InstanaRedisClient {
 	opts := client.Options()
-	client.AddHook(newCommandCapture(*sensor, opts, nil))
+	client.AddHook(newCommandCapture(sensor, opts, nil))
 	return client
 }
 
 // WrapClusterClient wraps the Redis client instance in order to add the instrumentation
-func WrapClusterClient(clusterClient InstanaRedisClusterClient, sensor *instana.Sensor) InstanaRedisClusterClient {
+func WrapClusterClient(clusterClient InstanaRedisClusterClient, sensor instana.TracerLogger) InstanaRedisClusterClient {
 	opts := clusterClient.Options()
-	clusterClient.AddHook(newCommandCapture(*sensor, nil, opts))
+	clusterClient.AddHook(newCommandCapture(sensor, nil, opts))
 	return clusterClient
 }

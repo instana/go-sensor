@@ -717,7 +717,7 @@ func TestNewHandler_InvokeLambda_Timeout(t *testing.T) {
 
 	logData := logSpan.Data.(instana.LogSpanData)
 	require.Equal(t, "ERROR", logData.Tags.Level)
-	require.Equal(t, `error: "handler has timed out"`, logData.Tags.Message)
+	require.Equal(t, `error.object: "handler has timed out"`, logData.Tags.Message)
 }
 
 func TestNewHandler_InvokeLambda_WithIncompleteSetOfInstanaHeaders(t *testing.T) {

@@ -16,7 +16,7 @@ import (
 type batchResults struct {
 	pgx.BatchResults
 	ctx    context.Context
-	sensor *instana.Sensor
+	sensor instana.TracerLogger
 	config *pgx.ConnConfig
 }
 

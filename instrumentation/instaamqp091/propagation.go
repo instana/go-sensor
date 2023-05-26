@@ -57,7 +57,7 @@ func (c *messageCarrier) Set(key, value string) {
 }
 
 // SpanContextFromConsumerMessage extracts the tracing context from amqp.Delivery#Headers
-func SpanContextFromConsumerMessage(d amqp.Delivery, sensor *instana.Sensor) (ot.SpanContext, bool) {
+func SpanContextFromConsumerMessage(d amqp.Delivery, sensor instana.TracerLogger) (ot.SpanContext, bool) {
 	sc, err := sensor.Tracer().Extract(ot.TextMap, &messageCarrier{d.Headers, sensor.Logger()})
 	if err != nil {
 		return nil, false

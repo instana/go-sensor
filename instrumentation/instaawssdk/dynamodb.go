@@ -13,7 +13,7 @@ import (
 
 // StartDynamoDBSpan initiates a new span from an AWS DynamoDB request and
 // injects it into the request.Request context
-func StartDynamoDBSpan(req *request.Request, sensor *instana.Sensor) {
+func StartDynamoDBSpan(req *request.Request, sensor instana.TracerLogger) {
 	tags, err := extractDynamoDBTags(req)
 	if err != nil {
 		if err == errMethodNotInstrumented {

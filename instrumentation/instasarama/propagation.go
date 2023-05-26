@@ -236,7 +236,7 @@ func (c ProducerMessageCarrier) indexOf(key []byte) (int, bool) {
 }
 
 // SpanContextFromConsumerMessage extracts the tracing context from consumer message
-func SpanContextFromConsumerMessage(cm *sarama.ConsumerMessage, sensor *instana.Sensor) (ot.SpanContext, bool) {
+func SpanContextFromConsumerMessage(cm *sarama.ConsumerMessage, sensor instana.TracerLogger) (ot.SpanContext, bool) {
 	spanContext, err := sensor.Tracer().Extract(ot.TextMap, ConsumerMessageCarrier{Message: cm})
 	if err != nil {
 		return nil, false

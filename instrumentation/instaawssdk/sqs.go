@@ -18,7 +18,7 @@ import (
 
 // StartSQSSpan initiates a new span from an AWS SQS request and injects it into the
 // request.Request context
-func StartSQSSpan(req *request.Request, sensor *instana.Sensor) {
+func StartSQSSpan(req *request.Request, sensor instana.TracerLogger) {
 	tags, err := extractSQSTags(req)
 	if err != nil {
 		if err == errMethodNotInstrumented {
@@ -73,7 +73,7 @@ func FinalizeSQSSpan(req *request.Request) {
 // TraceSQSMessage creates an returns an entry span for an SQS message. The context of this span is injected
 // into message attributes. This context can than be retrieved with instaawssdk.SpanContextFromSQSMessage()
 // and used in the message handler method to continue the trace.
-func TraceSQSMessage(msg *sqs.Message, sensor *instana.Sensor) opentracing.Span {
+func TraceSQSMessage(msg *sqs.Message, sensor instana.TracerLogger) opentracing.Span {
 	opts := []opentracing.StartSpanOption{
 		ext.SpanKindConsumer,
 		opentracing.Tags{

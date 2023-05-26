@@ -25,7 +25,7 @@ const (
 )
 
 // SpanContextFromSQSMessage returns the trace context from an SQS message
-func SpanContextFromSQSMessage(msg *sqs.Message, sensor *instana.Sensor) (opentracing.SpanContext, bool) {
+func SpanContextFromSQSMessage(msg *sqs.Message, sensor instana.TracerLogger) (opentracing.SpanContext, bool) {
 	spanContext, err := sensor.Tracer().Extract(
 		opentracing.TextMap,
 		SQSMessageAttributesCarrier(msg.MessageAttributes),

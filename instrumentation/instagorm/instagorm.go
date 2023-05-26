@@ -16,12 +16,12 @@ import (
 
 type wrappedDB struct {
 	connDetails instana.DbConnDetails
-	sensor      *instana.Sensor
+	sensor      instana.TracerLogger
 	*gorm.DB
 }
 
 // Instrument adds instrumentation for the specified gorm database instance.
-func Instrument(db *gorm.DB, s *instana.Sensor, dsn string) {
+func Instrument(db *gorm.DB, s instana.TracerLogger, dsn string) {
 
 	wdB := wrappedDB{
 		connDetails: instana.ParseDBConnDetails(dsn),

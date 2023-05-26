@@ -20,7 +20,7 @@ import (
 // It injects Instana OpenTracing headers into outgoing unary requests to ensure trace propagation
 // throughout the call.
 // If the server call results with an error, its message will be attached to the span logs.
-func UnaryClientInterceptor(sensor *instana.Sensor) grpc.UnaryClientInterceptor {
+func UnaryClientInterceptor(sensor instana.TracerLogger) grpc.UnaryClientInterceptor {
 	return func(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, callOpts ...grpc.CallOption) error {
 		parentSpan, ok := instana.SpanFromContext(ctx)
 		if !ok {
@@ -45,7 +45,7 @@ func UnaryClientInterceptor(sensor *instana.Sensor) grpc.UnaryClientInterceptor 
 // It injects Instana OpenTracing headers into outgoing stream requests to ensure trace propagation
 // throughout the call. The span is finished as soon as server closes the stream or returns an error.
 // Any error occurred during the request is attached to the span logs.
-func StreamClientInterceptor(sensor *instana.Sensor) grpc.StreamClientInterceptor {
+func StreamClientInterceptor(sensor instana.TracerLogger) grpc.StreamClientInterceptor {
 	return func(ctx context.Context, desc *grpc.StreamDesc, cc *grpc.ClientConn, method string, streamer grpc.Streamer, opts ...grpc.CallOption) (grpc.ClientStream, error) {
 
 		parentSpan, ok := instana.SpanFromContext(ctx)
@@ -71,7 +71,7 @@ func StreamClientInterceptor(sensor *instana.Sensor) grpc.StreamClientIntercepto
 	}
 }
 
-func startClientSpan(parentSpan ot.Span, target, method, callType string, sensor *instana.Sensor) ot.Span {
+func startClientSpan(parentSpan ot.Span, target, method, callType string, sensor instana.TracerLogger) ot.Span {
 	host, port, err := net.SplitHostPort(target)
 	if err != nil {
 		sensor.Logger().Info("failed to extract server host and port from request metadata:", err)
