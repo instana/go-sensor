@@ -4,4 +4,4 @@
 package instamux
 
 // Version is the instrumentation module semantic version
-const Version = "1.7.0"
+const Version = "1.8.0"
