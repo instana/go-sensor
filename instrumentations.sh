@@ -14,8 +14,6 @@
 # Release phase
 # 1. Run `./instrumentations.sh release` to create tags for each instrumentation with a new minor version, and update all version.go files.
 
-# set -eo pipefail
-
 # Checks if gh is installed, otherwise stop the script
 if ! [ -x "$(command -v gh)" ]; then
   echo "Error: gh is not installed." >&2
@@ -29,19 +27,14 @@ if gh auth status 2>&1 | grep -i "You are not logged"; then
 fi
 
 CORE_VERSION=latest
-# CORE_VERSION=v1.45.0
 
 # List of folders to be excluded from the instrumentation list
 # If new matches must be added, use regular expressions. eg:
 # EXCLUDED_DIRS="\/.*\/example|\/new_match"
 EXCLUDED_DIRS="\/.*\/example"
-# EXCLUDED_NEWER_VERSIONS="\/v[0-9]"
 
 # List of instrumentation folders
 LIB_LIST=$(find ./instrumentation -name go.mod -exec dirname {} \; | grep -E -v "$EXCLUDED_DIRS")
-
-# List of instrumentation folders WITHOUT /v1, v2 and so on subfolders
-# LIB_LIST_V1=$(echo "$LIB_LIST" | grep -E -v "$EXCLUDED_NEWER_VERSIONS")
 
 # Updates all instrumentations to use the @latest version of the core module
 run_update() {
@@ -56,14 +49,12 @@ run_release() {
   for lib in $LIB_LIST
     do LIB_PATH="$(echo "$lib" | sed 's/\.\///')"
 
-    # TAG_TO_SEARCH="$LIB_PATH/v[0-1].[0-9].[0-9]"
     TAG_TO_SEARCH="$LIB_PATH/v[0-1].*"
 
     NEW_VERSION_FOLDER=$(echo "$lib" | grep -E "v[0-9]")
 
     if [ -n "$NEW_VERSION_FOLDER" ]; then
       NEW_MAJOR_VERSION=$(echo "$NEW_VERSION_FOLDER" | sed "s/.*v//")
-      # TAG_TO_SEARCH="$LIB_PATH/v$NEW_MAJOR_VERSION.[0-9].[0-9]"
       TAG_TO_SEARCH="$LIB_PATH/v$NEW_MAJOR_VERSION.*"
     fi
 
@@ -79,35 +70,31 @@ run_release() {
     NEW_VERSION="$MAJOR_VERSION.$MINOR_VERSION.0"
 
     # Updates the minor version in version.go
-    # sed -i '' -E "s/[0-9]+\.[0-9]+\.[0-9]+/${NEW_VERSION}/" "$lib"/version.go | tail -1
-    sed -E "s/[0-9]+\.[0-9]+\.[0-9]+/${NEW_VERSION}/" "$lib"/version.go
+    sed -i '' -E "s/[0-9]+\.[0-9]+\.[0-9]+/${NEW_VERSION}/" "$lib"/version.go | tail -1
 
     # Tags to be created after version.go is merged to the main branch with the new version
     PATH_WITHOUT_V=$(echo "$LIB_PATH" | sed "s/\/v[0-9]*//")
-    # TAGS="$TAGS $LIB_PATH/v$MAJOR_VERSION.$MINOR_VERSION.0"
     TAGS="$TAGS $PATH_WITHOUT_V/v$MAJOR_VERSION.$MINOR_VERSION.0"
   done
 
-  echo "tags: $TAGS"
-
   # Commit all version.go files to the main branch
-  # git add ./instrumentation/**/version.go
-  # git add ./instrumentation/**/**/version.go
-  # git commit -m "Bumping new version of the instrumentation"
-  # git push origin main
+  git add ./instrumentation/**/version.go
+  git add ./instrumentation/**/**/version.go
+  git commit -m "Bumping new version of the instrumentation"
+  git push origin main
 
   echo "Creating tags for each instrumentation"
 
-  # for t in $TAGS
-  #   do git tag "$t" && git push origin "$t"
-  # done
+  for t in $TAGS
+    do git tag "$t" && git push origin "$t"
+  done
 
   # Release every instrumentation
-  # for t in $TAGS
-  #   do gh release create "$t" \
-	# 	--title "$t" \
-	# 	--notes "Update instrumentations to the latest core module"
-  # done
+  for t in $TAGS
+    do gh release create "$t" \
+		--title "$t" \
+		--notes "Update instrumentations to the latest core module"
+  done
 }
 
 run_replace() {
