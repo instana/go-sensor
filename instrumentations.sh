@@ -49,12 +49,19 @@ run_release() {
   for lib in $LIB_LIST
     do LIB_PATH="$(echo "$lib" | sed 's/\.\///')"
 
+    # Expected to find something like: instrumentation/instaredis/v1.5.0
+    # This option will be used if the instrumentation has no v2 subfolder
     TAG_TO_SEARCH="$LIB_PATH/v[0-1].*"
 
-    NEW_VERSION_FOLDER=$(echo "$lib" | grep -E "v[0-9]")
+    # Expected to identify packages with subfolders. eg: instrumentation/instaredis/v2
+    NEW_VERSION_FOLDER=$(echo "$lib" | grep -E "v[2-9].*")
 
+    # If NEW_VERSION_FOLDER has something we update TAG_TO_SEARCH
     if [ -n "$NEW_VERSION_FOLDER" ]; then
+      # Expected to be a version. eg: 1.5.0
       NEW_MAJOR_VERSION=$(echo "$NEW_VERSION_FOLDER" | sed "s/.*v//")
+
+      # Expected to be tag name with major version higher than 1. eg: instrumentation/instaredis/v2.1.0
       TAG_TO_SEARCH="$LIB_PATH/v$NEW_MAJOR_VERSION.*"
     fi
 
