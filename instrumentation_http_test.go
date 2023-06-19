@@ -387,7 +387,7 @@ func TestTracingHandlerFunc_Error(t *testing.T) {
 		Host:    "example.com",
 		Path:    "/test",
 		RouteID: "test",
-		Error:   "Internal Server Error",
+		Error:   "something went wrong",
 	}, data.Tags)
 
 	assert.Equal(t, span.TraceID, logSpan.TraceID)
@@ -403,7 +403,7 @@ func TestTracingHandlerFunc_Error(t *testing.T) {
 
 	assert.Equal(t, instana.LogSpanTags{
 		Level:   "ERROR",
-		Message: `error: "Internal Server Error"`,
+		Message: `error: "something went wrong"`,
 	}, logData.Tags)
 }
 

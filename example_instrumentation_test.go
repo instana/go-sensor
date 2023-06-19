@@ -29,6 +29,9 @@ func ExampleRoundTripper() {
 	sensor := instana.NewSensor("my-http-client")
 	span := sensor.Tracer().StartSpan("entry")
 
+	// Make sure to finish the span so it can be properly recorded in the backend
+	defer span.Finish()
+
 	// http.DefaultTransport is used as a default RoundTripper, however you can provide
 	// your own implementation
 	client := &http.Client{

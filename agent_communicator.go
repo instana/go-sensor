@@ -42,37 +42,6 @@ func (a *agentCommunicator) buildURL(sufix string) string {
 	return url
 }
 
-// serverHeader attempts to retrieve the "Server" header key from the Agent
-func (a *agentCommunicator) serverHeader() string {
-	url := a.buildURL("/")
-	req, err := http.NewRequest(http.MethodGet, url, nil)
-
-	if err != nil {
-		a.l.Debug("Error creating request while attempting to retrieve the 'Server' header: ", err.Error())
-		return ""
-	}
-
-	resp, err := a.client.Do(req)
-
-	if resp == nil {
-		a.l.Debug("No response from the agent while attempting to retrieve the 'Server' header: ", err.Error())
-		return ""
-	}
-
-	defer func() {
-		io.CopyN(ioutil.Discard, resp.Body, 256<<10)
-		resp.Body.Close()
-	}()
-
-	if err == nil {
-		return resp.Header.Get("Server")
-	}
-
-	a.l.Debug("Error requesting header from the agent while attempting to retrieve the 'Server' header: ", err.Error())
-
-	return ""
-}
-
 // checkForSuccessResponse checks for a successful GET operation with the agent host
 func (a *agentCommunicator) checkForSuccessResponse() bool {
 	url := a.buildURL("/")
@@ -178,7 +147,7 @@ func (a *agentCommunicator) pingAgent() bool {
 	}()
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		a.l.Debug("Agent ping failed, response: ", resp.StatusCode, " with message ", resp.Status)
+		a.l.Debug("Agent ping failed, response: ", resp.StatusCode, " with message ", resp.Status, "; URL: ", u)
 		return false
 	}
 
