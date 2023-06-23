@@ -294,7 +294,7 @@ func (rec *statusCodeRecorder) Write(b []byte) (int, error) {
 	}
 
 	if rec.status >= http.StatusInternalServerError {
-		rec.statusText = strings.TrimRight(string(b), "\n")
+		rec.statusText = strings.TrimSuffix(string(b), "\n")
 	}
 
 	return rec.ResponseWriter.Write(b)
