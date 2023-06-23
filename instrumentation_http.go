@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"net/textproto"
 	"net/url"
+	"strings"
 
 	ot "github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
@@ -121,7 +122,8 @@ func initSpanOptions(req *http.Request, routeID string) []ot.StartSpanOption {
 func processResponseStatus(response wrappedResponseWriter, span ot.Span) {
 	if response.Status() > 0 {
 		if response.Status() >= http.StatusInternalServerError {
-			statusText := http.StatusText(response.Status())
+			// statusText := http.StatusText(response.Status())
+			statusText := response.StatusText()
 
 			span.SetTag("http.error", statusText)
 			span.LogFields(otlog.Object("error", statusText))
@@ -255,6 +257,7 @@ func RoundTripper(sensor TracerLogger, original http.RoundTripper) http.RoundTri
 type wrappedResponseWriter interface {
 	http.ResponseWriter
 	Status() int
+	StatusText() string
 }
 
 func wrapResponseWriter(w http.ResponseWriter) wrappedResponseWriter {
@@ -272,7 +275,8 @@ func wrapResponseWriter(w http.ResponseWriter) wrappedResponseWriter {
 // statusCodeRecorder is a wrapper over http.ResponseWriter to spy the returned status code
 type statusCodeRecorder struct {
 	http.ResponseWriter
-	status int
+	status     int
+	statusText string
 }
 
 func (rec *statusCodeRecorder) SetStatus(status int) {
@@ -289,11 +293,19 @@ func (rec *statusCodeRecorder) Write(b []byte) (int, error) {
 		rec.SetStatus(http.StatusOK)
 	}
 
+	if rec.status >= http.StatusInternalServerError {
+		rec.statusText = strings.TrimRight(string(b), "\n")
+	}
+
 	return rec.ResponseWriter.Write(b)
 }
 
 func (rec *statusCodeRecorder) Status() int {
 	return rec.status
+}
+
+func (rec *statusCodeRecorder) StatusText() string {
+	return rec.statusText
 }
 
 // statusCodeRecorderHTTP10 is a wrapper over http.ResponseWriter similar to statusCodeRecorder, but
