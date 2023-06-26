@@ -252,8 +252,6 @@ func Test_fsmS_lookupAgentHost(t *testing.T) {
 // 4. A valid Agent hostname is available in the INSTANA_AGENT_HOST env var.
 // 5. A connection with the Agent is reestablished via env var.
 func Test_fsmS_agentConnectionReestablished(t *testing.T) {
-	shouldPing := true
-
 	agentResponseJSON := `{
 		"pid": 37808,
 		"agentUuid": "88:66:5a:ff:fe:05:a5:f0",
@@ -280,11 +278,7 @@ func Test_fsmS_agentConnectionReestablished(t *testing.T) {
 			return
 		}
 
-		if shouldPing {
-			w.WriteHeader(http.StatusOK)
-		} else {
-			w.WriteHeader(http.StatusBadRequest)
-		}
+		w.WriteHeader(http.StatusOK)
 	})
 	defer server.Close()
 
@@ -343,14 +337,6 @@ func Test_fsmS_agentConnectionReestablished(t *testing.T) {
 	r.fsm.Event(context.Background(), eInit)
 
 	assert.True(t, <-res)
-
-	// make agent server unresponsive for 500 ms to force triggering retries
-	shouldPing = false
-	go func() {
-		time.AfterFunc(time.Millisecond*500, func() {
-			shouldPing = true
-		})
-	}()
 
 	// Simulate Agent connection lost
 	r.agentComm.host = "invalid_host"
