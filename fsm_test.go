@@ -252,6 +252,8 @@ func Test_fsmS_lookupAgentHost(t *testing.T) {
 // 4. A valid Agent hostname is available in the INSTANA_AGENT_HOST env var.
 // 5. A connection with the Agent is reestablished via env var.
 func Test_fsmS_agentConnectionReestablished(t *testing.T) {
+	shouldPing := true
+
 	agentResponseJSON := `{
 		"pid": 37808,
 		"agentUuid": "88:66:5a:ff:fe:05:a5:f0",
@@ -269,12 +271,8 @@ func Test_fsmS_agentConnectionReestablished(t *testing.T) {
 		sensor = nil
 	}()
 
-	var shouldPingBack bool = true
-
 	server := getTestServer(func(w http.ResponseWriter, r *http.Request) {
 		p := r.URL.Path
-		// /com.instana.plugin.golang.37808: enter_announced
-		// fmt.Println("agent server received request url: ", p)
 
 		// announce phase (enter_unannounced)
 		if p == "/com.instana.plugin.golang.discovery" {
@@ -282,7 +280,7 @@ func Test_fsmS_agentConnectionReestablished(t *testing.T) {
 			return
 		}
 
-		if shouldPingBack {
+		if shouldPing {
 			w.WriteHeader(http.StatusOK)
 		} else {
 			w.WriteHeader(http.StatusBadRequest)
@@ -301,13 +299,6 @@ func Test_fsmS_agentConnectionReestablished(t *testing.T) {
 	assert.NoError(t, err)
 
 	res := make(chan bool)
-
-	go func() {
-		time.AfterFunc(time.Second*5, func() {
-			// fmt.Println("TIMEOUT")
-			res <- false
-		})
-	}()
 
 	r := &fsmS{
 		agentComm:                  newAgentCommunicator(u.Hostname(), u.Port(), &fromS{EntityID: "12345"}, defaultLogger),
@@ -342,13 +333,29 @@ func Test_fsmS_agentConnectionReestablished(t *testing.T) {
 			},
 		})
 
+	// We fail the test if the channel does not resolve after 5 seconds
+	go func() {
+		time.AfterFunc(time.Second*5, func() {
+			res <- false
+		})
+	}()
+
 	r.fsm.Event(context.Background(), eInit)
 
 	assert.True(t, <-res)
+
+	// make agent server unresponsive for 500 ms to force triggering retries
+	shouldPing = false
+	go func() {
+		time.AfterFunc(time.Millisecond*500, func() {
+			shouldPing = true
+		})
+	}()
 
 	// Simulate Agent connection lost
 	r.agentComm.host = "invalid_host"
 	r.reset()
 
 	assert.True(t, <-res)
+	assert.Equal(t, os.Getenv("INSTANA_AGENT_HOST"), r.agentComm.host, "Configured host to be updated with env var value")
 }
