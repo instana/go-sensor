@@ -45,5 +45,5 @@ jobs:
             }
         env:
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
-          SLACK_CHANNEL_ID_TEST: ${{ secrets.SLACK_CHANNEL_ID_TEST }}
+          SLACK_CHANNEL_ID_TEST: ${{ secrets.SLACK_RELEASE_CHANNEL_ID }}
 
