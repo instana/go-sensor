@@ -22,13 +22,13 @@ jobs:
           channel-id: ${{ secrets.SLACK_CHANNEL_ID_TEST }}
           payload: |
             {
-              "text": ":mega: *Go Tracer team* : Version ${{ env.RELEASE_VERSION }} of ${{ github.event.release.name }} :package: has been released.",
+              "text": ":mega: *Go Tracer team* : Version ${{ env.RELEASE_VERSION }} of go-sensor :package: has been released.",
               "blocks": [
                 {
                   "type": "section",
                   "text": {
                     "type": "mrkdwn",
-                    "text": ":mega: *Go Tracer team* : Version ${{ env.RELEASE_VERSION }} of ${{ github.event.release.name }} :package: has been released."
+                    "text": ":mega: *Go Tracer team* : Version ${{ env.RELEASE_VERSION }} of go-sensor :package: has been released."
                   }
                 },
                 {
