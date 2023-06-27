@@ -13,10 +13,12 @@ jobs:
 
       - name: Check instrumentation type
         id: check
-        run: echo "result=$(echo ${{ github.event.release.name }} | grep -c 'instrumentation/')" >> $GITHUB_OUTPUT
+        run: |
+          echo "result=$(echo ${{ github.event.release.name }} | grep -c 'instrumentation/')" >> $GITHUB_OUTPUT
+          echo "notes=$(echo ${{ github.event.release.body }} | grep -c '--auto-generated--')" >> $GITHUB_OUTPUT
 
       - name: Send success message to slack release channel
-        if: "${{ success() && env.DRY_RUN != 'true' && steps.check.outputs.result != '1' }}"
+        if: "${{ success() && env.DRY_RUN != 'true' && steps.check.outputs.result != '1' && steps.check.outputs.notes != '1' }}"
         uses: slackapi/slack-github-action@v1.24.0
         with:
           channel-id: ${{ secrets.SLACK_CHANNEL_ID_TEST }}
