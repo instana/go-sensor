@@ -8,7 +8,6 @@ import (
 	"errors"
 	"net/http"
 	"os"
-	"path"
 	"path/filepath"
 	"strings"
 	"sync"
@@ -83,15 +82,8 @@ func newSensor(options *Options) *sensorS {
 	s.setLogger(defaultLogger)
 
 	// override service name with an env value if set
-	if name, ok := os.LookupEnv("INSTANA_SERVICE_NAME"); ok {
+	if name, ok := os.LookupEnv("INSTANA_SERVICE_NAME"); ok && strings.TrimSpace(name) != "" {
 		s.serviceName = name
-	}
-
-	// if no service name is provided, we use the executable name
-	if "" == strings.TrimSpace(s.serviceName) {
-		sn := path.Base(os.Args[0])
-		s.logger.Debug("Using args[0] as service name: ", sn)
-		s.serviceName = sn
 	}
 
 	// handle the legacy (instana.Options).LogLevel value if we use logger.Logger to log
