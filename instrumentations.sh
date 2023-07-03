@@ -100,7 +100,7 @@ run_release() {
   for t in $TAGS
     do gh release create "$t" \
 		--title "$t" \
-		--notes "Update instrumentations to the latest core module"
+		--notes "Updated instrumentation with the latest version of go-sensor core module.<br/><br/> --auto-generated--"
   done
 }
 
