@@ -21,7 +21,7 @@ jobs:
         if: "${{ success() && env.DRY_RUN != 'true' && steps.check.outputs.result != '1' && steps.check.outputs.notes != '1' }}"
         uses: slackapi/slack-github-action@v1.24.0
         with:
-          channel-id: ${{ secrets.SLACK_CHANNEL_ID_TEST }}
+          channel-id: ${{ secrets.SLACK_RELEASE_CHANNEL_ID }}
           payload: |
             {
               "text": ":mega: *Go Tracer team* : Version ${{ env.RELEASE_VERSION }} of go-sensor :package: has been released.",
@@ -47,5 +47,5 @@ jobs:
             }
         env:
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
-          SLACK_CHANNEL_ID_TEST: ${{ secrets.SLACK_RELEASE_CHANNEL_ID }}
+          SLACK_RELEASE_CHANNEL_ID: ${{ secrets.SLACK_RELEASE_CHANNEL_ID }}
 
