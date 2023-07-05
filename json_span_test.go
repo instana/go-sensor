@@ -93,10 +93,29 @@ func TestServiceNameViaEnvVar(t *testing.T) {
 	assert.Contains(t, spanToJson(t, span), "\"service\":\"Service Name\"")
 }
 
+func TestServiceNameEmpty(t *testing.T) {
+	recorder := instana.NewTestRecorder()
+	tracer := instana.NewTracerWithEverything(
+		&instana.Options{
+			AgentClient: alwaysReadyClient{},
+		},
+		recorder,
+	)
+	defer instana.ShutdownSensor()
+	sp := tracer.StartSpan("g.http")
+	sp.Finish()
+	spans := recorder.GetQueuedSpans()
+
+	require.Len(t, spans, 1)
+	span := spans[0]
+	assert.Equal(t, "", span.Data.(instana.HTTPSpanData).SpanData.Service)
+	assert.NotContains(t, spanToJson(t, span), "\"service\":")
+}
+
 func spanToJson(t *testing.T, span instana.Span) string {
 	jsonBytes, err := span.MarshalJSON()
 	assert.NoError(t, err)
-	return string(jsonBytes[:])
+	return string(jsonBytes)
 }
 
 func TestNewSDKSpanData(t *testing.T) {
