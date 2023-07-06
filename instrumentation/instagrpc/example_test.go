@@ -23,7 +23,7 @@ import (
 
 // EchoServer is an implementation of GRPC server
 type TestServiceServer struct {
-	unimplementedTestServer
+	grpctest.UnimplementedTestServiceServer
 }
 
 // UnaryCall responds with a static greeting from server
