@@ -1,6 +1,9 @@
 // (c) Copyright IBM Corp. 2021
 // (c) Copyright Instana Inc. 2020
 
+//go:build go1.17
+// +build go1.17
+
 package pubsub_test
 
 import (
@@ -80,7 +83,13 @@ func TestClient_Topic(t *testing.T) {
 
 			createdConf, err := top.Config(context.Background())
 			require.NoError(t, err)
-			assert.Equal(t, *conf, createdConf)
+			assert.Equal(t, conf.Labels, createdConf.Labels)
+			assert.Equal(t, conf.MessageStoragePolicy, createdConf.MessageStoragePolicy)
+			assert.Equal(t, conf.KMSKeyName, createdConf.KMSKeyName)
+			assert.Equal(t, conf.SchemaSettings, createdConf.SchemaSettings)
+
+			// name cannot be tested because in new versions of pubsub this new name attribute is not replicated to the original conf. only top.Config() has it
+			// assert.Equal(t, conf.name, createdConf.name)
 
 			return top.Publish(context.Background(), msg)
 		},
