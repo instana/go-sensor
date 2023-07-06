@@ -1,6 +1,9 @@
 // (c) Copyright IBM Corp. 2021
 // (c) Copyright Instana Inc. 2020
 
+//go:build go1.17
+// +build go1.17
+
 package instagrpc_test
 
 import (
@@ -20,7 +23,7 @@ import (
 
 // EchoServer is an implementation of GRPC server
 type TestServiceServer struct {
-	unimplementedTestServer
+	grpctest.UnimplementedTestServiceServer
 }
 
 // UnaryCall responds with a static greeting from server
