@@ -12,8 +12,10 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/gofiber/fiber/v2"
 	"github.com/instana/go-sensor/acceptor"
 	"github.com/instana/go-sensor/autoprofile"
+	"github.com/valyala/fasthttp"
 
 	instana "github.com/instana/go-sensor"
 	"github.com/instana/go-sensor/w3ctrace"
@@ -41,6 +43,36 @@ func BenchmarkTracingNamedHandlerFunc(b *testing.B) {
 
 	for i := 0; i < b.N; i++ {
 		h.ServeHTTP(rec, req)
+	}
+
+}
+func BenchmarkTracingNamedHandlerFiberFunc(b *testing.B) {
+	recorder := instana.NewTestRecorder()
+	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{
+		Service:     "go-sensor-test",
+		AgentClient: alwaysReadyClient{},
+	}, recorder))
+	defer instana.ShutdownSensor()
+
+	h := instana.TracingNamedHandlerFiberFunc(s, "action", "/{action}", func(c *fiber.Ctx) error {
+		return c.SendString("Ok")
+	})
+
+	app := fiber.New()
+	app.Get("/test", h)
+
+	c := &fasthttp.RequestCtx{}
+
+	c.Request.Header.SetMethod(fiber.MethodGet)
+	c.URI().SetPath("/test")
+	c.URI().SetQueryString("q=term")
+
+	handler := app.Handler()
+
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		handler(c)
 	}
 }
 
@@ -118,6 +150,90 @@ func TestTracingNamedHandlerFunc_Write(t *testing.T) {
 	), tracestate)
 }
 
+func TestTracingNamedHandlerFiberFunc_Write(t *testing.T) {
+	opts := &instana.Options{
+		Service: "go-sensor-test",
+		Tracer: instana.TracerOptions{
+			CollectableHTTPHeaders: []string{"x-custom-header-1", "x-custom-header-2"},
+		},
+		AgentClient: alwaysReadyClient{},
+	}
+
+	recorder := instana.NewTestRecorder()
+	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(opts, recorder))
+	defer instana.ShutdownSensor()
+
+	h := instana.TracingNamedHandlerFiberFunc(s, "action", "/{action}", func(c *fiber.Ctx) error {
+		c.Set("X-Response", "true")
+		c.Set("X-Custom-Header-2", "response")
+		return c.SendString("Ok\n")
+	})
+
+	app := fiber.New()
+	app.Get("/test", h)
+
+	c := &fasthttp.RequestCtx{}
+
+	c.Request.Header.SetMethod(fiber.MethodGet)
+	c.Request.Header.Set("Authorization", "Basic blah")
+	c.Request.Header.Set("X-Custom-Header-1", "request")
+	c.URI().SetPath("/test")
+	c.URI().SetQueryString("q=term")
+	c.URI().SetHost("example.com")
+
+	handler := app.Handler()
+
+	handler(c)
+
+	assert.Equal(t, http.StatusOK, c.Response.StatusCode())
+	assert.Equal(t, "Ok\n", string(c.Response.Body()))
+
+	spans := recorder.GetQueuedSpans()
+	require.Len(t, spans, 1)
+
+	span := spans[0]
+	assert.Equal(t, 0, span.Ec)
+	assert.EqualValues(t, instana.EntrySpanKind, span.Kind)
+	assert.False(t, span.Synthetic)
+	assert.Empty(t, span.CorrelationType)
+	assert.Empty(t, span.CorrelationID)
+	assert.False(t, span.ForeignTrace)
+	assert.Empty(t, span.Ancestor)
+
+	require.IsType(t, instana.HTTPSpanData{}, span.Data)
+	data := span.Data.(instana.HTTPSpanData)
+
+	assert.Equal(t, instana.HTTPSpanTags{
+		Host:   "example.com",
+		Status: http.StatusOK,
+		Method: "GET",
+		Path:   "/test",
+		Params: "q=term",
+		Headers: map[string]string{
+			"x-custom-header-1": "request",
+			"x-custom-header-2": "response",
+		},
+		PathTemplate: "/{action}",
+		RouteID:      "action",
+		Protocol:     "http",
+	}, data.Tags)
+
+	// check whether the trace context has been sent back to the client
+	assert.Equal(t, instana.FormatID(span.TraceID), string(c.Response.Header.Peek(instana.FieldT)))
+	assert.Equal(t, instana.FormatID(span.SpanID), string(c.Response.Header.Peek(instana.FieldS)))
+
+	// w3c trace context
+	traceparent := string(c.Response.Header.Peek(w3ctrace.TraceParentHeader))
+	assert.Contains(t, traceparent, instana.FormatLongID(span.TraceIDHi, span.TraceID))
+	assert.Contains(t, traceparent, instana.FormatID(span.SpanID))
+
+	tracestate := string(c.Response.Header.Peek(w3ctrace.TraceStateHeader))
+	assert.True(t, strings.HasPrefix(
+		tracestate,
+		"in="+instana.FormatID(span.TraceID)+";"+instana.FormatID(span.SpanID),
+	), tracestate)
+}
+
 func TestTracingNamedHandlerFunc_InstanaFieldLPriorityOverTraceParentHeader(t *testing.T) {
 	type testCase struct {
 		headers                 http.Header
@@ -187,6 +303,86 @@ func TestTracingNamedHandlerFunc_InstanaFieldLPriorityOverTraceParentHeader(t *t
 		assert.True(t, strings.HasSuffix(rec.Header().Get(w3ctrace.TraceParentHeader), testCase.traceParentHeaderSuffix), "case '"+name+"' failed")
 	}
 }
+func TestTracingNamedHandlerFiberFunc_InstanaFieldLPriorityOverTraceParentHeader(t *testing.T) {
+	type testCase struct {
+		headers                 http.Header
+		traceParentHeaderSuffix string
+	}
+
+	testCases := map[string]testCase{
+		"traceparent is suppressed, x-instana-l is not suppressed": {
+			headers: http.Header{
+				w3ctrace.TraceParentHeader: []string{"00-00000000000000000000000000000001-0000000000000001-00"},
+				instana.FieldL:             []string{"1"},
+			},
+			traceParentHeaderSuffix: "-01",
+		},
+		"traceparent is suppressed, x-instana-l is absent (is not suppressed by default)": {
+			headers: http.Header{
+				w3ctrace.TraceParentHeader: []string{"00-00000000000000000000000000000001-0000000000000001-00"},
+			},
+			traceParentHeaderSuffix: "-01",
+		},
+		"traceparent is not suppressed, x-instana-l is absent (tracing enabled by default)": {
+			headers: http.Header{
+				w3ctrace.TraceParentHeader: []string{"00-00000000000000000000000000000001-0000000000000001-01"},
+			},
+			traceParentHeaderSuffix: "-01",
+		},
+		"traceparent is not suppressed, x-instana-l is not suppressed": {
+			headers: http.Header{
+				w3ctrace.TraceParentHeader: []string{"00-00000000000000000000000000000001-0000000000000001-01"},
+				instana.FieldL:             []string{"1"},
+			},
+			traceParentHeaderSuffix: "-01",
+		},
+		"traceparent is suppressed, x-instana-l is suppressed": {
+			headers: http.Header{
+				w3ctrace.TraceParentHeader: []string{"00-00000000000000000000000000000001-0000000000000001-00"},
+				instana.FieldL:             []string{"0"},
+			},
+			traceParentHeaderSuffix: "-00",
+		},
+		"traceparent is not suppressed, x-instana-l is suppressed": {
+			headers: http.Header{
+				w3ctrace.TraceParentHeader: []string{"00-00000000000000000000000000000001-0000000000000001-01"},
+				instana.FieldL:             []string{"0"},
+			},
+			traceParentHeaderSuffix: "-00",
+		},
+	}
+
+	recorder := instana.NewTestRecorder()
+	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{
+		Service:     "go-sensor-test",
+		AgentClient: alwaysReadyClient{},
+	}, recorder))
+	defer instana.ShutdownSensor()
+
+	h := instana.TracingNamedHandlerFiberFunc(s, "action", "/test", func(c *fiber.Ctx) error { return nil })
+
+	app := fiber.New()
+	app.Get("/test", h)
+
+	handler := app.Handler()
+
+	for name, testCase := range testCases {
+		c := &fasthttp.RequestCtx{}
+
+		for k, v := range testCase.headers {
+			c.Request.Header.Add(k, v[0])
+		}
+
+		c.Request.Header.SetMethod(fiber.MethodGet)
+		c.URI().SetPath("/test")
+		c.URI().SetHost("example.com")
+
+		handler(c)
+
+		assert.Equal(t, http.StatusOK, c.Response.StatusCode())
+		assert.True(t, strings.HasSuffix(string(c.Response.Header.Peek(w3ctrace.TraceParentHeader)), testCase.traceParentHeaderSuffix), "case '"+name+"' failed")
+	}
+}
 
 func TestTracingNamedHandlerFunc_WriteHeaders(t *testing.T) {
 	recorder := instana.NewTestRecorder()
@@ -241,7 +437,145 @@ func TestTracingNamedHandlerFunc_WriteHeaders(t *testing.T) {
 		"in="+instana.FormatID(span.TraceID)+";"+instana.FormatID(span.SpanID),
 	), tracestate)
 }
+func TestTracingNamedHandlerFiberFunc_WriteHeaders(t *testing.T) {
+	recorder := instana.NewTestRecorder()
+	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder))
+	defer instana.ShutdownSensor()
 
+	h := instana.TracingNamedHandlerFiberFunc(s, "test", "/test", func(c *fiber.Ctx) error {
+		return c.SendStatus(http.StatusNotFound)
+	})
+
+	c := &fasthttp.RequestCtx{}
+
+	c.Request.Header.SetMethod(fiber.MethodGet)
+	c.URI().SetPath("/test")
+	c.URI().SetQueryString("q=term")
+	c.URI().SetHost("example.com")
+
+	app := fiber.New()
+	app.Get("/test", h)
+
+	handler := app.Handler()
+
+	handler(c)
+
+	assert.Equal(t, http.StatusNotFound, c.Response.StatusCode())
+
+	spans := recorder.GetQueuedSpans()
+	require.Len(t, spans, 1)
+
+	span := spans[0]
+	assert.Equal(t, 0, span.Ec)
+	assert.EqualValues(t, instana.EntrySpanKind, span.Kind)
+	assert.False(t, span.Synthetic)
+	assert.Empty(t, span.CorrelationType)
+	assert.Empty(t, span.CorrelationID)
+	assert.False(t, span.ForeignTrace)
+	assert.Empty(t, span.Ancestor)
+
+	require.IsType(t, instana.HTTPSpanData{}, span.Data)
+	data := span.Data.(instana.HTTPSpanData)
+
+	assert.Equal(t, instana.HTTPSpanTags{
+		Status:   http.StatusNotFound,
+		Method:   "GET",
+		Host:     "example.com",
+		Path:     "/test",
+		Params:   "q=term",
+		RouteID:  "test",
+		Protocol: "http",
+	}, data.Tags)
+
+	// check whether the trace context has been sent back to the client
+	assert.Equal(t, instana.FormatID(span.TraceID), string(c.Response.Header.Peek(instana.FieldT)))
+	assert.Equal(t, instana.FormatID(span.SpanID), string(c.Response.Header.Peek(instana.FieldS)))
+
+	// w3c trace context
+	traceparent := string(c.Response.Header.Peek(w3ctrace.TraceParentHeader))
+	assert.Contains(t, traceparent, instana.FormatLongID(span.TraceIDHi, span.TraceID))
+	assert.Contains(t, traceparent, instana.FormatID(span.SpanID))
+
+	tracestate := string(c.Response.Header.Peek(w3ctrace.TraceStateHeader))
+	assert.True(t, strings.HasPrefix(
+		tracestate,
+		"in="+instana.FormatID(span.TraceID)+";"+instana.FormatID(span.SpanID),
+	), tracestate)
+}
+
+func TestTracingNamedHandlerFiberFunc_W3CTraceContext(t *testing.T) {
+	recorder := instana.NewTestRecorder()
+	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder))
+	defer instana.ShutdownSensor()
+
+	h := instana.TracingNamedHandlerFiberFunc(s, "test", "/test", func(c *fiber.Ctx) error {
+		return c.SendString("Ok")
+	})
+
+	c := &fasthttp.RequestCtx{}
+
+	c.Request.Header.SetMethod(fiber.MethodGet)
+	c.Request.Header.Set(w3ctrace.TraceParentHeader, "00-00000000000000010000000000000002-0000000000000003-01")
+	c.Request.Header.Set(w3ctrace.TraceStateHeader, "in=1234;5678,rojo=00f067aa0ba902b7")
+	c.URI().SetPath("/test")
+	c.URI().SetHost("example.com")
+
+	app := fiber.New()
+	app.Get("/test", h)
+
+	handler := app.Handler()
+
+	handler(c)
+
+	assert.Equal(t, http.StatusOK, c.Response.StatusCode())
+
+	spans := recorder.GetQueuedSpans()
+	require.Len(t, spans, 1)
+
+	span := spans[0]
+
+	assert.EqualValues(t, 0x1, span.TraceIDHi)
+	assert.EqualValues(t, 0x2, span.TraceID)
+	assert.EqualValues(t, 0x3, span.ParentID)
+
+	assert.Equal(t, 0, span.Ec)
+	assert.EqualValues(t, instana.EntrySpanKind, span.Kind)
+	assert.False(t, span.Synthetic)
+	assert.Empty(t, span.CorrelationType)
+	assert.Empty(t, span.CorrelationID)
+	assert.True(t, span.ForeignTrace)
+	assert.Equal(t, &instana.TraceReference{
+		TraceID:  "1234",
+		ParentID: "5678",
+	}, span.Ancestor)
+
+	require.IsType(t, instana.HTTPSpanData{}, span.Data)
+	data := span.Data.(instana.HTTPSpanData)
+
+	assert.Equal(t, instana.HTTPSpanTags{
+		Host:     "example.com",
+		Status:   http.StatusOK,
+		Method:   "GET",
+		Path:     "/test",
+		RouteID:  "test",
+		Protocol: "http",
+	}, data.Tags)
+
+	// check whether the trace context has been sent back to the client
+	assert.Equal(t, instana.FormatID(span.TraceID), string(c.Response.Header.Peek(instana.FieldT)))
+	assert.Equal(t, instana.FormatID(span.SpanID), string(c.Response.Header.Peek(instana.FieldS)))
+
+	// w3c trace context
+	traceparent := string(c.Response.Header.Peek(w3ctrace.TraceParentHeader))
+	assert.Contains(t, traceparent, instana.FormatLongID(span.TraceIDHi, span.TraceID))
+	assert.Contains(t, traceparent, instana.FormatID(span.SpanID))
+
+	tracestate := string(c.Response.Header.Peek(w3ctrace.TraceStateHeader))
+	assert.True(t, strings.HasPrefix(
+		tracestate,
+		"in="+instana.FormatID(span.TraceID)+";"+instana.FormatID(span.SpanID),
+	), tracestate)
+}
 func TestTracingNamedHandlerFunc_W3CTraceContext(t *testing.T) {
 	recorder := instana.NewTestRecorder()
 	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder))
@@ -355,6 +689,63 @@ func TestTracingHandlerFunc_SecretsFiltering(t *testing.T) {
 	assert.Equal(t, instana.FormatID(span.TraceID), rec.Header().Get(instana.FieldT))
 	assert.Equal(t, instana.FormatID(span.SpanID), rec.Header().Get(instana.FieldS))
 }
+func TestTracingHandlerFiberFunc_SecretsFiltering(t *testing.T) {
+	recorder := instana.NewTestRecorder()
+	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{
+		Service:     "go-sensor-test",
+		AgentClient: alwaysReadyClient{},
+	}, recorder))
+	defer instana.ShutdownSensor()
+
+	h := instana.TracingNamedHandlerFiberFunc(s, "action", "/{action}", func(c *fiber.Ctx) error {
+		return c.SendString("Ok\n")
+	})
+
+	c := &fasthttp.RequestCtx{}
+
+	c.Request.Header.SetMethod(fiber.MethodGet)
+	c.URI().SetPath("/test")
+	c.URI().SetQueryString("q=term&sensitive_key=s3cr3t&myPassword=qwerty&SECRET_VALUE=1")
+	c.URI().SetHost("example.com")
+
+	app := fiber.New()
+	app.Get("/test", h)
+
+	handler := app.Handler()
+
+	handler(c)
+
+	assert.Equal(t, http.StatusOK, c.Response.StatusCode())
+	assert.Equal(t, "Ok\n", string(c.Response.Body()))
+
+	spans := recorder.GetQueuedSpans()
+	require.Len(t, spans, 1)
+
+	span := spans[0]
+	assert.Equal(t, 0, span.Ec)
+	assert.EqualValues(t, instana.EntrySpanKind, span.Kind)
+	assert.False(t, span.Synthetic)
+	assert.Empty(t, span.CorrelationType)
+	assert.Empty(t, span.CorrelationID)
+
+	require.IsType(t, instana.HTTPSpanData{}, span.Data)
+	data := span.Data.(instana.HTTPSpanData)
+
+	assert.Equal(t, instana.HTTPSpanTags{
+		Host:         "example.com",
+		Status:       http.StatusOK,
+		Method:       "GET",
+		Path:         "/test",
+		Params:       "SECRET_VALUE=%3Credacted%3E&myPassword=%3Credacted%3E&q=term&sensitive_key=%3Credacted%3E",
+		PathTemplate: "/{action}",
+		RouteID:      "action",
+		Protocol:     "http",
+	}, data.Tags)
+
+	// check whether the trace context has been sent back to the client
+	assert.Equal(t, instana.FormatID(span.TraceID), string(c.Response.Header.Peek(instana.FieldT)))
+	assert.Equal(t, instana.FormatID(span.SpanID), string(c.Response.Header.Peek(instana.FieldS)))
+}
 
 func TestTracingHandlerFunc_Error(t *testing.T) {
 	recorder := instana.NewTestRecorder()
@@ -406,6 +797,68 @@ func TestTracingHandlerFunc_Error(t *testing.T) {
 		Message: `error: "Internal Server Error"`,
 	}, logData.Tags)
 }
+func TestTracingHandlerFiberFunc_Error(t *testing.T) {
+	recorder := instana.NewTestRecorder()
+	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder))
+	defer instana.ShutdownSensor()
+
+	h := instana.TracingNamedHandlerFiberFunc(s, "test", "/test", func(c *fiber.Ctx) error {
+		c.Status(http.StatusInternalServerError)
+		return fiber.NewError(http.StatusInternalServerError, "something went wrong")
+	})
+
+	c := &fasthttp.RequestCtx{}
+
+	c.Request.Header.SetMethod(fiber.MethodGet)
+	c.URI().SetPath("/test")
+	c.URI().SetHost("example.com")
+
+	app := fiber.New()
+	app.Get("/test", h)
+
+	handler := app.Handler()
+
+	handler(c)
+
+	assert.Equal(t, http.StatusInternalServerError, c.Response.StatusCode())
+
+	spans := recorder.GetQueuedSpans()
+	require.Len(t, spans, 2)
+
+	span, logSpan := spans[0], spans[1]
+	assert.Equal(t, 1, span.Ec)
+	assert.EqualValues(t, instana.EntrySpanKind, span.Kind)
+	assert.False(t, span.Synthetic)
+
+	require.IsType(t, instana.HTTPSpanData{}, span.Data)
+	data := span.Data.(instana.HTTPSpanData)
+
+	assert.Equal(t, instana.HTTPSpanTags{
+		Status:   http.StatusInternalServerError,
+		Method:   "GET",
+		Host:     "example.com",
+		Path:     "/test",
+		RouteID:  "test",
+		Error:    "Internal Server Error",
+		Protocol: "http",
+	}, data.Tags)
+
+	assert.Equal(t, span.TraceID, logSpan.TraceID)
+	assert.Equal(t, span.SpanID, logSpan.ParentID)
+	assert.Equal(t, "log.go", logSpan.Name)
+
+	// assert that log message has been recorded within the span interval
+	assert.GreaterOrEqual(t, logSpan.Timestamp, span.Timestamp)
+	assert.LessOrEqual(t, logSpan.Duration, span.Duration)
+
+	require.IsType(t, instana.LogSpanData{}, logSpan.Data)
+	logData := logSpan.Data.(instana.LogSpanData)
+
+	assert.Equal(t, instana.LogSpanTags{
+		Level:   "ERROR",
+		Message: `error: "Internal Server Error"`,
+	}, logData.Tags)
+}
 
 func TestTracingHandlerFunc_SyntheticCall(t *testing.T) {
 	recorder := instana.NewTestRecorder()
@@ -429,6 +882,35 @@ func TestTracingHandlerFunc_SyntheticCall(t *testing.T) {
 	require.Len(t, spans, 1)
 	assert.True(t, spans[0].Synthetic)
 }
+func TestTracingHandlerFiberFunc_SyntheticCall(t *testing.T) {
+	recorder := instana.NewTestRecorder()
+	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder))
+	defer instana.ShutdownSensor()
+
+	h := instana.TracingNamedHandlerFiberFunc(s, "test-handler", "/", func(c *fiber.Ctx) error {
+		return c.SendString("Ok")
+	})
+
+	c := &fasthttp.RequestCtx{}
+
+	c.Request.Header.SetMethod(fiber.MethodGet)
+	c.Request.Header.Set(instana.FieldSynthetic, "1")
+	c.URI().SetPath("/test")
+	c.URI().SetHost("example.com")
+
+	app := fiber.New()
+	app.Get("/test", h)
+
+	handler := app.Handler()
+
+	handler(c)
+
+	assert.Equal(t, http.StatusOK, c.Response.StatusCode())
+
+	spans := recorder.GetQueuedSpans()
+	require.Len(t, spans, 1)
+	assert.True(t, spans[0].Synthetic)
+}
 
 func TestTracingHandlerFunc_EUMCall(t *testing.T) {
 	recorder := instana.NewTestRecorder()
@@ -447,6 +929,36 @@ func TestTracingHandlerFunc_EUMCall(t *testing.T) {
 	h.ServeHTTP(rec, req)
 
 	assert.Equal(t, http.StatusOK, rec.Code)
+
+	spans := recorder.GetQueuedSpans()
+	require.Len(t, spans, 1)
+	assert.Equal(t, "web", spans[0].CorrelationType)
+	assert.Equal(t, "eum correlation id", spans[0].CorrelationID)
+}
+func TestTracingHandlerFiberFunc_EUMCall(t *testing.T) {
+	recorder := instana.NewTestRecorder()
+	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder))
+	defer instana.ShutdownSensor()
+
+	h := instana.TracingNamedHandlerFiberFunc(s, "test-handler", "/", func(c *fiber.Ctx) error {
+		return c.SendString("Ok")
+	})
+
+	c := &fasthttp.RequestCtx{}
+
+	c.Request.Header.SetMethod(fiber.MethodGet)
+	c.Request.Header.Set(instana.FieldL, "1,correlationType=web;correlationId=eum correlation id")
+	c.URI().SetPath("/test")
+	c.URI().SetHost("example.com")
+
+	app := fiber.New()
+	app.Get("/test", h)
+
+	handler := app.Handler()
+
+	handler(c)
+
+	assert.Equal(t, http.StatusOK, c.Response.StatusCode())
 
 	spans := recorder.GetQueuedSpans()
 	require.Len(t, spans, 1)
@@ -487,6 +999,71 @@ func TestTracingHandlerFunc_PanicHandling(t *testing.T) {
 		Params:  "q=term",
 		RouteID: "test",
 		Error:   "something went wrong",
+	}, data.Tags)
+
+	assert.Equal(t, span.TraceID, logSpan.TraceID)
+	assert.Equal(t, span.SpanID, logSpan.ParentID)
+	assert.Equal(t, "log.go", logSpan.Name)
+
+	// assert that log message has been recorded within the span interval
+	assert.GreaterOrEqual(t, logSpan.Timestamp, span.Timestamp)
+	assert.LessOrEqual(t, logSpan.Duration, span.Duration)
+
+	require.IsType(t, instana.LogSpanData{}, logSpan.Data)
+	logData := logSpan.Data.(instana.LogSpanData)
+
+	assert.Equal(t, instana.LogSpanTags{
+		Level:   "ERROR",
+		Message: `error: "something went wrong"`,
+	}, logData.Tags)
+}
+func TestTracingHandlerFiberFunc_PanicHandling(t *testing.T) {
+	recorder := instana.NewTestRecorder()
+	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder))
+	defer instana.ShutdownSensor()
+
+	h := instana.TracingNamedHandlerFiberFunc(s, "test", "/test", func(c *fiber.Ctx) error {
+		panic("something went wrong")
+	})
+
+	c := &fasthttp.RequestCtx{}
+
+	c.Request.Header.SetMethod(fiber.MethodGet)
+	c.Request.Header.Set(instana.FieldL, "1,correlationType=web;correlationId=eum correlation id")
+	c.URI().SetPath("/test")
+	c.URI().SetQueryString("q=term")
+	c.URI().SetHost("example.com")
+
+	assert.Panics(t, func() {
+		app := fiber.New()
+		app.Get("/test", h)
+
+		handler := app.Handler()
+
+		handler(c)
+
+	})
+
+	spans := recorder.GetQueuedSpans()
+	require.Len(t, spans, 2)
+
+	span, logSpan := spans[0], spans[1]
+	assert.Equal(t, 1, span.Ec)
+	assert.EqualValues(t, instana.EntrySpanKind, span.Kind)
+	assert.False(t, span.Synthetic)
+
+	require.IsType(t, instana.HTTPSpanData{}, span.Data)
+	data := span.Data.(instana.HTTPSpanData)
+
+	assert.Equal(t, instana.HTTPSpanTags{
+		Status:   http.StatusInternalServerError,
+		Method:   "GET",
+		Host:     "example.com",
+		Path:     "/test",
+		Params:   "q=term",
+		RouteID:  "test",
+		Error:    "something went wrong",
+		Protocol: "http",
 	}, data.Tags)
 
 	assert.Equal(t, span.TraceID, logSpan.TraceID)
