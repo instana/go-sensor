@@ -3,8 +3,6 @@ name: Go Tracer Release
 on:
   workflow_dispatch:
     secrets:
-      GH_TOKEN_TRACER_RELEASE:
-        description: 'Token with permissions to release the Go Tracer and its instrumentations'
       GITHUB_TOKEN:
         description: 'Github Token'
     inputs:
@@ -44,5 +42,4 @@ jobs:
         INSTANA_PACKAGE_NAME: ${{ inputs.packageName }}
         LIB_VERSION_TYPE: ${{ inputs.versionType }}
         RELEASE_AS_DRAFT: ${{ inputs.asDraft }}
-        GH_TOKEN_TRACER_RELEASE: ${{ secrets.GH_TOKEN_TRACER_RELEASE }}
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
