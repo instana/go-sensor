@@ -130,8 +130,6 @@ git push origin @
 # Tags to be created after version.go is merged to the main branch with the new version
 PATH_WITHOUT_V=$(echo "$LIB_PATH" | sed "s/\/v[0-9]*//")
 
-# echo "path without version: $PATH_WITHOUT_V"
-
 if [ "$IS_CORE" = "false" ]; then
   NEW_VERSION_TAG="$PATH_WITHOUT_V/v$NEW_VERSION"
 else
@@ -146,7 +144,7 @@ if [ "$RELEASE_AS_DRAFT" != "true" ]; then
   AS_DRAFT=""
 fi
 
-echo "$GH_TOKEN_TRACER_RELEASE" > gh_token.txt
+echo "$GITHUB_TOKEN" > gh_token.txt
 gh auth login --with-token < gh_token.txt
 rm gh_token.txt
 

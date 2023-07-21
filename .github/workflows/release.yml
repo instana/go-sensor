@@ -5,6 +5,8 @@ on:
     secrets:
       GH_TOKEN_TRACER_RELEASE:
         description: 'Token with permissions to release the Go Tracer and its instrumentations'
+      GITHUB_TOKEN:
+        description: 'Github Token'
     inputs:
       packageName:
         description: 'Example: instagorm, instaredis/v2. Use "." to release the core module'
@@ -35,9 +37,6 @@ jobs:
       name: Checkout repo
       with:
         fetch-depth: 0
-    # Theoretically we don't need to run tests if the action will run in the main branch, which is supposed to be always green
-    # - name: Tests
-    #   run: make test
     - name: Release tracer or package
       run: ./release_action.sh
       shell: bash {0}
@@ -46,3 +45,4 @@ jobs:
         LIB_VERSION_TYPE: ${{ inputs.versionType }}
         RELEASE_AS_DRAFT: ${{ inputs.asDraft }}
         GH_TOKEN_TRACER_RELEASE: ${{ secrets.GH_TOKEN_TRACER_RELEASE }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
