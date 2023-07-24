@@ -1,0 +1,45 @@
+name: Go Tracer Release
+
+on:
+  workflow_dispatch:
+    secrets:
+      GITHUB_TOKEN:
+        description: 'Github Token'
+    inputs:
+      packageName:
+        description: 'Example: instagorm, instaredis/v2. Use "." to release the core module'
+        required: true
+        default: '.'
+        type: string
+      versionType:
+        description: 'The version to be released: major, minor or patch'
+        required: true
+        default: 'patch'
+        type: choice
+        options:
+        - major
+        - minor
+        - patch
+      asDraft:
+        description: 'Release as draft?'
+        required: true
+        default: true
+        type: boolean
+
+jobs:
+  do_release:
+    name: Release
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+      name: Checkout repo
+      with:
+        fetch-depth: 0
+    - name: Release tracer or package
+      run: ./release_action.sh
+      shell: bash {0}
+      env:
+        INSTANA_PACKAGE_NAME: ${{ inputs.packageName }}
+        LIB_VERSION_TYPE: ${{ inputs.versionType }}
+        RELEASE_AS_DRAFT: ${{ inputs.asDraft }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
