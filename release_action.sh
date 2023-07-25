@@ -148,5 +148,6 @@ echo "$GITHUB_TOKEN" > gh_token.txt
 gh auth login --with-token < gh_token.txt
 rm gh_token.txt
 
-git tag "$NEW_VERSION_TAG" && git push origin "$NEW_VERSION_TAG"
+git tag "$NEW_VERSION_TAG"
+git push origin "$NEW_VERSION_TAG"
 gh release create "$NEW_VERSION_TAG" $AS_DRAFT --title "$NEW_VERSION_TAG" --notes "New release $NEW_VERSION_TAG."
