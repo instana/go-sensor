@@ -4,6 +4,7 @@ Release Steps
 All release steps rely on Github Actions.
 If you do not have permission to run Github actions into this repository, please request it so.
 
+> Make sure to have all your changes merged into the main branch before proceeding to a release.
 
 ## Release Types
 
@@ -29,7 +30,7 @@ Steps to release the core module:
 1. On the right side of the page, click on `Run workflow`
 1. Keep the default branch `main`
 1. Keep the default package as `.`
-1. Select `minor` or `patch` according to the type of version you want to release
+1. Select `minor` or `patch` according to the version type you want to release
 1. If you want to review the release and manually release it, keep the checkbox `Release as a draft?`
    a. If you keep it as a draft, you will have to go to the [releases page](https://github.com/instana/go-sensor/releases) and publish the release
    b. If you uncheck the `Release as a draft?` box, the release will take place
@@ -44,15 +45,15 @@ The steps to release an instrumented package is nearly the same as the core modu
 1. Click on [Go Tracer Release](https://github.com/instana/go-sensor/actions/workflows/release.yml)
 1. On the right side of the page, click on `Run workflow`
 1. Keep the default branch `main`
-1. Type the name of the package you want to release. Eg: `instagin`. You only add extra information when you want to release a different major version other than v1. In that case, suppose you want to release v2 of instaredigo, then write `instaredigo/v2`. If an existing package is provided the workflow will fail.
-1. Select `major`, `minor` or `patch` according to the type of version you want to release
+1. Type the name of the package you want to release. Eg: `instagin`. You only add extra information when you want to release a different major version other than v1. In that case, suppose you want to release v2 of instaredigo, then write `instaredigo/v2`. If an nonexisting package is provided the workflow will fail.
+1. Select `major`, `minor` or `patch` according to the version type you want to release
 1. If you want to review the release and manually release it, keep the checkbox `Release as a draft?`
-   a. If you keep it as a draft, you will have to go to the releases page and publish the release
-   b. If you uncheck the `Release as a draft?` box, the release will take place
+   1. If you keep it as a draft, you will have to go to the releases page and publish the release
+   1. If you uncheck the `Release as a draft?` box, the release will be published automatically
 
-> For releases done by the `Go Tracer Release` action that are not drafts, the workflow will automatically post the release in the Slack channel and will update https://pkg.go.dev website with the latest version of the packages
+> For releases done by the `Go Tracer Release` action that are **not drafts**, the workflow will automatically post the release in the Slack channel and will update https://pkg.go.dev website with the latest version of the packages
 >
-> For releases done by the `Go Tracer Release` action that are drafts, both the Slack post and https://pkg.go.dev website update will happen after the release is manually published.
+> For releases done by the `Go Tracer Release` action that **are drafts**, both the Slack post and https://pkg.go.dev website update will happen after the release is manually published.
 
 ### Updated Packages Release
 
@@ -60,10 +61,10 @@ When a new package is instrumented, it will import the latest core by the time t
 
 We want to keep instrumented packages up to date with the latest core module as much as we can, so a Github Action was created for this.
 
-Every time the core module is released via the `Go Tracer Release` action, as a draft or not, it will create a pull request with all the instrumented packages updated to import the new version of the core module.
+Every time the core module is released via the `Go Tracer Release` action, as a draft or not, it will create a pull request prefixed as `update-instrumentations-core` with all the instrumented packages updated to import the new version of the core module.
 
 It is your responsibility to check the success of this pull request and manually fix any potential issues in it.
 Once the pull request is successful and reviewed by the team, it can be merged into the main branch.
 
-When the pull request is merged into the main branch an action `sss` will be automatically triggered to release all packages.
-It will also update the https://pkg.go.dev website, but it **won't** post each package into the Slack channel
+When the pull request is merged into the main branch an action `Release all updated instrumentations` will be automatically triggered to release all packages.
+It will also update the https://pkg.go.dev website, but it **won't** post each package into the Slack channel to prevent flooding the channel.
