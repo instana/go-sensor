@@ -1,7 +1,7 @@
 # This workflow releases all instrumented packages updated to point to the latest core module.
-# It should run in the main branch after the PR created by the `Update all instrumentations PR` workflow is merged to main.
+# It should run in the main branch after the PR created by the `Go Tracer Release` workflow is merged to main.
 
-name: Update all instrumentations RELEASE
+name: Release all updated instrumentations
 
 on:
   pull_request:

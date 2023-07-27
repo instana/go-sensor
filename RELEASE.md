@@ -1,31 +1,69 @@
 Release Steps
 =============
 
-**Never ever update version tags that were already pushed**, this will cause errors on the user side because of different checksum. If a tag has been created accidentally pointing to a wrong commit, create a new patch version with a fix instead of updating it.
+All release steps rely on Github Actions.
+If you do not have permission to run Github actions into this repository, please request it so.
 
-1. Make sure to checkout the main branch and pull the latest changes
-2. Make sure to have the [GitHub CLI](https://cli.github.com/) installed and that you are logged in
-3. Ensure that tests are passing on [Circle CI](https://app.circleci.com/pipelines/github/instana/go-sensor)
-4. From the module directory run `make (minor|patch) release`. If you want to release the core module, run the command from the root directory
-   - This creates a new commit updating the module version constant in `version.go`, tag and push it to GitHub.
-   - If you are properly logged into Github via [GitHub CLI](https://cli.github.com/), it will create a draft release with the changelog
-5. Go to the [Releases](https://github.com/instana/go-sensor/releases) page, review and publish the draft release created by `make`
-6. When releasing a new version of the core module - that is - releasing from the root directory, make sure to follow the steps in the section below to update all instrumentations to reference the new core module release.
 
-## Updating instrumentations after a core module release
+## Release Types
 
-Releasing a new version of the core module doesn't automatically update and release a new version of each instrumentation, which we will cover in this section.
+The Instana Go Tracer consists of three distinguished release types:
 
-Follow the steps below to release the updated instrumentations:
+1. Release of the core module, aka `go-sensor`
+1. Release of an instrumented package. Eg: `instrumentation/instagin`
+1. Release of all instrumented packages updated for using the latest core
 
-1. Make sure to have the [GitHub CLI](https://cli.github.com/) installed and that you are logged in.
-1. Once a new version of the core module is released, update the main branch and create a new branch.
-1. Make sure that the latest core module release is updated in the [Go Package manager](https://pkg.go.dev/github.com/instana/go-sensor). If not, manually update it until it shows up.
-1. In the new branch, run `./instrumentations.sh update` to update all instrumentations to the latest core module version.
-1. Run `make test` to assure that no instrumentation is broken after the update. If there are any issues, fix them accordingly.
-1. Run `make integration` to assure that no instrumentation is broken after the update. If there are any issues, fix them accordingly.
-1. Once all tests pass, create a pull request with the changes and get it merged into the main branch.
-1. Switch to the main branch and pull the new changes.
-1. Run `./instrumentations.sh release` to release every instrumentation.
+Each of these releases are described below:
 
-If everything goes well, you should be able to see the instrumentations released in the [release page](https://github.com/instana/go-sensor/releases).
+### Core Module Release
+
+The core module needs to be released in a couple of cases:
+
+1. When a new feature or improvement is made into the core. This basically means any change made in the root of the project that affects Go files.
+1. When a new span is created. This will be needed if a new instrumentation is on the way and the span type is new, and needs to reside in the core module, according to the current design of the tracer.
+
+Steps to release the core module:
+
+1. Go to the [repository actions](https://github.com/instana/go-sensor/actions)
+1. Click on [Go Tracer Release](https://github.com/instana/go-sensor/actions/workflows/release.yml)
+1. On the right side of the page, click on `Run workflow`
+1. Keep the default branch `main`
+1. Keep the default package as `.`
+1. Select `minor` or `patch` according to the type of version you want to release
+1. If you want to review the release and manually release it, keep the checkbox `Release as a draft?`
+   a. If you keep it as a draft, you will have to go to the [releases page](https://github.com/instana/go-sensor/releases) and publish the release
+   b. If you uncheck the `Release as a draft?` box, the release will take place
+
+### Package Release
+
+An instrumented package needs to be released when a new instrumentation is introduced or if an existing package is updated.
+
+The steps to release an instrumented package is nearly the same as the core module:
+
+1. Go to the [repository actions](https://github.com/instana/go-sensor/actions)
+1. Click on [Go Tracer Release](https://github.com/instana/go-sensor/actions/workflows/release.yml)
+1. On the right side of the page, click on `Run workflow`
+1. Keep the default branch `main`
+1. Type the name of the package you want to release. Eg: `instagin`. You only add extra information when you want to release a different major version other than v1. In that case, suppose you want to release v2 of instaredigo, then write `instaredigo/v2`. If an existing package is provided the workflow will fail.
+1. Select `major`, `minor` or `patch` according to the type of version you want to release
+1. If you want to review the release and manually release it, keep the checkbox `Release as a draft?`
+   a. If you keep it as a draft, you will have to go to the releases page and publish the release
+   b. If you uncheck the `Release as a draft?` box, the release will take place
+
+> For releases done by the `Go Tracer Release` action that are not drafts, the workflow will automatically post the release in the Slack channel and will update https://pkg.go.dev website with the latest version of the packages
+>
+> For releases done by the `Go Tracer Release` action that are drafts, both the Slack post and https://pkg.go.dev website update will happen after the release is manually published.
+
+### Updated Packages Release
+
+When a new package is instrumented, it will import the latest core by the time the instrumentation was done. This means that when new versions of the core module is released, this package will be outdated with latest changes from the core.
+
+We want to keep instrumented packages up to date with the latest core module as much as we can, so a Github Action was created for this.
+
+Every time the core module is released via the `Go Tracer Release` action, as a draft or not, it will create a pull request with all the instrumented packages updated to import the new version of the core module.
+
+It is your responsibility to check the success of this pull request and manually fix any potential issues in it.
+Once the pull request is successful and reviewed by the team, it can be merged into the main branch.
+
+When the pull request is merged into the main branch an action `sss` will be automatically triggered to release all packages.
+It will also update the https://pkg.go.dev website, but it **won't** post each package into the Slack channel
