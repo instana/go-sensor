@@ -32,8 +32,8 @@ Steps to release the core module:
 1. Keep the default package as `.`
 1. Select `minor` or `patch` according to the version type you want to release
 1. If you want to review the release and manually release it, keep the checkbox `Release as a draft?`
-   a. If you keep it as a draft, you will have to go to the [releases page](https://github.com/instana/go-sensor/releases) and publish the release
-   b. If you uncheck the `Release as a draft?` box, the release will take place
+   * If you keep it as a draft, you will have to go to the [releases page](https://github.com/instana/go-sensor/releases) and publish the release
+   * If you uncheck the `Release as a draft?` box, the release will take place
 
 ### Package Release
 
