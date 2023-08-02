@@ -35,6 +35,7 @@ jobs:
       name: Checkout repo
       with:
         fetch-depth: 0
+        ssh-key: ${{secrets.PRIVATE_KEY_GO_TRACER_RELEASE}}
     - name: Release tracer or package
       id: releaser
       run: ./release_action.sh
