@@ -28,6 +28,20 @@ var (
 	}
 )
 
+func agentReady() chan bool {
+	ch := make(chan bool)
+
+	go func() {
+		for {
+			if instana.Ready() {
+				ch <- true
+			}
+		}
+	}()
+
+	return ch
+}
+
 // How to run the test:
 // 1. Make sure the agent is running, so you can see traces in the dashboard
 // 2. Start Postgres from the root folder running docker-compose up postgres
@@ -46,7 +60,11 @@ func main() {
 
 	// First we create an instance of instana.Sensor, a container that will be used to inject
 	// tracer into all instrumented methods.
-	sensor := instana.NewSensor("greeter-server")
+	sensor := instana.InitCollector(&instana.Options{
+		Service: "greeter-server",
+	})
+
+	<-agentReady()
 
 	// Create a new DB connection using instana.SQLOpen(). This is a drop-in replacement for
 	// database/sql.Open() that makes sure that the instrumented version of a driver is used.

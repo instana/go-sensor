@@ -157,21 +157,45 @@ func TestDSNParing(t *testing.T) {
 		"Postgres": {
 			DSN: "host=db-host1,db-host-2 hostaddr=1.2.3.4,2.3.4.5 connect_timeout=10  port=1234 user=user1 password=p@55w0rd dbname=test-schema",
 			ExpectedConfig: instana.DbConnDetails{
-				RawString: "host=db-host1,db-host-2 hostaddr=1.2.3.4,2.3.4.5 connect_timeout=10  port=1234 user=user1 dbname=test-schema",
-				Host:      "1.2.3.4,2.3.4.5",
-				Port:      "1234",
-				Schema:    "test-schema",
-				User:      "user1",
+				RawString:    "host=db-host1,db-host-2 hostaddr=1.2.3.4,2.3.4.5 connect_timeout=10  port=1234 user=user1 dbname=test-schema",
+				Host:         "1.2.3.4,2.3.4.5",
+				Port:         "1234",
+				Schema:       "test-schema",
+				User:         "user1",
+				DatabaseName: "postgres",
 			},
 		},
 		"MySQL": {
 			DSN: "Server=db-host1, db-host2;Database=test-schema;Port=1234;Uid=user1;Pwd=p@55w0rd;",
 			ExpectedConfig: instana.DbConnDetails{
-				RawString: "Server=db-host1, db-host2;Database=test-schema;Port=1234;Uid=user1;",
-				Host:      "db-host1, db-host2",
-				Port:      "1234",
-				Schema:    "test-schema",
-				User:      "user1",
+				RawString:    "Server=db-host1, db-host2;Database=test-schema;Port=1234;Uid=user1;",
+				Host:         "db-host1, db-host2",
+				Port:         "1234",
+				Schema:       "test-schema",
+				User:         "user1",
+				DatabaseName: "mysql",
+			},
+		},
+		"Redis_full_conn_string": {
+			DSN: "user:p455w0rd@127.0.0.15:3679",
+			ExpectedConfig: instana.DbConnDetails{
+				RawString:    "user:p455w0rd@127.0.0.15:3679",
+				Host:         "127.0.0.15",
+				Port:         "3679",
+				Schema:       "",
+				User:         "",
+				DatabaseName: "redis",
+			},
+		},
+		"Redis_no_user": {
+			DSN: ":p455w0rd@127.0.0.15:3679",
+			ExpectedConfig: instana.DbConnDetails{
+				RawString:    ":p455w0rd@127.0.0.15:3679",
+				Host:         "127.0.0.15",
+				Port:         "3679",
+				Schema:       "",
+				User:         "",
+				DatabaseName: "redis",
 			},
 		},
 		"SQLite": {
@@ -250,23 +274,16 @@ func TestOpenSQLDB_PostgresKVConnString(t *testing.T) {
 	spans := recorder.GetQueuedSpans()
 	require.Len(t, spans, 1)
 
-	require.IsType(t, instana.SDKSpanData{}, spans[0].Data)
-	data := spans[0].Data.(instana.SDKSpanData)
+	require.IsType(t, instana.PostgreSQLSpanData{}, spans[0].Data)
+	data := spans[0].Data.(instana.PostgreSQLSpanData)
 
-	assert.Equal(t, instana.SDKSpanTags{
-		Name: "sdk.database",
-		Type: "exit",
-		Custom: map[string]interface{}{
-			"tags": ot.Tags{
-				"span.kind":     ext.SpanKindRPCClientEnum,
-				"db.instance":   "test-schema",
-				"db.statement":  "TEST QUERY",
-				"db.type":       "sql",
-				"peer.address":  "host=db-host1,db-host-2 hostaddr=1.2.3.4,2.3.4.5 connect_timeout=10  port=1234 user=user1 dbname=test-schema",
-				"peer.hostname": "1.2.3.4,2.3.4.5",
-				"peer.port":     "1234",
-			},
-		},
+	assert.Equal(t, instana.PostgreSQLSpanTags{
+		Host:  "1.2.3.4,2.3.4.5",
+		DB:    "test-schema",
+		Port:  "1234",
+		User:  "user1",
+		Stmt:  "TEST QUERY",
+		Error: "",
 	}, data.Tags)
 }
 
@@ -290,23 +307,76 @@ func TestOpenSQLDB_MySQLKVConnString(t *testing.T) {
 	spans := recorder.GetQueuedSpans()
 	require.Len(t, spans, 1)
 
-	require.IsType(t, instana.SDKSpanData{}, spans[0].Data)
-	data := spans[0].Data.(instana.SDKSpanData)
+	require.IsType(t, instana.MySQLSpanData{}, spans[0].Data)
+	data := spans[0].Data.(instana.MySQLSpanData)
 
-	assert.Equal(t, instana.SDKSpanTags{
-		Name: "sdk.database",
-		Type: "exit",
-		Custom: map[string]interface{}{
-			"tags": ot.Tags{
-				"span.kind":     ext.SpanKindRPCClientEnum,
-				"db.instance":   "test-schema",
-				"db.statement":  "TEST QUERY",
-				"db.type":       "sql",
-				"peer.address":  "Server=db-host1, db-host2;Database=test-schema;Port=1234;Uid=user1;",
-				"peer.hostname": "db-host1, db-host2",
-				"peer.port":     "1234",
-			},
-		},
+	assert.Equal(t, instana.MySQLSpanTags{
+		Host:  "db-host1, db-host2",
+		Port:  "1234",
+		DB:    "test-schema",
+		User:  "user1",
+		Stmt:  "TEST QUERY",
+		Error: "",
+	}, data.Tags)
+}
+
+func TestOpenSQLDB_RedisConnString(t *testing.T) {
+	recorder := instana.NewTestRecorder()
+	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{
+		Service:     "go-sensor-test",
+		AgentClient: alwaysReadyClient{},
+	}, recorder))
+	defer instana.ShutdownSensor()
+
+	instana.InstrumentSQLDriver(s, "fake_redis_driver", sqlDriver{})
+	require.Contains(t, sql.Drivers(), "fake_redis_driver_with_instana")
+
+	db, err := instana.SQLOpen("fake_redis_driver", ":p455w0rd@192.168.2.10:6790")
+	require.NoError(t, err)
+
+	_, err = db.Exec("SET name Instana EX 15")
+	require.NoError(t, err)
+
+	spans := recorder.GetQueuedSpans()
+	require.Len(t, spans, 1)
+
+	require.IsType(t, instana.RedisSpanData{}, spans[0].Data)
+	data := spans[0].Data.(instana.RedisSpanData)
+
+	assert.Equal(t, instana.RedisSpanTags{
+		Connection: "192.168.2.10:6790",
+		Command:    "SET",
+		Error:      "",
+	}, data.Tags)
+}
+
+func TestOpenSQLDB_RedisKVConnString(t *testing.T) {
+	recorder := instana.NewTestRecorder()
+	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{
+		Service:     "go-sensor-test",
+		AgentClient: alwaysReadyClient{},
+	}, recorder))
+	defer instana.ShutdownSensor()
+
+	instana.InstrumentSQLDriver(s, "fake_redis_kv_driver", sqlDriver{})
+	require.Contains(t, sql.Drivers(), "fake_redis_kv_driver_with_instana")
+
+	db, err := instana.SQLOpen("fake_redis_kv_driver", "192.168.2.10:6790")
+	require.NoError(t, err)
+
+	_, err = db.Exec("SET name Instana EX 15")
+	require.NoError(t, err)
+
+	spans := recorder.GetQueuedSpans()
+	require.Len(t, spans, 1)
+
+	require.IsType(t, instana.RedisSpanData{}, spans[0].Data)
+	data := spans[0].Data.(instana.RedisSpanData)
+
+	assert.Equal(t, instana.RedisSpanTags{
+		Connection: "192.168.2.10:6790",
+		Command:    "SET",
+		Error:      "",
 	}, data.Tags)
 }
 

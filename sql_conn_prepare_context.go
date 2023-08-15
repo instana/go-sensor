@@ -17,6 +17,7 @@ func (conn *wConnPrepareContext) PrepareContext(ctx context.Context, query strin
 	stmt, err := conn.ConnPrepareContext.PrepareContext(ctx, query)
 
 	if err != nil {
+		conn.connDetails.Error = err
 		return stmt, err
 	}
 
