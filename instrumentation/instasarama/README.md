@@ -2,14 +2,12 @@ Instana instrumentation for github.com/IBM/sarama
 =====================================================
 
 This module contains instrumentation code for Kafka producers and consumers that use `github.com/IBM/sarama` library starting
-from v1.19.0 and above.
+from v1.41.0 and above.
 
 [![GoDoc](https://img.shields.io/static/v1?label=godoc&message=reference&color=blue)][godoc]
 
 Installation
 ------------
-
-Unlike the Instana Go sensor, this instrumentation module requires Go v1.9+.
 
 ```bash
 $ go get github.com/instana/go-sensor/instrumentation/instasarama

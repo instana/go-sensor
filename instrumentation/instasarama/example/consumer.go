@@ -14,29 +14,31 @@ import (
 // This example demonstrates how to instrument a Kafka consumer using instasarama
 // and extract the trace context to ensure continuation. Error handling is omitted for brevity.
 func consume(ch chan bool) {
-	sensor := instana.NewSensor("my-service")
+	collector := instana.InitCollector(&instana.Options{
+		Service: "my-service",
+	})
 	brokers := []string{"localhost:9092"}
 
 	conf := sarama.NewConfig()
 	conf.Version = sarama.V0_11_0_0
 
 	// create a new instrumented instance of sarama.Consumer
-	consumer, _ := instasarama.NewConsumer(brokers, conf, sensor)
+	consumer, _ := instasarama.NewConsumer(brokers, conf, collector)
 
 	c, _ := consumer.ConsumePartition("test-topic-1", 0, sarama.OffsetNewest)
 	defer c.Close()
 
 	for msg := range c.Messages() {
 		fmt.Println("Got message", msg)
-		processMessage(msg, sensor)
+		processMessage(msg, collector)
 		ch <- true
 	}
 }
 
-func processMessage(msg *sarama.ConsumerMessage, sensor instana.TracerLogger) {
+func processMessage(msg *sarama.ConsumerMessage, collector instana.TracerLogger) {
 	// extract trace context and start a new span
-	parentCtx, _ := instasarama.SpanContextFromConsumerMessage(msg, sensor)
+	parentCtx, _ := instasarama.SpanContextFromConsumerMessage(msg, collector)
 
-	sp := sensor.Tracer().StartSpan("process-message", opentracing.ChildOf(parentCtx))
+	sp := collector.Tracer().StartSpan("process-message", opentracing.ChildOf(parentCtx))
 	sp.Finish()
 }

@@ -35,8 +35,10 @@ func main() {
 	args.Brokers = flag.Args()
 
 	// First we create an instance of instana.Sensor, a container that will be used to inject
-	// tracer into all instrumented methods.
-	sensor := instana.NewSensor("doubler")
+	// collector into all instrumented methods.
+	collector := instana.InitCollector(&instana.Options{
+		Service: "doubler",
+	})
 
 	// First we set up and instrument producers and consumers. Instana uses the headers feature
 	// introduced in Kafka v0.11 to propagate trace context. In order to use it, github.com/IBM/sarama
@@ -45,7 +47,7 @@ func main() {
 	conf.Version = sarama.V0_11_0_0
 
 	// Create and instrument consumer to read messages from incoming topic
-	consumer, err := instasarama.NewConsumer(args.Brokers, conf, sensor)
+	consumer, err := instasarama.NewConsumer(args.Brokers, conf, collector)
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -57,7 +59,7 @@ func main() {
 	defer c.Close()
 
 	// Create and instrument an async producer to publish results
-	producer, err := instasarama.NewAsyncProducer(args.Brokers, conf, sensor)
+	producer, err := instasarama.NewAsyncProducer(args.Brokers, conf, collector)
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -66,7 +68,7 @@ func main() {
 	processor := Doubler{
 		Out:      args.Out,
 		producer: producer,
-		sensor:   sensor,
+		sensor:   collector,
 	}
 
 	for msg := range c.Messages() {
