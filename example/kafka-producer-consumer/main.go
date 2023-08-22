@@ -10,7 +10,7 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/Shopify/sarama"
+	"github.com/IBM/sarama"
 	instana "github.com/instana/go-sensor"
 	"github.com/instana/go-sensor/instrumentation/instasarama"
 	"github.com/opentracing/opentracing-go"
@@ -39,7 +39,7 @@ func main() {
 	sensor := instana.NewSensor("doubler")
 
 	// First we set up and instrument producers and consumers. Instana uses the headers feature
-	// introduced in Kafka v0.11 to propagate trace context. In order to use it, github.com/Shopify/sarama
+	// introduced in Kafka v0.11 to propagate trace context. In order to use it, github.com/IBM/sarama
 	// producers and consumers need to be explicitly configured with Version = sarama.V0_11_0_0 or above.
 	conf := sarama.NewConfig()
 	conf.Version = sarama.V0_11_0_0
@@ -89,7 +89,7 @@ type Doubler struct {
 func (d *Doubler) ProcessMessage(msg *sarama.ConsumerMessage) (err error) {
 	var span opentracing.Span
 
-	// Extract trace context injected into the message by Instana instrumentation for github.com/Shopify/sarama
+	// Extract trace context injected into the message by Instana instrumentation for github.com/IBM/sarama
 	if parentCtx, ok := instasarama.SpanContextFromConsumerMessage(msg, d.sensor); ok {
 		span = d.sensor.Tracer().StartSpan("processMessage", opentracing.ChildOf(parentCtx))
 		defer func() {

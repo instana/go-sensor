@@ -1,11 +1,11 @@
-// (c) Copyright IBM Corp. 2022
+// (c) Copyright IBM Corp. 2023
 
 package instasarama
 
 import (
 	"context"
 
-	"github.com/Shopify/sarama"
+	"github.com/IBM/sarama"
 	instana "github.com/instana/go-sensor"
 )
 

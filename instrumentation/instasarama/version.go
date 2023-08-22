@@ -1,5 +1,4 @@
-// (c) Copyright IBM Corp. 2021
-// (c) Copyright Instana Inc. 2021
+// (c) Copyright IBM Corp. 2023
 
 package instasarama
 

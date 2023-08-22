@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 #######################################
-# (c) Copyright IBM Corp. 2022
+# (c) Copyright IBM Corp. 2023
 #######################################
 
 # Copied from:

@@ -1,7 +1,7 @@
-Instana instrumentation for github.com/Shopify/sarama
+Instana instrumentation for github.com/IBM/sarama
 =====================================================
 
-This module contains instrumentation code for Kafka producers and consumers that use `github.com/Shopify/sarama` library starting
+This module contains instrumentation code for Kafka producers and consumers that use `github.com/IBM/sarama` library starting
 from v1.19.0 and above.
 
 [![GoDoc](https://img.shields.io/static/v1?label=godoc&message=reference&color=blue)][godoc]
@@ -27,7 +27,7 @@ For detailed usage examples see [the documentation][godoc] or the following link
 This instrumentation requires an instance of `instana.Sensor` to initialize spans and handle the trace context propagation.
 You can create a new instance of Instana sensor using `instana.NewSensor()`.
 
-`instasarama` provides a set of convenience wrappers for constructor functions exported by `github.com/Shopify/sarama`. These
+`instasarama` provides a set of convenience wrappers for constructor functions exported by `github.com/IBM/sarama`. These
 wrappers are named the same way as their origins and use the same set of arguments. In most cases it's enough to replace
 `sarama` with `instasarama` in the constructor call and append an instance of `instana.TracerLogger` to the argument list.
 
@@ -51,7 +51,7 @@ producer := instasarama.NewSyncProducerFromClient(client, sensor)
 ```
 
 The wrapped producer takes care of trace context propagation by creating an exit span and injecting the trace context into each Kafka
-message headers. Since `github.com/Shopify/sarama` does not use `context.Context`, which is a conventional way of passing the parent
+message headers. Since `github.com/IBM/sarama` does not use `context.Context`, which is a conventional way of passing the parent
 span in Instana Go sensor, the caller needs to inject the parent span context using [`instasarama.ProducerMessageWithSpan()`][ProducerMessageWithSpan]
 before passing it to the wrapped producer.
 
@@ -75,7 +75,7 @@ producer := instasarama.NewAsyncProducerFromClient(client, sensor)
 ```
 
 The wrapped producer takes care of trace context propagation by creating an exit span and injecting the trace context into each Kafka
-message headers. Since `github.com/Shopify/sarama` does not use `context.Context`, which is a conventional way of passing the parent
+message headers. Since `github.com/IBM/sarama` does not use `context.Context`, which is a conventional way of passing the parent
 span in Instana Go sensor, the caller needs to inject the parent span context using [`instasarama.ProducerMessageWithSpan()`][ProducerMessageWithSpan]
 before passing it to the wrapped producer.
 

@@ -1,11 +1,11 @@
-// (c) Copyright IBM Corp. 2022
+// (c) Copyright IBM Corp. 2023
 
 package main
 
 import (
 	"fmt"
 
-	"github.com/Shopify/sarama"
+	"github.com/IBM/sarama"
 	instana "github.com/instana/go-sensor"
 	"github.com/instana/go-sensor/instrumentation/instasarama"
 	"github.com/opentracing/opentracing-go"
