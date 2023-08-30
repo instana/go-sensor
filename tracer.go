@@ -108,6 +108,15 @@ func (r *tracerS) StartSpanWithOptions(operationName string, opts ot.StartSpanOp
 		delete(opts.Tags, suppressTracingTag)
 	}
 
+	// go func() {
+	// 	var counter int
+	// 	for {
+	// 		time.Sleep(time.Millisecond * 1)
+	// 		opts.Tags["rnd"+strconv.Itoa(counter)] = counter
+	// 		counter++
+	// 	}
+	// }()
+
 	return &spanS{
 		context:     sc,
 		tracer:      r,
@@ -116,7 +125,8 @@ func (r *tracerS) StartSpanWithOptions(operationName string, opts ot.StartSpanOp
 		Start:       startTime,
 		Duration:    -1,
 		Correlation: corrData,
-		Tags:        opts.Tags,
+		Tags:        cloneTags(opts.Tags),
+		// Tags: opts.Tags,
 	}
 }
 

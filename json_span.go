@@ -282,11 +282,13 @@ func newSDKSpanTags(span *spanS, spanType string) SDKSpanTags {
 	}
 
 	if len(span.Tags) != 0 {
-		tags.Custom["tags"] = span.Tags
+		tags.Custom["tags"] = cloneTags(span.Tags)
+		// tags.Custom["tags"] = span.Tags
 	}
 
 	if len(span.context.Baggage) != 0 {
-		tags.Custom["baggage"] = span.context.Baggage
+		// tags.Custom["baggage"] = span.context.Baggage
+		tags.Custom["baggage"] = cloneMapStringString(span.context.Baggage)
 	}
 
 	return tags
