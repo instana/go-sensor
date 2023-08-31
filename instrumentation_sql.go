@@ -300,6 +300,10 @@ func parseDBConnDetailsURI(connStr string) (DbConnDetails, bool) {
 		details.RawString = u.String()
 	}
 
+	if u.Scheme == "postgres" {
+		details.DatabaseName = u.Scheme
+	}
+
 	return details, true
 }
 

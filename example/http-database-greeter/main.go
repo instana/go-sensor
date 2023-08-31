@@ -49,8 +49,8 @@ func agentReady() chan bool {
 // 4. Test the app by calling http://localhost:9090/John
 
 func main() {
-	flag.StringVar(&args.DBConnStr, "db", os.Getenv("POSTGRES"), "PostgreSQL connection string")
-	flag.StringVar(&args.ListenAddr, "l", os.Getenv("LISTEN_ADDR"), "Server listen address")
+	flag.StringVar(&args.DBConnStr, "db", "postgres://postgres:mysecretpassword@localhost:5432/postgres?sslmode=disable", "PostgreSQL connection string")
+	flag.StringVar(&args.ListenAddr, "l", "localhost:9090", "Server listen address")
 	flag.Parse()
 
 	if args.DBConnStr == "" || args.ListenAddr == "" {
