@@ -126,21 +126,21 @@ func (sp Span) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
 		TraceReference
 
-		SpanID          string         `json:"s"`
-		LongTraceID     string         `json:"lt,omitempty"`
-		Timestamp       uint64         `json:"ts"`
-		Duration        uint64         `json:"d"`
-		Name            string         `json:"n"`
-		From            fromS          `json:"f"`
-		Batch           batchInfo      `json:"b,omitempty"`
-		Kind            int            `json:"k"`
-		Ec              int            `json:"ec,omitempty"`
-		Data            typedSpanData  `json:"data"`
-		Synthetic       bool           `json:"sy,omitempty"`
-		CorrelationType string         `json:"crtp,omitempty"`
-		CorrelationID   string         `json:"crid,omitempty"`
-		ForeignTrace    bool           `json:"tp,omitempty"`
-		Ancestor        TraceReference `json:"ia,omitempty"`
+		SpanID          string          `json:"s"`
+		LongTraceID     string          `json:"lt,omitempty"`
+		Timestamp       uint64          `json:"ts"`
+		Duration        uint64          `json:"d"`
+		Name            string          `json:"n"`
+		From            *fromS          `json:"f"`
+		Batch           *batchInfo      `json:"b,omitempty"`
+		Kind            int             `json:"k"`
+		Ec              int             `json:"ec,omitempty"`
+		Data            typedSpanData   `json:"data"`
+		Synthetic       bool            `json:"sy,omitempty"`
+		CorrelationType string          `json:"crtp,omitempty"`
+		CorrelationID   string          `json:"crid,omitempty"`
+		ForeignTrace    bool            `json:"tp,omitempty"`
+		Ancestor        *TraceReference `json:"ia,omitempty"`
 	}{
 		TraceReference{
 			FormatID(sp.TraceID),
@@ -151,8 +151,8 @@ func (sp Span) MarshalJSON() ([]byte, error) {
 		sp.Timestamp,
 		sp.Duration,
 		sp.Name,
-		*sp.From,
-		*sp.Batch,
+		sp.From,
+		sp.Batch,
 		sp.Kind,
 		sp.Ec,
 		sp.Data,
@@ -160,7 +160,7 @@ func (sp Span) MarshalJSON() ([]byte, error) {
 		sp.CorrelationType,
 		sp.CorrelationID,
 		sp.ForeignTrace,
-		*sp.Ancestor,
+		sp.Ancestor,
 	})
 }
 
