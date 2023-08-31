@@ -47,7 +47,7 @@ func entrySpan() ot.Span {
 func exitSpan(ps ot.Span) ot.Span {
 	tags := ot.Tags{}
 
-	// cm := map[string]int{"cmkey": 555}
+	cm := map[string]int{"cmkey": 555}
 	// go func() {
 	// 	var counter int
 	// 	for {
@@ -57,7 +57,7 @@ func exitSpan(ps ot.Span) ot.Span {
 	// 		counter++
 	// 	}
 	// }()
-	// tags["crazy_map"] = cm
+	tags["crazy_map"] = cm
 
 	opts := []ot.StartSpanOption{
 		ext.SpanKindRPCClient,

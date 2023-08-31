@@ -5,9 +5,12 @@ package instana
 
 import (
 	"context"
+	"fmt"
+	"reflect"
 	"time"
 
 	ot "github.com/opentracing/opentracing-go"
+	"github.com/opentracing/opentracing-go/ext"
 )
 
 const (
@@ -108,6 +111,12 @@ func (r *tracerS) StartSpanWithOptions(operationName string, opts ot.StartSpanOp
 		delete(opts.Tags, suppressTracingTag)
 	}
 
+	for _, v := range opts.Tags {
+		if !safeValue(v) && reflect.TypeOf(v).Kind() == reflect.Map {
+			fmt.Printf("INSTANA BETA: Potential dangerous tag value: %v of type %T\n", v, v)
+		}
+	}
+
 	return &spanS{
 		context:     sc,
 		tracer:      r,
@@ -136,4 +145,13 @@ func (r *tracerS) Flush(ctx context.Context) error {
 	}
 
 	return sensor.Agent().Flush(ctx)
+}
+
+func safeValue(v interface{}) bool {
+	switch v.(type) {
+	case ext.SpanKindEnum, int, float32, float64, string, bool, byte, rune, []int, []float32, []float64, []string, []bool, []byte, []rune:
+		return true
+	}
+
+	return false
 }
