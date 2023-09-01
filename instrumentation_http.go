@@ -177,11 +177,10 @@ func extractStartSpanOptionsFromHeaders(tracer ot.Tracer, req *http.Request, sen
 // RoundTripper wraps an existing http.RoundTripper and injects the tracing headers into the outgoing request.
 // If the original RoundTripper is nil, the http.DefaultTransport will be used.
 func RoundTripper(sensor TracerLogger, original http.RoundTripper) http.RoundTripper {
+	if original == nil {
+		original = http.DefaultTransport
+	}
 	return tracingRoundTripper(func(req *http.Request) (*http.Response, error) {
-		if original == nil {
-			original = http.DefaultTransport
-		}
-
 		ctx := req.Context()
 		parentSpan, ok := SpanFromContext(ctx)
 		if !ok {
