@@ -16,7 +16,7 @@ import (
 func Example() {
 
 	// Create a sensor for instana instrumentation
-	sensor := instana.NewSensor("my-web-server")
+	sensor := instana.NewSensor("my-service")
 
 	app := fiber.New()
 
