@@ -204,6 +204,18 @@ type testPartitionConsumer struct {
 	Async  bool
 }
 
+func (pc *testPartitionConsumer) Pause() {
+	panic("needs to be implemented if testcase is failing")
+}
+
+func (pc *testPartitionConsumer) Resume() {
+	panic("needs to be implemented if testcase is failing")
+}
+
+func (pc *testPartitionConsumer) IsPaused() bool {
+	panic("needs to be implemented if testcase is failing")
+}
+
 // AsyncClose closes the underlying partition consumer asynchronously
 func (pc *testPartitionConsumer) AsyncClose() {
 	pc.Closed = true

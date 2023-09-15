@@ -355,6 +355,34 @@ type testAsyncProducer struct {
 	errors    chan *sarama.ProducerError
 }
 
+func (p *testAsyncProducer) IsTransactional() bool {
+	panic("needs to be implemented if testcase is failing")
+}
+
+func (p *testAsyncProducer) TxnStatus() sarama.ProducerTxnStatusFlag {
+	panic("needs to be implemented if testcase is failing")
+}
+
+func (p *testAsyncProducer) BeginTxn() error {
+	panic("needs to be implemented if testcase is failing")
+}
+
+func (p *testAsyncProducer) CommitTxn() error {
+	panic("needs to be implemented if testcase is failing")
+}
+
+func (p *testAsyncProducer) AbortTxn() error {
+	panic("needs to be implemented if testcase is failing")
+}
+
+func (p *testAsyncProducer) AddOffsetsToTxn(offsets map[string][]*sarama.PartitionOffsetMetadata, groupId string) error {
+	panic("needs to be implemented if testcase is failing")
+}
+
+func (p *testAsyncProducer) AddMessageToTxn(msg *sarama.ConsumerMessage, groupId string, metadata *string) error {
+	panic("needs to be implemented if testcase is failing")
+}
+
 func newTestAsyncProducer(returnedErr error) *testAsyncProducer {
 	return &testAsyncProducer{
 		Error:     returnedErr,

@@ -265,6 +265,22 @@ type testConsumer struct {
 	consumers  map[string]*testPartitionConsumer
 }
 
+func (c *testConsumer) Pause(topicPartitions map[string][]int32) {
+	panic("needs to be implemented if testcase is failing")
+}
+
+func (c *testConsumer) Resume(topicPartitions map[string][]int32) {
+	panic("needs to be implemented if testcase is failing")
+}
+
+func (c *testConsumer) PauseAll() {
+	panic("needs to be implemented if testcase is failing")
+}
+
+func (c *testConsumer) ResumeAll() {
+	panic("needs to be implemented if testcase is failing")
+}
+
 func (c *testConsumer) Topics() ([]string, error) {
 	return c.topics, c.Error
 }
