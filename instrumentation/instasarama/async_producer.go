@@ -18,8 +18,8 @@ type AsyncProducer struct {
 	sarama.AsyncProducer
 	sensor instana.TracerLogger
 
-	awaitResult    bool
-	propageContext bool
+	awaitResult        bool
+	propagationContext bool
 
 	input     chan *sarama.ProducerMessage
 	successes chan *sarama.ProducerMessage
@@ -73,7 +73,7 @@ func WrapAsyncProducer(p sarama.AsyncProducer, conf *sarama.Config, sensor insta
 	}
 
 	if conf != nil {
-		ap.propageContext = contextPropagationSupported(conf.Version)
+		ap.propagationContext = contextPropagationSupported(conf.Version)
 		ap.awaitResult = conf.Producer.Return.Successes && conf.Producer.Return.Errors
 		ap.activeSpans = newSpanRegistry()
 	}
@@ -106,7 +106,7 @@ func (p *AsyncProducer) consume() {
 				}
 
 				carrier := ProducerMessageCarrier{msg}
-				if p.propageContext {
+				if p.propagationContext {
 					p.sensor.Tracer().Inject(sp.Context(), ot.TextMap, carrier)
 				} else {
 					carrier.RemoveAll()
