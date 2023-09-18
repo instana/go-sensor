@@ -32,7 +32,7 @@ func consume(ch chan bool) {
 	defer c.Close()
 
 	for msg := range c.Messages() {
-		fmt.Println("Got message", msg)
+		fmt.Println("Got message: ", string(msg.Value))
 		processMessage(msg, collector)
 		ch <- true
 	}
