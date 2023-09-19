@@ -116,7 +116,7 @@ func (r *tracerS) StartSpanWithOptions(operationName string, opts ot.StartSpanOp
 		Start:       startTime,
 		Duration:    -1,
 		Correlation: corrData,
-		Tags:        opts.Tags,
+		Tags:        cloneTags(opts.Tags),
 	}
 }
 
