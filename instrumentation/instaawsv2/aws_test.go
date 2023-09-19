@@ -5,7 +5,7 @@ package instaawsv2_test
 import (
 	"bytes"
 	"context"
-	"io"
+	"io/ioutil"
 	"math/rand"
 	"net/http"
 
@@ -21,7 +21,7 @@ func (t mockTransport) RoundTrip(*http.Request) (*http.Response, error) {
 	return &http.Response{
 		Status:     "200 OK",
 		StatusCode: 200,
-		Body:       io.NopCloser(bytes.NewReader([]byte("response-body-bytes"))),
+		Body:       ioutil.NopCloser(bytes.NewReader([]byte("response-body-bytes"))),
 		Header: http.Header{
 			"x-amzn-requestid": []string{requestID},
 		},
