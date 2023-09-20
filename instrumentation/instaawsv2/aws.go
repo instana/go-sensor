@@ -16,6 +16,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
 	smithymiddleware "github.com/aws/smithy-go/middleware"
 	instana "github.com/instana/go-sensor"
+	ot "github.com/opentracing/opentracing-go"
 )
 
 const (
@@ -27,6 +28,30 @@ const (
 	fieldL = "X_INSTANA_L"
 )
 
+type AWSOperations interface {
+	injectContextWithSpan(instana.TracerLogger, context.Context, interface{}) context.Context
+	finishSpan(instana.TracerLogger, context.Context, error)
+	injectSpanToCarrier(interface{}, ot.Span) error
+	extractTags(interface{}) (ot.Tags, error)
+}
+
+func operationById(clientType string) AWSOperations {
+	switch clientType {
+	case s3.ServiceID:
+		return AWSS3Operations{}
+	case dynamodb.ServiceID:
+		return AWSDynamoDBOperations{}
+	case sqs.ServiceID:
+		return AWSSQSOperations{}
+	case lambda.ServiceID:
+		return AWSInvokeLambdaOperations{}
+	case sns.ServiceID:
+		return AWSSNSOperations{}
+	}
+
+	return nil
+}
+
 // Instrument adds instana instrumentation to the aws config object
 func Instrument(tr instana.TracerLogger, cfg *aws.Config) {
 	spanBeginFunc := smithymiddleware.SerializeMiddlewareFunc("InstanaSpanBeginMiddleware", func(
@@ -34,29 +59,9 @@ func Instrument(tr instana.TracerLogger, cfg *aws.Config) {
 		out smithymiddleware.SerializeOutput, metadata smithymiddleware.Metadata, err error) {
 
 		clientType := awsmiddleware.GetServiceID(ctx)
+		op := operationById(clientType)
 
-		switch clientType {
-
-		case s3.ServiceID:
-			tr.Logger().Debug("Identified s3 operation. Initiating s3 span creation")
-			ctx = injectAWSContextWithS3Span(tr, ctx, in.Parameters)
-
-		case dynamodb.ServiceID:
-			tr.Logger().Debug("Identified dynamodb operation. Initiating dynamodb span creation")
-			ctx = injectAWSContextWithDynamoDBSpan(tr, ctx, in.Parameters)
-
-		case sqs.ServiceID:
-			tr.Logger().Debug("Identified sqs operation. Initiating sqs span creation")
-			ctx = injectAWSContextWithSQSSpan(tr, ctx, in.Parameters)
-
-		case lambda.ServiceID:
-			tr.Logger().Debug("Identified lambda operation. Initiating lambda span creation")
-			ctx = injectAWSContextWithInvokeLambdaSpan(tr, ctx, in.Parameters)
-
-		case sns.ServiceID:
-			tr.Logger().Debug("Identified sns operation. Initiating sns span creation")
-			ctx = injectAWSContextWithSNSSpan(tr, ctx, in.Parameters)
-		}
+		ctx = op.injectContextWithSpan(tr, ctx, in.Parameters)
 
 		out, metadata, err = next.HandleSerialize(ctx, in)
 
@@ -69,52 +74,30 @@ func Instrument(tr instana.TracerLogger, cfg *aws.Config) {
 
 		clientType := awsmiddleware.GetServiceID(ctx)
 
-		var sqsQueueUrl string
-
-		switch clientType {
-		case sqs.ServiceID:
-			if input, ok := in.Request.(*sqs.ReceiveMessageInput); ok {
-				sqsQueueUrl = *input.QueueUrl
-			}
-		}
+		op := operationById(clientType)
 
 		out, metadata, err = next.HandleDeserialize(ctx, in)
 
-		switch clientType {
+		tr.Logger().Debug("Identified " + clientType + " operation. Finishing the active span")
+		op.finishSpan(tr, ctx, err)
 
-		case s3.ServiceID:
-			tr.Logger().Debug("Identified s3 operation. Finishing the active s3 span")
-			finishS3Span(tr, ctx, err)
+		if clientType == sqs.ServiceID {
+			if input, ok := in.Request.(*sqs.ReceiveMessageInput); ok {
+				sqsQueueUrl := *input.QueueUrl
 
-		case dynamodb.ServiceID:
-			tr.Logger().Debug("Identified dynamodb operation. Finishing the active dynamodb span")
-			finishDynamoDBSpan(tr, ctx, err)
+				if data, ok := out.Result.(*sqs.ReceiveMessageOutput); ok {
 
-		case sqs.ServiceID:
-			tr.Logger().Debug("Identified sqs operation. Finishing the active sqs span")
-			finishSQSSpan(tr, ctx, err)
+					if _, ok := in.Request.(*sqs.ReceiveMessageInput); !ok {
+						tr.Logger().Error("unexpected SQS ReceiveMessage parameters type")
+					}
 
-			if data, ok := out.Result.(*sqs.ReceiveMessageOutput); ok {
-
-				if _, ok := in.Request.(*sqs.ReceiveMessageInput); !ok {
-					tr.Logger().Error("unexpected SQS ReceiveMessage parameters type")
-					break
-				}
-
-				for i := range data.Messages {
-					sp := traceSQSMessage(&data.Messages[i], tr)
-					sp.SetTag(sqsQueue, sqsQueueUrl)
-					sp.Finish()
+					for i := range data.Messages {
+						sp := traceSQSMessage(&data.Messages[i], tr)
+						sp.SetTag(sqsQueue, sqsQueueUrl)
+						sp.Finish()
+					}
 				}
 			}
-
-		case lambda.ServiceID:
-			tr.Logger().Debug("Identified lambda operation. Finishing the active lambda span")
-			finishInvokeLambdaSpan(tr, ctx, err)
-
-		case sns.ServiceID:
-			tr.Logger().Debug("Identified sns operation. Finishing the active sns span")
-			finishSNSSpan(tr, ctx, err)
 		}
 
 		return out, metadata, err
@@ -127,7 +110,6 @@ func Instrument(tr instana.TracerLogger, cfg *aws.Config) {
 		func(stack *smithymiddleware.Stack) error {
 			return stack.Deserialize.Add(spanEndFunc, smithymiddleware.After)
 		})
-
 }
 
 func stringDeRef(v *string) string {
