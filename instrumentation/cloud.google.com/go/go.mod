@@ -6,7 +6,7 @@ require (
 	cloud.google.com/go/iam v0.8.0
 	cloud.google.com/go/pubsub v1.27.1
 	cloud.google.com/go/storage v1.27.0
-	github.com/instana/go-sensor v1.55.0
+	github.com/instana/go-sensor v1.56.0
 	github.com/opentracing/opentracing-go v1.2.0
 	github.com/stretchr/testify v1.8.1
 	google.golang.org/api v0.103.0
