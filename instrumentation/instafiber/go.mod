@@ -4,7 +4,7 @@ go 1.17
 
 require (
 	github.com/gofiber/fiber/v2 v2.49.2
-	github.com/instana/go-sensor v1.55.2
+	github.com/instana/go-sensor v1.55.2-beta.1
 	github.com/opentracing/opentracing-go v1.2.0
 	github.com/stretchr/testify v1.8.1
 	github.com/valyala/fasthttp v1.49.0

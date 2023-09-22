@@ -3,7 +3,7 @@ module github.com/instana/go-sensor/instrumentation/instaazurefunction
 go 1.19
 
 require (
-	github.com/instana/go-sensor v1.55.0
+	github.com/instana/go-sensor v1.55.2-beta.1
 	github.com/opentracing/opentracing-go v1.2.0
 	github.com/stretchr/testify v1.8.1
 )
