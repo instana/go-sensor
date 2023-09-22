@@ -25,7 +25,7 @@ func traceSQSMessage(msg *sqsTypes.Message, tracer instana.TracerLogger) opentra
 		},
 	}
 
-	if spCtx, ok := SpanContextFromSQSMessage(*msg, tracer); ok {
+	if spCtx, err := SpanContextFromSQSMessage(*msg, tracer); err == nil {
 		opts = append(opts, opentracing.ChildOf(spCtx))
 	} else {
 		body := stringDeRef(msg.Body)
@@ -64,16 +64,13 @@ func traceSQSMessage(msg *sqsTypes.Message, tracer instana.TracerLogger) opentra
 }
 
 // SpanContextFromSQSMessage returns the trace context from an SQS message
-func SpanContextFromSQSMessage(msg sqsTypes.Message, tracer instana.TracerLogger) (opentracing.SpanContext, bool) {
+func SpanContextFromSQSMessage(msg sqsTypes.Message, tracer instana.TracerLogger) (opentracing.SpanContext, error) {
 	spanContext, err := tracer.Extract(
 		opentracing.TextMap,
 		sqsMessageAttributesCarrier(msg.MessageAttributes),
 	)
-	if err != nil {
-		return nil, false
-	}
 
-	return spanContext, true
+	return spanContext, err
 }
 
 type sqsMessageAttributes map[string]sqsTypes.MessageAttributeValue

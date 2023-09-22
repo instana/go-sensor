@@ -48,7 +48,7 @@ When calls to AWS Lambda is instrumented using instaawsv2, the trace context is 
 Hence, to avoid collisions, it is recommended to avoid these keys in your application code. 
 
 ## Limitations
-- Current instrumentation does not support asynchronous lamda invocation.
+- Current instrumentation does not support asynchronous lambda invocation.
 - If the length of base64 encoded ClientContext will exceed 3582 bytes, tracing headers will be not propagated.
 
 

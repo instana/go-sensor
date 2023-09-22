@@ -50,8 +50,8 @@ func TestSpanContextFromSQSMessage(t *testing.T) {
 
 	for name, msg := range examples {
 		t.Run(name, func(t *testing.T) {
-			spCtx, ok := SpanContextFromSQSMessage(msg, sensor)
-			require.True(t, ok)
+			spCtx, err := SpanContextFromSQSMessage(msg, sensor)
+			assert.NoError(t, err)
 			assert.Equal(t, instana.SpanContext{
 				TraceIDHi: 0x01,
 				TraceID:   0x02,
@@ -62,8 +62,8 @@ func TestSpanContextFromSQSMessage(t *testing.T) {
 	}
 
 	t.Run("no context", func(t *testing.T) {
-		_, ok := SpanContextFromSQSMessage(sqstypes.Message{}, sensor)
-		assert.False(t, ok)
+		_, err := SpanContextFromSQSMessage(sqstypes.Message{}, sensor)
+		assert.Error(t, err)
 	})
 }
 

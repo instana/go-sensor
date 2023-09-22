@@ -161,17 +161,18 @@ func (c messageAttributesCarrier) Set(key, val string) {
 }
 
 func (c messageAttributesCarrier) ForeachKey(handler func(key, val string) error) error {
+	var err error
 	if v, ok := c.Attrs.Get(fieldT); ok {
-		handler(instana.FieldT, v)
+		err = handler(instana.FieldT, v)
 	}
 
 	if v, ok := c.Attrs.Get(fieldS); ok {
-		handler(instana.FieldS, v)
+		err = handler(instana.FieldS, v)
 	}
 
 	if v, ok := c.Attrs.Get(fieldL); ok {
-		handler(instana.FieldL, v)
+		err = handler(instana.FieldL, v)
 	}
 
-	return nil
+	return err
 }
