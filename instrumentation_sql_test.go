@@ -358,10 +358,10 @@ func TestOpenSQLDB_RedisConnString_WithError(t *testing.T) {
 	}, recorder))
 	defer instana.ShutdownSensor()
 
-	instana.InstrumentSQLDriver(s, "fake_redis_driver", sqlDriver{errors.New("oops")})
-	require.Contains(t, sql.Drivers(), "fake_redis_driver_with_instana")
+	instana.InstrumentSQLDriver(s, "fake_redis_driver_with_error", sqlDriver{errors.New("oops")})
+	require.Contains(t, sql.Drivers(), "fake_redis_driver_with_error_with_instana")
 
-	db, err := instana.SQLOpen("fake_redis_driver", ":p455w0rd@192.168.2.10:6790")
+	db, err := instana.SQLOpen("fake_redis_driver_with_error", ":p455w0rd@192.168.2.10:6790")
 	require.NoError(t, err)
 
 	_, err = db.Exec("SET name Instana EX 15")
