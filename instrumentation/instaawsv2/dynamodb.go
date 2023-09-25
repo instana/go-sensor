@@ -9,15 +9,19 @@ import (
 	awsmiddleware "github.com/aws/aws-sdk-go-v2/aws/middleware"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	instana "github.com/instana/go-sensor"
-	"github.com/opentracing/opentracing-go"
+	ot "github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
 	otlog "github.com/opentracing/opentracing-go/log"
 )
 
 var errUnknownDynamoDBMethod = errors.New("dynamodb method not instrumented")
 
-func injectAWSContextWithDynamoDBSpan(tr instana.TracerLogger, ctx context.Context, params interface{}) context.Context {
-	tags, err := extractDynamoDBTags(params)
+type AWSDynamoDBOperations struct{}
+
+var _ AWSOperations = (*AWSDynamoDBOperations)(nil)
+
+func (o AWSDynamoDBOperations) injectContextWithSpan(tr instana.TracerLogger, ctx context.Context, params interface{}) context.Context {
+	tags, err := o.extractTags(params)
 	if err != nil {
 		if errors.Is(err, errUnknownDynamoDBMethod) {
 			tr.Logger().Error("failed to identify the dynamodb method: ", err.Error())
@@ -34,8 +38,8 @@ func injectAWSContextWithDynamoDBSpan(tr instana.TracerLogger, ctx context.Conte
 
 	sp := tr.Tracer().StartSpan("dynamodb",
 		ext.SpanKindRPCClient,
-		opentracing.ChildOf(parent.Context()),
-		opentracing.Tags{
+		ot.ChildOf(parent.Context()),
+		ot.Tags{
 			dynamodbRegion: awsmiddleware.GetRegion(ctx),
 		},
 		tags,
@@ -45,7 +49,7 @@ func injectAWSContextWithDynamoDBSpan(tr instana.TracerLogger, ctx context.Conte
 }
 
 // finishDynamoDBSpan retrieves tags from completed calls and adds them to the span
-func finishDynamoDBSpan(tr instana.TracerLogger, ctx context.Context, err error) {
+func (o AWSDynamoDBOperations) finishSpan(tr instana.TracerLogger, ctx context.Context, err error) {
 	sp, ok := instana.SpanFromContext(ctx)
 	if !ok {
 		tr.Logger().Error("failed to retrieve the dynamodb child span from context.")
@@ -59,48 +63,52 @@ func finishDynamoDBSpan(tr instana.TracerLogger, ctx context.Context, err error)
 	}
 }
 
-func extractDynamoDBTags(params interface{}) (opentracing.Tags, error) {
+func (o AWSDynamoDBOperations) extractTags(params interface{}) (ot.Tags, error) {
 	switch params := params.(type) {
 	case *dynamodb.CreateTableInput:
-		return opentracing.Tags{
+		return ot.Tags{
 			dynamodbOp:    "create",
 			dynamodbTable: stringDeRef(params.TableName),
 		}, nil
 	case *dynamodb.ListTablesInput:
-		return opentracing.Tags{
+		return ot.Tags{
 			dynamodbOp: "list",
 		}, nil
 	case *dynamodb.GetItemInput:
-		return opentracing.Tags{
+		return ot.Tags{
 			dynamodbOp:    "get",
 			dynamodbTable: stringDeRef(params.TableName),
 		}, nil
 	case *dynamodb.PutItemInput:
-		return opentracing.Tags{
+		return ot.Tags{
 			dynamodbOp:    "put",
 			dynamodbTable: stringDeRef(params.TableName),
 		}, nil
 	case *dynamodb.UpdateItemInput:
-		return opentracing.Tags{
+		return ot.Tags{
 			dynamodbOp:    "update",
 			dynamodbTable: stringDeRef(params.TableName),
 		}, nil
 	case *dynamodb.DeleteItemInput:
-		return opentracing.Tags{
+		return ot.Tags{
 			dynamodbOp:    "delete",
 			dynamodbTable: stringDeRef(params.TableName),
 		}, nil
 	case *dynamodb.QueryInput:
-		return opentracing.Tags{
+		return ot.Tags{
 			dynamodbOp:    "query",
 			dynamodbTable: stringDeRef(params.TableName),
 		}, nil
 	case *dynamodb.ScanInput:
-		return opentracing.Tags{
+		return ot.Tags{
 			dynamodbOp:    "scan",
 			dynamodbTable: stringDeRef(params.TableName),
 		}, nil
 	default:
 		return nil, errUnknownDynamoDBMethod
 	}
+}
+
+func (AWSDynamoDBOperations) injectSpanToCarrier(interface{}, ot.Span) error {
+	return nil
 }
