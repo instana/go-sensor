@@ -1488,6 +1488,7 @@ func newPostgreSQLSpanTags(span *spanS) PostgreSQLSpanTags {
 		case "pg.user":
 			readStringTag(&tags.User, v)
 		case "pg.error":
+			readStringTag(&tags.Error, v)
 		}
 	}
 	return tags
@@ -1538,6 +1539,7 @@ func newMySQLSpanTags(span *spanS) MySQLSpanTags {
 		case "mysql.user":
 			readStringTag(&tags.User, v)
 		case "mysql.error":
+			readStringTag(&tags.Error, v)
 		}
 	}
 	return tags

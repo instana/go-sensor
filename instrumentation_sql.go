@@ -97,7 +97,7 @@ func (drv *wrappedSQLDriver) Open(name string) (driver.Conn, error) {
 	return w, nil
 }
 
-func postgresSpan(ctx context.Context, conn DbConnDetails, query string, sensor TracerLogger) ot.Span {
+func postgresSpan(ctx context.Context, conn DbConnDetails, query string, sensor TracerLogger) (sp ot.Span, errKey string) {
 	tags := ot.Tags{
 		"pg.stmt": query,
 		"pg.user": conn.User,
@@ -119,10 +119,10 @@ func postgresSpan(ctx context.Context, conn DbConnDetails, query string, sensor 
 		opts = append(opts, ot.ChildOf(parentSpan.Context()))
 	}
 
-	return sensor.StartSpan(string(PostgreSQLSpanType), opts...)
+	return sensor.StartSpan(string(PostgreSQLSpanType), opts...), "pg.error"
 }
 
-func mySQLSpan(ctx context.Context, conn DbConnDetails, query string, sensor TracerLogger) ot.Span {
+func mySQLSpan(ctx context.Context, conn DbConnDetails, query string, sensor TracerLogger) (sp ot.Span, errKey string) {
 	tags := ot.Tags{
 		"mysql.stmt": query,
 		"mysql.user": conn.User,
@@ -144,12 +144,12 @@ func mySQLSpan(ctx context.Context, conn DbConnDetails, query string, sensor Tra
 		opts = append(opts, ot.ChildOf(parentSpan.Context()))
 	}
 
-	return sensor.StartSpan(string(MySQLSpanType), opts...)
+	return sensor.StartSpan(string(MySQLSpanType), opts...), "mysql.error"
 }
 
 var redisCmds = regexp.MustCompile(`(?i)SET|GET|DEL|INCR|DECR|APPEND|GETRANGE|SETRANGE|STRLEN|HSET|HGET|HMSET|HMGET|HDEL|HGETALL|HKEYS|HVALS|HLEN|HINCRBY|LPUSH|RPUSH|LPOP|RPOP|LLEN|LRANGE|LREM|LINDEX|LSET|SADD|SREM|SMEMBERS|SISMEMBER|SCARD|SINTER|SUNION|SDIFF|SRANDMEMBER|SPOP|ZADD|ZREM|ZRANGE|ZREVRANGE|ZRANK|ZREVRANK|ZRANGEBYSCORE|ZCARD|ZSCORE|PFADD|PFCOUNT|PFMERGE|SUBSCRIBE|UNSUBSCRIBE|PUBLISH|MULTI|EXEC|DISCARD|WATCH|UNWATCH|KEYS|EXISTS|EXPIRE|TTL|PERSIST|RENAME|RENAMENX|TYPE|SCAN|PING|INFO|CLIENT LIST|CONFIG GET|CONFIG SET|FLUSHDB|FLUSHALL|DBSIZE|SAVE|BGSAVE|BGREWRITEAOF|SHUTDOWN`)
 
-func redisSpan(ctx context.Context, conn DbConnDetails, query string, sensor TracerLogger) ot.Span {
+func redisSpan(ctx context.Context, conn DbConnDetails, query string, sensor TracerLogger) (sp ot.Span, errKey string) {
 	qarr := strings.Fields(query)
 	var q string
 
@@ -181,10 +181,10 @@ func redisSpan(ctx context.Context, conn DbConnDetails, query string, sensor Tra
 		opts = append(opts, ot.ChildOf(parentSpan.Context()))
 	}
 
-	return sensor.StartSpan(string(RedisSpanType), opts...)
+	return sensor.StartSpan(string(RedisSpanType), opts...), "redis.error"
 }
 
-func genericSQLSpan(ctx context.Context, conn DbConnDetails, query string, sensor TracerLogger) ot.Span {
+func genericSQLSpan(ctx context.Context, conn DbConnDetails, query string, sensor TracerLogger) (sp ot.Span, errKey string) {
 	tags := ot.Tags{
 		string(ext.DBType):      "sql",
 		string(ext.DBStatement): query,
@@ -210,7 +210,7 @@ func genericSQLSpan(ctx context.Context, conn DbConnDetails, query string, senso
 		opts = append(opts, ot.ChildOf(parentSpan.Context()))
 	}
 
-	return sensor.StartSpan("sdk.database", opts...)
+	return sensor.StartSpan("sdk.database", opts...), "db.error"
 }
 
 // dbNameByQuery attempts to guess what is the database based on the query.
@@ -224,7 +224,7 @@ func dbNameByQuery(q string) string {
 	return ""
 }
 
-func startSQLSpan(ctx context.Context, conn DbConnDetails, query string, sensor TracerLogger) ot.Span {
+func startSQLSpan(ctx context.Context, conn DbConnDetails, query string, sensor TracerLogger) (sp ot.Span, errKey string) {
 	if conn.DatabaseName == "" {
 		conn.DatabaseName = dbNameByQuery(query)
 	}

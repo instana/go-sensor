@@ -350,6 +350,37 @@ func TestOpenSQLDB_RedisConnString(t *testing.T) {
 	}, data.Tags)
 }
 
+func TestOpenSQLDB_RedisConnString_WithError(t *testing.T) {
+	recorder := instana.NewTestRecorder()
+	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{
+		Service:     "go-sensor-test",
+		AgentClient: alwaysReadyClient{},
+	}, recorder))
+	defer instana.ShutdownSensor()
+
+	instana.InstrumentSQLDriver(s, "fake_redis_driver", sqlDriver{errors.New("oops")})
+	require.Contains(t, sql.Drivers(), "fake_redis_driver_with_instana")
+
+	db, err := instana.SQLOpen("fake_redis_driver", ":p455w0rd@192.168.2.10:6790")
+	require.NoError(t, err)
+
+	_, err = db.Exec("SET name Instana EX 15")
+
+	require.Error(t, err)
+
+	spans := recorder.GetQueuedSpans()
+	require.Len(t, spans, 2)
+
+	require.IsType(t, instana.RedisSpanData{}, spans[0].Data)
+	data := spans[0].Data.(instana.RedisSpanData)
+
+	assert.Equal(t, instana.RedisSpanTags{
+		Connection: "192.168.2.10:6790",
+		Command:    "SET",
+		Error:      "oops",
+	}, data.Tags)
+}
+
 func TestOpenSQLDB_RedisKVConnString(t *testing.T) {
 	recorder := instana.NewTestRecorder()
 	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{

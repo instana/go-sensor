@@ -16,15 +16,14 @@ type wQueryerContext struct {
 }
 
 func (conn *wQueryerContext) QueryContext(ctx context.Context, query string, args []driver.NamedValue) (driver.Rows, error) {
-	res, err := conn.QueryerContext.QueryContext(ctx, query, args)
-
-	conn.connDetails.Error = err
-
-	sp := startSQLSpan(ctx, conn.connDetails, query, conn.sensor)
+	sp, errKey := startSQLSpan(ctx, conn.connDetails, query, conn.sensor)
 	defer sp.Finish()
+
+	res, err := conn.QueryerContext.QueryContext(ctx, query, args)
 
 	if err != nil && err != driver.ErrSkip {
 		sp.LogFields(otlog.Error(err))
+		sp.SetTag(errKey, err.Error())
 	}
 
 	return res, err

@@ -17,16 +17,14 @@ type wStmtQueryContext struct {
 }
 
 func (stmt *wStmtQueryContext) QueryContext(ctx context.Context, args []driver.NamedValue) (driver.Rows, error) {
+	sp, errKey := startSQLSpan(ctx, stmt.connDetails, stmt.query, stmt.sensor)
+	defer sp.Finish()
 
 	res, err := stmt.StmtQueryContext.QueryContext(ctx, args)
 
-	stmt.connDetails.Error = err
-
-	sp := startSQLSpan(ctx, stmt.connDetails, stmt.query, stmt.sensor)
-	defer sp.Finish()
-
 	if err != nil && err != driver.ErrSkip {
 		sp.LogFields(otlog.Error(err))
+		sp.SetTag(errKey, err.Error())
 	}
 
 	return res, err
