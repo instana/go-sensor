@@ -13,6 +13,7 @@ github.com/instana/go-sensor v1.53.0 h1:aAslrLFZ/ePsR976oQXj1lyGkQGUB+yWxB5esz1V
 github.com/instana/go-sensor v1.53.0/go.mod h1:19yQd89yv2d0O2+onnGL5WvtMS5c/HVzl14ko8eZgqo=
 github.com/instana/go-sensor v1.55.0 h1:9Dpo0S9hah1irJAkkpGMfiAoKMbLLOtYBbtdhJbGvUM=
 github.com/instana/go-sensor v1.55.0/go.mod h1:19yQd89yv2d0O2+onnGL5WvtMS5c/HVzl14ko8eZgqo=
+github.com/instana/go-sensor v1.56.0/go.mod h1:Ks06EG9Da5O3hbdJiHIePG/vNmToovkaJjMlUBd70Yc=
 github.com/looplab/fsm v1.0.1 h1:OEW0ORrIx095N/6lgoGkFkotqH6s7vaFPsgjLAaF5QU=
 github.com/looplab/fsm v1.0.1/go.mod h1:PmD3fFvQEIsjMEfvZdrCDZ6y8VwKTwWNjlpEr6IKPO4=
 github.com/opentracing/opentracing-go v1.1.0 h1:pWlfV3Bxv7k65HYwkikxat0+s3pV4bsqf19k25Ur8rU=

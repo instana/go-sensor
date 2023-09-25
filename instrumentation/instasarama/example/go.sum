@@ -23,6 +23,7 @@ github.com/instana/go-sensor v1.53.0 h1:aAslrLFZ/ePsR976oQXj1lyGkQGUB+yWxB5esz1V
 github.com/instana/go-sensor v1.53.0/go.mod h1:19yQd89yv2d0O2+onnGL5WvtMS5c/HVzl14ko8eZgqo=
 github.com/instana/go-sensor v1.55.0 h1:9Dpo0S9hah1irJAkkpGMfiAoKMbLLOtYBbtdhJbGvUM=
 github.com/instana/go-sensor v1.55.0/go.mod h1:19yQd89yv2d0O2+onnGL5WvtMS5c/HVzl14ko8eZgqo=
+github.com/instana/go-sensor v1.56.0/go.mod h1:Ks06EG9Da5O3hbdJiHIePG/vNmToovkaJjMlUBd70Yc=
 github.com/kr/pretty v0.2.0 h1:s5hAObm+yFO5uHYt5dYjxi2rXrsnmRpJx4OYvIWUaQs=
 github.com/kr/pretty v0.2.0/go.mod h1:ipq/a2n7PKx3OHsz4KJII5eveXtPO4qwEXGdVfWzfnI=
 github.com/kr/pty v1.1.1/go.mod h1:pFQYn66WHrOpPYNljwOMqo10TkYh1fy3cYio2l3bCsQ=
