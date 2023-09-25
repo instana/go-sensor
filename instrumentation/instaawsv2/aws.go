@@ -5,6 +5,7 @@ package instaawsv2
 
 import (
 	"context"
+	"errors"
 	"strings"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -35,21 +36,22 @@ type AWSOperations interface {
 	extractTags(interface{}) (ot.Tags, error)
 }
 
-func operationById(clientType string) AWSOperations {
+func operationById(clientType string) (AWSOperations, error) {
+	var err error
 	switch clientType {
 	case s3.ServiceID:
-		return AWSS3Operations{}
+		return AWSS3Operations{}, err
 	case dynamodb.ServiceID:
-		return AWSDynamoDBOperations{}
+		return AWSDynamoDBOperations{}, err
 	case sqs.ServiceID:
-		return AWSSQSOperations{}
+		return AWSSQSOperations{}, err
 	case lambda.ServiceID:
-		return AWSInvokeLambdaOperations{}
+		return AWSInvokeLambdaOperations{}, err
 	case sns.ServiceID:
-		return AWSSNSOperations{}
+		return AWSSNSOperations{}, err
 	}
 
-	return nil
+	return nil, errors.New("no instrumentation support for this aws service")
 }
 
 // Instrument adds instana instrumentation to the aws config object
@@ -60,9 +62,11 @@ func Instrument(tr instana.TracerLogger, cfg *aws.Config) {
 
 		clientType := awsmiddleware.GetServiceID(ctx)
 
-		op := operationById(clientType)
-
-		ctx = op.injectContextWithSpan(tr, ctx, in.Parameters)
+		if op, err := operationById(clientType); err != nil {
+			tr.Logger().Warn("Unsupported aws service: "+clientType+" for instrumetation. Error: ", err.Error())
+		} else {
+			ctx = op.injectContextWithSpan(tr, ctx, in.Parameters)
+		}
 
 		out, metadata, err = next.HandleSerialize(ctx, in)
 
@@ -75,27 +79,29 @@ func Instrument(tr instana.TracerLogger, cfg *aws.Config) {
 
 		clientType := awsmiddleware.GetServiceID(ctx)
 
-		op := operationById(clientType)
-
 		out, metadata, err = next.HandleDeserialize(ctx, in)
 
-		tr.Logger().Debug("Identified " + clientType + " operation. Finishing the active span")
-		op.finishSpan(tr, ctx, err)
+		if op, err := operationById(clientType); err != nil {
+			tr.Logger().Warn("Unsupported aws service: "+clientType+" for instrumetation. Error: ", err.Error())
+		} else {
+			tr.Logger().Debug("Identified " + clientType + " operation. Finishing the active span")
+			op.finishSpan(tr, ctx, err)
 
-		if clientType == sqs.ServiceID {
-			if input, ok := in.Request.(*sqs.ReceiveMessageInput); ok {
-				sqsQueueUrl := *input.QueueUrl
+			if clientType == sqs.ServiceID {
+				if input, ok := in.Request.(*sqs.ReceiveMessageInput); ok {
+					sqsQueueUrl := *input.QueueUrl
 
-				if data, ok := out.Result.(*sqs.ReceiveMessageOutput); ok {
+					if data, ok := out.Result.(*sqs.ReceiveMessageOutput); ok {
 
-					if _, ok := in.Request.(*sqs.ReceiveMessageInput); !ok {
-						tr.Logger().Error("unexpected SQS ReceiveMessage parameters type")
-					}
+						if _, ok := in.Request.(*sqs.ReceiveMessageInput); !ok {
+							tr.Logger().Error("unexpected SQS ReceiveMessage parameters type")
+						}
 
-					for i := range data.Messages {
-						sp := traceSQSMessage(&data.Messages[i], tr)
-						sp.SetTag(sqsQueue, sqsQueueUrl)
-						sp.Finish()
+						for i := range data.Messages {
+							sp := traceSQSMessage(&data.Messages[i], tr)
+							sp.SetTag(sqsQueue, sqsQueueUrl)
+							sp.Finish()
+						}
 					}
 				}
 			}

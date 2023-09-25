@@ -42,7 +42,9 @@ func (o AWSSNSOperations) injectContextWithSpan(tr instana.TracerLogger, ctx con
 		tags,
 	)
 
-	o.injectSpanToCarrier(params, sp)
+	if err = o.injectSpanToCarrier(params, sp); err != nil {
+		tr.Logger().Error("failed to inject span context to the sns carrier: ", err.Error())
+	}
 
 	return instana.ContextWithSpan(ctx, sp)
 }
@@ -66,14 +68,17 @@ func (o AWSSNSOperations) injectSpanToCarrier(params interface{}, sp ot.Span) er
 	var ok bool
 
 	if ip, ok = params.(*sns.PublishInput); !ok {
-		return nil
+		return errors.New("received param is not of type sns.PublishInput")
 	}
 
 	if ip.MessageAttributes == nil {
 		ip.MessageAttributes = make(map[string]types.MessageAttributeValue)
 	}
 
-	sp.Tracer().Inject(sp.Context(), ot.TextMap, snsMessageAttributesCarrier(ip.MessageAttributes))
+	err := sp.Tracer().Inject(sp.Context(), ot.TextMap, snsMessageAttributesCarrier(ip.MessageAttributes))
+	if err != nil {
+		return err
+	}
 
 	return nil
 }

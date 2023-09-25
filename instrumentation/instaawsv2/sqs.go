@@ -43,19 +43,23 @@ func (o AWSSQSOperations) injectContextWithSpan(tr instana.TracerLogger, ctx con
 		tags,
 	)
 
-	o.injectSpanToCarrier(params, sp)
+	if err = o.injectSpanToCarrier(params, sp); err != nil {
+		tr.Logger().Error("failed to inject span context to the sqs carrier: ", err.Error())
+	}
 
 	return instana.ContextWithSpan(ctx, sp)
 }
 
 func (o AWSSQSOperations) injectSpanToCarrier(params interface{}, sp ot.Span) error {
+	var err error
+
 	switch params := params.(type) {
 	case *sqs.SendMessageInput:
 		if params.MessageAttributes == nil {
 			params.MessageAttributes = make(map[string]types.MessageAttributeValue)
 		}
 
-		sp.Tracer().Inject(
+		err = sp.Tracer().Inject(
 			sp.Context(),
 			ot.TextMap,
 			sqsMessageAttributesCarrier(params.MessageAttributes),
@@ -66,14 +70,14 @@ func (o AWSSQSOperations) injectSpanToCarrier(params interface{}, sp ot.Span) er
 				params.Entries[i].MessageAttributes = make(map[string]types.MessageAttributeValue)
 			}
 
-			sp.Tracer().Inject(
+			err = sp.Tracer().Inject(
 				sp.Context(),
 				ot.TextMap,
 				sqsMessageAttributesCarrier(params.Entries[i].MessageAttributes),
 			)
 		}
 	}
-	return nil
+	return err
 }
 
 func (o AWSSQSOperations) finishSpan(tr instana.TracerLogger, ctx context.Context, err error) {

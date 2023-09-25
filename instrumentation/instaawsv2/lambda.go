@@ -97,13 +97,14 @@ func (o AWSInvokeLambdaOperations) injectSpanToCarrier(params interface{}, sp ot
 		ot.TextMapCarrier(lc.Custom),
 	)
 
-	s, err := lc.base64JSON()
+	var encodedStr string
+	encodedStr, err = lc.base64JSON()
 	if err != nil {
 		return errors.Wrap(err, "failed to marshall the ClientContext")
 	}
 
-	if len(s) <= maxClientContextLen {
-		p.ClientContext = &s
+	if len(encodedStr) <= maxClientContextLen {
+		p.ClientContext = &encodedStr
 	}
 
 	return nil
