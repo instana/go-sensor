@@ -34,6 +34,8 @@ github.com/aws/aws-sdk-go-v2/service/internal/s3shared v1.15.4 h1:v0jkRigbSD6uOd
 github.com/aws/aws-sdk-go-v2/service/internal/s3shared v1.15.4/go.mod h1:LhTyt8J04LL+9cIt7pYJ5lbS/U98ZmXovLOR/4LUsk8=
 github.com/aws/aws-sdk-go-v2/service/lambda v1.39.5 h1:uMvxJFS92hNW6BRX0Ou+5zb9DskgrJQHZ+5yT8FXK5Y=
 github.com/aws/aws-sdk-go-v2/service/lambda v1.39.5/go.mod h1:ByLHcf0zbHpyLTOy1iPVRPJWmAUPCiJv5k81dt52ID8=
+github.com/aws/aws-sdk-go-v2/service/rds v1.54.0 h1:FmExQnV6PXPAwP2DT3nXlWyKtCJ30gCEQIu4MUOuESo=
+github.com/aws/aws-sdk-go-v2/service/rds v1.54.0/go.mod h1:UNv1vk1fU1NJefzteykVpVLA88w4WxB05g3vp2kQhYM=
 github.com/aws/aws-sdk-go-v2/service/s3 v1.38.5 h1:A42xdtStObqy7NGvzZKpnyNXvoOmm+FENobZ0/ssHWk=
 github.com/aws/aws-sdk-go-v2/service/s3 v1.38.5/go.mod h1:rDGMZA7f4pbmTtPOk5v5UM2lmX6UAbRnMDJeDvnH7AM=
 github.com/aws/aws-sdk-go-v2/service/sns v1.22.0 h1:2fkhBbjvdOZ3aisgcgc38Z5P7qY+2temrmm3BC0HlRE=
@@ -53,8 +55,8 @@ github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/google/go-cmp v0.5.8 h1:e6P7q2lk1O+qJJb4BtCQXlK8vWEO8V1ZeuEdJNOqZyg=
 github.com/google/go-cmp v0.5.8/go.mod h1:17dUlkBOakJ0+DkrSSNjCkIjxS6bF9zb3elmeNGIjoY=
-github.com/instana/go-sensor v1.55.2 h1:XdLN38mSFsHpaL+jIDkE/ZrW7pxgPeUC/bV9bSwVHyM=
-github.com/instana/go-sensor v1.55.2/go.mod h1:Ks06EG9Da5O3hbdJiHIePG/vNmToovkaJjMlUBd70Yc=
+github.com/instana/go-sensor v1.56.0 h1:RKjSQSmcAqtIGpkYr1+KBwTyo/ptHsBAVHzJsyZ/7t8=
+github.com/instana/go-sensor v1.56.0/go.mod h1:Ks06EG9Da5O3hbdJiHIePG/vNmToovkaJjMlUBd70Yc=
 github.com/jmespath/go-jmespath v0.4.0 h1:BEgLn5cpjn8UN1mAw4NjwDrS35OdebyEtFe+9YPoQUg=
 github.com/jmespath/go-jmespath v0.4.0/go.mod h1:T8mJZnbsbmF+m6zOOFylbeCJqk5+pHWvzYPziyZiYoo=
 github.com/jmespath/go-jmespath/internal/testify v1.5.1 h1:shLQSRRSCCPj3f2gpwzGwWFoC7ycTf1rcQZHOlsJ6N8=

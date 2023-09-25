@@ -13,14 +13,18 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/lambda"
 	"github.com/aws/aws-sdk-go-v2/service/lambda/types"
 	instana "github.com/instana/go-sensor"
-	"github.com/opentracing/opentracing-go"
+	ot "github.com/opentracing/opentracing-go"
 	otlog "github.com/opentracing/opentracing-go/log"
 	"github.com/pkg/errors"
 )
 
 const maxClientContextLen = 3582
 
-func injectAWSContextWithInvokeLambdaSpan(tr instana.TracerLogger, ctx context.Context, params interface{}) context.Context {
+type AWSInvokeLambdaOperations struct{}
+
+var _ AWSOperations = (*AWSInvokeLambdaOperations)(nil)
+
+func (o AWSInvokeLambdaOperations) injectContextWithSpan(tr instana.TracerLogger, ctx context.Context, params interface{}) context.Context {
 	// By design, we will abort the invoke lambda span creation if a parent span is not identified.
 	parent, ok := instana.SpanFromContext(ctx)
 	if !ok {
@@ -29,7 +33,7 @@ func injectAWSContextWithInvokeLambdaSpan(tr instana.TracerLogger, ctx context.C
 	}
 
 	sp := tr.Tracer().StartSpan("aws.lambda.invoke",
-		opentracing.ChildOf(parent.Context()),
+		ot.ChildOf(parent.Context()),
 	)
 
 	if invokeInputReq, ok := params.(*lambda.InvokeInput); ok {
@@ -43,7 +47,7 @@ func injectAWSContextWithInvokeLambdaSpan(tr instana.TracerLogger, ctx context.C
 		}
 		sp.SetTag(typeTag, string(invocationType))
 
-		if err := injectInvokeLambdaSpanToCarrier(params, sp); err != nil {
+		if err := o.injectSpanToCarrier(params, sp); err != nil {
 			tr.Logger().Error("failed to inject lambda span to carrier.")
 		}
 	}
@@ -51,7 +55,7 @@ func injectAWSContextWithInvokeLambdaSpan(tr instana.TracerLogger, ctx context.C
 	return instana.ContextWithSpan(ctx, sp)
 }
 
-func finishInvokeLambdaSpan(tr instana.TracerLogger, ctx context.Context, err error) {
+func (o AWSInvokeLambdaOperations) finishSpan(tr instana.TracerLogger, ctx context.Context, err error) {
 	sp, ok := instana.SpanFromContext(ctx)
 	if !ok {
 		tr.Logger().Error("failed to retrieve the sqs child span from context.")
@@ -65,7 +69,7 @@ func finishInvokeLambdaSpan(tr instana.TracerLogger, ctx context.Context, err er
 	}
 }
 
-func injectInvokeLambdaSpanToCarrier(params interface{}, sp opentracing.Span) error {
+func (o AWSInvokeLambdaOperations) injectSpanToCarrier(params interface{}, sp ot.Span) error {
 	var p *lambda.InvokeInput
 	var ok bool
 
@@ -89,20 +93,25 @@ func injectInvokeLambdaSpanToCarrier(params interface{}, sp opentracing.Span) er
 
 	sp.Tracer().Inject(
 		sp.Context(),
-		opentracing.TextMap,
-		opentracing.TextMapCarrier(lc.Custom),
+		ot.TextMap,
+		ot.TextMapCarrier(lc.Custom),
 	)
 
-	s, err := lc.base64JSON()
+	var encodedStr string
+	encodedStr, err = lc.base64JSON()
 	if err != nil {
 		return errors.Wrap(err, "failed to marshall the ClientContext")
 	}
 
-	if len(s) <= maxClientContextLen {
-		p.ClientContext = &s
+	if len(encodedStr) <= maxClientContextLen {
+		p.ClientContext = &encodedStr
 	}
 
 	return nil
+}
+
+func (o AWSInvokeLambdaOperations) extractTags(interface{}) (ot.Tags, error) {
+	return ot.Tags{}, nil
 }
 
 // lambdaClientContextClientApplication represent client application specific data part of the lambdaClientContext.

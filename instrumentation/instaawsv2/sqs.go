@@ -9,15 +9,19 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
 	"github.com/aws/aws-sdk-go-v2/service/sqs/types"
 	instana "github.com/instana/go-sensor"
-	"github.com/opentracing/opentracing-go"
+	ot "github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
 	otlog "github.com/opentracing/opentracing-go/log"
 )
 
 var errUnknownSQSMethod = errors.New("sqs method not instrumented")
 
-func injectAWSContextWithSQSSpan(tr instana.TracerLogger, ctx context.Context, params interface{}) context.Context {
-	tags, err := extractSQSTags(params)
+type AWSSQSOperations struct{}
+
+var _ AWSOperations = (*AWSSQSOperations)(nil)
+
+func (o AWSSQSOperations) injectContextWithSpan(tr instana.TracerLogger, ctx context.Context, params interface{}) context.Context {
+	tags, err := o.extractTags(params)
 	if err != nil {
 		if errors.Is(err, errUnknownSQSMethod) {
 			tr.Logger().Error("failed to identify the sqs method: ", err.Error())
@@ -34,26 +38,30 @@ func injectAWSContextWithSQSSpan(tr instana.TracerLogger, ctx context.Context, p
 
 	sp := tr.Tracer().StartSpan("sqs",
 		ext.SpanKindRPCClient,
-		opentracing.ChildOf(parent.Context()),
-		opentracing.Tags{sqsSort: "exit"},
+		ot.ChildOf(parent.Context()),
+		ot.Tags{sqsSort: "exit"},
 		tags,
 	)
 
-	injectSpanToCarrier(params, sp)
+	if err = o.injectSpanToCarrier(params, sp); err != nil {
+		tr.Logger().Error("failed to inject span context to the sqs carrier: ", err.Error())
+	}
 
 	return instana.ContextWithSpan(ctx, sp)
 }
 
-func injectSpanToCarrier(params interface{}, sp opentracing.Span) {
+func (o AWSSQSOperations) injectSpanToCarrier(params interface{}, sp ot.Span) error {
+	var err error
+
 	switch params := params.(type) {
 	case *sqs.SendMessageInput:
 		if params.MessageAttributes == nil {
 			params.MessageAttributes = make(map[string]types.MessageAttributeValue)
 		}
 
-		sp.Tracer().Inject(
+		err = sp.Tracer().Inject(
 			sp.Context(),
-			opentracing.TextMap,
+			ot.TextMap,
 			sqsMessageAttributesCarrier(params.MessageAttributes),
 		)
 	case *sqs.SendMessageBatchInput:
@@ -62,17 +70,17 @@ func injectSpanToCarrier(params interface{}, sp opentracing.Span) {
 				params.Entries[i].MessageAttributes = make(map[string]types.MessageAttributeValue)
 			}
 
-			sp.Tracer().Inject(
+			err = sp.Tracer().Inject(
 				sp.Context(),
-				opentracing.TextMap,
+				ot.TextMap,
 				sqsMessageAttributesCarrier(params.Entries[i].MessageAttributes),
 			)
 		}
 	}
-
+	return err
 }
 
-func finishSQSSpan(tr instana.TracerLogger, ctx context.Context, err error) {
+func (o AWSSQSOperations) finishSpan(tr instana.TracerLogger, ctx context.Context, err error) {
 	sp, ok := instana.SpanFromContext(ctx)
 	if !ok {
 		tr.Logger().Error("failed to retrieve the sqs child span from context.")
@@ -86,26 +94,26 @@ func finishSQSSpan(tr instana.TracerLogger, ctx context.Context, err error) {
 	}
 }
 
-func extractSQSTags(params interface{}) (opentracing.Tags, error) {
+func (o AWSSQSOperations) extractTags(params interface{}) (ot.Tags, error) {
 	switch params := params.(type) {
 	case *sqs.ReceiveMessageInput:
-		return opentracing.Tags{
+		return ot.Tags{
 			sqsQueue: stringDeRef(params.QueueUrl),
 		}, nil
 	case *sqs.SendMessageInput:
-		return opentracing.Tags{
+		return ot.Tags{
 			sqsType:  "single.sync",
 			sqsQueue: stringDeRef(params.QueueUrl),
 			sqsGroup: stringDeRef(params.MessageGroupId),
 		}, nil
 	case *sqs.SendMessageBatchInput:
-		return opentracing.Tags{
+		return ot.Tags{
 			sqsType:  "batch.sync",
 			sqsQueue: stringDeRef(params.QueueUrl),
 			sqsSize:  len(params.Entries),
 		}, nil
 	case *sqs.GetQueueUrlInput:
-		return opentracing.Tags{
+		return ot.Tags{
 			sqsType: "get.queue",
 			// the queue url will be returned as a part of response,
 			// so we'd need to update this tag once queue is created.
@@ -114,7 +122,7 @@ func extractSQSTags(params interface{}) (opentracing.Tags, error) {
 			sqsQueue: stringDeRef(params.QueueName),
 		}, nil
 	case *sqs.CreateQueueInput:
-		return opentracing.Tags{
+		return ot.Tags{
 			sqsType: "create.queue",
 			// the queue url will be returned as a part of response,
 			// so we'd need to update this tag once queue is created.
@@ -123,12 +131,12 @@ func extractSQSTags(params interface{}) (opentracing.Tags, error) {
 			sqsQueue: stringDeRef(params.QueueName),
 		}, nil
 	case *sqs.DeleteMessageInput:
-		return opentracing.Tags{
+		return ot.Tags{
 			sqsType:  "delete.single.sync",
 			sqsQueue: stringDeRef(params.QueueUrl),
 		}, nil
 	case *sqs.DeleteMessageBatchInput:
-		return opentracing.Tags{
+		return ot.Tags{
 			sqsType:  "delete.batch.sync",
 			sqsQueue: stringDeRef(params.QueueUrl),
 			sqsSize:  len(params.Entries),
