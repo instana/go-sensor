@@ -59,6 +59,7 @@ func Instrument(tr instana.TracerLogger, cfg *aws.Config) {
 		out smithymiddleware.SerializeOutput, metadata smithymiddleware.Metadata, err error) {
 
 		clientType := awsmiddleware.GetServiceID(ctx)
+
 		op := operationById(clientType)
 
 		ctx = op.injectContextWithSpan(tr, ctx, in.Parameters)

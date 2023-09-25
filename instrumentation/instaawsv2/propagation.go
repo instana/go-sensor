@@ -69,6 +69,7 @@ func SpanContextFromSQSMessage(msg sqsTypes.Message, tracer instana.TracerLogger
 		opentracing.TextMap,
 		sqsMessageAttributesCarrier(msg.MessageAttributes),
 	)
+  
 	if err != nil {
 		return nil, false
 	}

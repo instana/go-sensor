@@ -16,6 +16,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	ot "github.com/opentracing/opentracing-go"
 )
 
 var (
@@ -202,4 +204,24 @@ func hexGatewayToAddr(gateway []rune) (string, error) {
 	}
 
 	return fmt.Sprintf("%v.%v.%v.%v", octets[0], octets[1], octets[2], octets[3]), nil
+}
+
+func cloneTags(t ot.Tags) ot.Tags {
+	clone := ot.Tags{}
+
+	for k, v := range t {
+		clone[k] = v
+	}
+
+	return clone
+}
+
+func cloneMapStringString(t map[string]string) map[string]string {
+	clone := map[string]string{}
+
+	for k, v := range t {
+		clone[k] = v
+	}
+
+	return clone
 }
