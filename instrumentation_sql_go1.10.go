@@ -70,5 +70,7 @@ func (drv *wrappedSQLDriver) OpenConnector(name string) (driver.Connector, error
 		return connector, nil
 	}
 
-	return WrapSQLConnector(drv.sensor, name, connector), nil
+	wc := WrapSQLConnector(drv.sensor, name, connector)
+
+	return wc, nil
 }

@@ -17,12 +17,15 @@ type wQueryer struct {
 
 func (conn *wQueryer) Query(query string, args []driver.Value) (driver.Rows, error) {
 	ctx := context.Background()
-	sp := startSQLSpan(ctx, conn.connDetails, query, conn.sensor)
+
+	sp, errKey := startSQLSpan(ctx, conn.connDetails, query, conn.sensor)
 	defer sp.Finish()
 
 	res, err := conn.Queryer.Query(query, args)
+
 	if err != nil && err != driver.ErrSkip {
 		sp.LogFields(otlog.Error(err))
+		sp.SetTag(errKey, err.Error())
 	}
 
 	return res, err
