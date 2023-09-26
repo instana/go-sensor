@@ -77,7 +77,7 @@ fi
 # Only relevant for instrumentations
 if [ "$IS_CORE" = "false" ]; then
   # Expected to identify packages with subfolders. eg: instrumentation/instaredis/v2
-  NEW_VERSION_FOLDER=$(echo "$LIB_PATH" | grep -E "v[2-9].*")
+  NEW_VERSION_FOLDER=$(echo "$LIB_PATH" | grep -E "/v[2-9].*")
 
   echo "New version folder. eg: v2, v3...: $NEW_VERSION_FOLDER"
 
