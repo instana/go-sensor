@@ -42,7 +42,7 @@ jobs:
           TAG_TO_SEARCH="$LIB_PATH/v[0-1].*"
 
           # Expected to identify packages with subfolders. eg: instrumentation/instaredis/v2
-          NEW_VERSION_FOLDER=$(echo "$lib" | grep -E "v[2-9].*")
+          NEW_VERSION_FOLDER=$(echo "$lib" | grep -E "/v[2-9].*")
 
           # If NEW_VERSION_FOLDER has something we update TAG_TO_SEARCH
           if [ -n "$NEW_VERSION_FOLDER" ]; then
