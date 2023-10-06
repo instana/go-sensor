@@ -16,20 +16,8 @@ jobs:
       - name: Run coverage commands
         run: go test -v -coverpkg=./... -cover -covermode atomic -coverprofile coverage.out ./... -json > coverage.json && ls cover*
 
-      # - uses: actions/checkout@v3
-        # with:
-        #   fetch-depth: 0
       - name: Sonarqube Scan
         uses: sonarsource/sonarqube-scan-action@master
-        # with:
-        #   args: >
-        #     -Dsonar.projectKey=go-sensor
-        #     -Dsonar.projectName=go-sensor
-        #     -Dsonar.sources=.
-        #     -Dsonar.tests=.
-        #     -Dsonar.test.inclusions=**/*_test.go
-        #     -Dsonar.go.coverage.reportPaths=coverage.out
-        #     -Dsonar.go.tests.reportPaths=coverage.json
 
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
