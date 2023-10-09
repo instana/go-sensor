@@ -207,6 +207,11 @@ func (agent *agentS) SendSpans(spans []Span) error {
 		return err
 	}
 
+	agent.logger.Debug("Successful in sending spans to the agent.", agent.agentComm.host)
+	if len(spans) > 0 {
+		agent.logger.Debug("Collecting Trace id: ", fmt.Sprintf("%x", spans[0].TraceID))
+	}
+
 	return nil
 }
 
