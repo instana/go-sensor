@@ -9,4 +9,7 @@ require (
 	github.com/opentracing/opentracing-go v1.2.0
 )
 
-replace github.com/instana/go-sensor/instrumentation/instasarama => ../
+replace (
+	github.com/instana/go-sensor => ../../../../go-sensor
+	github.com/instana/go-sensor/instrumentation/instasarama => ../
+)

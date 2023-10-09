@@ -11,4 +11,7 @@ require (
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 )
 
-replace github.com/instana/go-sensor/instrumentation/instagin => ../../instrumentation/instagin
+replace (
+	github.com/instana/go-sensor => ../../../go-sensor
+	github.com/instana/go-sensor/instrumentation/instagin => ../../instrumentation/instagin
+)
