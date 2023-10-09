@@ -59,3 +59,55 @@ func Test_Collector_Singleton(t *testing.T) {
 
 	assert.Equal(t, instana.C, instance, "instana.C is singleton and should not be reassigned if InitCollector is called again")
 }
+
+func Test_Collector_Logger(t *testing.T) {
+	instana.C = nil
+	instana.InitCollector(nil)
+
+	l := &mylogger{}
+
+	instana.C.SetLogger(l)
+
+	instana.C.Debug()
+	instana.C.Info()
+	instana.C.Warn()
+	instana.C.Error()
+	instana.C.Error()
+
+	assert.Equal(t, 1, l.counter["debug"])
+	assert.Equal(t, 1, l.counter["info"])
+	assert.Equal(t, 1, l.counter["warn"])
+	assert.Equal(t, 2, l.counter["error"])
+}
+
+var _ instana.LeveledLogger = (*mylogger)(nil)
+
+type mylogger struct {
+	counter map[string]int
+}
+
+func (l *mylogger) init() {
+	if l.counter == nil {
+		l.counter = make(map[string]int)
+	}
+}
+
+func (l *mylogger) Debug(v ...interface{}) {
+	l.init()
+	l.counter["debug"]++
+}
+
+func (l *mylogger) Info(v ...interface{}) {
+	l.init()
+	l.counter["info"]++
+}
+
+func (l *mylogger) Warn(v ...interface{}) {
+	l.init()
+	l.counter["warn"]++
+}
+
+func (l *mylogger) Error(v ...interface{}) {
+	l.init()
+	l.counter["error"]++
+}

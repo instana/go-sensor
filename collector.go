@@ -119,6 +119,11 @@ func (c *Collector) Error(v ...interface{}) {
 	c.LeveledLogger.Error(v...)
 }
 
+func (c *Collector) SetLogger(l LeveledLogger) {
+	c.Sensor.SetLogger(l)
+	c.LeveledLogger = l
+}
+
 // LegacySensor returns a reference to [Sensor] that can be used for old instrumentations that still require it.
 //
 // Example:

@@ -71,6 +71,16 @@ jobs:
             GO111MODULE: << parameters.go111module >>
             VENDOR_DEPS: << parameters.vendor_deps >>
             EXCLUDE_DIRS: << parameters.exclude_dirs >>
+
+      - run:
+          name: Creating coverage report
+          command: |
+            mkdir /go/src/github.com/instana/go-sensor/artifacts;
+            go test -coverpkg=./... -cover -covermode atomic  -coverprofile=/go/src/github.com/instana/go-sensor/artifacts/coverage.out ./...;
+            go tool cover -html /go/src/github.com/instana/go-sensor/artifacts/coverage.out -o /go/src/github.com/instana/go-sensor/artifacts/coverage.html;
+      - store_artifacts:
+          path: /go/src/github.com/instana/go-sensor/artifacts
+
       - save_cache:
           key: go-mod-v4-{{ checksum "go.sum" }}
           paths:
