@@ -36,7 +36,12 @@ func NewRecorder() *Recorder {
 	go func() {
 		for range ticker.C {
 			if sensor.Agent().Ready() {
-				go r.Flush(context.Background())
+				go func() {
+					err := r.Flush(context.Background())
+					if err != nil {
+						sensor.logger.Error("failed to send the spans : ", err.Error())
+					}
+				}()
 			}
 		}
 	}()
@@ -76,7 +81,12 @@ func (r *Recorder) RecordSpan(span *spanS) {
 
 	if len(r.spans) >= sensor.options.ForceTransmissionStartingAt {
 		sensor.logger.Debug("forcing ", len(r.spans), "span(s) to the agent")
-		go r.Flush(context.Background())
+		go func() {
+			err := r.Flush(context.Background())
+			if err != nil {
+				sensor.logger.Error("failed to flush the spans: ", err.Error())
+			}
+		}()
 	}
 }
 
