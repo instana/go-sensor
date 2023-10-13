@@ -2,3 +2,5 @@
 debug.test
 .vscode
 .go-version
+.coverage.out
+.coverage.json
