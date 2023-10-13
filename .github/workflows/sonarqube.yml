@@ -14,7 +14,9 @@ jobs:
         with:
           fetch-depth: 0
       - name: Run coverage commands
-        run: go test -v -coverpkg=./... -cover -covermode atomic -coverprofile coverage.out ./... -json > coverage.json && ls cover*
+        run: |
+            go test -v -coverpkg=./... -cover -covermode atomic -coverprofile coverage.out ./... -json > coverage.json && ls cover*
+            cd instrumentation/instaredis && go test -v -coverpkg=./... -cover -covermode atomic -coverprofile coverage.out ./... -json > coverage.json && ls cover*
 
       - name: Sonarqube Scan
         uses: sonarsource/sonarqube-scan-action@master
