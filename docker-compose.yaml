@@ -10,6 +10,8 @@ services:
       - POSTGRES_USER=postgres
       - POSTGRES_DB=postgres
       - POSTGRES_PASSWORD=mysecretpassword
+    volumes:
+      - ./example/gorm-postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
 
   rabbitmq:
     image: rabbitmq:3.7.8-alpine
