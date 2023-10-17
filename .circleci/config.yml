@@ -92,20 +92,20 @@ workflows:
       - build:
           name: "go1.17"
           image: "cimg/go:1.17"
-          exclude_dirs: "./internal/bin/sql ./example/gin ./example/sql-redis"
+          exclude_dirs: "./internal/bin/sql ./example/gin ./example/sql-redis ./example/gorm-postgres ./example/gorm-sqlite"
       - build:
           name: "go1.16"
           image: "cimg/go:1.16"
-          exclude_dirs: "./internal/bin/sql ./example/gin ./example/sql-redis ./example/grpc-client-server ./instrumentation/instafiber"
+          exclude_dirs: "./internal/bin/sql ./example/gin ./example/sql-redis ./example/grpc-client-server ./instrumentation/instafiber ./example/gorm-postgres ./example/gorm-sqlite"
       - build:
           name: "go1.15"
           image: "cimg/go:1.15"
-          exclude_dirs: "./instrumentation/instaredigo ./internal/bin/sql ./example/gin ./example/sql-redis ./instrumentation/instagorm ./example/grpc-client-server ./instrumentation/instafiber"
+          exclude_dirs: "./instrumentation/instaredigo ./internal/bin/sql ./example/gin ./example/sql-redis ./instrumentation/instagorm ./example/grpc-client-server ./instrumentation/instafiber ./example/gorm-postgres ./example/gorm-sqlite"
       - build:
           name: "go1.14"
           image: "cimg/go:1.14"
-          exclude_dirs: "./instrumentation/instaecho ./instrumentation/instaredigo ./internal/bin/sql ./instrumentation/cloud.google.com/go ./example/gin ./instrumentation/instagorm ./example/grpc-client-server ./instrumentation/instafiber ./instrumentation/instaawsv2 ./example/sql-redis"
+          exclude_dirs: "./instrumentation/instaecho ./instrumentation/instaredigo ./internal/bin/sql ./instrumentation/cloud.google.com/go ./example/gin ./instrumentation/instagorm ./example/grpc-client-server ./instrumentation/instafiber ./instrumentation/instaawsv2 ./example/sql-redis ./example/gorm-postgres ./example/gorm-sqlite"
       - build:
           name: "go1.13"
           image: "cimg/go:1.13"
-          exclude_dirs: "./instrumentation/instaecho ./instrumentation/instaredigo ./internal/bin/sql ./instrumentation/cloud.google.com/go ./example/gin ./instrumentation/instagorm ./example/grpc-client-server ./instrumentation/instafiber ./instrumentation/instaawsv2 ./example/sql-redis"
+          exclude_dirs: "./instrumentation/instaecho ./instrumentation/instaredigo ./internal/bin/sql ./instrumentation/cloud.google.com/go ./example/gin ./instrumentation/instagorm ./example/grpc-client-server ./instrumentation/instafiber ./instrumentation/instaawsv2 ./example/sql-redis ./example/gorm-postgres ./example/gorm-sqlite"
