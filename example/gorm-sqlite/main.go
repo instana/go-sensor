@@ -1,7 +1,7 @@
 // (c) Copyright IBM Corp. 2023
 
-//go:build go1.16
-// +build go1.16
+//go:build go1.18
+// +build go1.18
 
 package main
 
@@ -30,7 +30,9 @@ func agentReady() chan bool {
 
 func main() {
 	hold := make(chan bool)
-	s := instana.NewSensor("go-sensor-gorm")
+	s := instana.InitCollector(&instana.Options{
+		Service: "gorm-sqlite",
+	})
 
 	<-agentReady()
 	fmt.Println("agent ready")

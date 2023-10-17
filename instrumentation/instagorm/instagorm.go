@@ -8,7 +8,6 @@ package instagorm
 
 import (
 	instana "github.com/instana/go-sensor"
-	ot "github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
 	otlog "github.com/opentracing/opentracing-go/log"
 	"gorm.io/gorm"
@@ -129,12 +128,10 @@ func postOpCb() func(db *gorm.DB) {
 		var stmtKey string = dbKey + ".stmt"
 		var errKey string = dbKey + ".error"
 
-		if stmtKey == ".stmt" {
+		if dbKey == "db" {
 			stmtKey = string(ext.DBStatement)
-		}
-
-		if errKey == ".error" {
 			errKey = "error"
+			sp.SetTag(string(ext.DBType), db.Dialector.Name())
 		}
 
 		sp.SetTag(stmtKey, db.Statement.SQL.String())
@@ -144,26 +141,4 @@ func postOpCb() func(db *gorm.DB) {
 			sp.LogFields(otlog.Error(err))
 		}
 	}
-}
-
-func (wdB *wrappedDB) generateTags() ot.Tags {
-	tags := ot.Tags{
-		string(ext.PeerAddress): wdB.connDetails.RawString,
-	}
-
-	if wdB.connDetails.Schema != "" {
-		tags[string(ext.DBInstance)] = wdB.connDetails.Schema
-	} else {
-		tags[string(ext.DBInstance)] = wdB.connDetails.RawString
-	}
-
-	if wdB.connDetails.Host != "" {
-		tags[string(ext.PeerHostname)] = wdB.connDetails.Host
-	}
-
-	if wdB.connDetails.Port != "" {
-		tags[string(ext.PeerPort)] = wdB.connDetails.Port
-	}
-
-	return tags
 }

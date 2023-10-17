@@ -242,7 +242,7 @@ func startSQLSpan(ctx context.Context, conn DbConnDetails, query string, sensor 
 		return mySQLSpan(ctx, conn, query, sensor), "mysql"
 	}
 
-	return genericSQLSpan(ctx, conn, query, sensor), "sql"
+	return genericSQLSpan(ctx, conn, query, sensor), "db"
 }
 
 type DbConnDetails struct {
