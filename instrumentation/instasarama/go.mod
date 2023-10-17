@@ -10,7 +10,7 @@ require (
 	github.com/eapache/queue v1.1.0 // indirect
 	github.com/frankban/quicktest v1.8.1 // indirect
 	github.com/golang/snappy v0.0.1 // indirect
-	github.com/instana/go-sensor v1.57.0
+	github.com/instana/go-sensor v1.58.0
 	github.com/opentracing/opentracing-go v1.2.0
 	github.com/pierrec/lz4 v2.4.1+incompatible // indirect
 	github.com/rcrowley/go-metrics v0.0.0-20200313005456-10cdbea86bc0 // indirect
