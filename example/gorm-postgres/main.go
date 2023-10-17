@@ -41,10 +41,7 @@ func main() {
 	<-agentReady()
 	fmt.Println("agent ready")
 
-	// https://github.com/jackc/pgx
-	// TimeZone=Asia/Shanghai
 	dsn := "host=localhost user=postgres password=mysecretpassword dbname=postgres port=5432 sslmode=disable"
-	// dsn := "postgres://postgres:mysecretpassword@localhost:5432/postgres?sslmode=disable"
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 
 	if err != nil {

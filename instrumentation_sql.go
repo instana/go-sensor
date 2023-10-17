@@ -224,6 +224,10 @@ func dbNameByQuery(q string) string {
 	return ""
 }
 
+// StartSQLSpan creates a span based on DbConnDetails and a query, and attempts to detect which kind of database it belongs.
+// If a database is detected and it is already part of the registered spans, the span details will be specific to that
+// database.
+// Otherwise, the span will have generic database fields.
 func StartSQLSpan(ctx context.Context, conn DbConnDetails, query string, sensor TracerLogger) (sp ot.Span, dbKey string) {
 	return startSQLSpan(ctx, conn, query, sensor)
 }
