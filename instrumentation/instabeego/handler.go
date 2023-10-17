@@ -18,7 +18,12 @@ func New(sensor *instana.Sensor) {
 	beego.InsertFilter("*", beego.BeforeRouter, func(ctx *beecontext.Context) {
 		instana.TracingHandlerFunc(sensor, ctx.Request.URL.Path, func(w http.ResponseWriter, r *http.Request) {
 			ctx.Request = r
-			// ctx.ResponseWriter.ResponseWriter = w
+			ctx.ResponseWriter = &beecontext.Response{
+				ResponseWriter: w,
+				Started:        ctx.ResponseWriter.Started,
+				Status:         ctx.ResponseWriter.Status,
+				Elapsed:        ctx.ResponseWriter.Elapsed,
+			}
 		})(ctx.ResponseWriter, ctx.Request)
 	})
 }
