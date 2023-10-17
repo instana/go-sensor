@@ -103,18 +103,12 @@ func preOpCb(wdB *wrappedDB) func(db *gorm.DB) {
 
 	return func(db *gorm.DB) {
 
-		var sp ot.Span
-
 		ctx := db.Statement.Context
 
-		tags := wdB.generateTags()
+		sp, dbKey := instana.StartSQLSpan(ctx, wdB.connDetails, db.Statement.SQL.String(), wdB.sensor)
 
-		opts := []ot.StartSpanOption{ext.SpanKindRPCClient, tags}
-		if parentSpan, ok := instana.SpanFromContext(ctx); ok {
-			opts = append(opts, ot.ChildOf(parentSpan.Context()))
-		}
+		sp.SetBaggageItem("dbKey", dbKey)
 
-		sp = wdB.sensor.Tracer().StartSpan("sdk.database", opts...)
 		ctx = instana.ContextWithSpan(ctx, sp)
 		db.Statement.Context = ctx
 	}
@@ -130,11 +124,23 @@ func postOpCb() func(db *gorm.DB) {
 
 		defer sp.Finish()
 
-		sp.SetTag(string(ext.DBStatement), db.Statement.SQL.String())
-		sp.SetTag(string(ext.DBType), db.Dialector.Name())
+		dbKey := sp.BaggageItem("dbKey")
+
+		var stmtKey string = dbKey + ".stmt"
+		var errKey string = dbKey + ".error"
+
+		if stmtKey == ".stmt" {
+			stmtKey = string(ext.DBStatement)
+		}
+
+		if errKey == ".error" {
+			errKey = "error"
+		}
+
+		sp.SetTag(stmtKey, db.Statement.SQL.String())
 
 		if err := db.Statement.Error; err != nil {
-			sp.SetTag("error", err.Error())
+			sp.SetTag(errKey, err.Error())
 			sp.LogFields(otlog.Error(err))
 		}
 	}
