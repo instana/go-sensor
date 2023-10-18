@@ -23,8 +23,8 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	grpctest "google.golang.org/grpc/interop/grpc_testing"
 	"google.golang.org/grpc/status"
-	grpctest "google.golang.org/grpc/test/grpc_testing"
 )
 
 func TestUnaryClientInterceptor(t *testing.T) {
