@@ -70,6 +70,8 @@ func InstrumentSession(sess *session.Session, sensor instana.TracerLogger) {
 			StartDynamoDBSpan(req, sensor)
 		case lambda.ServiceName:
 			StartInvokeLambdaSpan(req, sensor)
+		case sns.ServiceName:
+			StartSNSSpan(req, sensor)
 		}
 	})
 
@@ -97,6 +99,8 @@ func InstrumentSession(sess *session.Session, sensor instana.TracerLogger) {
 			FinalizeDynamoDBSpan(req)
 		case lambda.ServiceName:
 			FinalizeInvokeLambdaSpan(req)
+		case sns.ServiceName:
+			FinalizeSNSSpan(req)
 		}
 	})
 }
