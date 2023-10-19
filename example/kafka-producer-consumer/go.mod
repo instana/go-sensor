@@ -31,4 +31,7 @@ require (
 	golang.org/x/net v0.15.0 // indirect
 )
 
-replace github.com/instana/go-sensor/instrumentation/instasarama => ../../instrumentation/instasarama
+replace (
+	github.com/instana/go-sensor => ../../../go-sensor
+	github.com/instana/go-sensor/instrumentation/instasarama => ../../instrumentation/instasarama
+)

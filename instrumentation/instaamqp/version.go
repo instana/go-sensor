@@ -3,4 +3,4 @@
 package instaamqp
 
 // Version is the instrumentation module semantic version
-const Version = "0.7.0"
+const Version = "0.10.0"

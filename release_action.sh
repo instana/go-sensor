@@ -5,7 +5,7 @@ build_major() {
   # - v1 was never released, so FOUND_VERSION_IN_TAG=0.0.0 and NEW_MAJOR_VERSION is empty. NEW_VERSION should be 1.0.0
   # - v2 or higher was never released, so FOUND_VERSION_IN_TAG=0.0.0 and NEW_MAJOR_VERSION is 2, 3, 4... NEW_VERSION should be 2.0.0, or higher
 
-  MAJOR_VERSION=$(echo "$FOUND_VERSION_IN_TAG" | sed -En 's/([0-9]+)\.[0-9]+\.[0-9]+/\1/p')
+  MAJOR_VERSION=$(echo "$FOUND_VERSION_IN_TAG" | sed -En 's/([0-9]+)\.[0-9]+\.[0-9]+.*/\1/p')
 
   if [ "$MAJOR_VERSION" != "0" ]; then
     echo "Cannot release new major version '$NEW_MAJOR_VERSION' with existing tag $FOUND_VERSION_IN_TAG"
@@ -27,8 +27,8 @@ build_minor() {
     exit 1
   fi
 
-  MINOR_VERSION=$(echo "$FOUND_VERSION_IN_TAG" | sed -En 's/[0-9]+\.([0-9]+)\.[0-9]+/\1/p')
-  MAJOR_VERSION=$(echo "$FOUND_VERSION_IN_TAG" | sed -En 's/([0-9]+)\.[0-9]+\.[0-9]+/\1/p')
+  MINOR_VERSION=$(echo "$FOUND_VERSION_IN_TAG" | sed -En 's/[0-9]+\.([0-9]+)\.[0-9]+.*/\1/p')
+  MAJOR_VERSION=$(echo "$FOUND_VERSION_IN_TAG" | sed -En 's/([0-9]+)\.[0-9]+\.[0-9]+.*/\1/p')
   MINOR_VERSION=$((MINOR_VERSION+1))
   NEW_VERSION="$MAJOR_VERSION.$MINOR_VERSION.0"
 }
@@ -41,9 +41,9 @@ build_patch() {
     exit 1
   fi
 
-  PATCH_VERSION=$(echo "$FOUND_VERSION_IN_TAG" | sed -En 's/[0-9]+\.[0-9]+\.([0-9]+)/\1/p')
-  MINOR_VERSION=$(echo "$FOUND_VERSION_IN_TAG" | sed -En 's/[0-9]+\.([0-9]+)\.[0-9]+/\1/p')
-  MAJOR_VERSION=$(echo "$FOUND_VERSION_IN_TAG" | sed -En 's/([0-9]+)\.[0-9]+\.[0-9]+/\1/p')
+  PATCH_VERSION=$(echo "$FOUND_VERSION_IN_TAG" | sed -En 's/[0-9]+\.[0-9]+\.([0-9]+).*/\1/p')
+  MINOR_VERSION=$(echo "$FOUND_VERSION_IN_TAG" | sed -En 's/[0-9]+\.([0-9]+)\.[0-9]+.*/\1/p')
+  MAJOR_VERSION=$(echo "$FOUND_VERSION_IN_TAG" | sed -En 's/([0-9]+)\.[0-9]+\.[0-9]+.*/\1/p')
   PATCH_VERSION=$((PATCH_VERSION+1))
   NEW_VERSION="$MAJOR_VERSION.$MINOR_VERSION.$PATCH_VERSION"
 }
@@ -77,7 +77,7 @@ fi
 # Only relevant for instrumentations
 if [ "$IS_CORE" = "false" ]; then
   # Expected to identify packages with subfolders. eg: instrumentation/instaredis/v2
-  NEW_VERSION_FOLDER=$(echo "$LIB_PATH" | grep -E "v[2-9].*")
+  NEW_VERSION_FOLDER=$(echo "$LIB_PATH" | grep -E "/v[2-9].*")
 
   echo "New version folder. eg: v2, v3...: $NEW_VERSION_FOLDER"
 

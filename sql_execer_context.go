@@ -17,12 +17,14 @@ type wExecerContext struct {
 }
 
 func (conn *wExecerContext) ExecContext(ctx context.Context, query string, args []driver.NamedValue) (driver.Result, error) {
-	sp := startSQLSpan(ctx, conn.connDetails, query, conn.sensor)
+	sp, dbKey := startSQLSpan(ctx, conn.connDetails, query, conn.sensor)
 	defer sp.Finish()
 
 	res, err := conn.ExecerContext.ExecContext(ctx, query, args)
+
 	if err != nil && err != driver.ErrSkip {
 		sp.LogFields(otlog.Error(err))
+		sp.SetTag(dbKey+".error", err.Error())
 	}
 
 	return res, err

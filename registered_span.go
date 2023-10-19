@@ -50,6 +50,8 @@ const (
 	MongoDBSpanType = RegisteredSpanType("mongo")
 	// PostgreSQL client span
 	PostgreSQLSpanType = RegisteredSpanType("postgres")
+	// MySQL client span
+	MySQLSpanType = RegisteredSpanType("mysql")
 	// Redis client span
 	RedisSpanType = RegisteredSpanType("redis")
 	// RabbitMQ client span
@@ -96,6 +98,8 @@ func (st RegisteredSpanType) extractData(span *spanS) typedSpanData {
 		return newMongoDBSpanData(span)
 	case PostgreSQLSpanType:
 		return newPostgreSQLSpanData(span)
+	case MySQLSpanType:
+		return newMySQLSpanData(span)
 	case RedisSpanType:
 		return newRedisSpanData(span)
 	case RabbitMQSpanType:
@@ -245,6 +249,15 @@ func (st RegisteredSpanType) TagsNames() map[string]struct{} {
 			"pg.host":  yes,
 			"pg.port":  yes,
 			"pg.error": yes,
+		}
+	case MySQLSpanType:
+		return map[string]struct{}{
+			"mysql.db":    yes,
+			"mysql.user":  yes,
+			"mysql.stmt":  yes,
+			"mysql.host":  yes,
+			"mysql.port":  yes,
+			"mysql.error": yes,
 		}
 	case RedisSpanType:
 		return map[string]struct{}{
@@ -1433,7 +1446,7 @@ func newMongoDBSpanTags(span *spanS) MongoDBSpanTags {
 // PostgreSQLSpanData represents the `data` section of a PostgreSQL client span
 type PostgreSQLSpanData struct {
 	SpanData
-	Tags postgreSQLSpanTags `json:"pg"`
+	Tags PostgreSQLSpanTags `json:"pg"`
 }
 
 // newPostgreSQLSpanData initializes a new PostgreSQL client span data from tracer span
@@ -1449,8 +1462,8 @@ func (d PostgreSQLSpanData) Kind() SpanKind {
 	return ExitSpanKind
 }
 
-// postgreSQLSpanTags contains fields within the `data.pg` section of an OT span document
-type postgreSQLSpanTags struct {
+// PostgreSQLSpanTags contains fields within the `data.pg` section of an OT span document
+type PostgreSQLSpanTags struct {
 	Host string `json:"host"`
 	Port string `json:"port"`
 	DB   string `json:"db"`
@@ -1460,8 +1473,8 @@ type postgreSQLSpanTags struct {
 	Error string `json:"error,omitempty"`
 }
 
-func newPostgreSQLSpanTags(span *spanS) postgreSQLSpanTags {
-	var tags postgreSQLSpanTags
+func newPostgreSQLSpanTags(span *spanS) PostgreSQLSpanTags {
+	var tags PostgreSQLSpanTags
 	for k, v := range span.Tags {
 		switch k {
 		case "pg.host":
@@ -1475,6 +1488,58 @@ func newPostgreSQLSpanTags(span *spanS) postgreSQLSpanTags {
 		case "pg.user":
 			readStringTag(&tags.User, v)
 		case "pg.error":
+			readStringTag(&tags.Error, v)
+		}
+	}
+	return tags
+}
+
+// MySQLSpanData represents the `data` section of a MySQL client span
+type MySQLSpanData struct {
+	SpanData
+	Tags MySQLSpanTags `json:"mysql"`
+}
+
+// newMySQLSpanData initializes a new MySQL client span data from tracer span
+func newMySQLSpanData(span *spanS) MySQLSpanData {
+	return MySQLSpanData{
+		SpanData: NewSpanData(span, MySQLSpanType),
+		Tags:     newMySQLSpanTags(span),
+	}
+}
+
+// Kind returns the span kind for a MySQL client span
+func (d MySQLSpanData) Kind() SpanKind {
+	return ExitSpanKind
+}
+
+// MySQLSpanTags contains fields within the `data.mysql` section of an OT span document
+type MySQLSpanTags struct {
+	Host string `json:"host"`
+	Port string `json:"port"`
+	DB   string `json:"db"`
+	User string `json:"user"`
+	Stmt string `json:"stmt"`
+
+	Error string `json:"error,omitempty"`
+}
+
+func newMySQLSpanTags(span *spanS) MySQLSpanTags {
+	var tags MySQLSpanTags
+	for k, v := range span.Tags {
+		switch k {
+		case "mysql.host":
+			readStringTag(&tags.Host, v)
+		case "mysql.port":
+			readStringTag(&tags.Port, v)
+		case "mysql.db":
+			readStringTag(&tags.DB, v)
+		case "mysql.stmt":
+			readStringTag(&tags.Stmt, v)
+		case "mysql.user":
+			readStringTag(&tags.User, v)
+		case "mysql.error":
+			readStringTag(&tags.Error, v)
 		}
 	}
 	return tags

@@ -42,7 +42,7 @@ jobs:
           TAG_TO_SEARCH="$LIB_PATH/v[0-1].*"
 
           # Expected to identify packages with subfolders. eg: instrumentation/instaredis/v2
-          NEW_VERSION_FOLDER=$(echo "$lib" | grep -E "v[2-9].*")
+          NEW_VERSION_FOLDER=$(echo "$lib" | grep -E "/v[2-9].*")
 
           # If NEW_VERSION_FOLDER has something we update TAG_TO_SEARCH
           if [ -n "$NEW_VERSION_FOLDER" ]; then
@@ -50,7 +50,8 @@ jobs:
             NEW_MAJOR_VERSION=$(echo "$NEW_VERSION_FOLDER" | sed "s/.*v//")
 
             # Expected to be tag name with major version higher than 1. eg: instrumentation/instaredis/v2.1.0
-            TAG_TO_SEARCH="$LIB_PATH/v$NEW_MAJOR_VERSION.*"
+            PATH_WITHOUT_V=$(echo "$LIB_PATH" | sed "s/\/v[0-9]*//")
+            TAG_TO_SEARCH="$PATH_WITHOUT_V/v$NEW_MAJOR_VERSION.*"
           fi
 
           VERSION=$(git tag -l "$TAG_TO_SEARCH" | sort -V | tail -n1 | sed "s/.*v//")
