@@ -17,7 +17,7 @@ $ go get github.com/instana/go-sensor/instrumentation/instagrpc
 Note
 ----
 From `instagrpc` v1.11.0, the minimum version of `grpc` package required has been changed to v1.55.0. For working with older versions of 
-`grpc`, once can use `instagrpc` v1.10.0.
+`grpc`, one can use `instagrpc` v1.10.0.
 
 Usage
 -----
