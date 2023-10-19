@@ -1,8 +1,8 @@
 // (c) Copyright IBM Corp. 2021
 // (c) Copyright Instana Inc. 2016
 
-//go:build go1.17
-// +build go1.17
+//go:build go1.19
+// +build go1.19
 
 package main
 
@@ -14,12 +14,12 @@ import (
 	"os"
 
 	"github.com/opentracing/opentracing-go/ext"
+	"google.golang.org/grpc"
 
 	"github.com/instana/go-sensor/example/grpc-client-server/pb"
 
 	instana "github.com/instana/go-sensor"
 	"github.com/instana/go-sensor/instrumentation/instagrpc"
-	"google.golang.org/grpc"
 )
 
 const (

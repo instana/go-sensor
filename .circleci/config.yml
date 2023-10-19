@@ -89,10 +89,11 @@ workflows:
       - build:
           name: "go1.18"
           image: "cimg/go:1.18"
+          exclude_dirs: "./example/grpc-client-server"
       - build:
           name: "go1.17"
           image: "cimg/go:1.17"
-          exclude_dirs: "./internal/bin/sql ./example/gin ./example/sql-redis ./example/gorm-postgres ./example/gorm-sqlite"
+          exclude_dirs: "./internal/bin/sql ./example/gin ./example/sql-redis ./example/gorm-postgres ./example/gorm-sqlite ./example/grpc-client-server"
       - build:
           name: "go1.16"
           image: "cimg/go:1.16"

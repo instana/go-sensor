@@ -8,11 +8,16 @@ This module contains instrumentation code for GRPC servers and clients that use 
 Installation
 ------------
 
-Unlike the Instana Go sensor, GRPC instrumentation module requires Go v1.9+ which is the minimal version for `google.golang.org/grpc`.
+To add the module to your `go.mod` file, run the following command in your project directory:
 
 ```bash
 $ go get github.com/instana/go-sensor/instrumentation/instagrpc
 ```
+
+Note
+----
+From `instagrpc` v1.11.0, the minimum version of `grpc` package required has been changed to v1.55.0. For working with older versions of 
+`grpc`, one can use `instagrpc` v1.10.0.
 
 Usage
 -----
