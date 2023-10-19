@@ -88,7 +88,8 @@ workflows:
           image: "cimg/go:1.19"
       - build:
           name: "go1.18"
-          image: "cimg/go:1.18 ./example/grpc-client-server"
+          image: "cimg/go:1.18"
+          exclude_dirs: "./example/grpc-client-server"
       - build:
           name: "go1.17"
           image: "cimg/go:1.17"
