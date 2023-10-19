@@ -79,7 +79,7 @@ func main() {
 
 	log.Println("Send request")
 
-	// call the service using context with a span
+	// Call the service using context with a span
 	r, err := client.Echo(
 		// Create a context that holds the parent entry span and pass it to the GRPC call
 		instana.ContextWithSpan(context.Background(), sp),
@@ -116,6 +116,7 @@ func (s *Service) Echo(ctx context.Context, in *pb.EchoRequest) (*pb.EchoReply, 
 
 func startServer(srv *grpc.Server, address string) {
 	lis, err := net.Listen("tcp", address)
+
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
