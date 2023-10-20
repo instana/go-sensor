@@ -32,6 +32,6 @@ require (
 )
 
 replace (
-	github.com/instana/go-sensor => ../../../../go-sensor
+	github.com/instana/go-sensor => ./../..
 	github.com/instana/go-sensor/instrumentation/instasarama => ../
 )
