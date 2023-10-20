@@ -1,10 +1,12 @@
-// (c) Copyright IBM Corp. 2021
-// (c) Copyright Instana Inc. 2020
+// (c) Copyright IBM Corp. 2023
+
+//go:build go1.17
+// +build go1.17
 
 package instasarama
 
 import (
-	"github.com/Shopify/sarama"
+	"github.com/IBM/sarama"
 	instana "github.com/instana/go-sensor"
 	ot "github.com/opentracing/opentracing-go"
 	otlog "github.com/opentracing/opentracing-go/log"
@@ -16,8 +18,8 @@ type AsyncProducer struct {
 	sarama.AsyncProducer
 	sensor instana.TracerLogger
 
-	awaitResult    bool
-	propageContext bool
+	awaitResult        bool
+	propagationContext bool
 
 	input     chan *sarama.ProducerMessage
 	successes chan *sarama.ProducerMessage
@@ -71,7 +73,7 @@ func WrapAsyncProducer(p sarama.AsyncProducer, conf *sarama.Config, sensor insta
 	}
 
 	if conf != nil {
-		ap.propageContext = contextPropagationSupported(conf.Version)
+		ap.propagationContext = contextPropagationSupported(conf.Version)
 		ap.awaitResult = conf.Producer.Return.Successes && conf.Producer.Return.Errors
 		ap.activeSpans = newSpanRegistry()
 	}
@@ -104,7 +106,7 @@ func (p *AsyncProducer) consume() {
 				}
 
 				carrier := ProducerMessageCarrier{msg}
-				if p.propageContext {
+				if p.propagationContext {
 					p.sensor.Tracer().Inject(sp.Context(), ot.TextMap, carrier)
 				} else {
 					carrier.RemoveAll()
