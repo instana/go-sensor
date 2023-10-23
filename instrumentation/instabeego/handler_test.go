@@ -2,11 +2,11 @@ package instabeego_test
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"testing"
+	"time"
 
 	beego "github.com/beego/beego/v2/server/web"
 	beecontext "github.com/beego/beego/v2/server/web/context"
@@ -27,7 +27,17 @@ type ListJson struct {
 	Value string `json:"Value"`
 }
 
+func ShutdownBeeApp() {
+	beego.BeeApp.Server.Shutdown(context.TODO())
+}
+
+func sleep(t time.Duration) {
+	time.Sleep(t)
+}
+
 func initBeeApp(t *testing.T, r *instana.Recorder) {
+
+	var server_dep_time time.Duration = 2 * time.Second
 
 	beego.Get("/foo", func(ctx *beecontext.Context) {
 		var listJson ListJson
@@ -45,6 +55,10 @@ func initBeeApp(t *testing.T, r *instana.Recorder) {
 		ctx.Output.Header("x-custom-header-2", "response")
 		ctx.JSONResp(listJson)
 	})
+
+	beego.BConfig.RunMode = "test"
+	go beego.Run()
+	sleep(server_dep_time)
 }
 
 func TestMain(m *testing.M) {
@@ -69,25 +83,21 @@ func TestPropagation(t *testing.T) {
 
 	instabeego.New(sensor)
 
+	defer ShutdownBeeApp()
+
 	initBeeApp(t, recorder)
 
 	traceIDHeader := "0000000000001234"
 	spanIDHeader := "0000000000004567"
 
 	req := httptest.NewRequest("GET", "https://example.com/foo?SECRET_VALUE=%3Credacted%3E&myPassword=%3Credacted%3E&q=term&sensitive_key=%3Credacted%3E", nil)
-
 	req.Header.Add(instana.FieldT, traceIDHeader)
 	req.Header.Add(instana.FieldS, spanIDHeader)
 	req.Header.Add(instana.FieldL, "1")
 	req.Header.Set("X-Custom-Header-1", "request")
 
 	w := httptest.NewRecorder()
-
 	beego.BeeApp.Handlers.ServeHTTP(w, req)
-
-	fmt.Println("code", w.Code)
-	fmt.Println("body", w.Body.String())
-	fmt.Println("header", w.Header().Get("X-Instana-T"))
 
 	assert.NotEmpty(t, w.Header().Get("X-Instana-T"))
 	assert.NotEmpty(t, w.Header().Get("X-Instana-S"))
@@ -98,7 +108,7 @@ func TestPropagation(t *testing.T) {
 	spans := recorder.GetQueuedSpans()
 	require.Len(t, spans, 2)
 
-	entrySpan, interSpan := spans[0], spans[1]
+	entrySpan, interSpan := spans[1], spans[0]
 
 	assert.EqualValues(t, instana.EntrySpanKind, entrySpan.Kind)
 	assert.EqualValues(t, instana.IntermediateSpanKind, interSpan.Kind)
@@ -109,7 +119,7 @@ func TestPropagation(t *testing.T) {
 	assert.Equal(t, traceIDHeader, instana.FormatID(entrySpan.TraceID))
 	assert.Equal(t, spanIDHeader, instana.FormatID(entrySpan.ParentID))
 
-	// // ensure that entry span contains all necessary data
+	// ensure that entry span contains all necessary data
 	require.IsType(t, instana.HTTPSpanData{}, entrySpan.Data)
 	entrySpanData := entrySpan.Data.(instana.HTTPSpanData)
 

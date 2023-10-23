@@ -3,7 +3,7 @@ module github.com/instana/go-sensor/instrumentation/instabeego
 go 1.21.0
 
 require (
-	github.com/beego/beego/v2 v2.1.2
+	github.com/beego/beego/v2 v2.1.3
 	github.com/instana/go-sensor v1.57.0
 	github.com/opentracing/opentracing-go v1.2.0
 	github.com/stretchr/testify v1.8.1
