@@ -19,7 +19,7 @@ $ go get github.com/instana/go-sensor/instrumentation/instagraphql
 Usage
 -----
 
-A complete working example can be found [here](../../example/instagraphql-basic).
+A complete working example can be found [here](../../example/instagraphql).
 
 `instagraphql` offers the following method wrappers able to collect GraphQL query data:
 
