@@ -34,7 +34,6 @@ func agentReady() chan bool {
 
 func handler(w http.ResponseWriter, req *http.Request) {
 	db, err := instana.SQLInstrumentAndOpen(s, "mysql", "go:gopw@tcp(localhost:3306)/godb")
-	// db, err := instana.SQLInstrumentAndOpen(s, "mysql", "go:gopw@/godb")
 	if err != nil {
 		panic(err)
 	}
