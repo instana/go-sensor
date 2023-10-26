@@ -1,4 +1,4 @@
-module github.com/instana/go-sensor/example/instasarama-basic
+module example.com/instasarama
 
 go 1.17
 

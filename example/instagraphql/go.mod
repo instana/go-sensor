@@ -1,4 +1,4 @@
-module example.com
+module example.com/instagraphql
 
 go 1.13
 
