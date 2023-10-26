@@ -4,7 +4,7 @@ go 1.19
 
 require (
 	github.com/instana/go-sensor v1.58.0
-	github.com/instana/go-sensor/instrumentation/instagrpc v1.11.0
+	github.com/instana/go-sensor/instrumentation/instagrpc v1.12.0
 	github.com/opentracing/opentracing-go v1.2.0
 	google.golang.org/grpc v1.59.0
 	google.golang.org/protobuf v1.31.0

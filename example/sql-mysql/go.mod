@@ -4,7 +4,7 @@ go 1.18
 
 require (
 	github.com/go-sql-driver/mysql v1.7.1
-	github.com/instana/go-sensor v1.55.2
+	github.com/instana/go-sensor v1.58.0
 )
 
 require (
