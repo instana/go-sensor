@@ -74,10 +74,8 @@ jobs:
 
         #!/bin/bash
 
-        EXCLUDED_DIRS="\/.*\/example"
-
         # List of instrumentation folders
-        LIB_LIST=$(find ./instrumentation -name go.mod -exec dirname {} \; | grep -E -v "$EXCLUDED_DIRS")
+        LIB_LIST=$(find ./instrumentation -name go.mod -exec dirname {} \;)
 
         git config user.name "IBM/Instana/Team Go"
         git config user.email "github-actions@github.com"

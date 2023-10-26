@@ -29,9 +29,7 @@ jobs:
         git config user.name "IBM/Instana/Team Go"
         git config user.email "github-actions@github.com"
 
-        EXCLUDED_DIRS="\/.*\/example"
-
-        LIB_LIST=$(find ./instrumentation -name go.mod -exec dirname {} \; | grep -E -v "$EXCLUDED_DIRS")
+        LIB_LIST=$(find ./instrumentation -name go.mod -exec dirname {} \;)
 
         TAGS=""
         for lib in $LIB_LIST
