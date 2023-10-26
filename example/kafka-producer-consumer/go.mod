@@ -5,7 +5,7 @@ go 1.17
 require (
 	github.com/IBM/sarama v1.41.3
 	github.com/instana/go-sensor v1.58.0
-	github.com/instana/go-sensor/instrumentation/instasarama v1.12.0
+	github.com/instana/go-sensor/instrumentation/instasarama v1.16.0
 	github.com/opentracing/opentracing-go v1.2.0
 )
 
