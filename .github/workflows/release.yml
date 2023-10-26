@@ -74,10 +74,10 @@ jobs:
 
         #!/bin/bash
 
-        DEPRECATED_PKGS=".*instaamqp$"
+        EXCLUDED_DIRS="\/.*\/example"
 
         # List of instrumentation folders
-        LIB_LIST=$(find ./instrumentation -name go.mod -exec dirname {} \; | grep -E -v "$DEPRECATED_PKGS")
+        LIB_LIST=$(find ./instrumentation -name go.mod -exec dirname {} \; | grep -E -v "$EXCLUDED_DIRS")
 
         git config user.name "IBM/Instana/Team Go"
         git config user.email "github-actions@github.com"
