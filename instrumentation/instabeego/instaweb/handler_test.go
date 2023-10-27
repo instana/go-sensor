@@ -1,4 +1,4 @@
-package instabeego_test
+package instaweb_test
 
 import (
 	"context"
@@ -13,7 +13,7 @@ import (
 	instana "github.com/instana/go-sensor"
 	"github.com/instana/go-sensor/acceptor"
 	"github.com/instana/go-sensor/autoprofile"
-	"github.com/instana/go-sensor/instrumentation/instabeego"
+	"github.com/instana/go-sensor/instrumentation/instabeego/instaweb"
 	"github.com/opentracing/opentracing-go"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -81,7 +81,7 @@ func TestPropagation(t *testing.T) {
 	defer instana.ShutdownSensor()
 	sensor := instana.NewSensorWithTracer(tracer)
 
-	instabeego.New(sensor)
+	instaweb.Instrument(sensor)
 
 	defer ShutdownBeeApp()
 

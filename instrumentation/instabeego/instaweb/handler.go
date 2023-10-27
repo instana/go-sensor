@@ -4,7 +4,7 @@
 //go:build go1.21
 // +build go1.21
 
-package instabeego
+package instaweb
 
 import (
 	"net/http"
@@ -14,7 +14,7 @@ import (
 	instana "github.com/instana/go-sensor"
 )
 
-func New(sensor *instana.Sensor) {
+func Instrument(sensor *instana.Sensor) {
 	beego.InsertFilterChain("*", func(next beego.FilterFunc) beego.FilterFunc {
 		return func(ctx *beecontext.Context) {
 			instana.TracingHandlerFunc(sensor, ctx.Request.URL.Path, func(w http.ResponseWriter, r *http.Request) {

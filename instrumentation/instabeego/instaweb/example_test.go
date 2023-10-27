@@ -4,12 +4,12 @@
 //go:build go1.21
 // +build go1.21
 
-package instabeego_test
+package instaweb_test
 
 import (
 	beego "github.com/beego/beego/v2/server/web"
 	instana "github.com/instana/go-sensor"
-	"github.com/instana/go-sensor/instrumentation/instabeego"
+	"github.com/instana/go-sensor/instrumentation/instabeego/instaweb"
 )
 
 type UserController struct {
@@ -22,7 +22,7 @@ func (u *UserController) GetUserById() {
 
 func main() {
 	sensor := instana.NewSensor("my-web-server")
-	instabeego.New(sensor)
+	instaweb.Instrument(sensor)
 
 	beego.CtrlGet("api/user/:id", (*UserController).GetUserById)
 	beego.Run()
