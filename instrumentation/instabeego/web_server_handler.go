@@ -1,10 +1,9 @@
 // (c) Copyright IBM Corp. 2023
-// (c) Copyright Instana Inc. 2023
 
-//go:build go1.21
-// +build go1.21
+//go:build go1.18
+// +build go1.18
 
-package instaweb
+package instabeego
 
 import (
 	"net/http"
@@ -14,7 +13,7 @@ import (
 	instana "github.com/instana/go-sensor"
 )
 
-func Instrument(sensor *instana.Sensor) {
+func InstrumentWebServer(sensor *instana.Sensor) {
 	beego.InsertFilterChain("*", func(next beego.FilterFunc) beego.FilterFunc {
 		return func(ctx *beecontext.Context) {
 			instana.TracingHandlerFunc(sensor, ctx.Request.URL.Path, func(w http.ResponseWriter, r *http.Request) {

@@ -1,4 +1,9 @@
-package instaweb_test
+// (c) Copyright IBM Corp. 2023
+
+//go:build go1.18
+// +build go1.18
+
+package instabeego_test
 
 import (
 	"context"
@@ -13,7 +18,7 @@ import (
 	instana "github.com/instana/go-sensor"
 	"github.com/instana/go-sensor/acceptor"
 	"github.com/instana/go-sensor/autoprofile"
-	"github.com/instana/go-sensor/instrumentation/instabeego/instaweb"
+	"github.com/instana/go-sensor/instrumentation/instabeego"
 	"github.com/opentracing/opentracing-go"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -40,8 +45,7 @@ func initBeeApp(t *testing.T, r *instana.Recorder) {
 	var server_dep_time time.Duration = 2 * time.Second
 
 	beego.Get("/foo", func(ctx *beecontext.Context) {
-		var listJson ListJson
-		listJson = ListJson{
+		listJson := ListJson{
 			Value: "abcd",
 		}
 
@@ -81,7 +85,7 @@ func TestPropagation(t *testing.T) {
 	defer instana.ShutdownSensor()
 	sensor := instana.NewSensorWithTracer(tracer)
 
-	instaweb.Instrument(sensor)
+	instabeego.InstrumentWebServer(sensor)
 
 	defer ShutdownBeeApp()
 

@@ -1,15 +1,14 @@
 // (c) Copyright IBM Corp. 2023
-// (c) Copyright Instana Inc. 2023
 
-//go:build go1.21
-// +build go1.21
+//go:build go1.18
+// +build go1.18
 
-package instaweb_test
+package instabeego_test
 
 import (
 	beego "github.com/beego/beego/v2/server/web"
 	instana "github.com/instana/go-sensor"
-	"github.com/instana/go-sensor/instrumentation/instabeego/instaweb"
+	"github.com/instana/go-sensor/instrumentation/instabeego"
 )
 
 type UserController struct {
@@ -20,9 +19,9 @@ func (u *UserController) GetUserById() {
 	u.Ctx.WriteString("GetUserById")
 }
 
-func main() {
+func Example_server_instrument() {
 	sensor := instana.NewSensor("my-web-server")
-	instaweb.Instrument(sensor)
+	instabeego.InstrumentWebServer(sensor)
 
 	beego.CtrlGet("api/user/:id", (*UserController).GetUserById)
 	beego.Run()
