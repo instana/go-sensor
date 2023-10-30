@@ -224,21 +224,29 @@ func dbNameByQuery(q string) string {
 	return ""
 }
 
-func startSQLSpan(ctx context.Context, conn DbConnDetails, query string, sensor TracerLogger) (sp ot.Span, errKey string) {
+// StartSQLSpan creates a span based on DbConnDetails and a query, and attempts to detect which kind of database it belongs.
+// If a database is detected and it is already part of the registered spans, the span details will be specific to that
+// database.
+// Otherwise, the span will have generic database fields.
+func StartSQLSpan(ctx context.Context, conn DbConnDetails, query string, sensor TracerLogger) (sp ot.Span, dbKey string) {
+	return startSQLSpan(ctx, conn, query, sensor)
+}
+
+func startSQLSpan(ctx context.Context, conn DbConnDetails, query string, sensor TracerLogger) (sp ot.Span, dbKey string) {
 	if conn.DatabaseName == "" {
 		conn.DatabaseName = dbNameByQuery(query)
 	}
 
 	switch conn.DatabaseName {
 	case "postgres":
-		return postgresSpan(ctx, conn, query, sensor), "pg.error"
+		return postgresSpan(ctx, conn, query, sensor), "pg"
 	case "redis":
-		return redisSpan(ctx, conn, query, sensor), "redis.error"
+		return redisSpan(ctx, conn, query, sensor), "redis"
 	case "mysql":
-		return mySQLSpan(ctx, conn, query, sensor), "mysql.error"
+		return mySQLSpan(ctx, conn, query, sensor), "mysql"
 	}
 
-	return genericSQLSpan(ctx, conn, query, sensor), "sql.error"
+	return genericSQLSpan(ctx, conn, query, sensor), "db"
 }
 
 type DbConnDetails struct {

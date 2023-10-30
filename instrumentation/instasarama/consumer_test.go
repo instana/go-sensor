@@ -1,5 +1,7 @@
-// (c) Copyright IBM Corp. 2021
-// (c) Copyright Instana Inc. 2020
+// (c) Copyright IBM Corp. 2023
+
+//go:build go1.17
+// +build go1.17
 
 package instasarama_test
 
@@ -8,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Shopify/sarama"
+	"github.com/IBM/sarama"
 	instana "github.com/instana/go-sensor"
 	"github.com/instana/go-sensor/instrumentation/instasarama"
 	"github.com/stretchr/testify/assert"
@@ -261,6 +263,22 @@ type testConsumer struct {
 	partitions map[string][]int32
 	offsets    map[string]map[int32]int64
 	consumers  map[string]*testPartitionConsumer
+}
+
+func (c *testConsumer) Pause(topicPartitions map[string][]int32) {
+	panic("needs to be implemented if testcase is failing")
+}
+
+func (c *testConsumer) Resume(topicPartitions map[string][]int32) {
+	panic("needs to be implemented if testcase is failing")
+}
+
+func (c *testConsumer) PauseAll() {
+	panic("needs to be implemented if testcase is failing")
+}
+
+func (c *testConsumer) ResumeAll() {
+	panic("needs to be implemented if testcase is failing")
 }
 
 func (c *testConsumer) Topics() ([]string, error) {

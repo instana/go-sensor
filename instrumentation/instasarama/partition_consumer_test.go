@@ -1,5 +1,7 @@
-// (c) Copyright IBM Corp. 2021
-// (c) Copyright Instana Inc. 2020
+// (c) Copyright IBM Corp. 2023
+
+//go:build go1.17
+// +build go1.17
 
 package instasarama_test
 
@@ -8,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Shopify/sarama"
+	"github.com/IBM/sarama"
 	instana "github.com/instana/go-sensor"
 	"github.com/instana/go-sensor/instrumentation/instasarama"
 	"github.com/stretchr/testify/assert"
@@ -200,6 +202,18 @@ type testPartitionConsumer struct {
 	Error  error
 	Closed bool
 	Async  bool
+}
+
+func (pc *testPartitionConsumer) Pause() {
+	panic("needs to be implemented if testcase is failing")
+}
+
+func (pc *testPartitionConsumer) Resume() {
+	panic("needs to be implemented if testcase is failing")
+}
+
+func (pc *testPartitionConsumer) IsPaused() bool {
+	panic("needs to be implemented if testcase is failing")
 }
 
 // AsyncClose closes the underlying partition consumer asynchronously

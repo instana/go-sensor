@@ -78,6 +78,7 @@ func TestInsertRecord(t *testing.T) {
 			Name: "sdk.database",
 			Type: "exit",
 			Custom: map[string]interface{}{
+				"baggage": map[string]string{"dbKey": "db"},
 				"tags": ot.Tags{
 					"span.kind":    ext.SpanKindRPCClientEnum,
 					"db.instance":  dsn,
@@ -134,6 +135,7 @@ func TestUpdateRecord(t *testing.T) {
 			Name: "sdk.database",
 			Type: "exit",
 			Custom: map[string]interface{}{
+				"baggage": map[string]string{"dbKey": "db"},
 				"tags": ot.Tags{
 					"span.kind":    ext.SpanKindRPCClientEnum,
 					"db.instance":  dsn,
@@ -188,6 +190,7 @@ func TestSelectRecord(t *testing.T) {
 			Name: "sdk.database",
 			Type: "exit",
 			Custom: map[string]interface{}{
+				"baggage": map[string]string{"dbKey": "db"},
 				"tags": ot.Tags{
 					"span.kind":    ext.SpanKindRPCClientEnum,
 					"db.instance":  dsn,
@@ -240,6 +243,7 @@ func TestDeleteRecord(t *testing.T) {
 			Name: "sdk.database",
 			Type: "exit",
 			Custom: map[string]interface{}{
+				"baggage": map[string]string{"dbKey": "db"},
 				"tags": ot.Tags{
 					"span.kind":    ext.SpanKindRPCClientEnum,
 					"db.instance":  dsn,
@@ -296,6 +300,7 @@ func TestRawSQL(t *testing.T) {
 			Name: "sdk.database",
 			Type: "exit",
 			Custom: map[string]interface{}{
+				"baggage": map[string]string{"dbKey": "db"},
 				"tags": ot.Tags{
 					"span.kind":    ext.SpanKindRPCClientEnum,
 					"db.instance":  dsn,
