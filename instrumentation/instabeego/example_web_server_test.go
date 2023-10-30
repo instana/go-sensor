@@ -19,6 +19,7 @@ func (u *UserController) GetUserById() {
 	u.Ctx.WriteString("GetUserById")
 }
 
+// This example shows how to instrument a beego web server.
 func Example_server_instrument() {
 	sensor := instana.NewSensor("my-web-server")
 	// This will add instana.TracingHandlerFunc() function as middleware for every API.
