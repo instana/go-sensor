@@ -17,6 +17,7 @@ type FilterChainBuilder struct {
 	Sensor *instana.Sensor
 }
 
+// FilterChain wrap the original BeegoHTTPRequest transport with instana.RoundTripper().
 func (builder *FilterChainBuilder) FilterChain(next httplib.Filter) httplib.Filter {
 	return func(ctx context.Context, req *httplib.BeegoHTTPRequest) (*http.Response, error) {
 		req.SetTransport(instana.RoundTripper(builder.Sensor, nil))

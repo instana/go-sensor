@@ -32,7 +32,8 @@ type ListJson struct {
 	Value string `json:"Value"`
 }
 
-func ShutdownBeeApp() {
+// shutdownBeeApp close the beego server for testing
+func shutdownBeeApp() {
 	beego.BeeApp.Server.Shutdown(context.TODO())
 }
 
@@ -40,9 +41,10 @@ func sleep(t time.Duration) {
 	time.Sleep(t)
 }
 
+// initBeeApp deploy a beego server for testing
 func initBeeApp(t *testing.T, r *instana.Recorder) {
 
-	var server_dep_time time.Duration = 2 * time.Second
+	var serverDepTime time.Duration = 2 * time.Second
 
 	beego.Get("/foo", func(ctx *beecontext.Context) {
 		listJson := ListJson{
@@ -62,7 +64,7 @@ func initBeeApp(t *testing.T, r *instana.Recorder) {
 
 	beego.BConfig.RunMode = "test"
 	go beego.Run()
-	sleep(server_dep_time)
+	sleep(serverDepTime)
 }
 
 func TestMain(m *testing.M) {
@@ -87,7 +89,7 @@ func TestPropagation(t *testing.T) {
 
 	instabeego.InstrumentWebServer(sensor)
 
-	defer ShutdownBeeApp()
+	defer shutdownBeeApp()
 
 	initBeeApp(t, recorder)
 
@@ -103,6 +105,7 @@ func TestPropagation(t *testing.T) {
 	w := httptest.NewRecorder()
 	beego.BeeApp.Handlers.ServeHTTP(w, req)
 
+	// Response headers assertions
 	assert.NotEmpty(t, w.Header().Get("X-Instana-T"))
 	assert.NotEmpty(t, w.Header().Get("X-Instana-S"))
 	assert.NotEmpty(t, w.Header().Get("X-Instana-L"))

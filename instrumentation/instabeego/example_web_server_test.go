@@ -21,6 +21,7 @@ func (u *UserController) GetUserById() {
 
 func Example_server_instrument() {
 	sensor := instana.NewSensor("my-web-server")
+	// This will add instana.TracingHandlerFunc() function as middleware for every API.
 	instabeego.InstrumentWebServer(sensor)
 
 	beego.CtrlGet("api/user/:id", (*UserController).GetUserById)
