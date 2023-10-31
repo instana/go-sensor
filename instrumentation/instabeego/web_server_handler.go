@@ -3,6 +3,7 @@
 //go:build go1.18
 // +build go1.18
 
+// Package instabeego provides Instana instrumentation for the beego framework.
 package instabeego
 
 import (

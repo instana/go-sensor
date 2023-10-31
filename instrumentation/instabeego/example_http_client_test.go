@@ -17,7 +17,7 @@ import (
 )
 
 // This example shows how to instrument beego httplib module (HTTP client) with Instana tracing
-func Example_http_client_instrument() {
+func Example_httpClientInstrumentation() {
 	sensor := instana.NewSensor("my-http-client")
 
 	// Every call should start with an entry span (https://docs.instana.io/quick_start/custom_tracing/#always-start-new-traces-with-entry-spans)
@@ -28,17 +28,11 @@ func Example_http_client_instrument() {
 
 	defer sp.Finish()
 
-	// As the filter function need sensor data, it should be injected to FilterChainBuilder
-	builder := &instabeego.FilterChainBuilder{
-		Sensor: sensor,
-	}
-
 	// Inject the parent span into request context
 	ctx := instana.ContextWithSpan(context.Background(), sp)
 
 	req := httplib.NewBeegoRequestWithCtx(ctx, "https://www.instana.com", http.MethodGet)
-	// Adding filter function to wrap the beego BeegoHTTPRequest transport with instana.RoundTripper().
-	req.AddFilters(builder.FilterChain)
+	instabeego.InstrumentRequest(sensor, req)
 
 	_, err := req.Response()
 	if err != nil {

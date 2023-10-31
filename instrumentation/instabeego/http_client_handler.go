@@ -13,14 +13,12 @@ import (
 	instana "github.com/instana/go-sensor"
 )
 
-type FilterChainBuilder struct {
-	Sensor *instana.Sensor
-}
-
-// FilterChain wrap the original BeegoHTTPRequest transport with instana.RoundTripper().
-func (builder *FilterChainBuilder) FilterChain(next httplib.Filter) httplib.Filter {
-	return func(ctx context.Context, req *httplib.BeegoHTTPRequest) (*http.Response, error) {
-		req.SetTransport(instana.RoundTripper(builder.Sensor, nil))
-		return next(ctx, req)
-	}
+// InstrumentRequest wrap the original BeegoHTTPRequest transport with instana.RoundTripper().
+func InstrumentRequest(sensor *instana.Sensor, req *httplib.BeegoHTTPRequest) {
+	req.AddFilters(func(next httplib.Filter) httplib.Filter {
+		return func(ctx context.Context, req *httplib.BeegoHTTPRequest) (*http.Response, error) {
+			req.SetTransport(instana.RoundTripper(sensor, nil))
+			return next(ctx, req)
+		}
+	})
 }
