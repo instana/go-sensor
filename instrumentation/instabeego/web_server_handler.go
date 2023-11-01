@@ -16,7 +16,7 @@ import (
 
 // InstrumentWebServer wraps beego's handlers execution. Adds tracing context and handles entry span.
 // It should be added as a first Middleware to the beego, before defining handlers.
-func InstrumentWebServer(sensor *instana.Sensor) {
+func InstrumentWebServer(sensor instana.TracerLogger) {
 	// InsertFilterChain of beego helps us to add instana.TracingHandlerFunc() as a middleware.
 	beego.InsertFilterChain("*", func(next beego.FilterFunc) beego.FilterFunc {
 		return func(ctx *beecontext.Context) {

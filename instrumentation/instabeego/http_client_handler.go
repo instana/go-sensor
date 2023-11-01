@@ -14,7 +14,7 @@ import (
 )
 
 // InstrumentRequest wrap the original BeegoHTTPRequest transport with instana.RoundTripper().
-func InstrumentRequest(sensor *instana.Sensor, req *httplib.BeegoHTTPRequest) {
+func InstrumentRequest(sensor instana.TracerLogger, req *httplib.BeegoHTTPRequest) {
 	req.AddFilters(func(next httplib.Filter) httplib.Filter {
 		return func(ctx context.Context, req *httplib.BeegoHTTPRequest) (*http.Response, error) {
 			req.SetTransport(instana.RoundTripper(sensor, nil))
