@@ -33,8 +33,10 @@ func main() {
 	req := httplib.NewBeegoRequestWithCtx(ctx, "https://www.instana.com", http.MethodGet)
 	instabeego.InstrumentRequest(sensor, req)
 
-	_, err := req.Response()
+	resp, err := req.Response()
 	if err != nil {
 		log.Fatalf("failed to GET https://www.instana.com: %s", err)
 	}
+
+	log.Printf("Got response with status code %v", resp.StatusCode)
 }
