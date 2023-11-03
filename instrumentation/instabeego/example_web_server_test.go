@@ -11,10 +11,12 @@ import (
 	"github.com/instana/go-sensor/instrumentation/instabeego"
 )
 
+// UserController represents the router for user APIs in the given example
 type UserController struct {
 	beego.Controller
 }
 
+// GetUserById is a sample handler function for the example
 func (u *UserController) GetUserById() {
 	u.Ctx.WriteString("GetUserById")
 }
