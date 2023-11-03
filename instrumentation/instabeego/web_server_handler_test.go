@@ -24,10 +24,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-type ListController struct {
-	beego.Controller
-}
-
+// ListJson defines the response for the test application
 type ListJson struct {
 	Value string `json:"Value"`
 }
