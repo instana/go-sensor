@@ -61,7 +61,11 @@ func main() {
 }
 
 type student struct {
-	gorm.Model
-	StudentName string
-	StudentID   uint
+	StudentName string `gorm:"column:studentname"`
+	StudentID   uint   `gorm:"primarykey,column:studentid"`
+}
+
+// implementing the schema.Tabler interface
+func (student) TableName() string {
+	return "student"
 }
