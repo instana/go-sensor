@@ -1,5 +1,8 @@
 // (c) Copyright IBM Corp. 2022
 
+//go:build go1.19
+// +build go1.19
+
 package tags
 
 const (
