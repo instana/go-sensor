@@ -15,15 +15,18 @@ import (
 	"github.com/instana/go-sensor/instrumentation/instabeego"
 )
 
+// UserJson defines the response for the APIs in the given example
 type UserJson struct {
 	ID   int    `json:"ID"`
 	Name string `json:"Name"`
 }
 
+// UserController handles the user API requests
 type UserController struct {
 	beego.Controller
 }
 
+// GetUser is a handler function for the sample API in the given example
 func (u *UserController) GetUser() {
 	u.Ctx.Output.Status = http.StatusOK
 	u.Ctx.JSONResp(UserJson{
