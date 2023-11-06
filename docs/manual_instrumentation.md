@@ -103,4 +103,4 @@ func main() {
 [Tracer Options](options.md) |
 [Tracing HTTP Outgoing Requests](roundtripper.md) |
 [Tracing SQL Driver Databases](sql.md) |
-[Tracing Other Go Packages](other_packages.md) |
+[Tracing Other Go Packages](other_packages.md)

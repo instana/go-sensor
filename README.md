@@ -51,15 +51,15 @@ Create a reference to the collector and initialize it with a service name:
 
 ```go
 var (
-	...
-	col instana.TracerLogger
+  ...
+  col instana.TracerLogger
 )
 
 func init() {
-	...
-	col = instana.InitCollector(&instana.Options{
-		Service: "My app",
-	})
+  ...
+  col = instana.InitCollector(&instana.Options{
+    Service: "My app",
+  })
 }
 ```
 
@@ -155,23 +155,23 @@ This log can then be visualized in the dashboard under Analytics/Logs. You can a
 package main
 
 import (
-	"log"
-	"net/http"
+  "log"
+  "net/http"
 
-	instana "github.com/instana/go-sensor"
+  instana "github.com/instana/go-sensor"
 )
 
 func main() {
-	col := instana.InitCollector(&instana.Options{
-		Service:           "Basic Usage",
-		EnableAutoProfile: true,
-	})
+  col := instana.InitCollector(&instana.Options{
+    Service:           "Basic Usage",
+    EnableAutoProfile: true,
+  })
 
-	http.HandleFunc("/endpoint", instana.TracingHandlerFunc(col, "/endpoint", func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-	}))
+  http.HandleFunc("/endpoint", instana.TracingHandlerFunc(col, "/endpoint", func(w http.ResponseWriter, r *http.Request) {
+    w.WriteHeader(http.StatusOK)
+  }))
 
-	log.Fatal(http.ListenAndServe(":7070", nil))
+  log.Fatal(http.ListenAndServe(":7070", nil))
 }
 ```
 
