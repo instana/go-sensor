@@ -31,35 +31,35 @@ The `instana.SQLInstrumentAndOpen` will return the expected `(*sql.DB, error)` r
 package main
 
 import (
-	"io"
-	"net/http"
+  "io"
+  "net/http"
 
-	_ "github.com/go-sql-driver/mysql"
-	instana "github.com/instana/go-sensor"
+  _ "github.com/go-sql-driver/mysql"
+  instana "github.com/instana/go-sensor"
 )
 
 func main() {
-	s := instana.InitCollector(&instana.Options{
-		Service: "MySQL app",
-	})
+  s := instana.InitCollector(&instana.Options{
+    Service: "MySQL app",
+  })
 
-	db, err := instana.SQLInstrumentAndOpen(s, "mysql", "go:gopw@tcp(localhost:3306)/godb")
-	if err != nil {
-		panic(err)
-	}
+  db, err := instana.SQLInstrumentAndOpen(s, "mysql", "go:gopw@tcp(localhost:3306)/godb")
+  if err != nil {
+    panic(err)
+  }
 
-	r, err := db.QueryContext(req.Context(), "SELECT 'Current date is' || CURDATE();")
+  r, err := db.QueryContext(req.Context(), "SELECT 'Current date is' || CURDATE();")
 
-	if err != nil {
-		panic(err)
-	}
+  if err != nil {
+    panic(err)
+  }
 
-	var buf, res string
+  var buf, res string
 
-	for r.Next() {
-		r.Scan(&buf)
-		res += " " + buf
-	}
+  for r.Next() {
+    r.Scan(&buf)
+    res += " " + buf
+  }
 }
 ```
 

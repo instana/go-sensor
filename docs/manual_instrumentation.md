@@ -31,24 +31,24 @@ You can create an entry span with the `StartSpan` method and by providing `ext.S
 package main
 
 import (
-	instana "github.com/instana/go-sensor"
-	ot "github.com/opentracing/opentracing-go"
-	"github.com/opentracing/opentracing-go/ext"
+  instana "github.com/instana/go-sensor"
+  ot "github.com/opentracing/opentracing-go"
+  "github.com/opentracing/opentracing-go/ext"
 )
 
 func main() {
-	col := instana.InitCollector(&instana.Options{
-		Service: "My Service",
-	})
+  col := instana.InitCollector(&instana.Options{
+    Service: "My Service",
+  })
 
-	ps := col.StartSpan("my-entry-span", []ot.StartSpanOption{
-		ext.SpanKindRPCServer,
-	}...)
+  ps := col.StartSpan("my-entry-span", []ot.StartSpanOption{
+    ext.SpanKindRPCServer,
+  }...)
 
-	// Do some work
+  // Do some work
 
-	// Always make sure to call Finish to send the span to the Agent.
-	ps.Finish()
+  // Always make sure to call Finish to send the span to the Agent.
+  ps.Finish()
 }
 ```
 
@@ -67,34 +67,34 @@ If you want to have a combination between spans, that is, multiple spans correla
 package main
 
 import (
-	instana "github.com/instana/go-sensor"
-	ot "github.com/opentracing/opentracing-go"
-	"github.com/opentracing/opentracing-go/ext"
+  instana "github.com/instana/go-sensor"
+  ot "github.com/opentracing/opentracing-go"
+  "github.com/opentracing/opentracing-go/ext"
 )
 
 func main() {
-	col := instana.InitCollector(&instana.Options{
-		Service: "My Service",
-	})
+  col := instana.InitCollector(&instana.Options{
+    Service: "My Service",
+  })
 
-	ps := col.StartSpan("my-parent-entry-span", []ot.StartSpanOption{
-		ext.SpanKindRPCServer,
-	}...)
+  ps := col.StartSpan("my-parent-entry-span", []ot.StartSpanOption{
+    ext.SpanKindRPCServer,
+  }...)
 
-	// Do some work
+  // Do some work
 
-	ps.Finish()
+  ps.Finish()
 
-	exs := col.StartSpan("my-child-exit-span", []ot.StartSpanOption{
-		ext.SpanKindRPCClient,
+  exs := col.StartSpan("my-child-exit-span", []ot.StartSpanOption{
+    ext.SpanKindRPCClient,
 
-		// Make sure to provide the parent span context to ot.ChildOf in order to correlate these spans
-		ot.ChildOf(ps.Context()),
-	}...)
+    // Make sure to provide the parent span context to ot.ChildOf in order to correlate these spans
+    ot.ChildOf(ps.Context()),
+  }...)
 
-	// Do some work
+  // Do some work
 
-	exs.Finish()
+  exs.Finish()
 }
 ```
 

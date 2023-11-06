@@ -84,39 +84,39 @@ You can learn more about manually instrumenting your code [here]().
 package main
 
 import (
-	"context"
-	"log"
-	"net/http"
+  "context"
+  "log"
+  "net/http"
 
-	instana "github.com/instana/go-sensor"
-	"github.com/opentracing/opentracing-go/ext"
+  instana "github.com/instana/go-sensor"
+  "github.com/opentracing/opentracing-go/ext"
 )
 
 func main() {
-	col := instana.InitCollector(&instana.Options{
-		Service: "my-http-client",
-	})
+  col := instana.InitCollector(&instana.Options{
+    Service: "my-http-client",
+  })
 
-	client := &http.Client{
-		Transport: instana.RoundTripper(col, nil),
-	}
+  client := &http.Client{
+    Transport: instana.RoundTripper(col, nil),
+  }
 
-	entrySpan := col.Tracer().StartSpan("client-call")
-	entrySpan.SetTag(string(ext.SpanKind), "entry")
+  entrySpan := col.Tracer().StartSpan("client-call")
+  entrySpan.SetTag(string(ext.SpanKind), "entry")
 
-	req, err := http.NewRequest(http.MethodGet, "https://www.instana.com", nil)
-	if err != nil {
-		log.Fatalf("failed to create request: %s", err)
-	}
+  req, err := http.NewRequest(http.MethodGet, "https://www.instana.com", nil)
+  if err != nil {
+    log.Fatalf("failed to create request: %s", err)
+  }
 
-	ctx := instana.ContextWithSpan(context.Background(), entrySpan)
+  ctx := instana.ContextWithSpan(context.Background(), entrySpan)
 
-	_, err = client.Do(req.WithContext(ctx))
-	if err != nil {
-		log.Fatalf("failed to GET https://www.instana.com: %s", err)
-	}
+  _, err = client.Do(req.WithContext(ctx))
+  if err != nil {
+    log.Fatalf("failed to GET https://www.instana.com: %s", err)
+  }
 
-	entrySpan.Finish()
+  entrySpan.Finish()
 }
 ```
 
