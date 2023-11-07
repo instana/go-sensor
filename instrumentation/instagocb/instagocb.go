@@ -77,7 +77,7 @@ type InstanaScope struct {
 }
 
 func (is *InstanaScope) Query(statement string, opts *gocb.QueryOptions) (*gocb.QueryResult, error) {
-	span := is.t.RequestSpan(opts.ParentSpan.Context, "instana-query")
+	span := is.t.RequestSpan(opts.ParentSpan.Context(), "instana-query")
 	span.SetAttribute("db.statement", statement)
 	span.SetAttribute("db.name", is.BucketName())
 	span.SetAttribute("db.couchbase.scope", is.Name())
@@ -86,7 +86,7 @@ func (is *InstanaScope) Query(statement string, opts *gocb.QueryOptions) (*gocb.
 
 	span.(*Span).err = err
 
-	span.End()
+	defer span.End()
 	fmt.Println(">>> FINISHED SPAN")
 
 	return res, err
@@ -151,7 +151,7 @@ func (s *Span) End() {
 
 	if s.err != nil {
 		fmt.Println(">>> SHOULD COLLECT ERROR ONCE:", s.err)
-		s.wrapped.SetTag("couchbase.error", s.err)
+		s.wrapped.SetTag("couchbase.error", s.err.Error())
 	}
 
 	if s != nil && s.wrapped != nil {
