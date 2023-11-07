@@ -10,27 +10,20 @@ import (
 	instana "github.com/instana/go-sensor"
 	"github.com/instana/go-sensor/instrumentation/instagocb"
 
-	"encoding/json"
-	"io"
 	"net/http"
-
-	redis "github.com/redis/go-redis/v9"
 )
 
 var (
-	c   *http.Client
-	rdb *redis.Client
-	s   instana.TracerLogger
+	c *http.Client
+	s instana.TracerLogger
 )
 
 func init() {
 
 	s = instana.InitCollector(&instana.Options{
-		Service:           "Nithin-sample-app22",
+		Service:           "Nithin-sample-app-couchbase",
 		EnableAutoProfile: true,
 	})
-
-	rdb = redis.NewClient(&redis.Options{Addr: ":6379"})
 
 	c = &http.Client{
 		Timeout: time.Second * 30,
@@ -38,56 +31,20 @@ func init() {
 }
 
 func main() {
-	http.HandleFunc("/star-wars/people", instana.TracingHandlerFunc(s, "/star-wars/people", handler))
+	http.HandleFunc("/couchbase-test", instana.TracingHandlerFunc(s, "/couchbase-test", handler))
 
 	log.Fatal(http.ListenAndServe("localhost:9990", nil))
 }
 
 func handler(w http.ResponseWriter, r *http.Request) {
-	var searchStr []string
-	var ok bool
-	if searchStr, ok = r.URL.Query()["search"]; !ok {
-		w.WriteHeader(http.StatusBadRequest)
-		_, _ = w.Write([]byte(`{message:"please give a search string"}`))
-		return
-	}
+	err := testCouchbase(r.Context())
 
-	val, err := rdb.Get(r.Context(), searchStr[0]).Result()
-	if err != redis.Nil {
-		vb := []byte(val)
-		err = gocbMain(r.Context())
-
-		if err == nil {
-			sendOkResp(w, vb, false)
-		} else {
-			sendErrResp(w)
-		}
-		return
-
-	}
-
-	resp, err := c.Get(`https://swapi.dev/api/people/?search=` + searchStr[0] + `&format=json`)
 	if err != nil {
 		sendErrResp(w)
 		return
 	}
 
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		sendErrResp(w)
-		return
-	}
-
-	rdb.Set(r.Context(), searchStr[0], body, time.Duration(time.Second*10))
-
-	err = gocbMain(r.Context())
-
-	if err == nil {
-		sendOkResp(w, body, false)
-	} else {
-		sendErrResp(w)
-	}
-
+	sendOkResp(w)
 }
 
 func sendErrResp(w http.ResponseWriter) {
@@ -95,32 +52,12 @@ func sendErrResp(w http.ResponseWriter) {
 	_, _ = w.Write([]byte(`{message:"some internal error"}`))
 }
 
-func sendOkResp(w http.ResponseWriter, vb []byte, cached bool) {
-
-	res := make(map[string]any)
-
-	err := json.Unmarshal(vb, &res)
-	if err != nil {
-		sendErrResp(w)
-		return
-	}
-
-	res["cached"] = cached
-
-	resStr, err := json.Marshal(res)
-	if err != nil {
-		sendErrResp(w)
-		return
-	}
-
+func sendOkResp(w http.ResponseWriter) {
 	w.WriteHeader(http.StatusOK)
-	_, _ = w.Write(resStr)
+	_, _ = w.Write([]byte("{message:Status OK! Check terminal for full log!}"))
 }
 
-func gocbMain(ctx context.Context) error {
-	// hold := make(chan bool)
-	// Uncomment following line to enable logging
-	// gocb.SetLogger(gocb.VerboseStdioLogger())
+func testCouchbase(ctx context.Context) error {
 
 	// Update this to your cluster details
 	connectionString := "localhost"
@@ -130,21 +67,22 @@ func gocbMain(ctx context.Context) error {
 
 	dsn := "couchbase://" + connectionString
 
-	// s := instana.InitCollector(&instana.Options{
-	// 	Service: "nithin-couchbase-app1",
-	// })
-
 	// For a secure cluster connection, use `couchbases://<your-cluster-ip>` instead.
+
+	t := instagocb.NewTracer(s, dsn)
 	cluster, err := gocb.Connect(dsn, gocb.ClusterOptions{
 		Authenticator: gocb.PasswordAuthenticator{
 			Username: username,
 			Password: password,
 		},
-		Tracer: instagocb.NewTracer(s, dsn),
+		Tracer: t,
 	})
 	if err != nil {
 		return err
 	}
+
+	// wrapping the connected cluster in tracer
+	t.WrapCluster(cluster)
 
 	bucket := cluster.Bucket(bucketName)
 
@@ -211,9 +149,6 @@ func gocbMain(ctx context.Context) error {
 	if err := queryResult.Err(); err != nil {
 		return err
 	}
-
-	fmt.Println("holding process up")
-	// <-hold
 
 	return nil
 }
