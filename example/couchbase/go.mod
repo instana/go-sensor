@@ -1,6 +1,6 @@
 module couchbase.example
 
-go 1.21.3
+go 1.19
 
 require (
 	github.com/couchbase/gocb/v2 v2.6.5
@@ -21,6 +21,6 @@ require (
 	github.com/opentracing/opentracing-go v1.2.0 // indirect
 )
 
-// replace github.com/instana/go-sensor/instrumentation/instagocb => ../../instrumentation/instagocb
+replace github.com/instana/go-sensor/instrumentation/instagocb => ../../instrumentation/instagocb
 
-// replace github.com/instana/go-sensor => ../../
+replace github.com/instana/go-sensor => ../../

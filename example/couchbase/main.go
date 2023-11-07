@@ -124,7 +124,7 @@ func testCouchbase(ctx context.Context) error {
 	// Perform a N1QL Query
 	inventoryScope := bucket.Scope("inventory")
 	queryResult, err := inventoryScope.Query(
-		fmt.Sprintf("SELECT * FROM airline WHERE id=10"),
+		fmt.Sprintf("SELECT * FROM `airline1` WHERE id=10"),
 		&gocb.QueryOptions{Adhoc: true, ParentSpan: instagocb.GetParentSpanFromContext(ctx)},
 	)
 	if err != nil {
