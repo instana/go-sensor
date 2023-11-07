@@ -21,6 +21,12 @@ github.com/golang/snappy v0.0.4/go.mod h1:/XxbfmMg8lxefKM7IXC3fBNl/7bRcc72aCRzEW
 github.com/google/uuid v1.3.0/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
 github.com/google/uuid v1.3.1 h1:KjJaJ9iWZ3jOFZIf1Lqf4laDRCasjl0BCmnEGxkdLb4=
 github.com/google/uuid v1.3.1/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
+github.com/instana/go-sensor v1.58.0 h1:cpRCa8rIqFk7Z2UP/yEIiXFx3ps89WPa6q8wb4IhSI4=
+github.com/instana/go-sensor v1.58.0/go.mod h1:Ks06EG9Da5O3hbdJiHIePG/vNmToovkaJjMlUBd70Yc=
+github.com/instana/go-sensor v1.58.1-0.20231107055240-4ac1225b817a h1:W0D521fj2MXxqqoDAwEvuql7RvBWKmwBdFiX+zgI8JY=
+github.com/instana/go-sensor v1.58.1-0.20231107055240-4ac1225b817a/go.mod h1:Ks06EG9Da5O3hbdJiHIePG/vNmToovkaJjMlUBd70Yc=
+github.com/instana/go-sensor/instrumentation/instagocb v0.0.0-20231107055240-4ac1225b817a h1:DIG6vhbkKS72qyg9yE1HWFFYOkzRIcqhf+19FBRdWTA=
+github.com/instana/go-sensor/instrumentation/instagocb v0.0.0-20231107055240-4ac1225b817a/go.mod h1:hVnfa0lfD5d8g3Uh2mEYL0Y7IKYsiNr8lWApdj2A9Ag=
 github.com/looplab/fsm v1.0.1 h1:OEW0ORrIx095N/6lgoGkFkotqH6s7vaFPsgjLAaF5QU=
 github.com/looplab/fsm v1.0.1/go.mod h1:PmD3fFvQEIsjMEfvZdrCDZ6y8VwKTwWNjlpEr6IKPO4=
 github.com/opentracing/opentracing-go v1.2.0 h1:uEJPy/1a5RIPAJ0Ov+OIO8OxWu77jEv+1B0VhjKrZUs=
