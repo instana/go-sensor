@@ -1,6 +1,9 @@
 // (c) Copyright IBM Corp. 2021
 // (c) Copyright Instana Inc. 2020
 
+//go:build go1.17
+// +build go1.17
+
 package main
 
 import (
@@ -10,7 +13,7 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/Shopify/sarama"
+	"github.com/IBM/sarama"
 	instana "github.com/instana/go-sensor"
 	"github.com/instana/go-sensor/instrumentation/instasarama"
 	"github.com/opentracing/opentracing-go"
@@ -35,17 +38,19 @@ func main() {
 	args.Brokers = flag.Args()
 
 	// First we create an instance of instana.Sensor, a container that will be used to inject
-	// tracer into all instrumented methods.
-	sensor := instana.NewSensor("doubler")
+	// collector into all instrumented methods.
+	collector := instana.InitCollector(&instana.Options{
+		Service: "doubler",
+	})
 
 	// First we set up and instrument producers and consumers. Instana uses the headers feature
-	// introduced in Kafka v0.11 to propagate trace context. In order to use it, github.com/Shopify/sarama
+	// introduced in Kafka v0.11 to propagate trace context. In order to use it, github.com/IBM/sarama
 	// producers and consumers need to be explicitly configured with Version = sarama.V0_11_0_0 or above.
 	conf := sarama.NewConfig()
 	conf.Version = sarama.V0_11_0_0
 
 	// Create and instrument consumer to read messages from incoming topic
-	consumer, err := instasarama.NewConsumer(args.Brokers, conf, sensor)
+	consumer, err := instasarama.NewConsumer(args.Brokers, conf, collector)
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -57,7 +62,7 @@ func main() {
 	defer c.Close()
 
 	// Create and instrument an async producer to publish results
-	producer, err := instasarama.NewAsyncProducer(args.Brokers, conf, sensor)
+	producer, err := instasarama.NewAsyncProducer(args.Brokers, conf, collector)
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -66,7 +71,7 @@ func main() {
 	processor := Doubler{
 		Out:      args.Out,
 		producer: producer,
-		sensor:   sensor,
+		sensor:   collector,
 	}
 
 	for msg := range c.Messages() {
@@ -89,7 +94,7 @@ type Doubler struct {
 func (d *Doubler) ProcessMessage(msg *sarama.ConsumerMessage) (err error) {
 	var span opentracing.Span
 
-	// Extract trace context injected into the message by Instana instrumentation for github.com/Shopify/sarama
+	// Extract trace context injected into the message by Instana instrumentation for github.com/IBM/sarama
 	if parentCtx, ok := instasarama.SpanContextFromConsumerMessage(msg, d.sensor); ok {
 		span = d.sensor.Tracer().StartSpan("processMessage", opentracing.ChildOf(parentCtx))
 		defer func() {

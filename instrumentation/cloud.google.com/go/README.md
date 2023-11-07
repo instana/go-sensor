@@ -8,7 +8,7 @@ This module contains instrumentation code for Google Cloud Platform clients that
 Installation
 ------------
 
-This instrumentation module requires Go v1.15 as the minimum version.
+This instrumentation module requires Go v1.19 as the minimum version.
 
 To add the module to your `go.mod` file run the following command in your project directory:
 
