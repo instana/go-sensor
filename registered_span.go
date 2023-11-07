@@ -54,6 +54,8 @@ const (
 	MySQLSpanType = RegisteredSpanType("mysql")
 	// Redis client span
 	RedisSpanType = RegisteredSpanType("redis")
+	// Couchbase client span
+	CouchbaseSpanType = RegisteredSpanType("couchbase")
 	// RabbitMQ client span
 	RabbitMQSpanType = RegisteredSpanType("rabbitmq")
 	// Azure function span
@@ -98,6 +100,8 @@ func (st RegisteredSpanType) extractData(span *spanS) typedSpanData {
 		return newMongoDBSpanData(span)
 	case PostgreSQLSpanType:
 		return newPostgreSQLSpanData(span)
+	case CouchbaseSpanType:
+		return newCouchbaseSpanData(span)
 	case MySQLSpanType:
 		return newMySQLSpanData(span)
 	case RedisSpanType:
@@ -249,6 +253,14 @@ func (st RegisteredSpanType) TagsNames() map[string]struct{} {
 			"pg.host":  yes,
 			"pg.port":  yes,
 			"pg.error": yes,
+		}
+	case CouchbaseSpanType:
+		return map[string]struct{}{
+			"couchbase.bucket":   yes,
+			"couchbase.hostname": yes,
+			"couchbase.type":     yes,
+			"couchbase.sql":      yes,
+			"couchbase.error":    yes,
 		}
 	case MySQLSpanType:
 		return map[string]struct{}{
@@ -1488,6 +1500,54 @@ func newPostgreSQLSpanTags(span *spanS) PostgreSQLSpanTags {
 		case "pg.user":
 			readStringTag(&tags.User, v)
 		case "pg.error":
+			readStringTag(&tags.Error, v)
+		}
+	}
+	return tags
+}
+
+// CouchbaseSpanData represents the `data` section of a Couchbase client span
+type CouchbaseSpanData struct {
+	SpanData
+	Tags CouchbaseSpanTags `json:"couchbase"`
+}
+
+// newCouchbaseSpanData initializes a new Couchbase client span data from tracer span
+func newCouchbaseSpanData(span *spanS) CouchbaseSpanData {
+	return CouchbaseSpanData{
+		SpanData: NewSpanData(span, CouchbaseSpanType),
+		Tags:     newCouchbaseSpanTags(span),
+	}
+}
+
+// Kind returns the span kind for a Couchbase client span
+func (c CouchbaseSpanData) Kind() SpanKind {
+	return ExitSpanKind
+}
+
+// CouchbaseSpanTags contains fields within the `data.couchbase` section of an OT span document
+type CouchbaseSpanTags struct {
+	Bucket string `json:"bucket"`
+	Host   string `json:"hostname"`
+	Type   string `json:"type"`
+	SQL    string `json:"sql"`
+
+	Error string `json:"error,omitempty"`
+}
+
+func newCouchbaseSpanTags(span *spanS) CouchbaseSpanTags {
+	var tags CouchbaseSpanTags
+	for k, v := range span.Tags {
+		switch k {
+		case "couchbase.bucket":
+			readStringTag(&tags.Bucket, v)
+		case "couchbase.hostname":
+			readStringTag(&tags.Host, v)
+		case "couchbase.type":
+			readStringTag(&tags.Type, v)
+		case "couchbase.sql":
+			readStringTag(&tags.SQL, v)
+		case "couchbase.error":
 			readStringTag(&tags.Error, v)
 		}
 	}
