@@ -31,7 +31,6 @@ type Span struct {
 	noTracingNeeded bool
 }
 
-// RequestSpan belongs to the Tracer interface.
 func (t *Tracer) RequestSpan(parentContext gocb.RequestSpanContext, operationName string) gocb.RequestSpan {
 	fmt.Println("Span RequestSpan", operationName)
 
@@ -110,6 +109,7 @@ func (s *Span) SetAttribute(key string, value interface{}) {
 
 		bm := s.tracer.cluster.Buckets()
 		bs, _ := bm.GetBucket(bucketName, &gocb.GetBucketOptions{})
+		bucketTypeLookup[bucketName] = string(bs.BucketType)
 		s.wrapped.SetTag("couchbase.type", bs.BucketType)
 		s.wrapped.SetTag("couchbase.bucket", value)
 
@@ -125,16 +125,7 @@ func (s *Span) SetAttribute(key string, value interface{}) {
 
 }
 
-func newInstanaTracer(s instana.TracerLogger, dsn string) requestTracer {
-	return &Tracer{
-		sensor: s,
-		connDetails: instana.DbConnDetails{
-			RawString:    dsn,
-			DatabaseName: string(instana.CouchbaseSpanType),
-		},
-	}
-}
-
+// wrapper for gocb.Connect - it will return an instrumented *gocb.Cluster instance
 func InstrumentAndConnect(s instana.TracerLogger, connStr string, opts gocb.ClusterOptions) (*gocb.Cluster, error) {
 	// create a new instana tracer
 	t := newInstanaTracer(s, connStr)
@@ -152,6 +143,7 @@ func InstrumentAndConnect(s instana.TracerLogger, connStr string, opts gocb.Clus
 	return cluster, nil
 }
 
+// Getting parent span from current context - users need to pass this parent span to the options (eg : gocb.QueryOptions)
 func GetParentSpanFromContext(ctx context.Context) *Span {
 	s, ok := instana.SpanFromContext(ctx)
 
@@ -167,6 +159,20 @@ func GetParentSpanFromContext(ctx context.Context) *Span {
 
 // helper functions
 
+// creates a new instana tracer instance
+func newInstanaTracer(s instana.TracerLogger, dsn string) requestTracer {
+	return &Tracer{
+		sensor: s,
+		connDetails: instana.DbConnDetails{
+			RawString:    dsn,
+			DatabaseName: string(instana.CouchbaseSpanType),
+		},
+	}
+
+}
+
+// gocb.RequestTracer traces a lot of operations, we don't need that much tracing happen
+// Add any operation here to skip the tracing.
 func isOperationNameInNotTracedList(operationName string) bool {
 	if strings.HasPrefix(operationName, "CMD") {
 		return true
