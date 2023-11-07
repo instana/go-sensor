@@ -11,9 +11,11 @@ import (
 	"github.com/opentracing/opentracing-go"
 )
 
-type RequestTracer interface {
+var bucketTypeLookup map[string]string
+
+type requestTracer interface {
 	gocb.RequestTracer
-	WrapCluster(cluster *gocb.Cluster)
+	wrapCluster(cluster *gocb.Cluster)
 }
 
 type Tracer struct {
@@ -31,9 +33,9 @@ type Span struct {
 
 // RequestSpan belongs to the Tracer interface.
 func (t *Tracer) RequestSpan(parentContext gocb.RequestSpanContext, operationName string) gocb.RequestSpan {
-	fmt.Println("Span RequestSpan", parentContext, operationName)
+	fmt.Println("Span RequestSpan", operationName)
 
-	if operationName == "manager_bucket_create_bucket" {
+	if isOperationNameInNotTracedList(operationName) {
 		return &Span{
 			noTracingNeeded: true,
 		}
@@ -45,8 +47,8 @@ func (t *Tracer) RequestSpan(parentContext gocb.RequestSpanContext, operationNam
 		ctx = context
 	}
 
-	s, dbKey := instana.StartSQLSpan(ctx, t.connDetails, operationName, t.sensor)
-	s.SetBaggageItem("dbKey", dbKey)
+	s, _ := instana.StartSQLSpan(ctx, t.connDetails, operationName, t.sensor)
+	s.SetTag("couchbase.sql", operationName)
 
 	return &Span{
 		wrapped: s,
@@ -55,7 +57,7 @@ func (t *Tracer) RequestSpan(parentContext gocb.RequestSpanContext, operationNam
 	}
 }
 
-func (t *Tracer) WrapCluster(cluster *gocb.Cluster) {
+func (t *Tracer) wrapCluster(cluster *gocb.Cluster) {
 	t.cluster = cluster
 }
 
@@ -63,7 +65,7 @@ func (s *Span) End() {
 	if s != nil && s.wrapped != nil {
 		s.wrapped.Finish()
 	}
-	fmt.Println("Span end!")
+	// fmt.Println("Span end!")
 
 }
 
@@ -71,7 +73,7 @@ func (s *Span) Context() gocb.RequestSpanContext {
 	if s == nil {
 		return nil
 	}
-	fmt.Println("Span Context!")
+	// fmt.Println("Span Context!")
 	return s.ctx
 }
 
@@ -79,7 +81,7 @@ func (s *Span) AddEvent(name string, timestamp time.Time) {
 	if s == nil {
 		return
 	}
-	fmt.Println("Span AddEvent!", name, timestamp)
+	// fmt.Println("Span AddEvent!", name, timestamp)
 	s.SetAttribute(name, timestamp)
 }
 
@@ -95,10 +97,22 @@ func (s *Span) SetAttribute(key string, value interface{}) {
 
 	switch key {
 	case "db.name":
+		bucketName := value.(string)
+		if bucketTypeLookup == nil {
+			bucketTypeLookup = make(map[string]string)
+		}
+
+		if bucketType, ok := bucketTypeLookup[bucketName]; ok {
+			s.wrapped.SetTag("couchbase.type", bucketType)
+			s.wrapped.SetTag("couchbase.bucket", bucketName)
+			break
+		}
+
 		bm := s.tracer.cluster.Buckets()
-		bs, _ := bm.GetBucket(value.(string), &gocb.GetBucketOptions{})
+		bs, _ := bm.GetBucket(bucketName, &gocb.GetBucketOptions{})
 		s.wrapped.SetTag("couchbase.type", bs.BucketType)
 		s.wrapped.SetTag("couchbase.bucket", value)
+
 	case "db.statement":
 		s.wrapped.SetTag("couchbase.sql", value)
 	case "db.operation":
@@ -111,7 +125,7 @@ func (s *Span) SetAttribute(key string, value interface{}) {
 
 }
 
-func NewTracer(s instana.TracerLogger, dsn string) RequestTracer {
+func newInstanaTracer(s instana.TracerLogger, dsn string) requestTracer {
 	return &Tracer{
 		sensor: s,
 		connDetails: instana.DbConnDetails{
@@ -119,6 +133,23 @@ func NewTracer(s instana.TracerLogger, dsn string) RequestTracer {
 			DatabaseName: string(instana.CouchbaseSpanType),
 		},
 	}
+}
+
+func InstrumentAndConnect(s instana.TracerLogger, connStr string, opts gocb.ClusterOptions) (*gocb.Cluster, error) {
+	// create a new instana tracer
+	t := newInstanaTracer(s, connStr)
+	opts.Tracer = t // adding the instana tracer to couchbase connection options
+
+	cluster, err := gocb.Connect(connStr, opts)
+
+	if err != nil {
+		return nil, err
+	}
+
+	// wrapping the connected cluster in tracer
+	t.wrapCluster(cluster)
+
+	return cluster, nil
 }
 
 func GetParentSpanFromContext(ctx context.Context) *Span {
@@ -132,4 +163,25 @@ func GetParentSpanFromContext(ctx context.Context) *Span {
 		wrapped: s,
 		ctx:     ctx,
 	}
+}
+
+// helper functions
+
+func isOperationNameInNotTracedList(operationName string) bool {
+	if strings.HasPrefix(operationName, "CMD") {
+		return true
+	}
+
+	if operationName == "dispatch_to_server" || operationName == "request_encoding" {
+		return true
+	}
+
+	// manager_bucket_create_bucket operation can't be traced because we need to call
+	// this method to fetch the bucket type internally.
+	// If we trace this call, it will create circular calls(dead lock).
+	if operationName == "manager_bucket_create_bucket" {
+		return true
+	}
+
+	return false
 }

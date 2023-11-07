@@ -69,20 +69,15 @@ func testCouchbase(ctx context.Context) error {
 
 	// For a secure cluster connection, use `couchbases://<your-cluster-ip>` instead.
 
-	t := instagocb.NewTracer(s, dsn)
-	cluster, err := gocb.Connect(dsn, gocb.ClusterOptions{
+	cluster, err := instagocb.InstrumentAndConnect(s, dsn, gocb.ClusterOptions{
 		Authenticator: gocb.PasswordAuthenticator{
 			Username: username,
 			Password: password,
 		},
-		Tracer: t,
 	})
 	if err != nil {
 		return err
 	}
-
-	// wrapping the connected cluster in tracer
-	t.WrapCluster(cluster)
 
 	bucket := cluster.Bucket(bucketName)
 
