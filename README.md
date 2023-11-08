@@ -1,8 +1,5 @@
 # IBM Instana Go Tracer
 
-<!-- ![Instana, an IBM company](https://user-images.githubusercontent.com/203793/135623131-0babc5b4-7599-4511-8bf0-ce05922de8a3.png) -->
-[<img src="https://user-images.githubusercontent.com/203793/135623131-0babc5b4-7599-4511-8bf0-ce05922de8a3.png" width="410"/>](135623131-0babc5b4-7599-4511-8bf0-ce05922de8a3.png)
-
 [![Build Status](https://circleci.com/gh/instana/go-sensor/tree/main.svg?style=svg)](https://circleci.com/gh/instana/go-sensor/tree/main)
 [![PkgGoDev](https://pkg.go.dev/badge/github.com/instana/go-sensor)][pkg.go.dev]
 [![OpenTracing](https://img.shields.io/badge/OpenTracing-enabled-blue.svg)](http://opentracing.io)
