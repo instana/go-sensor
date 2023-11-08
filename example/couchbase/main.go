@@ -1,3 +1,5 @@
+// (c) Copyright IBM Corp. 2022
+
 package main
 
 import (

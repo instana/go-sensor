@@ -1,3 +1,5 @@
+// (c) Copyright IBM Corp. 2023
+
 package instagocb
 
 import (
