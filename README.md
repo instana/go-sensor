@@ -187,7 +187,7 @@ Let's quickly summarize what we have seen so far:
 With this knowledge it's already possible to make your Go application traceable by our SDK.
 But there is much more you can do to enhance tracing for your application.
 
-In total, the Go tracer offers means to trace the following standard Go library features:
+The basic functionality covers tracing for the following standard Go features:
 
 1. HTTP incoming requests
 1. HTTP outgoing requests
