@@ -1,122 +1,206 @@
-# Instana Go Collector
+# IBM Instana Go Tracer
 
-![Instana, an IBM company](https://user-images.githubusercontent.com/203793/135623131-0babc5b4-7599-4511-8bf0-ce05922de8a3.png)
-
-[![Build Status](https://circleci.com/gh/instana/go-sensor/tree/master.svg?style=svg)](https://circleci.com/gh/instana/go-sensor/tree/main)
+[![Build Status](https://circleci.com/gh/instana/go-sensor/tree/main.svg?style=svg)](https://circleci.com/gh/instana/go-sensor/tree/main)
 [![PkgGoDev](https://pkg.go.dev/badge/github.com/instana/go-sensor)][pkg.go.dev]
 [![OpenTracing](https://img.shields.io/badge/OpenTracing-enabled-blue.svg)](http://opentracing.io)
 [![Go Report Card](https://goreportcard.com/badge/github.com/instana/go-sensor)](https://goreportcard.com/report/github.com/instana/go-sensor)
 
-The Go Collector is a runtime metrics collector, code execution tracer and profiler for applications and services written in Go. This module
-is a part of [Instana](https://instana.com) APM solution.
+The IBM Instana Go Tracer is an SDK that collects traces, metrics, logs and provides profiling for Go applications. The tracer is part of the [IBM Instana Observability](https://www.ibm.com/products/instana) tool set.
 
-## Dependency
-- Since version 1.47 the Go Collector requires Go version 1.13 or later.
-- Since version 1.53.0, the Go Collector uses fsm v1.0.1 internally. Customers using fsm version prior to v1 in their projects may face compilation issues and will need to update the fsm version to v1.
+## Compatibility
+
+|Tracer Version | Go version |
+|-----|-----|
+|Up to v1.46.0|v1.9.0 and higher|
+|v1.47.0 and higher|v1.13.0 and higher|
+
+> [!NOTE]
+> Make sure to always use the latest version of the tracer, as it provides new features, improvements, security updates and fixes.
+
+> [!IMPORTANT]
+> Since v1.53.0, the Go Tracer uses fsm v1.0.1 internally. Customers using fsm prior to v1 in their projects will need to update it to v1.
 
 ## Installation
 
-To add Instana Go Collector to your service run:
+To add the tracer to your project, run:
 
 ```bash
-$ go get github.com/instana/go-sensor
+go get -u github.com/instana/go-sensor@latest
 ```
 
-You might also consider installing [supplemental modules](https://www.ibm.com/docs/en/obi/current?topic=technologies-monitoring-go#supported-frameworks-and-libraries)
-that provide instrumentation for most popular 3rd-party packages.
-
-Please refer to [Instana Go Collector documentation][docs.installation] for further details on how to activate Go Collector and use it to
-instrument your application code.
-
-## Configuration
-
-The Go Collector accepts both configuration from within the application code and via environment variables. The values provided via enironment
-variables take precedence. In case is no specific configuration provided, the values returned by
-[instana.DefaultOptions()][instana.DefaultOptions] will be used.
-
-Please refer to [Go Collector Configuration page][docs.configuration] for detailed instructions. There is also the
-[Go Collector How To page][docs.howto.configuration] that covers the most common configuration use cases.
+> [!NOTE]
+> As a good practice, add this command to your CI pipeline or your automated tool before building the application to keep the tracer up to date.
 
 ## Usage
 
-In order to trace the code execution, a few minor changes to your app's source code is needed. Please check the [examples section](#examples)
-and the [Go Collector How To guide][docs.howto.instrumentation] to learn about common instrumentation patterns.
+### Initial Setup
 
-## Features
+Once the tracer is added to the project, import the package into the entrypoint file of your application:
 
-### Runtime metrics collection
+```go
+import (
+  ...
+  instana "github.com/instana/go-sensor"
+)
+```
 
-Once [initialized](https://www.ibm.com/docs/en/obi/current?topic=go-collector-common-operations#how-to-initialize-go-collector), the Go Collector starts automatically
-collecting and sending the following runtime metrics to Instana in background:
+Create a reference to the collector and initialize it with a service name:
 
-* Memory usage
-* Heap usage
-* GC activity
-* Goroutines
+```go
+var (
+  ...
+  col instana.TracerLogger
+)
 
-### Code execution tracing
+func init() {
+  ...
+  col = instana.InitCollector(&instana.Options{
+    Service: "My app",
+  })
+}
+```
 
-Instana Go Collector provides an API to [instrument][docs.howto.instrumentation] function and method calls from within the application code
-to trace its execution.
+> [!NOTE]
+> The tracer expects the Instana Agent to be up and running in the default port 42699. You can change the port with the environment variable ``INSTANA_AGENT_PORT``.
 
-The core `github.com/instana/go-sensor` package is shipped with instrumentation wrappers for the standard library, including HTTP client and
-server, as well as SQL database drivers compatible with `database/sql`. There are also supplemental
-[instrumentation modules](https://www.ibm.com/docs/en/obi/current?topic=technologies-monitoring-go#supported-frameworks-and-libraries) provide code wrappers to instrument
-the most popular 3rd-party libraries.
+> [!NOTE]
+> For non default options, like the Agent host and port, the tracer can be configured either via SDK options, environment variables or Agent options.
 
-Please check the [examples section](#examples) and the [Go Collector How To guide][docs.howto.instrumentation] to learn about common
-instrumentation patterns.
+### Collecting Metrics
 
-#### OpenTracing
+Once the collector has been initialized with `instana.InitCollector`, application metrics such as memory, CPU consumption, active goroutine count etc will be automatically collected and reported to the Agent without further actions or configurations to the SDK.
+This data is then already available in the dashboard.
 
-Instana Go Collector provides an interface compatible with [`github.com/opentracing/opentracing-go`](https://github.com/opentracing/opentracing-go) and thus can be used as a global tracer. However, the recommended approach is to use the Instana wrapper packages/functions [provided](./instrumentation) in the library. They set up a lot of semantic information which helps Instana get the best picture of the application possible. Sending proper tags is especially important when it comes to correlating calls to infrastructure and since they are strings mostly, there is a large room for making a mistake.
+### Tracing Calls
 
-The Go Collector will remap OpenTracing HTTP headers into Instana headers, so parallel use with some other OpenTracing model is not possible. The Instana tracer is based on the OpenTracing Go basictracer with necessary modifications to map to the Instana tracing model.
+Let's collect traces of calls received by an HTTP server.
 
-### Trace continuation and propagation
+Before any changes, your code should look something like this:
 
-Instana Go Collector ensures that application trace context will continued and propagated beyond the service boundaries using various
-methods, depending on the technology being used. Alongside with Instana-specific HTTP headers or message attributes, a number of open
-standards are supported, such as W3C Trace Context and OpenTelemetry.
+```go
+// endpointHandler is the standard http.Handler function
+http.HandleFunc("/endpoint", endpointHandler)
 
-#### W3C Trace Context & OpenTelemetry
+log.Fatal(http.ListenAndServe(":9090", nil))
+```
 
-The instrumentation wrappers provided with Go Collector automatically inject and extract trace context provided via W3C Trace Context HTTP
-headers.
+Wrap the `endpointHandler` function with `instana.TracingHandlerFunc`. Now your code should look like this:
 
-### Continuous profiling
+```go
+// endpointHandler is now wrapped by `instana.TracingHandlerFunc`
+http.HandleFunc("/endpoint", instana.TracingHandlerFunc(col, "/endpoint", endpointHandler))
 
-[Instana AutoProfile™][docs.autoprofile] generates and reports process profiles to Instana. Unlike development-time and on-demand profilers,
-where a user must manually initiate profiling, AutoProfile™ automatically schedules and continuously performs profiling appropriate for
-critical production environments.
+log.Fatal(http.ListenAndServe(":9090", nil))
+```
 
-Please refer to the [Instana Go Collector docs](https://www.ibm.com/docs/en/obi/current?topic=go-collector-common-operations#instana-autoprofile%E2%84%A2) to learn how to activate and
-use continuous profiling for your applications and services.
+When running the application, every time `/endpoint` is called, the tracer will collect this data and send it to the Instana Agent.
+You can monitor traces to this endpoint in the Instana UI.
 
-### Sending custom events
+### Profiling
 
-The Go Collector, be it instantiated explicitly or implicitly through the tracer, provides a simple wrapper API to send events to Instana as described in [its documentation](https://www.ibm.com/docs/en/obi/current?topic=integrations-sdks-apis).
+Unlike metrics, profiling needs to be enabled with the `EnableAutoProfile` option, as seen here:
 
-To learn more, see the [Events API](./EventAPI.md) document in this repository.
+```go
+col = instana.InitCollector(&instana.Options{
+  Service: "My app",
+  EnableAutoProfile: true,
+})
+```
 
-## Examples
+You should be able to see your application profiling in the Instana UI under Analytics/Profiles.
 
-Following examples are included in the `example` folder:
+### Logging
 
-* [Greeter](./example/http-database-greeter) - an instrumented HTTP server that queries a database
-* [Doubler](./example/kafka-producer-consumer) - an instrumented Kafka processor, that consumes and produces messages
-* [Event](./example/event) - Demonstrates usage of the Events API
-* [Autoprofile](./example/autoprofile) - Demonstrates usage of the AutoProfile™
-* [OpenTracing](./example/opentracing) - an example of usage of Instana tracer in an app instrumented with OpenTracing
-* [gRPC](./example/grpc-client-server) - an example of usage of Instana tracer in an app instrumented with gRPC
-* [Gin](./example/gin) - an example of usage of Instana tracer instrumenting a [`Gin`](github.com/gin-gonic/gin) application
-* [httprouter](./example/httprouter) - an example of usage of Instana tracer instrumenting a [`github.com/julienschmidt/httprouter`](https://github.com/julienschmidt/httprouter) router
+In terms of logging, the SDK provides two distinct logging features:
 
-For more examples please consult the [godoc][godoc] and the [Go Collector How To page](https://www.ibm.com/docs/en/obi/current?topic=go-collector-common-operations).
+1. Traditional logging, that is, logs reported to the standard output, usually used for debugging purposes
+1. Instana logs, a feature that allows customers to report logs to the dashboard under Analytics/Logs
 
-## Filing Issues
+#### Traditional Logging
 
-If something is not working as expected or you have a question, instead of opening an issue in this repository, please open a ticket at [Instana Support portal](https://support.instana.com/hc/requests/new) instead.
+Many logs are provided by the SDK, usually prefixed with "INSTANA" and are useful to understand what the tracer is doing underneath. It can also be used for debugging and troubleshoot reasons.
+Customers can also provide logs by calling one of the following: [Collector.Info()](https://pkg.go.dev/github.com/instana/go-sensor#Collector.Info), [Collector.Warn()](https://pkg.go.dev/github.com/instana/go-sensor#Collector.Warn), [Collector.Error()](https://pkg.go.dev/github.com/instana/go-sensor#Collector.Error), [Collector.Debug()](https://pkg.go.dev/github.com/instana/go-sensor#Collector.Debug). You can setup the log level via options or the `INSTANA_LOG_LEVEL` environment variable.
+
+You can find detailed information in the [Instana documentation](https://www.ibm.com/docs/en/instana-observability/current?topic=technologies-monitoring-go#tracers-logs).
+
+#### Instana Logs
+
+Instana Logs are spans of the type `log.go` that are rendered in a special format in the dashboard.
+You can create logs and report them to the agent or attach them as children of an existing span.
+
+The code snippet below shows how to create logs and send them to the agent:
+
+```go
+col := instana.InitCollector(&instana.Options{
+  Service: "My Go App",
+})
+
+col.StartSpan("log.go", []ot.StartSpanOption{
+  ot.Tags{
+    "log.level":   "error", // available levels: info, warn, error, debug
+    "log.message": "error from log.go span",
+  },
+}...).Finish() // make sure to "finish" the span, so it's sent to the agent
+```
+
+This log can then be visualized in the dashboard under Analytics/Logs. You can add a filter by service name. In our example, the service name is "My Go App".
+
+### Complete Example
+
+[Basic Usage](./example/basic_usage/main.go)
+```go
+package main
+
+import (
+  "log"
+  "net/http"
+
+  instana "github.com/instana/go-sensor"
+)
+
+func main() {
+  col := instana.InitCollector(&instana.Options{
+    Service:           "Basic Usage",
+    EnableAutoProfile: true,
+  })
+
+  http.HandleFunc("/endpoint", instana.TracingHandlerFunc(col, "/endpoint", func(w http.ResponseWriter, r *http.Request) {
+    w.WriteHeader(http.StatusOK)
+  }))
+
+  log.Fatal(http.ListenAndServe(":7070", nil))
+}
+```
+
+### Wrapping up
+
+Let's quickly summarize what we have seen so far:
+
+1. We learned how to install, import and initialize the Instana Go Tracer.
+1. Once the tracer is initialized, application metrics are collected out of the box.
+1. Application profiling can be enabled via the `EnableAutoProfile` option.
+1. Tracing incoming HTTP requests by wrapping the Go standard library `http.Handler` with `instana.TracingHandlerFunc`.
+
+With this knowledge it's already possible to make your Go application traceable by our SDK.
+But there is much more you can do to enhance tracing for your application.
+
+The basic functionality covers tracing for the following standard Go features:
+
+1. HTTP incoming requests
+1. HTTP outgoing requests
+1. SQL drivers
+
+As we already covered HTTP incoming requests, we suggest that you understand how to collect data from HTTP outgoing requests and SQL driver databases.
+
+Another interesting feature is the usage of additional packages located under [instrumentation](./instrumentation/). Each of these packages provide tracing for specific Go packages like the AWS SDK, Gorm and Fiber.
+
+## What's Next
+
+1. [Tracer Options](docs/options.md)
+1. [Tracing HTTP Outgoing Requests](docs/roundtripper.md)
+1. [Tracing SQL Driver Databases](docs/sql.md)
+1. [Tracing Other Go Packages](docs/other_packages.md)
+1. [Instrumenting Code Manually](docs/manual_instrumentation.md)
 
 <!-- Links section -->
 
