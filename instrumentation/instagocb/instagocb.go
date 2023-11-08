@@ -9,6 +9,8 @@ import (
 	"github.com/couchbase/gocb/v2"
 	instana "github.com/instana/go-sensor"
 	"github.com/opentracing/opentracing-go"
+	"github.com/opentracing/opentracing-go/ext"
+	otlog "github.com/opentracing/opentracing-go/log"
 )
 
 var bucketTypeLookup map[string]string
@@ -87,7 +89,6 @@ func (is *InstanaScope) Query(statement string, opts *gocb.QueryOptions) (*gocb.
 	span.(*Span).err = err
 
 	defer span.End()
-	fmt.Println(">>> FINISHED SPAN")
 
 	return res, err
 }
@@ -145,13 +146,13 @@ func (t *Tracer) wrapCluster(cluster Cluster) {
 func (s *Span) End() {
 	// ignore original query span
 	if s.operationType == "query" {
-		fmt.Println(">>> SHOULD BE HERE ONCE")
 		return
 	}
 
 	if s.err != nil {
-		fmt.Println(">>> SHOULD COLLECT ERROR ONCE:", s.err)
 		s.wrapped.SetTag("couchbase.error", s.err.Error())
+		s.wrapped.SetTag(string(ext.Error), s.err.Error())
+		s.wrapped.LogFields(otlog.Object("error", s.err.Error()))
 	}
 
 	if s != nil && s.wrapped != nil {
