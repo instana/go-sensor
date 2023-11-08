@@ -29,7 +29,7 @@ col := instana.InitCollector(&instana.Options{
 
 Then, we need to wrap the current Transport (if any) with `instana.RoundTripper`.
 If no Transport is provided, simply pass `nil` as the second argument.
-The `instana.RoundTripper` wrapper will intercept relevant information from the HTTP request, such as URL, methods and so on. It will then collect them to later be sent to the Agent.
+The `instana.RoundTripper` wrapper will intercept the relevant information from the HTTP request, such as URL, methods and so on. It will then collect them and send to the Agent periodically.
 
 ```go
 // Wrap the original http.Client transport with instana.RoundTripper().

@@ -1,13 +1,13 @@
 ## Instrumenting Code Manually
 
-The IBM Instana Go Tracer is built on top of the Opentracing SDK.
+The IBM Instana Go Tracer is built on top of the [Opentracing SDK](https://github.com/opentracing/opentracing-go).
 In practical terms this means that we provide concrete implementations for Opentracing's tracer, span interfaces and other required implementations to fulfill the SDK.
 
 All these concrete implementations are publicly available and can be used by anyone.
 
 The main difference between customers creating their own traces and using our SDK is that we encapsulate all the boilerplate code and data collection logic within the tracer and additional packages instrumentation for your convenience.
 
-However, customers could want to create custom spans or provide extra tags with our SDK.
+However, customers can extend it to create custom spans or provide extra tags with our SDK.
 
 This section is dedicated to explore the creation of custom spans to be sent to the Instana Agent.
 
@@ -61,7 +61,7 @@ You can also notice the usage of Opentracing's `ext.SpanKindRPCServer` to define
 
 ### Correlating Spans
 
-If you want to have a combination between spans, that is, multiple spans correlated to each other to form a more elaborate trace, you can use the method `ot.ChildOf()` as one of the options for child spans.
+If you wish to define a relation for a span with respect to another span, so that multiple spans can be correlated to each other to form a more elaborate trace, you can use the method `ot.ChildOf()` as one of the options for child spans.
 
 ```go
 package main

@@ -1,6 +1,6 @@
 ## Tracing SQL Driver Databases
 
-The tracer provides means to trace database calls made trough the Go standard library, that is for drivers compliant with the [database/sql/driver package](https://pkg.go.dev/database/sql/driver@go1.21.3).
+The tracer provides means to trace database calls made through the Go standard library, for drivers compliant with the [database/sql/driver package](https://pkg.go.dev/database/sql/driver@go1.21.3).
 
 The tracer is able to auto detect popular databases such as Postgres and MySQL, but will still provide more generic database spans to every driver that fulfills the Go standard library.
 

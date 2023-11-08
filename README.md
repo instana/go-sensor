@@ -69,12 +69,12 @@ func init() {
 > [!NOTE]
 > For non default options, like the Agent host and port, the tracer can be configured either via SDK options, environment variables or Agent options.
 
-### Metrics
+### Collecting Metrics
 
-Once the collector has been initialized with `instana.InitCollector`, application metrics such as memory and CPU consumption will be automatically collected and reported to the Agent without further actions or configurations to the SDK.
+Once the collector has been initialized with `instana.InitCollector`, application metrics such as memory, CPU consumption, active goroutine count etc will be automatically collected and reported to the Agent without further actions or configurations to the SDK.
 This data is then already available in the dashboard.
 
-### Tracing
+### Tracing Calls
 
 Let's collect traces of calls received by an HTTP server.
 
@@ -180,7 +180,7 @@ func main() {
 Let's quickly summarize what we have seen so far:
 
 1. We learned how to install, import and initialize the Instana Go Tracer.
-1. Once the tracer is initialized application metrics are collected out of the box.
+1. Once the tracer is initialized, application metrics are collected out of the box.
 1. Application profiling can be enabled via the `EnableAutoProfile` option.
 1. Tracing incoming HTTP requests by wrapping the Go standard library `http.Handler` with `instana.TracingHandlerFunc`.
 
