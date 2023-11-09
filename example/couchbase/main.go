@@ -1,4 +1,4 @@
-// (c) Copyright IBM Corp. 2022
+// (c) Copyright IBM Corp. 2023
 
 package main
 
@@ -71,7 +71,7 @@ func testCouchbase(ctx context.Context) error {
 
 	// For a secure cluster connection, use `couchbases://<your-cluster-ip>` instead.
 
-	cluster, err := instagocb.InstrumentAndConnect(s, dsn, gocb.ClusterOptions{
+	cluster, err := instagocb.Connect(s, dsn, gocb.ClusterOptions{
 		Authenticator: gocb.PasswordAuthenticator{
 			Username: username,
 			Password: password,
@@ -80,6 +80,10 @@ func testCouchbase(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+
+	// t1 := cluster.Transactions()
+
+	// fmt.Println(t1)
 
 	bucket := cluster.Bucket(bucketName)
 
@@ -126,7 +130,7 @@ func testCouchbase(ctx context.Context) error {
 	// Perform a N1QL Query
 	inventoryScope := bucket.Scope("inventory")
 	queryResult, err := inventoryScope.Query(
-		fmt.Sprintf("SELECT * FROM `airline1` WHERE id=10"),
+		fmt.Sprintf("SELECT * FROM `airline` WHERE id=10"),
 		&gocb.QueryOptions{Adhoc: true, ParentSpan: instagocb.GetParentSpanFromContext(ctx)},
 	)
 	if err != nil {

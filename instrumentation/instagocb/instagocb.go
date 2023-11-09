@@ -17,84 +17,6 @@ import (
 
 var bucketTypeLookup map[string]string
 
-type Cluster interface {
-	Bucket(bucketName string) Bucket
-	Buckets() *gocb.BucketManager
-	WaitUntilReady(timeout time.Duration, opts *gocb.WaitUntilReadyOptions) error
-	Close(opts *gocb.ClusterCloseOptions) error
-	Users() *gocb.UserManager
-	AnalyticsIndexes() *gocb.AnalyticsIndexManager
-	QueryIndexes() *gocb.QueryIndexManager
-	SearchIndexes() *gocb.SearchIndexManager
-	EventingFunctions() *gocb.EventingFunctionManager
-	Transactions() *gocb.Transactions
-}
-
-type InstanaCluster struct {
-	t gocb.RequestTracer
-	*gocb.Cluster
-}
-
-func (ic *InstanaCluster) Bucket(bn string) Bucket {
-	b := &InstanaBucket{
-		t:      ic.t,
-		Bucket: ic.Cluster.Bucket(bn),
-	}
-	return b
-}
-
-type Bucket interface {
-	Name() string
-	Scope(scopeName string) Scope
-	DefaultScope() *gocb.Scope
-	Collection(collectionName string) *gocb.Collection
-	DefaultCollection() *gocb.Collection
-	ViewIndexes() *gocb.ViewIndexManager
-	Collections() *gocb.CollectionManager
-	WaitUntilReady(timeout time.Duration, opts *gocb.WaitUntilReadyOptions) error
-}
-
-type InstanaBucket struct {
-	t gocb.RequestTracer
-	*gocb.Bucket
-}
-
-func (ib *InstanaBucket) Scope(s string) Scope {
-	scope := ib.Bucket.Scope(s)
-
-	return &InstanaScope{
-		t:     ib.t,
-		Scope: scope,
-	}
-}
-
-type Scope interface {
-	Name() string
-	BucketName() string
-	Collection(collectionName string) *gocb.Collection
-	Query(statement string, opts *gocb.QueryOptions) (*gocb.QueryResult, error)
-}
-
-type InstanaScope struct {
-	t gocb.RequestTracer
-	*gocb.Scope
-}
-
-func (is *InstanaScope) Query(statement string, opts *gocb.QueryOptions) (*gocb.QueryResult, error) {
-	span := is.t.RequestSpan(opts.ParentSpan.Context(), "instana-query")
-	span.SetAttribute("db.statement", statement)
-	span.SetAttribute("db.name", is.BucketName())
-	span.SetAttribute("db.couchbase.scope", is.Name())
-
-	res, err := is.Scope.Query(statement, opts)
-
-	span.(*Span).err = err
-
-	defer span.End()
-
-	return res, err
-}
-
 type requestTracer interface {
 	gocb.RequestTracer
 	wrapCluster(cluster Cluster)
@@ -146,10 +68,6 @@ func (t *Tracer) wrapCluster(cluster Cluster) {
 }
 
 func (s *Span) End() {
-	// ignore original query span
-	if s.operationType == "query" {
-		return
-	}
 
 	if s.err != nil {
 		s.wrapped.SetTag("couchbase.error", s.err.Error())
@@ -160,14 +78,12 @@ func (s *Span) End() {
 	if s != nil && s.wrapped != nil {
 		s.wrapped.Finish()
 	}
-	// fmt.Println("Span end!")
 }
 
 func (s *Span) Context() gocb.RequestSpanContext {
 	if s == nil {
 		return nil
 	}
-	// fmt.Println("Span Context!")
 	return s.ctx
 }
 
@@ -175,7 +91,6 @@ func (s *Span) AddEvent(name string, timestamp time.Time) {
 	if s == nil {
 		return
 	}
-	// fmt.Println("Span AddEvent!", name, timestamp)
 	s.SetAttribute(name, timestamp)
 }
 
@@ -183,7 +98,6 @@ func (s *Span) SetAttribute(key string, value interface{}) {
 	if s == nil {
 		return
 	}
-	fmt.Println("Span SetAttribute!", key, value)
 
 	if s.noTracingNeeded {
 		return
@@ -221,11 +135,9 @@ func (s *Span) SetAttribute(key string, value interface{}) {
 }
 
 // wrapper for gocb.Connect - it will return an instrumented *gocb.Cluster instance
-// func InstrumentAndConnect(s instana.TracerLogger, connStr string, opts gocb.ClusterOptions) (*gocb.Cluster, error) {
-func InstrumentAndConnect(s instana.TracerLogger, connStr string, opts gocb.ClusterOptions) (Cluster, error) {
+func Connect(s instana.TracerLogger, connStr string, opts gocb.ClusterOptions) (Cluster, error) {
 	// create a new instana tracer
 	t := newInstanaTracer(s, connStr)
-	opts.Tracer = t // adding the instana tracer to couchbase connection options
 
 	cluster, err := gocb.Connect(connStr, opts)
 
@@ -234,7 +146,7 @@ func InstrumentAndConnect(s instana.TracerLogger, connStr string, opts gocb.Clus
 	}
 
 	icluster := &InstanaCluster{
-		t:       t,
+		iTracer: t,
 		Cluster: cluster,
 	}
 
