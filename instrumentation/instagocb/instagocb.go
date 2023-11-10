@@ -4,8 +4,6 @@ package instagocb
 
 import (
 	"context"
-	"fmt"
-	"strings"
 	"time"
 
 	"github.com/couchbase/gocb/v2"
@@ -15,7 +13,13 @@ import (
 	otlog "github.com/opentracing/opentracing-go/log"
 )
 
-var bucketTypeLookup map[string]string
+const (
+	hostNameSpanTag   string = "couchbase.hostname"
+	bucketNameSpanTag string = "couchbase.bucket"
+	bucketTypeSpanTag string = "couchbase.type"
+	operationSpanTag  string = "couchbase.sql"
+	errorSpanTag      string = "couchbase.error"
+)
 
 type requestTracer interface {
 	gocb.RequestTracer
@@ -26,25 +30,21 @@ type Tracer struct {
 	sensor      instana.TracerLogger
 	connDetails instana.DbConnDetails
 	cluster     Cluster
+
+	// cache for bucket type
+	bucketTypeLookup map[string]string
 }
 
 type Span struct {
-	wrapped         opentracing.Span
-	ctx             context.Context
-	tracer          *Tracer
-	noTracingNeeded bool
-	operationType   string
-	err             error
+	wrapped       opentracing.Span
+	ctx           context.Context
+	tracer        *Tracer
+	operationType string
+	err           error
 }
 
 func (t *Tracer) RequestSpan(parentContext gocb.RequestSpanContext, operationType string) gocb.RequestSpan {
-	fmt.Println("Span RequestSpan", operationType)
-
-	if isOperationNameInNotTracedList(operationType) {
-		return &Span{
-			noTracingNeeded: true,
-		}
-	}
+	// fmt.Println("Span RequestSpan", operationType)
 
 	ctx := context.Background()
 
@@ -53,7 +53,6 @@ func (t *Tracer) RequestSpan(parentContext gocb.RequestSpanContext, operationTyp
 	}
 
 	s, _ := instana.StartSQLSpan(ctx, t.connDetails, operationType, t.sensor)
-	s.SetTag("couchbase.sql", operationType)
 
 	return &Span{
 		wrapped:       s,
@@ -69,8 +68,8 @@ func (t *Tracer) wrapCluster(cluster Cluster) {
 
 func (s *Span) End() {
 
-	if s.err != nil {
-		s.wrapped.SetTag("couchbase.error", s.err.Error())
+	if s != nil && s.err != nil {
+		s.wrapped.SetTag(errorSpanTag, s.err.Error())
 		s.wrapped.SetTag(string(ext.Error), s.err.Error())
 		s.wrapped.LogFields(otlog.Object("error", s.err.Error()))
 	}
@@ -99,38 +98,22 @@ func (s *Span) SetAttribute(key string, value interface{}) {
 		return
 	}
 
-	if s.noTracingNeeded {
-		return
-	}
-
 	switch key {
-	case "db.name":
+	case bucketNameSpanTag:
 		bucketName := value.(string)
-		if bucketTypeLookup == nil {
-			bucketTypeLookup = make(map[string]string)
+		if bucketType, ok := s.tracer.bucketTypeLookup[bucketName]; ok {
+			s.wrapped.SetTag(bucketTypeSpanTag, bucketType)
+			s.wrapped.SetTag(bucketNameSpanTag, bucketName)
+			return
 		}
-
-		if bucketType, ok := bucketTypeLookup[bucketName]; ok {
-			s.wrapped.SetTag("couchbase.type", bucketType)
-			s.wrapped.SetTag("couchbase.bucket", bucketName)
-			break
-		}
-
 		bm := s.tracer.cluster.Buckets()
 		bs, _ := bm.GetBucket(bucketName, &gocb.GetBucketOptions{})
-		bucketTypeLookup[bucketName] = string(bs.BucketType)
-		s.wrapped.SetTag("couchbase.type", bs.BucketType)
-		s.wrapped.SetTag("couchbase.bucket", value)
-
-	case "db.statement":
-		s.wrapped.SetTag("couchbase.sql", value)
-	case "db.operation":
-		if str, ok := value.(string); ok {
-			s.wrapped.SetTag("couchbase.sql", strings.ToUpper(str))
-		} else {
-			s.wrapped.SetTag("couchbase.sql", value)
-		}
+		s.tracer.bucketTypeLookup[bucketName] = string(bs.BucketType)
+		s.wrapped.SetTag(bucketTypeSpanTag, bs.BucketType)
+		s.wrapped.SetTag(bucketNameSpanTag, bucketName)
 	}
+
+	s.wrapped.SetTag(key, value)
 
 }
 
@@ -180,27 +163,7 @@ func newInstanaTracer(s instana.TracerLogger, dsn string) requestTracer {
 			RawString:    dsn,
 			DatabaseName: string(instana.CouchbaseSpanType),
 		},
+		bucketTypeLookup: map[string]string{},
 	}
 
-}
-
-// gocb.RequestTracer traces a lot of operations, we don't need that much tracing happen
-// Add any operation here to skip the tracing.
-func isOperationNameInNotTracedList(operationName string) bool {
-	if strings.HasPrefix(operationName, "CMD") {
-		return true
-	}
-
-	if operationName == "dispatch_to_server" || operationName == "request_encoding" {
-		return true
-	}
-
-	// manager_bucket_create_bucket operation can't be traced because we need to call
-	// this method to fetch the bucket type internally.
-	// If we trace this call, it will create circular calls(dead lock).
-	if operationName == "manager_bucket_create_bucket" {
-		return true
-	}
-
-	return false
 }

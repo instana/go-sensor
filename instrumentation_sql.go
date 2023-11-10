@@ -187,6 +187,7 @@ func redisSpan(ctx context.Context, conn DbConnDetails, query string, sensor Tra
 func couchbaseSpan(ctx context.Context, conn DbConnDetails, query string, sensor TracerLogger) ot.Span {
 	tags := ot.Tags{
 		"couchbase.hostname": conn.RawString,
+		"couchbase.sql":      query,
 	}
 
 	opts := []ot.StartSpanOption{ext.SpanKindRPCClient, tags}
