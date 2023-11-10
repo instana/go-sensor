@@ -24,9 +24,8 @@ type InstanaScope struct {
 // Query executes the query statement on the server, constraining the query to the bucket and scope.
 func (is *InstanaScope) Query(statement string, opts *gocb.QueryOptions) (*gocb.QueryResult, error) {
 	span := is.iTracer.RequestSpan(opts.ParentSpan.Context(), "query")
-	span.SetAttribute("db.statement", statement)
-	span.SetAttribute("db.name", is.BucketName())
-	span.SetAttribute("db.couchbase.scope", is.Name())
+	span.SetAttribute(operationSpanTag, statement)
+	span.SetAttribute(bucketNameSpanTag, is.BucketName())
 
 	res, err := is.Scope.Query(statement, opts)
 
