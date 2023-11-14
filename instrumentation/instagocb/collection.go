@@ -29,13 +29,13 @@ type Collection interface {
 	GetAndLock(id string, lockTime time.Duration, opts *gocb.GetAndLockOptions) (docOut *gocb.GetResult, errOut error)
 	Unlock(id string, cas gocb.Cas, opts *gocb.UnlockOptions) (errOut error)
 	Touch(id string, expiry time.Duration, opts *gocb.TouchOptions) (mutOut *gocb.MutationResult, errOut error)
-	Binary() *gocb.BinaryCollection
+	Binary() BinaryCollection
 
 	// ds
-	List(id string) *gocb.CouchbaseList
-	Map(id string) *gocb.CouchbaseMap
-	Set(id string) *gocb.CouchbaseSet
-	Queue(id string) *gocb.CouchbaseQueue
+	List(id string) CouchbaseList
+	Map(id string) CouchbaseMap
+	Set(id string) CouchbaseSet
+	Queue(id string) CouchbaseQueue
 
 	// sub doc
 	LookupIn(id string, ops []gocb.LookupInSpec, opts *gocb.LookupInOptions) (docOut *gocb.LookupInResult, errOut error)
@@ -219,6 +219,70 @@ func (ic *InstanaCollection) Touch(id string, expiry time.Duration, opts *gocb.T
 
 	defer span.End()
 	return
+}
+
+// Binary creates and returns a BinaryCollection.
+func (ic *InstanaCollection) Binary() BinaryCollection {
+	return createBinaryCollection(ic)
+}
+
+// LookupIn performs a set of subdocument lookup operations on the document identified by id.
+func (ic *InstanaCollection) LookupIn(id string, ops []gocb.LookupInSpec, opts *gocb.LookupInOptions) (docOut *gocb.LookupInResult, errOut error) {
+	span := ic.iTracer.RequestSpan(opts.ParentSpan.Context(), "LOOKUP_IN")
+	span.SetAttribute(bucketNameSpanTag, ic.Bucket().Name())
+
+	docOut, errOut = ic.Collection.LookupIn(id, ops, opts)
+
+	span.(*Span).err = errOut
+
+	defer span.End()
+	return
+}
+
+// MutateIn performs a set of subdocument mutations on the document specified by id.
+func (ic *InstanaCollection) MutateIn(id string, ops []gocb.MutateInSpec, opts *gocb.MutateInOptions) (mutOut *gocb.MutateInResult, errOut error) {
+	span := ic.iTracer.RequestSpan(opts.ParentSpan.Context(), "MUTATE_IN")
+	span.SetAttribute(bucketNameSpanTag, ic.Bucket().Name())
+
+	mutOut, errOut = ic.Collection.MutateIn(id, ops, opts)
+
+	span.(*Span).err = errOut
+
+	defer span.End()
+	return
+}
+
+// List returns a new CouchbaseList for the document specified by id.
+func (ic *InstanaCollection) List(id string) CouchbaseList {
+	return createList(ic, id)
+}
+
+// Map returns a new CouchbaseMap.
+func (ic *InstanaCollection) Map(id string) CouchbaseMap {
+	return createMap(ic, id)
+}
+
+// Set returns a new CouchbaseSet.
+func (ic *InstanaCollection) Set(id string) CouchbaseSet {
+	return createSet(ic, id)
+}
+
+// Queue returns a new CouchbaseQueue.
+func (ic *InstanaCollection) Queue(id string) CouchbaseQueue {
+	return createQueue(ic, id)
+}
+
+// Do execute one or more `BulkOp` items in parallel.
+func (ic *InstanaCollection) Do(ops []gocb.BulkOp, opts *gocb.BulkOpOptions) error {
+	span := ic.iTracer.RequestSpan(opts.ParentSpan.Context(), "BULK")
+	span.SetAttribute(bucketNameSpanTag, ic.Bucket().Name())
+
+	errOut := ic.Collection.Do(ops, opts)
+
+	span.(*Span).err = errOut
+
+	defer span.End()
+	return errOut
 }
 
 // helper functions
