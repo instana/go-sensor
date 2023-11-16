@@ -26,20 +26,9 @@ jobs:
 
             LIB_LIST=$(find ./instrumentation -name go.mod -exec dirname {} \;)
 
-            PPWWDD=$(echo "$PWD")
-
-            echo "will attempt to cover instapgx"
             cd ./instrumentation/instapgx
-            echo "will attempt to test integrtion instapgx"
-            go test -v -tags=integration ./...
-            go mod tidy || echo "failed on mod tidy"
-            go test -v -tags=integration -coverpkg=./... -cover -covermode atomic -coverprofile coverage.out ./... -json > coverage.json || echo "fail on go test"
-            cd ../../
-            echo "after attempt to cover instapgx"
-
-            echo "current directory is $PWD"
-
-            cd $PPWWDD
+            go mod tidy
+            go test -v -tags=integration -coverpkg=./... -cover -covermode atomic -coverprofile coverage.out ./... -json > coverage.json && cd -
 
             for lib in $LIB_LIST
               do cd "$lib" && go mod tidy && go test -v -coverpkg=./... -cover -covermode atomic -coverprofile coverage.out ./... -json > coverage.json && cd -;
