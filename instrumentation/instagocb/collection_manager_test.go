@@ -12,29 +12,17 @@ import (
 	instana "github.com/instana/go-sensor"
 )
 
-func TestBucketManager(t *testing.T) {
+func TestCollectionManager(t *testing.T) {
 	defer instana.ShutdownSensor()
-	recorder, ctx, cluster, a := prepare(t)
+	recorder, _, cluster, a := prepareWithBucket(t)
 
-	bucketMgr := cluster.Buckets()
+	bucket := cluster.Bucket(testBucketName)
+	cm := bucket.Collections()
 
-	bs := gocb.BucketSettings{
-		Name:                 testBucketName,
-		FlushEnabled:         true,
-		ReplicaIndexDisabled: true,
-		RAMQuotaMB:           150,
-		NumReplicas:          1,
-		BucketType:           gocb.CouchbaseBucketType,
-	}
-
-	// creation
-	err := bucketMgr.CreateBucket(gocb.CreateBucketSettings{
-		BucketSettings:         bs,
-		ConflictResolutionType: gocb.ConflictResolutionTypeSequenceNumber,
-	}, &gocb.CreateBucketOptions{
-		Context: ctx,
-	})
+	// create scope
+	err := cm.CreateScope(testScope, &gocb.CreateScopeOptions{})
 	a.NoError(err)
+
 	span := getLatestSpan(recorder)
 	a.Equal(0, span.Ec)
 	a.EqualValues(instana.ExitSpanKind, span.Kind)
@@ -44,15 +32,17 @@ func TestBucketManager(t *testing.T) {
 		Bucket: testBucketName,
 		Host:   "localhost",
 		Type:   string(gocb.CouchbaseBucketType),
-		SQL:    "CREATE_BUCKET",
+		SQL:    "CREATE_SCOPE",
 		Error:  "",
 	}, data.Tags)
 
-	// Get
-	bsRes, err := bucketMgr.GetBucket(testBucketName, &gocb.GetBucketOptions{})
+	// create collection
+	err = cm.CreateCollection(gocb.CollectionSpec{
+		Name:      testCollection,
+		ScopeName: testScope,
+	}, &gocb.CreateCollectionOptions{})
 	a.NoError(err)
-	a.Equal(bs.Name, bsRes.Name)
-	a.Equal(bs.BucketType, bsRes.BucketType)
+
 	span = getLatestSpan(recorder)
 	a.Equal(0, span.Ec)
 	a.EqualValues(instana.ExitSpanKind, span.Kind)
@@ -62,13 +52,17 @@ func TestBucketManager(t *testing.T) {
 		Bucket: testBucketName,
 		Host:   "localhost",
 		Type:   string(gocb.CouchbaseBucketType),
-		SQL:    "GET_BUCKET",
+		SQL:    "CREATE_COLLECTION",
 		Error:  "",
 	}, data.Tags)
 
-	// Flush
-	err = bucketMgr.FlushBucket(testBucketName, &gocb.FlushBucketOptions{})
+	// Drop collection
+	err = cm.DropCollection(gocb.CollectionSpec{
+		Name:      testCollection,
+		ScopeName: testScope,
+	}, &gocb.DropCollectionOptions{})
 	a.NoError(err)
+
 	span = getLatestSpan(recorder)
 	a.Equal(0, span.Ec)
 	a.EqualValues(instana.ExitSpanKind, span.Kind)
@@ -78,14 +72,14 @@ func TestBucketManager(t *testing.T) {
 		Bucket: testBucketName,
 		Host:   "localhost",
 		Type:   string(gocb.CouchbaseBucketType),
-		SQL:    "FLUSH_BUCKET",
+		SQL:    "DROP_COLLECTION",
 		Error:  "",
 	}, data.Tags)
 
-	// Update
-	bs.RAMQuotaMB = 200
-	err = bucketMgr.UpdateBucket(bs, &gocb.UpdateBucketOptions{})
+	// Drop scope
+	err = cm.DropScope(testScope, &gocb.DropScopeOptions{})
 	a.NoError(err)
+
 	span = getLatestSpan(recorder)
 	a.Equal(0, span.Ec)
 	a.EqualValues(instana.ExitSpanKind, span.Kind)
@@ -95,31 +89,12 @@ func TestBucketManager(t *testing.T) {
 		Bucket: testBucketName,
 		Host:   "localhost",
 		Type:   string(gocb.CouchbaseBucketType),
-		SQL:    "UPDATE_BUCKET",
-		Error:  "",
-	}, data.Tags)
-	bsRes, err = bucketMgr.GetBucket(testBucketName, &gocb.GetBucketOptions{})
-	a.Equal(bs.RAMQuotaMB, bsRes.RAMQuotaMB)
-	a.NoError(err)
-
-	// Drop
-	err = bucketMgr.DropBucket(testBucketName, &gocb.DropBucketOptions{})
-	a.NoError(err)
-	span = getLatestSpan(recorder)
-	a.Equal(0, span.Ec)
-	a.EqualValues(instana.ExitSpanKind, span.Kind)
-	a.IsType(instana.CouchbaseSpanData{}, span.Data)
-	data = span.Data.(instana.CouchbaseSpanData)
-	a.Equal(instana.CouchbaseSpanTags{
-		Bucket: testBucketName,
-		Host:   "localhost",
-		Type:   string(gocb.CouchbaseBucketType),
-		SQL:    "DROP_BUCKET",
+		SQL:    "DROP_SCOPE",
 		Error:  "",
 	}, data.Tags)
 
 	// Checking error
-	err = bucketMgr.DropBucket(testBucketName, &gocb.DropBucketOptions{})
+	err = cm.DropScope(testScope, &gocb.DropScopeOptions{})
 	a.Error(err)
 
 	spans := recorder.GetQueuedSpans()
@@ -131,6 +106,6 @@ func TestBucketManager(t *testing.T) {
 	a.EqualValues(instana.ExitSpanKind, span.Kind)
 	a.IsType(instana.CouchbaseSpanData{}, span.Data)
 	data = span.Data.(instana.CouchbaseSpanData)
-	a.Contains(data.Tags.Error, "bucket not found")
+	a.Contains(data.Tags.Error, "scope not found")
 
 }

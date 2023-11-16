@@ -15,7 +15,7 @@ type Bucket interface {
 	Collection(collectionName string) Collection
 	DefaultCollection() Collection
 	ViewIndexes() *gocb.ViewIndexManager
-	Collections() *gocb.CollectionManager
+	Collections() CollectionManager
 	WaitUntilReady(timeout time.Duration, opts *gocb.WaitUntilReadyOptions) error
 
 	// view query
@@ -55,6 +55,12 @@ func (ib *InstanaBucket) Collection(collectionName string) Collection {
 func (ib *InstanaBucket) DefaultCollection() Collection {
 	dc := ib.Bucket.DefaultCollection()
 	return createCollection(ib.iTracer, dc)
+}
+
+// Collections provides functions for managing collections.
+func (ib *InstanaBucket) Collections() CollectionManager {
+	cm := ib.Bucket.Collections()
+	return createCollectionManager(ib.iTracer, cm, ib.Name())
 }
 
 // helper functions

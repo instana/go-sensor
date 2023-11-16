@@ -20,7 +20,9 @@ import (
 var connStr = "couchbase://localhost"
 var username = "Administrator"
 var password = "password"
-var bucketName = "test-bucket"
+var testBucketName = "test-bucket"
+var testScope = "test-scope"
+var testCollection = "test-collection"
 
 // helpers
 
@@ -51,10 +53,33 @@ func prepare(t *testing.T) (*instana.Recorder, context.Context, instagocb.Cluste
 
 	// clearing existing bucket
 	bucketMgr := conn.Buckets()
-	_ = bucketMgr.DropBucket(bucketName, &gocb.DropBucketOptions{})
+	_ = bucketMgr.DropBucket(testBucketName, &gocb.DropBucketOptions{})
 
 	return recorder, ctx, conn, a
 
+}
+
+func prepareWithBucket(t *testing.T) (*instana.Recorder, context.Context, instagocb.Cluster, *assert.Assertions) {
+	recorder, ctx, cluster, a := prepare(t)
+
+	bs := gocb.BucketSettings{
+		Name:                 testBucketName,
+		FlushEnabled:         true,
+		ReplicaIndexDisabled: true,
+		RAMQuotaMB:           150,
+		NumReplicas:          1,
+		BucketType:           gocb.CouchbaseBucketType,
+	}
+	bucketMgr := cluster.Buckets()
+	err := bucketMgr.CreateBucket(gocb.CreateBucketSettings{
+		BucketSettings:         bs,
+		ConflictResolutionType: gocb.ConflictResolutionTypeSequenceNumber,
+	}, &gocb.CreateBucketOptions{
+		Context: ctx,
+	})
+	a.NoError(err)
+
+	return recorder, ctx, cluster, a
 }
 
 func getLatestSpan(recorder *instana.Recorder) instana.Span {

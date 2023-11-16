@@ -116,7 +116,7 @@ func (ibm *InstanaBucketManager) FlushBucket(name string, opts *gocb.FlushBucket
 
 // helper functions
 
-// createBucketManager will wrap *gocb.Scope in to InstanaBucketManager and will return it as BucketManager interface
+// createBucketManager will wrap *gocb.BucketManager in to InstanaBucketManager and will return it as BucketManager interface
 func createBucketManager(tracer gocb.RequestTracer, bm *gocb.BucketManager) BucketManager {
 	return &InstanaBucketManager{
 		iTracer:       tracer,
