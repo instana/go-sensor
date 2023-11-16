@@ -29,6 +29,10 @@ jobs:
           POSTGRES_USER: postgres
           POSTGRES_DB: postgres
           POSTGRES_PASSWORD: mysecretpassword
+      - image: couchbase/server-sandbox:7.1.1
+        ports:
+          - 8091-8094:8091-8094
+          - 11210:11210
     working_directory: /go/src/github.com/instana/go-sensor
     steps:
       - checkout
