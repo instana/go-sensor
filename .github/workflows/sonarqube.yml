@@ -29,6 +29,8 @@ jobs:
 
             echo "will attempt to cover instapgx"
             cd ./instrumentation/instapgx
+            echo "will attempt to test integrtion instapgx"
+            go test -v -tags=integration ./...
             go mod tidy || echo "failed on mod tidy"
             go test -v -tags=integration -coverpkg=./... -cover -covermode atomic -coverprofile coverage.out ./... -json > coverage.json || echo "fail on go test"
             cd ../../
