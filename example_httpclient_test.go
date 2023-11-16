@@ -14,18 +14,20 @@ import (
 
 // This example shows how to instrument an HTTP client with Instana tracing
 func Example_roundTripper() {
-	sensor := instana.NewSensor("my-http-client")
+	col := instana.InitCollector(&instana.Options{
+		Service: "my-http-client",
+	})
 
 	// Wrap the original http.Client transport with instana.RoundTripper().
 	// The http.DefaultTransport will be used if there was no transport provided.
 	client := &http.Client{
-		Transport: instana.RoundTripper(sensor, nil),
+		Transport: instana.RoundTripper(col, nil),
 	}
 
-	// Every call should start with an entry span (https://docs.instana.io/quick_start/custom_tracing/#always-start-new-traces-with-entry-spans)
+	// Every call should start with an entry span (https://www.ibm.com/docs/en/instana-observability/current?topic=tracing-best-practices#start-new-traces-with-entry-spans)
 	// Normally this would be your HTTP/GRPC/message queue request span, but here we need to create it explicitly, since an HTTP client call is
 	// an exit span. And all exit spans must have a parent entry span.
-	sp := sensor.Tracer().StartSpan("client-call")
+	sp := col.Tracer().StartSpan("client-call")
 	sp.SetTag(string(ext.SpanKind), "entry")
 
 	req, err := http.NewRequest(http.MethodGet, "https://www.instana.com", nil)
