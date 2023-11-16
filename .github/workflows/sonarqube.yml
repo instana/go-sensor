@@ -19,7 +19,6 @@ jobs:
 
             sudo systemctl start postgresql.service
 
-            docker run hello
 
             go test -v -coverpkg=./... -cover -covermode atomic -coverprofile coverage.out ./... -json > coverage.json && ls cover*
 
