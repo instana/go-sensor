@@ -21,7 +21,7 @@ integration: $(INTEGRATION_TESTS)
 	cd ../instagocb && go test -v -coverprofile cover.out -tags=integration ./...
 
 $(INTEGRATION_TESTS):
-	go test $(GOFLAGS) -tags "$@ integration" $(shell grep --exclude-dir=instapgx -lR '^// +build \($@,\)\?integration\(,$@\)\?' .)
+	go test $(GOFLAGS) -tags "$@ integration" $(shell grep --exclude-dir=instagorm --exclude-dir=instapgx -lR '^// +build \($@,\)\?integration\(,$@\)\?' .)
 
 $(LINTER):
 	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/a2bc9b7a99e3280805309d71036e8c2106853250/install.sh \
