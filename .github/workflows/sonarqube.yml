@@ -17,14 +17,17 @@ jobs:
         run: |
             #!/bin/bash
 
+            echo "starting postgres"
             sudo systemctl start postgresql.service
-
+            echo "after starting postgres"
 
             go test -v -coverpkg=./... -cover -covermode atomic -coverprofile coverage.out ./... -json > coverage.json && ls cover*
 
             LIB_LIST=$(find ./instrumentation -name go.mod -exec dirname {} \;)
 
-            cd "./instrumentation/instapgx" && go mod tidy && go test -v -tags=integration -coverpkg=./... -cover -covermode atomic -coverprofile coverage.out ./... -json > coverage.json && cd -;
+            echo "will attempt to cover instapgx"
+            cd "./instrumentation/instapgx" && go mod tidy && go test -v -tags=integration -coverpkg=./... -cover -covermode atomic -coverprofile coverage.out ./... -json > coverage.json && cd ../../;
+            echo "after attempt to cover instapgx"
 
             for lib in $LIB_LIST
               do cd "$lib" && go mod tidy && go test -v -coverpkg=./... -cover -covermode atomic -coverprofile coverage.out ./... -json > coverage.json && cd -;
