@@ -4,9 +4,11 @@ package instagocb
 
 import (
 	"context"
+	"strconv"
 	"time"
 
 	"github.com/couchbase/gocb/v2"
+	gocbconnstr "github.com/couchbase/gocbcore/v10/connstr"
 	instana "github.com/instana/go-sensor"
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
@@ -44,8 +46,6 @@ type Span struct {
 }
 
 func (t *Tracer) RequestSpan(parentContext gocb.RequestSpanContext, operationType string) gocb.RequestSpan {
-	// fmt.Println("Span RequestSpan", operationType)
-
 	ctx := context.Background()
 
 	if context, ok := parentContext.(context.Context); ok {
@@ -81,7 +81,7 @@ func (s *Span) End() {
 
 func (s *Span) Context() gocb.RequestSpanContext {
 	if s == nil {
-		return nil
+		return context.TODO()
 	}
 	return s.ctx
 }
@@ -106,11 +106,13 @@ func (s *Span) SetAttribute(key string, value interface{}) {
 			s.wrapped.SetTag(bucketNameSpanTag, bucketName)
 			return
 		}
-		bm := s.tracer.cluster.Buckets()
-		bs, _ := bm.GetBucket(bucketName, &gocb.GetBucketOptions{})
-		s.tracer.bucketTypeLookup[bucketName] = string(bs.BucketType)
-		s.wrapped.SetTag(bucketTypeSpanTag, bs.BucketType)
 		s.wrapped.SetTag(bucketNameSpanTag, bucketName)
+		bm := s.tracer.cluster.Buckets()
+		bs, err := bm.(*InstanaBucketManager).BucketManager.GetBucket(bucketName, &gocb.GetBucketOptions{})
+		if err == nil && bs != nil {
+			s.tracer.bucketTypeLookup[bucketName] = string(bs.BucketType)
+			s.wrapped.SetTag(bucketTypeSpanTag, string(bs.BucketType))
+		}
 	}
 
 	s.wrapped.SetTag(key, value)
@@ -157,10 +159,27 @@ func GetParentSpanFromContext(ctx context.Context) *Span {
 
 // creates a new instana tracer instance
 func newInstanaTracer(s instana.TracerLogger, dsn string) requestTracer {
+	var raw string
+	connSpec, err := gocbconnstr.Parse(dsn)
+
+	if err == nil {
+		for i, addr := range connSpec.Addresses {
+			if i != 0 {
+				raw += ","
+			}
+			raw += addr.Host
+			if addr.Port != -1 {
+				raw += ":" + strconv.Itoa(addr.Port)
+			}
+		}
+	} else {
+		raw = dsn
+	}
+
 	return &Tracer{
 		sensor: s,
 		connDetails: instana.DbConnDetails{
-			RawString:    dsn,
+			RawString:    raw,
 			DatabaseName: string(instana.CouchbaseSpanType),
 		},
 		bucketTypeLookup: map[string]string{},

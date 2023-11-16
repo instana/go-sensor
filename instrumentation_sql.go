@@ -258,7 +258,6 @@ func startSQLSpan(ctx context.Context, conn DbConnDetails, query string, sensor 
 		return redisSpan(ctx, conn, query, sensor), "redis"
 	case "mysql":
 		return mySQLSpan(ctx, conn, query, sensor), "mysql"
-
 	case "couchbase":
 		return couchbaseSpan(ctx, conn, query, sensor), "couchbase"
 	}
