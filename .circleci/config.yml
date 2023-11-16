@@ -47,7 +47,7 @@ jobs:
       - run:
           name: Waiting for Couchbase to be ready
           command: |
-            for i in `seq 1 10`;
+            for i in `seq 1 15`;
             do
               nc -z localhost 8091 && echo Success && exit 0
               echo -n .
