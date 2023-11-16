@@ -17,9 +17,13 @@ jobs:
         run: |
             #!/bin/bash
 
+            docker run hello
+
             go test -v -coverpkg=./... -cover -covermode atomic -coverprofile coverage.out ./... -json > coverage.json && ls cover*
 
             LIB_LIST=$(find ./instrumentation -name go.mod -exec dirname {} \;)
+
+            cd "./instrumentation/instapgx" && go mod tidy && go test -v -tags=integration -coverpkg=./... -cover -covermode atomic -coverprofile coverage.out ./... -json > coverage.json && cd -;
 
             for lib in $LIB_LIST
               do cd "$lib" && go mod tidy && go test -v -coverpkg=./... -cover -covermode atomic -coverprofile coverage.out ./... -json > coverage.json && cd -;

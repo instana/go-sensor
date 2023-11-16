@@ -18,7 +18,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-var databaseUrl = "postgres://postgres:mysecretpassword@localhost/postgres"
+// var databaseUrl = "postgres://postgres:mysecretpassword@localhost/postgres"
+var databaseUrl = "postgres://postgres@localhost/postgres"
 
 func TestMain(m *testing.M) {
 	db, err := sql.Open("postgres", databaseUrl)
