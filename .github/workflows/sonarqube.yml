@@ -19,6 +19,7 @@ jobs:
 
             echo "starting postgres"
             sudo systemctl start postgresql.service
+            sudo -u postgres psql -c "ALTER USER postgres PASSWORD 'root'"
             echo "after starting postgres"
 
             go test -v -coverpkg=./... -cover -covermode atomic -coverprofile coverage.out ./... -json > coverage.json && ls cover*
