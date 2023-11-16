@@ -18,7 +18,7 @@ endif
 
 integration: $(INTEGRATION_TESTS)
 	cd instrumentation/instapgx && go test -tags=integration
-	cd ../instagocb && go test -v -coverprofile cover.out -tags=integration ./...
+	cd instrumentation/instagocb && go test -v -coverprofile cover.out -tags=integration ./...
 
 $(INTEGRATION_TESTS):
 	go test $(GOFLAGS) -tags "$@ integration" $(shell grep --exclude-dir=instagocb --exclude-dir=instapgx -lR '^// +build \($@,\)\?integration\(,$@\)\?' .)
