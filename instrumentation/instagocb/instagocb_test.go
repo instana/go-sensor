@@ -23,8 +23,13 @@ var password = "password"
 var testBucketName = "test-bucket"
 var testScope = "test-scope"
 var testCollection = "test-collection"
+var testDocumentID string = "test-doc-id"
 
-// helpers
+// Insert Document
+type myDoc struct {
+	Foo string `json:"foo"`
+	Bar string `json:"bar"`
+}
 
 type alwaysReadyClient struct{}
 
@@ -110,4 +115,11 @@ func getLatestSpan(recorder *instana.Recorder) instana.Span {
 	span := spans[len(spans)-1]
 
 	return span
+}
+
+func getTestDocumentValue() myDoc {
+	return myDoc{
+		Foo: "test-foo",
+		Bar: "test-bar",
+	}
 }

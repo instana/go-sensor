@@ -13,10 +13,8 @@ import (
 	instana "github.com/instana/go-sensor"
 )
 
-var testDocumentID string = "test-doc-id"
-var testDocumentValue string = "test-doc-val"
-
 func TestCollection_CRUD(t *testing.T) {
+	testDocumentValue := getTestDocumentValue()
 	defer instana.ShutdownSensor()
 	recorder, _, cluster, a := prepareWithCollection(t)
 
@@ -40,7 +38,7 @@ func TestCollection_CRUD(t *testing.T) {
 	}, data.Tags)
 
 	// Get
-	var result string
+	var result myDoc
 	res, err := collection.Get(testDocumentID, &gocb.GetOptions{})
 	a.NoError(err)
 	res.Content(&result)
@@ -59,7 +57,7 @@ func TestCollection_CRUD(t *testing.T) {
 	}, data.Tags)
 
 	// Upsert
-	_, err = collection.Upsert(testDocumentID, "newValue", &gocb.UpsertOptions{})
+	_, err = collection.Upsert(testDocumentID, &myDoc{}, &gocb.UpsertOptions{})
 	a.NoError(err)
 
 	span = getLatestSpan(recorder)
@@ -209,6 +207,138 @@ func TestCollection_CRUD(t *testing.T) {
 		Host:   "localhost",
 		Type:   string(gocb.CouchbaseBucketType),
 		SQL:    "TOUCH",
+		Error:  "",
+	}, data.Tags)
+
+	// LookupIn
+	_, err = collection.LookupIn(testDocumentID, []gocb.LookupInSpec{
+		gocb.GetSpec("test", &gocb.GetSpecOptions{}),
+	}, &gocb.LookupInOptions{})
+	a.NoError(err)
+
+	span = getLatestSpan(recorder)
+	a.Equal(0, span.Ec)
+	a.EqualValues(instana.ExitSpanKind, span.Kind)
+	a.IsType(instana.CouchbaseSpanData{}, span.Data)
+	data = span.Data.(instana.CouchbaseSpanData)
+	a.Equal(instana.CouchbaseSpanTags{
+		Bucket: testBucketName,
+		Host:   "localhost",
+		Type:   string(gocb.CouchbaseBucketType),
+		SQL:    "LOOKUP_IN",
+		Error:  "",
+	}, data.Tags)
+
+	// MutateIn
+	_, err = collection.Upsert(testDocumentID, testDocumentValue, &gocb.UpsertOptions{})
+	a.NoError(err)
+	_, err = collection.MutateIn(testDocumentID, []gocb.MutateInSpec{
+		gocb.UpsertSpec("foo", "311-555-0151", &gocb.UpsertSpecOptions{}),
+	}, &gocb.MutateInOptions{})
+	a.NoError(err)
+
+	span = getLatestSpan(recorder)
+	a.Equal(0, span.Ec)
+	a.EqualValues(instana.ExitSpanKind, span.Kind)
+	a.IsType(instana.CouchbaseSpanData{}, span.Data)
+	data = span.Data.(instana.CouchbaseSpanData)
+	a.Equal(instana.CouchbaseSpanTags{
+		Bucket: testBucketName,
+		Host:   "localhost",
+		Type:   string(gocb.CouchbaseBucketType),
+		SQL:    "MUTATE_IN",
+		Error:  "",
+	}, data.Tags)
+
+	//Binary Operations
+	bc := collection.Binary()
+
+	// Append
+	_, err = bc.Append(testDocumentID, []byte{23}, &gocb.AppendOptions{})
+	a.NoError(err)
+
+	span = getLatestSpan(recorder)
+	a.Equal(0, span.Ec)
+	a.EqualValues(instana.ExitSpanKind, span.Kind)
+	a.IsType(instana.CouchbaseSpanData{}, span.Data)
+	data = span.Data.(instana.CouchbaseSpanData)
+	a.Equal(instana.CouchbaseSpanTags{
+		Bucket: testBucketName,
+		Host:   "localhost",
+		Type:   string(gocb.CouchbaseBucketType),
+		SQL:    "APPEND",
+		Error:  "",
+	}, data.Tags)
+
+	// Prepend
+	_, err = bc.Prepend(testDocumentID, []byte{23}, &gocb.PrependOptions{})
+	a.NoError(err)
+
+	span = getLatestSpan(recorder)
+	a.Equal(0, span.Ec)
+	a.EqualValues(instana.ExitSpanKind, span.Kind)
+	a.IsType(instana.CouchbaseSpanData{}, span.Data)
+	data = span.Data.(instana.CouchbaseSpanData)
+	a.Equal(instana.CouchbaseSpanTags{
+		Bucket: testBucketName,
+		Host:   "localhost",
+		Type:   string(gocb.CouchbaseBucketType),
+		SQL:    "PREPEND",
+		Error:  "",
+	}, data.Tags)
+
+	// Remove
+	_, err = collection.Remove(testDocumentID, &gocb.RemoveOptions{})
+	a.NoError(err)
+
+	span = getLatestSpan(recorder)
+	a.Equal(0, span.Ec)
+	a.EqualValues(instana.ExitSpanKind, span.Kind)
+	a.IsType(instana.CouchbaseSpanData{}, span.Data)
+	data = span.Data.(instana.CouchbaseSpanData)
+	a.Equal(instana.CouchbaseSpanTags{
+		Bucket: testBucketName,
+		Host:   "localhost",
+		Type:   string(gocb.CouchbaseBucketType),
+		SQL:    "REMOVE",
+		Error:  "",
+	}, data.Tags)
+
+	// Increment
+	_, err = bc.Increment(testDocumentID, &gocb.IncrementOptions{
+		Initial: 2,
+	})
+	a.NoError(err)
+
+	span = getLatestSpan(recorder)
+	a.Equal(0, span.Ec)
+	a.EqualValues(instana.ExitSpanKind, span.Kind)
+	a.IsType(instana.CouchbaseSpanData{}, span.Data)
+	data = span.Data.(instana.CouchbaseSpanData)
+	a.Equal(instana.CouchbaseSpanTags{
+		Bucket: testBucketName,
+		Host:   "localhost",
+		Type:   string(gocb.CouchbaseBucketType),
+		SQL:    "INCREMENT",
+		Error:  "",
+	}, data.Tags)
+
+	// Decrement
+	_, err = bc.Decrement(testDocumentID, &gocb.DecrementOptions{
+		Initial: 2,
+	})
+	a.NoError(err)
+
+	span = getLatestSpan(recorder)
+	a.Equal(0, span.Ec)
+	a.EqualValues(instana.ExitSpanKind, span.Kind)
+	a.IsType(instana.CouchbaseSpanData{}, span.Data)
+	data = span.Data.(instana.CouchbaseSpanData)
+	a.Equal(instana.CouchbaseSpanTags{
+		Bucket: testBucketName,
+		Host:   "localhost",
+		Type:   string(gocb.CouchbaseBucketType),
+		SQL:    "DECREMENT",
 		Error:  "",
 	}, data.Tags)
 
