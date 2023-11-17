@@ -56,7 +56,12 @@ func (ic *InstanaCollection) Bucket() Bucket {
 
 // Insert creates a new document in the Collection.
 func (ic *InstanaCollection) Insert(id string, val interface{}, opts *gocb.InsertOptions) (mutOut *gocb.MutationResult, errOut error) {
-	span := ic.iTracer.RequestSpan(opts.ParentSpan.Context(), "INSERT")
+	var tracectx gocb.RequestSpanContext
+	if opts.ParentSpan != nil {
+		tracectx = opts.ParentSpan.Context()
+	}
+
+	span := ic.iTracer.RequestSpan(tracectx, "INSERT")
 	span.SetAttribute(bucketNameSpanTag, ic.Bucket().Name())
 
 	// calling the original Insert
@@ -71,7 +76,12 @@ func (ic *InstanaCollection) Insert(id string, val interface{}, opts *gocb.Inser
 
 // Upsert creates a new document in the Collection if it does not exist, if it does exist then it updates it.
 func (ic *InstanaCollection) Upsert(id string, val interface{}, opts *gocb.UpsertOptions) (mutOut *gocb.MutationResult, errOut error) {
-	span := ic.iTracer.RequestSpan(opts.ParentSpan.Context(), "UPSERT")
+	var tracectx gocb.RequestSpanContext
+	if opts.ParentSpan != nil {
+		tracectx = opts.ParentSpan.Context()
+	}
+
+	span := ic.iTracer.RequestSpan(tracectx, "UPSERT")
 	span.SetAttribute(bucketNameSpanTag, ic.Bucket().Name())
 
 	// calling the original Upsert
@@ -86,7 +96,12 @@ func (ic *InstanaCollection) Upsert(id string, val interface{}, opts *gocb.Upser
 
 // Replace updates a document in the collection.
 func (ic *InstanaCollection) Replace(id string, val interface{}, opts *gocb.ReplaceOptions) (mutOut *gocb.MutationResult, errOut error) {
-	span := ic.iTracer.RequestSpan(opts.ParentSpan.Context(), "REPLACE")
+	var tracectx gocb.RequestSpanContext
+	if opts.ParentSpan != nil {
+		tracectx = opts.ParentSpan.Context()
+	}
+
+	span := ic.iTracer.RequestSpan(tracectx, "REPLACE")
 	span.SetAttribute(bucketNameSpanTag, ic.Bucket().Name())
 
 	mutOut, errOut = ic.Collection.Replace(id, val, opts)
@@ -101,7 +116,12 @@ func (ic *InstanaCollection) Replace(id string, val interface{}, opts *gocb.Repl
 // fetch, a subdocument full document fetch also fetching document expiry (when WithExpiry is set),
 // or a subdocument fetch (when Project is used).
 func (ic *InstanaCollection) Get(id string, opts *gocb.GetOptions) (docOut *gocb.GetResult, errOut error) {
-	span := ic.iTracer.RequestSpan(opts.ParentSpan.Context(), "GET")
+	var tracectx gocb.RequestSpanContext
+	if opts.ParentSpan != nil {
+		tracectx = opts.ParentSpan.Context()
+	}
+
+	span := ic.iTracer.RequestSpan(tracectx, "GET")
 	span.SetAttribute(bucketNameSpanTag, ic.Bucket().Name())
 
 	// calling the original Get
@@ -116,7 +136,12 @@ func (ic *InstanaCollection) Get(id string, opts *gocb.GetOptions) (docOut *gocb
 
 // Exists checks if a document exists for the given id.
 func (ic *InstanaCollection) Exists(id string, opts *gocb.ExistsOptions) (docOut *gocb.ExistsResult, errOut error) {
-	span := ic.iTracer.RequestSpan(opts.ParentSpan.Context(), "EXISTS")
+	var tracectx gocb.RequestSpanContext
+	if opts.ParentSpan != nil {
+		tracectx = opts.ParentSpan.Context()
+	}
+
+	span := ic.iTracer.RequestSpan(tracectx, "EXISTS")
 	span.SetAttribute(bucketNameSpanTag, ic.Bucket().Name())
 
 	docOut, errOut = ic.Collection.Exists(id, opts)
@@ -130,7 +155,12 @@ func (ic *InstanaCollection) Exists(id string, opts *gocb.ExistsOptions) (docOut
 // GetAllReplicas returns the value of a particular document from all replica servers. This will return an iterable
 // which streams results one at a time.
 func (ic *InstanaCollection) GetAllReplicas(id string, opts *gocb.GetAllReplicaOptions) (docOut *gocb.GetAllReplicasResult, errOut error) {
-	span := ic.iTracer.RequestSpan(opts.ParentSpan.Context(), "GET_ALL_REPLICAS")
+	var tracectx gocb.RequestSpanContext
+	if opts.ParentSpan != nil {
+		tracectx = opts.ParentSpan.Context()
+	}
+
+	span := ic.iTracer.RequestSpan(tracectx, "GET_ALL_REPLICAS")
 	span.SetAttribute(bucketNameSpanTag, ic.Bucket().Name())
 
 	docOut, errOut = ic.Collection.GetAllReplicas(id, opts)
@@ -143,7 +173,12 @@ func (ic *InstanaCollection) GetAllReplicas(id string, opts *gocb.GetAllReplicaO
 
 // GetAnyReplica returns the value of a particular document from a replica server.
 func (ic *InstanaCollection) GetAnyReplica(id string, opts *gocb.GetAnyReplicaOptions) (docOut *gocb.GetReplicaResult, errOut error) {
-	span := ic.iTracer.RequestSpan(opts.ParentSpan.Context(), "GET_ANY_REPLICA")
+	var tracectx gocb.RequestSpanContext
+	if opts.ParentSpan != nil {
+		tracectx = opts.ParentSpan.Context()
+	}
+
+	span := ic.iTracer.RequestSpan(tracectx, "GET_ANY_REPLICA")
 	span.SetAttribute(bucketNameSpanTag, ic.Bucket().Name())
 
 	docOut, errOut = ic.Collection.GetAnyReplica(id, opts)
@@ -156,7 +191,12 @@ func (ic *InstanaCollection) GetAnyReplica(id string, opts *gocb.GetAnyReplicaOp
 
 // Remove removes a document from the collection.
 func (ic *InstanaCollection) Remove(id string, opts *gocb.RemoveOptions) (mutOut *gocb.MutationResult, errOut error) {
-	span := ic.iTracer.RequestSpan(opts.ParentSpan.Context(), "REMOVE")
+	var tracectx gocb.RequestSpanContext
+	if opts.ParentSpan != nil {
+		tracectx = opts.ParentSpan.Context()
+	}
+
+	span := ic.iTracer.RequestSpan(tracectx, "REMOVE")
 	span.SetAttribute(bucketNameSpanTag, ic.Bucket().Name())
 
 	mutOut, errOut = ic.Collection.Remove(id, opts)
@@ -169,7 +209,12 @@ func (ic *InstanaCollection) Remove(id string, opts *gocb.RemoveOptions) (mutOut
 
 // GetAndTouch retrieves a document and simultaneously updates its expiry time.
 func (ic *InstanaCollection) GetAndTouch(id string, expiry time.Duration, opts *gocb.GetAndTouchOptions) (docOut *gocb.GetResult, errOut error) {
-	span := ic.iTracer.RequestSpan(opts.ParentSpan.Context(), "GET_AND_TOUCH")
+	var tracectx gocb.RequestSpanContext
+	if opts.ParentSpan != nil {
+		tracectx = opts.ParentSpan.Context()
+	}
+
+	span := ic.iTracer.RequestSpan(tracectx, "GET_AND_TOUCH")
 	span.SetAttribute(bucketNameSpanTag, ic.Bucket().Name())
 
 	docOut, errOut = ic.Collection.GetAndTouch(id, expiry, opts)
@@ -184,7 +229,12 @@ func (ic *InstanaCollection) GetAndTouch(id string, expiry time.Duration, opts *
 // A lockTime value of over 30 seconds will be treated as 30 seconds. The resolution used to send this value to
 // the server is seconds and is calculated using uint32(lockTime/time.Second).
 func (ic *InstanaCollection) GetAndLock(id string, lockTime time.Duration, opts *gocb.GetAndLockOptions) (docOut *gocb.GetResult, errOut error) {
-	span := ic.iTracer.RequestSpan(opts.ParentSpan.Context(), "GET_AND_LOCK")
+	var tracectx gocb.RequestSpanContext
+	if opts.ParentSpan != nil {
+		tracectx = opts.ParentSpan.Context()
+	}
+
+	span := ic.iTracer.RequestSpan(tracectx, "GET_AND_LOCK")
 	span.SetAttribute(bucketNameSpanTag, ic.Bucket().Name())
 
 	docOut, errOut = ic.Collection.GetAndLock(id, lockTime, opts)
@@ -197,7 +247,12 @@ func (ic *InstanaCollection) GetAndLock(id string, lockTime time.Duration, opts 
 
 // Unlock unlocks a document which was locked with GetAndLock.
 func (ic *InstanaCollection) Unlock(id string, cas gocb.Cas, opts *gocb.UnlockOptions) (errOut error) {
-	span := ic.iTracer.RequestSpan(opts.ParentSpan.Context(), "UNLOCK")
+	var tracectx gocb.RequestSpanContext
+	if opts.ParentSpan != nil {
+		tracectx = opts.ParentSpan.Context()
+	}
+
+	span := ic.iTracer.RequestSpan(tracectx, "UNLOCK")
 	span.SetAttribute(bucketNameSpanTag, ic.Bucket().Name())
 
 	errOut = ic.Collection.Unlock(id, cas, opts)
@@ -210,7 +265,12 @@ func (ic *InstanaCollection) Unlock(id string, cas gocb.Cas, opts *gocb.UnlockOp
 
 // Touch touches a document, specifying a new expiry time for it.
 func (ic *InstanaCollection) Touch(id string, expiry time.Duration, opts *gocb.TouchOptions) (mutOut *gocb.MutationResult, errOut error) {
-	span := ic.iTracer.RequestSpan(opts.ParentSpan.Context(), "TOUCH")
+	var tracectx gocb.RequestSpanContext
+	if opts.ParentSpan != nil {
+		tracectx = opts.ParentSpan.Context()
+	}
+
+	span := ic.iTracer.RequestSpan(tracectx, "TOUCH")
 	span.SetAttribute(bucketNameSpanTag, ic.Bucket().Name())
 
 	mutOut, errOut = ic.Collection.Touch(id, expiry, opts)
@@ -228,7 +288,12 @@ func (ic *InstanaCollection) Binary() BinaryCollection {
 
 // LookupIn performs a set of subdocument lookup operations on the document identified by id.
 func (ic *InstanaCollection) LookupIn(id string, ops []gocb.LookupInSpec, opts *gocb.LookupInOptions) (docOut *gocb.LookupInResult, errOut error) {
-	span := ic.iTracer.RequestSpan(opts.ParentSpan.Context(), "LOOKUP_IN")
+	var tracectx gocb.RequestSpanContext
+	if opts.ParentSpan != nil {
+		tracectx = opts.ParentSpan.Context()
+	}
+
+	span := ic.iTracer.RequestSpan(tracectx, "LOOKUP_IN")
 	span.SetAttribute(bucketNameSpanTag, ic.Bucket().Name())
 
 	docOut, errOut = ic.Collection.LookupIn(id, ops, opts)
@@ -241,7 +306,12 @@ func (ic *InstanaCollection) LookupIn(id string, ops []gocb.LookupInSpec, opts *
 
 // MutateIn performs a set of subdocument mutations on the document specified by id.
 func (ic *InstanaCollection) MutateIn(id string, ops []gocb.MutateInSpec, opts *gocb.MutateInOptions) (mutOut *gocb.MutateInResult, errOut error) {
-	span := ic.iTracer.RequestSpan(opts.ParentSpan.Context(), "MUTATE_IN")
+	var tracectx gocb.RequestSpanContext
+	if opts.ParentSpan != nil {
+		tracectx = opts.ParentSpan.Context()
+	}
+
+	span := ic.iTracer.RequestSpan(tracectx, "MUTATE_IN")
 	span.SetAttribute(bucketNameSpanTag, ic.Bucket().Name())
 
 	mutOut, errOut = ic.Collection.MutateIn(id, ops, opts)
@@ -274,7 +344,12 @@ func (ic *InstanaCollection) Queue(id string) CouchbaseQueue {
 
 // Do execute one or more `BulkOp` items in parallel.
 func (ic *InstanaCollection) Do(ops []gocb.BulkOp, opts *gocb.BulkOpOptions) error {
-	span := ic.iTracer.RequestSpan(opts.ParentSpan.Context(), "BULK")
+	var tracectx gocb.RequestSpanContext
+	if opts.ParentSpan != nil {
+		tracectx = opts.ParentSpan.Context()
+	}
+
+	span := ic.iTracer.RequestSpan(tracectx, "BULK")
 	span.SetAttribute(bucketNameSpanTag, ic.Bucket().Name())
 
 	errOut := ic.Collection.Do(ops, opts)
