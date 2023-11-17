@@ -119,6 +119,10 @@ func prepareWithATestDocumentInCollection(t *testing.T, operation string) (*inst
 	switch operation {
 	case "ds_list":
 		value = []interface{}{getTestStringValue()}
+	case "ds_map":
+		value = map[string]interface{}{
+			"test-key": getTestStringValue(),
+		}
 	default:
 		value = getTestStringValue()
 
