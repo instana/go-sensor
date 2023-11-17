@@ -24,7 +24,12 @@ type InstanaBinaryCollection struct {
 
 // Append appends a byte value to a document.
 func (ibc *InstanaBinaryCollection) Append(id string, val []byte, opts *gocb.AppendOptions) (mutOut *gocb.MutationResult, errOut error) {
-	span := ibc.iTracer.RequestSpan(opts.ParentSpan.Context(), "APPEND")
+	var tracectx gocb.RequestSpanContext
+	if opts.ParentSpan != nil {
+		tracectx = opts.ParentSpan.Context()
+	}
+
+	span := ibc.iTracer.RequestSpan(tracectx, "APPEND")
 	span.SetAttribute(bucketNameSpanTag, ibc.collection.Bucket().Name())
 
 	// calling the original Append
@@ -39,7 +44,12 @@ func (ibc *InstanaBinaryCollection) Append(id string, val []byte, opts *gocb.App
 
 // Prepend prepends a byte value to a document.
 func (ibc *InstanaBinaryCollection) Prepend(id string, val []byte, opts *gocb.PrependOptions) (mutOut *gocb.MutationResult, errOut error) {
-	span := ibc.iTracer.RequestSpan(opts.ParentSpan.Context(), "PREPEND")
+	var tracectx gocb.RequestSpanContext
+	if opts.ParentSpan != nil {
+		tracectx = opts.ParentSpan.Context()
+	}
+
+	span := ibc.iTracer.RequestSpan(tracectx, "PREPEND")
 	span.SetAttribute(bucketNameSpanTag, ibc.collection.Bucket().Name())
 
 	mutOut, errOut = ibc.BinaryCollection.Prepend(id, val, opts)
@@ -54,7 +64,12 @@ func (ibc *InstanaBinaryCollection) Prepend(id string, val []byte, opts *gocb.Pr
 // non-negative `initial` value will cause the document to be created if it did not
 // already exist.
 func (ibc *InstanaBinaryCollection) Increment(id string, opts *gocb.IncrementOptions) (countOut *gocb.CounterResult, errOut error) {
-	span := ibc.iTracer.RequestSpan(opts.ParentSpan.Context(), "INCREMENT")
+	var tracectx gocb.RequestSpanContext
+	if opts.ParentSpan != nil {
+		tracectx = opts.ParentSpan.Context()
+	}
+
+	span := ibc.iTracer.RequestSpan(tracectx, "INCREMENT")
 	span.SetAttribute(bucketNameSpanTag, ibc.collection.Bucket().Name())
 
 	countOut, errOut = ibc.BinaryCollection.Increment(id, opts)
@@ -69,7 +84,12 @@ func (ibc *InstanaBinaryCollection) Increment(id string, opts *gocb.IncrementOpt
 // non-negative `initial` value will cause the document to be created if it did not
 // already exist.
 func (ibc *InstanaBinaryCollection) Decrement(id string, opts *gocb.DecrementOptions) (countOut *gocb.CounterResult, errOut error) {
-	span := ibc.iTracer.RequestSpan(opts.ParentSpan.Context(), "DECREMENT")
+	var tracectx gocb.RequestSpanContext
+	if opts.ParentSpan != nil {
+		tracectx = opts.ParentSpan.Context()
+	}
+
+	span := ibc.iTracer.RequestSpan(tracectx, "DECREMENT")
 	span.SetAttribute(bucketNameSpanTag, ibc.collection.Bucket().Name())
 
 	countOut, errOut = ibc.BinaryCollection.Decrement(id, opts)
