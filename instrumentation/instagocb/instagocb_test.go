@@ -110,6 +110,24 @@ func prepareWithCollection(t *testing.T) (*instana.Recorder, context.Context, in
 	return recorder, ctx, cluster, a
 }
 
+func prepareWithATestDocumentInCollection(t *testing.T, operation string) (*instana.Recorder, context.Context, instagocb.Cluster, *assert.Assertions, interface{}) {
+	recorder, ctx, cluster, a := prepareWithCollection(t)
+	collection := cluster.Bucket(testBucketName).Scope(testScope).Collection(testCollection)
+	var err error
+	var value interface{}
+
+	switch operation {
+	case "ds_list":
+		value = []interface{}{getTestStringValue()}
+	default:
+		value = getTestStringValue()
+
+	}
+	_, err = collection.Insert(testDocumentID, value, &gocb.InsertOptions{})
+	a.NoError(err)
+	return recorder, ctx, cluster, a, value
+}
+
 func getLatestSpan(recorder *instana.Recorder) instana.Span {
 	spans := recorder.GetQueuedSpans()
 	span := spans[len(spans)-1]
@@ -122,4 +140,8 @@ func getTestDocumentValue() myDoc {
 		Foo: "test-foo",
 		Bar: "test-bar",
 	}
+}
+
+func getTestStringValue() string {
+	return "test-value-string"
 }
