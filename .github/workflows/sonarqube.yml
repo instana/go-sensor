@@ -17,13 +17,23 @@ jobs:
         run: |
             #!/bin/bash
 
-            go test -v -coverpkg=./... -cover -covermode atomic -coverprofile coverage.out ./... -json > coverage.json && ls cover*
+            echo "Starting Postgres"
+            sudo systemctl start postgresql.service
+            sudo -u postgres psql -c "ALTER USER postgres PASSWORD 'mysecretpassword'"
+            echo "After starting Postgres"
+
+            go test -v -coverpkg=./... -cover -covermode atomic -coverprofile coverage.out ./... -json > coverage.json
 
             LIB_LIST=$(find ./instrumentation -name go.mod -exec dirname {} \;)
 
             for lib in $LIB_LIST
-              do cd "$lib" && go mod tidy && go test -v -coverpkg=./... -cover -covermode atomic -coverprofile coverage.out ./... -json > coverage.json && cd -;
+              do echo "Generating test coverage for $lib" && cd "$lib" && go mod tidy && go test -v -coverpkg=./... -cover -covermode atomic -coverprofile coverage.out ./... -json > coverage.json && cd -;
             done
+
+            echo "Generating test coverage for ./instrumentation/instapgx"
+            cd ./instrumentation/instapgx
+            go mod tidy
+            go test -v -tags=integration -coverpkg=./... -cover -covermode atomic -coverprofile coverage.out ./... -json > coverage.json && cd -
 
       - name: Sonarqube Scan
         uses: sonarsource/sonarqube-scan-action@master
