@@ -26,6 +26,11 @@ jobs:
 
             LIB_LIST=$(find ./instrumentation -name go.mod -exec dirname {} \;)
 
+            for lib in $LIB_LIST
+              do echo "Generating test coverage for $lib" && cd "$lib" && go mod tidy && go test -v -coverpkg=./... -cover -covermode atomic -coverprofile coverage.out ./... -json > coverage.json && cd -;
+            done
+
+            echo "Generating test coverage for ./instrumentation/instapgx"
             cd ./instrumentation/instapgx
             go mod tidy
             go test -v -tags=integration -coverpkg=./... -cover -covermode atomic -coverprofile coverage.out ./... -json > coverage.json
@@ -33,10 +38,6 @@ jobs:
             cat coverage.out || echo "error reading instapgx coverage.out"
             cat coverage.json || echo "error reading instapgx coverage.json"
             cd -
-
-            for lib in $LIB_LIST
-              do echo "Generting test coverage for $lib" && cd "$lib" && go mod tidy && go test -v -coverpkg=./... -cover -covermode atomic -coverprofile coverage.out ./... -json > coverage.json && cd -;
-            done
 
       - name: Sonarqube Scan
         uses: sonarsource/sonarqube-scan-action@master
