@@ -82,6 +82,29 @@ func prepareWithBucket(t *testing.T) (*instana.Recorder, context.Context, instag
 	return recorder, ctx, cluster, a
 }
 
+func prepareWithScope(t *testing.T) (*instana.Recorder, context.Context, instagocb.Cluster, *assert.Assertions) {
+	recorder, ctx, cluster, a := prepareWithBucket(t)
+	b := cluster.Bucket(testBucketName)
+	collections := b.Collections()
+	err := collections.CreateScope(testScope, &gocb.CreateScopeOptions{})
+	a.NoError(err)
+
+	return recorder, ctx, cluster, a
+}
+
+func prepareWithCollection(t *testing.T) (*instana.Recorder, context.Context, instagocb.Cluster, *assert.Assertions) {
+	recorder, ctx, cluster, a := prepareWithScope(t)
+	b := cluster.Bucket(testBucketName)
+	collections := b.Collections()
+	err := collections.CreateCollection(gocb.CollectionSpec{
+		Name:      testCollection,
+		ScopeName: testScope,
+	}, &gocb.CreateCollectionOptions{})
+	a.NoError(err)
+
+	return recorder, ctx, cluster, a
+}
+
 func getLatestSpan(recorder *instana.Recorder) instana.Span {
 	spans := recorder.GetQueuedSpans()
 	span := spans[len(spans)-1]
