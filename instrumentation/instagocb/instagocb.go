@@ -16,18 +16,22 @@ import (
 )
 
 const (
-	hostNameSpanTag   string = "couchbase.hostname"
 	bucketNameSpanTag string = "couchbase.bucket"
 	bucketTypeSpanTag string = "couchbase.type"
 	operationSpanTag  string = "couchbase.sql"
 	errorSpanTag      string = "couchbase.error"
+
+	// keeping this here, for the documentation purpose
+	// hostNameSpanTag   string = "couchbase.hostname"
 )
 
+// wrapper interface on top of gocb.RequestTracer
 type requestTracer interface {
 	gocb.RequestTracer
 	wrapCluster(cluster Cluster)
 }
 
+// Instana tracer
 type Tracer struct {
 	sensor      instana.TracerLogger
 	connDetails instana.DbConnDetails
@@ -37,6 +41,7 @@ type Tracer struct {
 	bucketTypeLookup map[string]string
 }
 
+// Instana span
 type Span struct {
 	wrapped       opentracing.Span
 	ctx           context.Context
@@ -45,6 +50,7 @@ type Span struct {
 	err           error
 }
 
+// Request span will create a new span
 func (t *Tracer) RequestSpan(parentContext gocb.RequestSpanContext, operationType string) gocb.RequestSpan {
 	ctx := context.Background()
 
@@ -66,8 +72,8 @@ func (t *Tracer) wrapCluster(cluster Cluster) {
 	t.cluster = cluster
 }
 
+// Ending a span
 func (s *Span) End() {
-
 	if s != nil && s.err != nil {
 		s.wrapped.SetTag(errorSpanTag, s.err.Error())
 		s.wrapped.SetTag(string(ext.Error), s.err.Error())
@@ -79,6 +85,7 @@ func (s *Span) End() {
 	}
 }
 
+// To get the span context
 func (s *Span) Context() gocb.RequestSpanContext {
 	if s == nil {
 		return context.TODO()
@@ -86,13 +93,10 @@ func (s *Span) Context() gocb.RequestSpanContext {
 	return s.ctx
 }
 
-func (s *Span) AddEvent(name string, timestamp time.Time) {
-	if s == nil {
-		return
-	}
-	s.SetAttribute(name, timestamp)
-}
+// Not used; implemented as this one is part of gocb.RequestSpan interface
+func (s *Span) AddEvent(name string, timestamp time.Time) {}
 
+// Setting attributes in span
 func (s *Span) SetAttribute(key string, value interface{}) {
 	if s == nil {
 		return
@@ -160,8 +164,9 @@ func GetParentSpanFromContext(ctx context.Context) *Span {
 // creates a new instana tracer instance
 func newInstanaTracer(s instana.TracerLogger, dsn string) requestTracer {
 	var raw string
-	connSpec, err := gocbconnstr.Parse(dsn)
 
+	// parsing connection string
+	connSpec, err := gocbconnstr.Parse(dsn)
 	if err == nil {
 		for i, addr := range connSpec.Addresses {
 			if i != 0 {
