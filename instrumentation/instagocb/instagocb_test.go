@@ -21,8 +21,8 @@ var connStr = "couchbase://localhost"
 var username = "Administrator"
 var password = "password"
 var testBucketName = "test-bucket"
-var testScope = "test-scope"
-var testCollection = "test-collection"
+var testScope = "test_scope"
+var testCollection = "test_collection"
 var testDocumentID string = "test-doc-id"
 
 // Insert Document
@@ -112,7 +112,8 @@ func prepareWithCollection(t *testing.T) (*instana.Recorder, context.Context, in
 
 func prepareWithATestDocumentInCollection(t *testing.T, operation string) (*instana.Recorder, context.Context, instagocb.Cluster, *assert.Assertions, interface{}) {
 	recorder, ctx, cluster, a := prepareWithCollection(t)
-	collection := cluster.Bucket(testBucketName).Scope(testScope).Collection(testCollection)
+	b := cluster.Bucket(testBucketName)
+	collection := b.Scope(testScope).Collection(testCollection)
 	var err error
 	var value interface{}
 
@@ -123,12 +124,15 @@ func prepareWithATestDocumentInCollection(t *testing.T, operation string) (*inst
 		value = map[string]interface{}{
 			"test-key": getTestStringValue(),
 		}
+	case "scope", "cluster":
+		value = getTestDocumentValue()
 	default:
 		value = getTestStringValue()
 
 	}
 	_, err = collection.Insert(testDocumentID, value, &gocb.InsertOptions{})
 	a.NoError(err)
+
 	return recorder, ctx, cluster, a, value
 }
 

@@ -105,6 +105,9 @@ func (s *Span) SetAttribute(key string, value interface{}) {
 	switch key {
 	case bucketNameSpanTag:
 		bucketName := value.(string)
+		if bucketName == "" {
+			break
+		}
 		if bucketType, ok := s.tracer.bucketTypeLookup[bucketName]; ok {
 			s.wrapped.SetTag(bucketTypeSpanTag, bucketType)
 			s.wrapped.SetTag(bucketNameSpanTag, bucketName)
