@@ -57,3 +57,22 @@ func (ic *InstanaCluster) Buckets() BucketManager {
 	return createBucketManager(ic.iTracer, bm)
 
 }
+
+// Query executes the query statement on the server.
+func (ic *InstanaCluster) Query(statement string, opts *gocb.QueryOptions) (*gocb.QueryResult, error) {
+	var tracectx gocb.RequestSpanContext
+	if opts.ParentSpan != nil {
+		tracectx = opts.ParentSpan.Context()
+	}
+
+	span := ic.iTracer.RequestSpan(tracectx, "QUERY")
+	span.SetAttribute(operationSpanTag, statement)
+
+	res, err := ic.Cluster.Query(statement, opts)
+
+	span.(*Span).err = err
+
+	defer span.End()
+
+	return res, err
+}
