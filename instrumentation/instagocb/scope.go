@@ -23,7 +23,12 @@ type InstanaScope struct {
 
 // Query executes the query statement on the server, constraining the query to the bucket and scope.
 func (is *InstanaScope) Query(statement string, opts *gocb.QueryOptions) (*gocb.QueryResult, error) {
-	span := is.iTracer.RequestSpan(opts.ParentSpan.Context(), "query")
+	var tracectx gocb.RequestSpanContext
+	if opts.ParentSpan != nil {
+		tracectx = opts.ParentSpan.Context()
+	}
+
+	span := is.iTracer.RequestSpan(tracectx, "QUERY")
 	span.SetAttribute(operationSpanTag, statement)
 	span.SetAttribute(bucketNameSpanTag, is.BucketName())
 
