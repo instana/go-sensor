@@ -10,17 +10,18 @@ import (
 
 	"github.com/couchbase/gocb/v2"
 	instana "github.com/instana/go-sensor"
+	"github.com/instana/go-sensor/instrumentation/instagocb"
 )
 
 func TestCollectionManager(t *testing.T) {
 	defer instana.ShutdownSensor()
-	recorder, _, cluster, a := prepareWithBucket(t)
+	recorder, ctx, cluster, a := prepareWithBucket(t)
 
 	bucket := cluster.Bucket(testBucketName)
 	cm := bucket.Collections()
 
 	// create scope
-	err := cm.CreateScope(testScope, &gocb.CreateScopeOptions{})
+	err := cm.CreateScope(testScope, &gocb.CreateScopeOptions{ParentSpan: instagocb.GetParentSpanFromContext(ctx)})
 	a.NoError(err)
 
 	span := getLatestSpan(recorder)
@@ -40,7 +41,7 @@ func TestCollectionManager(t *testing.T) {
 	err = cm.CreateCollection(gocb.CollectionSpec{
 		Name:      testCollection,
 		ScopeName: testScope,
-	}, &gocb.CreateCollectionOptions{})
+	}, &gocb.CreateCollectionOptions{ParentSpan: instagocb.GetParentSpanFromContext(ctx)})
 	a.NoError(err)
 
 	span = getLatestSpan(recorder)
@@ -60,7 +61,7 @@ func TestCollectionManager(t *testing.T) {
 	err = cm.DropCollection(gocb.CollectionSpec{
 		Name:      testCollection,
 		ScopeName: testScope,
-	}, &gocb.DropCollectionOptions{})
+	}, &gocb.DropCollectionOptions{ParentSpan: instagocb.GetParentSpanFromContext(ctx)})
 	a.NoError(err)
 
 	span = getLatestSpan(recorder)
@@ -77,7 +78,7 @@ func TestCollectionManager(t *testing.T) {
 	}, data.Tags)
 
 	// Drop scope
-	err = cm.DropScope(testScope, &gocb.DropScopeOptions{})
+	err = cm.DropScope(testScope, &gocb.DropScopeOptions{ParentSpan: instagocb.GetParentSpanFromContext(ctx)})
 	a.NoError(err)
 
 	span = getLatestSpan(recorder)
@@ -94,7 +95,7 @@ func TestCollectionManager(t *testing.T) {
 	}, data.Tags)
 
 	// Checking error
-	err = cm.DropScope(testScope, &gocb.DropScopeOptions{})
+	err = cm.DropScope(testScope, &gocb.DropScopeOptions{ParentSpan: instagocb.GetParentSpanFromContext(ctx)})
 	a.Error(err)
 
 	spans := recorder.GetQueuedSpans()

@@ -10,17 +10,18 @@ import (
 
 	"github.com/couchbase/gocb/v2"
 	instana "github.com/instana/go-sensor"
+	"github.com/instana/go-sensor/instrumentation/instagocb"
 )
 
 func TestScope(t *testing.T) {
 	defer instana.ShutdownSensor()
-	recorder, _, cluster, a, _ := prepareWithATestDocumentInCollection(t, "scope")
+	recorder, ctx, cluster, a, _ := prepareWithATestDocumentInCollection(t, "scope")
 
 	scope := cluster.Bucket(testBucketName).Scope(testScope)
 
 	// Query
 	q := "SELECT count(*) FROM `" + testBucketName + "`." + testScope + "." + testCollection + ";"
-	_, err := scope.Query(q, &gocb.QueryOptions{})
+	_, err := scope.Query(q, &gocb.QueryOptions{ParentSpan: instagocb.GetParentSpanFromContext(ctx)})
 	a.NoError(err)
 
 	span := getLatestSpan(recorder)

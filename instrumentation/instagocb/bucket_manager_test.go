@@ -10,6 +10,7 @@ import (
 
 	"github.com/couchbase/gocb/v2"
 	instana "github.com/instana/go-sensor"
+	"github.com/instana/go-sensor/instrumentation/instagocb"
 )
 
 func TestBucketManager(t *testing.T) {
@@ -32,7 +33,8 @@ func TestBucketManager(t *testing.T) {
 		BucketSettings:         bs,
 		ConflictResolutionType: gocb.ConflictResolutionTypeSequenceNumber,
 	}, &gocb.CreateBucketOptions{
-		Context: ctx,
+		Context:    ctx,
+		ParentSpan: instagocb.GetParentSpanFromContext(ctx),
 	})
 	a.NoError(err)
 	span := getLatestSpan(recorder)
@@ -49,7 +51,7 @@ func TestBucketManager(t *testing.T) {
 	}, data.Tags)
 
 	// Get
-	bsRes, err := bucketMgr.GetBucket(testBucketName, &gocb.GetBucketOptions{})
+	bsRes, err := bucketMgr.GetBucket(testBucketName, &gocb.GetBucketOptions{ParentSpan: instagocb.GetParentSpanFromContext(ctx)})
 	a.NoError(err)
 	a.Equal(bs.Name, bsRes.Name)
 	a.Equal(bs.BucketType, bsRes.BucketType)
@@ -67,7 +69,7 @@ func TestBucketManager(t *testing.T) {
 	}, data.Tags)
 
 	// Flush
-	err = bucketMgr.FlushBucket(testBucketName, &gocb.FlushBucketOptions{})
+	err = bucketMgr.FlushBucket(testBucketName, &gocb.FlushBucketOptions{ParentSpan: instagocb.GetParentSpanFromContext(ctx)})
 	a.NoError(err)
 	span = getLatestSpan(recorder)
 	a.Equal(0, span.Ec)
@@ -84,7 +86,7 @@ func TestBucketManager(t *testing.T) {
 
 	// Update
 	bs.RAMQuotaMB = 200
-	err = bucketMgr.UpdateBucket(bs, &gocb.UpdateBucketOptions{})
+	err = bucketMgr.UpdateBucket(bs, &gocb.UpdateBucketOptions{ParentSpan: instagocb.GetParentSpanFromContext(ctx)})
 	a.NoError(err)
 	span = getLatestSpan(recorder)
 	a.Equal(0, span.Ec)
@@ -103,7 +105,7 @@ func TestBucketManager(t *testing.T) {
 	a.NoError(err)
 
 	// Drop
-	err = bucketMgr.DropBucket(testBucketName, &gocb.DropBucketOptions{})
+	err = bucketMgr.DropBucket(testBucketName, &gocb.DropBucketOptions{ParentSpan: instagocb.GetParentSpanFromContext(ctx)})
 	a.NoError(err)
 	span = getLatestSpan(recorder)
 	a.Equal(0, span.Ec)
@@ -119,7 +121,7 @@ func TestBucketManager(t *testing.T) {
 	}, data.Tags)
 
 	// Checking error
-	err = bucketMgr.DropBucket(testBucketName, &gocb.DropBucketOptions{})
+	err = bucketMgr.DropBucket(testBucketName, &gocb.DropBucketOptions{ParentSpan: instagocb.GetParentSpanFromContext(ctx)})
 	a.Error(err)
 
 	spans := recorder.GetQueuedSpans()
