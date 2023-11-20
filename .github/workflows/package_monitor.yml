@@ -1,0 +1,19 @@
+name: Auto instrumentation for version updates
+run-name: Running job for checking newer packages and updating instrumentation accordingly
+on: [workflow_dispatch]
+jobs:
+  monitor-update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install package
+        run: |
+          sudo apt-get -y install jq
+
+      - uses: actions/checkout@v3
+        name: Checkout repo
+        with:
+          fetch-depth: 0
+          ssh-key: ${{secrets.PRIVATE_KEY_GO_TRACER_RELEASE}}
+
+      - name: Run script to monitor packages and create PR with updated changes
+        run: ./version_updater.sh
