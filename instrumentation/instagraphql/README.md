@@ -105,3 +105,9 @@ See the [`instagraphql` package documentation][godoc] for detailed examples.
 [instagraphql.Do]: https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instagraphql#Do
 [instagraphql.Subscribe]: https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instagraphql#Subscribe
 [instagraphql.ResultCallbackFn]: https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instagraphql#ResultCallbackFn
+
+<!---
+Mandatory comment section for CI/CD !!
+target-pkg-url: github.com/graphql-go/graphql
+current-version: v0.8.1
+--->

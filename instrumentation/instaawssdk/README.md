@@ -116,3 +116,9 @@ Known limitations:
 [NewSensor]: https://pkg.go.dev/github.com/instana/go-sensor?tab=doc#NewSensor
 [InstrumentSession]: https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instaawssdk?tab=doc#InstrumentSession
 [SpanContextFromSQSMessage]: https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instaawssdk?tab=doc#SpanContextFromSQSMessage
+
+<!---
+Mandatory comment section for CI/CD !!
+target-pkg-url: github.com/aws/aws-sdk-go
+current-version: v1.44.209
+--->

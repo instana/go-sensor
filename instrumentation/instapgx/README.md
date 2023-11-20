@@ -69,3 +69,9 @@ To run integration tests, a PostgreSQL database is required in the environment. 
 ```bash
 docker run -e POSTGRES_PASSWORD=mysecretpassword -p 5432:5432 -d postgres
 ```
+
+<!---
+Mandatory comment section for CI/CD !!
+target-pkg-url: github.com/jackc/pgx/v4
+current-version: v4.14.1
+--->

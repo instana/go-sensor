@@ -43,3 +43,9 @@ engine.GET("/api", func(c *gin.Context) {}
 
 [godoc]: https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instagin
 [fullExample]: https://github.com/instana/go-sensor/blob/main/example/gin/main.go
+
+<!---
+Mandatory comment section for CI/CD !!
+target-pkg-url: github.com/gin-gonic/gin
+current-version: v1.9.1
+--->
