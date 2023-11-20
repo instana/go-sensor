@@ -74,6 +74,12 @@ echo "$directory_path"
 
 if [ -d "$directory_path" ]; then
     for folder in "$directory_path"/*/; do
+        # Create a branch and commit the changes
+        git config user.name "IBM/Instana/Team Go"
+        git config user.email "github-actions@github.com"
+
+        git checkout main
+
         folder_name=$(basename "$folder")
         # Identify the path to the README file
         readme_path="${folder}README.md"
@@ -115,20 +121,16 @@ if [ -d "$directory_path" ]; then
         # Need to update the current version in the README file
         replace_version_in_file "$LATEST_VERSION" "$readme_path"
 
-        # Create a branch and commit the changes
-        git config user.name "IBM/Instana/Team Go"
-        git config user.email "github-actions@github.com"
+        current_time=$(date '+%s')
+        git checkout -b "update-instrumentations-$folder_name-id-$current_time"
 
-        instrumentation_package=$(echo "$url" | sed -n 's|.*instrumentation/\([^/]*\).*|\1|p')
-        git checkout -b update-instrumentations-"$instrumentation_package"
-
-        git add go.mod go.sum
-        git commit -m "Updated go.mod and go.sum files for $instrumentation_package"
+        git add go.mod go.sum README.md
+        git commit -m "Updated go.mod and go.sum files for $folder_name"
         git push origin @
 
         # Create a PR request for the changes
         # shellcheck disable=SC2046
-        gh pr create --title "Updating instrumentation $instrumentation_package for new version $LATEST_VERSION" \
+        gh pr create --title "Updating instrumentation $folder_name for new version $LATEST_VERSION. Id: $current_time" \
         --body "This PR adds changes for the newer version $LATEST_VERSION for the instrumented package" --head $(git branch --show-current)
 
     done

@@ -1,5 +1,5 @@
 name: Auto instrumentation for version updates
-run-name: Running job for checking newer packages and updating instrumentation accordingly
+run-name: Running job for checking newer packages and updating instrumentation
 on: [workflow_dispatch]
 jobs:
   monitor-update:
@@ -16,4 +16,8 @@ jobs:
           ssh-key: ${{secrets.PRIVATE_KEY_GO_TRACER_RELEASE}}
 
       - name: Run script to monitor packages and create PR with updated changes
+        id: verison_updater
         run: ./version_updater.sh
+        shell: bash {0}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
