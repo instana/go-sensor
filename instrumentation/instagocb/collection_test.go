@@ -345,4 +345,29 @@ func TestCollection_CRUD(t *testing.T) {
 		Error:  "",
 	}, data.Tags)
 
+	// Bulk operations
+	_, err = collection.Insert("test-bulk-1", "test-bulk-value-1", &gocb.InsertOptions{ParentSpan: instagocb.GetParentSpanFromContext(ctx)})
+	a.NoError(err)
+	_, err = collection.Insert("test-bulk-2", "test-bulk-value-2", &gocb.InsertOptions{ParentSpan: instagocb.GetParentSpanFromContext(ctx)})
+	a.NoError(err)
+
+	var get1, get2 gocb.GetResult
+	var str1, str2 string
+	var itemsGet []gocb.BulkOp
+	itemsGet = append(itemsGet, &gocb.GetOp{ID: "test-bulk-1", Result: &get1})
+	itemsGet = append(itemsGet, &gocb.GetOp{ID: "test-bulk-2", Result: &get2})
+
+	err = collection.Do(itemsGet, &gocb.BulkOpOptions{ParentSpan: instagocb.GetParentSpanFromContext(ctx)})
+	a.NoError(err)
+	item1 := itemsGet[0].(*gocb.GetOp)
+	a.NoError(item1.Err)
+	a.NoError(item1.Result.Content(&str1))
+
+	item2 := itemsGet[1].(*gocb.GetOp)
+	a.NoError(item2.Err)
+	a.NoError(item2.Result.Content(&str2))
+
+	a.Equal("test-bulk-value-1", str1)
+	a.Equal("test-bulk-value-2", str2)
+
 }
