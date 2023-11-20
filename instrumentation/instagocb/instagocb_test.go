@@ -133,6 +133,11 @@ func prepareWithATestDocumentInCollection(t *testing.T, operation string) (*inst
 	_, err = collection.Insert(testDocumentID, value, &gocb.InsertOptions{})
 	a.NoError(err)
 
+	if operation == "cluster" {
+		_, err = b.DefaultCollection().Insert(testDocumentID, value, &gocb.InsertOptions{})
+		a.NoError(err)
+	}
+
 	return recorder, ctx, cluster, a, value
 }
 

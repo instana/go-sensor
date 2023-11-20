@@ -21,9 +21,8 @@ var (
 )
 
 func init() {
-
 	s = instana.InitCollector(&instana.Options{
-		Service:           "Nithin-sample-app-couchbase",
+		Service:           "sample-app-couchbase",
 		EnableAutoProfile: true,
 	})
 
@@ -39,7 +38,7 @@ func main() {
 }
 
 func handler(w http.ResponseWriter, r *http.Request) {
-	err := testCouchbase(r.Context())
+	err := couchbaseTest(r.Context())
 
 	if err != nil {
 		sendErrResp(w)
@@ -59,7 +58,7 @@ func sendOkResp(w http.ResponseWriter) {
 	_, _ = w.Write([]byte("{message:Status OK! Check terminal for full log!}"))
 }
 
-func testCouchbase(ctx context.Context) error {
+func couchbaseTest(ctx context.Context) error {
 
 	// Update this to your cluster details
 	connectionString := "localhost"
@@ -68,8 +67,6 @@ func testCouchbase(ctx context.Context) error {
 	password := "password"
 
 	dsn := "couchbase://" + connectionString
-
-	// For a secure cluster connection, use `couchbases://<your-cluster-ip>` instead.
 
 	cluster, err := instagocb.Connect(s, dsn, gocb.ClusterOptions{
 		Authenticator: gocb.PasswordAuthenticator{
@@ -81,19 +78,12 @@ func testCouchbase(ctx context.Context) error {
 		return err
 	}
 
-	// t1 := cluster.Transactions()
-
-	// fmt.Println(t1)
-
 	bucket := cluster.Bucket(bucketName)
 
 	err = bucket.WaitUntilReady(5*time.Second, nil)
 	if err != nil {
 		return err
 	}
-
-	// Get a reference to the default collection, required for older Couchbase server versions
-	// col := bucket.DefaultCollection()
 
 	col := bucket.Scope("tenant_agent_00").Collection("users")
 

@@ -33,7 +33,7 @@ type requestTracer interface {
 
 // Instana tracer
 type Tracer struct {
-	sensor      instana.TracerLogger
+	collector   instana.TracerLogger
 	connDetails instana.DbConnDetails
 	cluster     Cluster
 
@@ -58,7 +58,7 @@ func (t *Tracer) RequestSpan(parentContext gocb.RequestSpanContext, operationTyp
 		ctx = context
 	}
 
-	s, _ := instana.StartSQLSpan(ctx, t.connDetails, operationType, t.sensor)
+	s, _ := instana.StartSQLSpan(ctx, t.connDetails, operationType, t.collector)
 
 	return &Span{
 		wrapped:       s,
@@ -148,7 +148,8 @@ func Connect(s instana.TracerLogger, connStr string, opts gocb.ClusterOptions) (
 	return icluster, nil
 }
 
-// Getting parent span from current context - users need to pass this parent span to the options (eg : gocb.QueryOptions)
+// Getting parent span from current context.
+// Users need to pass this parent span to the options (eg : gocb.QueryOptions)
 func GetParentSpanFromContext(ctx context.Context) *Span {
 	s, ok := instana.SpanFromContext(ctx)
 
@@ -165,7 +166,7 @@ func GetParentSpanFromContext(ctx context.Context) *Span {
 // helper functions
 
 // creates a new instana tracer instance
-func newInstanaTracer(s instana.TracerLogger, dsn string) requestTracer {
+func newInstanaTracer(it instana.TracerLogger, dsn string) requestTracer {
 	var raw string
 
 	// parsing connection string
@@ -185,7 +186,7 @@ func newInstanaTracer(s instana.TracerLogger, dsn string) requestTracer {
 	}
 
 	return &Tracer{
-		sensor: s,
+		collector: it,
 		connDetails: instana.DbConnDetails{
 			RawString:    raw,
 			DatabaseName: string(instana.CouchbaseSpanType),
