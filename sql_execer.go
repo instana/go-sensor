@@ -9,6 +9,8 @@ import (
 	otlog "github.com/opentracing/opentracing-go/log"
 )
 
+// Execer interface is deprecated
+
 type wExecer struct {
 	driver.Execer
 	connDetails DbConnDetails

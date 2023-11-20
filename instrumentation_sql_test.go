@@ -350,6 +350,206 @@ func TestOpenSQLDB_RedisConnString(t *testing.T) {
 	}, data.Tags)
 }
 
+func TestConnPrepareContext(t *testing.T) {
+	recorder := instana.NewTestRecorder()
+	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{
+		Service:     "go-sensor-test",
+		AgentClient: alwaysReadyClient{},
+	}, recorder))
+	defer instana.ShutdownSensor()
+
+	instana.InstrumentSQLDriver(s, "fake_pc", sqlDriver{})
+	require.Contains(t, sql.Drivers(), "fake_pc_with_instana")
+
+	db, err := instana.SQLOpen("fake_pc", "conn string")
+	require.NoError(t, err)
+
+	ctx := context.Background()
+
+	stmt, err := db.PrepareContext(ctx, "select 1 from table")
+	require.NoError(t, err)
+
+	_, err = stmt.QueryContext(ctx)
+	require.NoError(t, err)
+
+	spans := recorder.GetQueuedSpans()
+
+	require.Len(t, spans, 1)
+
+	require.IsType(t, instana.SDKSpanData{}, spans[0].Data)
+	data := spans[0].Data.(instana.SDKSpanData)
+
+	assert.Equal(t, instana.SDKSpanTags{
+		Name: "sdk.database",
+		Type: "exit",
+		Custom: map[string]interface{}{
+			"tags": ot.Tags{
+				"span.kind":    ext.SpanKindRPCClientEnum,
+				"db.instance":  "conn string",
+				"db.statement": "select 1 from table",
+				"db.type":      "sql",
+				"peer.address": "conn string",
+			},
+		},
+	}, data.Tags)
+}
+
+func TestConnPrepareContextWithError(t *testing.T) {
+	recorder := instana.NewTestRecorder()
+	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{
+		Service:     "go-sensor-test",
+		AgentClient: alwaysReadyClient{},
+	}, recorder))
+	defer instana.ShutdownSensor()
+
+	instana.InstrumentSQLDriver(s, "fake_conn_pc_error", sqlDriver{Error: errors.New("some error")})
+	require.Contains(t, sql.Drivers(), "fake_conn_pc_error_with_instana")
+
+	db, err := instana.SQLOpen("fake_conn_pc_error", "conn string")
+	require.NoError(t, err)
+
+	ctx := context.Background()
+
+	stmt, err := db.PrepareContext(ctx, "select 1 from table")
+	require.NoError(t, err)
+
+	_, err = stmt.QueryContext(ctx)
+	require.Error(t, err)
+
+	spans := recorder.GetQueuedSpans()
+
+	require.Len(t, spans, 2)
+
+	assert.Equal(t, spans[0].Ec, 1)
+
+	require.IsType(t, instana.SDKSpanData{}, spans[0].Data)
+	data := spans[0].Data.(instana.SDKSpanData)
+
+	assert.Equal(t, instana.SDKSpanTags{
+		Name: "sdk.database",
+		Type: "exit",
+		Custom: map[string]interface{}{
+			"tags": ot.Tags{
+				"span.kind":    ext.SpanKindRPCClientEnum,
+				"db.error":     "some error",
+				"db.instance":  "conn string",
+				"db.statement": "select 1 from table",
+				"db.type":      "sql",
+				"peer.address": "conn string",
+			},
+		},
+	}, data.Tags)
+}
+
+func TestStmtExecContext(t *testing.T) {
+	recorder := instana.NewTestRecorder()
+	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{
+		Service:     "go-sensor-test",
+		AgentClient: alwaysReadyClient{},
+	}, recorder))
+	defer instana.ShutdownSensor()
+
+	instana.InstrumentSQLDriver(s, "fake_stmt_ec", sqlDriver{})
+	require.Contains(t, sql.Drivers(), "fake_stmt_ec_with_instana")
+
+	db, err := instana.SQLOpen("fake_stmt_ec", "conn string")
+	require.NoError(t, err)
+
+	ctx := context.Background()
+
+	stmt, err := db.PrepareContext(ctx, "select 1 from table")
+	require.NoError(t, err)
+
+	_, err = stmt.ExecContext(ctx)
+	require.NoError(t, err)
+
+	spans := recorder.GetQueuedSpans()
+
+	require.Len(t, spans, 1)
+
+	require.IsType(t, instana.SDKSpanData{}, spans[0].Data)
+	data := spans[0].Data.(instana.SDKSpanData)
+
+	assert.Equal(t, instana.SDKSpanTags{
+		Name: "sdk.database",
+		Type: "exit",
+		Custom: map[string]interface{}{
+			"tags": ot.Tags{
+				"span.kind":    ext.SpanKindRPCClientEnum,
+				"db.instance":  "conn string",
+				"db.statement": "select 1 from table",
+				"db.type":      "sql",
+				"peer.address": "conn string",
+			},
+		},
+	}, data.Tags)
+}
+
+func TestStmtExecContextWithError(t *testing.T) {
+	recorder := instana.NewTestRecorder()
+	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{
+		Service:     "go-sensor-test",
+		AgentClient: alwaysReadyClient{},
+	}, recorder))
+	defer instana.ShutdownSensor()
+
+	instana.InstrumentSQLDriver(s, "fake_stmt_ec_with_error", sqlDriver{Error: errors.New("oh no")})
+	require.Contains(t, sql.Drivers(), "fake_stmt_ec_with_error_with_instana")
+
+	db, err := instana.SQLOpen("fake_stmt_ec_with_error", "conn string")
+	require.NoError(t, err)
+
+	ctx := context.Background()
+
+	stmt, err := db.PrepareContext(ctx, "select 1 from table")
+	require.NoError(t, err)
+
+	_, err = stmt.ExecContext(ctx)
+	require.Error(t, err)
+
+	spans := recorder.GetQueuedSpans()
+
+	require.Len(t, spans, 2)
+
+	require.IsType(t, instana.SDKSpanData{}, spans[0].Data)
+	data := spans[0].Data.(instana.SDKSpanData)
+
+	assert.Equal(t, instana.SDKSpanTags{
+		Name: "sdk.database",
+		Type: "exit",
+		Custom: map[string]interface{}{
+			"tags": ot.Tags{
+				"span.kind":    ext.SpanKindRPCClientEnum,
+				"db.error":     "oh no",
+				"db.instance":  "conn string",
+				"db.statement": "select 1 from table",
+				"db.type":      "sql",
+				"peer.address": "conn string",
+			},
+		},
+	}, data.Tags)
+}
+
+func TestConnPrepareContextWithErrorOnReturn(t *testing.T) {
+	recorder := instana.NewTestRecorder()
+	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{
+		Service:     "go-sensor-test",
+		AgentClient: alwaysReadyClient{},
+	}, recorder))
+	defer instana.ShutdownSensor()
+
+	instana.InstrumentSQLDriver(s, "fake_conn_pc_error_on_ret", sqlDriver{PrepareError: errors.New("oh no")})
+	require.Contains(t, sql.Drivers(), "fake_conn_pc_error_on_ret_with_instana")
+
+	db, err := instana.SQLOpen("fake_conn_pc_error_on_ret", "conn string")
+	require.NoError(t, err)
+
+	ctx := context.Background()
+
+	_, err = db.PrepareContext(ctx, "select 1 from table")
+	require.Error(t, err)
+}
+
 func TestOpenSQLDB_RedisConnString_WithError(t *testing.T) {
 	recorder := instana.NewTestRecorder()
 	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{
@@ -358,7 +558,7 @@ func TestOpenSQLDB_RedisConnString_WithError(t *testing.T) {
 	}, recorder))
 	defer instana.ShutdownSensor()
 
-	instana.InstrumentSQLDriver(s, "fake_redis_driver_with_error", sqlDriver{errors.New("oops")})
+	instana.InstrumentSQLDriver(s, "fake_redis_driver_with_error", sqlDriver{Error: errors.New("oops")})
 	require.Contains(t, sql.Drivers(), "fake_redis_driver_with_error_with_instana")
 
 	db, err := instana.SQLOpen("fake_redis_driver_with_error", ":p455w0rd@192.168.2.10:6790")
@@ -482,15 +682,41 @@ func TestProcedureWithNoDefaultChecker(t *testing.T) {
 	assert.NoError(t, err)
 }
 
-type sqlDriver struct{ Error error }
+type sqlDriver struct {
+	// Error is a generic error in the SQL execution. It generates spans with errors
+	Error error
+	// StmtError will give an error when a method from Stmt returns. It does not generate spans at all
+	StmtError error
+	// PrepareError will give an error when a method from Prepare* returns. It does not generate spans at all
+	PrepareError error
+}
 
-func (drv sqlDriver) Open(name string) (driver.Conn, error) { return sqlConn{drv.Error}, nil } //nolint:gosimple
+func (drv sqlDriver) Open(name string) (driver.Conn, error) {
+	return sqlConn{
+		Error:        drv.Error,
+		StmtError:    drv.StmtError,
+		PrepareError: drv.PrepareError,
+	}, nil
+} //nolint:gosimple
 
-type sqlConn struct{ Error error }
+type sqlConn struct {
+	Error        error
+	StmtError    error
+	PrepareError error
+}
 
-func (conn sqlConn) Prepare(query string) (driver.Stmt, error) { return sqlStmt{conn.Error}, nil } //nolint:gosimple
-func (s sqlConn) Close() error                                 { return driver.ErrSkip }
-func (s sqlConn) Begin() (driver.Tx, error)                    { return nil, driver.ErrSkip }
+var _ driver.Conn = (*sqlConn)(nil)
+var _ driver.ConnPrepareContext = (*sqlConn)(nil)
+
+func (conn sqlConn) Prepare(query string) (driver.Stmt, error) {
+	return sqlStmt{Error: conn.Error}, nil
+}                                              //nolint:gosimple
+func (conn sqlConn) Close() error              { return driver.ErrSkip }
+func (conn sqlConn) Begin() (driver.Tx, error) { return nil, driver.ErrSkip }
+
+func (conn sqlConn) PrepareContext(ctx context.Context, query string) (driver.Stmt, error) {
+	return sqlStmt{StmtError: conn.StmtError, Error: conn.Error}, conn.PrepareError //nolint:gosimple
+}
 
 func (conn sqlConn) ExecContext(ctx context.Context, query string, args []driver.NamedValue) (driver.Result, error) {
 	return sqlResult{}, conn.Error
@@ -500,12 +726,21 @@ func (conn sqlConn) QueryContext(ctx context.Context, query string, args []drive
 	return sqlRows{}, conn.Error
 }
 
-type sqlStmt struct{ Error error }
+type sqlStmt struct {
+	Error     error
+	StmtError error
+}
 
 func (sqlStmt) Close() error                                         { return nil }
 func (sqlStmt) NumInput() int                                        { return -1 }
 func (stmt sqlStmt) Exec(args []driver.Value) (driver.Result, error) { return sqlResult{}, stmt.Error }
 func (stmt sqlStmt) Query(args []driver.Value) (driver.Rows, error)  { return sqlRows{}, stmt.Error }
+func (stmt sqlStmt) QueryContext(ctx context.Context, args []driver.NamedValue) (driver.Rows, error) {
+	return sqlRows{}, stmt.Error
+}
+func (stmt sqlStmt) ExecContext(ctx context.Context, args []driver.NamedValue) (driver.Result, error) {
+	return sqlResult{}, stmt.Error
+}
 
 type sqlResult struct{}
 
