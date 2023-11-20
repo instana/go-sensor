@@ -76,3 +76,22 @@ func (ic *InstanaCluster) Query(statement string, opts *gocb.QueryOptions) (*goc
 
 	return res, err
 }
+
+// SearchQuery executes the analytics query statement on the server.
+func (ic *InstanaCluster) SearchQuery(indexName string, query cbsearch.Query, opts *gocb.SearchOptions) (*gocb.SearchResult, error) {
+	var tracectx gocb.RequestSpanContext
+	if opts.ParentSpan != nil {
+		tracectx = opts.ParentSpan.Context()
+	}
+
+	span := ic.iTracer.RequestSpan(tracectx, "SEARCH_QUERY")
+	span.SetAttribute(operationSpanTag, "SEARCH "+indexName)
+
+	res, err := ic.Cluster.SearchQuery(indexName, query, opts)
+
+	span.(*Span).err = err
+
+	defer span.End()
+
+	return res, err
+}
