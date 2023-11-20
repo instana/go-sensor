@@ -18,12 +18,15 @@ import (
 
 // This example shows how to instrument beego httplib module (HTTP client) with Instana tracing
 func Example_httpClientInstrumentation() {
-	sensor := instana.NewSensor("my-http-client")
+	t := instana.InitCollector(&instana.Options{
+		Service:           "my-http-client",
+		EnableAutoProfile: true,
+	})
 
 	// Every call should start with an entry span (https://docs.instana.io/quick_start/custom_tracing/#always-start-new-traces-with-entry-spans)
 	// Normally this would be your HTTP/GRPC/message queue request span, but here we need to create it explicitly, since an HTTP client call is
 	// an exit span. And all exit spans must have a parent entry span.
-	sp := sensor.Tracer().StartSpan("client-call")
+	sp := t.StartSpan("client-call")
 	sp.SetTag(string(ext.SpanKind), "entry")
 
 	defer sp.Finish()
@@ -32,7 +35,7 @@ func Example_httpClientInstrumentation() {
 	ctx := instana.ContextWithSpan(context.Background(), sp)
 
 	req := httplib.NewBeegoRequestWithCtx(ctx, "https://www.instana.com", http.MethodGet)
-	instabeego.InstrumentRequest(sensor, req)
+	instabeego.InstrumentRequest(t, req)
 
 	_, err := req.Response()
 	if err != nil {

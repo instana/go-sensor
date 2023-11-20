@@ -21,10 +21,13 @@ Usage
 
 ```go
 // create a sensor
-sensor := instana.NewSensor("beego-server")
+t := instana.InitCollector(&instana.Options{
+    Service:           "beego-server",
+    EnableAutoProfile: true,
+})
 
 // instrument the web server
-instabeego.InstrumentWebServer(sensor)
+instabeego.InstrumentWebServer(t)
 
 // define API 
 beego.Get("/foo", func(ctx *beecontext.Context) {/* ... */})
@@ -39,7 +42,10 @@ beego.Run()
 
 ```go
 // create a sensor
-sensor := instana.NewSensor("my-http-client")
+t := instana.InitCollector(&instana.Options{
+    Service:           "my-http-client",
+    EnableAutoProfile: true,
+})
 
 // get the parent span and inject into the request context
 ctx := instana.ContextWithSpan(context.Background(), /* parent span */)
