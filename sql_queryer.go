@@ -9,6 +9,8 @@ import (
 	otlog "github.com/opentracing/opentracing-go/log"
 )
 
+// Queryer is deprecated since Go v1.8
+
 type wQueryer struct {
 	driver.Queryer
 	connDetails DbConnDetails

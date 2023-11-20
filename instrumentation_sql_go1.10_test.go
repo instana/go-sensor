@@ -186,5 +186,7 @@ func TestWrapSQLConnector_Query_Error(t *testing.T) {
 
 type sqlConnector struct{ Error error }
 
-func (c sqlConnector) Connect(context.Context) (driver.Conn, error) { return sqlConn{c.Error}, nil } //nolint:gosimple
-func (sqlConnector) Driver() driver.Driver                          { return sqlDriver{} }
+func (c sqlConnector) Connect(context.Context) (driver.Conn, error) {
+	return sqlConn{Error: c.Error}, nil
+}                                          //nolint:gosimple
+func (sqlConnector) Driver() driver.Driver { return sqlDriver{} }
