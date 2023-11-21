@@ -18,7 +18,7 @@ jobs:
             #!/bin/bash
 
             echo "Prune docker resources - to get some free memory"
-            docker system prune -f
+            docker system prune -a --volumes
 
             echo "Starting Postgres"
             sudo systemctl start postgresql.service
