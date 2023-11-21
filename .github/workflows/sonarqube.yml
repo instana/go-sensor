@@ -18,7 +18,7 @@ jobs:
             #!/bin/bash
 
             echo "Prune docker resources - to get some free memory"
-            docker system prune --volumes -f
+            docker system prune -f
 
             echo "Starting Postgres"
             sudo systemctl start postgresql.service
@@ -40,6 +40,7 @@ jobs:
 
             echo "Cleaning go build cache"
             go clean -cache
+            docker system prune -f
 
       - name: Sonarqube Scan
         uses: sonarsource/sonarqube-scan-action@master
