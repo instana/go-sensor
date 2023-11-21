@@ -12,9 +12,11 @@ type CouchbaseQueue interface {
 	Pop(valuePtr interface{}) error
 	Size() (int, error)
 	Clear() error
+
+	Unwrap() *gocb.CouchbaseQueue
 }
 
-type InstanaCouchbaseQueue struct {
+type instaCouchbaseQueue struct {
 	*gocb.CouchbaseQueue
 	iTracer gocb.RequestTracer
 
@@ -22,7 +24,7 @@ type InstanaCouchbaseQueue struct {
 }
 
 // Iterator returns an iterable for all items in the queue.
-func (icq *InstanaCouchbaseQueue) Iterator() ([]interface{}, error) {
+func (icq *instaCouchbaseQueue) Iterator() ([]interface{}, error) {
 	span := icq.iTracer.RequestSpan(nil, "QUEUE_ITERATOR")
 	span.SetAttribute(bucketNameSpanTag, icq.collection.Bucket().Name())
 
@@ -35,7 +37,7 @@ func (icq *InstanaCouchbaseQueue) Iterator() ([]interface{}, error) {
 }
 
 // Push pushes a value onto the queue.
-func (icq *InstanaCouchbaseQueue) Push(val interface{}) error {
+func (icq *instaCouchbaseQueue) Push(val interface{}) error {
 	span := icq.iTracer.RequestSpan(nil, "QUEUE_PUSH")
 	span.SetAttribute(bucketNameSpanTag, icq.collection.Bucket().Name())
 
@@ -48,7 +50,7 @@ func (icq *InstanaCouchbaseQueue) Push(val interface{}) error {
 }
 
 // Pop pops an items off of the queue.
-func (icq *InstanaCouchbaseQueue) Pop(valuePtr interface{}) error {
+func (icq *instaCouchbaseQueue) Pop(valuePtr interface{}) error {
 	span := icq.iTracer.RequestSpan(nil, "QUEUE_POP")
 	span.SetAttribute(bucketNameSpanTag, icq.collection.Bucket().Name())
 
@@ -61,7 +63,7 @@ func (icq *InstanaCouchbaseQueue) Pop(valuePtr interface{}) error {
 }
 
 // Size returns the size of the queue.
-func (icq *InstanaCouchbaseQueue) Size() (int, error) {
+func (icq *instaCouchbaseQueue) Size() (int, error) {
 	span := icq.iTracer.RequestSpan(nil, "QUEUE_SIZE")
 	span.SetAttribute(bucketNameSpanTag, icq.collection.Bucket().Name())
 
@@ -74,7 +76,7 @@ func (icq *InstanaCouchbaseQueue) Size() (int, error) {
 }
 
 // Clear clears a queue, also removing it.
-func (icq *InstanaCouchbaseQueue) Clear() error {
+func (icq *instaCouchbaseQueue) Clear() error {
 	span := icq.iTracer.RequestSpan(nil, "QUEUE_CLEAR")
 	span.SetAttribute(bucketNameSpanTag, icq.collection.Bucket().Name())
 
@@ -86,14 +88,20 @@ func (icq *InstanaCouchbaseQueue) Clear() error {
 	return err
 }
 
+// Unwrap returns the original *gocb.CouchbaseQueue instance.
+// Note: It is not advisable to use this directly, as Instana tracing will not be enabled if you directly utilize this instance.
+func (icq *instaCouchbaseQueue) Unwrap() *gocb.CouchbaseQueue {
+	return icq.CouchbaseQueue
+}
+
 // helper functions
 
-func createQueue(ic *InstanaCollection, id string) CouchbaseQueue {
+func createQueue(ic *instaCollection, id string) CouchbaseQueue {
 
 	// creating a gocb.CouchbaseQueue object.
 	q := ic.Collection.Queue(id)
 
-	return &InstanaCouchbaseQueue{
+	return &instaCouchbaseQueue{
 		iTracer:        ic.iTracer,
 		CouchbaseQueue: q,
 

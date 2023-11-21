@@ -41,21 +41,23 @@ type Collection interface {
 	LookupIn(id string, ops []gocb.LookupInSpec, opts *gocb.LookupInOptions) (docOut *gocb.LookupInResult, errOut error)
 	MutateIn(id string, ops []gocb.MutateInSpec, opts *gocb.MutateInOptions) (mutOut *gocb.MutateInResult, errOut error)
 	ScopeName() string
+
+	Unwrap() *gocb.Collection
 }
 
-type InstanaCollection struct {
+type instaCollection struct {
 	*gocb.Collection
 	iTracer gocb.RequestTracer
 }
 
 // Bucket returns the bucket to which this collection belongs.
-func (ic *InstanaCollection) Bucket() Bucket {
+func (ic *instaCollection) Bucket() Bucket {
 	bucket := ic.Collection.Bucket()
 	return createBucket(ic.iTracer, bucket)
 }
 
 // Insert creates a new document in the Collection.
-func (ic *InstanaCollection) Insert(id string, val interface{}, opts *gocb.InsertOptions) (mutOut *gocb.MutationResult, errOut error) {
+func (ic *instaCollection) Insert(id string, val interface{}, opts *gocb.InsertOptions) (mutOut *gocb.MutationResult, errOut error) {
 	var tracectx gocb.RequestSpanContext
 	if opts.ParentSpan != nil {
 		tracectx = opts.ParentSpan.Context()
@@ -75,7 +77,7 @@ func (ic *InstanaCollection) Insert(id string, val interface{}, opts *gocb.Inser
 }
 
 // Upsert creates a new document in the Collection if it does not exist, if it does exist then it updates it.
-func (ic *InstanaCollection) Upsert(id string, val interface{}, opts *gocb.UpsertOptions) (mutOut *gocb.MutationResult, errOut error) {
+func (ic *instaCollection) Upsert(id string, val interface{}, opts *gocb.UpsertOptions) (mutOut *gocb.MutationResult, errOut error) {
 	var tracectx gocb.RequestSpanContext
 	if opts.ParentSpan != nil {
 		tracectx = opts.ParentSpan.Context()
@@ -95,7 +97,7 @@ func (ic *InstanaCollection) Upsert(id string, val interface{}, opts *gocb.Upser
 }
 
 // Replace updates a document in the collection.
-func (ic *InstanaCollection) Replace(id string, val interface{}, opts *gocb.ReplaceOptions) (mutOut *gocb.MutationResult, errOut error) {
+func (ic *instaCollection) Replace(id string, val interface{}, opts *gocb.ReplaceOptions) (mutOut *gocb.MutationResult, errOut error) {
 	var tracectx gocb.RequestSpanContext
 	if opts.ParentSpan != nil {
 		tracectx = opts.ParentSpan.Context()
@@ -115,7 +117,7 @@ func (ic *InstanaCollection) Replace(id string, val interface{}, opts *gocb.Repl
 // Get performs a fetch operation against the collection. This can take 3 paths, a standard full document
 // fetch, a subdocument full document fetch also fetching document expiry (when WithExpiry is set),
 // or a subdocument fetch (when Project is used).
-func (ic *InstanaCollection) Get(id string, opts *gocb.GetOptions) (docOut *gocb.GetResult, errOut error) {
+func (ic *instaCollection) Get(id string, opts *gocb.GetOptions) (docOut *gocb.GetResult, errOut error) {
 	var tracectx gocb.RequestSpanContext
 	if opts.ParentSpan != nil {
 		tracectx = opts.ParentSpan.Context()
@@ -135,7 +137,7 @@ func (ic *InstanaCollection) Get(id string, opts *gocb.GetOptions) (docOut *gocb
 }
 
 // Exists checks if a document exists for the given id.
-func (ic *InstanaCollection) Exists(id string, opts *gocb.ExistsOptions) (docOut *gocb.ExistsResult, errOut error) {
+func (ic *instaCollection) Exists(id string, opts *gocb.ExistsOptions) (docOut *gocb.ExistsResult, errOut error) {
 	var tracectx gocb.RequestSpanContext
 	if opts.ParentSpan != nil {
 		tracectx = opts.ParentSpan.Context()
@@ -154,7 +156,7 @@ func (ic *InstanaCollection) Exists(id string, opts *gocb.ExistsOptions) (docOut
 
 // GetAllReplicas returns the value of a particular document from all replica servers. This will return an iterable
 // which streams results one at a time.
-func (ic *InstanaCollection) GetAllReplicas(id string, opts *gocb.GetAllReplicaOptions) (docOut *gocb.GetAllReplicasResult, errOut error) {
+func (ic *instaCollection) GetAllReplicas(id string, opts *gocb.GetAllReplicaOptions) (docOut *gocb.GetAllReplicasResult, errOut error) {
 	var tracectx gocb.RequestSpanContext
 	if opts.ParentSpan != nil {
 		tracectx = opts.ParentSpan.Context()
@@ -172,7 +174,7 @@ func (ic *InstanaCollection) GetAllReplicas(id string, opts *gocb.GetAllReplicaO
 }
 
 // GetAnyReplica returns the value of a particular document from a replica server.
-func (ic *InstanaCollection) GetAnyReplica(id string, opts *gocb.GetAnyReplicaOptions) (docOut *gocb.GetReplicaResult, errOut error) {
+func (ic *instaCollection) GetAnyReplica(id string, opts *gocb.GetAnyReplicaOptions) (docOut *gocb.GetReplicaResult, errOut error) {
 	var tracectx gocb.RequestSpanContext
 	if opts.ParentSpan != nil {
 		tracectx = opts.ParentSpan.Context()
@@ -190,7 +192,7 @@ func (ic *InstanaCollection) GetAnyReplica(id string, opts *gocb.GetAnyReplicaOp
 }
 
 // Remove removes a document from the collection.
-func (ic *InstanaCollection) Remove(id string, opts *gocb.RemoveOptions) (mutOut *gocb.MutationResult, errOut error) {
+func (ic *instaCollection) Remove(id string, opts *gocb.RemoveOptions) (mutOut *gocb.MutationResult, errOut error) {
 	var tracectx gocb.RequestSpanContext
 	if opts.ParentSpan != nil {
 		tracectx = opts.ParentSpan.Context()
@@ -208,7 +210,7 @@ func (ic *InstanaCollection) Remove(id string, opts *gocb.RemoveOptions) (mutOut
 }
 
 // GetAndTouch retrieves a document and simultaneously updates its expiry time.
-func (ic *InstanaCollection) GetAndTouch(id string, expiry time.Duration, opts *gocb.GetAndTouchOptions) (docOut *gocb.GetResult, errOut error) {
+func (ic *instaCollection) GetAndTouch(id string, expiry time.Duration, opts *gocb.GetAndTouchOptions) (docOut *gocb.GetResult, errOut error) {
 	var tracectx gocb.RequestSpanContext
 	if opts.ParentSpan != nil {
 		tracectx = opts.ParentSpan.Context()
@@ -228,7 +230,7 @@ func (ic *InstanaCollection) GetAndTouch(id string, expiry time.Duration, opts *
 // GetAndLock locks a document for a period of time, providing exclusive RW access to it.
 // A lockTime value of over 30 seconds will be treated as 30 seconds. The resolution used to send this value to
 // the server is seconds and is calculated using uint32(lockTime/time.Second).
-func (ic *InstanaCollection) GetAndLock(id string, lockTime time.Duration, opts *gocb.GetAndLockOptions) (docOut *gocb.GetResult, errOut error) {
+func (ic *instaCollection) GetAndLock(id string, lockTime time.Duration, opts *gocb.GetAndLockOptions) (docOut *gocb.GetResult, errOut error) {
 	var tracectx gocb.RequestSpanContext
 	if opts.ParentSpan != nil {
 		tracectx = opts.ParentSpan.Context()
@@ -246,7 +248,7 @@ func (ic *InstanaCollection) GetAndLock(id string, lockTime time.Duration, opts 
 }
 
 // Unlock unlocks a document which was locked with GetAndLock.
-func (ic *InstanaCollection) Unlock(id string, cas gocb.Cas, opts *gocb.UnlockOptions) (errOut error) {
+func (ic *instaCollection) Unlock(id string, cas gocb.Cas, opts *gocb.UnlockOptions) (errOut error) {
 	var tracectx gocb.RequestSpanContext
 	if opts.ParentSpan != nil {
 		tracectx = opts.ParentSpan.Context()
@@ -264,7 +266,7 @@ func (ic *InstanaCollection) Unlock(id string, cas gocb.Cas, opts *gocb.UnlockOp
 }
 
 // Touch touches a document, specifying a new expiry time for it.
-func (ic *InstanaCollection) Touch(id string, expiry time.Duration, opts *gocb.TouchOptions) (mutOut *gocb.MutationResult, errOut error) {
+func (ic *instaCollection) Touch(id string, expiry time.Duration, opts *gocb.TouchOptions) (mutOut *gocb.MutationResult, errOut error) {
 	var tracectx gocb.RequestSpanContext
 	if opts.ParentSpan != nil {
 		tracectx = opts.ParentSpan.Context()
@@ -282,12 +284,12 @@ func (ic *InstanaCollection) Touch(id string, expiry time.Duration, opts *gocb.T
 }
 
 // Binary creates and returns a BinaryCollection.
-func (ic *InstanaCollection) Binary() BinaryCollection {
+func (ic *instaCollection) Binary() BinaryCollection {
 	return createBinaryCollection(ic)
 }
 
 // LookupIn performs a set of subdocument lookup operations on the document identified by id.
-func (ic *InstanaCollection) LookupIn(id string, ops []gocb.LookupInSpec, opts *gocb.LookupInOptions) (docOut *gocb.LookupInResult, errOut error) {
+func (ic *instaCollection) LookupIn(id string, ops []gocb.LookupInSpec, opts *gocb.LookupInOptions) (docOut *gocb.LookupInResult, errOut error) {
 	var tracectx gocb.RequestSpanContext
 	if opts.ParentSpan != nil {
 		tracectx = opts.ParentSpan.Context()
@@ -305,7 +307,7 @@ func (ic *InstanaCollection) LookupIn(id string, ops []gocb.LookupInSpec, opts *
 }
 
 // MutateIn performs a set of subdocument mutations on the document specified by id.
-func (ic *InstanaCollection) MutateIn(id string, ops []gocb.MutateInSpec, opts *gocb.MutateInOptions) (mutOut *gocb.MutateInResult, errOut error) {
+func (ic *instaCollection) MutateIn(id string, ops []gocb.MutateInSpec, opts *gocb.MutateInOptions) (mutOut *gocb.MutateInResult, errOut error) {
 	var tracectx gocb.RequestSpanContext
 	if opts.ParentSpan != nil {
 		tracectx = opts.ParentSpan.Context()
@@ -323,27 +325,27 @@ func (ic *InstanaCollection) MutateIn(id string, ops []gocb.MutateInSpec, opts *
 }
 
 // List returns a new CouchbaseList for the document specified by id.
-func (ic *InstanaCollection) List(id string) CouchbaseList {
+func (ic *instaCollection) List(id string) CouchbaseList {
 	return createList(ic, id)
 }
 
 // Map returns a new CouchbaseMap.
-func (ic *InstanaCollection) Map(id string) CouchbaseMap {
+func (ic *instaCollection) Map(id string) CouchbaseMap {
 	return createMap(ic, id)
 }
 
 // Set returns a new CouchbaseSet.
-func (ic *InstanaCollection) Set(id string) CouchbaseSet {
+func (ic *instaCollection) Set(id string) CouchbaseSet {
 	return createSet(ic, id)
 }
 
 // Queue returns a new CouchbaseQueue.
-func (ic *InstanaCollection) Queue(id string) CouchbaseQueue {
+func (ic *instaCollection) Queue(id string) CouchbaseQueue {
 	return createQueue(ic, id)
 }
 
 // Do execute one or more `BulkOp` items in parallel.
-func (ic *InstanaCollection) Do(ops []gocb.BulkOp, opts *gocb.BulkOpOptions) error {
+func (ic *instaCollection) Do(ops []gocb.BulkOp, opts *gocb.BulkOpOptions) error {
 	var tracectx gocb.RequestSpanContext
 	if opts.ParentSpan != nil {
 		tracectx = opts.ParentSpan.Context()
@@ -360,11 +362,17 @@ func (ic *InstanaCollection) Do(ops []gocb.BulkOp, opts *gocb.BulkOpOptions) err
 	return errOut
 }
 
+// Unwrap returns the original *gocb.Collection instance.
+// Note: It is not advisable to use this directly, as Instana tracing will not be enabled if you directly utilize this instance.
+func (ic *instaCollection) Unwrap() *gocb.Collection {
+	return ic.Collection
+}
+
 // helper functions
 
 // createCollection will wrap *gocb.Collection in to instanaCollection and will return it as Collection interface
 func createCollection(tracer gocb.RequestTracer, collection *gocb.Collection) Collection {
-	return &InstanaCollection{
+	return &instaCollection{
 		iTracer:    tracer,
 		Collection: collection,
 	}

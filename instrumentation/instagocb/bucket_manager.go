@@ -13,15 +13,17 @@ type BucketManager interface {
 	UpdateBucket(settings gocb.BucketSettings, opts *gocb.UpdateBucketOptions) error
 	DropBucket(name string, opts *gocb.DropBucketOptions) error
 	FlushBucket(name string, opts *gocb.FlushBucketOptions) error
+
+	Unwrap() *gocb.BucketManager
 }
 
-type InstanaBucketManager struct {
+type instaBucketManager struct {
 	iTracer gocb.RequestTracer
 	*gocb.BucketManager
 }
 
 // GetBucket returns settings for a bucket on the cluster.
-func (ibm *InstanaBucketManager) GetBucket(bucketName string, opts *gocb.GetBucketOptions) (*gocb.BucketSettings, error) {
+func (ibm *instaBucketManager) GetBucket(bucketName string, opts *gocb.GetBucketOptions) (*gocb.BucketSettings, error) {
 	var tracectx gocb.RequestSpanContext
 	if opts.ParentSpan != nil {
 		tracectx = opts.ParentSpan.Context()
@@ -41,7 +43,7 @@ func (ibm *InstanaBucketManager) GetBucket(bucketName string, opts *gocb.GetBuck
 }
 
 // CreateBucket creates a bucket on the cluster.
-func (ibm *InstanaBucketManager) CreateBucket(settings gocb.CreateBucketSettings, opts *gocb.CreateBucketOptions) error {
+func (ibm *instaBucketManager) CreateBucket(settings gocb.CreateBucketSettings, opts *gocb.CreateBucketOptions) error {
 	var tracectx gocb.RequestSpanContext
 	if opts.ParentSpan != nil {
 		tracectx = opts.ParentSpan.Context()
@@ -60,7 +62,7 @@ func (ibm *InstanaBucketManager) CreateBucket(settings gocb.CreateBucketSettings
 }
 
 // UpdateBucket updates a bucket on the cluster.
-func (ibm *InstanaBucketManager) UpdateBucket(settings gocb.BucketSettings, opts *gocb.UpdateBucketOptions) error {
+func (ibm *instaBucketManager) UpdateBucket(settings gocb.BucketSettings, opts *gocb.UpdateBucketOptions) error {
 	var tracectx gocb.RequestSpanContext
 	if opts.ParentSpan != nil {
 		tracectx = opts.ParentSpan.Context()
@@ -78,7 +80,7 @@ func (ibm *InstanaBucketManager) UpdateBucket(settings gocb.BucketSettings, opts
 }
 
 // DropBucket will delete a bucket from the cluster by name.
-func (ibm *InstanaBucketManager) DropBucket(name string, opts *gocb.DropBucketOptions) error {
+func (ibm *instaBucketManager) DropBucket(name string, opts *gocb.DropBucketOptions) error {
 	var tracectx gocb.RequestSpanContext
 	if opts.ParentSpan != nil {
 		tracectx = opts.ParentSpan.Context()
@@ -97,7 +99,7 @@ func (ibm *InstanaBucketManager) DropBucket(name string, opts *gocb.DropBucketOp
 
 // FlushBucket will delete all the of the data from a bucket.
 // Keep in mind that you must have flushing enabled in the buckets configuration.
-func (ibm *InstanaBucketManager) FlushBucket(name string, opts *gocb.FlushBucketOptions) error {
+func (ibm *instaBucketManager) FlushBucket(name string, opts *gocb.FlushBucketOptions) error {
 	var tracectx gocb.RequestSpanContext
 	if opts.ParentSpan != nil {
 		tracectx = opts.ParentSpan.Context()
@@ -114,11 +116,17 @@ func (ibm *InstanaBucketManager) FlushBucket(name string, opts *gocb.FlushBucket
 	return errOut
 }
 
+// Unwrap returns the original *gocb.BucketManager instance.
+// Note: It is not advisable to use this directly, as Instana tracing will not be enabled if you directly utilize this instance.
+func (ibm *instaBucketManager) Unwrap() *gocb.BucketManager {
+	return ibm.BucketManager
+}
+
 // helper functions
 
-// createBucketManager will wrap *gocb.BucketManager in to InstanaBucketManager and will return it as BucketManager interface
+// createBucketManager will wrap *gocb.BucketManager in to instaBucketManager and will return it as BucketManager interface
 func createBucketManager(tracer gocb.RequestTracer, bm *gocb.BucketManager) BucketManager {
-	return &InstanaBucketManager{
+	return &instaBucketManager{
 		iTracer:       tracer,
 		BucketManager: bm,
 	}

@@ -38,28 +38,30 @@ type Cluster interface {
 
 	//analytics query
 	AnalyticsQuery(statement string, opts *gocb.AnalyticsOptions) (*gocb.AnalyticsResult, error)
+
+	Unwrap() *gocb.Cluster
 }
 
-type InstanaCluster struct {
+type instaCluster struct {
 	iTracer requestTracer
 	*gocb.Cluster
 }
 
 // Bucket connects the cluster to server(s) and returns a new Bucket instance.
-func (ic *InstanaCluster) Bucket(bucketName string) Bucket {
+func (ic *instaCluster) Bucket(bucketName string) Bucket {
 	bucket := ic.Cluster.Bucket(bucketName)
 	return createBucket(ic.iTracer, bucket)
 }
 
 // Buckets returns a BucketManager for managing buckets.
-func (ic *InstanaCluster) Buckets() BucketManager {
+func (ic *instaCluster) Buckets() BucketManager {
 	bm := ic.Cluster.Buckets()
 	return createBucketManager(ic.iTracer, bm)
 
 }
 
 // Query executes the query statement on the server.
-func (ic *InstanaCluster) Query(statement string, opts *gocb.QueryOptions) (*gocb.QueryResult, error) {
+func (ic *instaCluster) Query(statement string, opts *gocb.QueryOptions) (*gocb.QueryResult, error) {
 	var tracectx gocb.RequestSpanContext
 	if opts.ParentSpan != nil {
 		tracectx = opts.ParentSpan.Context()
@@ -78,7 +80,7 @@ func (ic *InstanaCluster) Query(statement string, opts *gocb.QueryOptions) (*goc
 }
 
 // SearchQuery executes the analytics query statement on the server.
-func (ic *InstanaCluster) SearchQuery(indexName string, query cbsearch.Query, opts *gocb.SearchOptions) (*gocb.SearchResult, error) {
+func (ic *instaCluster) SearchQuery(indexName string, query cbsearch.Query, opts *gocb.SearchOptions) (*gocb.SearchResult, error) {
 	var tracectx gocb.RequestSpanContext
 	if opts.ParentSpan != nil {
 		tracectx = opts.ParentSpan.Context()
@@ -94,4 +96,20 @@ func (ic *InstanaCluster) SearchQuery(indexName string, query cbsearch.Query, op
 	defer span.End()
 
 	return res, err
+}
+
+// Unwrap returns the original *gocb.Cluster instance.
+// Note: It is not advisable to use this directly, as Instana tracing will not be enabled if you directly utilize this instance.
+func (ic *instaCluster) Unwrap() *gocb.Cluster {
+	return ic.Cluster
+}
+
+// Helper functions
+
+// createCluster will wrap *gocb.Cluster in to instaCluster and will return it as Cluster interface
+func createCluster(tracer requestTracer, cluster *gocb.Cluster) Cluster {
+	return &instaCluster{
+		iTracer: tracer,
+		Cluster: cluster,
+	}
 }

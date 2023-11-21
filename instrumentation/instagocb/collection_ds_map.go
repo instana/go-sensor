@@ -16,9 +16,11 @@ type CouchbaseMap interface {
 	Keys() ([]string, error)
 	Values() ([]interface{}, error)
 	Clear() error
+
+	Unwrap() *gocb.CouchbaseMap
 }
 
-type InstanaCouchbaseMap struct {
+type instaCouchbaseMap struct {
 	*gocb.CouchbaseMap
 	iTracer gocb.RequestTracer
 
@@ -26,7 +28,7 @@ type InstanaCouchbaseMap struct {
 }
 
 // Iterator returns an iterable for all items in the map.
-func (icm *InstanaCouchbaseMap) Iterator() (map[string]interface{}, error) {
+func (icm *instaCouchbaseMap) Iterator() (map[string]interface{}, error) {
 	span := icm.iTracer.RequestSpan(nil, "MAP_ITERATOR")
 	span.SetAttribute(bucketNameSpanTag, icm.collection.Bucket().Name())
 
@@ -39,7 +41,7 @@ func (icm *InstanaCouchbaseMap) Iterator() (map[string]interface{}, error) {
 }
 
 // At retrieves the item for the given id from the map.
-func (icm *InstanaCouchbaseMap) At(id string, valuePtr interface{}) error {
+func (icm *instaCouchbaseMap) At(id string, valuePtr interface{}) error {
 	span := icm.iTracer.RequestSpan(nil, "MAP_AT")
 	span.SetAttribute(bucketNameSpanTag, icm.collection.Bucket().Name())
 
@@ -52,7 +54,7 @@ func (icm *InstanaCouchbaseMap) At(id string, valuePtr interface{}) error {
 }
 
 // Add adds an item to the map.
-func (icm *InstanaCouchbaseMap) Add(id string, val interface{}) error {
+func (icm *instaCouchbaseMap) Add(id string, val interface{}) error {
 	span := icm.iTracer.RequestSpan(nil, "MAP_ADD")
 	span.SetAttribute(bucketNameSpanTag, icm.collection.Bucket().Name())
 
@@ -65,7 +67,7 @@ func (icm *InstanaCouchbaseMap) Add(id string, val interface{}) error {
 }
 
 // Remove removes an item from the map.
-func (icm *InstanaCouchbaseMap) Remove(id string) error {
+func (icm *instaCouchbaseMap) Remove(id string) error {
 	span := icm.iTracer.RequestSpan(nil, "MAP_REMOVE")
 	span.SetAttribute(bucketNameSpanTag, icm.collection.Bucket().Name())
 
@@ -78,7 +80,7 @@ func (icm *InstanaCouchbaseMap) Remove(id string) error {
 }
 
 // Exists verifies whether or a id exists in the map.
-func (icm *InstanaCouchbaseMap) Exists(id string) (bool, error) {
+func (icm *instaCouchbaseMap) Exists(id string) (bool, error) {
 	span := icm.iTracer.RequestSpan(nil, "MAP_EXISTS")
 	span.SetAttribute(bucketNameSpanTag, icm.collection.Bucket().Name())
 
@@ -91,7 +93,7 @@ func (icm *InstanaCouchbaseMap) Exists(id string) (bool, error) {
 }
 
 // Size returns the size of the map.
-func (icm *InstanaCouchbaseMap) Size() (int, error) {
+func (icm *instaCouchbaseMap) Size() (int, error) {
 	span := icm.iTracer.RequestSpan(nil, "MAP_SIZE")
 	span.SetAttribute(bucketNameSpanTag, icm.collection.Bucket().Name())
 
@@ -104,7 +106,7 @@ func (icm *InstanaCouchbaseMap) Size() (int, error) {
 }
 
 // Keys returns all of the keys within the map.
-func (icm *InstanaCouchbaseMap) Keys() ([]string, error) {
+func (icm *instaCouchbaseMap) Keys() ([]string, error) {
 	span := icm.iTracer.RequestSpan(nil, "MAP_KEYS")
 	span.SetAttribute(bucketNameSpanTag, icm.collection.Bucket().Name())
 
@@ -117,7 +119,7 @@ func (icm *InstanaCouchbaseMap) Keys() ([]string, error) {
 }
 
 // Values returns all of the values within the map.
-func (icm *InstanaCouchbaseMap) Values() ([]interface{}, error) {
+func (icm *instaCouchbaseMap) Values() ([]interface{}, error) {
 	span := icm.iTracer.RequestSpan(nil, "MAP_VALUES")
 	span.SetAttribute(bucketNameSpanTag, icm.collection.Bucket().Name())
 
@@ -130,7 +132,7 @@ func (icm *InstanaCouchbaseMap) Values() ([]interface{}, error) {
 }
 
 // Clear clears a map, also removing it.
-func (icm *InstanaCouchbaseMap) Clear() error {
+func (icm *instaCouchbaseMap) Clear() error {
 	span := icm.iTracer.RequestSpan(nil, "MAP_CLEAR")
 	span.SetAttribute(bucketNameSpanTag, icm.collection.Bucket().Name())
 
@@ -142,14 +144,20 @@ func (icm *InstanaCouchbaseMap) Clear() error {
 	return err
 }
 
+// Unwrap returns the original *gocb.CouchbaseMap instance.
+// Note: It is not advisable to use this directly, as Instana tracing will not be enabled if you directly utilize this instance.
+func (icm *instaCouchbaseMap) Unwrap() *gocb.CouchbaseMap {
+	return icm.CouchbaseMap
+}
+
 // helper functions
 
-func createMap(ic *InstanaCollection, id string) CouchbaseMap {
+func createMap(ic *instaCollection, id string) CouchbaseMap {
 
 	// creating a gocb.CouchbaseMap object.
 	m := ic.Collection.Map(id)
 
-	return &InstanaCouchbaseMap{
+	return &instaCouchbaseMap{
 		iTracer:      ic.iTracer,
 		CouchbaseMap: m,
 

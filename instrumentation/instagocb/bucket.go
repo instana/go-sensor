@@ -26,48 +26,56 @@ type Bucket interface {
 
 	// internal
 	Internal() *gocb.InternalBucket
+
+	Unwrap() *gocb.Bucket
 }
 
-type InstanaBucket struct {
+type instaBucket struct {
 	iTracer gocb.RequestTracer
 	*gocb.Bucket
 }
 
 // Scope returns an instance of a Scope.
-func (ib *InstanaBucket) Scope(s string) Scope {
+func (ib *instaBucket) Scope(s string) Scope {
 	scope := ib.Bucket.Scope(s)
 	return createScope(ib.iTracer, scope)
 }
 
 // DefaultScope returns an instance of the default scope.
-func (ib *InstanaBucket) DefaultScope() Scope {
+func (ib *instaBucket) DefaultScope() Scope {
 	ds := ib.Bucket.DefaultScope()
 	return createScope(ib.iTracer, ds)
 }
 
 // Collection returns an instance of a collection from within the default scope.
-func (ib *InstanaBucket) Collection(collectionName string) Collection {
+func (ib *instaBucket) Collection(collectionName string) Collection {
 	collection := ib.Bucket.Collection(collectionName)
 	return createCollection(ib.iTracer, collection)
 }
 
 // DefaultCollection returns an instance of the default collection.
-func (ib *InstanaBucket) DefaultCollection() Collection {
+func (ib *instaBucket) DefaultCollection() Collection {
 	dc := ib.Bucket.DefaultCollection()
 	return createCollection(ib.iTracer, dc)
 }
 
 // Collections provides functions for managing collections.
-func (ib *InstanaBucket) Collections() CollectionManager {
+func (ib *instaBucket) Collections() CollectionManager {
 	cm := ib.Bucket.Collections()
 	return createCollectionManager(ib.iTracer, cm, ib.Name())
 }
 
+// Unwrap returns the original *gocb.Bucket instance.
+// Note: It is not advisable to use this directly, as Instana tracing will not be enabled if you directly utilize this instance.
+func (ib *instaBucket) Unwrap() *gocb.Bucket {
+	return ib.Bucket
+}
+
 // helper functions
 
-// createCollection will wrap *gocb.Collection in to instanaCollection and will return it as Collection interface
+// createBucket will wrap *gocb.Bucket in to instaBucket and will return it as Bucket interface
 func createBucket(tracer gocb.RequestTracer, bucket *gocb.Bucket) Bucket {
-	return &InstanaBucket{
+	return &instaBucket{
 		iTracer: tracer,
 		Bucket:  bucket,
 	}

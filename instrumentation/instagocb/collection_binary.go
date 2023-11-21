@@ -11,9 +11,11 @@ type BinaryCollection interface {
 	Prepend(id string, val []byte, opts *gocb.PrependOptions) (mutOut *gocb.MutationResult, errOut error)
 	Increment(id string, opts *gocb.IncrementOptions) (countOut *gocb.CounterResult, errOut error)
 	Decrement(id string, opts *gocb.DecrementOptions) (countOut *gocb.CounterResult, errOut error)
+
+	Unwrap() *gocb.BinaryCollection
 }
 
-type InstanaBinaryCollection struct {
+type instaBinaryCollection struct {
 	*gocb.BinaryCollection
 	iTracer gocb.RequestTracer
 
@@ -23,7 +25,7 @@ type InstanaBinaryCollection struct {
 }
 
 // Append appends a byte value to a document.
-func (ibc *InstanaBinaryCollection) Append(id string, val []byte, opts *gocb.AppendOptions) (mutOut *gocb.MutationResult, errOut error) {
+func (ibc *instaBinaryCollection) Append(id string, val []byte, opts *gocb.AppendOptions) (mutOut *gocb.MutationResult, errOut error) {
 	var tracectx gocb.RequestSpanContext
 	if opts.ParentSpan != nil {
 		tracectx = opts.ParentSpan.Context()
@@ -43,7 +45,7 @@ func (ibc *InstanaBinaryCollection) Append(id string, val []byte, opts *gocb.App
 }
 
 // Prepend prepends a byte value to a document.
-func (ibc *InstanaBinaryCollection) Prepend(id string, val []byte, opts *gocb.PrependOptions) (mutOut *gocb.MutationResult, errOut error) {
+func (ibc *instaBinaryCollection) Prepend(id string, val []byte, opts *gocb.PrependOptions) (mutOut *gocb.MutationResult, errOut error) {
 	var tracectx gocb.RequestSpanContext
 	if opts.ParentSpan != nil {
 		tracectx = opts.ParentSpan.Context()
@@ -63,7 +65,7 @@ func (ibc *InstanaBinaryCollection) Prepend(id string, val []byte, opts *gocb.Pr
 // Increment performs an atomic addition for an integer document. Passing a
 // non-negative `initial` value will cause the document to be created if it did not
 // already exist.
-func (ibc *InstanaBinaryCollection) Increment(id string, opts *gocb.IncrementOptions) (countOut *gocb.CounterResult, errOut error) {
+func (ibc *instaBinaryCollection) Increment(id string, opts *gocb.IncrementOptions) (countOut *gocb.CounterResult, errOut error) {
 	var tracectx gocb.RequestSpanContext
 	if opts.ParentSpan != nil {
 		tracectx = opts.ParentSpan.Context()
@@ -83,7 +85,7 @@ func (ibc *InstanaBinaryCollection) Increment(id string, opts *gocb.IncrementOpt
 // Decrement performs an atomic subtraction for an integer document. Passing a
 // non-negative `initial` value will cause the document to be created if it did not
 // already exist.
-func (ibc *InstanaBinaryCollection) Decrement(id string, opts *gocb.DecrementOptions) (countOut *gocb.CounterResult, errOut error) {
+func (ibc *instaBinaryCollection) Decrement(id string, opts *gocb.DecrementOptions) (countOut *gocb.CounterResult, errOut error) {
 	var tracectx gocb.RequestSpanContext
 	if opts.ParentSpan != nil {
 		tracectx = opts.ParentSpan.Context()
@@ -100,15 +102,21 @@ func (ibc *InstanaBinaryCollection) Decrement(id string, opts *gocb.DecrementOpt
 	return
 }
 
+// Unwrap returns the original *gocb.BinaryCollection instance.
+// Note: It is not advisable to use this directly, as Instana tracing will not be enabled if you directly utilize this instance.
+func (ibc *instaBinaryCollection) Unwrap() *gocb.BinaryCollection {
+	return ibc.BinaryCollection
+}
+
 // helper functions
 
 // createBinaryCollection creates an instance of gocb.BinaryCollection and returns it as a BinaryCollection interface
-func createBinaryCollection(ic *InstanaCollection) BinaryCollection {
+func createBinaryCollection(ic *instaCollection) BinaryCollection {
 
 	// creating a gocb.BinaryCollection object.
 	bc := ic.Collection.Binary()
 
-	return &InstanaBinaryCollection{
+	return &instaBinaryCollection{
 		iTracer:          ic.iTracer,
 		BinaryCollection: bc,
 

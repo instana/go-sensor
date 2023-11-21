@@ -15,9 +15,11 @@ type CouchbaseList interface {
 	IndexOf(val interface{}) (int, error)
 	Size() (int, error)
 	Clear() error
+
+	Unwrap() *gocb.CouchbaseList
 }
 
-type InstanaCouchbaseList struct {
+type instaCouchbaseList struct {
 	*gocb.CouchbaseList
 	iTracer gocb.RequestTracer
 
@@ -25,7 +27,7 @@ type InstanaCouchbaseList struct {
 }
 
 // Iterator returns an iterable for all items in the list.
-func (icl *InstanaCouchbaseList) Iterator() ([]interface{}, error) {
+func (icl *instaCouchbaseList) Iterator() ([]interface{}, error) {
 	span := icl.iTracer.RequestSpan(nil, "LIST_ITERATOR")
 	span.SetAttribute(bucketNameSpanTag, icl.collection.Bucket().Name())
 
@@ -38,7 +40,7 @@ func (icl *InstanaCouchbaseList) Iterator() ([]interface{}, error) {
 }
 
 // At retrieves the value specified at the given index from the list.
-func (icl *InstanaCouchbaseList) At(index int, valuePtr interface{}) error {
+func (icl *instaCouchbaseList) At(index int, valuePtr interface{}) error {
 	span := icl.iTracer.RequestSpan(nil, "LIST_AT")
 	span.SetAttribute(bucketNameSpanTag, icl.collection.Bucket().Name())
 
@@ -51,7 +53,7 @@ func (icl *InstanaCouchbaseList) At(index int, valuePtr interface{}) error {
 }
 
 // RemoveAt removes the value specified at the given index from the list.
-func (icl *InstanaCouchbaseList) RemoveAt(index int) error {
+func (icl *instaCouchbaseList) RemoveAt(index int) error {
 	span := icl.iTracer.RequestSpan(nil, "LIST_REMOVE_AT")
 	span.SetAttribute(bucketNameSpanTag, icl.collection.Bucket().Name())
 
@@ -64,7 +66,7 @@ func (icl *InstanaCouchbaseList) RemoveAt(index int) error {
 }
 
 // Append appends an item to the list.
-func (icl *InstanaCouchbaseList) Append(val interface{}) error {
+func (icl *instaCouchbaseList) Append(val interface{}) error {
 	span := icl.iTracer.RequestSpan(nil, "LIST_APPEND")
 	span.SetAttribute(bucketNameSpanTag, icl.collection.Bucket().Name())
 
@@ -77,7 +79,7 @@ func (icl *InstanaCouchbaseList) Append(val interface{}) error {
 }
 
 // Prepend prepends an item to the list.
-func (icl *InstanaCouchbaseList) Prepend(val interface{}) error {
+func (icl *instaCouchbaseList) Prepend(val interface{}) error {
 	span := icl.iTracer.RequestSpan(nil, "LIST_PREPEND")
 	span.SetAttribute(bucketNameSpanTag, icl.collection.Bucket().Name())
 
@@ -90,7 +92,7 @@ func (icl *InstanaCouchbaseList) Prepend(val interface{}) error {
 }
 
 // IndexOf gets the index of the item in the list.
-func (icl *InstanaCouchbaseList) IndexOf(val interface{}) (int, error) {
+func (icl *instaCouchbaseList) IndexOf(val interface{}) (int, error) {
 	span := icl.iTracer.RequestSpan(nil, "LIST_INDEX_OF")
 	span.SetAttribute(bucketNameSpanTag, icl.collection.Bucket().Name())
 
@@ -103,7 +105,7 @@ func (icl *InstanaCouchbaseList) IndexOf(val interface{}) (int, error) {
 }
 
 // Size returns the size of the list.
-func (icl *InstanaCouchbaseList) Size() (int, error) {
+func (icl *instaCouchbaseList) Size() (int, error) {
 	span := icl.iTracer.RequestSpan(nil, "LIST_SIZE")
 	span.SetAttribute(bucketNameSpanTag, icl.collection.Bucket().Name())
 
@@ -116,7 +118,7 @@ func (icl *InstanaCouchbaseList) Size() (int, error) {
 }
 
 // Clear clears a list, also removing it.
-func (icl *InstanaCouchbaseList) Clear() error {
+func (icl *instaCouchbaseList) Clear() error {
 	span := icl.iTracer.RequestSpan(nil, "LIST_CLEAR")
 	span.SetAttribute(bucketNameSpanTag, icl.collection.Bucket().Name())
 
@@ -128,14 +130,20 @@ func (icl *InstanaCouchbaseList) Clear() error {
 	return err
 }
 
+// Unwrap returns the original *gocb.CouchbaseList instance.
+// Note: It is not advisable to use this directly, as Instana tracing will not be enabled if you directly utilize this instance.
+func (icl *instaCouchbaseList) Unwrap() *gocb.CouchbaseList {
+	return icl.CouchbaseList
+}
+
 // helper functions
 
-func createList(ic *InstanaCollection, id string) CouchbaseList {
+func createList(ic *instaCollection, id string) CouchbaseList {
 
 	// creating a gocb.CouchbaseList object.
 	l := ic.Collection.List(id)
 
-	return &InstanaCouchbaseList{
+	return &instaCouchbaseList{
 		iTracer:       ic.iTracer,
 		CouchbaseList: l,
 

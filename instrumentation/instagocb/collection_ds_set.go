@@ -14,9 +14,11 @@ type CouchbaseSet interface {
 	Contains(val string) (bool, error)
 	Size() (int, error)
 	Clear() error
+
+	Unwrap() *gocb.CouchbaseSet
 }
 
-type InstanaCouchbaseSet struct {
+type instaCouchbaseSet struct {
 	*gocb.CouchbaseSet
 	iTracer gocb.RequestTracer
 
@@ -24,7 +26,7 @@ type InstanaCouchbaseSet struct {
 }
 
 // Iterator returns an iterable for all items in the set.
-func (ics *InstanaCouchbaseSet) Iterator() ([]interface{}, error) {
+func (ics *instaCouchbaseSet) Iterator() ([]interface{}, error) {
 	span := ics.iTracer.RequestSpan(nil, "SET_ITERATOR")
 	span.SetAttribute(bucketNameSpanTag, ics.collection.Bucket().Name())
 
@@ -37,7 +39,7 @@ func (ics *InstanaCouchbaseSet) Iterator() ([]interface{}, error) {
 }
 
 // Add adds a value to the set.
-func (ics *InstanaCouchbaseSet) Add(val interface{}) error {
+func (ics *instaCouchbaseSet) Add(val interface{}) error {
 	span := ics.iTracer.RequestSpan(nil, "SET_ADD")
 	span.SetAttribute(bucketNameSpanTag, ics.collection.Bucket().Name())
 
@@ -50,7 +52,7 @@ func (ics *InstanaCouchbaseSet) Add(val interface{}) error {
 }
 
 // Remove removes an value from the set.
-func (ics *InstanaCouchbaseSet) Remove(val string) error {
+func (ics *instaCouchbaseSet) Remove(val string) error {
 	span := ics.iTracer.RequestSpan(nil, "SET_REMOVE")
 	span.SetAttribute(bucketNameSpanTag, ics.collection.Bucket().Name())
 
@@ -63,7 +65,7 @@ func (ics *InstanaCouchbaseSet) Remove(val string) error {
 }
 
 // Values returns all of the values within the set.
-func (ics *InstanaCouchbaseSet) Values() ([]interface{}, error) {
+func (ics *instaCouchbaseSet) Values() ([]interface{}, error) {
 	span := ics.iTracer.RequestSpan(nil, "SET_VALUES")
 	span.SetAttribute(bucketNameSpanTag, ics.collection.Bucket().Name())
 
@@ -76,7 +78,7 @@ func (ics *InstanaCouchbaseSet) Values() ([]interface{}, error) {
 }
 
 // Contains verifies whether or not a value exists within the set.
-func (ics *InstanaCouchbaseSet) Contains(val string) (bool, error) {
+func (ics *instaCouchbaseSet) Contains(val string) (bool, error) {
 	span := ics.iTracer.RequestSpan(nil, "SET_CONTAINS")
 	span.SetAttribute(bucketNameSpanTag, ics.collection.Bucket().Name())
 
@@ -89,7 +91,7 @@ func (ics *InstanaCouchbaseSet) Contains(val string) (bool, error) {
 }
 
 // Size returns the size of the set
-func (ics *InstanaCouchbaseSet) Size() (int, error) {
+func (ics *instaCouchbaseSet) Size() (int, error) {
 	span := ics.iTracer.RequestSpan(nil, "SET_SIZE")
 	span.SetAttribute(bucketNameSpanTag, ics.collection.Bucket().Name())
 
@@ -102,7 +104,7 @@ func (ics *InstanaCouchbaseSet) Size() (int, error) {
 }
 
 // Clear clears a set, also removing it.
-func (ics *InstanaCouchbaseSet) Clear() error {
+func (ics *instaCouchbaseSet) Clear() error {
 	span := ics.iTracer.RequestSpan(nil, "SET_CLEAR")
 	span.SetAttribute(bucketNameSpanTag, ics.collection.Bucket().Name())
 
@@ -114,14 +116,20 @@ func (ics *InstanaCouchbaseSet) Clear() error {
 	return err
 }
 
+// Unwrap returns the original *gocb.CouchbaseSet instance.
+// Note: It is not advisable to use this directly, as Instana tracing will not be enabled if you directly utilize this instance.
+func (ics *instaCouchbaseSet) Unwrap() *gocb.CouchbaseSet {
+	return ics.CouchbaseSet
+}
+
 // helper functions
 
-func createSet(ic *InstanaCollection, id string) CouchbaseSet {
+func createSet(ic *instaCollection, id string) CouchbaseSet {
 
 	// creating a gocb.CouchbaseSet object.
 	s := ic.Collection.Set(id)
 
-	return &InstanaCouchbaseSet{
+	return &instaCouchbaseSet{
 		iTracer:      ic.iTracer,
 		CouchbaseSet: s,
 

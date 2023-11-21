@@ -115,7 +115,7 @@ func (s *Span) SetAttribute(key string, value interface{}) {
 		}
 		s.wrapped.SetTag(bucketNameSpanTag, bucketName)
 		bm := s.tracer.cluster.Buckets()
-		bs, err := bm.(*InstanaBucketManager).BucketManager.GetBucket(bucketName, &gocb.GetBucketOptions{})
+		bs, err := bm.(*instaBucketManager).BucketManager.GetBucket(bucketName, &gocb.GetBucketOptions{})
 		if err == nil && bs != nil {
 			s.tracer.bucketTypeLookup[bucketName] = string(bs.BucketType)
 			s.wrapped.SetTag(bucketTypeSpanTag, string(bs.BucketType))
@@ -137,10 +137,7 @@ func Connect(s instana.TracerLogger, connStr string, opts gocb.ClusterOptions) (
 		return nil, err
 	}
 
-	icluster := &InstanaCluster{
-		iTracer: t,
-		Cluster: cluster,
-	}
+	icluster := createCluster(t, cluster)
 
 	// wrapping the connected cluster in tracer
 	t.wrapCluster(icluster)

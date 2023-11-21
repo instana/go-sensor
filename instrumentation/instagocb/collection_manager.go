@@ -12,9 +12,11 @@ type CollectionManager interface {
 	DropCollection(spec gocb.CollectionSpec, opts *gocb.DropCollectionOptions) error
 	CreateScope(scopeName string, opts *gocb.CreateScopeOptions) error
 	DropScope(scopeName string, opts *gocb.DropScopeOptions) error
+
+	Unwrap() *gocb.CollectionManager
 }
 
-type InstanaCollectionManager struct {
+type instaCollectionManager struct {
 	iTracer gocb.RequestTracer
 	*gocb.CollectionManager
 
@@ -22,7 +24,7 @@ type InstanaCollectionManager struct {
 }
 
 // CreateCollection creates a new collection on the bucket.
-func (icm *InstanaCollectionManager) CreateCollection(spec gocb.CollectionSpec, opts *gocb.CreateCollectionOptions) error {
+func (icm *instaCollectionManager) CreateCollection(spec gocb.CollectionSpec, opts *gocb.CreateCollectionOptions) error {
 	var tracectx gocb.RequestSpanContext
 	if opts.ParentSpan != nil {
 		tracectx = opts.ParentSpan.Context()
@@ -42,7 +44,7 @@ func (icm *InstanaCollectionManager) CreateCollection(spec gocb.CollectionSpec, 
 }
 
 // DropCollection removes a collection.
-func (icm *InstanaCollectionManager) DropCollection(spec gocb.CollectionSpec, opts *gocb.DropCollectionOptions) error {
+func (icm *instaCollectionManager) DropCollection(spec gocb.CollectionSpec, opts *gocb.DropCollectionOptions) error {
 	var tracectx gocb.RequestSpanContext
 	if opts.ParentSpan != nil {
 		tracectx = opts.ParentSpan.Context()
@@ -60,7 +62,7 @@ func (icm *InstanaCollectionManager) DropCollection(spec gocb.CollectionSpec, op
 }
 
 // CreateScope creates a new scope on the bucket.
-func (icm *InstanaCollectionManager) CreateScope(scopeName string, opts *gocb.CreateScopeOptions) error {
+func (icm *instaCollectionManager) CreateScope(scopeName string, opts *gocb.CreateScopeOptions) error {
 	var tracectx gocb.RequestSpanContext
 	if opts.ParentSpan != nil {
 		tracectx = opts.ParentSpan.Context()
@@ -78,7 +80,7 @@ func (icm *InstanaCollectionManager) CreateScope(scopeName string, opts *gocb.Cr
 }
 
 // DropScope removes a scope.
-func (icm *InstanaCollectionManager) DropScope(scopeName string, opts *gocb.DropScopeOptions) error {
+func (icm *instaCollectionManager) DropScope(scopeName string, opts *gocb.DropScopeOptions) error {
 	var tracectx gocb.RequestSpanContext
 	if opts.ParentSpan != nil {
 		tracectx = opts.ParentSpan.Context()
@@ -95,11 +97,17 @@ func (icm *InstanaCollectionManager) DropScope(scopeName string, opts *gocb.Drop
 	return errOut
 }
 
+// Unwrap returns the original *gocb.CollectionManager instance.
+// Note: It is not advisable to use this directly, as Instana tracing will not be enabled if you directly utilize this instance.
+func (icm *instaCollectionManager) Unwrap() *gocb.CollectionManager {
+	return icm.CollectionManager
+}
+
 // helper functions
 
-// createCollectionManager will wrap *gocb.CollectionManager in to InstanaCollectionManager and will return it as CollectionManager interface
+// createCollectionManager will wrap *gocb.CollectionManager in to instaCollectionManager and will return it as CollectionManager interface
 func createCollectionManager(tracer gocb.RequestTracer, cm *gocb.CollectionManager, bucketName string) CollectionManager {
-	return &InstanaCollectionManager{
+	return &instaCollectionManager{
 		iTracer:           tracer,
 		CollectionManager: cm,
 
