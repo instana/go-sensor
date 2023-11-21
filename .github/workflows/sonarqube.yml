@@ -17,6 +17,9 @@ jobs:
         run: |
             #!/bin/bash
 
+            echo "Prune docker resources - to get some free memory"
+            docker system prune -f
+
             echo "Starting Postgres"
             sudo systemctl start postgresql.service
             sudo -u postgres psql -c "ALTER USER postgres PASSWORD 'mysecretpassword'"
