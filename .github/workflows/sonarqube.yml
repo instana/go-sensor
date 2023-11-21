@@ -38,9 +38,9 @@ jobs:
             go mod tidy
             go test -v -tags=integration -coverpkg=./... -cover -covermode atomic -coverprofile coverage.out ./... -json > coverage.json && cd -
 
-            echo "Cleaning go build cache"
-            go clean -cache
-            docker system prune -f
+            #echo "Cleaning go build cache"
+            #go clean -cache
+            #docker system prune -f
 
       - name: Sonarqube Scan
         uses: sonarsource/sonarqube-scan-action@master
