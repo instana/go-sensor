@@ -1,4 +1,4 @@
-name: Auto instrumentation for version updates
+name: Auto update for instrumentation packages
 run-name: Running job for checking newer packages and updating instrumentation
 on:
   schedule:
