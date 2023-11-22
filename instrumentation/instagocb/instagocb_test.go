@@ -25,7 +25,7 @@ var testScope = "test_scope"
 var testCollection = "test_collection"
 var testDocumentID string = "test-doc-id"
 
-// Insert Document
+// Test Document to insert
 type myDoc struct {
 	Foo string `json:"foo"`
 	Bar string `json:"bar"`
@@ -39,6 +39,71 @@ func (alwaysReadyClient) SendEvent(event *instana.EventData) error          { re
 func (alwaysReadyClient) SendSpans(spans []instana.Span) error              { return nil }
 func (alwaysReadyClient) SendProfiles(profiles []autoprofile.Profile) error { return nil }
 func (alwaysReadyClient) Flush(context.Context) error                       { return nil }
+
+func TestUnwrapForAll(t *testing.T) {
+	defer instana.ShutdownSensor()
+	_, _, cluster, a, _ := prepareWithATestDocumentInCollection(t, "ds_list")
+
+	// Cluster
+	c := cluster.Unwrap()
+	a.IsType(&gocb.Cluster{}, c)
+	a.NotNil(c)
+
+	// Bucket Manager
+	bm := cluster.Buckets().Unwrap()
+	a.IsType(&gocb.BucketManager{}, bm)
+	a.NotNil(bm)
+
+	// Bucket
+	b := cluster.Bucket(testBucketName).Unwrap()
+	a.IsType(&gocb.Bucket{}, b)
+	a.NotNil(b)
+
+	//Scope
+	s := cluster.Bucket(testBucketName).Scope(testScope)
+	su := s.Unwrap()
+	a.IsType(&gocb.Scope{}, su)
+	a.NotNil(su)
+
+	// Collection
+	coll := s.Collection(testCollection)
+	collU := coll.Unwrap()
+	a.IsType(&gocb.Collection{}, collU)
+	a.NotNil(collU)
+
+	// Collection Manager
+	cm := cluster.Bucket(testBucketName).Collections().Unwrap()
+	a.IsType(&gocb.CollectionManager{}, cm)
+	a.NotNil(cm)
+
+	// Collection Map
+	m := coll.Map("id").Unwrap()
+	a.IsType(&gocb.CouchbaseMap{}, m)
+	a.NotNil(m)
+
+	// Collection List
+	l := coll.List("id").Unwrap()
+	a.IsType(&gocb.CouchbaseList{}, l)
+	a.NotNil(l)
+
+	// Collection Queue
+	q := coll.Queue("id").Unwrap()
+	a.IsType(&gocb.CouchbaseQueue{}, q)
+	a.NotNil(q)
+
+	// Collection Set
+	st := coll.Set("id").Unwrap()
+	a.IsType(&gocb.CouchbaseSet{}, st)
+	a.NotNil(st)
+
+	// Collection Binary
+	cb := coll.Binary().Unwrap()
+	a.IsType(&gocb.BinaryCollection{}, cb)
+	a.NotNil(cb)
+
+}
+
+// helper functions
 
 func prepare(t *testing.T) (*instana.Recorder, context.Context, instagocb.Cluster, *assert.Assertions) {
 	a := assert.New(t)
@@ -127,7 +192,7 @@ func prepareWithATestDocumentInCollection(t *testing.T, operation string) (*inst
 	case "scope", "cluster":
 		value = getTestDocumentValue()
 	default:
-		value = getTestStringValue()
+		value = getTestDocumentValue()
 
 	}
 	_, err = collection.Insert(testDocumentID, value, &gocb.InsertOptions{})

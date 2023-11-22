@@ -98,6 +98,25 @@ func (ic *instaCluster) SearchQuery(indexName string, query cbsearch.Query, opts
 	return res, err
 }
 
+// AnalyticsQuery executes the analytics query statement on the server.
+func (ic *instaCluster) AnalyticsQuery(statement string, opts *gocb.AnalyticsOptions) (*gocb.AnalyticsResult, error) {
+	var tracectx gocb.RequestSpanContext
+	if opts.ParentSpan != nil {
+		tracectx = opts.ParentSpan.Context()
+	}
+
+	span := ic.iTracer.RequestSpan(tracectx, "ANALYTICS_QUERY")
+	span.SetAttribute(operationSpanTag, statement)
+
+	res, err := ic.Cluster.AnalyticsQuery(statement, opts)
+
+	span.(*Span).err = err
+
+	defer span.End()
+
+	return res, err
+}
+
 // Unwrap returns the original *gocb.Cluster instance.
 // Note: It is not advisable to use this directly, as Instana tracing will not be enabled if you directly utilize this instance.
 func (ic *instaCluster) Unwrap() *gocb.Cluster {

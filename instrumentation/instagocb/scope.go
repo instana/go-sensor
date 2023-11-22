@@ -14,6 +14,8 @@ type Scope interface {
 
 	// analytic query
 	AnalyticsQuery(statement string, opts *gocb.AnalyticsOptions) (*gocb.AnalyticsResult, error)
+
+	Unwrap() *gocb.Scope
 }
 
 type instaScope struct {
