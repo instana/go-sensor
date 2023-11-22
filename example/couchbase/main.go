@@ -16,29 +16,31 @@ import (
 )
 
 var (
-	c *http.Client
-	s instana.TracerLogger
+	collector instana.TracerLogger
 )
 
 func init() {
-	s = instana.InitCollector(&instana.Options{
+	collector = instana.InitCollector(&instana.Options{
 		Service:           "sample-app-couchbase",
 		EnableAutoProfile: true,
 	})
-
-	c = &http.Client{
-		Timeout: time.Second * 30,
-	}
 }
 
 func main() {
-	http.HandleFunc("/couchbase-test", instana.TracingHandlerFunc(s, "/couchbase-test", handler))
-
+	http.HandleFunc("/couchbase-test", instana.TracingHandlerFunc(collector, "/couchbase-test", handler))
 	log.Fatal(http.ListenAndServe("localhost:9990", nil))
 }
 
 func handler(w http.ResponseWriter, r *http.Request) {
-	err := couchbaseTest(r.Context())
+
+	var needError bool
+
+	erStr := r.URL.Query().Get("error")
+	if erStr == "true" {
+		needError = true
+	}
+
+	err := couchbaseTest(r.Context(), needError)
 
 	if err != nil {
 		sendErrResp(w)
@@ -58,7 +60,7 @@ func sendOkResp(w http.ResponseWriter) {
 	_, _ = w.Write([]byte("{message:Status OK! Check terminal for full log!}"))
 }
 
-func couchbaseTest(ctx context.Context) error {
+func couchbaseTest(ctx context.Context, needError bool) error {
 
 	// Update this to your cluster details
 	connectionString := "localhost"
@@ -68,7 +70,7 @@ func couchbaseTest(ctx context.Context) error {
 
 	dsn := "couchbase://" + connectionString
 
-	cluster, err := instagocb.Connect(s, dsn, gocb.ClusterOptions{
+	cluster, err := instagocb.Connect(collector, dsn, gocb.ClusterOptions{
 		Authenticator: gocb.PasswordAuthenticator{
 			Username: username,
 			Password: password,
@@ -99,7 +101,15 @@ func couchbaseTest(ctx context.Context) error {
 			Name:      "Jade",
 			Email:     "jade@test-email.com",
 			Interests: []string{"Swimming", "Rowing"},
-		}, &gocb.UpsertOptions{ParentSpan: instagocb.GetParentSpanFromContext(ctx)})
+		}, &gocb.UpsertOptions{
+			// If you are using couchbase call as part of some http request or something,
+			// you need to set this parentSpan property using `instagocb.GetParentSpanFromContext` method,
+			// Else the parent-child span relationship wont be tracked.
+			// You can keep this as nil, otherwise.
+
+			// Here in this case, this couchbase call is part of a http request.
+			ParentSpan: instagocb.GetParentSpanFromContext(ctx),
+		})
 	if err != nil {
 		return err
 	}
@@ -117,10 +127,17 @@ func couchbaseTest(ctx context.Context) error {
 	}
 	fmt.Printf("User: %v\n", inUser)
 
-	// Perform a N1QL Query
+	// Perform a SQL++ Query
 	inventoryScope := bucket.Scope("inventory")
-	queryResult, err := inventoryScope.Query(
-		fmt.Sprintf("SELECT * FROM `airline` WHERE id=10"),
+	var queryStr string
+
+	if needError {
+		// airline1 is not there, this will produce an error
+		queryStr = "SELECT * FROM `airline1` WHERE id=10"
+	} else {
+		queryStr = "SELECT * FROM `airline` WHERE id=10"
+	}
+	queryResult, err := inventoryScope.Query(queryStr,
 		&gocb.QueryOptions{Adhoc: true, ParentSpan: instagocb.GetParentSpanFromContext(ctx)},
 	)
 	if err != nil {
