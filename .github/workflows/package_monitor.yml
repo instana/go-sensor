@@ -1,0 +1,25 @@
+name: Auto update for instrumentation packages
+run-name: Running job for checking newer packages and updating instrumentation
+on:
+  schedule:
+    - cron: '0 4 * * *'
+jobs:
+  monitor-update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install package
+        run: |
+          sudo apt-get -y install jq
+
+      - uses: actions/checkout@v3
+        name: Checkout repo
+        with:
+          fetch-depth: 0
+          ssh-key: ${{secrets.PRIVATE_KEY_GO_TRACER_RELEASE}}
+
+      - name: Run script to monitor packages and create PR with updated changes
+        id: verison_updater
+        run: ./version_updater.sh
+        shell: bash {0}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

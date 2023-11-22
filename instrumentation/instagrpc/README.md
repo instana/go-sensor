@@ -81,3 +81,9 @@ If the context contains an active span stored using [`instana.ContextWithSpan()`
 [Sensor]: https://pkg.go.dev/github.com/instana/go-sensor/?tab=doc#Sensor
 [SpanFromContext]: https://pkg.go.dev/github.com/instana/go-sensor/?tab=doc#SpanFromContext
 [ContextWithSpan]: https://pkg.go.dev/github.com/instana/go-sensor/?tab=doc#ContextWithSpan
+
+<!---
+Mandatory comment section for CI/CD !!
+target-pkg-url: google.golang.org/grpc
+current-version: v1.59.0
+--->
