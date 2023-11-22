@@ -9,14 +9,14 @@
 # Function to extract the package url and current version from the metadata
 extract_info_from_markdown() {
     if [ -e "$1" ]; then
-        markdown_text=$(<"$1")
+        local markdown_text=$(<"$1")
         # Extract target-package-url and current-version using awk
-        target_pkg_url=$(echo "$markdown_text" | awk -F: '/target-pkg-url:/ {print $2}' | tr -d '[:space:]')
-        current_version=$(echo "$markdown_text" | awk -F: '/current-version:/ {print $2}' | tr -d '[:space:]')
+        TARGET_PKG_URL=$(echo "$markdown_text" | awk -F: '/target-pkg-url:/ {print $2}' | tr -d '[:space:]')
+        CURRENT_VERSION=$(echo "$markdown_text" | awk -F: '/current-version:/ {print $2}' | tr -d '[:space:]')
     else
         echo "Error: File not found - $1"
-        target_pkg_url=""
-        current_version=""
+        TARGET_PKG_URL=""
+        CURRENT_VERSION=""
     fi
 }
 
@@ -39,10 +39,10 @@ version_compare() {
     local version1=$1
     local version2=$2
 
-    major_version1=$(echo "$version1" | sed -E 's/v([0-9]+)\.([0-9]+)\..*/\1/')
-    minor_version1=$(echo "$version1" | sed -E 's/v([0-9]+)\.([0-9]+)\..*/\2/')
-    major_version2=$(echo "$version2" | sed -E 's/v([0-9]+)\.([0-9]+)\..*/\1/')
-    minor_version2=$(echo "$version2" | sed -E 's/v([0-9]+)\.([0-9]+)\..*/\2/')
+    local major_version1=$(echo "$version1" | sed -E 's/v([0-9]+)\.([0-9]+)\..*/\1/')
+    local minor_version1=$(echo "$version1" | sed -E 's/v([0-9]+)\.([0-9]+)\..*/\2/')
+    local major_version2=$(echo "$version2" | sed -E 's/v([0-9]+)\.([0-9]+)\..*/\1/')
+    local minor_version2=$(echo "$version2" | sed -E 's/v([0-9]+)\.([0-9]+)\..*/\2/')
 
     # We are checking the changes in minor versions for automation purpose
     if [ "$major_version1" = "$major_version2" ] && [ "$minor_version1" -gt "$minor_version2" ]; then
@@ -58,84 +58,84 @@ replace_version_in_file() {
     local file_path=$2
 
     # Read the content of the file
-    file_content=$(<"$file_path")
+    local file_content=$(<"$file_path")
 
     # Replace current-version with the new version
     # shellcheck disable=SC2001
-    updated_content=$(echo "$file_content" | sed "s/current-version: [^ ]*/current-version: $version/")
+    local updated_content=$(echo "$file_content" | sed "s/current-version: [^ ]*/current-version: $version/")
 
     # Write the updated content back to the file
     echo "$updated_content" > "$file_path"
     echo "Version in file $file_path updated to $version"
 }
 
-directory_path=$(pwd)/instrumentation
-echo "$directory_path"
+DIRECTORY_PATH=$(pwd)/instrumentation
+echo "$DIRECTORY_PATH"
 
-if [ -d "$directory_path" ]; then
-    for folder in "$directory_path"/*/; do
+if [ -d "$DIRECTORY_PATH" ]; then
+    for folder in "$DIRECTORY_PATH"/*/; do
         # Create a branch and commit the changes
         git config user.name "IBM/Instana/Team Go"
         git config user.email "github-actions@github.com"
 
         git checkout main
 
-        folder_name=$(basename "$folder")
+        INSTRUMENTATION=$(basename "$folder")
         # Identify the path to the README file
-        readme_path="${folder}README.md"
+        README_PATH="${folder}README.md"
 
-        echo "--------------$folder_name-----------------"
-        if [ ! -e "$readme_path" ]; then
+        echo "--------------$INSTRUMENTATION-----------------"
+        if [ ! -e "$README_PATH" ]; then
           continue
         fi
 
         # Extract the metadata from the README file
-        extract_info_from_markdown "$readme_path"
+        extract_info_from_markdown "$README_PATH"
 
-        if [ -z "$target_pkg_url" ]; then
+        if [ -z "$TARGET_PKG_URL" ]; then
           continue
         fi
 
         # Print the extracted values
-        #echo "Target Package URL: $target_pkg_url"
-        echo "Current Version: $current_version"
+        #echo "Target Package URL: $TARGET_PKG_URL"
+        echo "Current Version: $CURRENT_VERSION"
 
         # Find the latest version of the instrumented package
-        find_latest_version "$target_pkg_url"
+        find_latest_version "$TARGET_PKG_URL"
         echo "Latest version:" "$LATEST_VERSION"
 
-        version_compare "$LATEST_VERSION" "$current_version"
-        update_needed=$( version_compare "$LATEST_VERSION" "$current_version" )
+        version_compare "$LATEST_VERSION" "$CURRENT_VERSION"
+        update_needed=$( version_compare "$LATEST_VERSION" "$CURRENT_VERSION" )
 
         if [ "$update_needed" != true ]; then
           continue
         fi
 
-        if gh pr list | grep -q "instrumentation $folder_name for new version $LATEST_VERSION"; then
-          echo "PR for $folder_name newer version:$LATEST_VERSION already exists. Skipping to next iteration"
+        if gh pr list | grep -q "instrumentation $INSTRUMENTATION for new version $LATEST_VERSION"; then
+          echo "PR for $INSTRUMENTATION newer version:$LATEST_VERSION already exists. Skipping to next iteration"
           continue
         fi
 
         echo "Update needed for this package. Update process starting..."
         cd "$folder" || continue
-        go get "$target_pkg_url"
+        go get "$TARGET_PKG_URL"
         go mod tidy
         go test ./... || echo "Continuing the operation even if the test fails. This needs manual intervention"
 
 
         # Need to update the current version in the README file
-        replace_version_in_file "$LATEST_VERSION" "$readme_path"
+        replace_version_in_file "$LATEST_VERSION" "$README_PATH"
 
-        current_time=$(date '+%s')
-        git checkout -b "update-instrumentations-$folder_name-id-$current_time"
+        CURRENT_TIME_UNIX=$(date '+%s')
+        git checkout -b "update-instrumentations-$INSTRUMENTATION-id-$CURRENT_TIME_UNIX"
 
         git add go.mod go.sum README.md
-        git commit -m "Updated go.mod and go.sum files for $folder_name"
+        git commit -m "Updated go.mod, go.sum files, README.md for $INSTRUMENTATION"
         git push origin @
 
         # Create a PR request for the changes
         # shellcheck disable=SC2046
-        gh pr create --title "Updating instrumentation $folder_name for new version $LATEST_VERSION. Id: $current_time" \
+        gh pr create --title "Updating instrumentation $INSTRUMENTATION for new version $LATEST_VERSION. Id: $CURRENT_TIME_UNIX" \
         --body "This PR adds changes for the newer version $LATEST_VERSION for the instrumented package" --head $(git branch --show-current)
 
     done
