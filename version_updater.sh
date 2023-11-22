@@ -111,6 +111,11 @@ if [ -d "$directory_path" ]; then
           continue
         fi
 
+        if gh pr list | grep -q "instrumentation $folder_name for new version $LATEST_VERSION"; then
+          echo "PR for $folder_name newer version:$LATEST_VERSION already exists. Skipping to next iteration"
+          continue
+        fi
+
         echo "Update needed for this package. Update process starting..."
         cd "$folder" || continue
         go get "$target_pkg_url"
@@ -137,18 +142,3 @@ if [ -d "$directory_path" ]; then
 else
     echo "Error: The specified path is not a directory."
 fi
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
