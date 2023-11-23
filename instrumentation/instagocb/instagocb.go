@@ -1,5 +1,5 @@
 // (c) Copyright IBM Corp. 2023
-
+// Package Instagocb provides instrumentation for the gocb package
 package instagocb
 
 import (
