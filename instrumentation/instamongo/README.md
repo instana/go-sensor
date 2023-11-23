@@ -42,5 +42,5 @@ See the [`instamongo` package documentation][godoc] for detailed examples.
 <!---
 Mandatory comment section for CI/CD !!
 target-pkg-url: go.mongodb.org/mongo-driver
-current-version: v1.7.2
+current-version: v1.12.1
 --->
