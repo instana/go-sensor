@@ -105,7 +105,7 @@ func TestMonitoredS3Operations(t *testing.T) {
 					Bucket: &s3bucket,
 					Delete: &s3types.Delete{
 						Objects: make([]s3types.ObjectIdentifier, 0),
-						Quiet:   false,
+						Quiet:   nil,
 					},
 				}
 				return client.DeleteObjects(ctx, &ip)
