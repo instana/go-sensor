@@ -112,3 +112,9 @@ func subCall(ctx context.Context) {
 [instalambda.NewHandler]: https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instalambda#NewHandler
 [instalambda.WrapHandler]: https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instalambda#WrapHandler
 [instana.SpanFromContext]: https://pkg.go.dev/github.com/instana/go-sensor#SpanFromContext
+
+<!---
+Mandatory comment section for CI/CD !!
+target-pkg-url: github.com/aws/aws-lambda-go
+current-version: v1.20.0
+--->

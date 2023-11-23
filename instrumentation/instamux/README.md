@@ -37,3 +37,9 @@ r.HandleFunc("/foo", func(writer http.ResponseWriter, request *http.Request) {})
 
 [godoc]: https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instamux
 [fullExample]: https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instamux#example-package
+
+<!---
+Mandatory comment section for CI/CD !!
+target-pkg-url: github.com/gorilla/mux
+current-version: v1.8.0
+--->

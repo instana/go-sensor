@@ -36,3 +36,9 @@ instagorm.Instrument(db, sensor, dsn)
 
 
 [godoc]: https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instagorm
+
+<!---
+Mandatory comment section for CI/CD !!
+target-pkg-url: gorm.io/gorm
+current-version: v1.25.0
+--->

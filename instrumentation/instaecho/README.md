@@ -33,3 +33,9 @@ e.GET("/foo", func(c echo.Context) error { /* ... */ })
 
 [godoc]: https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instaecho
 [fullExample]: https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instaecho#example-package
+
+<!---
+Mandatory comment section for CI/CD !!
+target-pkg-url: github.com/labstack/echo/v4
+current-version: v0.4.9
+--->
