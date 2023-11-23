@@ -1,27 +1,42 @@
 # Instana instrumentation of Couchbase SDK v2 (gocb) for Go
 
-This module contains the code for instrumenting the Couchbase SDK, based on the [`gocb`][gocb-github] library for Go.
+This module contains the code for instrumenting the Couchbase SDK, based on the [`gocb`](https://github.com/couchbase/gocb) library for Go.
 
 The following services are currently instrumented:
 
 1. Cluster
+   1. Query
+   2. SearchQuery
+   3. AnalyticsQuery
 2. Bucket
 3. Bucket Manager
+   1. Get/Create/Update/Drop/Flush Bucket
 4. Collection
-5. Binary Collection
-6. Collection Manager
-7. Data Structures
+   1. Bulk Operations
+   2. Data operation (Insert, Upsert, Get etc)
+   3. Sub-doc operations
+      1. LookupIn & MutateIn
+5. Scope
+   1. Query
+   2. AnalyticsQuery
+6. Binary Collection
+7. Collection Manager
+8. Collection Data Structures
    1. List
    2. Map
    3. Queue
    4. Set
 
+> [!NOTE]
+> While you can call methods such as QueryIndexManager or SearchIndexManager from the provided instagocb cluster interface, it's important to note that tracing support for these methods is currently not implemented. If you find the instrumentation of any unlisted features necessary, please feel free to raise an issue.
+
+
 
 Compatibility
 -------------
 
- * Minimum gocb version - v2.7.0 
- * Minimum Go version - 1.13
+ * gocb version - v2.6.5 
+ * Go version - 1.13
 
 
 Installation
@@ -108,3 +123,9 @@ Sample Usage
 [Full example][fullExample]
 
 [fullExample]: ../../example/couchbase/main.go
+
+<!---
+Mandatory comment section for CI/CD !!
+target-pkg-url: github.com/couchbase/gocb/v2
+current-version: v2.6.5
+--->

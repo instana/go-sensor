@@ -21,22 +21,16 @@ type Cluster interface {
 	EventingFunctions() *gocb.EventingFunctionManager
 	Transactions() *gocb.Transactions
 
-	// search query
 	SearchQuery(indexName string, query cbsearch.Query, opts *gocb.SearchOptions) (*gocb.SearchResult, error)
 
-	// query
 	Query(statement string, opts *gocb.QueryOptions) (*gocb.QueryResult, error)
 
-	// ping
 	Ping(opts *gocb.PingOptions) (*gocb.PingResult, error)
 
-	// internal
 	Internal() *gocb.InternalCluster
 
-	// diag
 	Diagnostics(opts *gocb.DiagnosticsOptions) (*gocb.DiagnosticsResult, error)
 
-	//analytics query
 	AnalyticsQuery(statement string, opts *gocb.AnalyticsOptions) (*gocb.AnalyticsResult, error)
 
 	Unwrap() *gocb.Cluster

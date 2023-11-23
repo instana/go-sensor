@@ -18,13 +18,10 @@ type Bucket interface {
 	Collections() CollectionManager
 	WaitUntilReady(timeout time.Duration, opts *gocb.WaitUntilReadyOptions) error
 
-	// view query
 	ViewQuery(designDoc string, viewName string, opts *gocb.ViewOptions) (*gocb.ViewResult, error)
 
-	// ping
 	Ping(opts *gocb.PingOptions) (*gocb.PingResult, error)
 
-	// internal
 	Internal() *gocb.InternalBucket
 
 	Unwrap() *gocb.Bucket

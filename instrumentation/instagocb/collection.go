@@ -13,10 +13,8 @@ type Collection interface {
 	Name() string
 	QueryIndexes() *gocb.CollectionQueryIndexManager
 
-	// bulk operation
 	Do(ops []gocb.BulkOp, opts *gocb.BulkOpOptions) error
 
-	// crud
 	Insert(id string, val interface{}, opts *gocb.InsertOptions) (mutOut *gocb.MutationResult, errOut error)
 	Upsert(id string, val interface{}, opts *gocb.UpsertOptions) (mutOut *gocb.MutationResult, errOut error)
 	Replace(id string, val interface{}, opts *gocb.ReplaceOptions) (mutOut *gocb.MutationResult, errOut error)
@@ -31,13 +29,11 @@ type Collection interface {
 	Touch(id string, expiry time.Duration, opts *gocb.TouchOptions) (mutOut *gocb.MutationResult, errOut error)
 	Binary() BinaryCollection
 
-	// ds
 	List(id string) CouchbaseList
 	Map(id string) CouchbaseMap
 	Set(id string) CouchbaseSet
 	Queue(id string) CouchbaseQueue
 
-	// sub doc
 	LookupIn(id string, ops []gocb.LookupInSpec, opts *gocb.LookupInOptions) (docOut *gocb.LookupInResult, errOut error)
 	MutateIn(id string, ops []gocb.MutateInSpec, opts *gocb.MutateInOptions) (mutOut *gocb.MutateInResult, errOut error)
 	ScopeName() string

@@ -9,10 +9,8 @@ type Scope interface {
 	BucketName() string
 	Collection(collectionName string) Collection
 
-	// query
 	Query(statement string, opts *gocb.QueryOptions) (*gocb.QueryResult, error)
 
-	// analytic query
 	AnalyticsQuery(statement string, opts *gocb.AnalyticsOptions) (*gocb.AnalyticsResult, error)
 
 	Unwrap() *gocb.Scope
@@ -35,6 +33,26 @@ func (is *instaScope) Query(statement string, opts *gocb.QueryOptions) (*gocb.Qu
 	span.SetAttribute(bucketNameSpanTag, is.BucketName())
 
 	res, err := is.Scope.Query(statement, opts)
+
+	span.(*Span).err = err
+
+	defer span.End()
+
+	return res, err
+}
+
+// AnalyticsQuery executes the analytics query statement on the server, constraining the query to the bucket and scope.
+func (is *instaScope) AnalyticsQuery(statement string, opts *gocb.AnalyticsOptions) (*gocb.AnalyticsResult, error) {
+	var tracectx gocb.RequestSpanContext
+	if opts.ParentSpan != nil {
+		tracectx = opts.ParentSpan.Context()
+	}
+
+	span := is.iTracer.RequestSpan(tracectx, "ANALYTICS_QUERY")
+	span.SetAttribute(operationSpanTag, statement)
+	span.SetAttribute(bucketNameSpanTag, is.BucketName())
+
+	res, err := is.Scope.AnalyticsQuery(statement, opts)
 
 	span.(*Span).err = err
 
