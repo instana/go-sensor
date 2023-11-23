@@ -120,5 +120,5 @@ Known limitations:
 <!---
 Mandatory comment section for CI/CD !!
 target-pkg-url: github.com/aws/aws-sdk-go
-current-version: v1.44.209
+current-version: v1.48.3
 --->
