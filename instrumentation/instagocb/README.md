@@ -31,14 +31,6 @@ The following services are currently instrumented:
 > While you can call methods such as QueryIndexManager or SearchIndexManager from the provided instagocb cluster interface, it's important to note that tracing support for these methods is currently not implemented. If you find the instrumentation of any unlisted features necessary, please feel free to raise an issue.
 
 
-
-Compatibility
--------------
-
- * gocb version - v2.6.5 
- * Go version - 1.13
-
-
 Installation
 ------------
 
