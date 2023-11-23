@@ -37,5 +37,5 @@ Refer to [`instafiber`](https://pkg.go.dev/github.com/instana/go-sensor/instrume
 <!---
 Mandatory comment section for CI/CD !!
 target-pkg-url: github.com/gofiber/fiber/v2
-current-version: v2.50.0
+current-version: v2.51.0
 --->
