@@ -44,5 +44,5 @@ logrus.WithContext(ctx).
 <!---
 Mandatory comment section for CI/CD !!
 target-pkg-url: github.com/sirupsen/logrus
-current-version: v1.5.0
+current-version: v1.9.3
 --->
