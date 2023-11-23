@@ -136,5 +136,5 @@ See the [`instaamqp091` package documentation][godoc] for detailed examples.
 <!---
 Mandatory comment section for CI/CD !!
 target-pkg-url: github.com/rabbitmq/amqp091-go
-current-version: v1.5.0
+current-version: v1.9.0
 --->

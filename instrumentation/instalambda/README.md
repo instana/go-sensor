@@ -116,5 +116,5 @@ func subCall(ctx context.Context) {
 <!---
 Mandatory comment section for CI/CD !!
 target-pkg-url: github.com/aws/aws-lambda-go
-current-version: v1.20.0
+current-version: v1.41.0
 --->
