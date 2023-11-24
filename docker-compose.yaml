@@ -19,6 +19,12 @@ services:
       - 5671:5671
       - 5672:5672
 
+  couchbase-server-sandbox:
+    image: couchbase/server-sandbox:7.1.1
+    ports:
+      - 8091-8094:8091-8094
+      - 11210:11210
+
   redis:
     image: redis
     ports:

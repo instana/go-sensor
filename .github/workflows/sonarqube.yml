@@ -17,6 +17,9 @@ jobs:
         run: |
             #!/bin/bash
 
+            echo "Starting Couchbase"
+            docker-compose -f docker-compose-integration.yaml up -d
+
             echo "Starting Postgres"
             sudo systemctl start postgresql.service
             sudo -u postgres psql -c "ALTER USER postgres PASSWORD 'mysecretpassword'"
@@ -29,6 +32,11 @@ jobs:
             for lib in $LIB_LIST
               do echo "Generating test coverage for $lib" && cd "$lib" && go mod tidy && go test -v -coverpkg=./... -cover -covermode atomic -coverprofile coverage.out ./... -json > coverage.json && cd -;
             done
+
+            echo "Generating test coverage for ./instrumentation/instagocb"
+            cd ./instrumentation/instagocb
+            go mod tidy
+            go test -v -tags=integration -coverpkg=./... -cover -covermode atomic -coverprofile coverage.out ./... -json > coverage.json && cd -
 
             echo "Generating test coverage for ./instrumentation/instapgx"
             cd ./instrumentation/instapgx

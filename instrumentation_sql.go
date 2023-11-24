@@ -184,6 +184,20 @@ func redisSpan(ctx context.Context, conn DbConnDetails, query string, sensor Tra
 	return sensor.StartSpan(string(RedisSpanType), opts...)
 }
 
+func couchbaseSpan(ctx context.Context, conn DbConnDetails, query string, sensor TracerLogger) ot.Span {
+	tags := ot.Tags{
+		"couchbase.hostname": conn.RawString,
+		"couchbase.sql":      query,
+	}
+
+	opts := []ot.StartSpanOption{ext.SpanKindRPCClient, tags}
+	if parentSpan, ok := SpanFromContext(ctx); ok {
+		opts = append(opts, ot.ChildOf(parentSpan.Context()))
+	}
+
+	return sensor.StartSpan(string(CouchbaseSpanType), opts...)
+}
+
 func genericSQLSpan(ctx context.Context, conn DbConnDetails, query string, sensor TracerLogger) ot.Span {
 	tags := ot.Tags{
 		string(ext.DBType):      "sql",
@@ -244,6 +258,8 @@ func startSQLSpan(ctx context.Context, conn DbConnDetails, query string, sensor 
 		return redisSpan(ctx, conn, query, sensor), "redis"
 	case "mysql":
 		return mySQLSpan(ctx, conn, query, sensor), "mysql"
+	case "couchbase":
+		return couchbaseSpan(ctx, conn, query, sensor), "couchbase"
 	}
 
 	return genericSQLSpan(ctx, conn, query, sensor), "db"
