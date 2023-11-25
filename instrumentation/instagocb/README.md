@@ -119,5 +119,5 @@ Sample Usage
 <!---
 Mandatory comment section for CI/CD !!
 target-pkg-url: github.com/couchbase/gocb/v2
-current-version: v2.6.5
+current-version: v2.7.0
 --->
