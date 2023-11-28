@@ -4,6 +4,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"time"
@@ -155,6 +156,107 @@ func couchbaseTest(ctx context.Context, needError bool) error {
 	}
 
 	if err := queryResult.Err(); err != nil {
+		return err
+	}
+
+	// test transactions
+	collection := inventoryScope.Collection("airport").Unwrap()
+
+	_, err = cluster.Transactions().Run(func(ctx1 *gocb.TransactionAttemptContext) error {
+
+		tac := cluster.WrapTransactionAttemptContext(ctx1, instagocb.GetParentSpanFromContext(ctx))
+		// Inserting a doc:
+		_, err := tac.Insert(collection, "doc-a", map[string]interface{}{})
+		if err != nil {
+			return err
+		}
+
+		// Getting documents:
+		docA, err := tac.Get(collection, "doc-a")
+		// Use err != nil && !errors.Is(err, gocb.ErrDocumentNotFound) if the document may or may not exist
+		if err != nil {
+			return err
+		}
+
+		// Replacing a doc:
+		// docB, err := tac.Get(collection, "doc-b")
+		// if err != nil {
+		// 	return err
+		// }
+
+		var content map[string]interface{}
+		err = docA.Content(&content)
+		if err != nil {
+			return err
+		}
+		content["transactions"] = "are awesome"
+		_, err = tac.Replace(collection, docA, content)
+		if err != nil {
+			return err
+		}
+
+		// Removing a doc:
+		docA1, err := tac.Get(collection, "doc-a")
+		if err != nil {
+			return err
+		}
+
+		err = tac.Remove(collection, docA1)
+		if err != nil {
+			return err
+		}
+
+		// Performing a SELECT N1QL query against a scope:
+		qr, err := tac.Query("SELECT * FROM hotel WHERE country = $1", &gocb.TransactionQueryOptions{
+			PositionalParameters: []interface{}{"United Kingdom"},
+			Scope:                inventoryScope.Unwrap(),
+		})
+		if err != nil {
+			return err
+		}
+
+		type hotel struct {
+			Name string `json:"name"`
+		}
+
+		var hotels []hotel
+		for qr.Next() {
+			var h hotel
+			err = qr.Row(&h)
+			if err != nil {
+				return err
+			}
+
+			hotels = append(hotels, h)
+		}
+
+		// Performing an UPDATE N1QL query on multiple documents, in the `inventory` scope:
+		_, err = tac.Query("UPDATE route SET airlineid = $1 WHERE airline = $2", &gocb.TransactionQueryOptions{
+			PositionalParameters: []interface{}{"airline_137", "AF"},
+			Scope:                inventoryScope.Unwrap(),
+		})
+		if err != nil {
+			return err
+		}
+
+		// There is no commit call, by not returning an error the transaction will automatically commit
+		return nil
+	}, nil)
+	var ambigErr gocb.TransactionCommitAmbiguousError
+	if errors.As(err, &ambigErr) {
+		log.Println("Transaction possibly committed")
+
+		log.Printf("%+v", ambigErr)
+		return nil
+	}
+	var failedErr gocb.TransactionFailedError
+	if errors.As(err, &failedErr) {
+		log.Println("Transaction did not reach commit point")
+
+		log.Printf("%+v", failedErr)
+		return nil
+	}
+	if err != nil {
 		return err
 	}
 
