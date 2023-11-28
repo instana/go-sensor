@@ -101,6 +101,16 @@ func TestUnwrapForAll(t *testing.T) {
 	a.IsType(&gocb.BinaryCollection{}, cb)
 	a.NotNil(cb)
 
+	// Transactions
+	ts := cluster.Transactions().Unwrap()
+	a.IsType(&gocb.Transactions{}, ts)
+	a.NotNil(ts)
+
+	// TransactionAttemptContext
+	tac := cluster.WrapTransactionAttemptContext(&gocb.TransactionAttemptContext{}, nil).Unwrap()
+	a.IsType(&gocb.TransactionAttemptContext{}, tac)
+	a.NotNil(tac)
+
 }
 
 // helper functions
