@@ -24,6 +24,7 @@ var testBucketName = "test-bucket"
 var testScope = "test_scope"
 var testCollection = "test_collection"
 var testDocumentID string = "test-doc-id"
+var rec *instana.Recorder
 
 // Test Document to insert
 type myDoc struct {
@@ -117,7 +118,12 @@ func TestUnwrapForAll(t *testing.T) {
 
 func prepare(t *testing.T) (*instana.Recorder, context.Context, instagocb.Cluster, *assert.Assertions) {
 	a := assert.New(t)
-	recorder := instana.NewTestRecorder()
+	var recorder *instana.Recorder
+	if rec == nil {
+		rec = instana.NewRecorder()
+	}
+
+	recorder = rec
 	tracer := instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder)
 	sensor := instana.NewSensorWithTracer(tracer)
 

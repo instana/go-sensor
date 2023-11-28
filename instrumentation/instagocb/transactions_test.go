@@ -115,7 +115,40 @@ func TestTransactions(t *testing.T) {
 				Error:  "",
 			}, data.Tags)
 		}
-
 	}
+
+	recorder, ctx, cluster, a, _ = prepareWithATestDocumentInCollection(t, "scope")
+	scope = cluster.Bucket(testBucketName).Scope(testScope)
+	collection = scope.Collection(testCollection)
+	transaction = cluster.Transactions()
+
+	q := "SELECT count(*) FROM `" + testBucketName + "`." + testScope + "." + testCollection + ";"
+	_, err = transaction.Run(
+		func(tac *gocb.TransactionAttemptContext) error {
+			// Query
+			c := cluster.WrapTransactionAttemptContext(tac, instagocb.GetParentSpanFromContext(ctx))
+			_, err := c.Query(q, &gocb.TransactionQueryOptions{})
+			a.NoError(err)
+
+			return nil
+
+		},
+		&gocb.TransactionOptions{},
+	)
+
+	a.NoError(err)
+
+	span := getLatestSpan(recorder)
+	a.Equal(0, span.Ec)
+	a.EqualValues(instana.ExitSpanKind, span.Kind)
+	a.IsType(instana.CouchbaseSpanData{}, span.Data)
+	data := span.Data.(instana.CouchbaseSpanData)
+	a.Equal(instana.CouchbaseSpanTags{
+		Bucket: "",
+		Host:   "localhost",
+		Type:   "",
+		SQL:    q,
+		Error:  "",
+	}, data.Tags)
 
 }
