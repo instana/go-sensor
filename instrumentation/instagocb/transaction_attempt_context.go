@@ -107,7 +107,7 @@ func (itac *instaTransactionAttemptContext) Remove(collection *gocb.Collection, 
 		tracectx = itac.parentSpan.Context()
 	}
 
-	span := itac.iTracer.RequestSpan(tracectx, "TRANSACTION_INSERT")
+	span := itac.iTracer.RequestSpan(tracectx, "TRANSACTION_REMOVE")
 	span.SetAttribute(bucketNameSpanTag, collection.Bucket().Name())
 
 	err := itac.TransactionAttemptContext.Remove(doc)

@@ -137,7 +137,7 @@ func prepareWithBucket(t *testing.T) (*instana.Recorder, context.Context, instag
 		FlushEnabled:         true,
 		ReplicaIndexDisabled: true,
 		RAMQuotaMB:           150,
-		NumReplicas:          1,
+		NumReplicas:          0,
 		BucketType:           gocb.CouchbaseBucketType,
 	}
 	bucketMgr := cluster.Buckets()
