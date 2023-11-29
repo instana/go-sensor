@@ -247,8 +247,8 @@ Sample Usage
 
 [fullExample]: ../../example/couchbase/main.go
 
-<!-- -
+<!---
 Mandatory comment section for CI/CD !!
 target-pkg-url: github.com/couchbase/gocb/v2
 current-version: v2.6.5
-- -->
+--->
