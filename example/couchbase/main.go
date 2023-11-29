@@ -159,57 +159,60 @@ func couchbaseTest(ctx context.Context, needError bool) error {
 		return err
 	}
 
-	// test transactions
-	collection := inventoryScope.Collection("airport").Unwrap()
+	// Test transactions
+	collection := inventoryScope.Collection("airport")
 
-	_, err = cluster.Transactions().Run(func(ctx1 *gocb.TransactionAttemptContext) error {
+	// Starting transactions
+	transactions := cluster.Transactions()
+	_, err = transactions.Run(func(tac *gocb.TransactionAttemptContext) error {
 
-		tac := cluster.WrapTransactionAttemptContext(ctx1, instagocb.GetParentSpanFromContext(ctx))
+		// Create new TransactionAttemptContext from instagocb
+		tacNew := cluster.WrapTransactionAttemptContext(tac, instagocb.GetParentSpanFromContext(ctx))
+
+		// Unwrapped collection is required to pass it to transaction operations
+		collectionUnwrapped := collection.Unwrap()
+
 		// Inserting a doc:
-		_, err := tac.Insert(collection, "doc-a", map[string]interface{}{})
+		_, err := tacNew.Insert(collectionUnwrapped, "doc-a", map[string]interface{}{})
 		if err != nil {
 			return err
 		}
 
 		// Getting documents:
-		docA, err := tac.Get(collection, "doc-a")
+		docA, err := tacNew.Get(collectionUnwrapped, "doc-a")
 		// Use err != nil && !errors.Is(err, gocb.ErrDocumentNotFound) if the document may or may not exist
 		if err != nil {
 			return err
 		}
 
 		// Replacing a doc:
-		// docB, err := tac.Get(collection, "doc-b")
-		// if err != nil {
-		// 	return err
-		// }
-
 		var content map[string]interface{}
 		err = docA.Content(&content)
 		if err != nil {
 			return err
 		}
 		content["transactions"] = "are awesome"
-		_, err = tac.Replace(collection, docA, content)
+		_, err = tacNew.Replace(collectionUnwrapped, docA, content)
 		if err != nil {
 			return err
 		}
 
 		// Removing a doc:
-		docA1, err := tac.Get(collection, "doc-a")
+		docA1, err := tacNew.Get(collectionUnwrapped, "doc-a")
 		if err != nil {
 			return err
 		}
-
-		err = tac.Remove(collection, docA1)
+		err = tacNew.Remove(collectionUnwrapped, docA1)
 		if err != nil {
 			return err
 		}
 
 		// Performing a SELECT N1QL query against a scope:
-		qr, err := tac.Query("SELECT * FROM hotel WHERE country = $1", &gocb.TransactionQueryOptions{
+		qr, err := tacNew.Query("SELECT * FROM hotel WHERE country = $1", &gocb.TransactionQueryOptions{
 			PositionalParameters: []interface{}{"United Kingdom"},
-			Scope:                inventoryScope.Unwrap(),
+
+			// Unwrapped scope is required here
+			Scope: inventoryScope.Unwrap(),
 		})
 		if err != nil {
 			return err
@@ -231,9 +234,10 @@ func couchbaseTest(ctx context.Context, needError bool) error {
 		}
 
 		// Performing an UPDATE N1QL query on multiple documents, in the `inventory` scope:
-		_, err = tac.Query("UPDATE route SET airlineid = $1 WHERE airline = $2", &gocb.TransactionQueryOptions{
+		_, err = tacNew.Query("UPDATE route SET airlineid = $1 WHERE airline = $2", &gocb.TransactionQueryOptions{
 			PositionalParameters: []interface{}{"airline_137", "AF"},
-			Scope:                inventoryScope.Unwrap(),
+			// Unwrapped scope is required here
+			Scope: inventoryScope.Unwrap(),
 		})
 		if err != nil {
 			return err
@@ -256,6 +260,7 @@ func couchbaseTest(ctx context.Context, needError bool) error {
 		log.Printf("%+v", failedErr)
 		return nil
 	}
+
 	if err != nil {
 		return err
 	}
