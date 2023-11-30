@@ -38,3 +38,9 @@ See the [`instaredis` package documentation][godoc] for detailed examples.
 [godoc]: https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instaredis/v2
 [instaredis.WrapClient]: https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instaredis/v2#WrapClient
 [instaredis.WrapClusterClient]: https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instaredis/v2#WrapClusterClient
+
+<!---
+Mandatory comment section for CI/CD !!
+target-pkg-url: github.com/redis/go-redis/v9
+current-version: v9.0.2
+--->
