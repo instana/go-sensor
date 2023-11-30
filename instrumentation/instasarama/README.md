@@ -152,3 +152,8 @@ See the topic [Kafka header migration](https://www.ibm.com/docs/en/instana-obser
 [ProducerMessageWithSpan]: https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instasarama?tab=doc#ProducerMessageWithSpan
 [SpanContextFromConsumerMessage]: https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instasarama?tab=doc#SpanContextFromConsumerMessage
 
+<!---
+Mandatory comment section for CI/CD !!
+target-pkg-url: github.com/IBM/sarama
+current-version: v1.41.3
+--->
