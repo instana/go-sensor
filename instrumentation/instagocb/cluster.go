@@ -19,7 +19,7 @@ type Cluster interface {
 	QueryIndexes() *gocb.QueryIndexManager
 	SearchIndexes() *gocb.SearchIndexManager
 	EventingFunctions() *gocb.EventingFunctionManager
-	Transactions() *gocb.Transactions
+	Transactions() Transactions
 
 	SearchQuery(indexName string, query cbsearch.Query, opts *gocb.SearchOptions) (*gocb.SearchResult, error)
 
@@ -33,7 +33,9 @@ type Cluster interface {
 
 	AnalyticsQuery(statement string, opts *gocb.AnalyticsOptions) (*gocb.AnalyticsResult, error)
 
+	// These methods are only available in Cluster interface, not available in gocb.Cluster instance
 	Unwrap() *gocb.Cluster
+	WrapTransactionAttemptContext(tac *gocb.TransactionAttemptContext, parentSpan gocb.RequestSpan) TransactionAttemptContext
 }
 
 type instaCluster struct {
@@ -111,10 +113,19 @@ func (ic *instaCluster) AnalyticsQuery(statement string, opts *gocb.AnalyticsOpt
 	return res, err
 }
 
+// Transactions returns a Transactions instance for performing transactions.
+func (ic *instaCluster) Transactions() Transactions {
+	return createTransactions(ic.iTracer, ic.Cluster.Transactions())
+}
+
 // Unwrap returns the original *gocb.Cluster instance.
 // Note: It is not advisable to use this directly, as Instana tracing will not be enabled if you directly utilize this instance.
 func (ic *instaCluster) Unwrap() *gocb.Cluster {
 	return ic.Cluster
+}
+
+func (ic *instaCluster) WrapTransactionAttemptContext(tac *gocb.TransactionAttemptContext, parentSpan gocb.RequestSpan) TransactionAttemptContext {
+	return createTransactionAttemptContext(ic.iTracer, tac, parentSpan)
 }
 
 // Helper functions
