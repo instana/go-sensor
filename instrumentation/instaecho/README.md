@@ -37,5 +37,5 @@ e.GET("/foo", func(c echo.Context) error { /* ... */ })
 <!---
 Mandatory comment section for CI/CD !!
 target-pkg-url: github.com/labstack/echo/v4
-current-version: v4.9.0
+current-version: v4.11.3
 --->
