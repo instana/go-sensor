@@ -29,6 +29,7 @@ jobs:
           POSTGRES_USER: postgres
           POSTGRES_DB: postgres
           POSTGRES_PASSWORD: mysecretpassword
+      - image: couchbase/server-sandbox:7.1.1
     working_directory: /go/src/github.com/instana/go-sensor
     steps:
       - checkout
@@ -42,6 +43,18 @@ jobs:
               sleep 1
             done
             echo Failed waiting for Postgress && exit 1
+
+      - run:
+          name: Waiting for Couchbase to be ready
+          command: |
+            for i in `seq 1 15`;
+            do
+              nc -z localhost 8091 && echo Success && exit 0
+              echo -n .
+              sleep 1
+            done
+            echo Failed waiting for Couchbase && exit 1
+
 
       - restore_cache:
           keys:
