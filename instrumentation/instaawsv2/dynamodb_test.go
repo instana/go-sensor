@@ -201,7 +201,7 @@ func TestDynamoDBMonitoredOperations(t *testing.T) {
 
 			_, err = testcase.MonitoredFunc(ctx, ddClient)
 
-			assert.Error(t, err) //error is fine as we are more interested in the span details. Mocking the response data should solve this.
+			assert.NoError(t, err)
 
 			ps.Finish()
 
