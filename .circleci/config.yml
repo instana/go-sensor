@@ -30,6 +30,12 @@ jobs:
           POSTGRES_DB: postgres
           POSTGRES_PASSWORD: mysecretpassword
       - image: couchbase/server-sandbox:7.1.1
+      - image: mcr.microsoft.com/cosmosdb/linux/azure-cosmos-emulator
+        tty: true
+        restart: always
+        environment:
+          AZURE_COSMOS_EMULATOR_PARTITION_COUNT: 10
+          AZURE_COSMOS_EMULATOR_ENABLE_DATA_PERSISTENCE: true
     working_directory: /go/src/github.com/instana/go-sensor
     steps:
       - checkout
