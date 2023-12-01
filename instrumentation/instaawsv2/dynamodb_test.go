@@ -243,7 +243,7 @@ func TestDynamoDBNoParentSpan(t *testing.T) {
 		Key:       movie.GetKey(),
 	})
 
-	assert.Error(t, err) //error is fine as we are more interested in the span details. Mocking the response data should solve this.
+	assert.NoError(t, err)
 
 	recordedSpans := recorder.GetQueuedSpans()
 	assert.Equal(t, 0, len(recordedSpans))
@@ -273,7 +273,7 @@ func TestDynamoDBUnMonitoredMethod(t *testing.T) {
 		TableName:  &tableName,
 	})
 
-	assert.Error(t, err) //error is fine as we are more interested in the span details. Mocking the response data should solve this.
+	assert.NoError(t, err)
 
 	recordedSpans := recorder.GetQueuedSpans()
 	assert.Equal(t, 0, len(recordedSpans))
