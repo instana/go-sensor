@@ -1,8 +1,7 @@
 name: Auto update for instrumentation packages
 run-name: Running job for checking newer packages and updating instrumentation
 on:
-  schedule:
-    - cron: '0 4 * * *'
+  workflow_dispatch:
 jobs:
   monitor-update:
     runs-on: ubuntu-latest
