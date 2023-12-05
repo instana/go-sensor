@@ -35,6 +35,4 @@ func forever() {
 }
 ```
 
-The critical event is reported to the Instana _Service Quality Engine_, it is logged to the dashboard and directly affects the state of the _games_ service:
-
-![games_service_event](https://disznc.s3.amazonaws.com/Instana-Event-API-Service-Event-games-2017-07-18.png)
+The critical event is reported to the Instana _Service Quality Engine_, it is logged to the dashboard and directly affects the state of the _games_ service.
