@@ -1,0 +1,42 @@
+name: Slack Post
+run-name: Posting the release in ${{ github.event.release.name }} to slack
+on:
+  release:
+    types: [published]
+jobs:
+  publish-release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set env
+        run: echo "RELEASE_VERSION=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
+
+      - name: Send success message to slack release channel
+        if: "${{ success() && env.DRY_RUN != 'true' }}"
+        uses: slackapi/slack-github-action@v1.24.0
+        with:
+          channel-id: ${{ secrets.SLACK_RELEASE_CHANNEL_ID }}
+          payload: |
+            {
+              "text": ":mega: *Go Tracer team* : Go package ${{ github.event.release.name }} has been released",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": ":mega: *Go Tracer team* : Go package <${{ github.event.release.html_url }}|${{ github.event.release.name }}> has been released. :tada:"
+                  }
+                },
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "Release link: <${{ github.event.release.html_url }}|${{ github.event.release.html_url }}>"
+                  }
+                }
+              ]
+            }
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+          SLACK_RELEASE_CHANNEL_ID: ${{ secrets.SLACK_RELEASE_CHANNEL_ID }}
+

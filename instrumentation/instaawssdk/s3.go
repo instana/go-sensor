@@ -13,7 +13,7 @@ import (
 
 // StartS3Span initiates a new span from an AWS S3 request and injects it into the
 // request.Request context
-func StartS3Span(req *request.Request, sensor *instana.Sensor) {
+func StartS3Span(req *request.Request, sensor instana.TracerLogger) {
 	tags, err := extractS3Tags(req)
 	if err != nil {
 		if err == errMethodNotInstrumented {

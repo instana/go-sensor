@@ -11,19 +11,19 @@ import (
 type wrappedSQLConnector struct {
 	driver.Connector
 
-	connDetails dbConnDetails
-	sensor      *Sensor
+	connDetails DbConnDetails
+	sensor      TracerLogger
 }
 
 // WrapSQLConnector wraps an existing sql.Connector and instruments the DB calls made using it
-func WrapSQLConnector(sensor *Sensor, name string, connector driver.Connector) *wrappedSQLConnector {
+func WrapSQLConnector(sensor TracerLogger, name string, connector driver.Connector) *wrappedSQLConnector {
 	if c, ok := connector.(*wrappedSQLConnector); ok {
 		return c
 	}
 
 	return &wrappedSQLConnector{
 		Connector:   connector,
-		connDetails: parseDBConnDetails(name),
+		connDetails: ParseDBConnDetails(name),
 		sensor:      sensor,
 	}
 }
@@ -70,5 +70,7 @@ func (drv *wrappedSQLDriver) OpenConnector(name string) (driver.Connector, error
 		return connector, nil
 	}
 
-	return WrapSQLConnector(drv.sensor, name, connector), nil
+	wc := WrapSQLConnector(drv.sensor, name, connector)
+
+	return wc, nil
 }

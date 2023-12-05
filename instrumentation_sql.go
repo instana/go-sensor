@@ -11,7 +11,6 @@ import (
 	"regexp"
 	"strings"
 	"sync"
-
 	_ "unsafe"
 
 	ot "github.com/opentracing/opentracing-go"
@@ -28,7 +27,7 @@ var (
 // The instrumented version is registered with `_with_instana` suffix, e.g.
 // if `postgres` provided as a name, the instrumented version is registered as
 // `postgres_with_instana`.
-func InstrumentSQLDriver(sensor *Sensor, name string, driver driver.Driver) {
+func InstrumentSQLDriver(sensor TracerLogger, name string, driver driver.Driver) {
 	sqlDriverRegistrationMu.Lock()
 	defer sqlDriverRegistrationMu.Unlock()
 
@@ -69,7 +68,7 @@ var drivers map[string]driver.Driver
 // This function can be used as a convenient shortcut for InstrumentSQLDriver and SQLOpen functions.
 // The main difference is that this approach will use the already registered driver and using InstrumentSQLDriver
 // requires to explicitly provide an instance of the driver to instrument.
-func SQLInstrumentAndOpen(sensor *Sensor, driverName, dataSourceName string) (*sql.DB, error) {
+func SQLInstrumentAndOpen(sensor TracerLogger, driverName, dataSourceName string) (*sql.DB, error) {
 	if d, ok := drivers[driverName]; ok {
 		InstrumentSQLDriver(sensor, driverName, d)
 	}
@@ -80,7 +79,7 @@ func SQLInstrumentAndOpen(sensor *Sensor, driverName, dataSourceName string) (*s
 type wrappedSQLDriver struct {
 	driver.Driver
 
-	sensor *Sensor
+	sensor TracerLogger
 }
 
 func (drv *wrappedSQLDriver) Open(name string) (driver.Conn, error) {
@@ -93,12 +92,113 @@ func (drv *wrappedSQLDriver) Open(name string) (driver.Conn, error) {
 		return conn, nil
 	}
 
-	w := wrapConn(parseDBConnDetails(name), conn, drv.sensor)
+	w := wrapConn(ParseDBConnDetails(name), conn, drv.sensor)
 
 	return w, nil
 }
 
-func startSQLSpan(ctx context.Context, conn dbConnDetails, query string, sensor *Sensor) ot.Span {
+func postgresSpan(ctx context.Context, conn DbConnDetails, query string, sensor TracerLogger) ot.Span {
+	tags := ot.Tags{
+		"pg.stmt": query,
+		"pg.user": conn.User,
+		"pg.host": conn.Host,
+	}
+
+	if conn.Schema != "" {
+		tags["pg.db"] = conn.Schema
+	} else {
+		tags["pg.db"] = conn.RawString
+	}
+
+	if conn.Port != "" {
+		tags["pg.port"] = conn.Port
+	}
+
+	opts := []ot.StartSpanOption{ext.SpanKindRPCClient, tags}
+	if parentSpan, ok := SpanFromContext(ctx); ok {
+		opts = append(opts, ot.ChildOf(parentSpan.Context()))
+	}
+
+	return sensor.StartSpan(string(PostgreSQLSpanType), opts...)
+}
+
+func mySQLSpan(ctx context.Context, conn DbConnDetails, query string, sensor TracerLogger) ot.Span {
+	tags := ot.Tags{
+		"mysql.stmt": query,
+		"mysql.user": conn.User,
+		"mysql.host": conn.Host,
+	}
+
+	if conn.Schema != "" {
+		tags["mysql.db"] = conn.Schema
+	} else {
+		tags["mysql.db"] = conn.RawString
+	}
+
+	if conn.Port != "" {
+		tags["mysql.port"] = conn.Port
+	}
+
+	opts := []ot.StartSpanOption{ext.SpanKindRPCClient, tags}
+	if parentSpan, ok := SpanFromContext(ctx); ok {
+		opts = append(opts, ot.ChildOf(parentSpan.Context()))
+	}
+
+	return sensor.StartSpan(string(MySQLSpanType), opts...)
+}
+
+var redisCmds = regexp.MustCompile(`(?i)SET|GET|DEL|INCR|DECR|APPEND|GETRANGE|SETRANGE|STRLEN|HSET|HGET|HMSET|HMGET|HDEL|HGETALL|HKEYS|HVALS|HLEN|HINCRBY|LPUSH|RPUSH|LPOP|RPOP|LLEN|LRANGE|LREM|LINDEX|LSET|SADD|SREM|SMEMBERS|SISMEMBER|SCARD|SINTER|SUNION|SDIFF|SRANDMEMBER|SPOP|ZADD|ZREM|ZRANGE|ZREVRANGE|ZRANK|ZREVRANK|ZRANGEBYSCORE|ZCARD|ZSCORE|PFADD|PFCOUNT|PFMERGE|SUBSCRIBE|UNSUBSCRIBE|PUBLISH|MULTI|EXEC|DISCARD|WATCH|UNWATCH|KEYS|EXISTS|EXPIRE|TTL|PERSIST|RENAME|RENAMENX|TYPE|SCAN|PING|INFO|CLIENT LIST|CONFIG GET|CONFIG SET|FLUSHDB|FLUSHALL|DBSIZE|SAVE|BGSAVE|BGREWRITEAOF|SHUTDOWN`)
+
+func redisSpan(ctx context.Context, conn DbConnDetails, query string, sensor TracerLogger) ot.Span {
+	qarr := strings.Fields(query)
+	var q string
+
+	for _, w := range qarr {
+		if redisCmds.MatchString(w) {
+			q += w + " "
+		}
+	}
+
+	tags := ot.Tags{
+		"redis.command": strings.TrimSpace(q),
+	}
+
+	if conn.Error != nil {
+		tags["redis.error"] = conn.Error.Error()
+	}
+
+	connection := conn.Host + ":" + conn.Port
+
+	if conn.Host == "" || conn.Port == "" {
+		i := strings.LastIndex(conn.RawString, "@")
+		connection = conn.RawString[i+1:]
+	}
+
+	tags["redis.connection"] = connection
+
+	opts := []ot.StartSpanOption{ext.SpanKindRPCClient, tags}
+	if parentSpan, ok := SpanFromContext(ctx); ok {
+		opts = append(opts, ot.ChildOf(parentSpan.Context()))
+	}
+
+	return sensor.StartSpan(string(RedisSpanType), opts...)
+}
+
+func couchbaseSpan(ctx context.Context, conn DbConnDetails, query string, sensor TracerLogger) ot.Span {
+	tags := ot.Tags{
+		"couchbase.hostname": conn.RawString,
+		"couchbase.sql":      query,
+	}
+
+	opts := []ot.StartSpanOption{ext.SpanKindRPCClient, tags}
+	if parentSpan, ok := SpanFromContext(ctx); ok {
+		opts = append(opts, ot.ChildOf(parentSpan.Context()))
+	}
+
+	return sensor.StartSpan(string(CouchbaseSpanType), opts...)
+}
+
+func genericSQLSpan(ctx context.Context, conn DbConnDetails, query string, sensor TracerLogger) ot.Span {
 	tags := ot.Tags{
 		string(ext.DBType):      "sql",
 		string(ext.DBStatement): query,
@@ -124,21 +224,63 @@ func startSQLSpan(ctx context.Context, conn dbConnDetails, query string, sensor 
 		opts = append(opts, ot.ChildOf(parentSpan.Context()))
 	}
 
-	return sensor.Tracer().StartSpan("sdk.database", opts...)
+	return sensor.StartSpan("sdk.database", opts...)
 }
 
-type dbConnDetails struct {
-	RawString  string
-	Host, Port string
-	Schema     string
-	User       string
+// dbNameByQuery attempts to guess what is the database based on the query.
+func dbNameByQuery(q string) string {
+	qf := strings.Fields(q)
+
+	if len(qf) > 0 && redisCmds.MatchString(qf[0]) {
+		return "redis"
+	}
+
+	return ""
 }
 
-func parseDBConnDetails(connStr string) dbConnDetails {
-	strategies := [...]func(string) (dbConnDetails, bool){
-		parseDBConnDetailsURI,
+// StartSQLSpan creates a span based on DbConnDetails and a query, and attempts to detect which kind of database it belongs.
+// If a database is detected and it is already part of the registered spans, the span details will be specific to that
+// database.
+// Otherwise, the span will have generic database fields.
+func StartSQLSpan(ctx context.Context, conn DbConnDetails, query string, sensor TracerLogger) (sp ot.Span, dbKey string) {
+	return startSQLSpan(ctx, conn, query, sensor)
+}
+
+func startSQLSpan(ctx context.Context, conn DbConnDetails, query string, sensor TracerLogger) (sp ot.Span, dbKey string) {
+	if conn.DatabaseName == "" {
+		conn.DatabaseName = dbNameByQuery(query)
+	}
+
+	switch conn.DatabaseName {
+	case "postgres":
+		return postgresSpan(ctx, conn, query, sensor), "pg"
+	case "redis":
+		return redisSpan(ctx, conn, query, sensor), "redis"
+	case "mysql":
+		return mySQLSpan(ctx, conn, query, sensor), "mysql"
+	case "couchbase":
+		return couchbaseSpan(ctx, conn, query, sensor), "couchbase"
+	}
+
+	return genericSQLSpan(ctx, conn, query, sensor), "db"
+}
+
+type DbConnDetails struct {
+	RawString    string
+	Host, Port   string
+	Schema       string
+	User         string
+	DatabaseName string
+	Error        error
+}
+
+func ParseDBConnDetails(connStr string) DbConnDetails {
+	strategies := [...]func(string) (DbConnDetails, bool){
+		parseMySQLGoSQLDriver,
 		parsePostgresConnDetailsKV,
 		parseMySQLConnDetailsKV,
+		parseRedisConnString,
+		parseDBConnDetailsURI,
 	}
 	for _, parseFn := range strategies {
 		if details, ok := parseFn(connStr); ok {
@@ -146,19 +288,19 @@ func parseDBConnDetails(connStr string) dbConnDetails {
 		}
 	}
 
-	return dbConnDetails{RawString: connStr}
+	return DbConnDetails{RawString: connStr}
 }
 
 // parseDBConnDetailsURI attempts to parse a connection string as an URI, assuming that it has
 // following format: [scheme://][user[:[password]]@]host[:port][/schema][?attribute1=value1&attribute2=value2...]
-func parseDBConnDetailsURI(connStr string) (dbConnDetails, bool) {
+func parseDBConnDetailsURI(connStr string) (DbConnDetails, bool) {
 	u, err := url.Parse(connStr)
 	if err != nil {
-		return dbConnDetails{}, false
+		return DbConnDetails{}, false
 	}
 
 	if u.Scheme == "" {
-		return dbConnDetails{}, false
+		return DbConnDetails{}, false
 	}
 
 	path := ""
@@ -166,7 +308,7 @@ func parseDBConnDetailsURI(connStr string) (dbConnDetails, bool) {
 		path = u.Path[1:]
 	}
 
-	details := dbConnDetails{
+	details := DbConnDetails{
 		RawString: connStr,
 		Host:      u.Hostname(),
 		Port:      u.Port(),
@@ -182,14 +324,18 @@ func parseDBConnDetailsURI(connStr string) (dbConnDetails, bool) {
 		details.RawString = u.String()
 	}
 
+	if u.Scheme == "postgres" {
+		details.DatabaseName = u.Scheme
+	}
+
 	return details, true
 }
 
 var postgresKVPasswordRegex = regexp.MustCompile(`(^|\s)password=[^\s]+(\s|$)`)
 
 // parsePostgresConnDetailsKV parses a space-separated PostgreSQL-style connection string
-func parsePostgresConnDetailsKV(connStr string) (dbConnDetails, bool) {
-	var details dbConnDetails
+func parsePostgresConnDetailsKV(connStr string) (DbConnDetails, bool) {
+	var details DbConnDetails
 
 	for _, field := range strings.Split(connStr, " ") {
 		fieldNorm := strings.ToLower(field)
@@ -222,10 +368,11 @@ func parsePostgresConnDetailsKV(connStr string) (dbConnDetails, bool) {
 	}
 
 	if details.Schema == "" {
-		return dbConnDetails{}, false
+		return DbConnDetails{}, false
 	}
 
 	details.RawString = postgresKVPasswordRegex.ReplaceAllString(connStr, " ")
+	details.DatabaseName = "postgres"
 
 	return details, true
 }
@@ -233,8 +380,8 @@ func parsePostgresConnDetailsKV(connStr string) (dbConnDetails, bool) {
 var mysqlKVPasswordRegex = regexp.MustCompile(`(?i)(^|;)Pwd=[^;]+(;|$)`)
 
 // parseMySQLConnDetailsKV parses a semicolon-separated MySQL-style connection string
-func parseMySQLConnDetailsKV(connStr string) (dbConnDetails, bool) {
-	details := dbConnDetails{RawString: connStr}
+func parseMySQLConnDetailsKV(connStr string) (DbConnDetails, bool) {
+	details := DbConnDetails{RawString: connStr, DatabaseName: "mysql"}
 
 	for _, field := range strings.Split(connStr, ";") {
 		fieldNorm := strings.ToLower(field)
@@ -260,12 +407,91 @@ func parseMySQLConnDetailsKV(connStr string) (dbConnDetails, bool) {
 	}
 
 	if details.Schema == "" {
-		return dbConnDetails{}, false
+		return DbConnDetails{}, false
 	}
 
 	details.RawString = mysqlKVPasswordRegex.ReplaceAllString(connStr, ";")
 
 	return details, true
+}
+
+var mySQLGoDriverRe = regexp.MustCompile(`^(.*):(.*)@((.*)\((.*):([0-9]+)\))?\/(.*)$`)
+
+// parseMySQLGoSQLDriver parses the connection string from https://github.com/go-sql-driver/mysql
+// Format: user:password@protocol(host:port)/databasename
+// When protocol(host:port) is omitted, assume "tcp(localhost:3306)"
+func parseMySQLGoSQLDriver(connStr string) (DbConnDetails, bool) {
+	// Expected matches
+	// 0 - Entire match. eg: go:gopw@tcp(localhost:3306)/godb
+	// 1 - User
+	// 2 - password
+	// 3 - protocol+host+port. Eg: tcp(localhost:3306)
+	// 4 - protocol (if "" use tcp)
+	// 5 - host (if "" use localhost)
+	// 6 - port (if "" use 3306)
+	// 7 - database name
+	matches := mySQLGoDriverRe.FindAllStringSubmatch(connStr, -1)
+
+	if len(matches) == 0 {
+		return DbConnDetails{}, false
+	}
+
+	values := matches[0]
+
+	host := values[5]
+	port := values[6]
+
+	if host == "" {
+		host = "localhost"
+	}
+
+	if port == "" {
+		port = "3306"
+	}
+
+	d := DbConnDetails{
+		RawString:    connStr,
+		User:         values[1],
+		Host:         host,
+		Port:         port,
+		Schema:       values[7],
+		DatabaseName: "mysql",
+	}
+
+	return d, true
+}
+
+var redisOptionalUser = regexp.MustCompile(`^(.*:\/\/)?(.+)?:.+@(.+):(\d+)`)
+
+// parseRedisConnString attempts to parse: user:password@host:port
+// Based on conn string from github.com/bonede/go-redis-driver
+func parseRedisConnString(connStr string) (DbConnDetails, bool) {
+	// Expected matches
+	// 0 - mysql://user:password@localhost:9898 or db://user:password@localhost:9898 and so on
+	// 1 - mysql:// or db:// and so on
+	// 2 - user
+	// 3 - localhost
+	// 4 - 1234
+	matches := redisOptionalUser.FindAllStringSubmatch(connStr, -1)
+
+	var d = DbConnDetails{}
+
+	if len(matches) == 0 {
+		return d, false
+	}
+
+	// We want to ignore the first match. for instance db:// or mysql:// will be ignored if matched
+	if matches[0][1] == "" {
+		return DbConnDetails{
+				Host:         matches[0][3],
+				Port:         matches[0][4],
+				DatabaseName: "redis",
+				RawString:    connStr,
+			},
+			true
+	}
+
+	return d, false
 }
 
 type dsnConnector struct {

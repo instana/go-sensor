@@ -1,6 +1,9 @@
 // (c) Copyright IBM Corp. 2021
 // (c) Copyright Instana Inc. 2020
 
+//go:build go1.19
+// +build go1.19
+
 package pubsub
 
 import (
@@ -22,7 +25,7 @@ type Subscription struct {
 
 	projectID string
 
-	sensor *instana.Sensor
+	sensor instana.TracerLogger
 }
 
 // Receive wraps the Receive() call of the underlying cloud.google.com/go/pubsub.Subscription starting a new
@@ -60,7 +63,7 @@ type SubscriptionIterator struct {
 
 	projectID string
 
-	sensor *instana.Sensor
+	sensor instana.TracerLogger
 }
 
 // Next fetches the next subscription in project via the wrapped SubscriptionIterator and returns its wrapped version.

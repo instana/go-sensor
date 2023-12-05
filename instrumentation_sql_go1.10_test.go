@@ -96,7 +96,7 @@ func TestWrapSQLConnector_Exec_Error(t *testing.T) {
 
 	assert.Equal(t, instana.LogSpanTags{
 		Level:   "ERROR",
-		Message: `error: "something went wrong"`,
+		Message: `error.object: "something went wrong"`,
 	}, logData.Tags)
 }
 
@@ -180,11 +180,13 @@ func TestWrapSQLConnector_Query_Error(t *testing.T) {
 
 	assert.Equal(t, instana.LogSpanTags{
 		Level:   "ERROR",
-		Message: `error: "something went wrong"`,
+		Message: `error.object: "something went wrong"`,
 	}, logData.Tags)
 }
 
 type sqlConnector struct{ Error error }
 
-func (c sqlConnector) Connect(context.Context) (driver.Conn, error) { return sqlConn{c.Error}, nil } //nolint:gosimple
-func (sqlConnector) Driver() driver.Driver                          { return sqlDriver{} }
+func (c sqlConnector) Connect(context.Context) (driver.Conn, error) {
+	return sqlConn{Error: c.Error}, nil
+}                                          //nolint:gosimple
+func (sqlConnector) Driver() driver.Driver { return sqlDriver{} }

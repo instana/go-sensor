@@ -1,6 +1,9 @@
 // (c) Copyright IBM Corp. 2021
 // (c) Copyright Instana Inc. 2020
 
+//go:build go1.19
+// +build go1.19
+
 package pubsub
 
 import (
@@ -23,7 +26,7 @@ type Topic struct {
 
 	projectID string
 
-	sensor *instana.Sensor
+	sensor instana.TracerLogger
 }
 
 // Publish adds the trace context found in ctx to the message and publishes it to the wrapped topic.
@@ -83,7 +86,7 @@ type TopicIterator struct {
 
 	projectID string
 
-	sensor *instana.Sensor
+	sensor instana.TracerLogger
 }
 
 // Next fetches the next topic in project via the wrapped TopicIterator and returns its wrapped version.

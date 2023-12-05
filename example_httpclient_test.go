@@ -14,18 +14,20 @@ import (
 
 // This example shows how to instrument an HTTP client with Instana tracing
 func Example_roundTripper() {
-	sensor := instana.NewSensor("my-http-client")
+	col := instana.InitCollector(&instana.Options{
+		Service: "my-http-client",
+	})
 
 	// Wrap the original http.Client transport with instana.RoundTripper().
 	// The http.DefaultTransport will be used if there was no transport provided.
 	client := &http.Client{
-		Transport: instana.RoundTripper(sensor, nil),
+		Transport: instana.RoundTripper(col, nil),
 	}
 
-	// The call should always start with an entry span (https://docs.instana.io/quick_start/custom_tracing/#always-start-new-traces-with-entry-spans)
-	// Normally this would be your HTTP/GRPC/message queue request span, but here we need to
-	// create it explicitly.
-	sp := sensor.Tracer().StartSpan("client-call")
+	// Every call should start with an entry span (https://www.ibm.com/docs/en/instana-observability/current?topic=tracing-best-practices#start-new-traces-with-entry-spans)
+	// Normally this would be your HTTP/GRPC/message queue request span, but here we need to create it explicitly, since an HTTP client call is
+	// an exit span. And all exit spans must have a parent entry span.
+	sp := col.Tracer().StartSpan("client-call")
 	sp.SetTag(string(ext.SpanKind), "entry")
 
 	req, err := http.NewRequest(http.MethodGet, "https://www.instana.com", nil)
@@ -41,4 +43,9 @@ func Example_roundTripper() {
 	if err != nil {
 		log.Fatalf("failed to GET https://www.instana.com: %s", err)
 	}
+
+	// Remember to always finish spans that were created manually to make sure it's propagated to the Agent.
+	// In this case, we want to make sure that the entry span is finished after the HTTP request is completed.
+	// Optionally, we could use defer right after the span is created.
+	sp.Finish()
 }

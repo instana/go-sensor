@@ -1,5 +1,7 @@
-// (c) Copyright IBM Corp. 2021
-// (c) Copyright Instana Inc. 2020
+// (c) Copyright IBM Corp. 2023
+
+//go:build go1.17
+// +build go1.17
 
 package instasarama_test
 
@@ -10,7 +12,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Shopify/sarama"
+	"github.com/IBM/sarama"
 	instana "github.com/instana/go-sensor"
 	"github.com/instana/go-sensor/acceptor"
 	"github.com/instana/go-sensor/autoprofile"
@@ -351,6 +353,34 @@ type testAsyncProducer struct {
 	input     chan *sarama.ProducerMessage
 	successes chan *sarama.ProducerMessage
 	errors    chan *sarama.ProducerError
+}
+
+func (p *testAsyncProducer) IsTransactional() bool {
+	panic("needs to be implemented if testcase is failing")
+}
+
+func (p *testAsyncProducer) TxnStatus() sarama.ProducerTxnStatusFlag {
+	panic("needs to be implemented if testcase is failing")
+}
+
+func (p *testAsyncProducer) BeginTxn() error {
+	panic("needs to be implemented if testcase is failing")
+}
+
+func (p *testAsyncProducer) CommitTxn() error {
+	panic("needs to be implemented if testcase is failing")
+}
+
+func (p *testAsyncProducer) AbortTxn() error {
+	panic("needs to be implemented if testcase is failing")
+}
+
+func (p *testAsyncProducer) AddOffsetsToTxn(offsets map[string][]*sarama.PartitionOffsetMetadata, groupId string) error {
+	panic("needs to be implemented if testcase is failing")
+}
+
+func (p *testAsyncProducer) AddMessageToTxn(msg *sarama.ConsumerMessage, groupId string, metadata *string) error {
+	panic("needs to be implemented if testcase is failing")
 }
 
 func newTestAsyncProducer(returnedErr error) *testAsyncProducer {

@@ -13,7 +13,7 @@ import (
 
 // StartSNSSpan initiates a new span from an AWS SNS request and injects it into the
 // request.Request context
-func StartSNSSpan(req *request.Request, sensor *instana.Sensor) {
+func StartSNSSpan(req *request.Request, sensor instana.TracerLogger) {
 	tags, err := extractSNSTags(req)
 	if err != nil {
 		if err == errMethodNotInstrumented {

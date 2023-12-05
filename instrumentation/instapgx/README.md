@@ -1,13 +1,13 @@
 Instana instrumentation for pgx
 =============================================
 
-This module contains middleware to instrument services written with [`github.com/jackc/pgx/v4`](https://github.com/jackc/pgx/v4).
+This module contains the middleware to instrument services written with [`github.com/jackc/pgx/v4`](https://github.com/jackc/pgx/v4).
 
 [![PkgGoDev](https://pkg.go.dev/badge/github.com/instana/go-sensor/instrumentation/instapgx)](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instapgx)
 
 The API of this instrumentation might change in the future.
 
-The current version contains instrumentation for most of the methods defined for `pgx.Tx` and `*pg.Conn`.
+The current version contains the instrumentation for most of the methods defined for `pgx.Tx` and `*pg.Conn`.
 
 ### Known limitation:
 
@@ -20,7 +20,7 @@ The current version contains instrumentation for most of the methods defined for
 Installation
 ------------
 
-To add the module to your `go.mod` file run the following command in your project directory:
+To add the module to your `go.mod` file, run the following command in your project directory:
 
 ```bash
 $ go get github.com/instana/go-sensor/instrumentation/instapgx
@@ -58,9 +58,9 @@ br := conn.SendBatch(ctx, b)
 Examples
 ---
 
-[Connection examples](https://github.com/instana/go-sensor/blob/master/instrumentation/instapgx/example_conn_test.go)
+[Connection examples](https://github.com/instana/go-sensor/blob/main/instrumentation/instapgx/example_conn_test.go)
 
-[Transaction examples](https://github.com/instana/go-sensor/blob/master/instrumentation/instapgx/example_tx_test.go)
+[Transaction examples](https://github.com/instana/go-sensor/blob/main/instrumentation/instapgx/example_tx_test.go)
 
 Testing
 ---
@@ -69,3 +69,9 @@ To run integration tests, a PostgreSQL database is required in the environment. 
 ```bash
 docker run -e POSTGRES_PASSWORD=mysecretpassword -p 5432:5432 -d postgres
 ```
+
+<!---
+Mandatory comment section for CI/CD !!
+target-pkg-url: github.com/jackc/pgx/v4
+current-version: v4.18.1
+--->

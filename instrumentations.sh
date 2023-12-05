@@ -9,12 +9,10 @@
 # 1. Run `./instrumentations.sh update`. This will update all instrumentations to reference the latest core module.
 # 2. Run `make test` to ensure that all instrumentations work with the latest core.
 # 3. If any errors are detected in some instrumentation, fix them.
-# 4. If everything is fine, commit your changes, open a PR and get it merged into the master branch.
+# 4. If everything is fine, commit your changes, open a PR and get it merged into the main branch.
 #
 # Release phase
 # 1. Run `./instrumentations.sh release` to create tags for each instrumentation with a new minor version, and update all version.go files.
-
-set -eo pipefail
 
 # Checks if gh is installed, otherwise stop the script
 if ! [ -x "$(command -v gh)" ]; then
@@ -29,7 +27,6 @@ if gh auth status 2>&1 | grep -i "You are not logged"; then
 fi
 
 CORE_VERSION=latest
-# CORE_VERSION=v1.45.0
 
 # List of folders to be excluded from the instrumentation list
 # If new matches must be added, use regular expressions. eg:
@@ -51,7 +48,24 @@ run_release() {
   TAGS=""
   for lib in $LIB_LIST
     do LIB_PATH="$(echo "$lib" | sed 's/\.\///')"
-    VERSION=$(git tag -l "$LIB_PATH*" | sort -V | tail -n1 | sed "s/.*v//")
+
+    # Expected to find something like: instrumentation/instaredis/v1.5.0
+    # This option will be used if the instrumentation has no v2 subfolder
+    TAG_TO_SEARCH="$LIB_PATH/v[0-1].*"
+
+    # Expected to identify packages with subfolders. eg: instrumentation/instaredis/v2
+    NEW_VERSION_FOLDER=$(echo "$lib" | grep -E "v[2-9].*")
+
+    # If NEW_VERSION_FOLDER has something we update TAG_TO_SEARCH
+    if [ -n "$NEW_VERSION_FOLDER" ]; then
+      # Expected to be a version. eg: 1.5.0
+      NEW_MAJOR_VERSION=$(echo "$NEW_VERSION_FOLDER" | sed "s/.*v//")
+
+      # Expected to be tag name with major version higher than 1. eg: instrumentation/instaredis/v2.1.0
+      TAG_TO_SEARCH="$LIB_PATH/v$NEW_MAJOR_VERSION.*"
+    fi
+
+    VERSION=$(git tag -l "$TAG_TO_SEARCH" | sort -V | tail -n1 | sed "s/.*v//")
 
     if [ -z "$VERSION" ]; then
       VERSION="0.0.0"
@@ -65,15 +79,16 @@ run_release() {
     # Updates the minor version in version.go
     sed -i '' -E "s/[0-9]+\.[0-9]+\.[0-9]+/${NEW_VERSION}/" "$lib"/version.go | tail -1
 
-    # Tags to be created after version.go is merged to the master branch with the new version
-    TAGS="$TAGS $LIB_PATH/v$MAJOR_VERSION.$MINOR_VERSION.0"
+    # Tags to be created after version.go is merged to the main branch with the new version
+    PATH_WITHOUT_V=$(echo "$LIB_PATH" | sed "s/\/v[0-9]*//")
+    TAGS="$TAGS $PATH_WITHOUT_V/v$MAJOR_VERSION.$MINOR_VERSION.0"
   done
 
-  # Commit all version.go files to the master branch
+  # Commit all version.go files to the main branch
   git add ./instrumentation/**/version.go
   git add ./instrumentation/**/**/version.go
   git commit -m "Bumping new version of the instrumentation"
-  git push origin master
+  git push origin main
 
   echo "Creating tags for each instrumentation"
 
@@ -85,7 +100,7 @@ run_release() {
   for t in $TAGS
     do gh release create "$t" \
 		--title "$t" \
-		--notes "Update instrumentations to the latest core module"
+		--notes "Updated instrumentation with the latest version of go-sensor core module.<br/><br/> --auto-generated--"
   done
 }
 

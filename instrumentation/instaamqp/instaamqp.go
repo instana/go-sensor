@@ -29,7 +29,7 @@ type PubCons interface {
 type AmqpChannel struct {
 	url    string
 	pc     PubCons
-	sensor *instana.Sensor
+	sensor instana.TracerLogger
 }
 
 // Publish replaces the original amqp.Channel.Publish method in order to collect the relevant data to be tracked
@@ -132,7 +132,7 @@ func (c AmqpChannel) consumeMessage(pipeCh chan amqp.Delivery, deliveryData amqp
 }
 
 // WrapChannel returns the AmqpChannel, which is Instana's wrapper around amqp.Channel
-func WrapChannel(sensor *instana.Sensor, ch PubCons, serverUrl string) *AmqpChannel {
+func WrapChannel(sensor instana.TracerLogger, ch PubCons, serverUrl string) *AmqpChannel {
 	sUrl := ""
 	urlObj, err := url.Parse(serverUrl)
 

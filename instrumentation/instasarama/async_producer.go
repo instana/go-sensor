@@ -1,10 +1,12 @@
-// (c) Copyright IBM Corp. 2021
-// (c) Copyright Instana Inc. 2020
+// (c) Copyright IBM Corp. 2023
+
+//go:build go1.17
+// +build go1.17
 
 package instasarama
 
 import (
-	"github.com/Shopify/sarama"
+	"github.com/IBM/sarama"
 	instana "github.com/instana/go-sensor"
 	ot "github.com/opentracing/opentracing-go"
 	otlog "github.com/opentracing/opentracing-go/log"
@@ -14,10 +16,10 @@ import (
 // provided instana.Sensor
 type AsyncProducer struct {
 	sarama.AsyncProducer
-	sensor *instana.Sensor
+	sensor instana.TracerLogger
 
-	awaitResult    bool
-	propageContext bool
+	awaitResult        bool
+	propagationContext bool
 
 	input     chan *sarama.ProducerMessage
 	successes chan *sarama.ProducerMessage
@@ -36,7 +38,7 @@ const (
 
 // NewAsyncProducer creates a new sarama.AsyncProducer using the given broker addresses and configuration, and
 // instruments its calls
-func NewAsyncProducer(addrs []string, conf *sarama.Config, sensor *instana.Sensor) (sarama.AsyncProducer, error) {
+func NewAsyncProducer(addrs []string, conf *sarama.Config, sensor instana.TracerLogger) (sarama.AsyncProducer, error) {
 	ap, err := sarama.NewAsyncProducer(addrs, conf)
 	if err != nil {
 		return ap, err
@@ -47,7 +49,7 @@ func NewAsyncProducer(addrs []string, conf *sarama.Config, sensor *instana.Senso
 
 // NewAsyncProducerFromClient creates a new sarama.AsyncProducer using the given client, and
 // instruments its calls
-func NewAsyncProducerFromClient(client sarama.Client, sensor *instana.Sensor) (sarama.AsyncProducer, error) {
+func NewAsyncProducerFromClient(client sarama.Client, sensor instana.TracerLogger) (sarama.AsyncProducer, error) {
 	ap, err := sarama.NewAsyncProducerFromClient(client)
 	if err != nil {
 		return ap, err
@@ -60,7 +62,7 @@ func NewAsyncProducerFromClient(client sarama.Client, sensor *instana.Sensor) (s
 // config that was used to create this producer to detect the Kafka version and whether it's supposed to return
 // successes/errors. To initialize a new  sync producer instance use instasarama.NewAsyncProducer() and
 // instasarama.NewAsyncProducerFromClient() convenience methods instead
-func WrapAsyncProducer(p sarama.AsyncProducer, conf *sarama.Config, sensor *instana.Sensor) *AsyncProducer {
+func WrapAsyncProducer(p sarama.AsyncProducer, conf *sarama.Config, sensor instana.TracerLogger) *AsyncProducer {
 	ap := &AsyncProducer{
 		AsyncProducer: p,
 		sensor:        sensor,
@@ -71,7 +73,7 @@ func WrapAsyncProducer(p sarama.AsyncProducer, conf *sarama.Config, sensor *inst
 	}
 
 	if conf != nil {
-		ap.propageContext = contextPropagationSupported(conf.Version)
+		ap.propagationContext = contextPropagationSupported(conf.Version)
 		ap.awaitResult = conf.Producer.Return.Successes && conf.Producer.Return.Errors
 		ap.activeSpans = newSpanRegistry()
 	}
@@ -104,7 +106,7 @@ func (p *AsyncProducer) consume() {
 				}
 
 				carrier := ProducerMessageCarrier{msg}
-				if p.propageContext {
+				if p.propagationContext {
 					p.sensor.Tracer().Inject(sp.Context(), ot.TextMap, carrier)
 				} else {
 					carrier.RemoveAll()

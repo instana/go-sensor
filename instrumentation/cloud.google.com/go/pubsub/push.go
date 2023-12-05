@@ -1,6 +1,9 @@
 // (c) Copyright IBM Corp. 2021
 // (c) Copyright Instana Inc. 2020
 
+//go:build go1.19
+// +build go1.19
+
 package pubsub
 
 import (
@@ -24,7 +27,7 @@ import (
 //
 // Please note, that this wrapper consumes the request body in order to to extract the trace context
 // from the message, thus the (net/http.Request).Body is a copy of received data.
-func TracingHandlerFunc(sensor *instana.Sensor, pathTemplate string, handler http.HandlerFunc) http.HandlerFunc {
+func TracingHandlerFunc(sensor instana.TracerLogger, pathTemplate string, handler http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		if req.Method != http.MethodPost {
 			instana.TracingHandlerFunc(sensor, pathTemplate, handler)(w, req)
@@ -53,7 +56,7 @@ func TracingHandlerFunc(sensor *instana.Sensor, pathTemplate string, handler htt
 	}
 }
 
-func startConsumePushSpan(body []byte, sensor *instana.Sensor) (opentracing.Span, error) {
+func startConsumePushSpan(body []byte, sensor instana.TracerLogger) (opentracing.Span, error) {
 	var delivery struct {
 		Message struct {
 			Attributes map[string]string `json:"attributes"`

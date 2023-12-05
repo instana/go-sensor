@@ -12,7 +12,7 @@ Following services are currently instrumented:
 * [SNS](https://docs.aws.amazon.com/sdk-for-go/api/service/sns/)
 * [SQS](https://docs.aws.amazon.com/sdk-for-go/api/service/sqs/)
 * [Lambda](https://docs.aws.amazon.com/sdk-for-go/api/service/lambda/) 
-  - Read about usage and limitations [here](https://github.com/instana/go-sensor/tree/master/instrumentation/instaawssdk#instrumenting-lambda)
+  - Read about usage and limitations [here](https://github.com/instana/go-sensor/tree/main/instrumentation/instaawssdk#instrumenting-lambda)
 
 Installation
 ------------
@@ -45,6 +45,8 @@ dynamoDBClient := dynamodb.New(sess)
 // ...
 ```
 
+Important Note:
+---------------
 Instana tracer uses `context.Context` to propagate the trace context. To ensure trace continuation within
 the instrumented service **use AWS SDK client methods that take `context.Context` as an argument**.
 Usually these method names end with `WithContext` suffix, e.g.
@@ -114,3 +116,9 @@ Known limitations:
 [NewSensor]: https://pkg.go.dev/github.com/instana/go-sensor?tab=doc#NewSensor
 [InstrumentSession]: https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instaawssdk?tab=doc#InstrumentSession
 [SpanContextFromSQSMessage]: https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instaawssdk?tab=doc#SpanContextFromSQSMessage
+
+<!---
+Mandatory comment section for CI/CD !!
+target-pkg-url: github.com/aws/aws-sdk-go
+current-version: v1.48.3
+--->

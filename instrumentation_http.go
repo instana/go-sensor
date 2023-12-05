@@ -24,13 +24,13 @@ import (
 //
 // The wrapped handler will also propagate the W3C trace context (https://www.w3.org/TR/trace-context/)
 // if found in request.
-func TracingHandlerFunc(sensor *Sensor, pathTemplate string, handler http.HandlerFunc) http.HandlerFunc {
+func TracingHandlerFunc(sensor TracerLogger, pathTemplate string, handler http.HandlerFunc) http.HandlerFunc {
 	return TracingNamedHandlerFunc(sensor, "", pathTemplate, handler)
 }
 
 // TracingNamedHandlerFunc is an HTTP middleware that similarly to instana.TracingHandlerFunc() captures the tracing data,
 // while allowing to provide a unique route indetifier to be associated with each request.
-func TracingNamedHandlerFunc(sensor *Sensor, routeID, pathTemplate string, handler http.HandlerFunc) http.HandlerFunc {
+func TracingNamedHandlerFunc(sensor TracerLogger, routeID, pathTemplate string, handler http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		ctx := req.Context()
 
@@ -127,7 +127,18 @@ func processResponseStatus(response wrappedResponseWriter, span ot.Span) {
 			span.LogFields(otlog.Object("error", statusText))
 		}
 
-		span.SetTag("http.status", response.Status())
+		// GraphQL queries received by a webserver are HTTP incoming requests that must be "merged" into one single entry
+		// span, as we cannot have two entry spans (http and graphql).
+		// Our UI will render a span as HTTP if the http.status tag is present, so in the case of a GraphQL span, we must
+		// ensure that this status is not provided.
+		// Due to a design limitation, the graphql instrumentation doesn't have access to the instana.spanS struct. Plus,
+		// we are unable to control the span finishing from the graphql instrumentation, which leads us to add this workaround
+		// here.
+		if spS, ok := span.(*spanS); ok {
+			if spS.Operation != "graphql.server" {
+				span.SetTag("http.status", response.Status())
+			}
+		}
 	}
 }
 
@@ -147,7 +158,7 @@ func collectRequestHeaders(req *http.Request, collectableHTTPHeaders []string, c
 	}
 }
 
-func extractStartSpanOptionsFromHeaders(tracer ot.Tracer, req *http.Request, sensor *Sensor) []ot.StartSpanOption {
+func extractStartSpanOptionsFromHeaders(tracer ot.Tracer, req *http.Request, sensor TracerLogger) []ot.StartSpanOption {
 	var opts []ot.StartSpanOption
 	wireContext, err := tracer.Extract(ot.HTTPHeaders, ot.HTTPHeadersCarrier(req.Header))
 	switch err {
@@ -165,12 +176,11 @@ func extractStartSpanOptionsFromHeaders(tracer ot.Tracer, req *http.Request, sen
 
 // RoundTripper wraps an existing http.RoundTripper and injects the tracing headers into the outgoing request.
 // If the original RoundTripper is nil, the http.DefaultTransport will be used.
-func RoundTripper(sensor *Sensor, original http.RoundTripper) http.RoundTripper {
+func RoundTripper(sensor TracerLogger, original http.RoundTripper) http.RoundTripper {
+	if original == nil {
+		original = http.DefaultTransport
+	}
 	return tracingRoundTripper(func(req *http.Request) (*http.Response, error) {
-		if original == nil {
-			original = http.DefaultTransport
-		}
-
 		ctx := req.Context()
 		parentSpan, ok := SpanFromContext(ctx)
 		if !ok {

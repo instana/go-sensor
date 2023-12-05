@@ -1,6 +1,9 @@
 // (c) Copyright IBM Corp. 2021
 // (c) Copyright Instana Inc. 2016
 
+//go:build go1.18
+// +build go1.18
+
 package instagin
 
 import (
@@ -11,17 +14,17 @@ import (
 )
 
 // AddMiddleware adds the tracing middleware to the list of Gin handlers. Unlike the gin.Use method, it puts the middleware
-// to the beginning of the list to allow tracing default handlers added by the gin.Default() call.
-func AddMiddleware(sensor *instana.Sensor, engine *gin.Engine) {
+// to the beginning of the list, to allow the tracing of default handlers added by the gin.Default() call.
+func AddMiddleware(sensor instana.TracerLogger, engine *gin.Engine) {
 	f := middleware(sensor)
 	engine.Handlers = append([]gin.HandlerFunc{f}, engine.Handlers...)
 
-	// trigger engine.rebuild404Handlers and engine.rebuild405Handlers
+	// Trigger engine.rebuild404Handlers and engine.rebuild405Handlers
 	engine.Use()
 }
 
 // Default is wrapper for gin.Default()
-func Default(sensor *instana.Sensor) *gin.Engine {
+func Default(sensor instana.TracerLogger) *gin.Engine {
 	e := gin.Default()
 	AddMiddleware(sensor, e)
 
@@ -29,7 +32,7 @@ func Default(sensor *instana.Sensor) *gin.Engine {
 }
 
 // New is wrapper for gin.New()
-func New(sensor *instana.Sensor) *gin.Engine {
+func New(sensor instana.TracerLogger) *gin.Engine {
 	e := gin.New()
 	AddMiddleware(sensor, e)
 
@@ -41,7 +44,7 @@ type statusWriter interface {
 }
 
 // middleware wraps gin's handlers execution. Adds tracing context and handles entry span.
-func middleware(sensor *instana.Sensor) gin.HandlerFunc {
+func middleware(sensor instana.TracerLogger) gin.HandlerFunc {
 	return func(gc *gin.Context) {
 		instana.TracingHandlerFunc(sensor, gc.FullPath(), func(writer http.ResponseWriter, request *http.Request) {
 			gc.Request = request

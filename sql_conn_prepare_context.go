@@ -9,14 +9,15 @@ import (
 
 type wConnPrepareContext struct {
 	driver.ConnPrepareContext
-	connDetails dbConnDetails
-	sensor      *Sensor
+	connDetails DbConnDetails
+	sensor      TracerLogger
 }
 
 func (conn *wConnPrepareContext) PrepareContext(ctx context.Context, query string) (driver.Stmt, error) {
 	stmt, err := conn.ConnPrepareContext.PrepareContext(ctx, query)
 
 	if err != nil {
+		conn.connDetails.Error = err
 		return stmt, err
 	}
 

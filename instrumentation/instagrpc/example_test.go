@@ -1,6 +1,9 @@
 // (c) Copyright IBM Corp. 2021
 // (c) Copyright Instana Inc. 2020
 
+//go:build go1.19
+// +build go1.19
+
 package instagrpc_test
 
 import (
@@ -14,13 +17,12 @@ import (
 	"github.com/instana/go-sensor/instrumentation/instagrpc"
 	"github.com/opentracing/opentracing-go/ext"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/test/grpc_testing"
-	grpctest "google.golang.org/grpc/test/grpc_testing"
+	grpctest "google.golang.org/grpc/interop/grpc_testing"
 )
 
 // EchoServer is an implementation of GRPC server
 type TestServiceServer struct {
-	unimplementedTestServer
+	grpctest.UnimplementedTestServiceServer
 }
 
 // UnaryCall responds with a static greeting from server
@@ -34,8 +36,8 @@ func (s TestServiceServer) UnaryCall(ctx context.Context, req *grpctest.SimpleRe
 
 	time.Sleep(100 * time.Microsecond)
 
-	return &grpc_testing.SimpleResponse{
-		Payload: &grpc_testing.Payload{
+	return &grpctest.SimpleResponse{
+		Payload: &grpctest.Payload{
 			Body: []byte("hello from server"),
 		},
 	}, nil
@@ -60,7 +62,7 @@ func setupServer() (net.Addr, error) {
 		grpc.StreamInterceptor(instagrpc.StreamServerInterceptor(sensor)),
 	)
 
-	grpc_testing.RegisterTestServiceServer(srv, &TestServiceServer{})
+	grpctest.RegisterTestServiceServer(srv, &TestServiceServer{})
 	go func() {
 		if err := srv.Serve(ln); err != nil {
 			log.Fatalf("failed to start server: %s", err)
@@ -93,7 +95,7 @@ func Example() {
 	}
 	defer conn.Close()
 
-	c := grpc_testing.NewTestServiceClient(conn)
+	c := grpctest.NewTestServiceClient(conn)
 
 	// The call should always start with an entry span (https://www.instana.com/docs/tracing/custom-best-practices/#start-new-traces-with-entry-spans)
 	// Normally this would be your HTTP/GRPC/message queue request span, but here we need to
@@ -104,8 +106,8 @@ func Example() {
 	// Create a context that holds the parent entry span and pass it to the GRPC call
 	resp, err := c.UnaryCall(
 		instana.ContextWithSpan(context.Background(), sp),
-		&grpc_testing.SimpleRequest{
-			Payload: &grpc_testing.Payload{
+		&grpctest.SimpleRequest{
+			Payload: &grpctest.Payload{
 				Body: []byte("hello from client"),
 			},
 		},

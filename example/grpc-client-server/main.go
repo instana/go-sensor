@@ -1,6 +1,9 @@
 // (c) Copyright IBM Corp. 2021
 // (c) Copyright Instana Inc. 2016
 
+//go:build go1.19
+// +build go1.19
+
 package main
 
 import (
@@ -11,12 +14,12 @@ import (
 	"os"
 
 	"github.com/opentracing/opentracing-go/ext"
+	"google.golang.org/grpc"
 
 	"github.com/instana/go-sensor/example/grpc-client-server/pb"
 
 	instana "github.com/instana/go-sensor"
 	"github.com/instana/go-sensor/instrumentation/instagrpc"
-	"google.golang.org/grpc"
 )
 
 const (
@@ -76,7 +79,7 @@ func main() {
 
 	log.Println("Send request")
 
-	// call the service using context with a span
+	// Call the service using context with a span
 	r, err := client.Echo(
 		// Create a context that holds the parent entry span and pass it to the GRPC call
 		instana.ContextWithSpan(context.Background(), sp),
@@ -113,6 +116,7 @@ func (s *Service) Echo(ctx context.Context, in *pb.EchoRequest) (*pb.EchoReply, 
 
 func startServer(srv *grpc.Server, address string) {
 	lis, err := net.Listen("tcp", address)
+
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}

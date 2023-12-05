@@ -1,12 +1,14 @@
-// (c) Copyright IBM Corp. 2021
-// (c) Copyright Instana Inc. 2020
+// (c) Copyright IBM Corp. 2023
+
+//go:build go1.17
+// +build go1.17
 
 package instasarama_test
 
 import (
 	"context"
 
-	"github.com/Shopify/sarama"
+	"github.com/IBM/sarama"
 	instana "github.com/instana/go-sensor"
 	"github.com/instana/go-sensor/instrumentation/instasarama"
 	"github.com/opentracing/opentracing-go"
@@ -37,7 +39,7 @@ func Example_consumerGroup() {
 }
 
 type Consumer struct {
-	sensor *instana.Sensor
+	sensor instana.TracerLogger
 }
 
 func (*Consumer) Setup(sarama.ConsumerGroupSession) error {

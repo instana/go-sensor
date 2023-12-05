@@ -27,7 +27,7 @@ var unmarshalReg = bson.NewRegistryBuilder().
 //
 // This is a wrapper method for mongo.Connect(), see https://pkg.go.dev/go.mongodb.org/mongo-driver/mongo#Connect for details on
 // the original method.
-func Connect(ctx context.Context, sensor *instana.Sensor, opts ...*options.ClientOptions) (*mongo.Client, error) {
+func Connect(ctx context.Context, sensor instana.TracerLogger, opts ...*options.ClientOptions) (*mongo.Client, error) {
 	return mongo.Connect(ctx, addInstrumentedCommandMonitor(opts, sensor)...)
 }
 
@@ -35,11 +35,11 @@ func Connect(ctx context.Context, sensor *instana.Sensor, opts ...*options.Clien
 //
 // This is a wrapper method for mongo.NewClient(), see https://pkg.go.dev/go.mongodb.org/mongo-driver/mongo#NewClient for details on
 // the original method.
-func NewClient(sensor *instana.Sensor, opts ...*options.ClientOptions) (*mongo.Client, error) {
+func NewClient(sensor instana.TracerLogger, opts ...*options.ClientOptions) (*mongo.Client, error) {
 	return mongo.NewClient(addInstrumentedCommandMonitor(opts, sensor)...)
 }
 
-func addInstrumentedCommandMonitor(opts []*options.ClientOptions, sensor *instana.Sensor) []*options.ClientOptions {
+func addInstrumentedCommandMonitor(opts []*options.ClientOptions, sensor instana.TracerLogger) []*options.ClientOptions {
 	// search for the last client options containing a CommandMonitor and wrap it to preserve
 	for i := len(opts) - 1; i >= 0; i-- {
 		if opts[i] != nil && opts[i].Monitor != nil {
@@ -57,17 +57,17 @@ func addInstrumentedCommandMonitor(opts []*options.ClientOptions, sensor *instan
 
 type wrappedCommandMonitor struct {
 	mon    *event.CommandMonitor
-	sensor *instana.Sensor
+	sensor instana.TracerLogger
 	spans  *spanRegistry
 }
 
 // NewCommandMonitor creates a new event.CommandMonitor that instruments a mongo.Client with Instana.
-func NewCommandMonitor(sensor *instana.Sensor) *event.CommandMonitor {
+func NewCommandMonitor(sensor instana.TracerLogger) *event.CommandMonitor {
 	return WrapCommandMonitor(nil, sensor)
 }
 
 // WrapCommandMonitor wraps an existing event.CommandMonitor to instrument a mongo.Client with Instana
-func WrapCommandMonitor(mon *event.CommandMonitor, sensor *instana.Sensor) *event.CommandMonitor {
+func WrapCommandMonitor(mon *event.CommandMonitor, sensor instana.TracerLogger) *event.CommandMonitor {
 	wrapper := &wrappedCommandMonitor{
 		mon:    mon,
 		sensor: sensor,

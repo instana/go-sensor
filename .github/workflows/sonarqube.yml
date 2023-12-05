@@ -2,7 +2,7 @@ name: Generate SonarQube report
 on:
   push:
     branches:
-      - master
+      - main
   pull_request:
     types: [opened, synchronize, reopened]
 jobs:
@@ -13,7 +13,39 @@ jobs:
       - uses: actions/checkout@v3
         with:
           fetch-depth: 0
-      - uses: sonarsource/sonarqube-scan-action@master
+      - name: Run coverage commands
+        run: |
+            #!/bin/bash
+
+            echo "Starting Couchbase"
+            docker-compose -f docker-compose-integration.yaml up -d
+
+            echo "Starting Postgres"
+            sudo systemctl start postgresql.service
+            sudo -u postgres psql -c "ALTER USER postgres PASSWORD 'mysecretpassword'"
+            echo "After starting Postgres"
+
+            go test -v -coverpkg=./... -cover -covermode atomic -coverprofile coverage.out ./... -json > coverage.json
+
+            LIB_LIST=$(find ./instrumentation -name go.mod -exec dirname {} \;)
+
+            for lib in $LIB_LIST
+              do echo "Generating test coverage for $lib" && cd "$lib" && go mod tidy && go test -v -coverpkg=./... -cover -covermode atomic -coverprofile coverage.out ./... -json > coverage.json && cd -;
+            done
+
+            echo "Generating test coverage for ./instrumentation/instagocb"
+            cd ./instrumentation/instagocb
+            go mod tidy
+            go test -v -tags=integration -coverpkg=./... -cover -covermode atomic -coverprofile coverage.out ./... -json > coverage.json && cd -
+
+            echo "Generating test coverage for ./instrumentation/instapgx"
+            cd ./instrumentation/instapgx
+            go mod tidy
+            go test -v -tags=integration -coverpkg=./... -cover -covermode atomic -coverprofile coverage.out ./... -json > coverage.json && cd -
+
+      - name: Sonarqube Scan
+        uses: sonarsource/sonarqube-scan-action@master
+
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}

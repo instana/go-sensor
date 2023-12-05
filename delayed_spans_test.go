@@ -148,7 +148,7 @@ func (*eventuallyNotReadyClient) SendSpans(spans []Span) error                  
 func (*eventuallyNotReadyClient) SendProfiles(profiles []autoprofile.Profile) error { return nil }
 func (*eventuallyNotReadyClient) Flush(context.Context) error                       { return nil }
 
-func generateSomeTraffic(s *Sensor, amount int) {
+func generateSomeTraffic(s TracerLogger, amount int) {
 	h := TracingNamedHandlerFunc(s, "action", "/{action}", func(w http.ResponseWriter, req *http.Request) {
 		fmt.Fprintln(w, "Ok")
 	})

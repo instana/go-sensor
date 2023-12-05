@@ -17,7 +17,7 @@ import (
 
 // Connect establishes a connection with a PostgreSQL server using connection string
 // and returns instrumented connection.
-func Connect(ctx context.Context, sensor *instana.Sensor, connString string) (*Conn, error) {
+func Connect(ctx context.Context, sensor instana.TracerLogger, connString string) (*Conn, error) {
 	connConfig, err := pgx.ParseConfig(connString)
 	if err != nil {
 		return nil, err
@@ -28,7 +28,7 @@ func Connect(ctx context.Context, sensor *instana.Sensor, connString string) (*C
 
 // ConnectConfig establishes a connection with a PostgreSQL server using configuration struct
 // and returns instrumented connection.
-func ConnectConfig(ctx context.Context, sensor *instana.Sensor, connConfig *pgx.ConnConfig) (*Conn, error) {
+func ConnectConfig(ctx context.Context, sensor instana.TracerLogger, connConfig *pgx.ConnConfig) (*Conn, error) {
 	c, err := pgx.ConnectConfig(ctx, connConfig)
 	if err != nil {
 		return nil, err
@@ -41,7 +41,7 @@ func ConnectConfig(ctx context.Context, sensor *instana.Sensor, connConfig *pgx.
 	}, nil
 }
 
-func contextWithChildSpan(ctx context.Context, sql string, config *pgx.ConnConfig, sensor *instana.Sensor) (context.Context, ot.Span) {
+func contextWithChildSpan(ctx context.Context, sql string, config *pgx.ConnConfig, sensor instana.TracerLogger) (context.Context, ot.Span) {
 	var spanOptions []ot.StartSpanOption
 	if parent, ok := instana.SpanFromContext(ctx); ok {
 		spanOptions = append(spanOptions, ot.ChildOf(parent.Context()))

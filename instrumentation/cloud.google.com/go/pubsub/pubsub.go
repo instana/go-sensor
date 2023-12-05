@@ -1,6 +1,9 @@
 // (c) Copyright IBM Corp. 2021
 // (c) Copyright Instana Inc. 2020
 
+//go:build go1.19
+// +build go1.19
+
 // Package pubsub provides Instana tracing instrumentation for
 // Google Cloud Pub/Sub producers and consumers that use cloud.google.com/go/pubsub.
 package pubsub
@@ -31,14 +34,14 @@ type Client struct {
 	*pubsub.Client
 	projectID string
 
-	sensor *instana.Sensor
+	sensor instana.TracerLogger
 }
 
 // NewClient returns a new wrapped cloud.google.com/go/pubsub.Client that uses provided instana.Sensor to
 // trace the publish/receive operations.
 //
 // See https://pkg.go.dev/cloud.google.com/go/pubsub?tab=doc#NewClient for further details on wrapped method.
-func NewClient(ctx context.Context, projectID string, sensor *instana.Sensor, opts ...option.ClientOption) (*Client, error) {
+func NewClient(ctx context.Context, projectID string, sensor instana.TracerLogger, opts ...option.ClientOption) (*Client, error) {
 	c, err := pubsub.NewClient(ctx, projectID, opts...)
 	return &Client{c, projectID, sensor}, err
 }

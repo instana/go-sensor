@@ -39,7 +39,7 @@ const (
 func SendDefaultServiceEvent(title string, text string, sev severity, duration time.Duration) {
 	var service string
 	if sensor != nil {
-		service = sensor.serviceName
+		service = sensor.serviceOrBinaryName()
 	}
 
 	// If the sensor is not yet initialized, there is no default service (as

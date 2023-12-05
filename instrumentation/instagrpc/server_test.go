@@ -1,6 +1,9 @@
 // (c) Copyright IBM Corp. 2021
 // (c) Copyright Instana Inc. 2020
 
+//go:build go1.19
+// +build go1.19
+
 package instagrpc_test
 
 import (
@@ -17,9 +20,9 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	grpctest "google.golang.org/grpc/interop/grpc_testing"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
-	grpctest "google.golang.org/grpc/test/grpc_testing"
 )
 
 func TestUnaryServerInterceptor(t *testing.T) {
@@ -386,36 +389,9 @@ func suppressStreamHandlerPanics(next grpc.StreamServerInterceptor) grpc.ServerO
 	)
 }
 
-// basic implementation of grpctest.TestServiceServer with all handlers returning "Unimplemented" error
-type unimplementedTestServer struct{}
-
-func (ts unimplementedTestServer) EmptyCall(ctx context.Context, req *grpctest.Empty) (*grpctest.Empty, error) {
-	return nil, status.Error(codes.Unimplemented, "not implemented")
-}
-
-func (ts unimplementedTestServer) UnaryCall(context.Context, *grpctest.SimpleRequest) (*grpctest.SimpleResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "not implemented")
-}
-
-func (ts unimplementedTestServer) StreamingOutputCall(*grpctest.StreamingOutputCallRequest, grpctest.TestService_StreamingOutputCallServer) error {
-	return status.Error(codes.Unimplemented, "not implemented")
-}
-
-func (ts unimplementedTestServer) StreamingInputCall(grpctest.TestService_StreamingInputCallServer) error {
-	return status.Error(codes.Unimplemented, "not implemented")
-}
-
-func (ts unimplementedTestServer) FullDuplexCall(s grpctest.TestService_FullDuplexCallServer) error {
-	return status.Error(codes.Unimplemented, "not implemented")
-}
-
-func (ts unimplementedTestServer) HalfDuplexCall(grpctest.TestService_HalfDuplexCallServer) error {
-	return status.Error(codes.Unimplemented, "not implemented")
-}
-
 // a test server that optionally returns an error on EmptyCall and FullDuplexCall requests
 type testServer struct {
-	unimplementedTestServer
+	grpctest.UnimplementedTestServiceServer
 	Error error
 }
 
@@ -440,7 +416,7 @@ func (ts *testServer) FullDuplexCall(s grpctest.TestService_FullDuplexCallServer
 
 // a test server that throws panics on EmptyCall requests
 type panickingTestServer struct {
-	unimplementedTestServer
+	grpctest.UnimplementedTestServiceServer
 }
 
 func (ts *panickingTestServer) EmptyCall(ctx context.Context, req *grpctest.Empty) (*grpctest.Empty, error) {

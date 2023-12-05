@@ -1,10 +1,12 @@
-// (c) Copyright IBM Corp. 2021
-// (c) Copyright Instana Inc. 2020
+// (c) Copyright IBM Corp. 2023
+
+//go:build go1.17
+// +build go1.17
 
 package instasarama
 
 import (
-	"github.com/Shopify/sarama"
+	"github.com/IBM/sarama"
 	instana "github.com/instana/go-sensor"
 )
 
@@ -12,12 +14,12 @@ import (
 // partition consumers
 type Consumer struct {
 	sarama.Consumer
-	sensor *instana.Sensor
+	sensor instana.TracerLogger
 }
 
 // NewConsumer creates a new consumer using the given broker addresses and configuration, and
 // instruments its calls
-func NewConsumer(addrs []string, config *sarama.Config, sensor *instana.Sensor) (sarama.Consumer, error) {
+func NewConsumer(addrs []string, config *sarama.Config, sensor instana.TracerLogger) (sarama.Consumer, error) {
 	c, err := sarama.NewConsumer(addrs, config)
 	if err != nil {
 		return c, err
@@ -27,7 +29,7 @@ func NewConsumer(addrs []string, config *sarama.Config, sensor *instana.Sensor) 
 }
 
 // NewConsumerFromClient creates a new consumer using the given client and instruments its calls
-func NewConsumerFromClient(client sarama.Client, sensor *instana.Sensor) (sarama.Consumer, error) {
+func NewConsumerFromClient(client sarama.Client, sensor instana.TracerLogger) (sarama.Consumer, error) {
 	c, err := sarama.NewConsumerFromClient(client)
 	if err != nil {
 		return c, err
@@ -39,7 +41,7 @@ func NewConsumerFromClient(client sarama.Client, sensor *instana.Sensor) (sarama
 // WrapConsumer wraps an existing sarama.Consumer instance and instruments its calls. To initialize
 // a new instance of sarama.Consumer use instasarama.NewConsumer() and instasarama.NewConsumerFromclient()
 // convenience methods instead
-func WrapConsumer(c sarama.Consumer, sensor *instana.Sensor) *Consumer {
+func WrapConsumer(c sarama.Consumer, sensor instana.TracerLogger) *Consumer {
 	return &Consumer{
 		Consumer: c,
 		sensor:   sensor,

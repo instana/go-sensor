@@ -52,6 +52,7 @@ type sensorS struct {
 	logger      LeveledLogger
 	options     *Options
 	serviceName string
+	binaryName  string
 
 	mu    sync.RWMutex
 	agent AgentClient
@@ -62,7 +63,12 @@ var (
 	muSensor         sync.Mutex
 	binaryName       = filepath.Base(os.Args[0])
 	processStartedAt = time.Now()
+	C                TracerLogger
 )
+
+func init() {
+	C = newNoopCollector()
+}
 
 func newSensor(options *Options) *sensorS {
 	options.setDefaults()
@@ -70,15 +76,13 @@ func newSensor(options *Options) *sensorS {
 	s := &sensorS{
 		options:     options,
 		serviceName: options.Service,
-	}
-	if s.serviceName == "" {
-		s.serviceName = binaryName
+		binaryName:  binaryName,
 	}
 
 	s.setLogger(defaultLogger)
 
 	// override service name with an env value if set
-	if name, ok := os.LookupEnv("INSTANA_SERVICE_NAME"); ok {
+	if name, ok := os.LookupEnv("INSTANA_SERVICE_NAME"); ok && strings.TrimSpace(name) != "" {
 		s.serviceName = name
 	}
 
@@ -117,11 +121,11 @@ func newSensor(options *Options) *sensorS {
 			}
 		}
 
-		agent = newServerlessAgent(s.serviceName, agentEndpoint, os.Getenv("INSTANA_AGENT_KEY"), client, s.logger)
+		agent = newServerlessAgent(s.serviceOrBinaryName(), agentEndpoint, os.Getenv("INSTANA_AGENT_KEY"), client, s.logger)
 	}
 
 	if agent == nil {
-		agent = newAgent(s.serviceName, s.options.AgentHost, s.options.AgentPort, s.logger)
+		agent = newAgent(s.serviceOrBinaryName(), s.options.AgentHost, s.options.AgentPort, s.logger)
 	}
 
 	s.setAgent(agent)
@@ -162,8 +166,20 @@ func (r *sensorS) Agent() AgentClient {
 	return r.agent
 }
 
-// InitSensor intializes the sensor (without tracing) to begin collecting
+func (r *sensorS) serviceOrBinaryName() string {
+	if r == nil {
+		return ""
+	}
+	if r.serviceName != "" {
+		return r.serviceName
+	}
+	return r.binaryName
+}
+
+// InitSensor initializes the sensor (without tracing) to begin collecting
 // and reporting metrics.
+//
+// Deprecated: Use [StartMetrics] instead.
 func InitSensor(options *Options) {
 	if sensor != nil {
 		return
@@ -206,6 +222,13 @@ func InitSensor(options *Options) {
 	go sensor.meter.Run(1 * time.Second)
 
 	sensor.logger.Debug("initialized Instana sensor v", Version)
+}
+
+// StartMetrics initializes the communication with the agent. Then it starts collecting and reporting metrics to the agent.
+// Calling StartMetrics multiple times has no effect and the function will simply return, and provided options will not
+// be reapplied.
+func StartMetrics(options *Options) {
+	InitSensor(options)
 }
 
 // Ready returns whether the Instana collector is ready to collect and send data to the agent

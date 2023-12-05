@@ -30,7 +30,7 @@ func TestRegisteredSpanType_ExtractData(t *testing.T) {
 			Operation: "rpc-server",
 			Expected:  instana.RPCSpanData{},
 		},
-		"github.com/Shopify/sarama": {
+		"github.com/IBM/sarama": {
 			Operation: "kafka",
 			Expected:  instana.KafkaSpanData{},
 		},
@@ -81,6 +81,14 @@ func TestRegisteredSpanType_ExtractData(t *testing.T) {
 		"rabbitmq": {
 			Operation: "rabbitmq",
 			Expected:  instana.RabbitMQSpanData{},
+		},
+		"graphql server": {
+			Operation: "graphql.server",
+			Expected:  instana.GraphQLSpanData{},
+		},
+		"graphql client": {
+			Operation: "graphql.client",
+			Expected:  instana.GraphQLSpanData{},
 		},
 	}
 

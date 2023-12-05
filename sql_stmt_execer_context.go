@@ -1,4 +1,5 @@
 // (c) Copyright IBM Corp. 2023
+
 package instana
 
 import (
@@ -10,18 +11,20 @@ import (
 
 type wStmtExecContext struct {
 	driver.StmtExecContext
-	connDetails dbConnDetails
-	sensor      *Sensor
+	connDetails DbConnDetails
+	sensor      TracerLogger
 	query       string
 }
 
 func (stmt *wStmtExecContext) ExecContext(ctx context.Context, args []driver.NamedValue) (driver.Result, error) {
-	sp := startSQLSpan(ctx, stmt.connDetails, stmt.query, stmt.sensor)
+	sp, dbKey := startSQLSpan(ctx, stmt.connDetails, stmt.query, stmt.sensor)
 	defer sp.Finish()
 
 	res, err := stmt.StmtExecContext.ExecContext(ctx, args)
+
 	if err != nil && err != driver.ErrSkip {
 		sp.LogFields(otlog.Error(err))
+		sp.SetTag(dbKey+".error", err.Error())
 	}
 
 	return res, err

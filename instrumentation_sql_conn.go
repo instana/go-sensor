@@ -9,8 +9,8 @@ import (
 type wConn struct {
 	driver.Conn
 
-	connDetails dbConnDetails
-	sensor      *Sensor
+	connDetails DbConnDetails
+	sensor      TracerLogger
 }
 
 func (conn *wConn) Prepare(query string) (driver.Stmt, error) {

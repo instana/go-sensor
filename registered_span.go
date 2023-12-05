@@ -50,12 +50,20 @@ const (
 	MongoDBSpanType = RegisteredSpanType("mongo")
 	// PostgreSQL client span
 	PostgreSQLSpanType = RegisteredSpanType("postgres")
+	// MySQL client span
+	MySQLSpanType = RegisteredSpanType("mysql")
 	// Redis client span
 	RedisSpanType = RegisteredSpanType("redis")
+	// Couchbase client span
+	CouchbaseSpanType = RegisteredSpanType("couchbase")
 	// RabbitMQ client span
 	RabbitMQSpanType = RegisteredSpanType("rabbitmq")
 	// Azure function span
 	AzureFunctionType = RegisteredSpanType("azf")
+	// GraphQL server span
+	GraphQLServerType = RegisteredSpanType("graphql.server")
+	// GraphQL client span
+	GraphQLClientType = RegisteredSpanType("graphql.client")
 )
 
 // RegisteredSpanType represents the span type supported by Instana
@@ -92,12 +100,18 @@ func (st RegisteredSpanType) extractData(span *spanS) typedSpanData {
 		return newMongoDBSpanData(span)
 	case PostgreSQLSpanType:
 		return newPostgreSQLSpanData(span)
+	case CouchbaseSpanType:
+		return newCouchbaseSpanData(span)
+	case MySQLSpanType:
+		return newMySQLSpanData(span)
 	case RedisSpanType:
 		return newRedisSpanData(span)
 	case RabbitMQSpanType:
 		return newRabbitMQSpanData(span)
 	case AzureFunctionType:
 		return newAZFSpanData(span)
+	case GraphQLServerType, GraphQLClientType:
+		return newGraphQLSpanData(span)
 	default:
 		return newSDKSpanData(span)
 	}
@@ -240,6 +254,23 @@ func (st RegisteredSpanType) TagsNames() map[string]struct{} {
 			"pg.port":  yes,
 			"pg.error": yes,
 		}
+	case CouchbaseSpanType:
+		return map[string]struct{}{
+			"couchbase.bucket":   yes,
+			"couchbase.hostname": yes,
+			"couchbase.type":     yes,
+			"couchbase.sql":      yes,
+			"couchbase.error":    yes,
+		}
+	case MySQLSpanType:
+		return map[string]struct{}{
+			"mysql.db":    yes,
+			"mysql.user":  yes,
+			"mysql.stmt":  yes,
+			"mysql.host":  yes,
+			"mysql.port":  yes,
+			"mysql.error": yes,
+		}
 	case RedisSpanType:
 		return map[string]struct{}{
 			"redis.connection":  yes,
@@ -263,6 +294,14 @@ func (st RegisteredSpanType) TagsNames() map[string]struct{} {
 			"azf.triggername":  yes,
 			"azf.runtime":      yes,
 			"azf.error":        yes,
+		}
+	case GraphQLServerType, GraphQLClientType:
+		return map[string]struct{}{
+			"graphql.operationName": yes,
+			"graphql.operationType": yes,
+			"graphql.fields":        yes,
+			"graphql.args":          yes,
+			"graphql.error":         yes,
 		}
 	default:
 		return nil
@@ -1186,7 +1225,7 @@ func newAWSSNSSpanTags(span *spanS) AWSSNSSpanTags {
 // AWSDynamoDBSpanData represents the `data` section of a AWS DynamoDB span sent within an OT span document
 type AWSDynamoDBSpanData struct {
 	SpanData
-	Tags AWSDynamoDBSpanTags `json:"sns"`
+	Tags AWSDynamoDBSpanTags `json:"dynamodb"`
 }
 
 // newAWSDynamoDBSpanData initializes a new AWS DynamoDB span data from tracer span
@@ -1419,7 +1458,7 @@ func newMongoDBSpanTags(span *spanS) MongoDBSpanTags {
 // PostgreSQLSpanData represents the `data` section of a PostgreSQL client span
 type PostgreSQLSpanData struct {
 	SpanData
-	Tags postgreSQLSpanTags `json:"pg"`
+	Tags PostgreSQLSpanTags `json:"pg"`
 }
 
 // newPostgreSQLSpanData initializes a new PostgreSQL client span data from tracer span
@@ -1435,8 +1474,8 @@ func (d PostgreSQLSpanData) Kind() SpanKind {
 	return ExitSpanKind
 }
 
-// postgreSQLSpanTags contains fields within the `data.pg` section of an OT span document
-type postgreSQLSpanTags struct {
+// PostgreSQLSpanTags contains fields within the `data.pg` section of an OT span document
+type PostgreSQLSpanTags struct {
 	Host string `json:"host"`
 	Port string `json:"port"`
 	DB   string `json:"db"`
@@ -1446,8 +1485,8 @@ type postgreSQLSpanTags struct {
 	Error string `json:"error,omitempty"`
 }
 
-func newPostgreSQLSpanTags(span *spanS) postgreSQLSpanTags {
-	var tags postgreSQLSpanTags
+func newPostgreSQLSpanTags(span *spanS) PostgreSQLSpanTags {
+	var tags PostgreSQLSpanTags
 	for k, v := range span.Tags {
 		switch k {
 		case "pg.host":
@@ -1461,6 +1500,106 @@ func newPostgreSQLSpanTags(span *spanS) postgreSQLSpanTags {
 		case "pg.user":
 			readStringTag(&tags.User, v)
 		case "pg.error":
+			readStringTag(&tags.Error, v)
+		}
+	}
+	return tags
+}
+
+// CouchbaseSpanData represents the `data` section of a Couchbase client span
+type CouchbaseSpanData struct {
+	SpanData
+	Tags CouchbaseSpanTags `json:"couchbase"`
+}
+
+// newCouchbaseSpanData initializes a new Couchbase client span data from tracer span
+func newCouchbaseSpanData(span *spanS) CouchbaseSpanData {
+	return CouchbaseSpanData{
+		SpanData: NewSpanData(span, CouchbaseSpanType),
+		Tags:     newCouchbaseSpanTags(span),
+	}
+}
+
+// Kind returns the span kind for a Couchbase client span
+func (c CouchbaseSpanData) Kind() SpanKind {
+	return ExitSpanKind
+}
+
+// CouchbaseSpanTags contains fields within the `data.couchbase` section of an OT span document
+type CouchbaseSpanTags struct {
+	Bucket string `json:"bucket"`
+	Host   string `json:"hostname"`
+	Type   string `json:"type"`
+	SQL    string `json:"sql"`
+
+	Error string `json:"error,omitempty"`
+}
+
+func newCouchbaseSpanTags(span *spanS) CouchbaseSpanTags {
+	var tags CouchbaseSpanTags
+	for k, v := range span.Tags {
+		switch k {
+		case "couchbase.bucket":
+			readStringTag(&tags.Bucket, v)
+		case "couchbase.hostname":
+			readStringTag(&tags.Host, v)
+		case "couchbase.type":
+			readStringTag(&tags.Type, v)
+		case "couchbase.sql":
+			readStringTag(&tags.SQL, v)
+		case "couchbase.error":
+			readStringTag(&tags.Error, v)
+		}
+	}
+	return tags
+}
+
+// MySQLSpanData represents the `data` section of a MySQL client span
+type MySQLSpanData struct {
+	SpanData
+	Tags MySQLSpanTags `json:"mysql"`
+}
+
+// newMySQLSpanData initializes a new MySQL client span data from tracer span
+func newMySQLSpanData(span *spanS) MySQLSpanData {
+	return MySQLSpanData{
+		SpanData: NewSpanData(span, MySQLSpanType),
+		Tags:     newMySQLSpanTags(span),
+	}
+}
+
+// Kind returns the span kind for a MySQL client span
+func (d MySQLSpanData) Kind() SpanKind {
+	return ExitSpanKind
+}
+
+// MySQLSpanTags contains fields within the `data.mysql` section of an OT span document
+type MySQLSpanTags struct {
+	Host string `json:"host"`
+	Port string `json:"port"`
+	DB   string `json:"db"`
+	User string `json:"user"`
+	Stmt string `json:"stmt"`
+
+	Error string `json:"error,omitempty"`
+}
+
+func newMySQLSpanTags(span *spanS) MySQLSpanTags {
+	var tags MySQLSpanTags
+	for k, v := range span.Tags {
+		switch k {
+		case "mysql.host":
+			readStringTag(&tags.Host, v)
+		case "mysql.port":
+			readStringTag(&tags.Port, v)
+		case "mysql.db":
+			readStringTag(&tags.DB, v)
+		case "mysql.stmt":
+			readStringTag(&tags.Stmt, v)
+		case "mysql.user":
+			readStringTag(&tags.User, v)
+		case "mysql.error":
+			readStringTag(&tags.Error, v)
 		}
 	}
 	return tags
@@ -1540,4 +1679,64 @@ func newAZFSpanData(span *spanS) AZFSpanData {
 // Kind returns instana.EntrySpanKind for server spans and instana.ExitSpanKind otherwise
 func (d AZFSpanData) Kind() SpanKind {
 	return EntrySpanKind
+}
+
+// GraphQLSpanData represents the `data` section of a GraphQL span sent within an OT span document
+type GraphQLSpanData struct {
+	SpanData
+	Tags GraphQLSpanTags `json:"graphql"`
+
+	clientSpan bool
+}
+
+// newGraphQLSpanData initializes a new GraphQL span data from tracer span
+func newGraphQLSpanData(span *spanS) GraphQLSpanData {
+	data := GraphQLSpanData{
+		SpanData: NewSpanData(span, RegisteredSpanType(span.Operation)),
+		Tags:     newGraphQLSpanTags(span),
+	}
+
+	kindTag := span.Tags[string(ext.SpanKind)]
+	data.clientSpan = kindTag == ext.SpanKindRPCClientEnum || kindTag == string(ext.SpanKindRPCClientEnum)
+
+	return data
+}
+
+// Kind returns instana.EntrySpanKind for server spans and instana.ExitSpanKind otherwise
+func (d GraphQLSpanData) Kind() SpanKind {
+	if d.clientSpan {
+		return ExitSpanKind
+	}
+
+	return EntrySpanKind
+}
+
+// GraphQLSpanTags contains fields within the `data.graphql` section of an OT span document
+type GraphQLSpanTags struct {
+	OperationName string              `json:"operationName,omitempty"`
+	OperationType string              `json:"operationType,omitempty"`
+	Fields        map[string][]string `json:"fields,omitempty"`
+	Args          map[string][]string `json:"args,omitempty"`
+	Error         string              `json:"error,omitempty"`
+}
+
+// newGraphQLSpanTags extracts GraphQL-specific span tags from a tracer span
+func newGraphQLSpanTags(span *spanS) GraphQLSpanTags {
+	var tags GraphQLSpanTags
+	for k, v := range span.Tags {
+		switch k {
+		case "graphql.operationName":
+			readStringTag(&tags.OperationName, v)
+		case "graphql.operationType":
+			readStringTag(&tags.OperationType, v)
+		case "graphql.fields":
+			readMapOfStringSlicesTag(&tags.Fields, v)
+		case "graphql.args":
+			readMapOfStringSlicesTag(&tags.Args, v)
+		case "graphql.error":
+			readStringTag(&tags.Error, v)
+		}
+	}
+
+	return tags
 }

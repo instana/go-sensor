@@ -15,7 +15,7 @@ import (
 
 type instaTx struct {
 	pgx.Tx
-	sensor      *instana.Sensor
+	sensor      instana.TracerLogger
 	config      *pgx.ConnConfig
 	ctxWithSpan context.Context
 }

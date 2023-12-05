@@ -5,6 +5,11 @@ This module contains middleware to instrument HTTP services written with [github
 
 [![GoDoc](https://img.shields.io/static/v1?label=godoc&message=reference&color=blue)][godoc]
 
+Compatibility
+-------------
+
+ * Starting at version 1.6.0 of instagin, [gin v1.9.0](https://github.com/gin-gonic/gin/releases/tag/v1.9.0) is used, which requires Go v1.18 or higher
+
 
 Installation
 ------------
@@ -37,4 +42,10 @@ engine.GET("/api", func(c *gin.Context) {}
 
 
 [godoc]: https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instagin
-[fullExample]: https://github.com/instana/go-sensor/blob/master/example/gin/main.go
+[fullExample]: https://github.com/instana/go-sensor/blob/main/example/gin/main.go
+
+<!---
+Mandatory comment section for CI/CD !!
+target-pkg-url: github.com/gin-gonic/gin
+current-version: v1.9.1
+--->

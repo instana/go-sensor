@@ -1,10 +1,12 @@
-// (c) Copyright IBM Corp. 2021
-// (c) Copyright Instana Inc. 2020
+// (c) Copyright IBM Corp. 2023
+
+//go:build go1.17
+// +build go1.17
 
 package instasarama
 
 import (
-	"github.com/Shopify/sarama"
+	"github.com/IBM/sarama"
 	instana "github.com/instana/go-sensor"
 	ot "github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
@@ -14,12 +16,12 @@ import (
 // provided instana.Sensor
 type PartitionConsumer struct {
 	sarama.PartitionConsumer
-	sensor   *instana.Sensor
+	sensor   instana.TracerLogger
 	messages chan *sarama.ConsumerMessage
 }
 
 // WrapPartitionConsumer wraps sarama.PartitionConsumer instance and instruments its calls
-func WrapPartitionConsumer(c sarama.PartitionConsumer, sensor *instana.Sensor) *PartitionConsumer {
+func WrapPartitionConsumer(c sarama.PartitionConsumer, sensor instana.TracerLogger) *PartitionConsumer {
 	pc := &PartitionConsumer{
 		PartitionConsumer: c,
 		sensor:            sensor,

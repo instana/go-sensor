@@ -1,12 +1,14 @@
-// (c) Copyright IBM Corp. 2021
-// (c) Copyright Instana Inc. 2020
+// (c) Copyright IBM Corp. 2023
+
+//go:build go1.17
+// +build go1.17
 
 package instasarama
 
 import (
 	"bytes"
 
-	"github.com/Shopify/sarama"
+	"github.com/IBM/sarama"
 	instana "github.com/instana/go-sensor"
 	ot "github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
@@ -17,13 +19,13 @@ import (
 // provided instana.Sensor
 type SyncProducer struct {
 	sarama.SyncProducer
-	sensor         *instana.Sensor
+	sensor         instana.TracerLogger
 	propageContext bool
 }
 
 // NewSyncProducer creates a new SyncProducer using the given broker addresses and configuration, and
 // instruments its calls
-func NewSyncProducer(addrs []string, config *sarama.Config, sensor *instana.Sensor) (sarama.SyncProducer, error) {
+func NewSyncProducer(addrs []string, config *sarama.Config, sensor instana.TracerLogger) (sarama.SyncProducer, error) {
 	sp, err := sarama.NewSyncProducer(addrs, config)
 	if err != nil {
 		return sp, err
@@ -33,7 +35,7 @@ func NewSyncProducer(addrs []string, config *sarama.Config, sensor *instana.Sens
 }
 
 // NewSyncProducerFromClient creates a new SyncProducer using the given client, and instruments its calls
-func NewSyncProducerFromClient(client sarama.Client, sensor *instana.Sensor) (sarama.SyncProducer, error) {
+func NewSyncProducerFromClient(client sarama.Client, sensor instana.TracerLogger) (sarama.SyncProducer, error) {
 	sp, err := sarama.NewSyncProducerFromClient(client)
 	if err != nil {
 		return sp, err
@@ -46,7 +48,7 @@ func NewSyncProducerFromClient(client sarama.Client, sensor *instana.Sensor) (sa
 // config that was used to create this producer to detect the Kafka version and whether it's supposed to return
 // successes/errors. To initialize a new sync producer instance use instasarama.NewSyncProducer() and
 // instasarama.NewSyncProducerFromClient() convenience methods instead
-func WrapSyncProducer(sp sarama.SyncProducer, config *sarama.Config, sensor *instana.Sensor) *SyncProducer {
+func WrapSyncProducer(sp sarama.SyncProducer, config *sarama.Config, sensor instana.TracerLogger) *SyncProducer {
 	return &SyncProducer{
 		SyncProducer:   sp,
 		sensor:         sensor,
@@ -160,7 +162,7 @@ func (p *SyncProducer) SendMessages(msgs []*sarama.ProducerMessage) error {
 
 // startSpan picks up the existing trace context provided in the message and returns a new child
 // span. It returns nil if there is no valid context provided in the message
-func startProducerSpan(sensor *instana.Sensor, msg *sarama.ProducerMessage) ot.Span {
+func startProducerSpan(sensor instana.TracerLogger, msg *sarama.ProducerMessage) ot.Span {
 	switch sc, err := sensor.Tracer().Extract(ot.TextMap, ProducerMessageCarrier{msg}); err {
 	case nil:
 		return sensor.Tracer().StartSpan(

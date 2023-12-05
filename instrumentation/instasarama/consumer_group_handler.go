@@ -1,10 +1,12 @@
-// (c) Copyright IBM Corp. 2021
-// (c) Copyright Instana Inc. 2020
+// (c) Copyright IBM Corp. 2023
+
+//go:build go1.17
+// +build go1.17
 
 package instasarama
 
 import (
-	"github.com/Shopify/sarama"
+	"github.com/IBM/sarama"
 	instana "github.com/instana/go-sensor"
 	ot "github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
@@ -14,11 +16,11 @@ import (
 // incoming Kafka message, ensuring the extraction and continuation of the existing trace context if provided
 type ConsumerGroupHandler struct {
 	handler sarama.ConsumerGroupHandler
-	sensor  *instana.Sensor
+	sensor  instana.TracerLogger
 }
 
 // WrapConsumerGroupHandler wraps the existing group handler and instruments its calls
-func WrapConsumerGroupHandler(h sarama.ConsumerGroupHandler, sensor *instana.Sensor) *ConsumerGroupHandler {
+func WrapConsumerGroupHandler(h sarama.ConsumerGroupHandler, sensor instana.TracerLogger) *ConsumerGroupHandler {
 	return &ConsumerGroupHandler{
 		handler: h,
 		sensor:  sensor,
@@ -58,11 +60,11 @@ func (h *ConsumerGroupHandler) ConsumeClaim(sess sarama.ConsumerGroupSession, cl
 // and finished when the message is marked as consumed by MarkMessage().
 type consumerGroupSession struct {
 	sarama.ConsumerGroupSession
-	sensor      *instana.Sensor
+	sensor      instana.TracerLogger
 	activeSpans *spanRegistry
 }
 
-func newConsumerGroupSession(sess sarama.ConsumerGroupSession, sensor *instana.Sensor) *consumerGroupSession {
+func newConsumerGroupSession(sess sarama.ConsumerGroupSession, sensor instana.TracerLogger) *consumerGroupSession {
 	return &consumerGroupSession{
 		ConsumerGroupSession: sess,
 		sensor:               sensor,

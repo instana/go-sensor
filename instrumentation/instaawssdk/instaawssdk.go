@@ -26,7 +26,7 @@ var errMethodNotInstrumented = errors.New("method not instrumented")
 const maxClientContextLen = 3582
 
 // New is a wrapper for `session.New`
-func New(sensor *instana.Sensor, cfgs ...*aws.Config) *session.Session {
+func New(sensor instana.TracerLogger, cfgs ...*aws.Config) *session.Session {
 	sess := session.New(cfgs...)
 	InstrumentSession(sess, sensor)
 
@@ -34,7 +34,7 @@ func New(sensor *instana.Sensor, cfgs ...*aws.Config) *session.Session {
 }
 
 // NewSession is a wrapper for `session.NewSession`
-func NewSession(sensor *instana.Sensor, cfgs ...*aws.Config) (*session.Session, error) {
+func NewSession(sensor instana.TracerLogger, cfgs ...*aws.Config) (*session.Session, error) {
 	sess, err := session.NewSession(cfgs...)
 	if err != nil {
 		return sess, err
@@ -46,7 +46,7 @@ func NewSession(sensor *instana.Sensor, cfgs ...*aws.Config) (*session.Session, 
 }
 
 // NewSessionWithOptions is a wrapper for `session.NewSessionWithOptions`
-func NewSessionWithOptions(sensor *instana.Sensor, opts session.Options) (*session.Session, error) {
+func NewSessionWithOptions(sensor instana.TracerLogger, opts session.Options) (*session.Session, error) {
 	sess, err := session.NewSessionWithOptions(opts)
 	if err != nil {
 		return sess, err
@@ -59,7 +59,7 @@ func NewSessionWithOptions(sensor *instana.Sensor, opts session.Options) (*sessi
 
 // InstrumentSession instruments github.com/aws/aws-sdk-go/aws/session.Session by
 // injecting handlers to create and finalize Instana spans
-func InstrumentSession(sess *session.Session, sensor *instana.Sensor) {
+func InstrumentSession(sess *session.Session, sensor instana.TracerLogger) {
 	sess.Handlers.Validate.PushBack(func(req *request.Request) {
 		switch req.ClientInfo.ServiceName {
 		case s3.ServiceName:
@@ -70,6 +70,8 @@ func InstrumentSession(sess *session.Session, sensor *instana.Sensor) {
 			StartDynamoDBSpan(req, sensor)
 		case lambda.ServiceName:
 			StartInvokeLambdaSpan(req, sensor)
+		case sns.ServiceName:
+			StartSNSSpan(req, sensor)
 		}
 	})
 
@@ -97,6 +99,8 @@ func InstrumentSession(sess *session.Session, sensor *instana.Sensor) {
 			FinalizeDynamoDBSpan(req)
 		case lambda.ServiceName:
 			FinalizeInvokeLambdaSpan(req)
+		case sns.ServiceName:
+			FinalizeSNSSpan(req)
 		}
 	})
 }

@@ -282,11 +282,11 @@ func newSDKSpanTags(span *spanS, spanType string) SDKSpanTags {
 	}
 
 	if len(span.Tags) != 0 {
-		tags.Custom["tags"] = span.Tags
+		tags.Custom["tags"] = cloneTags(span.Tags)
 	}
 
 	if len(span.context.Baggage) != 0 {
-		tags.Custom["baggage"] = span.context.Baggage
+		tags.Custom["baggage"] = cloneMapStringString(span.context.Baggage)
 	}
 
 	return tags
@@ -302,11 +302,21 @@ func readStringTag(dst *string, tag interface{}) {
 	}
 }
 
+// readArrayStringTag populates &dst with the tag value if it's a slice of strings
 func readArrayStringTag(dst *[]string, tag interface{}) {
 	switch s := tag.(type) {
 	case []string:
 		*dst = s
 	default:
+		*dst = nil
+	}
+}
+
+// readMapOfStringSlicesTag populates &dst with the tag value if it's a map of slice of strings
+func readMapOfStringSlicesTag(dst *map[string][]string, tag interface{}) {
+	if m, ok := tag.(map[string][]string); ok {
+		*dst = m
+	} else {
 		*dst = nil
 	}
 }
