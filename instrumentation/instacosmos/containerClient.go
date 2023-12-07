@@ -1,3 +1,8 @@
+// (c) Copyright IBM Corp. 2023
+
+//go:build go1.18
+// +build go1.18
+
 package instacosmos
 
 import (
@@ -7,6 +12,7 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/data/azcosmos"
 )
 
+// ContainerClient is the interface that wraps the methods of *azcosmos.ContainerClient
 type ContainerClient interface {
 	CreateItem(
 		ctx context.Context,
@@ -15,7 +21,7 @@ type ContainerClient interface {
 		o *azcosmos.ItemOptions) (azcosmos.ItemResponse, error)
 }
 
-type InstaContainerClient struct {
+type instaContainerClient struct {
 	database    string
 	containerID string
 	endpoint    string
@@ -23,19 +29,27 @@ type InstaContainerClient struct {
 	*azcosmos.ContainerClient
 }
 
-func (icc *InstaContainerClient) DatabaseID() string {
+// DatabaseID returns the azure cosmos database name
+func (icc *instaContainerClient) DatabaseID() string {
 	return icc.database
 }
 
-func (icc *InstaContainerClient) ContainerID() string {
+// ContainerID returns the azure cosmos container name
+func (icc *instaContainerClient) ContainerID() string {
 	return icc.containerID
 }
 
-func (icc *InstaContainerClient) EndPoint() string {
+// Endpoint returns the cosmos service endpoint
+func (icc *instaContainerClient) Endpoint() string {
 	return icc.endpoint
 }
 
-func (icc *InstaContainerClient) CreateItem(ctx context.Context,
+// CreateItem creates an item in a Cosmos container.
+// ctx - The context for the request.
+// partitionKey - The partition key for the item.
+// item - The item to create.
+// o - Options for the operation.
+func (icc *instaContainerClient) CreateItem(ctx context.Context,
 	partitionKey azcosmos.PartitionKey,
 	item []byte,
 	o *azcosmos.ItemOptions) (azcosmos.ItemResponse, error) {
@@ -48,17 +62,18 @@ func (icc *InstaContainerClient) CreateItem(ctx context.Context,
 	})
 	defer s.End()
 
-	icc.SetAttributes(s)
+	icc.setAttributes(s)
 
 	resp, err := icc.ContainerClient.CreateItem(ctx, partitionKey, item, o)
-	icc.SetStatus(s, resp.RawResponse.StatusCode)
+	icc.setStatus(s, resp.RawResponse.StatusCode)
 	if err != nil {
-		icc.SetError(s, err)
+		icc.setError(s, err)
 	}
 	return resp, err
 }
 
-func (icc *InstaContainerClient) SetAttributes(s tracing.Span) {
+// helper functions
+func (icc *instaContainerClient) setAttributes(s tracing.Span) {
 	attrs := []tracing.Attribute{
 		{
 			Key:   dataDB,
@@ -76,7 +91,7 @@ func (icc *InstaContainerClient) SetAttributes(s tracing.Span) {
 	s.SetAttributes(attrs...)
 }
 
-func (icc *InstaContainerClient) SetError(s tracing.Span, err error) {
+func (icc *instaContainerClient) setError(s tracing.Span, err error) {
 	errAttrs := []tracing.Attribute{
 		{
 			Key:   dataError,
@@ -95,6 +110,6 @@ func (icc *InstaContainerClient) SetError(s tracing.Span, err error) {
 	})
 }
 
-func (icc *InstaContainerClient) SetStatus(s tracing.Span, statusCode int) {
+func (icc *instaContainerClient) setStatus(s tracing.Span, statusCode int) {
 	s.SetStatus(tracing.SpanStatus(statusCode), dataReturnCode)
 }

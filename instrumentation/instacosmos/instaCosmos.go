@@ -1,7 +1,14 @@
+// (c) Copyright IBM Corp. 2023
+
+//go:build go1.18
+// +build go1.18
+
+// Package instacosmos provides instrumentation for the azcosmos package in azure-sdk-for-go
 package instacosmos
 
 import (
 	"context"
+	"fmt"
 
 	instana "github.com/instana/go-sensor"
 
@@ -25,11 +32,11 @@ const (
 	errorEvent = "error"
 )
 
-type Tracer struct {
-	tracing.Tracer
-	instana.DbConnDetails
-}
-
+// newTracer creates a Tracer with the help of azure tracing package
+// it provides the definition for the new span function which creates new span instances
+// ctx - The context for creating new tracer
+// collector - instana go collector
+// connDetails - db connection details for instana
 func newTracer(ctx context.Context,
 	collector instana.TracerLogger,
 	connDetails instana.DbConnDetails) tracing.Tracer {
@@ -61,7 +68,7 @@ func newTracer(ctx context.Context,
 				}
 			},
 			SetStatus: func(ss tracing.SpanStatus, s string) {
-				cosmosSpan.SetTag(s, ss)
+				cosmosSpan.SetTag(s, fmt.Sprintf("%d", ss))
 			},
 		})
 
