@@ -65,6 +65,9 @@ func validateAzureCreds(t *testing.T) {
 	key, _ = os.LookupEnv(KEY)
 
 	fmt.Println("endpoint", endpoint)
+	if endpoint == "localhost" {
+		fmt.Println("env is valid!!")
+	}
 	fmt.Println("key", key)
 
 	if endpoint == "" || key == "" {
