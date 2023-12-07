@@ -1,8 +1,5 @@
 // (c) Copyright IBM Corp. 2023
 
-//go:build integration
-// +build integration
-
 package instacosmos_test
 
 import (
@@ -23,8 +20,8 @@ import (
 )
 
 const (
-	CONNECTION_URL = "CONNECTION_URL"
-	KEY            = "KEY"
+	CONNECTION_URL = "COSMOS_CONNECTION_URL"
+	KEY            = "COSMOS_KEY"
 )
 
 const (
@@ -64,12 +61,6 @@ func validateAzureCreds(t *testing.T) {
 	endpoint, _ = os.LookupEnv(CONNECTION_URL)
 	key, _ = os.LookupEnv(KEY)
 
-	fmt.Println("endpoint", endpoint)
-	if endpoint == "localhost" {
-		fmt.Println("env is valid!!")
-	}
-	fmt.Println("key", key)
-
 	if endpoint == "" || key == "" {
 		t.Error("Azure credentials are not provided")
 		t.FailNow()
@@ -105,10 +96,13 @@ func TestInstaContainerClient_CreateItem(t *testing.T) {
 	a.EqualValues(instana.ExitSpanKind, span.Kind)
 	a.IsType(instana.CosmosSpanData{}, span.Data)
 	spData := span.Data.(instana.CosmosSpanData)
-	a.Equal(spData.Tags.Database, database)
-	a.Equal(spData.Tags.Type, "Query")
-	a.Equal(spData.Tags.ReturnCode, "201")
-	a.Equal(spData.Tags.Error, "")
+	a.Equal(instana.CosmosSpanTags{
+		ConnectionURL: endpoint,
+		Database:      database,
+		Type:          "Query",
+		ReturnCode:    fmt.Sprintf("%d", resp.RawResponse.StatusCode),
+		Error:         "",
+	}, spData.Tags)
 }
 
 func genRandomID() string {
