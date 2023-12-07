@@ -65,9 +65,12 @@ func (icc *instaContainerClient) CreateItem(ctx context.Context,
 	icc.setAttributes(s)
 
 	resp, err := icc.ContainerClient.CreateItem(ctx, partitionKey, item, o)
-	icc.setStatus(s, resp.RawResponse.StatusCode)
 	if err != nil {
 		icc.setError(s, err)
+	}
+
+	if resp.RawResponse != nil {
+		icc.setStatus(s, resp.RawResponse.StatusCode)
 	}
 	return resp, err
 }
