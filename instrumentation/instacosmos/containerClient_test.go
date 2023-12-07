@@ -1,5 +1,8 @@
 // (c) Copyright IBM Corp. 2023
 
+//go:build integration
+// +build integration
+
 package instacosmos_test
 
 import (
