@@ -208,7 +208,7 @@ func cosmosSpan(ctx context.Context, conn DbConnDetails, query string, sensor Tr
 		opts = append(opts, ot.ChildOf(parentSpan.Context()))
 	}
 
-	return sensor.StartSpan(string(CouchbaseSpanType), opts...)
+	return sensor.StartSpan(string(CosmosSpanType), opts...)
 }
 
 func genericSQLSpan(ctx context.Context, conn DbConnDetails, query string, sensor TracerLogger) ot.Span {

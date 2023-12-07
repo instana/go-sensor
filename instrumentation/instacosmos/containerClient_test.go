@@ -68,6 +68,7 @@ func validateAzureCreds(t *testing.T) {
 		t.Error("Azure credentials are not provided")
 		t.FailNow()
 	}
+	fmt.Println("endpoint", endpoint)
 }
 
 func TestInstaContainerClient_CreateItem(t *testing.T) {

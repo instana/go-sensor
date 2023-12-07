@@ -1542,7 +1542,7 @@ type CouchbaseSpanTags struct {
 // CosmosSpanData represents the `data` section of a Cosmos client span
 type CosmosSpanData struct {
 	SpanData
-	Tags CosmosSpanTags `json:"couchbase"`
+	Tags CosmosSpanTags `json:"cosmos"`
 }
 
 // newCosmosSpanData initializes a new Cosmos client span data from tracer span

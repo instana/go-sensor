@@ -19,9 +19,10 @@ endif
 integration: $(INTEGRATION_TESTS)
 	cd instrumentation/instapgx && go test -tags=integration
 	cd instrumentation/instagocb && go test -v -coverprofile cover.out -tags=integration ./...
+	cd instrumentation/instacosmos && go test -v -coverprofile cover.out -tags=integration ./...
 
 $(INTEGRATION_TESTS):
-	go test $(GOFLAGS) -tags "$@ integration" $(shell grep --exclude-dir=instagocb --exclude-dir=instapgx -lR '^// +build \($@,\)\?integration\(,$@\)\?' .)
+	go test $(GOFLAGS) -tags "$@ integration" $(shell grep --exclude-dir=instagocb --exclude-dir=instapgx --exclude-dir=instacosmos  -lR '^// +build \($@,\)\?integration\(,$@\)\?' .)
 
 $(LINTER):
 	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/a2bc9b7a99e3280805309d71036e8c2106853250/install.sh \
