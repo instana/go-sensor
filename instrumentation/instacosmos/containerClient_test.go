@@ -64,11 +64,13 @@ func validateAzureCreds(t *testing.T) {
 	endpoint, _ = os.LookupEnv(CONNECTION_URL)
 	key, _ = os.LookupEnv(KEY)
 
+	fmt.Println("endpoint", endpoint)
+	fmt.Println("key", key)
+
 	if endpoint == "" || key == "" {
 		t.Error("Azure credentials are not provided")
 		t.FailNow()
 	}
-	fmt.Println("endpoint", endpoint)
 }
 
 func TestInstaContainerClient_CreateItem(t *testing.T) {
