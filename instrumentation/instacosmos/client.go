@@ -16,8 +16,8 @@ import (
 // Client is the interface that wraps the methods of *azcosmos.Client
 type Client interface {
 	Endpoint() string
-	NewContainer(t instana.TracerLogger, databaseID string, containerID string) (ContainerClient, error)
-	NewDatabase(id string) (*azcosmos.DatabaseClient, error)
+	NewContainer(collector instana.TracerLogger, databaseID string, containerID string) (ContainerClient, error)
+	NewDatabase(collector instana.TracerLogger, id string) (DatabaseClient, error)
 	CreateDatabase(
 		ctx context.Context,
 		databaseProperties azcosmos.DatabaseProperties,
@@ -57,6 +57,25 @@ func (ic *instaClient) Endpoint() string {
 	return ic.Client.Endpoint()
 }
 
+// NewContainer returns the instance of instrumented *azcosmos.DatabaseClient
+// collector - instana go collector
+// id - azure cosmos database name
+func (ic *instaClient) NewDatabase(collector instana.TracerLogger, id string) (DatabaseClient, error) {
+	databaseClient, err := ic.Client.NewDatabase(id)
+	if err != nil {
+		return nil, err
+	}
+	return &instaDatabaseClient{
+		database: id,
+		endpoint: ic.Client.Endpoint(),
+		T: newTracer(context.TODO(), collector, instana.DbConnDetails{
+			DatabaseName: string(instana.CosmosSpanType),
+			RawString:    ic.Client.Endpoint(),
+		}),
+		DatabaseClient: databaseClient,
+	}, nil
+}
+
 // NewContainer returns the instance of instrumented *azcosmos.ContainerClient
 // collector - instana go collector
 // databaseID - azure cosmos database name
@@ -76,4 +95,13 @@ func (ic *instaClient) NewContainer(collector instana.TracerLogger, databaseID s
 		}),
 		ContainerClient: containerClient,
 	}, nil
+}
+
+// CreateDatabase creates a new database in azure account
+// ctx - The context for the request.
+// databaseProperties - The definition of the database
+// o - Options for the create database operation.
+func (ic *instaClient) CreateDatabase(ctx context.Context,
+	dbProperties azcosmos.DatabaseProperties, o *azcosmos.CreateDatabaseOptions) (azcosmos.DatabaseResponse, error) {
+	return ic.Client.CreateDatabase(ctx, dbProperties, nil)
 }

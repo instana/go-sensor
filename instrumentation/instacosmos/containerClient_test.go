@@ -9,12 +9,14 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"math/rand"
+	"log"
+	"net/http"
 	"os"
+	"sync"
 	"testing"
-	"time"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/data/azcosmos"
+	"github.com/google/uuid"
 	instana "github.com/instana/go-sensor"
 	"github.com/instana/go-sensor/acceptor"
 	"github.com/instana/go-sensor/autoprofile"
@@ -28,8 +30,16 @@ const (
 )
 
 const (
-	database  = "trace-data"
-	container = "spans"
+	partitionKeyPath = "/SpanID"
+	databasePrefix   = "test-db-"
+	container        = "spans"
+)
+
+var (
+	syncInstaClient   sync.Once
+	syncInstaRecorder sync.Once
+	client            instacosmos.Client
+	rec               *instana.Recorder
 )
 
 type alwaysReadyClient struct{}
@@ -44,8 +54,9 @@ func (alwaysReadyClient) Flush(context.Context) error                       { re
 type SpanType string
 
 var (
-	endpoint string = ""
-	key             = ""
+	endpoint   string = ""
+	key               = ""
+	databaseID        = ""
 )
 
 const (
@@ -60,22 +71,89 @@ type Span struct {
 	Description string   `json:"description"`
 }
 
-func validateAzureCreds(t *testing.T) {
-	endpoint, _ = os.LookupEnv(CONNECTION_URL)
-	key, _ = os.LookupEnv(KEY)
+func setup(collector instana.TracerLogger) {
 
-	if endpoint == "" || key == "" {
-		t.Error("Azure credentials are not provided")
-		t.FailNow()
+	// validating azure creds are exported
+	validateAzureCreds()
+
+	// getting azure cosmos client
+	client, err := getInstaClient()
+	failOnError(err)
+
+	// creating a database in azure test account
+	databaseID = databasePrefix + uuid.New().String()
+	dbProperties := azcosmos.DatabaseProperties{ID: databaseID}
+	response, err := client.CreateDatabase(context.TODO(), dbProperties, nil)
+	failOnError(err)
+
+	if response.RawResponse.StatusCode != http.StatusCreated {
+		err = fmt.Errorf("Failed to create database. Got response status %d",
+			response.RawResponse.StatusCode)
+		failOnError(err)
 	}
+
+	dbClient, err := client.NewDatabase(collector, databaseID)
+	failOnError(err)
+
+	// create a container in test database
+	properties := azcosmos.ContainerProperties{
+		ID: container,
+		PartitionKeyDefinition: azcosmos.PartitionKeyDefinition{
+			Paths: []string{partitionKeyPath},
+		},
+	}
+
+	throughput := azcosmos.NewManualThroughputProperties(400)
+
+	resp, err := dbClient.CreateContainer(context.TODO(), properties,
+		&azcosmos.CreateContainerOptions{ThroughputProperties: &throughput})
+	failOnError(err)
+
+	if resp.RawResponse.StatusCode != http.StatusCreated {
+		err = fmt.Errorf("Failed to create container. Got response status %d",
+			resp.RawResponse.StatusCode)
+		failOnError(err)
+	}
+}
+
+func shutdown(collector instana.TracerLogger) {
+	client, err := getInstaClient()
+	failOnError(err)
+
+	database, err := client.NewDatabase(collector, databaseID)
+	failOnError(err)
+
+	response, err := database.Delete(context.TODO(), &azcosmos.DeleteDatabaseOptions{})
+	failOnError(err)
+
+	if response.RawResponse.StatusCode != http.StatusNoContent {
+		err = fmt.Errorf("Failed to delete database. Got response status %d",
+			response.RawResponse.StatusCode)
+		failOnError(err)
+	}
+}
+
+func TestMain(m *testing.M) {
+
+	// creating a sensor with instana recorder
+	recorder := getInstaRecorder()
+	tracer := instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder)
+	sensor := instana.NewSensorWithTracer(tracer)
+
+	// create a database and a container in azure test account
+	setup(sensor)
+	// run the tests
+	code := m.Run()
+	// delete the test database
+	shutdown(sensor)
+	os.Exit(code)
 }
 
 func TestInstaContainerClient_CreateItem(t *testing.T) {
 
-	validateAzureCreds(t)
 	ctx, recorder, cc, a := prepareContainerClient(t)
 
-	id := genRandomID()
+	id := uuid.New().String()
 	spanID := fmt.Sprintf("span-%s", id)
 
 	data := Span{
@@ -101,47 +179,71 @@ func TestInstaContainerClient_CreateItem(t *testing.T) {
 	spData := span.Data.(instana.CosmosSpanData)
 	a.Equal(instana.CosmosSpanTags{
 		ConnectionURL: endpoint,
-		Database:      database,
+		Database:      databaseID,
 		Type:          "Query",
 		ReturnCode:    fmt.Sprintf("%d", resp.RawResponse.StatusCode),
 		Error:         "",
 	}, spData.Tags)
 }
 
-func genRandomID() string {
-	size := 4
-	letterRunes := []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
-	rand.New(rand.NewSource(time.Now().UnixNano()))
+func validateAzureCreds() {
+	endpoint, _ = os.LookupEnv(CONNECTION_URL)
+	key, _ = os.LookupEnv(KEY)
 
-	b := make([]rune, size)
-	for i := range b {
-		b[i] = letterRunes[rand.Intn(len(letterRunes))]
+	if endpoint == "" || key == "" {
+		failOnError(fmt.Errorf("Azure credentials are not provided"))
 	}
-	return string(b)
+}
+
+func failOnError(err error) {
+	if err != nil {
+		log.Fatal(err)
+		os.Exit(0)
+	}
 }
 
 func prepare(t *testing.T) (context.Context, *instana.Recorder, instacosmos.Client, *instana.Sensor, *assert.Assertions) {
 	a := assert.New(t)
-	recorder := instana.NewRecorder()
-
-	tracer := instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder)
+	rec = getInstaRecorder()
+	tracer := instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, rec)
 	sensor := instana.NewSensorWithTracer(tracer)
 
 	ctx := context.Background()
 
-	cred, err := instacosmos.NewKeyCredential(key)
+	client, err := getInstaClient()
 	a.NoError(err)
 
-	client, err := instacosmos.NewClientWithKey(endpoint, cred, &azcosmos.ClientOptions{})
-	a.NoError(err)
+	return ctx, rec, client, sensor, a
 
-	return ctx, recorder, client, sensor, a
+}
 
+func getInstaClient() (instacosmos.Client, error) {
+	var err error
+	syncInstaClient.Do(func() {
+		cred, e := instacosmos.NewKeyCredential(key)
+		if e != nil {
+			err = e
+		}
+
+		client, e = instacosmos.NewClientWithKey(endpoint, cred, &azcosmos.ClientOptions{})
+		if e != nil {
+			err = e
+		}
+	})
+
+	return client, err
+}
+
+func getInstaRecorder() *instana.Recorder {
+	syncInstaRecorder.Do(func() {
+		rec = instana.NewRecorder()
+	})
+	return rec
 }
 
 func prepareContainerClient(t *testing.T) (context.Context, *instana.Recorder, instacosmos.ContainerClient, *assert.Assertions) {
 	ctx, rec, client, sensor, a := prepare(t)
-	containerClient, err := client.NewContainer(sensor, database, container)
+	containerClient, err := client.NewContainer(sensor, databaseID, container)
 	a.NoError(err)
 	return ctx, rec, containerClient, a
 }
