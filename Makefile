@@ -12,7 +12,7 @@ endif
 test: $(MODULES) legal
 
 $(MODULES):
-@echo "$@" $(operation)
+	@echo "$@" $(operation)
 ifeq ($(operation), unittest)
 	cd $@ && go get -d -t ./... && go test $(GOFLAGS) ./...
 endif
