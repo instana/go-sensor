@@ -63,9 +63,9 @@ jobs:
           command: apt-get --allow-releaseinfo-change-suite update -y && apt-get install ca-certificates libgnutls30 -y || true
       - run:
           command: go install golang.org/x/tools/cmd/goimports@latest || true
-      # - run:
-      #     name: Check fmt
-      #     command: make fmtcheck
+      - run:
+          name: Check fmt
+          command: make fmtcheck
       - run:
           name: Check imports
           command: make importcheck
