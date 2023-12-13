@@ -49,8 +49,14 @@ fmtcheck:
 		exclude_string+=" -not -path \"$$exclude_dir/*\""; \
 	done; \
 	command="find . -type f -name \"*.go\" $$exclude_string"; \
-	@gofmt -l $$(eval "$$command") \
-	@test -z $$(shell gofmt -l $$(eval "$$command") && exit 1)
+	gofmt_output=$$(gofmt -l $$(eval "$$command")); \
+    if [ -n "$$gofmt_output" ]; then \
+        echo "Some files are not formatted properly:"; \
+        echo "$$gofmt_output"; \
+        exit 1; \
+    else \
+        echo "All Go files are formatted properly."; \
+    fi
 
 importcheck:
 	@test -z $(shell goimports -l . && exit 1)
