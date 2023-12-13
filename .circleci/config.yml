@@ -66,6 +66,8 @@ jobs:
       - run:
           name: Check fmt
           command: make fmtcheck
+          environment:
+            EXCLUDE_DIRS: << parameters.exclude_dirs >>
       - run:
           name: Check imports
           command: make importcheck
