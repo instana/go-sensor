@@ -32,6 +32,9 @@ install:
 	cd .git/hooks && ln -fs ../../.githooks/* .
 	brew install gh
 
+print_excl:
+	echo $$EXCLUDE_DIRS
+
 # Make sure there is a copyright at the first line of each .go file
 legal:
 	awk 'FNR==1 { if (tolower($$0) !~ "^//.+copyright") { print FILENAME" does not contain copyright header"; rc=1 } }; END { exit rc }' $$(find . -name '*.go' -type f | grep -v "/vendor/")
@@ -45,7 +48,7 @@ instrumentation/% :
 
 fmtcheck:
 	@exclude_string=""; \
-	for exclude_dir in $(echo $EXCLUDE_DIRS | tr ' ' '\n'); do \
+	for exclude_dir in $$(echo $$EXCLUDE_DIRS | tr ' ' '\n'); do \
 		exclude_string+=" -not -path \"$$exclude_dir/*\""; \
 	done; \
 	command="find . -type f -name \"*.go\" $$exclude_string"; \
