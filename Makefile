@@ -49,7 +49,7 @@ instrumentation/% :
 fmtcheck:
 	@exclude_string=""; \
 	for exclude_dir in $$(echo $$EXCLUDE_DIRS | tr ' ' '\n'); do \
-		exclude_string+=" -not -path \"$$exclude_dir/*\""; \
+		exclude_string="$$exclude_string -not -path \"$$exclude_dir/*\""; \
 	done; \
 	command="find . -type f -name \"*.go\" $$exclude_string"; \
 	gofmt_output=$$(gofmt -l $$(eval "$$command")); \
