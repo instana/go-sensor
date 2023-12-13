@@ -85,5 +85,5 @@ If the context contains an active span stored using [`instana.ContextWithSpan()`
 <!---
 Mandatory comment section for CI/CD !!
 target-pkg-url: google.golang.org/grpc
-current-version: v1.59.0
+current-version: v1.60.0
 --->

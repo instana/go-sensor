@@ -10,6 +10,10 @@ This module contains the code for instrumenting AWS APIs which are based on the 
 * [SNS](https://pkg.go.dev/github.com/aws/aws-sdk-go-v2/service/sns)
 * [Lambda](https://pkg.go.dev/github.com/aws/aws-sdk-go-v2/service/lambda)
 
+> [!IMPORTANT]
+> From v0.3.0 onwards, this instrumentation module requires Go v1.19 as the minimum version.
+
+
 ## Installation
 
 ```bash
@@ -61,5 +65,5 @@ Hence, to avoid collisions, it is recommended to avoid these keys in your applic
 <!---
 Mandatory comment section for CI/CD !!
 target-pkg-url: github.com/aws/aws-sdk-go-v2
-current-version: v1.21.0
+current-version: v1.24.0
 --->

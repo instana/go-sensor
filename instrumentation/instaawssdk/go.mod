@@ -3,7 +3,7 @@ module github.com/instana/go-sensor/instrumentation/instaawssdk
 go 1.13
 
 require (
-	github.com/aws/aws-sdk-go v1.48.3
+	github.com/aws/aws-sdk-go v1.49.0
 	github.com/instana/go-sensor v1.58.0
 	github.com/kr/pretty v0.1.0 // indirect
 	github.com/opentracing/opentracing-go v1.2.0
