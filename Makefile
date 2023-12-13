@@ -45,12 +45,11 @@ instrumentation/% :
 
 fmtcheck:
 	exclude_string=""
-	for exclude_dir in $(echo $exclude_directories | tr ' ' '\n'); do
-  		exclude_string+=" -not -path \"$exclude_dir/*\""
+	for exclude_dir in $(echo $EXCLUDE_DIRS | tr ' ' '\n'); do \
+		exclude_string+=" -not -path \"$exclude_dir/*\"" \
 	done
-	command="find . -type f -name \"*.go\" $exclude_string"
-
-	@gofmt -l $(eval "$command")
+	command="find . -type f -name \"*.go\" $exclude_string" \
+	@gofmt -l $(eval "$$command") \
 	@test -z $(shell gofmt -l $(eval "$command") && exit 1)
 
 importcheck:
