@@ -108,7 +108,7 @@ workflows:
       - build:
           name: "go1.17"
           image: "cimg/go:1.17"
-          exclude_dirs: "./internal/bin/sql ./example/gin ./example/sql-redis ./example/gorm-postgres ./example/gorm-sqlite ./example/grpc-client-server ./instrumentation/cloud.google.com/go ./instrumentation/instabeego ./example/beego ./instrumentation/instaawsv2 ./instrumentation/instacosmos"
+          exclude_dirs: "./internal/bin/sql ./example/gin ./example/sql-redis ./example/gorm-postgres ./example/gorm-sqlite ./example/grpc-client-server ./instrumentation/cloud.google.com/go ./instrumentation/instabeego ./example/beego ./instrumentation/instaawsv2"
       - build:
           name: "go1.16"
           image: "cimg/go:1.16"

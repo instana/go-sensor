@@ -15,7 +15,7 @@ import (
 
 // Client is the interface that wraps the methods of *azcosmos.Client
 type Client interface {
-			Endpoint() string
+	Endpoint() string
 	NewContainer(collector instana.TracerLogger, databaseID string, containerID string) (ContainerClient, error)
 	NewDatabase(collector instana.TracerLogger, id string) (DatabaseClient, error)
 	CreateDatabase(
