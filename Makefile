@@ -12,12 +12,13 @@ endif
 test: $(MODULES) legal
 
 $(MODULES):
-	@echo "$@" $(operation)
+	@echo "in modules" $(operation)
 ifeq ($(operation), unittest)
 	cd $@ && go get -d -t ./... && go test $(GOFLAGS) ./...
 endif
 
 ifeq ($(operation), gofmt)
+	@echo "in gofmt" $(operation)
 	cd $@ && gofmt -l .
 endif
 
