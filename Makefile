@@ -44,13 +44,13 @@ instrumentation/% :
 	printf '// (c) Copyright IBM Corp. %s\n// (c) Copyright Instana Inc. %s\n\npackage %s\n\nconst Version = "0.0.0"\n' $(shell date +%Y) $(shell date +%Y) $(notdir $@) > $@/version.go
 
 fmtcheck:
-    exclude_string=""
-    for exclude_dir in $(echo $EXCLUDE_DIRS | tr ' ' '\n'); do \
-        exclude_string+=" -not -path \"$exclude_dir/*\"" \
-    done
-    command="find . -type f -name \"*.go\" $exclude_string" \
-    @gofmt -l $(eval "$$command") \
-    @test -z $(shell gofmt -l $(eval "$command") && exit 1)
+	exclude_string=""
+	for exclude_dir in $(echo $EXCLUDE_DIRS | tr ' ' '\n'); do \
+		exclude_string+=" -not -path \"$exclude_dir/*\"" \
+	done
+	command="find . -type f -name \"*.go\" $exclude_string" \
+	@gofmt -l $(eval "$$command") \
+	@test -z $(shell gofmt -l $(eval "$command") && exit 1)
 
 importcheck:
 	@test -z $(shell goimports -l . && exit 1)
