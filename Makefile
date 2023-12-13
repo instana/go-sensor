@@ -13,11 +13,10 @@ test: $(MODULES) legal
 
 $(MODULES):
 	@echo "in modules" $(operation)
-ifeq ($(operation), unittest)
+ifeq ($(operation),unittest)
+	@echo "unittest" $(operation)
 	cd $@ && go get -d -t ./... && go test $(GOFLAGS) ./...
-endif
-
-ifeq ($(operation), gofmt)
+else ifeq ($(operation),gofmt)
 	@echo "in gofmt" $(operation)
 	cd $@ && gofmt -l .
 endif
