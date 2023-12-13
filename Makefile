@@ -16,7 +16,7 @@ ifeq ($(RUN_LINTER),yes)
 	cd $@ && $(LINTER) run
 endif
 
-integration: $(INTEGRATION_TESTS)
+integration: $(MODULES) $(INTEGRATION_TESTS)
 	cd instrumentation/instapgx && go test -tags=integration
 	cd instrumentation/instagocb && go test -v -coverprofile cover.out -tags=integration ./...
 	cd instrumentation/instacosmos && go test -v -coverprofile cover.out -tags=integration ./...
@@ -43,7 +43,7 @@ instrumentation/% :
 	printf "VERSION_TAG_PREFIX ?= $@/v\nGO_MODULE_NAME ?= github.com/instana/go-sensor/$@\n\ninclude ../../Makefile.release\n" > $@/Makefile
 	printf '// (c) Copyright IBM Corp. %s\n// (c) Copyright Instana Inc. %s\n\npackage %s\n\nconst Version = "0.0.0"\n' $(shell date +%Y) $(shell date +%Y) $(notdir $@) > $@/version.go
 
-fmtcheck:
+fmtcheck: $(MODULES)
 	@gofmt -l .
 	@test -z $(shell gofmt -l . && exit 1)
 
