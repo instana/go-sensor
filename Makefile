@@ -53,7 +53,7 @@ fmtcheck:
 	done; \
 	command="find . -type f -name \"*.go\" $$exclude_string"; \
 	gofmt_output=$$(gofmt -l $$(eval "$$command")); \
-	echo $$gofmt_output
+	echo "$$gofmt_output"; \
     if [ -n "$$gofmt_output" ]; then \
         echo "Some files are not formatted properly:"; \
         echo "$$gofmt_output"; \
