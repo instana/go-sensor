@@ -54,7 +54,7 @@ fmtcheck:
 	command="find . -type f -name \"*.go\" $$exclude_string"; \
 	echo "1111111"; \
 	echo "$$command"; \
-	echo "11111111"; \	
+	echo "11111111"; \
 	gofmt_output=$$(gofmt -l $$(eval "$$command")); \
 	echo "*********"; \
 	echo "$$gofmt_output"; \
