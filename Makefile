@@ -66,6 +66,8 @@ fmtcheck:
     else \
         echo "All Go files are formatted properly."; \
     fi
+	@gofmt -l $$(eval "$$command")
+	@test -z $(shell gofmt -l $$(eval "$$command") && exit 1)
 
 importcheck:
 	@test -z $(shell goimports -l . && exit 1)
