@@ -53,9 +53,10 @@ func Middleware(sensor instana.TracerLogger) echo.MiddlewareFunc {
 
 func lookupMatchedRoute(c echo.Context) *echo.Route {
 	path := c.Path()
+	method := c.Request().Method
 
 	for _, r := range c.Echo().Routes() {
-		if r.Path == path {
+		if r.Path == path && r.Method == method {
 			return r
 		}
 	}
