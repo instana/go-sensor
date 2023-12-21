@@ -106,5 +106,5 @@ func TestCluster(t *testing.T) {
 		SQL:    "SEARCH sample-index",
 		Error:  "",
 	}, data.Tags)
-
+	a.NoError(cluster.Close(&gocb.ClusterCloseOptions{}))
 }

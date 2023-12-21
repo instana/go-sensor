@@ -108,5 +108,5 @@ func TestCollectionManager(t *testing.T) {
 	a.IsType(instana.CouchbaseSpanData{}, span.Data)
 	data = span.Data.(instana.CouchbaseSpanData)
 	a.Contains(data.Tags.Error, "scope not found")
-
+	a.NoError(cluster.Close(&gocb.ClusterCloseOptions{}))
 }

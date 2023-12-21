@@ -112,6 +112,7 @@ func TestUnwrapForAll(t *testing.T) {
 	a.IsType(&gocb.TransactionAttemptContext{}, tac)
 	a.NotNil(tac)
 
+	a.NoError(cluster.Close(&gocb.ClusterCloseOptions{}))
 }
 
 // helper functions

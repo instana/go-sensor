@@ -135,4 +135,5 @@ func TestBucketManager(t *testing.T) {
 	data = span.Data.(instana.CouchbaseSpanData)
 	a.Contains(data.Tags.Error, "bucket not found")
 
+	a.NoError(cluster.Close(&gocb.ClusterCloseOptions{}))
 }

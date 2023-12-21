@@ -178,5 +178,5 @@ func TestCollection_DS_Map(t *testing.T) {
 		SQL:    "MAP_CLEAR",
 		Error:  "",
 	}, data.Tags)
-
+	a.NoError(cluster.Close(&gocb.ClusterCloseOptions{}))
 }

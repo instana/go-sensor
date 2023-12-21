@@ -142,4 +142,5 @@ func TestCollection_DS_Set(t *testing.T) {
 		SQL:    "SET_CLEAR",
 		Error:  "",
 	}, data.Tags)
+	a.NoError(cluster.Close(&gocb.ClusterCloseOptions{}))
 }

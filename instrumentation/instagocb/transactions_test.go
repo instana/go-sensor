@@ -154,5 +154,5 @@ func TestTransactions(t *testing.T) {
 		SQL:    q,
 		Error:  "",
 	}, data.Tags)
-
+	a.NoError(cluster.Close(&gocb.ClusterCloseOptions{}))
 }

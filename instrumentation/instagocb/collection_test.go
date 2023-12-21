@@ -369,5 +369,5 @@ func TestCollection_CRUD(t *testing.T) {
 
 	a.Equal("test-bulk-value-1", str1)
 	a.Equal("test-bulk-value-2", str2)
-
+	a.NoError(cluster.Close(&gocb.ClusterCloseOptions{}))
 }

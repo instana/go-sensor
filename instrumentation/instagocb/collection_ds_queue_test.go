@@ -109,5 +109,5 @@ func TestCollection_DS_Queue(t *testing.T) {
 		SQL:    "QUEUE_CLEAR",
 		Error:  "",
 	}, data.Tags)
-
+	a.NoError(cluster.Close(&gocb.ClusterCloseOptions{}))
 }

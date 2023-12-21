@@ -37,4 +37,6 @@ func TestScope(t *testing.T) {
 		Error:  "",
 	}, data.Tags)
 
+	a.NoError(cluster.Close(&gocb.ClusterCloseOptions{}))
+
 }

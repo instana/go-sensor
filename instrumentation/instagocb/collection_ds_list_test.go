@@ -159,5 +159,5 @@ func TestCollection_DS_List(t *testing.T) {
 		SQL:    "LIST_CLEAR",
 		Error:  "",
 	}, data.Tags)
-
+	a.NoError(cluster.Close(&gocb.ClusterCloseOptions{}))
 }
