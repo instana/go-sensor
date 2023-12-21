@@ -61,13 +61,23 @@ func TestTransactions(t *testing.T) {
 
 	// asserting all spans recorded during transaction
 	spans := recorder.GetQueuedSpans()
-	for i, span := range spans {
-		switch i {
-		case 0:
-			a.Equal(0, span.Ec)
-			a.EqualValues(instana.ExitSpanKind, span.Kind)
-			a.IsType(instana.CouchbaseSpanData{}, span.Data)
-			data := span.Data.(instana.CouchbaseSpanData)
+
+	getFlag := 0
+	insertFlag := 0
+	replaceFlag := 0
+	removeFlag := 0
+
+	for _, span := range spans {
+
+		a.Equal(0, span.Ec)
+		a.EqualValues(instana.ExitSpanKind, span.Kind)
+		a.IsType(instana.CouchbaseSpanData{}, span.Data)
+		data := span.Data.(instana.CouchbaseSpanData)
+
+		switch data.Tags.SQL {
+		case "TRANSACTION_INSERT":
+			a.Equalf(insertFlag, 0, "More than expected insert calls!")
+			insertFlag += 1
 			a.Equal(instana.CouchbaseSpanTags{
 				Bucket: testBucketName,
 				Host:   "localhost",
@@ -76,11 +86,9 @@ func TestTransactions(t *testing.T) {
 				Error:  "",
 			}, data.Tags)
 
-		case 1, 3:
-			a.Equal(0, span.Ec)
-			a.EqualValues(instana.ExitSpanKind, span.Kind)
-			a.IsType(instana.CouchbaseSpanData{}, span.Data)
-			data := span.Data.(instana.CouchbaseSpanData)
+		case "TRANSACTION_GET":
+			a.Containsf([]int{0, 1}, getFlag, "More than expected get calls!")
+			getFlag += 1
 			a.Equal(instana.CouchbaseSpanTags{
 				Bucket: testBucketName,
 				Host:   "localhost",
@@ -89,11 +97,9 @@ func TestTransactions(t *testing.T) {
 				Error:  "",
 			}, data.Tags)
 
-		case 2:
-			a.Equal(0, span.Ec)
-			a.EqualValues(instana.ExitSpanKind, span.Kind)
-			a.IsType(instana.CouchbaseSpanData{}, span.Data)
-			data := span.Data.(instana.CouchbaseSpanData)
+		case "TRANSACTION_REPLACE":
+			a.Equalf(replaceFlag, 0, "More than expected replace calls!")
+			replaceFlag += 1
 			a.Equal(instana.CouchbaseSpanTags{
 				Bucket: testBucketName,
 				Host:   "localhost",
@@ -102,11 +108,9 @@ func TestTransactions(t *testing.T) {
 				Error:  "",
 			}, data.Tags)
 
-		case 4:
-			a.Equal(0, span.Ec)
-			a.EqualValues(instana.ExitSpanKind, span.Kind)
-			a.IsType(instana.CouchbaseSpanData{}, span.Data)
-			data := span.Data.(instana.CouchbaseSpanData)
+		case "TRANSACTION_REMOVE":
+			a.Equalf(removeFlag, 0, "More than expected remove calls!")
+			removeFlag += 1
 			a.Equal(instana.CouchbaseSpanTags{
 				Bucket: testBucketName,
 				Host:   "localhost",
