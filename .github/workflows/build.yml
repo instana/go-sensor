@@ -52,13 +52,13 @@ jobs:
 
 
       - name: Check fmt
-        run: make fmtcheck
+        run: sudo make fmtcheck
 
       - name: Check imports
-        run: make importcheck
+        run: sudo make importcheck
 
       - name: Run unit tests
-        run: make test
+        run: sudo make test
         env:
           RUN_LINTER: yes
           EXCLUDE_DIRS: ${{ matrix.go_version.exclude_dirs }}
@@ -68,7 +68,7 @@ jobs:
 
 
       - name: Run integration tests
-        run: make integration
+        run: sudo make integration
         env:
           EXCLUDE_DIRS: ${{ matrix.go_version.exclude_dirs }}
           GO111MODULE: "auto"
