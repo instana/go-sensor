@@ -62,9 +62,14 @@ jobs:
         env:
           RUN_LINTER: yes
           EXCLUDE_DIRS: ${{ matrix.go_version.exclude_dirs }}
+          GO111MODULE: "auto"
+          VENDOR_DEPS: no
+
 
 
       - name: Run integration tests
         run: make integration
         env:
           EXCLUDE_DIRS: ${{ matrix.go_version.exclude_dirs }}
+          GO111MODULE: "auto"
+          VENDOR_DEPS: no
