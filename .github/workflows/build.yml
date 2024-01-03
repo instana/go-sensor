@@ -40,7 +40,6 @@ jobs:
         with:
           path: /go/pkg/mod
           key: go-mod-v4-${{ runner.os }}-${{ hashFiles('go.sum') }}
-          id: restore-cache
 
       - name: Setup databases and other things
         run: |
@@ -84,4 +83,3 @@ jobs:
         with:
           path: /go/pkg/mod
           key: go-mod-v4-${{ runner.os }}-${{ hashFiles('go.sum') }}
-          id: save-cache
