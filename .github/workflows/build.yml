@@ -1,4 +1,4 @@
-name: Build and Test on all supported Golang versions
+name: Build and test on all supported Golang versions
 
 # on:
 #   push:
@@ -35,6 +35,13 @@ jobs:
         with:
           go-version: ${{ matrix.go_version.version }}
 
+      - name: Restore Cache
+        uses: actions/cache@v2
+        with:
+          path: /go/pkg/mod
+          key: go-mod-v4-${{ runner.os }}-${{ hashFiles('go.sum') }}
+          id: restore-cache
+
       - name: Setup databases and other things
         run: |
             #!/bin/bash
@@ -65,11 +72,16 @@ jobs:
           GO111MODULE: "auto"
           VENDOR_DEPS: no
 
-
-
       - name: Run integration tests
         run: sudo make integration
         env:
           EXCLUDE_DIRS: ${{ matrix.go_version.exclude_dirs }}
           GO111MODULE: "auto"
           VENDOR_DEPS: no
+
+      - name: Save Cache
+        uses: actions/cache@v2
+        with:
+          path: /go/pkg/mod
+          key: go-mod-v4-${{ runner.os }}-${{ hashFiles('go.sum') }}
+          id: save-cache
