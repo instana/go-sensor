@@ -164,7 +164,7 @@ while IFS= read -r line; do
 
     git add go.mod go.sum $LIBRARY_INFO_MD_PATH
     git commit -m "Updated go.mod, go.sum files, README.md for $INSTRUMENTATION"
-    git push fork @
+    git push origin @
 
     # Create a PR request for the changes
     # shellcheck disable=SC2046
