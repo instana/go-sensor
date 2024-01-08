@@ -106,11 +106,11 @@ workflows:
       - build:
           name: "go1.17"
           image: "cimg/go:1.17"
-          exclude_dirs: "./internal/bin/sql ./example/gin ./example/sql-redis ./example/gorm-postgres ./example/gorm-sqlite ./example/grpc-client-server ./instrumentation/cloud.google.com/go ./instrumentation/instabeego ./example/beego ./instrumentation/instaawsv2"
+          exclude_dirs: "./internal/bin/sql ./example/gin ./example/sql-redis ./example/gorm-postgres ./example/gorm-sqlite ./example/grpc-client-server ./instrumentation/cloud.google.com/go ./instrumentation/instabeego ./example/beego ./instrumentation/instaawsv2 ./instrumentation/instagorm"
       - build:
           name: "go1.16"
           image: "cimg/go:1.16"
-          exclude_dirs: "./internal/bin/sql ./example/gin ./example/sql-redis ./example/grpc-client-server ./instrumentation/instafiber ./example/gorm-postgres ./example/gorm-sqlite ./instrumentation/instasarama ./instrumentation/instasarama/example ./example/kafka-producer-consumer ./instrumentation/cloud.google.com/go ./instrumentation/instabeego ./example/beego ./instrumentation/instaawsv2 ./instrumentation/instapgx"
+          exclude_dirs: "./internal/bin/sql ./example/gin ./example/sql-redis ./example/grpc-client-server ./instrumentation/instafiber ./example/gorm-postgres ./example/gorm-sqlite ./instrumentation/instasarama ./instrumentation/instasarama/example ./example/kafka-producer-consumer ./instrumentation/cloud.google.com/go ./instrumentation/instabeego ./example/beego ./instrumentation/instaawsv2 ./instrumentation/instapgx ./instrumentation/instagorm"
       - build:
           name: "go1.15"
           image: "cimg/go:1.15"
