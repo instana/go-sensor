@@ -14,6 +14,7 @@ import (
 	"os"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/data/azcosmos"
 	"github.com/google/uuid"
@@ -33,6 +34,25 @@ const (
 	partitionKeyPath = "/SpanID"
 	databasePrefix   = "test-db-"
 	container        = "spans"
+)
+
+// data operation types
+const (
+	Query   = "Query"
+	Write   = "Write"
+	Execute = "Execute"
+	Update  = "Update"
+	Upsert  = "Upsert"
+	Replace = "Replace"
+)
+
+// test items IDs
+const (
+	ID1 = "A001" // item to be read
+	ID2 = "A002" // item to be replaced
+	ID3 = "A003" // item to be patched
+	ID4 = "A004" // item to be deleted
+	ID5 = "A005" // item to be upsert
 )
 
 var (
@@ -114,6 +134,11 @@ func setup(collector instana.TracerLogger) {
 			resp.RawResponse.StatusCode)
 		failOnError(err)
 	}
+
+	containerClient, err := client.NewContainer(collector, databaseID, container)
+	failOnError(err)
+	prepareTestData(containerClient)
+
 }
 
 func shutdown(collector instana.TracerLogger) {
@@ -180,7 +205,289 @@ func TestInstaContainerClient_CreateItem(t *testing.T) {
 	a.Equal(instana.CosmosSpanTags{
 		ConnectionURL: endpoint,
 		Database:      databaseID,
-		Type:          "Query",
+		Type:          Write,
+		ReturnCode:    fmt.Sprintf("%d", resp.RawResponse.StatusCode),
+		Error:         "",
+	}, spData.Tags)
+}
+
+func TestInstaContainerClient_DeleteItem(t *testing.T) {
+
+	ctx, recorder, cc, a := prepareContainerClient(t)
+
+	spanID := fmt.Sprintf("span-%s", ID4)
+	pk := azcosmos.NewPartitionKeyString(spanID)
+	resp, err := cc.DeleteItem(ctx, pk, ID4, &azcosmos.ItemOptions{})
+	a.NoError(err)
+	a.NotEmpty(resp)
+
+	span := getLatestSpan(recorder)
+	a.Equal(0, span.Ec)
+	a.EqualValues(instana.ExitSpanKind, span.Kind)
+	a.IsType(instana.CosmosSpanData{}, span.Data)
+	spData := span.Data.(instana.CosmosSpanData)
+	a.Equal(instana.CosmosSpanTags{
+		ConnectionURL: endpoint,
+		Database:      databaseID,
+		Type:          Write,
+		ReturnCode:    fmt.Sprintf("%d", resp.RawResponse.StatusCode),
+		Error:         "",
+	}, spData.Tags)
+}
+
+func TestInstaContainerClient_NewQueryItemsPager(t *testing.T) {
+
+	_, recorder, cc, a := prepareContainerClient(t)
+
+	spanID := fmt.Sprintf("span-%s", ID1)
+	pk := azcosmos.NewPartitionKeyString(spanID)
+
+	query := fmt.Sprintf("SELECT * FROM %v", container)
+	resp := cc.NewQueryItemsPager(query, pk, &azcosmos.QueryOptions{})
+	a.NotEmpty(resp)
+
+	span := getLatestSpan(recorder)
+	a.Equal(0, span.Ec)
+	a.EqualValues(instana.ExitSpanKind, span.Kind)
+	a.IsType(instana.CosmosSpanData{}, span.Data)
+	spData := span.Data.(instana.CosmosSpanData)
+	a.Equal(instana.CosmosSpanTags{
+		ConnectionURL: endpoint,
+		Database:      databaseID,
+		Type:          Query,
+		ReturnCode:    fmt.Sprintf("%d", 0),
+		Error:         "",
+	}, spData.Tags)
+}
+
+func TestInstaContainerClient_PatchItem(t *testing.T) {
+
+	ctx, recorder, cc, a := prepareContainerClient(t)
+
+	spanID := fmt.Sprintf("span-%s", ID3)
+	pk := azcosmos.NewPartitionKeyString(spanID)
+
+	patch := azcosmos.PatchOperations{}
+
+	patch.AppendAdd("updatedTime", time.Now().Unix())
+	patch.AppendRemove("description")
+
+	resp, err := cc.PatchItem(ctx, pk, ID3, patch, &azcosmos.ItemOptions{})
+	a.NoError(err)
+	a.NotEmpty(resp)
+
+	span := getLatestSpan(recorder)
+	a.Equal(0, span.Ec)
+	a.EqualValues(instana.ExitSpanKind, span.Kind)
+	a.IsType(instana.CosmosSpanData{}, span.Data)
+	spData := span.Data.(instana.CosmosSpanData)
+	a.Equal(instana.CosmosSpanTags{
+		ConnectionURL: endpoint,
+		Database:      databaseID,
+		Type:          Update,
+		ReturnCode:    fmt.Sprintf("%d", resp.RawResponse.StatusCode),
+		Error:         "",
+	}, spData.Tags)
+}
+
+func TestInstaContainerClient_Read(t *testing.T) {
+
+	ctx, recorder, cc, a := prepareContainerClient(t)
+
+	resp, err := cc.Read(ctx, &azcosmos.ReadContainerOptions{})
+	a.NoError(err)
+	a.NotEmpty(resp)
+
+	span := getLatestSpan(recorder)
+	a.Equal(0, span.Ec)
+	a.EqualValues(instana.ExitSpanKind, span.Kind)
+	a.IsType(instana.CosmosSpanData{}, span.Data)
+	spData := span.Data.(instana.CosmosSpanData)
+	a.Equal(instana.CosmosSpanTags{
+		ConnectionURL: endpoint,
+		Database:      databaseID,
+		Type:          Query,
+		ReturnCode:    fmt.Sprintf("%d", resp.RawResponse.StatusCode),
+		Error:         "",
+	}, spData.Tags)
+}
+
+func TestInstaContainerClient_ReadItem(t *testing.T) {
+
+	ctx, recorder, cc, a := prepareContainerClient(t)
+	spanID := fmt.Sprintf("span-%s", ID1)
+	pk := azcosmos.NewPartitionKeyString(spanID)
+
+	resp, err := cc.ReadItem(ctx, pk, ID1, &azcosmos.ItemOptions{})
+	a.NoError(err)
+	a.NotEmpty(resp)
+
+	span := getLatestSpan(recorder)
+	a.Equal(0, span.Ec)
+	a.EqualValues(instana.ExitSpanKind, span.Kind)
+	a.IsType(instana.CosmosSpanData{}, span.Data)
+	spData := span.Data.(instana.CosmosSpanData)
+	a.Equal(instana.CosmosSpanTags{
+		ConnectionURL: endpoint,
+		Database:      databaseID,
+		Type:          Query,
+		ReturnCode:    fmt.Sprintf("%d", resp.RawResponse.StatusCode),
+		Error:         "",
+	}, spData.Tags)
+}
+
+func TestInstaContainerClient_ReadThroughput(t *testing.T) {
+
+	ctx, recorder, cc, a := prepareContainerClient(t)
+
+	resp, err := cc.ReadThroughput(ctx, &azcosmos.ThroughputOptions{})
+	a.NoError(err)
+	a.NotEmpty(resp)
+
+	span := getLatestSpan(recorder)
+	a.Equal(0, span.Ec)
+	a.EqualValues(instana.ExitSpanKind, span.Kind)
+	a.IsType(instana.CosmosSpanData{}, span.Data)
+	spData := span.Data.(instana.CosmosSpanData)
+	a.Equal(instana.CosmosSpanTags{
+		ConnectionURL: endpoint,
+		Database:      databaseID,
+		Type:          Query,
+		ReturnCode:    fmt.Sprintf("%d", resp.RawResponse.StatusCode),
+		Error:         "",
+	}, spData.Tags)
+}
+
+func TestInstaContainerClient_Replace(t *testing.T) {
+
+	ctx, recorder, cc, a := prepareContainerClient(t)
+
+	containerResponse, err := cc.Read(context.Background(), nil)
+	a.NoError(err)
+	a.NotEmpty(containerResponse)
+
+	// Changing the indexing policy
+	containerResponse.ContainerProperties.IndexingPolicy = &azcosmos.IndexingPolicy{
+		IncludedPaths: []azcosmos.IncludedPath{},
+		ExcludedPaths: []azcosmos.ExcludedPath{},
+		Automatic:     false,
+		IndexingMode:  azcosmos.IndexingModeNone,
+	}
+
+	resp, err := cc.Replace(ctx, *containerResponse.ContainerProperties, &azcosmos.ReplaceContainerOptions{})
+	a.NoError(err)
+	a.NotEmpty(resp)
+
+	span := getLatestSpan(recorder)
+	a.Equal(0, span.Ec)
+	a.EqualValues(instana.ExitSpanKind, span.Kind)
+	a.IsType(instana.CosmosSpanData{}, span.Data)
+	spData := span.Data.(instana.CosmosSpanData)
+	a.Equal(instana.CosmosSpanTags{
+		ConnectionURL: endpoint,
+		Database:      databaseID,
+		Type:          Replace,
+		ReturnCode:    fmt.Sprintf("%d", resp.RawResponse.StatusCode),
+		Error:         "",
+	}, spData.Tags)
+}
+
+func TestInstaContainerClient_ReplaceItem(t *testing.T) {
+
+	ctx, recorder, cc, a := prepareContainerClient(t)
+
+	spanID := fmt.Sprintf("span-%s", ID2)
+	pk := azcosmos.NewPartitionKeyString(spanID)
+
+	data := Span{
+		ID:          ID2,
+		SpanID:      spanID,
+		Type:        ExitSpan,
+		Description: "updated-description",
+	}
+
+	jsonData, err := json.Marshal(data)
+	a.NoError(err)
+
+	resp, err := cc.ReplaceItem(ctx, pk, ID2, jsonData, &azcosmos.ItemOptions{})
+	a.NoError(err)
+	a.NotEmpty(resp)
+
+	span := getLatestSpan(recorder)
+	a.Equal(0, span.Ec)
+	a.EqualValues(instana.ExitSpanKind, span.Kind)
+	a.IsType(instana.CosmosSpanData{}, span.Data)
+	spData := span.Data.(instana.CosmosSpanData)
+	a.Equal(instana.CosmosSpanTags{
+		ConnectionURL: endpoint,
+		Database:      databaseID,
+		Type:          Replace,
+		ReturnCode:    fmt.Sprintf("%d", resp.RawResponse.StatusCode),
+		Error:         "",
+	}, spData.Tags)
+}
+
+func TestInstaContainerClient_ReplaceThroughput(t *testing.T) {
+
+	ctx, recorder, cc, a := prepareContainerClient(t)
+
+	throughputResponse, err := cc.ReadThroughput(context.Background(), nil)
+	a.NoError(err)
+
+	_, hasManual := throughputResponse.ThroughputProperties.ManualThroughput()
+	a.True(hasManual)
+
+	// Replace manual throughput
+	newScale := azcosmos.NewManualThroughputProperties(500)
+
+	resp, err := cc.ReplaceThroughput(ctx, newScale, &azcosmos.ThroughputOptions{})
+	a.NoError(err)
+	a.NotEmpty(resp)
+
+	span := getLatestSpan(recorder)
+	a.Equal(0, span.Ec)
+	a.EqualValues(instana.ExitSpanKind, span.Kind)
+	a.IsType(instana.CosmosSpanData{}, span.Data)
+	spData := span.Data.(instana.CosmosSpanData)
+	a.Equal(instana.CosmosSpanTags{
+		ConnectionURL: endpoint,
+		Database:      databaseID,
+		Type:          Replace,
+		ReturnCode:    fmt.Sprintf("%d", resp.RawResponse.StatusCode),
+		Error:         "",
+	}, spData.Tags)
+}
+
+func TestInstaContainerClient_UpsertItem(t *testing.T) {
+
+	ctx, recorder, cc, a := prepareContainerClient(t)
+
+	spanID := fmt.Sprintf("span-%s", ID5)
+	pk := azcosmos.NewPartitionKeyString(spanID)
+
+	data := Span{
+		ID:          ID2,
+		SpanID:      spanID,
+		Type:        ExitSpan,
+		Description: "updated-description",
+	}
+
+	jsonData, err := json.Marshal(data)
+	a.NoError(err)
+
+	resp, err := cc.UpsertItem(ctx, pk, jsonData, &azcosmos.ItemOptions{})
+	a.NoError(err)
+	a.NotEmpty(resp)
+
+	span := getLatestSpan(recorder)
+	a.Equal(0, span.Ec)
+	a.EqualValues(instana.ExitSpanKind, span.Kind)
+	a.IsType(instana.CosmosSpanData{}, span.Data)
+	spData := span.Data.(instana.CosmosSpanData)
+	a.Equal(instana.CosmosSpanTags{
+		ConnectionURL: endpoint,
+		Database:      databaseID,
+		Type:          Upsert,
 		ReturnCode:    fmt.Sprintf("%d", resp.RawResponse.StatusCode),
 		Error:         "",
 	}, spData.Tags)
@@ -252,4 +559,42 @@ func getLatestSpan(recorder *instana.Recorder) instana.Span {
 	spans := recorder.GetQueuedSpans()
 	span := spans[len(spans)-1]
 	return span
+}
+
+func prepareTestData(client instacosmos.ContainerClient) {
+	data := []Span{
+		{
+			ID:          ID1,
+			SpanID:      "span-" + ID1,
+			Type:        EntrySpan,
+			Description: "sample-description",
+		},
+		{
+			ID:          ID2,
+			SpanID:      "span-" + ID2,
+			Type:        EntrySpan,
+			Description: "sample-description",
+		},
+		{
+			ID:          ID3,
+			SpanID:      "span-" + ID3,
+			Type:        EntrySpan,
+			Description: "sample-description",
+		},
+		{
+			ID:          ID4,
+			SpanID:      "span-" + ID3,
+			Type:        EntrySpan,
+			Description: "sample-description",
+		},
+	}
+
+	for _, item := range data {
+		pk := azcosmos.NewPartitionKeyString(item.SpanID)
+		jsonData, err := json.Marshal(item)
+		failOnError(err)
+		_, err = client.CreateItem(context.TODO(), pk, jsonData, &azcosmos.ItemOptions{})
+		failOnError(err)
+	}
+
 }
