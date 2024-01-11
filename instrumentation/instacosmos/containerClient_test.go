@@ -255,7 +255,7 @@ func TestInstaContainerClient_NewQueryItemsPager(t *testing.T) {
 		ConnectionURL: endpoint,
 		Database:      databaseID,
 		Type:          Query,
-		ReturnCode:    fmt.Sprintf("%d", 0),
+		ReturnCode:    "",
 		Error:         "",
 	}, spData.Tags)
 }
@@ -269,8 +269,8 @@ func TestInstaContainerClient_PatchItem(t *testing.T) {
 
 	patch := azcosmos.PatchOperations{}
 
-	patch.AppendAdd("updatedTime", time.Now().Unix())
-	patch.AppendRemove("description")
+	patch.AppendAdd("/updatedTime", time.Now().Unix())
+	patch.AppendRemove("/description")
 
 	resp, err := cc.PatchItem(ctx, pk, ID3, patch, &azcosmos.ItemOptions{})
 	a.NoError(err)
@@ -583,7 +583,13 @@ func prepareTestData(client instacosmos.ContainerClient) {
 		},
 		{
 			ID:          ID4,
-			SpanID:      "span-" + ID3,
+			SpanID:      "span-" + ID4,
+			Type:        EntrySpan,
+			Description: "sample-description",
+		},
+		{
+			ID:          ID5,
+			SpanID:      "span-" + ID5,
 			Type:        EntrySpan,
 			Description: "sample-description",
 		},

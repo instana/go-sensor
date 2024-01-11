@@ -30,7 +30,6 @@ type ContainerClient interface {
 		partitionKey azcosmos.PartitionKey,
 		item []byte,
 		o *azcosmos.ItemOptions) (azcosmos.ItemResponse, error)
-
 	DeleteItem(ctx context.Context,
 		partitionKey azcosmos.PartitionKey,
 		itemId string,

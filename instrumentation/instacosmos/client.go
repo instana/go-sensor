@@ -17,7 +17,7 @@ import (
 type Client interface {
 	Endpoint() string
 	NewContainer(collector instana.TracerLogger, databaseID string, containerID string) (ContainerClient, error)
-	NewDatabase(collector instana.TracerLogger, id string) (DatabaseClient, error)
+	NewDatabase(collector instana.TracerLogger, id string) (*azcosmos.DatabaseClient, error)
 	CreateDatabase(
 		ctx context.Context,
 		databaseProperties azcosmos.DatabaseProperties,
@@ -60,20 +60,8 @@ func (ic *instaClient) Endpoint() string {
 // NewContainer returns the instance of instrumented *azcosmos.DatabaseClient
 // collector - instana go collector
 // id - azure cosmos database name
-func (ic *instaClient) NewDatabase(collector instana.TracerLogger, id string) (DatabaseClient, error) {
-	databaseClient, err := ic.Client.NewDatabase(id)
-	if err != nil {
-		return nil, err
-	}
-	return &instaDatabaseClient{
-		database: id,
-		endpoint: ic.Client.Endpoint(),
-		T: newTracer(context.TODO(), collector, instana.DbConnDetails{
-			DatabaseName: string(instana.CosmosSpanType),
-			RawString:    ic.Client.Endpoint(),
-		}),
-		DatabaseClient: databaseClient,
-	}, nil
+func (ic *instaClient) NewDatabase(collector instana.TracerLogger, id string) (*azcosmos.DatabaseClient, error) {
+	return ic.Client.NewDatabase(id)
 }
 
 // NewContainer returns the instance of instrumented *azcosmos.ContainerClient
