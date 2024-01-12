@@ -53,6 +53,8 @@ const (
 	ID3 = "A003" // item to be patched
 	ID4 = "A004" // item to be deleted
 	ID5 = "A005" // item to be upsert
+	ID6 = "A006" // item to be insert as part of transaction
+	ID7 = "A007" // item to be delete as part of transaction
 )
 
 var (
@@ -285,6 +287,46 @@ func TestInstaContainerClient_PatchItem(t *testing.T) {
 		ConnectionURL: endpoint,
 		Database:      databaseID,
 		Type:          Update,
+		ReturnCode:    fmt.Sprintf("%d", resp.RawResponse.StatusCode),
+		Error:         "",
+	}, spData.Tags)
+}
+
+func TestInstaContainerClient_ExecuteTransactionalBatch(t *testing.T) {
+
+	ctx, recorder, cc, a := prepareContainerClient(t)
+
+	spanID := fmt.Sprintf("span-%s", ID6)
+	pk := azcosmos.NewPartitionKeyString(spanID)
+
+	batch := cc.NewTransactionalBatch(pk)
+	data := Span{
+		ID:          ID6,
+		SpanID:      spanID,
+		Type:        EntrySpan,
+		Description: "sample-description",
+	}
+
+	jsonData, err := json.Marshal(data)
+	a.NoError(err)
+
+	batch.CreateItem(jsonData, nil)
+	batch.ReadItem(ID1, nil)
+	batch.DeleteItem(ID7, nil)
+
+	resp, err := cc.ExecuteTransactionalBatch(ctx, batch, &azcosmos.TransactionalBatchOptions{})
+	a.NoError(err)
+	a.NotEmpty(resp)
+
+	span := getLatestSpan(recorder)
+	a.Equal(0, span.Ec)
+	a.EqualValues(instana.ExitSpanKind, span.Kind)
+	a.IsType(instana.CosmosSpanData{}, span.Data)
+	spData := span.Data.(instana.CosmosSpanData)
+	a.Equal(instana.CosmosSpanTags{
+		ConnectionURL: endpoint,
+		Database:      databaseID,
+		Type:          Execute,
 		ReturnCode:    fmt.Sprintf("%d", resp.RawResponse.StatusCode),
 		Error:         "",
 	}, spData.Tags)
@@ -590,6 +632,12 @@ func prepareTestData(client instacosmos.ContainerClient) {
 		{
 			ID:          ID5,
 			SpanID:      "span-" + ID5,
+			Type:        EntrySpan,
+			Description: "sample-description",
+		},
+		{
+			ID:          ID7,
+			SpanID:      "span-" + ID7,
 			Type:        EntrySpan,
 			Description: "sample-description",
 		},
