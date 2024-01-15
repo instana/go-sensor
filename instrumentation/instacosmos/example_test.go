@@ -6,7 +6,6 @@ import (
 	"context"
 	"encoding/json"
 	"log"
-	"os"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/data/azcosmos"
 	instana "github.com/instana/go-sensor"
@@ -18,6 +17,12 @@ const (
 	containerName = "spans"
 )
 
+// given empty string for example. Replace the credentials securely in your code
+var (
+	cosmosEndpoint = ""
+	cosmosKey      = ""
+)
+
 // This example shows how to instrument Azure Cosmos DB using instacosmos library
 func Example() {
 
@@ -26,16 +31,13 @@ func Example() {
 		EnableAutoProfile: true,
 	})
 
-	// get azure credentials
-	key, endpoint := getAzureCreds()
-
 	// creates an KeyCredential containing the account's primary or secondary key.
-	cred, err := instacosmos.NewKeyCredential(key)
+	cred, err := instacosmos.NewKeyCredential(cosmosKey)
 	if err != nil {
 		log.Fatal("Failed to create KeyCredential:", err)
 	}
 
-	client, err := instacosmos.NewClientWithKey(endpoint, cred, &azcosmos.ClientOptions{})
+	client, err := instacosmos.NewClientWithKey(cosmosEndpoint, cred, &azcosmos.ClientOptions{})
 	if err != nil {
 		log.Fatal("Failed to create cosmos DB client:", err)
 	}
@@ -69,15 +71,4 @@ func Example() {
 		itemResponse.RawResponse.StatusCode,
 		pk, itemResponse.ActivityID,
 		itemResponse.RequestCharge)
-}
-
-func getAzureCreds() (string, string) {
-	endpoint, _ = os.LookupEnv(CONNECTION_URL)
-	key, _ = os.LookupEnv(KEY)
-
-	if endpoint == "" || key == "" {
-		log.Fatal("Azure credentials are not provided")
-	}
-
-	return key, endpoint
 }
