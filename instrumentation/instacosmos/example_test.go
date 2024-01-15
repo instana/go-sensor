@@ -6,6 +6,7 @@ import (
 	"context"
 	"encoding/json"
 	"log"
+	"os"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/data/azcosmos"
 	instana "github.com/instana/go-sensor"
@@ -24,6 +25,9 @@ func Example() {
 		Service:           "cosmos-example",
 		EnableAutoProfile: true,
 	})
+
+	// get azure credentials
+	key, endpoint := getAzureCreds()
 
 	// creates an KeyCredential containing the account's primary or secondary key.
 	cred, err := instacosmos.NewKeyCredential(key)
@@ -65,4 +69,15 @@ func Example() {
 		itemResponse.RawResponse.StatusCode,
 		pk, itemResponse.ActivityID,
 		itemResponse.RequestCharge)
+}
+
+func getAzureCreds() (string, string) {
+	endpoint, _ = os.LookupEnv(CONNECTION_URL)
+	key, _ = os.LookupEnv(KEY)
+
+	if endpoint == "" || key == "" {
+		log.Fatal("Azure credentials are not provided")
+	}
+
+	return key, endpoint
 }
