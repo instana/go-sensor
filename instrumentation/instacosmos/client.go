@@ -8,6 +8,7 @@ package instacosmos
 import (
 	"context"
 
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/runtime"
 	"github.com/Azure/azure-sdk-for-go/sdk/data/azcosmos"
 	instana "github.com/instana/go-sensor"
@@ -42,7 +43,7 @@ func NewKeyCredential(key string) (azcosmos.KeyCredential, error) {
 func NewClientWithKey(endpoint string,
 	cred azcosmos.KeyCredential,
 	o *azcosmos.ClientOptions) (Client, error) {
-	client, err := azcosmos.NewClientWithKey(endpoint, cred, &azcosmos.ClientOptions{})
+	client, err := azcosmos.NewClientWithKey(endpoint, cred, o)
 	if err != nil {
 		return nil, err
 	}
@@ -50,6 +51,33 @@ func NewClientWithKey(endpoint string,
 		client,
 	}, nil
 
+}
+
+// NewClient creates an instance of instrumented *azcosmos.Client
+// endpoint - The cosmos service endpoint to use.
+// cred - The credential used to authenticate with the cosmos service.
+// options - Optional Cosmos client options.  Pass nil to accept default values.
+func NewClient(endpoint string, cred azcore.TokenCredential, o *azcosmos.ClientOptions) (Client, error) {
+	client, err := azcosmos.NewClient(endpoint, cred, o)
+	if err != nil {
+		return nil, err
+	}
+	return &instaClient{
+		client,
+	}, nil
+}
+
+// NewClientFromConnectionString creates an instance of instrumented *azcosmos.Client
+// connectionString - The cosmos service connection string.
+// options - Optional Cosmos client options.  Pass nil to accept default values.
+func NewClientFromConnectionString(connectionString string, o *azcosmos.ClientOptions) (Client, error) {
+	client, err := azcosmos.NewClientFromConnectionString(connectionString, o)
+	if err != nil {
+		return nil, err
+	}
+	return &instaClient{
+		client,
+	}, nil
 }
 
 // Endpoint return the cosmos service endpoint
