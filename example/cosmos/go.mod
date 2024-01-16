@@ -1,6 +1,6 @@
 module cosmos.example
 
-go 1.18.0
+go 1.18
 
 require (
 	github.com/Azure/azure-sdk-for-go/sdk/data/azcosmos v0.3.6
