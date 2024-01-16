@@ -1,7 +1,9 @@
-Instana instrumentation for streadway-amqp
+Instana instrumentation for streadway-amqp [NOT MAINTAINED ANYMORE]
 ==========================================
 
 This module contains instrumentation code for RabbitMQ clients written with [`streadway-amqp`](https://pkg.go.dev/github.com/streadway/amqp@v1.0.0).
+
+**IMPORTANT NOTE**: This package is not maintained anymore. Kindly use the package [`instaamqp091`](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instaamqp091) for the instrumentation  of [`amqp091-go`](https://github.com/rabbitmq/amqp091-go).
 
 [![GoDoc](https://pkg.go.dev/badge/github.com/instana/go-sensor/instrumentation/instaamqp)][godoc]
 
