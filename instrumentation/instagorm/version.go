@@ -1,9 +1,9 @@
 // (c) Copyright IBM Corp. 2023
 
-//go:build go1.16
-// +build go1.16
+//go:build go1.18
+// +build go1.18
 
 package instagorm
 
 // Version is the instrumentation module semantic version
-const Version = "1.5.0"
+const Version = "1.6.0"
