@@ -5,11 +5,14 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"os"
 
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
 	"github.com/Azure/azure-sdk-for-go/sdk/data/azcosmos"
 	"github.com/google/uuid"
 	instana "github.com/instana/go-sensor"
@@ -74,8 +77,15 @@ func handler(w http.ResponseWriter, r *http.Request) {
 
 	itemResponse, err := cosmosTest(r.Context(), needError)
 	if err != nil {
-		log.Println("Error:", err.Error())
-		sendErrResp(w, http.StatusInternalServerError)
+		var responseErr *azcore.ResponseError
+		errors.As(err, &responseErr)
+		defer responseErr.RawResponse.Body.Close()
+		errBytes, err := io.ReadAll(responseErr.RawResponse.Body)
+		if err != nil {
+			log.Fatal("Failed to read error body")
+		}
+		log.Println("Error:", string(errBytes))
+		sendErrResp(w, responseErr.StatusCode)
 	} else {
 		sendOkResp(w)
 		log.Printf("Status %d. ActivityId %s. Consuming %v Request Units.\n",
