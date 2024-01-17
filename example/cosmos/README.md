@@ -20,4 +20,7 @@ go run .
 ```sh
 # Test success
 curl http://localhost:9990/cosmos-test
+
+# Test error
+curl http://localhost:9990/cosmos-test?error=true
 ```
