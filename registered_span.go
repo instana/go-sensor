@@ -1563,6 +1563,9 @@ type CosmosSpanTags struct {
 	ConnectionURL string `json:"con"`
 	Database      string `json:"db"`
 	Type          string `json:"type"`
+	Sql           string `json:"cmd"`
+	Object        string `json:"obj"`
+	PartitionKey  string `json:"pk"`
 	ReturnCode    string `json:"rt"`
 	Error         string `json:"error"`
 }
@@ -1579,6 +1582,12 @@ func newCosmosSpanTags(span *spanS) CosmosSpanTags {
 			readStringTag(&tags.Type, v)
 		case "cosmos.rt":
 			readStringTag(&tags.ReturnCode, v)
+		case "cosmos.cmd":
+			readStringTag(&tags.Sql, v)
+		case "cosmos.obj":
+			readStringTag(&tags.Object, v)
+		case "cosmos.pk":
+			readStringTag(&tags.PartitionKey, v)
 		case "cosmos.error":
 			readStringTag(&tags.Error, v)
 		}
