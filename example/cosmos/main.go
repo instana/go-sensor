@@ -84,7 +84,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			log.Fatal("Failed to read error body")
 		}
-		log.Printf("Error:", string(errBytes))
+		log.Println("Error:", string(errBytes))
 		sendErrResp(w, responseErr.StatusCode)
 	} else {
 		sendOkResp(w)
