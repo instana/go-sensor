@@ -25,6 +25,7 @@ const (
 
 // ContainerClient is the interface that wraps the methods of *azcosmos.ContainerClient
 type ContainerClient interface {
+	PartitionKey
 	CreateItem(
 		ctx context.Context,
 		partitionKey azcosmos.PartitionKey,
@@ -81,10 +82,11 @@ type ContainerClient interface {
 }
 
 type instaContainerClient struct {
-	database    string
-	containerID string
-	endpoint    string
-	T           tracing.Tracer
+	database     string
+	containerID  string
+	endpoint     string
+	partitionKey string
+	T            tracing.Tracer
 	*azcosmos.ContainerClient
 }
 
@@ -507,6 +509,14 @@ func (icc *instaContainerClient) setAttributes(s tracing.Span, dt string) {
 		{
 			Key:   dataType,
 			Value: dt,
+		},
+		{
+			Key:   dataObj,
+			Value: icc.containerID,
+		},
+		{
+			Key:   dataPartitionKey,
+			Value: icc.partitionKey,
 		},
 	}
 	s.SetAttributes(attrs...)

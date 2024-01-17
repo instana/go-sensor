@@ -125,7 +125,7 @@ func cosmosTest(ctx context.Context, needError bool) (azcosmos.ItemResponse, err
 	// Specifies the value of the partition key
 	var partitionKey string
 	partitionKey = fmt.Sprintf("span-%s", spanID)
-	pk := azcosmos.NewPartitionKeyString(partitionKey)
+	pk := containerClient.NewPartitionKeyString(partitionKey)
 
 	if needError {
 		partitionKey = "invalidPartitionKey"

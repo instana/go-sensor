@@ -193,7 +193,7 @@ func TestInstaContainerClient_CreateItem(t *testing.T) {
 	jsonData, err := json.Marshal(data)
 	a.NoError(err)
 
-	pk := azcosmos.NewPartitionKeyString(spanID)
+	pk := cc.NewPartitionKeyString(spanID)
 
 	resp, err := cc.CreateItem(ctx, pk, jsonData, &azcosmos.ItemOptions{})
 	a.NoError(err)
@@ -218,7 +218,7 @@ func TestInstaContainerClient_DeleteItem(t *testing.T) {
 	ctx, recorder, cc, a := prepareContainerClient(t)
 
 	spanID := fmt.Sprintf("span-%s", ID4)
-	pk := azcosmos.NewPartitionKeyString(spanID)
+	pk := cc.NewPartitionKeyString(spanID)
 	resp, err := cc.DeleteItem(ctx, pk, ID4, &azcosmos.ItemOptions{})
 	a.NoError(err)
 	a.NotEmpty(resp)
@@ -242,7 +242,7 @@ func TestInstaContainerClient_NewQueryItemsPager(t *testing.T) {
 	_, recorder, cc, a := prepareContainerClient(t)
 
 	spanID := fmt.Sprintf("span-%s", ID1)
-	pk := azcosmos.NewPartitionKeyString(spanID)
+	pk := cc.NewPartitionKeyString(spanID)
 
 	query := fmt.Sprintf("SELECT * FROM %v", container)
 	resp := cc.NewQueryItemsPager(query, pk, &azcosmos.QueryOptions{})
@@ -267,7 +267,7 @@ func TestInstaContainerClient_PatchItem(t *testing.T) {
 	ctx, recorder, cc, a := prepareContainerClient(t)
 
 	spanID := fmt.Sprintf("span-%s", ID3)
-	pk := azcosmos.NewPartitionKeyString(spanID)
+	pk := cc.NewPartitionKeyString(spanID)
 
 	patch := azcosmos.PatchOperations{}
 
@@ -297,7 +297,7 @@ func TestInstaContainerClient_ExecuteTransactionalBatch(t *testing.T) {
 	ctx, recorder, cc, a := prepareContainerClient(t)
 
 	spanID := fmt.Sprintf("span-%s", ID6)
-	pk := azcosmos.NewPartitionKeyString(spanID)
+	pk := cc.NewPartitionKeyString(spanID)
 
 	batch := cc.NewTransactionalBatch(pk)
 	data := Span{
@@ -358,7 +358,7 @@ func TestInstaContainerClient_ReadItem(t *testing.T) {
 
 	ctx, recorder, cc, a := prepareContainerClient(t)
 	spanID := fmt.Sprintf("span-%s", ID1)
-	pk := azcosmos.NewPartitionKeyString(spanID)
+	pk := cc.NewPartitionKeyString(spanID)
 
 	resp, err := cc.ReadItem(ctx, pk, ID1, &azcosmos.ItemOptions{})
 	a.NoError(err)
@@ -439,7 +439,7 @@ func TestInstaContainerClient_ReplaceItem(t *testing.T) {
 	ctx, recorder, cc, a := prepareContainerClient(t)
 
 	spanID := fmt.Sprintf("span-%s", ID2)
-	pk := azcosmos.NewPartitionKeyString(spanID)
+	pk := cc.NewPartitionKeyString(spanID)
 
 	data := Span{
 		ID:          ID2,
@@ -505,7 +505,7 @@ func TestInstaContainerClient_UpsertItem(t *testing.T) {
 	ctx, recorder, cc, a := prepareContainerClient(t)
 
 	spanID := fmt.Sprintf("span-%s", ID5)
-	pk := azcosmos.NewPartitionKeyString(spanID)
+	pk := cc.NewPartitionKeyString(spanID)
 
 	data := Span{
 		ID:          ID2,
@@ -644,7 +644,7 @@ func prepareTestData(client instacosmos.ContainerClient) {
 	}
 
 	for _, item := range data {
-		pk := azcosmos.NewPartitionKeyString(item.SpanID)
+		pk := client.NewPartitionKeyString(item.SpanID)
 		jsonData, err := json.Marshal(item)
 		failOnError(err)
 		_, err = client.CreateItem(context.TODO(), pk, jsonData, &azcosmos.ItemOptions{})

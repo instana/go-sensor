@@ -18,13 +18,15 @@ import (
 
 // instrumenting fields
 const (
-	dataURL        = "cosmos.con"
-	dataDB         = "cosmos.db"
-	dataCommand    = "cosmos.cmd"
-	dataType       = "cosmos.type"
-	dataReturnCode = "cosmos.rt"
-	operationType  = "cosmos.sql"
-	dataError      = "error"
+	dataURL          = "cosmos.con"
+	dataDB           = "cosmos.db"
+	dataCommand      = "cosmos.cmd"
+	dataObj          = "cosmos.obj"
+	dataPartitionKey = "cosmos.pk"
+	dataType         = "cosmos.type"
+	dataReturnCode   = "cosmos.rt"
+	operationType    = "cosmos.sql"
+	dataError        = "error"
 )
 
 // events
