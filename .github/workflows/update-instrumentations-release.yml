@@ -30,8 +30,9 @@ jobs:
         git config user.email "github-actions@github.com"
 
         EXCLUDED_DIRS="\/.*\/example"
+        DEPRECATED_PKGS=".*instaamqp$"
 
-        LIB_LIST=$(find ./instrumentation -name go.mod -exec dirname {} \; | grep -E -v "$EXCLUDED_DIRS")
+        LIB_LIST=$(find ./instrumentation -name go.mod -exec dirname {} \; | grep -E -v "$EXCLUDED_DIRS" | grep -E -v "$DEPRECATED_PKGS")
 
         TAGS=""
         for lib in $LIB_LIST

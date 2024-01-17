@@ -31,7 +31,9 @@ jobs:
 
             go test -v -coverpkg=./... -cover -covermode atomic -coverprofile $TRACER_PATH/coverage/coverage.out ./... -json > $TRACER_PATH/coverage/coverage.json
 
-            LIB_LIST=$(find ./instrumentation -name go.mod -exec dirname {} \;)
+            DEPRECATED_PKGS=".*instaamqp$"
+  
+            LIB_LIST=$(find ./instrumentation -name go.mod -exec dirname {} \; | grep -E -v "$DEPRECATED_PKGS")
 
             for lib in $LIB_LIST
               do echo "Generating test coverage for $lib" && cd "$lib" && go mod tidy && go test -v -coverpkg=./... -cover -covermode atomic -coverprofile $TRACER_PATH/coverage/coverage_$(date +%s%N)_$RANDOM.out ./... -json > $TRACER_PATH/coverage/coverage_$(date +%s%N)_$RANDOM.json && cd -;
