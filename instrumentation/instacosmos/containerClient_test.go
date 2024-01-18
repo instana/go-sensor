@@ -1,7 +1,7 @@
 // (c) Copyright IBM Corp. 2023
 
-//go:build integration
-// +build integration
+//go:build go1.18
+// +build go1.18
 
 package instacosmos_test
 
@@ -208,6 +208,9 @@ func TestInstaContainerClient_CreateItem(t *testing.T) {
 		ConnectionURL: endpoint,
 		Database:      databaseID,
 		Type:          Write,
+		Sql:           "INSERT INTO " + container,
+		Object:        container,
+		PartitionKey:  spanID,
 		ReturnCode:    fmt.Sprintf("%d", resp.RawResponse.StatusCode),
 		Error:         "",
 	}, spData.Tags)
@@ -232,6 +235,9 @@ func TestInstaContainerClient_DeleteItem(t *testing.T) {
 		ConnectionURL: endpoint,
 		Database:      databaseID,
 		Type:          Write,
+		Sql:           "DELETE FROM " + container,
+		Object:        container,
+		PartitionKey:  spanID,
 		ReturnCode:    fmt.Sprintf("%d", resp.RawResponse.StatusCode),
 		Error:         "",
 	}, spData.Tags)
@@ -257,6 +263,9 @@ func TestInstaContainerClient_NewQueryItemsPager(t *testing.T) {
 		ConnectionURL: endpoint,
 		Database:      databaseID,
 		Type:          Query,
+		Sql:           query,
+		Object:        container,
+		PartitionKey:  spanID,
 		ReturnCode:    "",
 		Error:         "",
 	}, spData.Tags)
@@ -287,6 +296,9 @@ func TestInstaContainerClient_PatchItem(t *testing.T) {
 		ConnectionURL: endpoint,
 		Database:      databaseID,
 		Type:          Update,
+		Sql:           "UPDATE " + container,
+		Object:        container,
+		PartitionKey:  spanID,
 		ReturnCode:    fmt.Sprintf("%d", resp.RawResponse.StatusCode),
 		Error:         "",
 	}, spData.Tags)
@@ -327,6 +339,9 @@ func TestInstaContainerClient_ExecuteTransactionalBatch(t *testing.T) {
 		ConnectionURL: endpoint,
 		Database:      databaseID,
 		Type:          Execute,
+		Sql:           "Execute",
+		Object:        container,
+		PartitionKey:  spanID,
 		ReturnCode:    fmt.Sprintf("%d", resp.RawResponse.StatusCode),
 		Error:         "",
 	}, spData.Tags)
@@ -349,6 +364,9 @@ func TestInstaContainerClient_Read(t *testing.T) {
 		ConnectionURL: endpoint,
 		Database:      databaseID,
 		Type:          Query,
+		Sql:           "Read",
+		Object:        container,
+		PartitionKey:  "",
 		ReturnCode:    fmt.Sprintf("%d", resp.RawResponse.StatusCode),
 		Error:         "",
 	}, spData.Tags)
@@ -373,6 +391,9 @@ func TestInstaContainerClient_ReadItem(t *testing.T) {
 		ConnectionURL: endpoint,
 		Database:      databaseID,
 		Type:          Query,
+		Sql:           "SELECT " + ID1 + " FROM " + container,
+		Object:        container,
+		PartitionKey:  spanID,
 		ReturnCode:    fmt.Sprintf("%d", resp.RawResponse.StatusCode),
 		Error:         "",
 	}, spData.Tags)
@@ -395,6 +416,9 @@ func TestInstaContainerClient_ReadThroughput(t *testing.T) {
 		ConnectionURL: endpoint,
 		Database:      databaseID,
 		Type:          Query,
+		Sql:           "ReadThroughput",
+		Object:        container,
+		PartitionKey:  "",
 		ReturnCode:    fmt.Sprintf("%d", resp.RawResponse.StatusCode),
 		Error:         "",
 	}, spData.Tags)
@@ -429,6 +453,9 @@ func TestInstaContainerClient_Replace(t *testing.T) {
 		ConnectionURL: endpoint,
 		Database:      databaseID,
 		Type:          Replace,
+		Sql:           "Replace",
+		Object:        container,
+		PartitionKey:  "",
 		ReturnCode:    fmt.Sprintf("%d", resp.RawResponse.StatusCode),
 		Error:         "",
 	}, spData.Tags)
@@ -464,6 +491,9 @@ func TestInstaContainerClient_ReplaceItem(t *testing.T) {
 		ConnectionURL: endpoint,
 		Database:      databaseID,
 		Type:          Replace,
+		Sql:           "ReplaceItem",
+		Object:        container,
+		PartitionKey:  spanID,
 		ReturnCode:    fmt.Sprintf("%d", resp.RawResponse.StatusCode),
 		Error:         "",
 	}, spData.Tags)
@@ -495,6 +525,9 @@ func TestInstaContainerClient_ReplaceThroughput(t *testing.T) {
 		ConnectionURL: endpoint,
 		Database:      databaseID,
 		Type:          Replace,
+		Sql:           "ReplaceThroughput",
+		Object:        container,
+		PartitionKey:  "",
 		ReturnCode:    fmt.Sprintf("%d", resp.RawResponse.StatusCode),
 		Error:         "",
 	}, spData.Tags)
@@ -530,6 +563,9 @@ func TestInstaContainerClient_UpsertItem(t *testing.T) {
 		ConnectionURL: endpoint,
 		Database:      databaseID,
 		Type:          Upsert,
+		Sql:           "UpsertItem",
+		Object:        container,
+		PartitionKey:  spanID,
 		ReturnCode:    fmt.Sprintf("%d", resp.RawResponse.StatusCode),
 		Error:         "",
 	}, spData.Tags)
