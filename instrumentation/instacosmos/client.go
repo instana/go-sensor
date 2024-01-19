@@ -14,6 +14,8 @@ import (
 	instana "github.com/instana/go-sensor"
 )
 
+const emptyPrimaryKey string = ""
+
 // Client is the interface that wraps the methods of *azcosmos.Client
 type Client interface {
 	Endpoint() string
@@ -105,11 +107,12 @@ func (ic *instaClient) NewContainer(collector instana.TracerLogger, databaseID s
 		database:    databaseID,
 		containerID: containerID,
 		endpoint:    ic.Client.Endpoint(),
-		T: newTracer(context.TODO(), collector, instana.DbConnDetails{
+		t: newTracer(context.TODO(), collector, instana.DbConnDetails{
 			DatabaseName: string(instana.CosmosSpanType),
 			RawString:    ic.Client.Endpoint(),
 		}),
 		ContainerClient: containerClient,
+		pk:              newPK(emptyPrimaryKey),
 	}, nil
 }
 

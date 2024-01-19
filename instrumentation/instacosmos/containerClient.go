@@ -82,11 +82,11 @@ type ContainerClient interface {
 }
 
 type instaContainerClient struct {
-	database     string
-	containerID  string
-	endpoint     string
-	partitionKey string
-	T            tracing.Tracer
+	*pk
+	database    string
+	containerID string
+	endpoint    string
+	t           tracing.Tracer
 	*azcosmos.ContainerClient
 }
 
@@ -114,7 +114,7 @@ func (icc *instaContainerClient) CreateItem(ctx context.Context,
 	partitionKey azcosmos.PartitionKey,
 	item []byte,
 	o *azcosmos.ItemOptions) (azcosmos.ItemResponse, error) {
-	_, s := icc.T.Start(ctx, "CREATE", &tracing.SpanOptions{
+	_, s := icc.t.Start(ctx, "CREATE", &tracing.SpanOptions{
 		Attributes: []tracing.Attribute{
 			{
 				Key:   dataCommand,
@@ -145,7 +145,7 @@ func (icc *instaContainerClient) DeleteItem(ctx context.Context,
 	partitionKey azcosmos.PartitionKey,
 	itemId string,
 	o *azcosmos.ItemOptions) (azcosmos.ItemResponse, error) {
-	_, s := icc.T.Start(ctx, "DELETE", &tracing.SpanOptions{
+	_, s := icc.t.Start(ctx, "DELETE", &tracing.SpanOptions{
 		Attributes: []tracing.Attribute{
 			{
 				Key:   dataCommand,
@@ -173,7 +173,7 @@ func (icc *instaContainerClient) ExecuteTransactionalBatch(ctx context.Context,
 	b azcosmos.TransactionalBatch,
 	o *azcosmos.TransactionalBatchOptions) (azcosmos.TransactionalBatchResponse, error) {
 
-	_, s := icc.T.Start(ctx, "EXECUTE", &tracing.SpanOptions{
+	_, s := icc.t.Start(ctx, "EXECUTE", &tracing.SpanOptions{
 		Attributes: []tracing.Attribute{
 			{
 				Key:   dataCommand,
@@ -209,7 +209,7 @@ func (icc *instaContainerClient) NewQueryItemsPager(query string,
 	partitionKey azcosmos.PartitionKey,
 	o *azcosmos.QueryOptions) *runtime.Pager[azcosmos.QueryItemsResponse] {
 
-	_, s := icc.T.Start(context.TODO(), "QUERY", &tracing.SpanOptions{
+	_, s := icc.t.Start(context.TODO(), "QUERY", &tracing.SpanOptions{
 		Attributes: []tracing.Attribute{
 			{
 				Key:   dataCommand,
@@ -245,7 +245,7 @@ func (icc *instaContainerClient) PatchItem(
 	ops azcosmos.PatchOperations,
 	o *azcosmos.ItemOptions) (azcosmos.ItemResponse, error) {
 
-	_, s := icc.T.Start(ctx, "PATCH_ITEM", &tracing.SpanOptions{
+	_, s := icc.t.Start(ctx, "PATCH_ITEM", &tracing.SpanOptions{
 		Attributes: []tracing.Attribute{
 			{
 				Key:   dataCommand,
@@ -275,7 +275,7 @@ func (icc *instaContainerClient) Read(
 	ctx context.Context,
 	o *azcosmos.ReadContainerOptions) (azcosmos.ContainerResponse, error) {
 
-	_, s := icc.T.Start(ctx, "READ", &tracing.SpanOptions{
+	_, s := icc.t.Start(ctx, "READ", &tracing.SpanOptions{
 		Attributes: []tracing.Attribute{
 			{
 				Key:   dataCommand,
@@ -309,7 +309,7 @@ func (icc *instaContainerClient) ReadItem(
 	itemId string,
 	o *azcosmos.ItemOptions) (azcosmos.ItemResponse, error) {
 
-	_, s := icc.T.Start(ctx, "READ_ITEM", &tracing.SpanOptions{
+	_, s := icc.t.Start(ctx, "READ_ITEM", &tracing.SpanOptions{
 		Attributes: []tracing.Attribute{
 			{
 				Key:   dataCommand,
@@ -339,7 +339,7 @@ func (icc *instaContainerClient) ReadThroughput(
 	ctx context.Context,
 	o *azcosmos.ThroughputOptions) (azcosmos.ThroughputResponse, error) {
 
-	_, s := icc.T.Start(ctx, "READ_THROUGHPUT", &tracing.SpanOptions{
+	_, s := icc.t.Start(ctx, "READ_THROUGHPUT", &tracing.SpanOptions{
 		Attributes: []tracing.Attribute{
 			{
 				Key:   dataCommand,
@@ -370,7 +370,7 @@ func (icc *instaContainerClient) Replace(
 	containerProperties azcosmos.ContainerProperties,
 	o *azcosmos.ReplaceContainerOptions) (azcosmos.ContainerResponse, error) {
 
-	_, s := icc.T.Start(ctx, "REPLACE", &tracing.SpanOptions{
+	_, s := icc.t.Start(ctx, "REPLACE", &tracing.SpanOptions{
 		Attributes: []tracing.Attribute{
 			{
 				Key:   dataCommand,
@@ -406,7 +406,7 @@ func (icc *instaContainerClient) ReplaceItem(
 	item []byte,
 	o *azcosmos.ItemOptions) (azcosmos.ItemResponse, error) {
 
-	_, s := icc.T.Start(ctx, "REPLACE_ITEM", &tracing.SpanOptions{
+	_, s := icc.t.Start(ctx, "REPLACE_ITEM", &tracing.SpanOptions{
 		Attributes: []tracing.Attribute{
 			{
 				Key:   dataCommand,
@@ -438,7 +438,7 @@ func (icc *instaContainerClient) ReplaceThroughput(
 	throughputProperties azcosmos.ThroughputProperties,
 	o *azcosmos.ThroughputOptions) (azcosmos.ThroughputResponse, error) {
 
-	_, s := icc.T.Start(ctx, "REPLACE_THROUGHPUT", &tracing.SpanOptions{
+	_, s := icc.t.Start(ctx, "REPLACE_THROUGHPUT", &tracing.SpanOptions{
 		Attributes: []tracing.Attribute{
 			{
 				Key:   dataCommand,
@@ -472,7 +472,7 @@ func (icc *instaContainerClient) UpsertItem(
 	item []byte,
 	o *azcosmos.ItemOptions) (azcosmos.ItemResponse, error) {
 
-	_, s := icc.T.Start(ctx, "UPSERT", &tracing.SpanOptions{
+	_, s := icc.t.Start(ctx, "UPSERT", &tracing.SpanOptions{
 		Attributes: []tracing.Attribute{
 			{
 				Key:   dataCommand,
@@ -516,7 +516,7 @@ func (icc *instaContainerClient) setAttributes(s tracing.Span, dt string) {
 		},
 		{
 			Key:   dataPartitionKey,
-			Value: icc.partitionKey,
+			Value: icc.pk.value,
 		},
 	}
 	s.SetAttributes(attrs...)
