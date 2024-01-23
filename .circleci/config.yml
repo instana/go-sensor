@@ -104,25 +104,25 @@ workflows:
       - build:
           name: "go1.18"
           image: "cimg/go:1.18"
-          exclude_dirs: "./example/grpc-client-server ./instrumentation/cloud.google.com/go ./instrumentation/instaawsv2"
+          exclude_dirs: "./example/grpc-client-server ./instrumentation/cloud.google.com/go ./instrumentation/instaawsv2 ./instrumentation/instaamqp ./instrumentation/instaawssdk"
       - build:
           name: "go1.17"
           image: "cimg/go:1.17"
-          exclude_dirs: "./internal/bin/sql ./example/gin ./example/sql-redis ./example/gorm-postgres ./example/gorm-sqlite ./example/grpc-client-server ./instrumentation/cloud.google.com/go ./instrumentation/instabeego ./example/beego ./instrumentation/instaawsv2 ./instrumentation/instaecho ./instrumentation/instagorm ./instrumentation/instacosmos ./example/cosmos"
+          exclude_dirs: "./internal/bin/sql ./example/gin ./example/sql-redis ./example/gorm-postgres ./example/gorm-sqlite ./example/grpc-client-server ./instrumentation/cloud.google.com/go ./instrumentation/instabeego ./example/beego ./instrumentation/instaawsv2 ./instrumentation/instaecho ./instrumentation/instagorm ./instrumentation/instaamqp ./instrumentation/instaawssdk ./instrumentation/instacosmos ./example/cosmos"
       - build:
           name: "go1.16"
           image: "cimg/go:1.16"
-          exclude_dirs: "./internal/bin/sql ./example/gin ./example/sql-redis ./example/grpc-client-server ./instrumentation/instafiber ./example/gorm-postgres ./example/gorm-sqlite ./instrumentation/instasarama ./instrumentation/instasarama/example ./example/kafka-producer-consumer ./instrumentation/cloud.google.com/go ./instrumentation/instabeego ./example/beego ./instrumentation/instaawsv2 ./instrumentation/instapgx ./instrumentation/instaecho ./instrumentation/instagorm ./instrumentation/instacosmos ./example/cosmos"
+          exclude_dirs: "./internal/bin/sql ./example/gin ./example/sql-redis ./example/grpc-client-server ./instrumentation/instafiber ./example/gorm-postgres ./example/gorm-sqlite ./instrumentation/instasarama ./instrumentation/instasarama/example ./example/kafka-producer-consumer ./instrumentation/cloud.google.com/go ./instrumentation/instabeego ./example/beego ./instrumentation/instaawsv2 ./instrumentation/instapgx ./instrumentation/instaecho ./instrumentation/instagorm ./instrumentation/instaamqp ./instrumentation/instaawssdk ./instrumentation/instacosmos ./example/cosmos"
       - build:
           name: "go1.15"
           image: "cimg/go:1.15"
-          exclude_dirs: "./instrumentation/instaredigo ./internal/bin/sql ./example/gin ./example/sql-redis ./instrumentation/instagorm ./example/grpc-client-server ./instrumentation/instafiber ./example/gorm-postgres ./example/gorm-sqlite ./instrumentation/instasarama ./instrumentation/instasarama/example ./example/kafka-producer-consumer ./instrumentation/cloud.google.com/go ./instrumentation/instabeego ./example/beego ./instrumentation/instaawsv2 ./instrumentation/instapgx ./instrumentation/instaecho ./instrumentation/instacosmos ./example/cosmos"
+          exclude_dirs: "./instrumentation/instaredigo ./internal/bin/sql ./example/gin ./example/sql-redis ./instrumentation/instagorm ./example/grpc-client-server ./instrumentation/instafiber ./example/gorm-postgres ./example/gorm-sqlite ./instrumentation/instasarama ./instrumentation/instasarama/example ./example/kafka-producer-consumer ./instrumentation/cloud.google.com/go ./instrumentation/instabeego ./example/beego ./instrumentation/instaawsv2 ./instrumentation/instapgx ./instrumentation/instaecho ./instrumentation/instaamqp ./instrumentation/instaawssdk ./instrumentation/instacosmos ./example/cosmos"
       - build:
           name: "go1.14"
           image: "cimg/go:1.14"
-          exclude_dirs: "./instrumentation/instaecho ./instrumentation/instaredigo ./internal/bin/sql ./instrumentation/cloud.google.com/go ./example/gin ./instrumentation/instagorm ./example/grpc-client-server ./instrumentation/instafiber ./instrumentation/instaawsv2 ./example/sql-redis ./example/gorm-postgres ./example/gorm-sqlite ./instrumentation/instasarama ./instrumentation/instasarama/example ./example/kafka-producer-consumer ./instrumentation/instabeego ./example/beego ./instrumentation/instapgx ./instrumentation/instacosmos ./example/cosmos"
+          exclude_dirs: "./instrumentation/instaecho ./instrumentation/instaredigo ./internal/bin/sql ./instrumentation/cloud.google.com/go ./example/gin ./instrumentation/instagorm ./example/grpc-client-server ./instrumentation/instafiber ./instrumentation/instaawsv2 ./example/sql-redis ./example/gorm-postgres ./example/gorm-sqlite ./instrumentation/instasarama ./instrumentation/instasarama/example ./example/kafka-producer-consumer ./instrumentation/instabeego ./example/beego ./instrumentation/instapgx ./instrumentation/instaamqp ./instrumentation/instaawssdk ./instrumentation/instacosmos ./example/cosmos"
       - build:
           name: "go1.13"
           image: "cimg/go:1.13"
-          exclude_dirs: "./instrumentation/instaecho ./instrumentation/instaredigo ./internal/bin/sql ./instrumentation/cloud.google.com/go ./example/gin ./instrumentation/instagorm ./example/grpc-client-server ./instrumentation/instafiber ./instrumentation/instaawsv2 ./example/sql-redis ./example/gorm-postgres ./example/gorm-sqlite ./instrumentation/instasarama ./instrumentation/instasarama/example ./example/kafka-producer-consumer ./instrumentation/instabeego ./example/beego ./instrumentation/instapgx ./instrumentation/instacosmos ./example/cosmos"
+          exclude_dirs: "./instrumentation/instaecho ./instrumentation/instaredigo ./internal/bin/sql ./instrumentation/cloud.google.com/go ./example/gin ./instrumentation/instagorm ./example/grpc-client-server ./instrumentation/instafiber ./instrumentation/instaawsv2 ./example/sql-redis ./example/gorm-postgres ./example/gorm-sqlite ./instrumentation/instasarama ./instrumentation/instasarama/example ./example/kafka-producer-consumer ./instrumentation/instabeego ./example/beego ./instrumentation/instapgx ./instrumentation/instaamqp ./instrumentation/instaawssdk ./instrumentation/instacosmos ./example/cosmos"
 

@@ -246,9 +246,3 @@ Sample Usage
 [gocb-transactions-example]: https://docs.couchbase.com/go-sdk/2.6/howtos/distributed-acid-transactions-from-the-sdk.html#creating-a-transaction
 
 [fullExample]: ../../example/couchbase/main.go
-
-<!---
-Mandatory comment section for CI/CD !!
-target-pkg-url: github.com/couchbase/gocb/v2
-current-version: v2.6.5
---->
