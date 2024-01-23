@@ -70,7 +70,6 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	var needError bool
 
 	erStr := r.URL.Query().Get("error")
-	fmt.Println("erStr", erStr)
 	if erStr == "true" {
 		needError = true
 	}

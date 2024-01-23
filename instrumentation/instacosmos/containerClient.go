@@ -500,7 +500,7 @@ func (icc *instaContainerClient) setAttributes(s tracing.Span, dt string) {
 	attrs := []tracing.Attribute{
 		{
 			Key:   dataDB,
-			Value: icc.database,
+			Value: icc.database + ":" + icc.containerID,
 		},
 		{
 			Key:   dataURL,
