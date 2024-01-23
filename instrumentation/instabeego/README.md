@@ -70,9 +70,3 @@ _, err := req.Response()
 [serverInstrumentationExample]: https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instabeego#example-package-ServerInstrumentation
 [clientInstrumentationExample]: https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instabeego#example-package-HttpClientInstrumentation
 
-
-<!---
-Mandatory comment section for CI/CD !!
-target-pkg-url: github.com/beego/beego/v2
-current-version: v2.1.3
---->

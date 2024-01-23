@@ -39,8 +39,3 @@ See the [`instamongo` package documentation][godoc] for detailed examples.
 [instamongo.Connect]: https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instamongo#Connect
 [instamongo.NewClient]: https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instamongo#NewClient
 
-<!---
-Mandatory comment section for CI/CD !!
-target-pkg-url: go.mongodb.org/mongo-driver
-current-version: v1.13.1
---->

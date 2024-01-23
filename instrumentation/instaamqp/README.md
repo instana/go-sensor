@@ -120,8 +120,3 @@ See the [`instaamqp` package documentation][godoc] for detailed examples.
 [instaamqp.WrapChannel]: https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instaamqp#WrapChannel
 [amqp.Channel]: https://pkg.go.dev/github.com/streadway/amqp@v1.0.0#Channel
 
-<!---
-Mandatory comment section for CI/CD !!
-target-pkg-url: github.com/streadway/amqp
-current-version: v1.1.0
---->
