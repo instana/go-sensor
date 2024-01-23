@@ -28,8 +28,3 @@ reply, err := conn.Do("SET", "greetings", "helloworld")
 
 See the [`instaredigo` package documentation](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instaredigo) for detailed examples.
 
-<!---
-Mandatory comment section for CI/CD !!
-target-pkg-url: github.com/gomodule/redigo
-current-version: v1.8.8
---->
