@@ -206,7 +206,7 @@ func TestInstaContainerClient_CreateItem(t *testing.T) {
 	spData := span.Data.(instana.CosmosSpanData)
 	a.Equal(instana.CosmosSpanTags{
 		ConnectionURL: endpoint,
-		Database:      databaseID,
+		Database:      databaseID + ":" + container,
 		Type:          Write,
 		Sql:           "INSERT INTO " + container,
 		Object:        container,
@@ -233,7 +233,7 @@ func TestInstaContainerClient_DeleteItem(t *testing.T) {
 	spData := span.Data.(instana.CosmosSpanData)
 	a.Equal(instana.CosmosSpanTags{
 		ConnectionURL: endpoint,
-		Database:      databaseID,
+		Database:      databaseID + ":" + container,
 		Type:          Write,
 		Sql:           "DELETE FROM " + container,
 		Object:        container,
@@ -261,7 +261,7 @@ func TestInstaContainerClient_NewQueryItemsPager(t *testing.T) {
 	spData := span.Data.(instana.CosmosSpanData)
 	a.Equal(instana.CosmosSpanTags{
 		ConnectionURL: endpoint,
-		Database:      databaseID,
+		Database:      databaseID + ":" + container,
 		Type:          Query,
 		Sql:           query,
 		Object:        container,
@@ -294,7 +294,7 @@ func TestInstaContainerClient_PatchItem(t *testing.T) {
 	spData := span.Data.(instana.CosmosSpanData)
 	a.Equal(instana.CosmosSpanTags{
 		ConnectionURL: endpoint,
-		Database:      databaseID,
+		Database:      databaseID + ":" + container,
 		Type:          Update,
 		Sql:           "UPDATE " + container,
 		Object:        container,
@@ -337,7 +337,7 @@ func TestInstaContainerClient_ExecuteTransactionalBatch(t *testing.T) {
 	spData := span.Data.(instana.CosmosSpanData)
 	a.Equal(instana.CosmosSpanTags{
 		ConnectionURL: endpoint,
-		Database:      databaseID,
+		Database:      databaseID + ":" + container,
 		Type:          Execute,
 		Sql:           "Execute",
 		Object:        container,
@@ -362,7 +362,7 @@ func TestInstaContainerClient_Read(t *testing.T) {
 	spData := span.Data.(instana.CosmosSpanData)
 	a.Equal(instana.CosmosSpanTags{
 		ConnectionURL: endpoint,
-		Database:      databaseID,
+		Database:      databaseID + ":" + container,
 		Type:          Query,
 		Sql:           "Read",
 		Object:        container,
@@ -389,7 +389,7 @@ func TestInstaContainerClient_ReadItem(t *testing.T) {
 	spData := span.Data.(instana.CosmosSpanData)
 	a.Equal(instana.CosmosSpanTags{
 		ConnectionURL: endpoint,
-		Database:      databaseID,
+		Database:      databaseID + ":" + container,
 		Type:          Query,
 		Sql:           "SELECT " + ID1 + " FROM " + container,
 		Object:        container,
@@ -414,7 +414,7 @@ func TestInstaContainerClient_ReadThroughput(t *testing.T) {
 	spData := span.Data.(instana.CosmosSpanData)
 	a.Equal(instana.CosmosSpanTags{
 		ConnectionURL: endpoint,
-		Database:      databaseID,
+		Database:      databaseID + ":" + container,
 		Type:          Query,
 		Sql:           "ReadThroughput",
 		Object:        container,
@@ -451,7 +451,7 @@ func TestInstaContainerClient_Replace(t *testing.T) {
 	spData := span.Data.(instana.CosmosSpanData)
 	a.Equal(instana.CosmosSpanTags{
 		ConnectionURL: endpoint,
-		Database:      databaseID,
+		Database:      databaseID + ":" + container,
 		Type:          Replace,
 		Sql:           "Replace",
 		Object:        container,
@@ -489,7 +489,7 @@ func TestInstaContainerClient_ReplaceItem(t *testing.T) {
 	spData := span.Data.(instana.CosmosSpanData)
 	a.Equal(instana.CosmosSpanTags{
 		ConnectionURL: endpoint,
-		Database:      databaseID,
+		Database:      databaseID + ":" + container,
 		Type:          Replace,
 		Sql:           "ReplaceItem",
 		Object:        container,
@@ -523,7 +523,7 @@ func TestInstaContainerClient_ReplaceThroughput(t *testing.T) {
 	spData := span.Data.(instana.CosmosSpanData)
 	a.Equal(instana.CosmosSpanTags{
 		ConnectionURL: endpoint,
-		Database:      databaseID,
+		Database:      databaseID + ":" + container,
 		Type:          Replace,
 		Sql:           "ReplaceThroughput",
 		Object:        container,
@@ -561,7 +561,7 @@ func TestInstaContainerClient_UpsertItem(t *testing.T) {
 	spData := span.Data.(instana.CosmosSpanData)
 	a.Equal(instana.CosmosSpanTags{
 		ConnectionURL: endpoint,
-		Database:      databaseID,
+		Database:      databaseID + ":" + container,
 		Type:          Upsert,
 		Sql:           "UpsertItem",
 		Object:        container,

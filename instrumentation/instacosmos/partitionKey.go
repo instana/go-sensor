@@ -15,7 +15,7 @@ type pk struct {
 	value string
 }
 
-func newPK(val string) *pk {
+func NewPK(val string) *pk {
 	return &pk{
 		value: val,
 	}

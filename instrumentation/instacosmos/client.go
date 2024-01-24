@@ -112,7 +112,7 @@ func (ic *instaClient) NewContainer(collector instana.TracerLogger, databaseID s
 			RawString:    ic.Client.Endpoint(),
 		}),
 		ContainerClient: containerClient,
-		pk:              newPK(emptyPrimaryKey),
+		pk:              NewPK(emptyPrimaryKey),
 	}, nil
 }
 
