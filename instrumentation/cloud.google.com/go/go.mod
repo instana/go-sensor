@@ -4,7 +4,7 @@ go 1.19
 
 require (
 	cloud.google.com/go/iam v1.1.5
-	cloud.google.com/go/pubsub v1.33.0
+	cloud.google.com/go/pubsub v1.35.0
 	cloud.google.com/go/storage v1.37.0
 	github.com/instana/go-sensor v1.59.0
 	github.com/opentracing/opentracing-go v1.2.0
@@ -31,6 +31,7 @@ require (
 	github.com/googleapis/gax-go/v2 v2.12.0 // indirect
 	github.com/looplab/fsm v1.0.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
+	go.einride.tech/aip v0.65.0 // indirect
 	go.opencensus.io v0.24.0 // indirect
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.46.1 // indirect
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.46.1 // indirect
