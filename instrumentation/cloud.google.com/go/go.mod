@@ -4,7 +4,7 @@ go 1.19
 
 require (
 	cloud.google.com/go/iam v1.1.5
-	cloud.google.com/go/pubsub v1.35.0
+	cloud.google.com/go/pubsub v1.36.0
 	cloud.google.com/go/storage v1.37.0
 	github.com/instana/go-sensor v1.59.0
 	github.com/opentracing/opentracing-go v1.2.0
