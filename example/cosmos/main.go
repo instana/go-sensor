@@ -1,4 +1,4 @@
-// (c) Copyright IBM Corp. 2023
+// (c) Copyright IBM Corp. 2024
 
 package main
 
@@ -55,8 +55,7 @@ var (
 func init() {
 	validateAzureCreds()
 	collector = instana.InitCollector(&instana.Options{
-		Service:           "sample-app-cosmos",
-		EnableAutoProfile: true,
+		Service: "sample-app-cosmos",
 	})
 }
 
@@ -67,10 +66,9 @@ func main() {
 
 func handler(w http.ResponseWriter, r *http.Request) {
 
-	var needError bool
-
 	erStr := r.URL.Query().Get("error")
-	if erStr == "true" {
+	needError := erStr == "true"
+	if needError {
 		needError = true
 	}
 
@@ -113,17 +111,15 @@ func cosmosTest(ctx context.Context, needError bool) (azcosmos.ItemResponse, err
 	}
 
 	// Create container client
-	containerClient, err := client.NewContainer(collector, database, container)
+	containerClient, err := client.NewContainer(database, container)
 	if err != nil {
 		log.Fatal("Failed to create a container client:", err)
 	}
 
 	id := uuid.New().String()
-	spanID := fmt.Sprintf("span-%s", id)
+	partitionKey := fmt.Sprintf("span-%s", id)
 
 	// Specifies the value of the partition key
-	var partitionKey string
-	partitionKey = fmt.Sprintf("span-%s", spanID)
 	pk := containerClient.NewPartitionKeyString(partitionKey)
 
 	if needError {
@@ -131,7 +127,7 @@ func cosmosTest(ctx context.Context, needError bool) (azcosmos.ItemResponse, err
 	}
 
 	span := Span{
-		ID:          spanID,
+		ID:          id,
 		SpanID:      partitionKey,
 		Type:        EntrySpan,
 		Description: "sample span",
@@ -157,7 +153,7 @@ func getClient(sensor instana.TracerLogger) (instacosmos.Client, error) {
 		return nil, err
 	}
 
-	client, err := instacosmos.NewClientWithKey(endpoint, cred, &azcosmos.ClientOptions{})
+	client, err := instacosmos.NewClientWithKey(sensor, endpoint, cred, &azcosmos.ClientOptions{})
 	if err != nil {
 		return nil, err
 	}

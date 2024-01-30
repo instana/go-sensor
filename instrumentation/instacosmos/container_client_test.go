@@ -99,7 +99,7 @@ func setup(collector instana.TracerLogger) {
 	validateAzureCreds()
 
 	// getting azure cosmos client
-	client, err := getInstaClient()
+	client, err := getInstaClient(collector)
 	failOnError(err)
 
 	// creating a database in azure test account
@@ -114,7 +114,7 @@ func setup(collector instana.TracerLogger) {
 		failOnError(err)
 	}
 
-	dbClient, err := client.NewDatabase(collector, databaseID)
+	dbClient, err := client.NewDatabase(databaseID)
 	failOnError(err)
 
 	// create a container in test database
@@ -137,17 +137,17 @@ func setup(collector instana.TracerLogger) {
 		failOnError(err)
 	}
 
-	containerClient, err := client.NewContainer(collector, databaseID, container)
+	containerClient, err := client.NewContainer(databaseID, container)
 	failOnError(err)
 	prepareTestData(containerClient)
 
 }
 
 func shutdown(collector instana.TracerLogger) {
-	client, err := getInstaClient()
+	client, err := getInstaClient(collector)
 	failOnError(err)
 
-	database, err := client.NewDatabase(collector, databaseID)
+	database, err := client.NewDatabase(databaseID)
 	failOnError(err)
 
 	response, err := database.Delete(context.TODO(), &azcosmos.DeleteDatabaseOptions{})
@@ -587,7 +587,7 @@ func failOnError(err error) {
 	}
 }
 
-func prepare(t *testing.T) (context.Context, *instana.Recorder, instacosmos.Client, *instana.Sensor, *assert.Assertions) {
+func prepare(t *testing.T) (context.Context, *instana.Recorder, instacosmos.Client, *assert.Assertions) {
 	a := assert.New(t)
 	rec = getInstaRecorder()
 	tracer := instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, rec)
@@ -595,14 +595,14 @@ func prepare(t *testing.T) (context.Context, *instana.Recorder, instacosmos.Clie
 
 	ctx := context.Background()
 
-	client, err := getInstaClient()
+	client, err := getInstaClient(sensor)
 	a.NoError(err)
 
-	return ctx, rec, client, sensor, a
+	return ctx, rec, client, a
 
 }
 
-func getInstaClient() (instacosmos.Client, error) {
+func getInstaClient(collector instana.TracerLogger) (instacosmos.Client, error) {
 	var err error
 	syncInstaClient.Do(func() {
 		cred, e := instacosmos.NewKeyCredential(key)
@@ -610,7 +610,7 @@ func getInstaClient() (instacosmos.Client, error) {
 			err = e
 		}
 
-		client, e = instacosmos.NewClientWithKey(endpoint, cred, &azcosmos.ClientOptions{})
+		client, e = instacosmos.NewClientWithKey(collector, endpoint, cred, &azcosmos.ClientOptions{})
 		if e != nil {
 			err = e
 		}
@@ -627,8 +627,8 @@ func getInstaRecorder() *instana.Recorder {
 }
 
 func prepareContainerClient(t *testing.T) (context.Context, *instana.Recorder, instacosmos.ContainerClient, *assert.Assertions) {
-	ctx, rec, client, sensor, a := prepare(t)
-	containerClient, err := client.NewContainer(sensor, databaseID, container)
+	ctx, rec, client, a := prepare(t)
+	containerClient, err := client.NewContainer(databaseID, container)
 	a.NoError(err)
 	return ctx, rec, containerClient, a
 }

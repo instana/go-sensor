@@ -37,13 +37,13 @@ func Example() {
 		log.Fatal("Failed to create KeyCredential:", err)
 	}
 
-	client, err := instacosmos.NewClientWithKey(cosmosEndpoint, cred, &azcosmos.ClientOptions{})
+	client, err := instacosmos.NewClientWithKey(t, cosmosEndpoint, cred, &azcosmos.ClientOptions{})
 	if err != nil {
 		log.Fatal("Failed to create cosmos DB client:", err)
 	}
 
 	// Create container client instance
-	containerClient, err := client.NewContainer(t, dbName, containerName)
+	containerClient, err := client.NewContainer(dbName, containerName)
 	if err != nil {
 		log.Fatal("Failed to create a container client:", err)
 	}

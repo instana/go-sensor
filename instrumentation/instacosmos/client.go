@@ -19,8 +19,8 @@ const emptyPrimaryKey string = ""
 // Client is the interface that wraps the methods of *azcosmos.Client
 type Client interface {
 	Endpoint() string
-	NewContainer(collector instana.TracerLogger, databaseID string, containerID string) (ContainerClient, error)
-	NewDatabase(collector instana.TracerLogger, id string) (*azcosmos.DatabaseClient, error)
+	NewContainer(databaseID string, containerID string) (ContainerClient, error)
+	NewDatabase(id string) (*azcosmos.DatabaseClient, error)
 	CreateDatabase(
 		ctx context.Context,
 		databaseProperties azcosmos.DatabaseProperties,
@@ -30,6 +30,7 @@ type Client interface {
 
 type instaClient struct {
 	*azcosmos.Client
+	collector instana.TracerLogger
 }
 
 // NewKeyCredential creates an KeyCredential containing the
@@ -42,7 +43,8 @@ func NewKeyCredential(key string) (azcosmos.KeyCredential, error) {
 // endpoint - The cosmos service endpoint to use.
 // cred - The credential used to authenticate with the cosmos service.
 // options - Optional Cosmos client options.  Pass nil to accept default values.
-func NewClientWithKey(endpoint string,
+func NewClientWithKey(collector instana.TracerLogger,
+	endpoint string,
 	cred azcosmos.KeyCredential,
 	o *azcosmos.ClientOptions) (Client, error) {
 	client, err := azcosmos.NewClientWithKey(endpoint, cred, o)
@@ -51,6 +53,7 @@ func NewClientWithKey(endpoint string,
 	}
 	return &instaClient{
 		client,
+		collector,
 	}, nil
 
 }
@@ -59,26 +62,28 @@ func NewClientWithKey(endpoint string,
 // endpoint - The cosmos service endpoint to use.
 // cred - The credential used to authenticate with the cosmos service.
 // options - Optional Cosmos client options.  Pass nil to accept default values.
-func NewClient(endpoint string, cred azcore.TokenCredential, o *azcosmos.ClientOptions) (Client, error) {
+func NewClient(collector instana.TracerLogger, endpoint string, cred azcore.TokenCredential, o *azcosmos.ClientOptions) (Client, error) {
 	client, err := azcosmos.NewClient(endpoint, cred, o)
 	if err != nil {
 		return nil, err
 	}
 	return &instaClient{
 		client,
+		collector,
 	}, nil
 }
 
 // NewClientFromConnectionString creates an instance of instrumented *azcosmos.Client
 // connectionString - The cosmos service connection string.
 // options - Optional Cosmos client options.  Pass nil to accept default values.
-func NewClientFromConnectionString(connectionString string, o *azcosmos.ClientOptions) (Client, error) {
+func NewClientFromConnectionString(collector instana.TracerLogger, connectionString string, o *azcosmos.ClientOptions) (Client, error) {
 	client, err := azcosmos.NewClientFromConnectionString(connectionString, o)
 	if err != nil {
 		return nil, err
 	}
 	return &instaClient{
 		client,
+		collector,
 	}, nil
 }
 
@@ -88,17 +93,15 @@ func (ic *instaClient) Endpoint() string {
 }
 
 // NewContainer returns the instance of instrumented *azcosmos.DatabaseClient
-// collector - instana go collector
 // id - azure cosmos database name
-func (ic *instaClient) NewDatabase(collector instana.TracerLogger, id string) (*azcosmos.DatabaseClient, error) {
+func (ic *instaClient) NewDatabase(id string) (*azcosmos.DatabaseClient, error) {
 	return ic.Client.NewDatabase(id)
 }
 
 // NewContainer returns the instance of instrumented *azcosmos.ContainerClient
-// collector - instana go collector
 // databaseID - azure cosmos database name
 // containerID - azure cosmos container name
-func (ic *instaClient) NewContainer(collector instana.TracerLogger, databaseID string, containerID string) (ContainerClient, error) {
+func (ic *instaClient) NewContainer(databaseID string, containerID string) (ContainerClient, error) {
 	containerClient, err := ic.Client.NewContainer(databaseID, containerID)
 	if err != nil {
 		return nil, err
@@ -107,7 +110,7 @@ func (ic *instaClient) NewContainer(collector instana.TracerLogger, databaseID s
 		database:    databaseID,
 		containerID: containerID,
 		endpoint:    ic.Client.Endpoint(),
-		t: newTracer(context.TODO(), collector, instana.DbConnDetails{
+		t: newTracer(context.TODO(), ic.collector, instana.DbConnDetails{
 			DatabaseName: string(instana.CosmosSpanType),
 			RawString:    ic.Client.Endpoint(),
 		}),
