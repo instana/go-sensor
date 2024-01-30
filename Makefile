@@ -1,4 +1,3 @@
-operation = unittest
 MODULES = $(filter-out $(EXCLUDE_DIRS), $(shell find . -name go.mod -exec dirname {} \;))
 LINTER ?= $(shell go env GOPATH)/bin/golangci-lint
 
@@ -12,15 +11,7 @@ endif
 test: $(MODULES) legal
 
 $(MODULES):
-	@echo "in modules" $(operation)
-ifeq ($(operation),unittest)
-	@echo "unittest" $(operation)
 	cd $@ && go get -d -t ./... && go test $(GOFLAGS) ./...
-else ifeq ($(operation),gofmt)
-	@echo "in gofmt" $(operation)
-	cd $@ && gofmt -l .
-endif
-
 ifeq ($(RUN_LINTER),yes)
 	cd $@ && $(LINTER) run
 endif
