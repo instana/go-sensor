@@ -68,9 +68,6 @@ func handler(w http.ResponseWriter, r *http.Request) {
 
 	erStr := r.URL.Query().Get("error")
 	needError := erStr == "true"
-	if needError {
-		needError = true
-	}
 
 	itemResponse, err := cosmosTest(r.Context(), needError)
 	if err != nil {
