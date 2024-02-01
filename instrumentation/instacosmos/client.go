@@ -18,7 +18,7 @@ const emptyPrimaryKey string = ""
 
 // Client is the interface that wraps the methods of *azcosmos.Client
 type Client interface {
-	Endpoint() string
+		Endpoint() string
 	NewContainer(databaseID string, containerID string) (ContainerClient, error)
 	NewDatabase(id string) (*azcosmos.DatabaseClient, error)
 	CreateDatabase(
