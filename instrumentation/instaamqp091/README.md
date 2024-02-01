@@ -133,8 +133,3 @@ See the [`instaamqp091` package documentation][godoc] for detailed examples.
 [instaamqp091.WrapChannel]: https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instaamqp091#WrapChannel
 [amqp.Channel]: https://pkg.go.dev/github.com/rabbitmq/amqp091-go#Channel
 
-<!---
-Mandatory comment section for CI/CD !!
-target-pkg-url: github.com/rabbitmq/amqp091-go
-current-version: v1.9.0
---->

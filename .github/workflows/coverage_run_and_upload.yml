@@ -1,0 +1,57 @@
+name: Generate code coverage and upload to artifact
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    types: [opened, synchronize, reopened]
+jobs:
+  build:
+    name: Code Coverage
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Run coverage commands
+        run: |
+            #!/bin/bash
+
+            TRACER_PATH=$(pwd)
+            echo $TRACER_PATH
+            mkdir coverage
+
+            echo "Starting Couchbase"
+            docker-compose -f docker-compose-integration.yaml up -d
+
+            echo "Starting Postgres"
+            sudo systemctl start postgresql.service
+            sudo -u postgres psql -c "ALTER USER postgres PASSWORD 'mysecretpassword'"
+            echo "After starting Postgres"
+
+            go test -v -coverpkg=./... -cover -covermode atomic -coverprofile $TRACER_PATH/coverage/coverage.out ./... -json > $TRACER_PATH/coverage/coverage.json
+
+            DEPRECATED_PKGS=".*instaamqp$"
+  
+            LIB_LIST=$(find ./instrumentation -name go.mod -exec dirname {} \; | grep -E -v "$DEPRECATED_PKGS")
+
+            for lib in $LIB_LIST
+              do echo "Generating test coverage for $lib" && cd "$lib" && go mod tidy && go test -v -coverpkg=./... -cover -covermode atomic -coverprofile $TRACER_PATH/coverage/coverage_$(date +%s%N)_$RANDOM.out ./... -json > $TRACER_PATH/coverage/coverage_$(date +%s%N)_$RANDOM.json && cd -;
+            done
+
+            echo "Generating test coverage for ./instrumentation/instagocb"
+            cd ./instrumentation/instagocb
+            go mod tidy
+            go test -v -tags=integration -coverpkg=./... -cover -covermode atomic -coverprofile $TRACER_PATH/coverage/coverage_$(date +%s%N)_$RANDOM.out ./... -json > $TRACER_PATH/coverage/coverage_$(date +%s%N)_$RANDOM.json && cd -
+
+            echo "Generating test coverage for ./instrumentation/instapgx"
+            cd ./instrumentation/instapgx
+            go mod tidy
+            go test -v -tags=integration -coverpkg=./... -cover -covermode atomic -coverprofile $TRACER_PATH/coverage/coverage_$(date +%s%N)_$RANDOM.out ./... -json > $TRACER_PATH/coverage/coverage_$(date +%s%N)_$RANDOM.json && cd -
+
+      - name: Upload code coverage
+        uses: actions/upload-artifact@v3
+        with:
+          name: go-tracer-code-coverage
+          path: coverage
+

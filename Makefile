@@ -16,10 +16,19 @@ ifeq ($(RUN_LINTER),yes)
 	cd $@ && $(LINTER) run
 endif
 
+INSTAPGX_EXCLUDED := $(findstring ./instrumentation/instapgx, $(EXCLUDE_DIRS))
+INSTAGOCB_EXCLUDED := $(findstring ./instrumentation/instagocb, $(EXCLUDE_DIRS))
+INSTACOSMOS_EXCLUDED := $(findstring ./instrumentation/instacosmos, $(EXCLUDE_DIRS))
 integration: $(INTEGRATION_TESTS)
+ifndef INSTAPGX_EXCLUDED
 	cd instrumentation/instapgx && go test -tags=integration
+endif
+ifndef INSTAGOCB_EXCLUDED
 	cd instrumentation/instagocb && go test -v -coverprofile cover.out -tags=integration ./...
+endif
+ifndef INSTACOSMOS_EXCLUDED
 	cd instrumentation/instacosmos && go test -v -coverprofile cover.out -tags=integration ./...
+endif
 
 $(INTEGRATION_TESTS):
 	go test $(GOFLAGS) -tags "$@ integration" $(shell grep --exclude-dir=instagocb --exclude-dir=instapgx --exclude-dir=instacosmos  -lR '^// +build \($@,\)\?integration\(,$@\)\?' .)
