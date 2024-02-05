@@ -27,8 +27,7 @@ var (
 func Example() {
 
 	t := instana.InitCollector(&instana.Options{
-		Service:           "cosmos-example",
-		EnableAutoProfile: true,
+		Service: "cosmos-example",
 	})
 
 	// creates an KeyCredential containing the account's primary or secondary key.

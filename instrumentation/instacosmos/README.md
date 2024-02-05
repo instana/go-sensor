@@ -44,8 +44,7 @@ Sample Usage
 
     var collector instana.TracerLogger
 	collector := instana.InitCollector(&instana.Options{
-		Service:           "cosmos-example",
-		EnableAutoProfile: true,
+		Service: "cosmos-example",
 	})
 
     // creates an KeyCredential containing the account's primary or secondary key.
@@ -89,9 +88,3 @@ Sample Usage
 [Full example][fullExample]
 
 [fullExample]: ../../example/cosmos/main.go
-
-<!---
-Mandatory comment section for CI/CD !!
-target-pkg-url: github.com/Azure/azure-sdk-for-go/tree/main/sdk/data/azcosmos
-current-version: v0.3.6
---->

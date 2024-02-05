@@ -19,11 +19,15 @@ import (
 	"github.com/instana/go-sensor/instrumentation/instacosmos"
 )
 
+// The following variables are database id and container name created in azure.
+// this values needs to be changed to if the database and container are created
+// with different names.
 const (
 	database  = "trace-data"
 	container = "spans"
 )
 
+// environment variables to be exported
 const (
 	CONNECTION_URL = "COSMOS_CONNECTION_URL"
 	KEY            = "COSMOS_KEY"
@@ -36,6 +40,7 @@ const (
 	ExitSpan  SpanType = "exit"
 )
 
+// Span is the item to be inserted in the azure container.
 type Span struct {
 	ID          string   `json:"id"`
 	SpanID      string   `json:"SpanID"`
