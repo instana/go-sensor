@@ -23,6 +23,7 @@ import (
 	"github.com/instana/go-sensor/autoprofile"
 	"github.com/instana/go-sensor/instrumentation/instacosmos"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 const (
@@ -169,6 +170,10 @@ func TestMain(m *testing.M) {
 
 	// create a database and a container in azure test account
 	setup(sensor)
+
+	// flush all the created spans while test data creation
+	recorder.Flush(context.TODO())
+
 	// run the tests
 	code := m.Run()
 	// delete the test database
@@ -214,6 +219,57 @@ func TestInstaContainerClient_CreateItem(t *testing.T) {
 		ReturnCode:    fmt.Sprintf("%d", resp.RawResponse.StatusCode),
 		Error:         "",
 	}, spData.Tags)
+}
+
+func TestInstaContainerClient_CreateItem_WithError(t *testing.T) {
+
+	ctx, recorder, cc, a := prepareContainerClient(t)
+
+	id := uuid.New().String()
+	spanID := fmt.Sprintf("span-%s", id)
+
+	data := Span{
+		ID:          id,
+		SpanID:      "invalidPartitionKey",
+		Type:        EntrySpan,
+		Description: "sample-description",
+	}
+
+	jsonData, err := json.Marshal(data)
+	a.NoError(err)
+
+	pk := cc.NewPartitionKeyString(spanID)
+
+	_, err = cc.CreateItem(ctx, pk, jsonData, &azcosmos.ItemOptions{})
+	a.Error(err)
+
+	time.Sleep(2 * time.Second)
+
+	spans := recorder.GetQueuedSpans()
+	require.Len(t, spans, 2)
+
+	span, logSpan := spans[0], spans[1]
+	assert.Empty(t, span.ParentID)
+	assert.Equal(t, 1, span.Ec)
+
+	a.EqualValues(instana.ExitSpanKind, span.Kind)
+	a.IsType(instana.CosmosSpanData{}, span.Data)
+
+	spanData := span.Data.(instana.CosmosSpanData)
+	a.Equal(instana.CosmosSpanTags{
+		ConnectionURL: endpoint,
+		Database:      databaseID + ":" + container,
+		Type:          Write,
+		Sql:           "INSERT INTO " + container,
+		Object:        container,
+		PartitionKey:  spanID,
+		ReturnCode:    fmt.Sprintf("%d", 400),
+		Error:         err.Error(),
+	}, spanData.Tags)
+
+	assert.Equal(t, span.TraceID, logSpan.TraceID)
+	assert.Equal(t, span.SpanID, logSpan.ParentID)
+	assert.Equal(t, "log.go", logSpan.Name)
 }
 
 func TestInstaContainerClient_DeleteItem(t *testing.T) {
@@ -621,7 +677,7 @@ func getInstaClient(collector instana.TracerLogger) (instacosmos.Client, error) 
 
 func getInstaRecorder() *instana.Recorder {
 	syncInstaRecorder.Do(func() {
-		rec = instana.NewRecorder()
+		rec = instana.NewTestRecorder()
 	})
 	return rec
 }
@@ -687,4 +743,45 @@ func prepareTestData(client instacosmos.ContainerClient) {
 		failOnError(err)
 	}
 
+}
+
+func Test_instaContainerClient_DatabaseID(t *testing.T) {
+	_, _, cc, _ := prepareContainerClient(t)
+	tests := []struct {
+		name string
+		want string
+	}{
+		{
+			name: "success",
+			want: databaseID,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+
+			if got := cc.DatabaseID(); got != tt.want {
+				t.Errorf("instaContainerClient.DatabaseID() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_instaContainerClient_ID(t *testing.T) {
+	_, _, cc, _ := prepareContainerClient(t)
+	tests := []struct {
+		name string
+		want string
+	}{
+		{
+			name: "success",
+			want: containerName,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := cc.ID(); got != tt.want {
+				t.Errorf("instaContainerClient.ID() = %v, want %v", got, tt.want)
+			}
+		})
+	}
 }

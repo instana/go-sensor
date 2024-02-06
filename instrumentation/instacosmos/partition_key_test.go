@@ -39,7 +39,7 @@ func Test_pk_NewPartitionKeyString(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			icc := instacosmos.NewPK(tt.fields.value)
+			icc := instacosmos.NewPartitionKey(tt.fields.value)
 			if got := icc.NewPartitionKeyString(tt.args.value); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("pk.NewPartitionKeyString() = %v, want %v", got, tt.want)
 			}
@@ -73,7 +73,7 @@ func Test_pk_NewPartitionKeyBool(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			icc := instacosmos.NewPK(tt.fields.value)
+			icc := instacosmos.NewPartitionKey(tt.fields.value)
 			if got := icc.NewPartitionKeyBool(tt.args.value); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("pk.NewPartitionKeyBool() = %v, want %v", got, tt.want)
 			}
@@ -107,7 +107,7 @@ func Test_pk_NewPartitionKeyNumber(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			icc := instacosmos.NewPK(tt.fields.value)
+			icc := instacosmos.NewPartitionKey(tt.fields.value)
 			if got := icc.NewPartitionKeyNumber(tt.args.value); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("pk.NewPartitionKeyNumber() = %v, want %v", got, tt.want)
 			}

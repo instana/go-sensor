@@ -7,7 +7,9 @@ package instacosmos
 
 import (
 	"context"
+	"errors"
 
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/runtime"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/tracing"
 	"github.com/Azure/azure-sdk-for-go/sdk/data/azcosmos"
@@ -26,6 +28,7 @@ const (
 // ContainerClient is the interface that wraps the methods of *azcosmos.ContainerClient
 type ContainerClient interface {
 	PartitionKey
+	DatabaseID() string
 	CreateItem(
 		ctx context.Context,
 		partitionKey azcosmos.PartitionKey,
@@ -82,7 +85,7 @@ type ContainerClient interface {
 }
 
 type instaContainerClient struct {
-	*pk
+	PartitionKey
 	database    string
 	containerID string
 	endpoint    string
@@ -93,16 +96,6 @@ type instaContainerClient struct {
 // DatabaseID returns the azure cosmos database name
 func (icc *instaContainerClient) DatabaseID() string {
 	return icc.database
-}
-
-// ContainerID returns the azure cosmos container name
-func (icc *instaContainerClient) ContainerID() string {
-	return icc.containerID
-}
-
-// Endpoint returns the cosmos service endpoint
-func (icc *instaContainerClient) Endpoint() string {
-	return icc.endpoint
 }
 
 // CreateItem creates an item in a Cosmos container.
@@ -516,7 +509,7 @@ func (icc *instaContainerClient) setAttributes(s tracing.Span, dt string) {
 		},
 		{
 			Key:   dataPartitionKey,
-			Value: icc.pk.value,
+			Value: icc.PartitionKey.getPartitionKey(),
 		},
 	}
 	s.SetAttributes(attrs...)
@@ -536,9 +529,14 @@ func (icc *instaContainerClient) setError(s tracing.Span, err error) {
 
 	s.SetAttributes(errAttrs...)
 	s.AddEvent(errorEvent, tracing.Attribute{
-		Key:   dataError,
+		Key:   "error",
 		Value: err.Error(),
 	})
+
+	// setting status code of error response
+	var responseErr *azcore.ResponseError
+	errors.As(err, &responseErr)
+	icc.setStatus(s, responseErr.StatusCode)
 }
 
 func (icc *instaContainerClient) setStatus(s tracing.Span, statusCode int) {

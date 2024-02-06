@@ -1567,7 +1567,7 @@ type CosmosSpanTags struct {
 	Object        string `json:"obj"`
 	PartitionKey  string `json:"pk"`
 	ReturnCode    string `json:"rt"`
-	Error         string `json:"error"`
+	Error         string `json:"error,omitempty"`
 }
 
 func newCosmosSpanTags(span *spanS) CosmosSpanTags {

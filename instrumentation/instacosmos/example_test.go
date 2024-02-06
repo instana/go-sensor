@@ -47,7 +47,7 @@ func Example() {
 		log.Fatal("Failed to create a container client:", err)
 	}
 
-	pk := azcosmos.NewPartitionKeyString("newPartitionKey")
+	pk := containerClient.NewPartitionKeyString("newPartitionKey")
 
 	item := map[string]string{
 		"id":             "anId",

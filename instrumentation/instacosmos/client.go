@@ -115,7 +115,7 @@ func (ic *instaClient) NewContainer(databaseID string, containerID string) (Cont
 			RawString:    ic.Client.Endpoint(),
 		}),
 		ContainerClient: containerClient,
-		pk:              NewPK(emptyPrimaryKey),
+		PartitionKey:    NewPartitionKey(emptyPrimaryKey),
 	}, nil
 }
 

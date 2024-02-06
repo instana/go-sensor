@@ -15,7 +15,8 @@ type pk struct {
 	value string
 }
 
-func NewPK(val string) *pk {
+// NewPartitionKey returns instance of pk which implements PartitionKey interface
+func NewPartitionKey(val string) PartitionKey {
 	return &pk{
 		value: val,
 	}
@@ -26,22 +27,27 @@ type PartitionKey interface {
 	NewPartitionKeyString(value string) azcosmos.PartitionKey
 	NewPartitionKeyBool(value bool) azcosmos.PartitionKey
 	NewPartitionKeyNumber(value float64) azcosmos.PartitionKey
+	getPartitionKey() string
 }
 
 // NewPartitionKeyString creates a partition key with a string value.
-func (icc *pk) NewPartitionKeyString(value string) azcosmos.PartitionKey {
-	icc.value = value
+func (p *pk) NewPartitionKeyString(value string) azcosmos.PartitionKey {
+	p.value = value
 	return azcosmos.NewPartitionKeyString(value)
 }
 
 // NewPartitionKeyBool creates a partition key with a boolean value.
-func (icc *pk) NewPartitionKeyBool(value bool) azcosmos.PartitionKey {
-	icc.value = strconv.FormatBool(value)
+func (p *pk) NewPartitionKeyBool(value bool) azcosmos.PartitionKey {
+	p.value = strconv.FormatBool(value)
 	return azcosmos.NewPartitionKeyBool(value)
 }
 
 // NewPartitionKeyNumber creates a partition key with a numeric value.
-func (icc *pk) NewPartitionKeyNumber(value float64) azcosmos.PartitionKey {
-	icc.value = strconv.FormatFloat(value, 'f', -1, 64)
+func (p *pk) NewPartitionKeyNumber(value float64) azcosmos.PartitionKey {
+	p.value = strconv.FormatFloat(value, 'f', -1, 64)
 	return azcosmos.NewPartitionKeyNumber(value)
+}
+
+func (p *pk) getPartitionKey() string {
+	return p.value
 }

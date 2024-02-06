@@ -26,7 +26,7 @@ const (
 	dataType         = "cosmos.type"
 	dataReturnCode   = "cosmos.rt"
 	operationType    = "cosmos.sql"
-	dataError        = "error"
+	dataError        = "cosmos.error"
 )
 
 // events
