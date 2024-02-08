@@ -1,4 +1,4 @@
-module github.com/instana/go-sensor/instrumentation/instasarama/example
+module example.com/instasarama
 
 go 1.17
 
@@ -32,6 +32,6 @@ require (
 )
 
 replace (
-	github.com/instana/go-sensor => ../../../../go-sensor
-	github.com/instana/go-sensor/instrumentation/instasarama => ../
+	github.com/instana/go-sensor => ../../../go-sensor
+	github.com/instana/go-sensor/instrumentation/instasarama => ../../instrumentation/instasarama
 )
