@@ -3,10 +3,10 @@ module github.com/instana/go-sensor/gorm-postgres
 go 1.19
 
 require (
-	github.com/instana/go-sensor v1.58.0
-	github.com/instana/go-sensor/instrumentation/instagorm v1.5.0
-	gorm.io/driver/postgres v1.5.4
-	gorm.io/gorm v1.25.5
+	github.com/instana/go-sensor v1.59.0
+	github.com/instana/go-sensor/instrumentation/instagorm v1.3.0
+	gorm.io/driver/postgres v1.5.3
+	gorm.io/gorm v1.25.7
 )
 
 require (
@@ -17,8 +17,8 @@ require (
 	github.com/jinzhu/now v1.1.5 // indirect
 	github.com/looplab/fsm v1.0.1 // indirect
 	github.com/opentracing/opentracing-go v1.2.0 // indirect
-	golang.org/x/crypto v0.14.0 // indirect
-	golang.org/x/text v0.13.0 // indirect
+	golang.org/x/crypto v0.17.0 // indirect
+	golang.org/x/text v0.14.0 // indirect
 	gorm.io/driver/sqlite v1.5.4 // indirect
 )
 
