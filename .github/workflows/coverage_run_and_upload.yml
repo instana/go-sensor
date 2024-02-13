@@ -45,7 +45,7 @@ jobs:
             INTEGRATIONS_TESTS=("instagocb" "instapgx" "instacosmos")
 
             for str in ${INTEGRATIONS_TESTS[@]}; do
-              dir=./instrumentation/"$str"
+              dir=./instrumentation/$str
               echo "Generating test coverage for $dir"
               cd $dir
               go mod tidy
