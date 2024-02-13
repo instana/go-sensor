@@ -39,15 +39,15 @@ jobs:
               do echo "Generating test coverage for $lib" && cd "$lib" && go mod tidy && go test -v -coverpkg=./... -cover -covermode atomic -coverprofile $TRACER_PATH/coverage/coverage_$(date +%s%N)_$RANDOM.out ./... -json > $TRACER_PATH/coverage/coverage_$(date +%s%N)_$RANDOM.json && cd -;
             done
 
-            echo "Generating test coverage for ./instrumentation/instagocb"
-            cd ./instrumentation/instagocb
-            go mod tidy
-            go test -v -tags=integration -coverpkg=./... -cover -covermode atomic -coverprofile $TRACER_PATH/coverage/coverage_$(date +%s%N)_$RANDOM.out ./... -json > $TRACER_PATH/coverage/coverage_$(date +%s%N)_$RANDOM.json && cd -
+            INTEGRATIONS_TESTS=("instagocb" "instapgx" "instacosmos")
 
-            echo "Generating test coverage for ./instrumentation/instapgx"
-            cd ./instrumentation/instapgx
-            go mod tidy
-            go test -v -tags=integration -coverpkg=./... -cover -covermode atomic -coverprofile $TRACER_PATH/coverage/coverage_$(date +%s%N)_$RANDOM.out ./... -json > $TRACER_PATH/coverage/coverage_$(date +%s%N)_$RANDOM.json && cd -
+            for str in ${INTEGRATIONS_TESTS[@]}; do
+              dir=./instrumentation/"$str"
+              echo "Generating test coverage for $dir"
+              cd $dir
+              go mod tidy
+              go test -v -tags=integration -coverpkg=./... -cover -covermode atomic -coverprofile $TRACER_PATH/coverage/coverage_$(date +%s%N)_$RANDOM.out ./... -json > $TRACER_PATH/coverage/coverage_$(date +%s%N)_$RANDOM.json && cd -
+            done
 
       - name: Upload code coverage
         uses: actions/upload-artifact@v3
