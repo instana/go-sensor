@@ -9,6 +9,9 @@ jobs:
   build:
     name: Code Coverage
     runs-on: ubuntu-latest
+    env:
+      COSMOS_CONNECTION_URL: ${{ secrets.COSMOS_CONNECTION_URL }}
+      COSMOS_KEY: ${{ secrets.COSMOS_KEY }}
     steps:
       - uses: actions/checkout@v3
         with:

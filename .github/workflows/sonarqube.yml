@@ -40,5 +40,4 @@ jobs:
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
-          COSMOS_CONNECTION_URL: ${{ secrets.COSMOS_CONNECTION_URL }}
-          COSMOS_KEY: ${{ secrets.COSMOS_KEY }}
+
