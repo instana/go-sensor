@@ -4,9 +4,9 @@ Examples
 This folder contains examples of instrumenting the common use-cases with `github.com/instana/go-sensor`
 
 * [autoprofile](./autoprofile) - Demonstrates the usage of autoprofiling using `go-sensor` SDK.
-* [Greeter](./http-database-greeter) - an instrumented application using `go-senor` SDK with basic HTTP and database queries.
+* [greeter](./http-database-greeter) - an instrumented application using `go-sensor` SDK with basic HTTP and database queries.
 * [beego](./beego) - an example of instrumenting application using `instabeego`.
-* [couchBase](./couchbase) - an example of instrumenting application using `instacouchbase`.
+* [couchbase](./couchbase) - an example of instrumenting application using `instagocb`.
 * [event](./event) - Demonstrates usage of the Events API in `go-sensor` SDK.
 * [gin](./gin) - an example of instrumenting application using `instagin`.
 * [gorm-sqlite](./gorm-sqlite) - an example of instrumenting a SQLite application using `instagorm`.
