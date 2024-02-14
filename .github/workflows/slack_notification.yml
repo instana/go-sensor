@@ -24,7 +24,14 @@ jobs:
                   "type": "section",
                   "text": {
                     "type": "mrkdwn",
-                    "text": ":mega: *Go Tracer team* : Go package <${{ github.event.release.html_url }}|${{ github.event.release.name }}> has been released. :tada:"
+                    "text": ":mega: *Go Tracer team* : Go package ${{ github.event.release.name }} has been released. :tada:"
+                  }
+                },
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": ${{ toJSON(github.event.release.body) }}
                   }
                 },
                 {
