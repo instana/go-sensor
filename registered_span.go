@@ -56,6 +56,8 @@ const (
 	RedisSpanType = RegisteredSpanType("redis")
 	// Couchbase client span
 	CouchbaseSpanType = RegisteredSpanType("couchbase")
+	// Cosmos client span
+	CosmosSpanType = RegisteredSpanType("cosmos")
 	// RabbitMQ client span
 	RabbitMQSpanType = RegisteredSpanType("rabbitmq")
 	// Azure function span
@@ -102,6 +104,8 @@ func (st RegisteredSpanType) extractData(span *spanS) typedSpanData {
 		return newPostgreSQLSpanData(span)
 	case CouchbaseSpanType:
 		return newCouchbaseSpanData(span)
+	case CosmosSpanType:
+		return newCosmosSpanData(span)
 	case MySQLSpanType:
 		return newMySQLSpanData(span)
 	case RedisSpanType:
@@ -1533,6 +1537,62 @@ type CouchbaseSpanTags struct {
 	SQL    string `json:"sql"`
 
 	Error string `json:"error,omitempty"`
+}
+
+// CosmosSpanData represents the `data` section of a Cosmos client span
+type CosmosSpanData struct {
+	SpanData
+	Tags CosmosSpanTags `json:"cosmos"`
+}
+
+// newCosmosSpanData initializes a new Cosmos client span data from tracer span
+func newCosmosSpanData(span *spanS) CosmosSpanData {
+	return CosmosSpanData{
+		SpanData: NewSpanData(span, CosmosSpanType),
+		Tags:     newCosmosSpanTags(span),
+	}
+}
+
+// Kind returns the span kind for a Cosmos client span
+func (c CosmosSpanData) Kind() SpanKind {
+	return ExitSpanKind
+}
+
+// CosmosSpanTags contains fields within the `data.cosmos` section of an OT span document
+type CosmosSpanTags struct {
+	ConnectionURL string `json:"con"`
+	Database      string `json:"db"`
+	Type          string `json:"type"`
+	Sql           string `json:"cmd"`
+	Object        string `json:"obj"`
+	PartitionKey  string `json:"pk"`
+	ReturnCode    string `json:"rt"`
+	Error         string `json:"error,omitempty"`
+}
+
+func newCosmosSpanTags(span *spanS) CosmosSpanTags {
+	var tags CosmosSpanTags
+	for k, v := range span.Tags {
+		switch k {
+		case "cosmos.con":
+			readStringTag(&tags.ConnectionURL, v)
+		case "cosmos.db":
+			readStringTag(&tags.Database, v)
+		case "cosmos.type":
+			readStringTag(&tags.Type, v)
+		case "cosmos.rt":
+			readStringTag(&tags.ReturnCode, v)
+		case "cosmos.cmd":
+			readStringTag(&tags.Sql, v)
+		case "cosmos.obj":
+			readStringTag(&tags.Object, v)
+		case "cosmos.pk":
+			readStringTag(&tags.PartitionKey, v)
+		case "cosmos.error":
+			readStringTag(&tags.Error, v)
+		}
+	}
+	return tags
 }
 
 func newCouchbaseSpanTags(span *spanS) CouchbaseSpanTags {
