@@ -198,6 +198,19 @@ func couchbaseSpan(ctx context.Context, conn DbConnDetails, query string, sensor
 	return sensor.StartSpan(string(CouchbaseSpanType), opts...)
 }
 
+func cosmosSpan(ctx context.Context, conn DbConnDetails, query string, sensor TracerLogger) ot.Span {
+	tags := ot.Tags{
+		"cosmos.cmd": query,
+	}
+
+	opts := []ot.StartSpanOption{ext.SpanKindRPCClient, tags}
+	if parentSpan, ok := SpanFromContext(ctx); ok {
+		opts = append(opts, ot.ChildOf(parentSpan.Context()))
+	}
+
+	return sensor.StartSpan(string(CosmosSpanType), opts...)
+}
+
 func genericSQLSpan(ctx context.Context, conn DbConnDetails, query string, sensor TracerLogger) ot.Span {
 	tags := ot.Tags{
 		string(ext.DBType):      "sql",
@@ -260,6 +273,8 @@ func startSQLSpan(ctx context.Context, conn DbConnDetails, query string, sensor 
 		return mySQLSpan(ctx, conn, query, sensor), "mysql"
 	case "couchbase":
 		return couchbaseSpan(ctx, conn, query, sensor), "couchbase"
+	case "cosmos":
+		return cosmosSpan(ctx, conn, query, sensor), "cosmos"
 	}
 
 	return genericSQLSpan(ctx, conn, query, sensor), "db"
