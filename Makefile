@@ -18,6 +18,7 @@ endif
 
 INSTAPGX_EXCLUDED := $(findstring ./instrumentation/instapgx, $(EXCLUDE_DIRS))
 INSTAGOCB_EXCLUDED := $(findstring ./instrumentation/instagocb, $(EXCLUDE_DIRS))
+INSTACOSMOS_EXCLUDED := $(findstring ./instrumentation/instacosmos, $(EXCLUDE_DIRS))
 integration: $(INTEGRATION_TESTS)
 ifndef INSTAPGX_EXCLUDED
 	cd instrumentation/instapgx && go test -tags=integration
@@ -25,9 +26,12 @@ endif
 ifndef INSTAGOCB_EXCLUDED
 	cd instrumentation/instagocb && go test -v -coverprofile cover.out -tags=integration ./...
 endif
+ifndef INSTACOSMOS_EXCLUDED
+	cd instrumentation/instacosmos && go test -v -coverprofile cover.out -tags=integration ./...
+endif
 
 $(INTEGRATION_TESTS):
-	go test $(GOFLAGS) -tags "$@ integration" $(shell grep --exclude-dir=instagocb --exclude-dir=instapgx -lR '^// +build \($@,\)\?integration\(,$@\)\?' .)
+	go test $(GOFLAGS) -tags "$@ integration" $(shell grep --exclude-dir=instagocb --exclude-dir=instapgx --exclude-dir=instacosmos  -lR '^// +build \($@,\)\?integration\(,$@\)\?' .)
 
 $(LINTER):
 	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/a2bc9b7a99e3280805309d71036e8c2106853250/install.sh \
@@ -49,8 +53,21 @@ instrumentation/% :
 	printf '// (c) Copyright IBM Corp. %s\n// (c) Copyright Instana Inc. %s\n\npackage %s\n\nconst Version = "0.0.0"\n' $(shell date +%Y) $(shell date +%Y) $(notdir $@) > $@/version.go
 
 fmtcheck:
-	@gofmt -l .
-	@test -z $(shell gofmt -l . && exit 1)
+	@exclude_string=""; \
+	for exclude_dir in $$(echo $$EXCLUDE_DIRS | tr ' ' '\n'); do \
+		exclude_string="$$exclude_string -not -path \"$$exclude_dir/*\""; \
+	done; \
+	command="find . -type f -name \"*.go\" $$exclude_string"; \
+	gofmt_output=$$(gofmt -l $$(eval "$$command")); \
+    if [ -n "$$gofmt_output" ]; then \
+        echo "Some files are not formatted properly:"; \
+        echo "$$gofmt_output"; \
+        exit 1; \
+    else \
+        echo "All Go files are formatted properly."; \
+    fi
+	@gofmt -l $$(eval "$$command")
+	@test -z $(shell gofmt -l $$(eval "$$command") && exit 1)
 
 importcheck:
 	@test -z $(shell goimports -l . && exit 1)
