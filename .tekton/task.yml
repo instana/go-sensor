@@ -46,4 +46,40 @@ spec:
         #!/bin/sh
         echo "Running unit test"
         cd /workspace/go-sensor/ && ls -lah /workspace && make test
-
+---
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: go-tracer-integration-task
+spec:
+  sidecars:
+    - name: couchbase
+      image: couchbase/server-sandbox:7.1.1
+    - name: postgresql
+      image: postgres:14
+      env:
+        - name: POSTGRES_USER
+          value: "postgres"
+        - name: POSTGRES_DB
+          value: "postgres"
+        - name: POSTGRES_PASSWORD
+          value: "mysecretpassword"
+  params:
+  - name: imageTag
+    type: string
+  workspaces:
+    - name: task-pvc
+      mountPath: /workspace
+  steps:
+    - name: integrationtest
+      image: golang:$(params.imageTag)
+      env:
+        - name: GO111MODULE
+          value: "auto"
+        - name: VENDOR_DEPS
+          value: "no"
+      workingDir: /workspace/go-sensor/
+      script: |
+        #!/bin/sh
+        echo "Running integration tests"
+        cd /workspace/go-sensor/ && ls -lah /workspace && make integration

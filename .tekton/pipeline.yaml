@@ -31,3 +31,17 @@ spec:
       workspaces:
         - name: task-pvc
           workspace: go-tracer-ci-pipeline-pvc
+
+    - name: integrationtest
+      runAfter:
+        - unittest
+      matrix:
+        params:
+          - name: imageTag
+            value:
+              - "1.19"
+      taskRef:
+        name: go-tracer-integration-task
+      workspaces:
+        - name: task-pvc
+          workspace: go-tracer-ci-pipeline-pvc
