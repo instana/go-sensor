@@ -1,0 +1,49 @@
+---
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: go-tracer-clone-task
+spec:
+  params:
+    - name: revision
+      type: string
+  workspaces:
+    - name: task-pvc
+      mountPath: /workspace
+  steps:
+    - name: clone
+      image: alpine/git
+      script: |
+        #!/bin/sh
+        echo "Cloning repo"
+        cd /workspace && git clone --depth 1 -b main https://github.com/instana/go-sensor
+        ls -lah /workspace
+---
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: go-tracer-unittest-task
+spec:
+  params:
+    - name: imageTag
+      type: string
+  workspaces:
+    - name: task-pvc
+      mountPath: /workspace
+  steps:
+    - name: unittest
+      image: golang:$(params.imageTag)
+      env:
+        - name: RUN_LINTER
+          # need to change this before merge
+          value: "no"
+        - name: GO111MODULE
+          value: "auto"
+        - name: VENDOR_DEPS
+          value: "no"
+      workingDir: /workspace/go-sensor/
+      script: |
+        #!/bin/sh
+        echo "Running unit test"
+        cd /workspace/go-sensor/ && ls -lah /workspace && make test
+

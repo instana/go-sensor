@@ -1,0 +1,33 @@
+apiVersion: tekton.dev/v1
+kind: Pipeline
+metadata:
+  name: go-tracer-ci-pipeline
+spec:
+  params:
+  - name: revision
+    type: string
+  workspaces:
+    - name: go-tracer-ci-pipeline-pvc
+  tasks:
+    - name: clone
+      params:
+      - name: revision
+        value: $(params.revision)
+      taskRef:
+        name: go-tracer-clone-task
+      workspaces:
+        - name: task-pvc
+          workspace: go-tracer-ci-pipeline-pvc
+    - name: unittest
+      runAfter:
+        - clone
+      matrix:
+        params:
+          - name: imageTag
+            value:
+              - "1.19"
+      taskRef:
+        name: go-tracer-unittest-task
+      workspaces:
+        - name: task-pvc
+          workspace: go-tracer-ci-pipeline-pvc

@@ -1,0 +1,20 @@
+apiVersion: tekton.dev/v1
+kind: PipelineRun
+metadata:
+  # generateName: go-tracer-ci-pipeline-run-
+  name: go-tracer-ci-pipeline-run
+spec:
+  pipelineRef:
+    name: go-tracer-ci-pipeline
+  workspaces:
+  - name: go-tracer-ci-pipeline-pvc
+    volumeClaimTemplate:
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 100Mi
+  params:
+  - name: revision
+    value: "tekton"
