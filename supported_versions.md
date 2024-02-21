@@ -11,7 +11,7 @@
 | 9 | Databases | [mongo-driver](https://pkg.go.dev/go.mongodb.org/mongo-driver) | [instamongo](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instamongo) | v1.7.2 | v1.14.0 |
 | 10 | Databases | [pgx](https://pkg.go.dev/github.com/jackc/pgx/v4) | [instapgx](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instapgx) | v4.14.1 | v4.18.1 |
 | 11 | Databases | [go-redis](https://pkg.go.dev/github.com/go-redis/redis/v8) | [instaredis](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instaredis) | v8.11.4 | v8.11.5 |
-| 12 | Databases | [redigo](https://pkg.go.dev/github.com/gomodule/redigo) | [instaredigo](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instaredigo) | v1.8.8 | v1.8.9 |
+| 12 | Databases | [redigo](https://pkg.go.dev/github.com/gomodule/redigo) | [instaredigo](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instaredigo) | v1.8.8 | v1.9.1 |
 | 13 | Databases | [gorm](https://pkg.go.dev/gorm.io/gorm) | [instagorm](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instagorm) | v1.25.0 | v1.25.7 |
 | 14 | Databases | [gocb](https://pkg.go.dev/github.com/couchbase/gocb/v2) | [instagocb](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instagocb) | v2.6.5 | v2.7.1 |
 | 15 | Messaging | [pubsub](https://pkg.go.dev/cloud.google.com/go/pubsub) | [instapubsub](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/cloud.google.com/go/pubsub) | v1.3.1 | v1.36.1 |
