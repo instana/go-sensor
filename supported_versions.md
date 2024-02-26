@@ -19,11 +19,11 @@
 | 17 | Messaging | [amqp091-go](https://pkg.go.dev/github.com/rabbitmq/amqp091-go) | [instaamqp091](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instaamqp091) | v1.5.0 | v1.9.0 |
 | 18 | GraphQL | [graphql](https://pkg.go.dev/github.com/graphql-go/graphql) | [instagraphql](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instagraphql) | v0.8.0 | v0.8.1 |
 | 19 | Other | [storage](https://pkg.go.dev/cloud.google.com/go/storage) | [storage](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/cloud.google.com/go/storage) | v1.7.0 | v1.38.0 |
-| 20 | Other | [aws-sdk-go](https://pkg.go.dev/github.com/aws/aws-sdk-go) | [instaawssdk](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instaawssdk) | v1.8.0 | v1.50.24 |
+| 20 | Other | [aws-sdk-go](https://pkg.go.dev/github.com/aws/aws-sdk-go) | [instaawssdk](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instaawssdk) | v1.8.0 | v1.50.25 |
 | 21 | Other | [aws-lambda-go](https://pkg.go.dev/github.com/aws/aws-lambda-go) | [instalambda](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instalambda) | v1.20.0 | v1.46.0 |
 | 22 | Other | [logrus](https://pkg.go.dev/github.com/sirupsen/logrus) | [instalogrus](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instalogrus) | v1.5.0 | v1.9.3 |
 | 23 | Databases | [go-redis v2](https://pkg.go.dev/github.com/redis/go-redis/v9) | [instaredis](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instaredis/v2) | v8.11.4 | v9.5.1 |
 | 24 | HTTP | [beego](https://pkg.go.dev/github.com/beego/beego/v2) | [instabeego](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instabeego) | v2.1.3 | v2.1.6 |
-| 25 | Other | [aws-sdk-go](https://pkg.go.dev/github.com/aws/aws-sdk-go-v2) | [instaawsv2](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instaawsv2) | v1.21.0 | v1.25.1 |
+| 25 | Other | [aws-sdk-go](https://pkg.go.dev/github.com/aws/aws-sdk-go-v2) | [instaawsv2](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instaawsv2) | v1.21.0 | v1.25.2 |
 | 26 | Databases | [azcosmos](https://pkg.go.dev/github.com/Azure/azure-sdk-for-go/sdk/data/azcosmos) | [instacosmos](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instacosmos) | v0.3.6 | v0.3.6 |
 
