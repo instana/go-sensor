@@ -18,7 +18,13 @@ spec:
   params:
   - name: revision
     value: "tekton"
-  - name: cosmosConnURL
-    value: "yyyyyy-yyyyy-yyyyy"
-  - name: cosmosKey
-    value: "yyyyy-yyyyy-yyyy"
+  # - name: cosmosConnURL
+  #   valueFrom:
+  #     secretKeyRef:
+  #       name: "cosmos-conn-url"
+  #       key: "connUrl"
+  # - name: cosmosKey
+  #   valueFrom:
+  #     secretKeyRef:
+  #       name: "cosmos-conn-key"
+  #       key: "connKey"
