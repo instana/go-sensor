@@ -18,3 +18,7 @@ spec:
   params:
   - name: revision
     value: "tekton"
+  - name: cosmosConnURL
+    value: "yyyyyy-yyyyy-yyyyy"
+  - name: cosmosKey
+    value: "yyyyy-yyyyy-yyyy"

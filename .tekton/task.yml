@@ -45,7 +45,7 @@ spec:
       script: |
         #!/bin/sh
         echo "Running unit test"
-        cd /workspace/go-sensor/ && ls -lah /workspace && make test
+        make test
 ---
 apiVersion: tekton.dev/v1
 kind: Task
@@ -67,6 +67,10 @@ spec:
   params:
   - name: imageTag
     type: string
+  - name: cosmosConnURL
+    type: string
+  - name: cosmosKey
+    type: string
   workspaces:
     - name: task-pvc
       mountPath: /workspace
@@ -78,8 +82,14 @@ spec:
           value: "auto"
         - name: VENDOR_DEPS
           value: "no"
+        - name: COSMOS_CONNECTION_URL
+          value: $(params.cosmosConnURL)
+        - name: COSMOS_KEY
+          value: $(params.cosmosKey)
+        - name: NITHIN_KEY
+          value: "helloww"
       workingDir: /workspace/go-sensor/
       script: |
         #!/bin/sh
         echo "Running integration tests"
-        cd /workspace/go-sensor/ && ls -lah /workspace && make integration
+        make integration

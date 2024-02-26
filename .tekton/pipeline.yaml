@@ -6,6 +6,10 @@ spec:
   params:
   - name: revision
     type: string
+  - name: cosmosConnURL
+    type: string
+  - name: cosmosKey
+    type: string
   workspaces:
     - name: go-tracer-ci-pipeline-pvc
   tasks:
@@ -18,6 +22,7 @@ spec:
       workspaces:
         - name: task-pvc
           workspace: go-tracer-ci-pipeline-pvc
+    
     - name: unittest
       runAfter:
         - clone
@@ -35,11 +40,17 @@ spec:
     - name: integrationtest
       runAfter:
         - unittest
+      params:
+      - name: cosmosConnURL
+        value: $(params.cosmosConnURL)
+      - name: cosmosKey
+        value: $(params.cosmosKey)
       matrix:
         params:
           - name: imageTag
             value:
               - "1.19"
+
       taskRef:
         name: go-tracer-integration-task
       workspaces:
