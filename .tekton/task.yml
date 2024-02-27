@@ -44,8 +44,29 @@ spec:
       workingDir: /workspace/go-sensor/
       script: |
         #!/bin/sh
-        echo "Running unit test"
+        echo "Running go fmt"
         make test
+
+---
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: go-tracer-gofmt-task
+spec:
+  params:
+    - name: imageTag
+      type: string
+  workspaces:
+    - name: task-pvc
+      mountPath: /workspace
+  steps:
+    - name: gofmt
+      image: golang:$(params.imageTag)
+      workingDir: /workspace/go-sensor/
+      script: |
+        #!/bin/sh
+        echo "Running unit test"
+        make fmtcheck
 ---
 apiVersion: tekton.dev/v1
 kind: Task
