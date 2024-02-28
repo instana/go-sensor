@@ -16,7 +16,7 @@ spec:
       script: |
         #!/bin/sh
         echo "Cloning repo!"
-        cd /workspace && git clone --depth 1 -b main https://github.com/instana/go-sensor
+        cd /workspace && git clone --depth 1 -b tests-fix https://github.com/instana/go-sensor
         ls -lah /workspace
 
 ---
@@ -140,7 +140,7 @@ spec:
               name: "cosmos-conn-key"
               key: "connKey"
         - name: EXCLUDE_DIRS
-          value: "./instrumentation/instapgx ./instrumentation/instagocb"
+          value: "./instrumentation/instagocb"
       workingDir: /workspace/go-sensor/
       script: |
         #!/bin/sh
