@@ -15,9 +15,10 @@ spec:
       image: alpine/git
       script: |
         #!/bin/sh
-        echo "Cloning repo"
+        echo "Cloning repo!"
         cd /workspace && git clone --depth 1 -b main https://github.com/instana/go-sensor
         ls -lah /workspace
+
 ---
 apiVersion: tekton.dev/v1
 kind: Task
@@ -44,7 +45,7 @@ spec:
       workingDir: /workspace/go-sensor/
       script: |
         #!/bin/sh
-        echo "Running go fmt"
+        echo "Running unit tests!"
         make test
 
 ---
@@ -65,8 +66,33 @@ spec:
       workingDir: /workspace/go-sensor/
       script: |
         #!/bin/sh
-        echo "Running unit test"
+        echo "Running go fmt check!"
         make fmtcheck
+
+---
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: go-tracer-goimports-task
+spec:
+  params:
+    - name: imageTag
+      type: string
+  workspaces:
+    - name: task-pvc
+      mountPath: /workspace
+  steps:
+    - name: goimports
+      image: golang:$(params.imageTag)
+      workingDir: /workspace/go-sensor/
+      script: |
+        #!/bin/sh
+        echo "Installing go imports!"
+        go install golang.org/x/tools/cmd/goimports@latest || true
+        echo "Running import check"
+        make importcheck
+        
+
 ---
 apiVersion: tekton.dev/v1
 kind: Task
@@ -116,5 +142,5 @@ spec:
       workingDir: /workspace/go-sensor/
       script: |
         #!/bin/sh
-        echo "Running integration tests"
+        echo "Running integration tests!"
         make integration
