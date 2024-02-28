@@ -1,0 +1,70 @@
+apiVersion: tekton.dev/v1
+kind: Pipeline
+metadata:
+  name: go-tracer-unit-test-pipeline
+spec:
+  params:
+  - name: revision
+    type: string
+  # - name: cosmosConnURL
+  #   type: string
+  # - name: cosmosKey
+  #   type: string
+  workspaces:
+    - name: go-tracer-unit-test-pipeline-pvc
+  tasks:
+    - name: clone
+      params:
+      - name: revision
+        value: $(params.revision)
+      taskRef:
+        name: go-tracer-clone-task
+      workspaces:
+        - name: task-pvc
+          workspace: go-tracer-unit-test-pipeline-pvc
+
+    - name: gofmt
+      runAfter:
+        - clone
+      matrix:
+        params:
+          - name: imageTag
+            value:
+              - "1.19"
+              - "1.20"
+      taskRef:
+        name: go-tracer-gofmt-task
+      workspaces:
+        - name: task-pvc
+          workspace: go-tracer-unit-test-pipeline-pvc
+
+    - name: goimports
+      runAfter:
+        - gofmt
+      matrix:
+        params:
+          - name: imageTag
+            value:
+              - "1.19"
+              - "1.20"
+      taskRef:
+        name: go-tracer-goimports-task
+      workspaces:
+        - name: task-pvc
+          workspace: go-tracer-unit-test-pipeline-pvc
+
+    - name: unittest
+      runAfter:
+        - goimports
+      matrix:
+        params:
+          - name: imageTag
+            value:
+              - "1.19"
+              - "1.20"
+      taskRef:
+        name: go-tracer-unittest-task
+      workspaces:
+        - name: task-pvc
+          workspace: go-tracer-unit-test-pipeline-pvc
+
