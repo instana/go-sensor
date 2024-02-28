@@ -31,13 +31,14 @@ spec:
           - name: imageTag
             value:
               - "1.19"
+              - "1.20"
       taskRef:
         name: go-tracer-gofmt-task
       workspaces:
         - name: task-pvc
           workspace: go-tracer-ci-pipeline-pvc
-    
-    - name: unittest
+
+    - name: goimports
       runAfter:
         - gofmt
       matrix:
@@ -45,6 +46,22 @@ spec:
           - name: imageTag
             value:
               - "1.19"
+              - "1.20"
+      taskRef:
+        name: go-tracer-goimports-task
+      workspaces:
+        - name: task-pvc
+          workspace: go-tracer-ci-pipeline-pvc
+    
+    - name: unittest
+      runAfter:
+        - goimports
+      matrix:
+        params:
+          - name: imageTag
+            value:
+              - "1.19"
+              - "1.20"
       taskRef:
         name: go-tracer-unittest-task
       workspaces:
@@ -64,6 +81,7 @@ spec:
           - name: imageTag
             value:
               - "1.19"
+              - "1.20"
 
       taskRef:
         name: go-tracer-integration-task
