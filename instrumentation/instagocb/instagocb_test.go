@@ -7,9 +7,12 @@ package instagocb_test
 
 import (
 	"context"
+	"os"
+	"strings"
 	"testing"
 
 	"github.com/couchbase/gocb/v2"
+	"github.com/google/uuid"
 	instana "github.com/instana/go-sensor"
 	"github.com/instana/go-sensor/acceptor"
 	"github.com/instana/go-sensor/autoprofile"
@@ -40,6 +43,12 @@ func (alwaysReadyClient) SendEvent(event *instana.EventData) error          { re
 func (alwaysReadyClient) SendSpans(spans []instana.Span) error              { return nil }
 func (alwaysReadyClient) SendProfiles(profiles []autoprofile.Profile) error { return nil }
 func (alwaysReadyClient) Flush(context.Context) error                       { return nil }
+
+func TestMain(m *testing.M) {
+	testBucketName = testBucketName + "-" + strings.Replace(uuid.New().String(), "-", "", -1)
+	code := m.Run()
+	os.Exit(code)
+}
 
 func TestUnwrapForAll(t *testing.T) {
 	defer instana.ShutdownSensor()
