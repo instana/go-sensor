@@ -101,7 +101,12 @@ metadata:
 spec:
   sidecars:
     - name: couchbase
-      image: couchbase/server-sandbox:7.1.1
+      image: couchbase/server-sandbox:7.2.4
+      readinessProbe:
+        httpGet:
+           path: /ui/index.html
+           port: 8091
+        initialDelaySeconds: 60
     - name: postgresql
       image: postgres:14
       env:
@@ -140,7 +145,7 @@ spec:
               name: "cosmos-conn-key"
               key: "connKey"
         - name: EXCLUDE_DIRS
-          value: "./instrumentation/instagocb"
+          value: ""
       workingDir: /workspace/go-sensor/
       script: |
         #!/bin/sh
