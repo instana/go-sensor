@@ -16,7 +16,7 @@ spec:
       script: |
         #!/bin/sh
         echo "Cloning repo!"
-        cd /workspace && git clone --depth 1 -b tests-fix https://github.com/instana/go-sensor
+        cd /workspace && git clone --depth 1 -b tests-fix1 https://github.com/instana/go-sensor
         ls -lah /workspace
 
 ---
@@ -128,11 +128,23 @@ spec:
       mountPath: /workspace
   steps:
     - name: runcouchbase
-      image: docker/compose
+      image: quay.io/podman/stable
+      # args:
+      #   - sleep
+      #   - "1000000"
+      securityContext:
+        privileged: true
       workingDir: /workspace/go-sensor/
       script: |
         #!/bin/sh
-        docker-compose -f docker-compose-integration.yaml up -d
+        podman run -d -p 8091-8094:8091-8094 -p 11210:11210 docker.io/couchbase/server-sandbox:7.1.1
+        sleep 61
+    # - name: runcouchbase
+    #   image: quay.io/podman/stable
+    #   workingDir: /workspace/go-sensor/
+    #   script: |
+    #     #!/bin/sh
+    #     podman-compose -f docker-compose-integration.yaml up -d
     - name: integrationtest
       image: golang:$(params.imageTag)
       env:
