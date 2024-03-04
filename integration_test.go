@@ -60,6 +60,12 @@ func (srv *serverlessAgent) HandleBundle(w http.ResponseWriter, req *http.Reques
 		body = nil
 	}
 
+	if value, ok := os.LookupEnv("NEED_ERROR"); ok && value == "true" {
+		os.Unsetenv("NEED_ERROR")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
 	srv.Bundles = append(srv.Bundles, serverlessAgentRequest{
 		Header: req.Header,
 		Body:   body,
