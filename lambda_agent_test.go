@@ -85,6 +85,29 @@ func TestLambdaAgent_SendSpans(t *testing.T) {
 	assert.JSONEq(t, `{"hl": true, "cp": "aws", "e": "aws::test-lambda::$LATEST"}`, string(spans[0]["f"]))
 }
 
+func TestLambdaAgent_SendSpans_Error(t *testing.T) {
+	defer agent.Reset()
+
+	os.Setenv("NEED_ERROR", "true")
+
+	tracer := instana.NewTracer()
+	sensor := instana.NewSensorWithTracer(tracer)
+	defer instana.ShutdownSensor()
+
+	sp := sensor.Tracer().StartSpan("aws.lambda.entry", opentracing.Tags{
+		"lambda.arn":     "aws::test-lambda::$LATEST",
+		"lambda.name":    "test-lambda",
+		"lambda.version": "$LATEST",
+	})
+	sp.Finish()
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+
+	require.Error(t, tracer.Flush(ctx))
+	require.Len(t, agent.Bundles, 0)
+}
+
 func setupAWSLambdaEnv() func() {
 	teardown := restoreEnvVarFunc("AWS_EXECUTION_ENV")
 	os.Setenv("AWS_EXECUTION_ENV", "AWS_Lambda_go1.x")
