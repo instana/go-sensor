@@ -11,7 +11,7 @@ endif
 test: $(MODULES) legal
 
 $(MODULES):
-	cd $@ && go get -d -t ./... && go test $(GOFLAGS) ./...
+	cd $@ && go get -d -t ./... && go test $(GOFLAGS) ./... && go ​clean -modcache
 ifeq ($(RUN_LINTER),yes)
 	cd $@ && $(LINTER) run
 endif
@@ -21,18 +21,18 @@ INSTAGOCB_EXCLUDED := $(findstring ./instrumentation/instagocb, $(EXCLUDE_DIRS))
 INSTACOSMOS_EXCLUDED := $(findstring ./instrumentation/instacosmos, $(EXCLUDE_DIRS))
 integration-common: $(INTEGRATION_TESTS)
 ifndef INSTAPGX_EXCLUDED
-	cd instrumentation/instapgx && go test -tags=integration
+	cd instrumentation/instapgx && go test -tags=integration && go ​clean -modcache
 endif
 ifndef INSTACOSMOS_EXCLUDED
-	cd instrumentation/instacosmos && go test -v -coverprofile cover.out -tags=integration ./...
+	cd instrumentation/instacosmos && go test -v -coverprofile cover.out -tags=integration ./... && go ​clean -modcache
 endif
 
 $(INTEGRATION_TESTS):
-	go test $(GOFLAGS) -tags "$@ integration" $(shell grep --exclude-dir=instagocb --exclude-dir=instapgx --exclude-dir=instacosmos  -lR '^// +build \($@,\)\?integration\(,$@\)\?' .)
+	go test $(GOFLAGS) -tags "$@ integration" $(shell grep --exclude-dir=instagocb --exclude-dir=instapgx --exclude-dir=instacosmos  -lR '^// +build \($@,\)\?integration\(,$@\)\?' .) && go ​clean -modcache
 
 integration-couchbase:
 ifndef INSTAGOCB_EXCLUDED
-	cd instrumentation/instagocb && go test -v -coverprofile cover.out -tags=integration ./...
+	cd instrumentation/instagocb && go test -v -coverprofile cover.out -tags=integration ./... && go ​clean -modcache
 endif
 
 $(LINTER):
