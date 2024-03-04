@@ -100,13 +100,13 @@ metadata:
   name: go-tracer-integration-task
 spec:
   sidecars:
-    - name: couchbase
-      image: couchbase/server-sandbox:7.2.4
-      readinessProbe:
-        httpGet:
-           path: /ui/index.html
-           port: 8091
-        initialDelaySeconds: 60
+    # - name: couchbase
+    #   image: couchbase/server-sandbox:7.2.4
+    #   readinessProbe:
+    #     httpGet:
+    #        path: /ui/index.html
+    #        port: 8091
+    #     initialDelaySeconds: 60
     - name: postgresql
       image: postgres:14
       env:
@@ -127,6 +127,12 @@ spec:
     - name: task-pvc
       mountPath: /workspace
   steps:
+    - name: runcouchbase
+      image: docker/compose
+      workingDir: /workspace/go-sensor/
+      script: |
+        #!/bin/sh
+        docker-compose -f docker-compose-integration.yaml up -d
     - name: integrationtest
       image: golang:$(params.imageTag)
       env:
