@@ -28,6 +28,12 @@ spec:
         - clone
       matrix:
         include:
+          - name: build-117
+            params:
+              - name: imageTag
+                value: "1.17"
+              - name: excludeDirs
+                value: "./internal/bin/sql ./example/gin ./example/sql-redis ./example/gorm-postgres ./example/gorm-sqlite ./example/grpc-client-server ./instrumentation/cloud.google.com/go ./instrumentation/instabeego ./example/beego ./instrumentation/instaawsv2 ./instrumentation/instaecho ./instrumentation/instagorm ./instrumentation/instaamqp ./instrumentation/instaawssdk ./instrumentation/instagocb ./example/couchbase ./instrumentation/instacosmos ./example/cosmos ./instrumentation/instamongo"
           - name: build-118
             params:
               - name: imageTag
@@ -63,6 +69,12 @@ spec:
         - gofmt
       matrix:
         include:
+          - name: build-117
+            params:
+              - name: imageTag
+                value: "1.17"
+              - name: excludeDirs
+                value: ".//internal/bin/sql ./example/gin ./example/sql-redis ./example/gorm-postgres ./example/gorm-sqlite ./example/grpc-client-server ./instrumentation/cloud.google.com/go ./instrumentation/instabeego ./example/beego ./instrumentation/instaawsv2 ./instrumentation/instaecho ./instrumentation/instagorm ./instrumentation/instaamqp ./instrumentation/instaawssdk ./instrumentation/instagocb ./example/couchbase ./instrumentation/instacosmos ./example/cosmos ./instrumentation/instamongo"
           - name: build-118
             params:
               - name: imageTag
@@ -98,6 +110,12 @@ spec:
         - goimports
       matrix:
         include:
+          - name: build-117
+            params:
+              - name: imageTag
+                value: "1.17"
+              - name: excludeDirs
+                value: "./internal/bin/sql ./example/gin ./example/sql-redis ./example/gorm-postgres ./example/gorm-sqlite ./example/grpc-client-server ./instrumentation/cloud.google.com/go ./instrumentation/instabeego ./example/beego ./instrumentation/instaawsv2 ./instrumentation/instaecho ./instrumentation/instagorm ./instrumentation/instaamqp ./instrumentation/instaawssdk ./instrumentation/instagocb ./example/couchbase ./instrumentation/instacosmos ./example/cosmos ./instrumentation/instamongo"
           - name: build-118
             params:
               - name: imageTag
@@ -133,6 +151,12 @@ spec:
         - unittest
       matrix:
         include:
+          - name: build-117
+            params:
+              - name: imageTag
+                value: "1.17"
+              - name: excludeDirs
+                value: "./internal/bin/sql ./example/gin ./example/sql-redis ./example/gorm-postgres ./example/gorm-sqlite ./example/grpc-client-server ./instrumentation/cloud.google.com/go ./instrumentation/instabeego ./example/beego ./instrumentation/instaawsv2 ./instrumentation/instaecho ./instrumentation/instagorm ./instrumentation/instaamqp ./instrumentation/instaawssdk ./instrumentation/instagocb ./example/couchbase ./instrumentation/instacosmos ./example/cosmos ./instrumentation/instamongo"
           - name: build-118
             params:
               - name: imageTag
