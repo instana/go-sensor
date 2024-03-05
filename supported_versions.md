@@ -9,7 +9,7 @@
 | 7 | RPC | [grpc](https://pkg.go.dev/google.golang.org/grpc) | [instagrpc](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instagrpc) | v1.15.0 | v1.62.0 |
 | 8 | Databases | database/sql | | | |
 | 9 | Databases | [mongo-driver](https://pkg.go.dev/go.mongodb.org/mongo-driver) | [instamongo](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instamongo) | v1.7.2 | v1.14.0 |
-| 10 | Databases | [pgx](https://pkg.go.dev/github.com/jackc/pgx/v4) | [instapgx](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instapgx) | v4.14.1 | v4.18.1 |
+| 10 | Databases | [pgx](https://pkg.go.dev/github.com/jackc/pgx/v4) | [instapgx](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instapgx) | v4.14.1 | v4.18.2 |
 | 11 | Databases | [go-redis](https://pkg.go.dev/github.com/go-redis/redis/v8) | [instaredis](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instaredis) | v8.11.4 | v8.11.5 |
 | 12 | Databases | [redigo](https://pkg.go.dev/github.com/gomodule/redigo) | [instaredigo](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instaredigo) | v1.8.8 | v1.9.2 |
 | 13 | Databases | [gorm](https://pkg.go.dev/gorm.io/gorm) | [instagorm](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instagorm) | v1.25.0 | v1.25.7 |
