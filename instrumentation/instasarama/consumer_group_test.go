@@ -62,7 +62,33 @@ func TestNewConsumerGroup_Consume(t *testing.T) {
 	topics := []string{"my-topic"}
 	err = group.Consume(ctx, topics, h)
 	assert.Error(t, err)
+}
 
+func TestNewConsumerGroupFromClient_Consume(t *testing.T) {
+
+	recorder := instana.NewTestRecorder()
+	sensor := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{}, recorder))
+
+	config := NewTestConfig()
+	config.ClientID = t.Name()
+	config.Version = sarama.V2_0_0_0
+
+	ctx, cancel := context.WithCancel(context.Background())
+	h := &handler{t, cancel}
+
+	broker0 := initMockBroker(t)
+	defer broker0.Close()
+
+	client, err := sarama.NewClient([]string{broker0.Addr()}, config)
+	assert.NoError(t, err)
+
+	group, err := instasarama.NewConsumerGroupFromClient("my-group", client, sensor)
+	defer func() { _ = group.Close() }()
+	assert.NoError(t, err)
+
+	topics := []string{"my-topic"}
+	err = group.Consume(ctx, topics, h)
+	assert.Error(t, err)
 }
 
 func initMockBroker(t *testing.T) *sarama.MockBroker {
