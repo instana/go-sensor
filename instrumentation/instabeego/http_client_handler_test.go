@@ -3,7 +3,7 @@
 //go:build go1.18
 // +build go1.18
 
-package instabeego
+package instabeego_test
 
 import (
 	"context"
@@ -12,6 +12,7 @@ import (
 
 	"github.com/beego/beego/v2/client/httplib"
 	instana "github.com/instana/go-sensor"
+	"github.com/instana/go-sensor/instrumentation/instabeego"
 	"github.com/opentracing/opentracing-go/ext"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -20,7 +21,10 @@ import (
 func TestInstrumentRequest(t *testing.T) {
 
 	recorder := instana.NewTestRecorder()
-	tracer := instana.NewTracerWithEverything(nil, recorder)
+	tracer := instana.NewTracerWithEverything(&instana.Options{
+		Service:     "beego-test",
+		AgentClient: alwaysReadyClient{},
+	}, recorder)
 	defer instana.ShutdownSensor()
 	sensor := instana.NewSensorWithTracer(tracer)
 
@@ -32,7 +36,7 @@ func TestInstrumentRequest(t *testing.T) {
 	ctx := instana.ContextWithSpan(context.Background(), sp)
 
 	req := httplib.NewBeegoRequestWithCtx(ctx, "https://www.instana.com", http.MethodGet)
-	InstrumentRequest(sensor, req)
+	instabeego.InstrumentRequest(sensor, req)
 
 	response, err := req.Response()
 	require.NoError(t, err)
