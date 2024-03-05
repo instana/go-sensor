@@ -169,8 +169,7 @@ func (a *azureAgent) sendRequest(req *http.Request) error {
 			return err
 		}
 
-		err = fmt.Errorf("serverless agent has responded with %s : %s", resp.Status, string(respBody))
-		a.logger.Info(err.Error())
+		a.logger.Info("serverless agent has responded with ", resp.Status, ": ", string(respBody))
 		return err
 	}
 

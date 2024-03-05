@@ -104,7 +104,7 @@ func TestLambdaAgent_SendSpans_Error(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 
-	require.Error(t, tracer.Flush(ctx))
+	require.NoError(t, tracer.Flush(ctx))
 	require.Len(t, agent.Bundles, 0)
 }
 

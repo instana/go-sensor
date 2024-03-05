@@ -64,7 +64,7 @@ func initBeeApp(t *testing.T) {
 }
 
 func initSensor() {
-	instana.StartMetrics(&instana.Options{
+	instana.InitCollector(&instana.Options{
 		Service: "beego-test",
 		Tracer: instana.TracerOptions{
 			CollectableHTTPHeaders: []string{"x-custom-header-1", "x-custom-header-2"},
