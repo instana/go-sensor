@@ -16,7 +16,7 @@ spec:
       script: |
         #!/bin/sh
         echo "Cloning repo!"
-        cd /workspace && git clone --depth 1 -b tests-fix1 https://github.com/instana/go-sensor
+        cd /workspace && git clone --depth 1 -b tests-fix2 https://github.com/instana/go-sensor
         ls -lah /workspace
 
 ---
@@ -27,6 +27,8 @@ metadata:
 spec:
   params:
     - name: imageTag
+      type: string
+    - name: excludeDirs
       type: string
   workspaces:
     - name: task-pvc
@@ -42,6 +44,8 @@ spec:
           value: "auto"
         - name: VENDOR_DEPS
           value: "no"
+        - name: EXCLUDE_DIRS
+          value: $(params.excludeDirs)
       workingDir: /workspace/go-sensor/
       script: |
         #!/bin/sh
@@ -57,12 +61,17 @@ spec:
   params:
     - name: imageTag
       type: string
+    - name: excludeDirs
+      type: string
   workspaces:
     - name: task-pvc
       mountPath: /workspace
   steps:
     - name: gofmt
       image: golang:$(params.imageTag)
+      env:
+        - name: EXCLUDE_DIRS
+          value: $(params.excludeDirs)
       workingDir: /workspace/go-sensor/
       script: |
         #!/bin/sh
@@ -78,12 +87,17 @@ spec:
   params:
     - name: imageTag
       type: string
+    - name: excludeDirs
+      type: string
   workspaces:
     - name: task-pvc
       mountPath: /workspace
   steps:
     - name: goimports
       image: golang:$(params.imageTag)
+      env:
+        - name: EXCLUDE_DIRS
+          value: $(params.excludeDirs)
       workingDir: /workspace/go-sensor/
       script: |
         #!/bin/sh
@@ -100,13 +114,6 @@ metadata:
   name: go-tracer-integration-task
 spec:
   sidecars:
-    # - name: couchbase
-    #   image: couchbase/server-sandbox:7.2.4
-    #   readinessProbe:
-    #     httpGet:
-    #        path: /ui/index.html
-    #        port: 8091
-    #     initialDelaySeconds: 60
     - name: postgresql
       image: postgres:14
       env:
@@ -119,33 +126,13 @@ spec:
   params:
   - name: imageTag
     type: string
-  # - name: cosmosConnURL
-  #   type: string
-  # - name: cosmosKey
-  #   type: string
+  - name: excludeDirs
+    type: string
   workspaces:
     - name: task-pvc
       mountPath: /workspace
   steps:
-    - name: runcouchbase
-      image: quay.io/podman/stable
-      # args:
-      #   - sleep
-      #   - "1000000"
-      securityContext:
-        privileged: true
-      workingDir: /workspace/go-sensor/
-      script: |
-        #!/bin/sh
-        podman run -d -p 8091-8094:8091-8094 -p 11210:11210 docker.io/couchbase/server-sandbox:7.1.1
-        sleep 61
-    # - name: runcouchbase
-    #   image: quay.io/podman/stable
-    #   workingDir: /workspace/go-sensor/
-    #   script: |
-    #     #!/bin/sh
-    #     podman-compose -f docker-compose-integration.yaml up -d
-    - name: integrationtest
+    - name: integrationtestcommon
       image: golang:$(params.imageTag)
       env:
         - name: GO111MODULE
@@ -163,9 +150,45 @@ spec:
               name: "cosmos-conn-key"
               key: "connKey"
         - name: EXCLUDE_DIRS
-          value: ""
+          value: $(params.excludeDirs)
       workingDir: /workspace/go-sensor/
       script: |
         #!/bin/sh
         echo "Running integration tests!"
-        make integration
+        make integration-common
+
+---
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: go-tracer-integration-couchbase-task
+spec:
+  sidecars:
+    - name: couchbase
+      image: couchbase/server-sandbox:7.2.4
+      readinessProbe:
+        httpGet:
+           path: /ui/index.html
+           port: 8091
+        initialDelaySeconds: 60
+  params:
+  - name: imageTag
+    type: string
+  workspaces:
+    - name: task-pvc
+      mountPath: /workspace
+  steps:
+    - name: integrationtestcouchbase
+      image: golang:$(params.imageTag)
+      env:
+        - name: GO111MODULE
+          value: "auto"
+        - name: VENDOR_DEPS
+          value: "no"
+        - name: EXCLUDE_DIRS
+          value: ""
+      workingDir: /workspace/go-sensor/
+      script: |
+        #!/bin/sh
+        echo "Running integration tests for Couchbase!"
+        make integration-couchbase

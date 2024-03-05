@@ -14,7 +14,7 @@ spec:
           - ReadWriteOnce
         resources:
           requests:
-            storage: 900Mi
+            storage: 20Gi
   params:
   - name: revision
     value: "tekton"

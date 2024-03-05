@@ -27,11 +27,31 @@ spec:
       runAfter:
         - clone
       matrix:
-        params:
-          - name: imageTag
-            value:
-              - "1.19"
-              - "1.20"
+        include:
+          - name: build-118
+            params:
+              - name: imageTag
+                value: "1.18"
+              - name: excludeDirs
+                value: "./example/grpc-client-server ./instrumentation/cloud.google.com/go ./instrumentation/instaawsv2 ./instrumentation/instaamqp ./instrumentation/instaawssdk ./instrumentation/instagocb ./example/couchbase"
+          - name: build-119
+            params:
+              - name: imageTag
+                value: "1.19"
+              - name: excludeDirs
+                value: ""
+          - name: build-120
+            params:
+              - name: imageTag
+                value: "1.20"
+              - name: excludeDirs
+                value: ""
+          - name: build-121
+            params:
+              - name: imageTag
+                value: "1.21"
+              - name: excludeDirs
+                value: ""
       taskRef:
         name: go-tracer-gofmt-task
       workspaces:
@@ -42,49 +62,119 @@ spec:
       runAfter:
         - gofmt
       matrix:
-        params:
-          - name: imageTag
-            value:
-              - "1.19"
-              - "1.20"
+        include:
+          - name: build-118
+            params:
+              - name: imageTag
+                value: "1.18"
+              - name: excludeDirs
+                value: "./example/grpc-client-server ./instrumentation/cloud.google.com/go ./instrumentation/instaawsv2 ./instrumentation/instaamqp ./instrumentation/instaawssdk ./instrumentation/instagocb ./example/couchbase"
+          - name: build-119
+            params:
+              - name: imageTag
+                value: "1.19"
+              - name: excludeDirs
+                value: ""
+          - name: build-120
+            params:
+              - name: imageTag
+                value: "1.20"
+              - name: excludeDirs
+                value: ""
+          - name: build-121
+            params:
+              - name: imageTag
+                value: "1.21"
+              - name: excludeDirs
+                value: ""
       taskRef:
         name: go-tracer-goimports-task
       workspaces:
         - name: task-pvc
           workspace: go-tracer-ci-pipeline-pvc
     
-    # - name: unittest
-    #   runAfter:
-    #     - goimports
-    #   matrix:
-    #     params:
-    #       - name: imageTag
-    #         value:
-    #           - "1.19"
-    #           - "1.20"
-    #   taskRef:
-    #     name: go-tracer-unittest-task
-    #   workspaces:
-    #     - name: task-pvc
-    #       workspace: go-tracer-ci-pipeline-pvc
-
-    - name: integrationtest
+    - name: unittest
       runAfter:
         - goimports
-      # params:
-      # - name: cosmosConnURL
-      #   value: $(params.cosmosConnURL)
-      # - name: cosmosKey
-      #   value: $(params.cosmosKey)
+      matrix:
+        include:
+          - name: build-118
+            params:
+              - name: imageTag
+                value: "1.18"
+              - name: excludeDirs
+                value: "./example/grpc-client-server ./instrumentation/cloud.google.com/go ./instrumentation/instaawsv2 ./instrumentation/instaamqp ./instrumentation/instaawssdk ./instrumentation/instagocb ./example/couchbase"
+          - name: build-119
+            params:
+              - name: imageTag
+                value: "1.19"
+              - name: excludeDirs
+                value: ""
+          - name: build-120
+            params:
+              - name: imageTag
+                value: "1.20"
+              - name: excludeDirs
+                value: ""
+          - name: build-121
+            params:
+              - name: imageTag
+                value: "1.21"
+              - name: excludeDirs
+                value: ""
+      taskRef:
+        name: go-tracer-unittest-task
+      workspaces:
+        - name: task-pvc
+          workspace: go-tracer-ci-pipeline-pvc
+
+    - name: integrationtestcommon
+      runAfter:
+        - unittest
+      matrix:
+        include:
+          - name: build-118
+            params:
+              - name: imageTag
+                value: "1.18"
+              - name: excludeDirs
+                value: "./example/grpc-client-server ./instrumentation/cloud.google.com/go ./instrumentation/instaawsv2 ./instrumentation/instaamqp ./instrumentation/instaawssdk ./instrumentation/instagocb ./example/couchbase"
+          - name: build-119
+            params:
+              - name: imageTag
+                value: "1.19"
+              - name: excludeDirs
+                value: ""
+          - name: build-120
+            params:
+              - name: imageTag
+                value: "1.20"
+              - name: excludeDirs
+                value: ""
+          - name: build-121
+            params:
+              - name: imageTag
+                value: "1.21"
+              - name: excludeDirs
+                value: ""
+
+      taskRef:
+        name: go-tracer-integration-task
+      workspaces:
+        - name: task-pvc
+          workspace: go-tracer-ci-pipeline-pvc
+
+    - name: integrationtestcouchbase
+      runAfter:
+        - integrationtestcommon
       matrix:
         params:
           - name: imageTag
             value:
               - "1.19"
-              - "1.20"
 
       taskRef:
-        name: go-tracer-integration-task
+        name: go-tracer-integration-couchbase-task
       workspaces:
         - name: task-pvc
           workspace: go-tracer-ci-pipeline-pvc
