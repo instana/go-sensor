@@ -1,12 +1,13 @@
-// (c) Copyright IBM Corp. 2021
-// (c) Copyright Instana Inc. 2020
+// (c) Copyright IBM Corp. 2024
 
-package acceptor
+package acceptor_test
 
 import (
 	"os"
 	"testing"
 	"time"
+
+	"github.com/instana/go-sensor/acceptor"
 )
 
 func TestNewHTTPClient(t *testing.T) {
@@ -40,7 +41,7 @@ func TestNewHTTPClient(t *testing.T) {
 			os.Setenv("INSTANA_ENDPOINT_PROXY", "http://{example.com")
 		}
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := NewHTTPClient(tt.args.timeout)
+			_, err := acceptor.NewHTTPClient(tt.args.timeout)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("NewHTTPClient() error = %v, wantErr %v", err, tt.wantErr)
 				return
