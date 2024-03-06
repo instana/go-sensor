@@ -66,10 +66,12 @@ func (srv *serverlessAgent) HandleBundle(w http.ResponseWriter, req *http.Reques
 	if err != nil {
 		log.Printf("ERROR: failed to unmarshal serverless agent spans request body: %s", err.Error())
 	} else {
-		if root.Spans[0].Data.SDKCustom.Tags.ReturnError == "true" ||
-			root.Spans[0].Data.Lambda.ReturnError == "true" {
-			w.WriteHeader(http.StatusInternalServerError)
-			return
+		if len(root.Spans) > 0 {
+			if root.Spans[0].Data.SDKCustom.Tags.ReturnError == "true" ||
+				root.Spans[0].Data.Lambda.ReturnError == "true" {
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
 		}
 	}
 
