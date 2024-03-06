@@ -109,6 +109,24 @@ func TestAzureAgent_SpanDetails(t *testing.T) {
         }}`, string(spans[0]["data"]))
 }
 
+func TestAzureAgent_SendSpans_Error(t *testing.T) {
+	defer agent.Reset()
+
+	tracer := instana.NewTracer()
+	sensor := instana.NewSensorWithTracer(tracer)
+	defer instana.ShutdownSensor()
+
+	sp := sensor.Tracer().StartSpan("azf")
+	sp.SetTag("returnError", "true")
+	sp.Finish()
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+
+	require.NoError(t, tracer.Flush(ctx))
+	require.Len(t, agent.Bundles, 0)
+}
+
 func setupAzureFunctionEnv() func() {
 	var teardownFuncs []func()
 
