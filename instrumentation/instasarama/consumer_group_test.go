@@ -15,31 +15,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-type handler struct {
-	*testing.T
-	cancel context.CancelFunc
-}
-
-func (h *handler) Setup(s sarama.ConsumerGroupSession) error   { return nil }
-func (h *handler) Cleanup(s sarama.ConsumerGroupSession) error { return nil }
-func (h *handler) ConsumeClaim(sess sarama.ConsumerGroupSession, claim sarama.ConsumerGroupClaim) error {
-	for msg := range claim.Messages() {
-		sess.MarkMessage(msg, "")
-		h.Logf("consumed msg %v", msg)
-		h.cancel()
-		break
-	}
-	return nil
-}
-
-func NewTestConfig() *sarama.Config {
-	config := sarama.NewConfig()
-	config.Consumer.Retry.Backoff = 0
-	config.Producer.Retry.Backoff = 0
-	config.Version = sarama.MinVersion
-	return config
-}
-
 func TestNewConsumerGroup_Consume(t *testing.T) {
 
 	recorder := instana.NewTestRecorder()
@@ -89,6 +64,31 @@ func TestNewConsumerGroupFromClient_Consume(t *testing.T) {
 	topics := []string{"my-topic"}
 	err = group.Consume(ctx, topics, h)
 	assert.Error(t, err)
+}
+
+type handler struct {
+	*testing.T
+	cancel context.CancelFunc
+}
+
+func (h *handler) Setup(s sarama.ConsumerGroupSession) error   { return nil }
+func (h *handler) Cleanup(s sarama.ConsumerGroupSession) error { return nil }
+func (h *handler) ConsumeClaim(sess sarama.ConsumerGroupSession, claim sarama.ConsumerGroupClaim) error {
+	for msg := range claim.Messages() {
+		sess.MarkMessage(msg, "")
+		h.Logf("consumed msg %v", msg)
+		h.cancel()
+		break
+	}
+	return nil
+}
+
+func NewTestConfig() *sarama.Config {
+	config := sarama.NewConfig()
+	config.Consumer.Retry.Backoff = 0
+	config.Producer.Retry.Backoff = 0
+	config.Version = sarama.MinVersion
+	return config
 }
 
 func initMockBroker(t *testing.T) *sarama.MockBroker {

@@ -88,8 +88,6 @@ func TestLambdaAgent_SendSpans(t *testing.T) {
 func TestLambdaAgent_SendSpans_Error(t *testing.T) {
 	defer agent.Reset()
 
-	os.Setenv("NEED_ERROR", "true")
-
 	tracer := instana.NewTracer()
 	sensor := instana.NewSensorWithTracer(tracer)
 	defer instana.ShutdownSensor()
@@ -98,6 +96,7 @@ func TestLambdaAgent_SendSpans_Error(t *testing.T) {
 		"lambda.arn":     "aws::test-lambda::$LATEST",
 		"lambda.name":    "test-lambda",
 		"lambda.version": "$LATEST",
+		"lambda.error":   "true",
 	})
 	sp.Finish()
 

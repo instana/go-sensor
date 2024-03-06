@@ -7,6 +7,7 @@
 package instana_test
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -60,10 +61,16 @@ func (srv *serverlessAgent) HandleBundle(w http.ResponseWriter, req *http.Reques
 		body = nil
 	}
 
-	if value, ok := os.LookupEnv("NEED_ERROR"); ok && value == "true" {
-		os.Unsetenv("NEED_ERROR")
-		w.WriteHeader(http.StatusInternalServerError)
-		return
+	var root Root
+	err = json.Unmarshal(body, &root)
+	if err != nil {
+		log.Printf("ERROR: failed to unmarshal serverless agent spans request body: %s", err.Error())
+	} else {
+		if root.Spans[0].Data.SDKCustom.Tags.ReturnError == "true" ||
+			root.Spans[0].Data.Lambda.ReturnError == "true" {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
 	}
 
 	srv.Bundles = append(srv.Bundles, serverlessAgentRequest{
@@ -89,4 +96,25 @@ func restoreEnvVarFunc(key string) func() {
 	}
 
 	return func() { os.Unsetenv(key) }
+}
+
+type Data struct {
+	SDKCustom struct {
+		Tags struct {
+			ReturnError string `json:"returnError"`
+		} `json:"tags"`
+	} `json:"sdk.custom"`
+	Lambda LambdaData `json:"lambda"`
+}
+
+type LambdaData struct {
+	ReturnError string `json:"error"`
+}
+
+type Span struct {
+	Data Data `json:"data"`
+}
+
+type Root struct {
+	Spans []Span `json:"spans"`
 }

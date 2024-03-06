@@ -112,13 +112,12 @@ func TestAzureAgent_SpanDetails(t *testing.T) {
 func TestAzureAgent_SendSpans_Error(t *testing.T) {
 	defer agent.Reset()
 
-	os.Setenv("NEED_ERROR", "true")
-
 	tracer := instana.NewTracer()
 	sensor := instana.NewSensorWithTracer(tracer)
 	defer instana.ShutdownSensor()
 
 	sp := sensor.Tracer().StartSpan("azf")
+	sp.SetTag("returnError", "true")
 	sp.Finish()
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
