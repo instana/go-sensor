@@ -63,7 +63,7 @@ func initBeeApp(t *testing.T) {
 	sleep(serverDepTime)
 }
 
-func initSensor() {
+func initCollector() {
 	instana.InitCollector(&instana.Options{
 		Service: "beego-test",
 		Tracer: instana.TracerOptions{
@@ -74,7 +74,7 @@ func initSensor() {
 }
 
 func TestPropagation(t *testing.T) {
-	initSensor()
+	initCollector()
 	recorder := instana.NewTestRecorder()
 	tracer := instana.NewTracerWithEverything(&instana.Options{
 		Service:     "beego-test",
