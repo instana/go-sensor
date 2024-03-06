@@ -123,7 +123,7 @@ func TestAzureAgent_SendSpans_Error(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 
-	require.NoError(t, tracer.Flush(ctx))
+	require.Error(t, tracer.Flush(ctx))
 	require.Len(t, agent.Bundles, 0)
 }
 

@@ -163,8 +163,9 @@ func (a *lambdaAgent) sendRequest(req *http.Request) error {
 			return nil
 		}
 
-		a.logger.Info("serverless agent has responded with ", resp.Status, ": ", string(respBody))
-		return nil
+		err = fmt.Errorf("serverless agent has responded with %s : %s", resp.Status, string(respBody))
+		a.logger.Info(err.Error())
+		return err
 	}
 
 	io.CopyN(ioutil.Discard, resp.Body, 1<<20)
