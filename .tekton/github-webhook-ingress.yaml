@@ -1,0 +1,20 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: github-webhook-ingress
+spec:
+  ingressClassName: public-iks-k8s-nginx
+  tls:
+  - hosts:
+    - gotracer-ci-eu-de-1-cx2-8-cb73e84fcbb4ab67ae0abd68dec78837-0000.eu-de.containers.appdomain.cloud
+  rules:
+    - host: gotracer-ci-eu-de-1-cx2-8-cb73e84fcbb4ab67ae0abd68dec78837-0000.eu-de.containers.appdomain.cloud
+      http:
+        paths:
+          - path: /hooks
+            pathType: Exact
+            backend:
+              service:
+                name: el-github-pr-eventlistener
+                port:
+                  number: 8080

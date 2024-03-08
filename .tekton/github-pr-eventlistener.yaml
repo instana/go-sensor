@@ -1,0 +1,102 @@
+apiVersion: triggers.tekton.dev/v1beta1
+kind: TriggerTemplate
+metadata:
+  name: github-pr-pipeline-template
+spec:
+  params:
+    - description: The git branch name
+      name: git-branch
+    - description: The git branch name shortened and converted to RFC 1123 subdomain names
+      name: git-branch-normalized
+    - description: The full sha of the git commit
+      name: git-commit-sha
+    - description: The short 7 digit sha of the git commit
+      name: git-commit-short-sha
+  resourcetemplates:
+    - apiVersion: tekton.dev/v1
+      kind: PipelineRun
+      metadata:
+        # After variable resolution, this has to be maximum 63 character long,
+        # lower case, RFC 1123 subdomain name. The regex used for validation is
+        # '[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*'
+        name: go-tracer-pr-$(tt.params.git-branch-normalized)-$(tt.params.git-commit-short-sha)
+      spec:
+        params:
+        - name: revision
+          value: $(tt.params.git-branch)
+        - name: git-commit-sha
+          value: $(tt.params.git-commit-sha)
+        pipelineRef:
+          name: go-tracer-ci-pipeline
+        workspaces:
+        - name: go-tracer-ci-pipeline-pvc
+          volumeClaimTemplate:
+            spec:
+              accessModes:
+                - ReadWriteOnce
+              resources:
+                requests:
+                  storage: 20Gi
+---
+apiVersion: triggers.tekton.dev/v1beta1
+kind: TriggerBinding
+metadata:
+  name: github-pr-binding
+spec:
+  params:
+    - name: git-branch
+      value: $(body.pull_request.head.ref)
+    - name: git-branch-normalized
+      value: $(extensions.git_branch_normalized)
+    - name: git-commit-sha
+      value: $(body.pull_request.head.sha)
+    - name: git-commit-short-sha
+      value: $(extensions.truncated_sha)
+---
+apiVersion: triggers.tekton.dev/v1beta1
+kind: EventListener
+metadata:
+  name: github-pr-eventlistener
+spec:
+  serviceAccountName: tekton-triggers-eventlistener-serviceaccount
+  triggers:
+    - name: github-pr-trigger
+      interceptors:
+        - name: receive-github-event
+          ref:
+            name: "github"
+          params:
+            - name: "secretRef"
+              value:
+                secretName: github-interceptor-secret
+                secretKey: secretToken
+            - name: "eventTypes"
+              value: ["pull_request"]
+        - name: filter-irrelevant-events
+          ref:
+            name: "cel"
+          params:
+            - name: "filter"
+              # We should not trigger on 'closed', 'assigned', 'unassigned', 'converted_to_draft'
+              value: "body.action in ['opened', 'synchronize', 'reopened']"
+        - name: add-truncated-sha
+          ref:
+            name: "cel"
+          params:
+            - name: "overlays"
+              value:
+              - key: truncated_sha
+                expression: "body.pull_request.head.sha.truncate(7)"
+        - name: add-normalized-branch-name
+          ref:
+            name: "cel"
+          params:
+            - name: "overlays"
+              value:
+              - key: git_branch_normalized
+                # The git branch name shortened and converted to RFC 1123 subdomain names
+                expression: 'body.pull_request.head.ref.truncate(38).lowerAscii().translate("_", "-")'
+      bindings:
+        - ref: github-pr-binding
+      template:
+        ref: github-pr-pipeline-template
