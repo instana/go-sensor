@@ -6,6 +6,8 @@ spec:
   params:
   - name: revision
     type: string
+  - name: git-commit-sha
+    type: string
   # - name: cosmosConnURL
   #   type: string
   # - name: cosmosKey
@@ -13,6 +15,28 @@ spec:
   workspaces:
     - name: go-tracer-ci-pipeline-pvc
   tasks:
+
+    - name: github-set-check-status-to-pending
+      taskRef:
+        kind: Task
+        name: github-set-status
+      params:
+      - name: SHA
+        value: $(params.git-commit-sha)
+      - name: STATE
+        value: pending
+    - name: github-set-check-status-to-success-or-failure
+      runAfter:
+      - integrationtestcouchbase
+      taskRef:
+        kind: Task
+        name: github-set-status
+      params:
+      - name: SHA
+        value: $(params.git-commit-sha)
+      - name: STATE
+        value: success
+
     - name: clone
       params:
       - name: revision
