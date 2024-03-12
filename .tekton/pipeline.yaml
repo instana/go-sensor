@@ -25,17 +25,6 @@ spec:
         value: $(params.git-commit-sha)
       - name: STATE
         value: pending
-    - name: github-set-check-status-to-success-or-failure
-      runAfter:
-      - integrationtestcouchbase
-      taskRef:
-        kind: Task
-        name: github-set-status
-      params:
-      - name: SHA
-        value: $(params.git-commit-sha)
-      - name: STATE
-        value: success
 
     - name: clone
       params:
@@ -226,3 +215,14 @@ spec:
       workspaces:
         - name: task-pvc
           workspace: go-tracer-ci-pipeline-pvc
+
+  finally:
+    - name: github-set-check-status-to-success-or-failure
+      taskRef:
+        kind: Task
+        name: github-set-status
+      params:
+      - name: SHA
+        value: $(params.git-commit-sha)
+      - name: STATE
+        value: "$(tasks.status)"
