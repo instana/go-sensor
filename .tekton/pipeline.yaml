@@ -25,6 +25,8 @@ spec:
         value: $(params.git-commit-sha)
       - name: STATE
         value: pending
+      - name: PIPELINE_RUN_NAME
+        value: $(context.pipelineRun.name)
 
     - name: clone
       params:
@@ -226,3 +228,5 @@ spec:
         value: $(params.git-commit-sha)
       - name: STATE
         value: "$(tasks.status)"
+      - name: PIPELINE_RUN_NAME
+        value: $(context.pipelineRun.name)
