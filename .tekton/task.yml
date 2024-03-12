@@ -203,6 +203,7 @@ spec:
   - name: SHA
   - name: STATE
   - name: PIPELINE_RUN_NAME
+  - name: go-version
   steps:
     - name: set-status
       # curlimages/curl:8.6.0
@@ -214,6 +215,8 @@ spec:
         value: $(params.STATE)
       - name: PIPELINE_RUN_NAME
         value: $(params.PIPELINE_RUN_NAME)
+      - name: GO_VERSION
+        value: $(params.go-version)
       - name: GITHUB_TOKEN
         valueFrom:
           secretKeyRef:
@@ -245,5 +248,5 @@ spec:
                    "state": "'"${status}"'",
                    "target_url":"http://localhost:8001/api/v1/namespaces/tekton-pipelines/services/tekton-dashboard:http/proxy/#/namespaces/default/pipelineruns/'"${PIPELINE_RUN_NAME}"'",
                    "description": "'"${description}"'",
-                   "context":"Tekton Build Pipeline"
+                   "context":"Tekton Build Pipeline: '"${GO_VERSION}"'"
                  }'
