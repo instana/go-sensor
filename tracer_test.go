@@ -4,10 +4,12 @@
 package instana_test
 
 import (
+	"os"
 	"testing"
 
 	instana "github.com/instana/go-sensor"
 	ot "github.com/opentracing/opentracing-go"
+	"github.com/opentracing/opentracing-go/ext"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -88,4 +90,133 @@ func TestTracer_NonInstanaSpan(t *testing.T) {
 	assert.NotPanics(t, func() {
 		tracer.StartSpanWithOptions("my_operation", opts)
 	})
+}
+
+func Test_tracerS_SuppressTracing(t *testing.T) {
+	opName := "my_operation"
+	suppressTracingTag := "suppress_tracing"
+	exitSpan := ext.SpanKindRPCClientEnum
+	entrySpan := ext.SpanKindRPCServerEnum
+	allowExitAsRoot := "INSTANA_ALLOW_EXIT_AS_ROOT"
+
+	getSpanTags := func(kind ext.SpanKindEnum, suppressTracing bool) ot.Tags {
+		return ot.Tags{
+			"span.kind":        kind,
+			suppressTracingTag: suppressTracing,
+		}
+	}
+
+	type args struct {
+		operationName string
+		opts          ot.StartSpanOptions
+	}
+	tests := []struct {
+		name      string
+		exportEnv bool
+		args      args
+		want      bool
+	}{
+		{
+			name:      "env_disable_tag_false_exit_true",
+			exportEnv: false,
+			args: args{
+				operationName: opName,
+				opts: ot.StartSpanOptions{
+					Tags: getSpanTags(exitSpan, false),
+				},
+			},
+			want: true,
+		},
+		{
+			name:      "env_disable_tag_true_exit_true",
+			exportEnv: false,
+			args: args{
+				operationName: opName,
+				opts: ot.StartSpanOptions{
+					Tags: getSpanTags(exitSpan, true),
+				},
+			},
+			want: true,
+		},
+		{
+			name:      "env_enable_tag_false_exit_true",
+			exportEnv: true,
+			args: args{
+				operationName: opName,
+				opts: ot.StartSpanOptions{
+					Tags: getSpanTags(exitSpan, false),
+				},
+			},
+			want: false,
+		},
+		{
+			name:      "env_enable_tag_true_exit_true",
+			exportEnv: true,
+			args: args{
+				operationName: opName,
+				opts: ot.StartSpanOptions{
+					Tags: getSpanTags(exitSpan, true),
+				},
+			},
+			want: false,
+		}, // ------------------
+		{
+			name:      "env_disable_tag_false_exit_false",
+			exportEnv: false,
+			args: args{
+				operationName: opName,
+				opts: ot.StartSpanOptions{
+					Tags: getSpanTags(entrySpan, false),
+				},
+			},
+			want: false,
+		},
+		{
+			name:      "env_disable_tag_true_exit_false",
+			exportEnv: false,
+			args: args{
+				operationName: opName,
+				opts: ot.StartSpanOptions{
+					Tags: getSpanTags(entrySpan, true),
+				},
+			},
+			want: true,
+		},
+		{
+			name:      "env_enable_tag_false_exit_false",
+			exportEnv: true,
+			args: args{
+				operationName: opName,
+				opts: ot.StartSpanOptions{
+					Tags: getSpanTags(entrySpan, false),
+				},
+			},
+			want: false,
+		},
+		{
+			name:      "env_enable_tag_true_exit_false",
+			exportEnv: true,
+			args: args{
+				operationName: opName,
+				opts: ot.StartSpanOptions{
+					Tags: getSpanTags(entrySpan, true),
+				},
+			},
+			want: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.exportEnv {
+				os.Setenv(allowExitAsRoot, "1")
+			} else {
+				os.Unsetenv(allowExitAsRoot)
+			}
+
+			tracer := instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, nil)
+			got := tracer.StartSpanWithOptions(tt.args.operationName, tt.args.opts)
+			sc := got.Context().(instana.SpanContext)
+			assert.Equal(t, tt.want, sc.Suppressed)
+		})
+	}
 }

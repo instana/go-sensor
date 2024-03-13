@@ -9,6 +9,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/opentracing/opentracing-go/ext"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -185,5 +186,70 @@ eth0	00000000	010011AC	0003	0	0	0	00000000	0	0	0
 func BenchmarkFormatID(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		FormatID(int64(i))
+	}
+}
+
+func Test_optInExitSpans(t *testing.T) {
+	type args struct {
+		kind interface{}
+	}
+	tests := []struct {
+		name      string
+		args      args
+		exportEnv bool
+		want      bool
+	}{
+		{
+			name: "exit_span_env_exported",
+			args: args{
+				kind: ext.SpanKindRPCClientEnum,
+			},
+			exportEnv: true,
+			want:      true,
+		},
+		{
+			name: "exit_span_env_not_exported",
+			args: args{
+				kind: ext.SpanKindProducerEnum,
+			},
+			exportEnv: false,
+			want:      false,
+		},
+		{
+			name: "not_exit_span_env_exported",
+			args: args{
+				kind: ext.SpanKindRPCServerEnum,
+			},
+			exportEnv: true,
+			want:      false,
+		},
+		{
+			name: "not_exit_span_env_not_exported",
+			args: args{
+				kind: ext.SpanKindConsumerEnum,
+			},
+			exportEnv: false,
+			want:      false,
+		},
+		{
+			name: "span_kind_is_nil",
+			args: args{
+				kind: ext.SpanKindRPCServerEnum,
+			},
+			exportEnv: true,
+			want:      false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.exportEnv {
+				os.Setenv(allowExitAsRoot, "1")
+			} else {
+				os.Unsetenv(allowExitAsRoot)
+			}
+			if got := optInExitSpans(tt.args.kind); got != tt.want {
+				t.Errorf("optInExitSpans() = %v, want %v", got, tt.want)
+			}
+		})
 	}
 }

@@ -11,6 +11,7 @@ import (
 
 	"github.com/instana/go-sensor/logger"
 	ot "github.com/opentracing/opentracing-go"
+	"github.com/opentracing/opentracing-go/ext"
 	otlog "github.com/opentracing/opentracing-go/log"
 )
 
@@ -180,7 +181,8 @@ func (r *spanS) SetTag(key string, value interface{}) ot.Span {
 		r.ErrorCount++
 	}
 
-	if key == suppressTracingTag {
+	if !isExitSpans(r.Tags[string(ext.SpanKind)]) &&
+		key == suppressTracingTag {
 		r.context.Suppressed = true
 		return r
 	}
