@@ -10,10 +10,8 @@ spec:
     type: string
   - name: go-version
     type: string
-  # - name: cosmosConnURL
-  #   type: string
-  # - name: cosmosKey
-  #   type: string
+  - name: excludeDirs
+    type: string
   workspaces:
     - name: go-tracer-ci-pipeline-pvc
   tasks:
@@ -49,39 +47,7 @@ spec:
       - name: imageTag
         value: $(params.go-version)
       - name: excludeDirs
-        value: ""
-      # matrix:
-      #   include:
-      #     - name: build-117
-      #       params:
-      #         - name: imageTag
-      #           value: "1.17"
-      #         - name: excludeDirs
-      #           value: "./internal/bin/sql ./example/gin ./example/sql-redis ./example/gorm-postgres ./example/gorm-sqlite ./example/grpc-client-server ./instrumentation/cloud.google.com/go ./instrumentation/instabeego ./example/beego ./instrumentation/instaawsv2 ./instrumentation/instaecho ./instrumentation/instagorm ./instrumentation/instaamqp ./instrumentation/instaawssdk ./instrumentation/instagocb ./example/couchbase ./instrumentation/instacosmos ./example/cosmos ./instrumentation/instamongo"
-      #     - name: build-118
-      #       params:
-      #         - name: imageTag
-      #           value: "1.18"
-      #         - name: excludeDirs
-      #           value: "./example/grpc-client-server ./instrumentation/cloud.google.com/go ./instrumentation/instaawsv2 ./instrumentation/instaamqp ./instrumentation/instaawssdk ./instrumentation/instagocb ./example/couchbase"
-      #     - name: build-119
-      #       params:
-      #         - name: imageTag
-      #           value: "1.19"
-      #         - name: excludeDirs
-      #           value: ""
-      #     - name: build-120
-      #       params:
-      #         - name: imageTag
-      #           value: "1.20"
-      #         - name: excludeDirs
-      #           value: ""
-      #     - name: build-121
-      #       params:
-      #         - name: imageTag
-      #           value: "1.21"
-      #         - name: excludeDirs
-      #           value: ""
+        value: $(params.excludeDirs)
       taskRef:
         name: go-tracer-gofmt-task
       workspaces:
@@ -95,39 +61,7 @@ spec:
       - name: imageTag
         value: $(params.go-version)
       - name: excludeDirs
-        value: ""
-      # matrix:
-      #   include:
-      #     - name: build-117
-      #       params:
-      #         - name: imageTag
-      #           value: "1.17"
-      #         - name: excludeDirs
-      #           value: ".//internal/bin/sql ./example/gin ./example/sql-redis ./example/gorm-postgres ./example/gorm-sqlite ./example/grpc-client-server ./instrumentation/cloud.google.com/go ./instrumentation/instabeego ./example/beego ./instrumentation/instaawsv2 ./instrumentation/instaecho ./instrumentation/instagorm ./instrumentation/instaamqp ./instrumentation/instaawssdk ./instrumentation/instagocb ./example/couchbase ./instrumentation/instacosmos ./example/cosmos ./instrumentation/instamongo"
-      #     - name: build-118
-      #       params:
-      #         - name: imageTag
-      #           value: "1.18"
-      #         - name: excludeDirs
-      #           value: "./example/grpc-client-server ./instrumentation/cloud.google.com/go ./instrumentation/instaawsv2 ./instrumentation/instaamqp ./instrumentation/instaawssdk ./instrumentation/instagocb ./example/couchbase"
-      #     - name: build-119
-      #       params:
-      #         - name: imageTag
-      #           value: "1.19"
-      #         - name: excludeDirs
-      #           value: ""
-      #     - name: build-120
-      #       params:
-      #         - name: imageTag
-      #           value: "1.20"
-      #         - name: excludeDirs
-      #           value: ""
-      #     - name: build-121
-      #       params:
-      #         - name: imageTag
-      #           value: "1.21"
-      #         - name: excludeDirs
-      #           value: ""
+        value: $(params.excludeDirs)
       taskRef:
         name: go-tracer-goimports-task
       workspaces:
@@ -141,39 +75,7 @@ spec:
       - name: imageTag
         value: $(params.go-version)
       - name: excludeDirs
-        value: ""
-      # matrix:
-      #   include:
-      #     - name: build-117
-      #       params:
-      #         - name: imageTag
-      #           value: "1.17"
-      #         - name: excludeDirs
-      #           value: "./internal/bin/sql ./example/gin ./example/sql-redis ./example/gorm-postgres ./example/gorm-sqlite ./example/grpc-client-server ./instrumentation/cloud.google.com/go ./instrumentation/instabeego ./example/beego ./instrumentation/instaawsv2 ./instrumentation/instaecho ./instrumentation/instagorm ./instrumentation/instaamqp ./instrumentation/instaawssdk ./instrumentation/instagocb ./example/couchbase ./instrumentation/instacosmos ./example/cosmos ./instrumentation/instamongo"
-      #     - name: build-118
-      #       params:
-      #         - name: imageTag
-      #           value: "1.18"
-      #         - name: excludeDirs
-      #           value: "./example/grpc-client-server ./instrumentation/cloud.google.com/go ./instrumentation/instaawsv2 ./instrumentation/instaamqp ./instrumentation/instaawssdk ./instrumentation/instagocb ./example/couchbase"
-      #     - name: build-119
-      #       params:
-      #         - name: imageTag
-      #           value: "1.19"
-      #         - name: excludeDirs
-      #           value: ""
-      #     - name: build-120
-      #       params:
-      #         - name: imageTag
-      #           value: "1.20"
-      #         - name: excludeDirs
-      #           value: ""
-      #     - name: build-121
-      #       params:
-      #         - name: imageTag
-      #           value: "1.21"
-      #         - name: excludeDirs
-      #           value: ""
+        value: $(params.excludeDirs)
       taskRef:
         name: go-tracer-unittest-task
       workspaces:
@@ -187,42 +89,9 @@ spec:
       - name: imageTag
         value: $(params.go-version)
       - name: excludeDirs
-        value: ""
-      # matrix:
-      #   include:
-      #     - name: build-117
-      #       params:
-      #         - name: imageTag
-      #           value: "1.17"
-      #         - name: excludeDirs
-      #           value: "./internal/bin/sql ./example/gin ./example/sql-redis ./example/gorm-postgres ./example/gorm-sqlite ./example/grpc-client-server ./instrumentation/cloud.google.com/go ./instrumentation/instabeego ./example/beego ./instrumentation/instaawsv2 ./instrumentation/instaecho ./instrumentation/instagorm ./instrumentation/instaamqp ./instrumentation/instaawssdk ./instrumentation/instagocb ./example/couchbase ./instrumentation/instacosmos ./example/cosmos ./instrumentation/instamongo"
-      #     - name: build-118
-      #       params:
-      #         - name: imageTag
-      #           value: "1.18"
-      #         - name: excludeDirs
-      #           value: "./example/grpc-client-server ./instrumentation/cloud.google.com/go ./instrumentation/instaawsv2 ./instrumentation/instaamqp ./instrumentation/instaawssdk ./instrumentation/instagocb ./example/couchbase"
-      #     - name: build-119
-      #       params:
-      #         - name: imageTag
-      #           value: "1.19"
-      #         - name: excludeDirs
-      #           value: ""
-      #     - name: build-120
-      #       params:
-      #         - name: imageTag
-      #           value: "1.20"
-      #         - name: excludeDirs
-      #           value: ""
-      #     - name: build-121
-      #       params:
-      #         - name: imageTag
-      #           value: "1.21"
-      #         - name: excludeDirs
-      #           value: ""
-
+        value: $(params.excludeDirs)
       taskRef:
-        name: go-tracer-integration-task
+        name: go-tracer-integration-common-task
       workspaces:
         - name: task-pvc
           workspace: go-tracer-ci-pipeline-pvc
@@ -230,17 +99,15 @@ spec:
     - name: integrationtestcouchbase
       runAfter:
         - integrationtestcommon
+      when:
+        - input: "$(params.go-version)"
+          operator: in
+          values: ["1.21"]
       params:
       - name: imageTag
         value: $(params.go-version)
       - name: excludeDirs
-        value: ""
-      # matrix:
-      #   params:
-      #     - name: imageTag
-      #       value:
-      #         - "1.19"
-
+        value: $(params.excludeDirs)
       taskRef:
         name: go-tracer-integration-couchbase-task
       workspaces:

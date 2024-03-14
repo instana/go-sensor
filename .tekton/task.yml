@@ -111,7 +111,7 @@ spec:
 apiVersion: tekton.dev/v1
 kind: Task
 metadata:
-  name: go-tracer-integration-task
+  name: go-tracer-integration-common-task
 spec:
   sidecars:
     - name: postgresql
@@ -123,6 +123,7 @@ spec:
           value: "postgres"
         - name: POSTGRES_PASSWORD
           value: "mysecretpassword"
+
   params:
   - name: imageTag
     type: string
@@ -132,7 +133,7 @@ spec:
     - name: task-pvc
       mountPath: /workspace
   steps:
-    - name: integrationtestcommon
+    - name: integrationtest
       image: golang:$(params.imageTag)
       env:
         - name: GO111MODULE
@@ -171,8 +172,11 @@ spec:
            path: /ui/index.html
            port: 8091
         initialDelaySeconds: 60
+
   params:
   - name: imageTag
+    type: string
+  - name: excludeDirs
     type: string
   workspaces:
     - name: task-pvc
@@ -181,17 +185,57 @@ spec:
     - name: integrationtestcouchbase
       image: golang:$(params.imageTag)
       env:
+        - name: GO_VERSION
+          value: $(params.imageTag)
         - name: GO111MODULE
           value: "auto"
         - name: VENDOR_DEPS
           value: "no"
         - name: EXCLUDE_DIRS
-          value: ""
+          value: $(params.excludeDirs)
       workingDir: /workspace/go-sensor/
       script: |
         #!/bin/sh
-        echo "Running integration tests for Couchbase!"
+        echo "Running couchbase integration tests!"
         make integration-couchbase
+
+
+---
+
+# apiVersion: tekton.dev/v1
+# kind: Task
+# metadata:
+#   name: go-tracer-integration-couchbase-task
+# spec:
+#   sidecars:
+#     - name: couchbase
+#       image: couchbase/server-sandbox:7.2.4
+#       readinessProbe:
+#         httpGet:
+#            path: /ui/index.html
+#            port: 8091
+#         initialDelaySeconds: 60
+#   params:
+#   - name: imageTag
+#     type: string
+#   workspaces:
+#     - name: task-pvc
+#       mountPath: /workspace
+#   steps:
+#     - name: integrationtestcouchbase
+#       image: golang:$(params.imageTag)
+#       env:
+#         - name: GO111MODULE
+#           value: "auto"
+#         - name: VENDOR_DEPS
+#           value: "no"
+#         - name: EXCLUDE_DIRS
+#           value: ""
+#       workingDir: /workspace/go-sensor/
+#       script: |
+#         #!/bin/sh
+#         echo "Running integration tests for Couchbase!"
+#         make integration-couchbase
 
 ---
 apiVersion: tekton.dev/v1
@@ -248,5 +292,5 @@ spec:
                    "state": "'"${status}"'",
                    "target_url":"http://localhost:8001/api/v1/namespaces/tekton-pipelines/services/tekton-dashboard:http/proxy/#/namespaces/default/pipelineruns/'"${PIPELINE_RUN_NAME}"'",
                    "description": "'"${description}"'",
-                   "context":"Tekton Build Pipeline: '"${GO_VERSION}"'"
+                   "context":"Tekton Build Pipeline: go'"${GO_VERSION}"'"
                  }'
