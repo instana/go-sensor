@@ -40,8 +40,3 @@ r.HandlerFunc(http.MethodDelete, "/foo/:id", func(writer http.ResponseWriter, re
 
 [godoc]: https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instahttprouter
 
-<!---
-Mandatory comment section for CI/CD !!
-target-pkg-url: github.com/julienschmidt/httprouter
-current-version: v1.3.0
---->

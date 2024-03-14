@@ -40,9 +40,3 @@ logrus.WithContext(ctx).
 
 [godoc]: https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instalogrus
 [fullExample]: https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instalogrus#example-package
-
-<!---
-Mandatory comment section for CI/CD !!
-target-pkg-url: github.com/sirupsen/logrus
-current-version: v1.9.3
---->

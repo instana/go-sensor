@@ -62,8 +62,3 @@ Hence, to avoid collisions, it is recommended to avoid these keys in your applic
 [aws-sdk-go-v2-github]: https://github.com/aws/aws-sdk-go-v2
 [aws-config]: https://pkg.go.dev/github.com/aws/aws-sdk-go-v2/config#Config
 
-<!---
-Mandatory comment section for CI/CD !!
-target-pkg-url: github.com/aws/aws-sdk-go-v2
-current-version: v1.24.0
---->

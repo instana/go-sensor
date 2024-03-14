@@ -7,6 +7,7 @@
 package instana_test
 
 import (
+	"context"
 	"encoding/json"
 	"log"
 	"net/http"
@@ -174,6 +175,22 @@ func TestGCRAgent_SendSpans(t *testing.T) {
 
 	require.Len(t, spans, 1)
 	assert.JSONEq(t, `{"hl": true, "cp": "gcp", "e": "id1"}`, string(spans[0]["f"]))
+}
+
+func TestGCRAgent_FlushSpans(t *testing.T) {
+	defer agent.Reset()
+
+	tracer := instana.NewTracer()
+	sensor := instana.NewSensorWithTracer(tracer)
+
+	sp := sensor.Tracer().StartSpan("entry")
+	sp.SetTag("value", "42")
+	sp.Finish()
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+
+	require.NoError(t, tracer.Flush(ctx))
 }
 
 func setupGCREnv() func() {

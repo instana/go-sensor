@@ -1,11 +1,11 @@
-module github.com/instana/go-sensor/instrumentation/instasarama/example
+module example.com/instasarama
 
 go 1.17
 
 require (
 	github.com/IBM/sarama v1.41.3
-	github.com/instana/go-sensor v1.58.0
-	github.com/instana/go-sensor/instrumentation/instasarama v1.15.0
+	github.com/instana/go-sensor v1.59.0
+	github.com/instana/go-sensor/instrumentation/instasarama v1.17.0
 	github.com/opentracing/opentracing-go v1.2.0
 )
 
@@ -32,6 +32,6 @@ require (
 )
 
 replace (
-	github.com/instana/go-sensor => ../../../../go-sensor
-	github.com/instana/go-sensor/instrumentation/instasarama => ../
+	github.com/instana/go-sensor => ../../../go-sensor
+	github.com/instana/go-sensor/instrumentation/instasarama => ../../instrumentation/instasarama
 )

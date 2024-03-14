@@ -3,14 +3,21 @@ Examples
 
 This folder contains examples of instrumenting the common use-cases with `github.com/instana/go-sensor`
 
-* [Greeter](./http-database-greeter) - an instrumented HTTP server that queries a database
-* [Doubler](./kafka-producer-consumer) - an instrumented Kafka processor, that consumes and produces messages
-* [Event](./event) - Demonstrates usage of the Events API
-* [Autoprofile](./autoprofile) - Demonstrates usage of the AutoProfile™
-* [OpenTracing](./opentracing) - an example of usage of Instana tracer in an app instrumented with OpenTracing
-* [gRPC](./grpc-client-server) - an example of usage of Instana tracer in an app instrumented with gRPC
-* [Gin](./gin) - an example of usage of Instana tracer instrumenting a [`Gin`](github.com/gin-gonic/gin) application
-* [github.com/julienschmidt/httprouter](./httprouter) - an example of usage of Instana tracer to instrument a [`github.com/julienschmidt/httprouter`](https://github.com/julienschmidt/httprouter) router
+* [autoprofile](./autoprofile) - Demonstrates the usage of autoprofiling using `go-sensor` SDK.
+* [greeter](./http-database-greeter) - an instrumented application using `go-sensor` SDK with basic HTTP and database queries.
+* [beego](./beego) - an example of instrumenting application using `instabeego`.
+* [couchbase](./couchbase) - an example of instrumenting application using `instagocb`.
+* [event](./event) - Demonstrates usage of the Events API in `go-sensor` SDK.
+* [gin](./gin) - an example of instrumenting application using `instagin`.
+* [gorm-sqlite](./gorm-sqlite) - an example of instrumenting a SQLite application using `instagorm`.
+* [gorm-postgres](./gorm-postgres) - an example of instrumenting a Postgres application using `instagorm`.
+* [graphQL](./graphql) - an example of instrumenting application using `instagraphql`.
+* [gRPC](./grpc-client-server) - an example of usage of Instana tracer in an app instrumented with `instagrpc`.
+* [httprouter](./httprouter) - an example of instrumenting application using `instahttprouter`.
+* [openTracing](./opentracing) - an example of usage of Instana tracer in an app instrumented with OpenTracing.
+* [sarama](./sarama) - an example of instrumenting application using `instasarama`.
+* [sql-mysql](./sql-mysql) - an example of instrumenting a SQL application using `go-sensor` SDK.
+* [sql-redis](./sql-redis) - an example of instrumenting a Redis application using `go-sensor` SDK.
 
 For more up-to-date instrumentation code examples please consult the respective package documentation page:
 

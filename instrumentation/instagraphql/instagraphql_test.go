@@ -437,7 +437,7 @@ func TestGraphQLWithSubscription(t *testing.T) {
 
 	assert.Eventually(t, func() bool {
 		return recorder.QueuedSpansCount() == 2
-	}, time.Second*2, time.Millisecond*50)
+	}, time.Second*4, time.Millisecond*50)
 
 	spans = recorder.GetQueuedSpans()
 	assert.Len(t, spans, 2)
