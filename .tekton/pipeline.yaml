@@ -84,6 +84,7 @@ spec:
     - name: unittest
       runAfter:
         - goimports
+        - cacherestore
       params:
       - name: imageTag
         value: $(params.go-version)
