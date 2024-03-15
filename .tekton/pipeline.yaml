@@ -14,6 +14,7 @@ spec:
     type: string
   workspaces:
     - name: go-tracer-ci-pipeline-pvc
+    - name: cache-pvc
   tasks:
 
     - name: github-set-check-status-to-pending
@@ -56,7 +57,7 @@ spec:
 
     - name: goimports
       runAfter:
-        - gofmt
+        - clone
       params:
       - name: imageTag
         value: $(params.go-version)
@@ -70,7 +71,7 @@ spec:
     
     - name: unittest
       runAfter:
-        - goimports
+        - clone
       params:
       - name: imageTag
         value: $(params.go-version)
@@ -81,10 +82,12 @@ spec:
       workspaces:
         - name: task-pvc
           workspace: go-tracer-ci-pipeline-pvc
+        - name: cache-pvc
+          workspace: cache-pvc
 
     - name: integrationtestcommon
       runAfter:
-        - unittest
+        - clone
       params:
       - name: imageTag
         value: $(params.go-version)
@@ -95,10 +98,12 @@ spec:
       workspaces:
         - name: task-pvc
           workspace: go-tracer-ci-pipeline-pvc
+        - name: cache-pvc
+          workspace: cache-pvc
 
     - name: integrationtestcouchbase
       runAfter:
-        - integrationtestcommon
+        - clone
       when:
         - input: "$(params.go-version)"
           operator: in
@@ -113,6 +118,8 @@ spec:
       workspaces:
         - name: task-pvc
           workspace: go-tracer-ci-pipeline-pvc
+        - name: cache-pvc
+          workspace: cache-pvc
 
   finally:
     - name: github-set-check-status-to-success-or-failure

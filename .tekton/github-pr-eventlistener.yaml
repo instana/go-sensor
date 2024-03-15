@@ -41,6 +41,9 @@ spec:
               resources:
                 requests:
                   storage: 1Gi
+        - name: cache-pvc
+          persistentVolumeClaim:
+            claimName: cache-pvc
 
     - apiVersion: tekton.dev/v1
       kind: PipelineRun
@@ -67,6 +70,9 @@ spec:
               resources:
                 requests:
                   storage: 1Gi
+        - name: cache-pvc
+          persistentVolumeClaim:
+            claimName: cache-pvc
 
     - apiVersion: tekton.dev/v1
       kind: PipelineRun
@@ -93,6 +99,9 @@ spec:
               resources:
                 requests:
                   storage: 1Gi
+        - name: cache-pvc
+          persistentVolumeClaim:
+            claimName: cache-pvc
 
     - apiVersion: tekton.dev/v1
       kind: PipelineRun
@@ -119,6 +128,9 @@ spec:
               resources:
                 requests:
                   storage: 1Gi
+        - name: cache-pvc
+          persistentVolumeClaim:
+            claimName: cache-pvc
 
     - apiVersion: tekton.dev/v1
       kind: PipelineRun
@@ -145,6 +157,9 @@ spec:
               resources:
                 requests:
                   storage: 1Gi
+        - name: cache-pvc
+          persistentVolumeClaim:
+            claimName: cache-pvc
 
     - apiVersion: tekton.dev/v1
       kind: PipelineRun
@@ -171,6 +186,9 @@ spec:
               resources:
                 requests:
                   storage: 1Gi
+        - name: cache-pvc
+          persistentVolumeClaim:
+            claimName: cache-pvc
 
     - apiVersion: tekton.dev/v1
       kind: PipelineRun
@@ -197,6 +215,9 @@ spec:
               resources:
                 requests:
                   storage: 1Gi
+        - name: cache-pvc
+          persistentVolumeClaim:
+            claimName: cache-pvc
 
     - apiVersion: tekton.dev/v1
       kind: PipelineRun
@@ -223,6 +244,9 @@ spec:
               resources:
                 requests:
                   storage: 1Gi
+        - name: cache-pvc
+          persistentVolumeClaim:
+            claimName: cache-pvc
 
     - apiVersion: tekton.dev/v1
       kind: PipelineRun
@@ -249,6 +273,10 @@ spec:
               resources:
                 requests:
                   storage: 1Gi
+        - name: cache-pvc
+          persistentVolumeClaim:
+            claimName: cache-pvc
+
 
 ---
 apiVersion: triggers.tekton.dev/v1beta1
