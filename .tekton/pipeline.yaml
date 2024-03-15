@@ -57,7 +57,7 @@ spec:
 
     - name: goimports
       runAfter:
-        - clone
+        - gofmt
       params:
       - name: imageTag
         value: $(params.go-version)
@@ -71,7 +71,7 @@ spec:
     
     - name: unittest
       runAfter:
-        - clone
+        - goimports
       params:
       - name: imageTag
         value: $(params.go-version)
@@ -87,7 +87,7 @@ spec:
 
     - name: integrationtestcommon
       runAfter:
-        - clone
+        - unittest
       params:
       - name: imageTag
         value: $(params.go-version)
@@ -103,7 +103,7 @@ spec:
 
     - name: integrationtestcouchbase
       runAfter:
-        - clone
+        - integrationtestcommon
       when:
         - input: "$(params.go-version)"
           operator: in

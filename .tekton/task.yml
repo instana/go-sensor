@@ -56,25 +56,25 @@ spec:
         #!/bin/sh
 
         echo "Restoring cache!"
-        # rm -rf /cache/${GO_VERSION}
         mkdir -p /go/pkg/mod
-        ls -lah /go/pkg
-        ls -lah /cache
-        cp -R /cache/${GO_VERSION}/mod/* /go/pkg/mod || true
-        ls -lah /go/pkg
+        # cp -R /cache/${GO_VERSION}/mod/* /go/pkg/mod || true
+        rsync -ah --progress /cache/${GO_VERSION}/mod /go/pkg/mod || true
         ls -lah /go/pkg/mod
 
         echo "Running unit tests!"
         make test
 
-        echo "Save cache"
-        mkdir -p /cache/${GO_VERSION}/mod
-        cp -R /go/pkg/mod/* /cache/${GO_VERSION}/mod
-        
-        ls -lah /go/pkg/mod/
-        ls -lah /cache/${GO_VERSION}/
-
-        ls -lah /cache/${GO_VERSION}/mod
+        if [ $? -eq 0 ]; then
+          echo "Update cache!"
+          mkdir -p /cache/${GO_VERSION}/mod
+          # cp -R /go/pkg/mod/* /cache/${GO_VERSION}/mod
+          rsync -ah --progress /go/pkg/mod /cache/${GO_VERSION}/mod
+          ls -lah /cache/${GO_VERSION}/mod
+          exit 0
+        else
+          echo "unit test failed!"
+          exit 1
+        fi
 
 ---
 apiVersion: tekton.dev/v1
@@ -147,7 +147,6 @@ spec:
           value: "postgres"
         - name: POSTGRES_PASSWORD
           value: "mysecretpassword"
-
   params:
   - name: imageTag
     type: string
@@ -183,27 +182,26 @@ spec:
       workingDir: /workspace/go-sensor/
       script: |
         #!/bin/sh
-
         echo "Restoring cache!"
-        # rm -rf /cache/${GO_VERSION}
         mkdir -p /go/pkg/mod
-        ls -lah /go/pkg
-        ls -lah /cache
-        cp -R /cache/${GO_VERSION}/mod/* /go/pkg/mod || true
-        ls -lah /go/pkg
+        # cp -R /cache/${GO_VERSION}/mod/* /go/pkg/mod || true
+        rsync -ah --progress /cache/${GO_VERSION}/mod /go/pkg/mod || true
         ls -lah /go/pkg/mod
 
         echo "Running integration tests!"
         make integration-common
 
-        echo "Save cache"
-        mkdir -p /cache/${GO_VERSION}/mod
-        cp -R /go/pkg/mod/* /cache/${GO_VERSION}/mod
-        
-        ls -lah /go/pkg/mod/
-        ls -lah /cache/${GO_VERSION}/
-
-        ls -lah /cache/${GO_VERSION}/mod
+        if [ $? -eq 0 ]; then
+          echo "Update cache!"
+          mkdir -p /cache/${GO_VERSION}/mod
+          # cp -R /go/pkg/mod/* /cache/${GO_VERSION}/mod
+          rsync -ah --progress /go/pkg/mod /cache/${GO_VERSION}/mod
+          ls -lah /cache/${GO_VERSION}/mod
+          exit 0
+        else
+          echo "unit test failed!"
+          exit 1
+        fi
 
 ---
 apiVersion: tekton.dev/v1
@@ -247,63 +245,25 @@ spec:
         #!/bin/sh
 
         echo "Restoring cache!"
-        # rm -rf /cache/${GO_VERSION}
         mkdir -p /go/pkg/mod
-        ls -lah /go/pkg
-        ls -lah /cache
-        cp -R /cache/${GO_VERSION}/mod/* /go/pkg/mod || true
-        ls -lah /go/pkg
+        # cp -R /cache/${GO_VERSION}/mod/* /go/pkg/mod || true
+        rsync -ah --progress /cache/${GO_VERSION}/mod /go/pkg/mod || true
         ls -lah /go/pkg/mod
 
         echo "Running couchbase integration tests!"
         make integration-couchbase
 
-        echo "Save cache"
-        mkdir -p /cache/${GO_VERSION}/mod
-        cp -R /go/pkg/mod/* /cache/${GO_VERSION}/mod
-        
-        ls -lah /go/pkg/mod/
-        ls -lah /cache/${GO_VERSION}/
-
-        ls -lah /cache/${GO_VERSION}/mod
-
-
----
-
-# apiVersion: tekton.dev/v1
-# kind: Task
-# metadata:
-#   name: go-tracer-integration-couchbase-task
-# spec:
-#   sidecars:
-#     - name: couchbase
-#       image: couchbase/server-sandbox:7.2.4
-#       readinessProbe:
-#         httpGet:
-#            path: /ui/index.html
-#            port: 8091
-#         initialDelaySeconds: 60
-#   params:
-#   - name: imageTag
-#     type: string
-#   workspaces:
-#     - name: task-pvc
-#       mountPath: /workspace
-#   steps:
-#     - name: integrationtestcouchbase
-#       image: golang:$(params.imageTag)
-#       env:
-#         - name: GO111MODULE
-#           value: "auto"
-#         - name: VENDOR_DEPS
-#           value: "no"
-#         - name: EXCLUDE_DIRS
-#           value: ""
-#       workingDir: /workspace/go-sensor/
-#       script: |
-#         #!/bin/sh
-#         echo "Running integration tests for Couchbase!"
-#         make integration-couchbase
+        if [ $? -eq 0 ]; then
+          echo "Update cache!"
+          mkdir -p /cache/${GO_VERSION}/mod
+          # cp -R /go/pkg/mod/* /cache/${GO_VERSION}/mod
+          rsync -ah --progress /go/pkg/mod /cache/${GO_VERSION}/mod
+          ls -lah /cache/${GO_VERSION}/mod
+          exit 0
+        else
+          echo "unit test failed!"
+          exit 1
+        fi
 
 ---
 apiVersion: tekton.dev/v1
