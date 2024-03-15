@@ -23,6 +23,69 @@ spec:
 apiVersion: tekton.dev/v1
 kind: Task
 metadata:
+  name: go-tracer-cache-restore-task
+spec:
+  params:
+  - name: imageTag
+    type: string
+  workspaces:
+    - name: task-pvc
+      mountPath: /workspace
+    - name: cache-pvc
+      mountPath: /cache
+  steps:
+    - name: cache-restore
+      image: alpinelinux/rsyncd
+      env:
+        - name: GO_VERSION
+          value: $(params.imageTag)
+      workingDir: /workspace/
+      script: |
+        #!/bin/sh
+
+        # rm -rf /cache/*
+
+        echo "Creating Go path!"
+        mkdir -p ./go/pkg/mod
+
+        echo "Restoring cache!"
+        rsync -ah --progress /cache/${GO_VERSION}/mod/ ./go/pkg/mod || true
+        ls -lah ./go/pkg/mod
+
+
+---
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: go-tracer-cache-update-task
+spec:
+  params:
+  - name: imageTag
+    type: string
+  workspaces:
+    - name: task-pvc
+      mountPath: /workspace
+    - name: cache-pvc
+      mountPath: /cache
+  steps:
+    - name: cache-update
+      image: alpinelinux/rsyncd
+      env:
+        - name: GO_VERSION
+          value: $(params.imageTag)
+      workingDir: /workspace/
+      script: |
+        #!/bin/sh
+
+        mkdir -p /cache/${GO_VERSION}/mod
+        echo "Update cache!"
+        rsync -ah --progress ./go/pkg/mod/ /cache/${GO_VERSION}/mod
+        ls -lah /cache/${GO_VERSION}/mod
+        
+---
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
   name: go-tracer-unittest-task
 spec:
   params:
@@ -55,26 +118,27 @@ spec:
       script: |
         #!/bin/sh
 
-        echo "Restoring cache!"
-        mkdir -p /go/pkg/mod
-        # cp -R /cache/${GO_VERSION}/mod/* /go/pkg/mod || true
-        rsync -ah --progress /cache/${GO_VERSION}/mod /go/pkg/mod || true
-        ls -lah /go/pkg/mod
+        # echo "Restoring cache!"
+        # mkdir -p /go/pkg/mod
+        # # cp -R /cache/${GO_VERSION}/mod/* /go/pkg/mod || true
+        # rsync -ah --progress /cache/${GO_VERSION}/mod /go/pkg/mod || true
+        # ls -lah /go/pkg/mod
 
+        export GOPATH="/workspace/go"
         echo "Running unit tests!"
         make test
 
-        if [ $? -eq 0 ]; then
-          echo "Update cache!"
-          mkdir -p /cache/${GO_VERSION}/mod
-          # cp -R /go/pkg/mod/* /cache/${GO_VERSION}/mod
-          rsync -ah --progress /go/pkg/mod /cache/${GO_VERSION}/mod
-          ls -lah /cache/${GO_VERSION}/mod
-          exit 0
-        else
-          echo "unit test failed!"
-          exit 1
-        fi
+        # if [ $? -eq 0 ]; then
+        #   echo "Update cache!"
+        #   mkdir -p /cache/${GO_VERSION}/mod
+        #   # cp -R /go/pkg/mod/* /cache/${GO_VERSION}/mod
+        #   rsync -ah --progress /go/pkg/mod /cache/${GO_VERSION}/mod
+        #   ls -lah /cache/${GO_VERSION}/mod
+        #   exit 0
+        # else
+        #   echo "unit test failed!"
+        #   exit 1
+        # fi
 
 ---
 apiVersion: tekton.dev/v1
@@ -182,26 +246,27 @@ spec:
       workingDir: /workspace/go-sensor/
       script: |
         #!/bin/sh
-        echo "Restoring cache!"
-        mkdir -p /go/pkg/mod
-        # cp -R /cache/${GO_VERSION}/mod/* /go/pkg/mod || true
-        rsync -ah --progress /cache/${GO_VERSION}/mod /go/pkg/mod || true
-        ls -lah /go/pkg/mod
+        # echo "Restoring cache!"
+        # mkdir -p /go/pkg/mod
+        # # cp -R /cache/${GO_VERSION}/mod/* /go/pkg/mod || true
+        # rsync -ah --progress /cache/${GO_VERSION}/mod /go/pkg/mod || true
+        # ls -lah /go/pkg/mod
 
+        export GOPATH="/workspace/go"
         echo "Running integration tests!"
         make integration-common
 
-        if [ $? -eq 0 ]; then
-          echo "Update cache!"
-          mkdir -p /cache/${GO_VERSION}/mod
-          # cp -R /go/pkg/mod/* /cache/${GO_VERSION}/mod
-          rsync -ah --progress /go/pkg/mod /cache/${GO_VERSION}/mod
-          ls -lah /cache/${GO_VERSION}/mod
-          exit 0
-        else
-          echo "unit test failed!"
-          exit 1
-        fi
+        # if [ $? -eq 0 ]; then
+        #   echo "Update cache!"
+        #   mkdir -p /cache/${GO_VERSION}/mod
+        #   # cp -R /go/pkg/mod/* /cache/${GO_VERSION}/mod
+        #   rsync -ah --progress /go/pkg/mod /cache/${GO_VERSION}/mod
+        #   ls -lah /cache/${GO_VERSION}/mod
+        #   exit 0
+        # else
+        #   echo "unit test failed!"
+        #   exit 1
+        # fi
 
 ---
 apiVersion: tekton.dev/v1
@@ -244,26 +309,27 @@ spec:
       script: |
         #!/bin/sh
 
-        echo "Restoring cache!"
-        mkdir -p /go/pkg/mod
-        # cp -R /cache/${GO_VERSION}/mod/* /go/pkg/mod || true
-        rsync -ah --progress /cache/${GO_VERSION}/mod /go/pkg/mod || true
-        ls -lah /go/pkg/mod
+        # echo "Restoring cache!"
+        # mkdir -p /go/pkg/mod
+        # # cp -R /cache/${GO_VERSION}/mod/* /go/pkg/mod || true
+        # rsync -ah --progress /cache/${GO_VERSION}/mod /go/pkg/mod || true
+        # ls -lah /go/pkg/mod
 
+        export GOPATH="/workspace/go"
         echo "Running couchbase integration tests!"
         make integration-couchbase
 
-        if [ $? -eq 0 ]; then
-          echo "Update cache!"
-          mkdir -p /cache/${GO_VERSION}/mod
-          # cp -R /go/pkg/mod/* /cache/${GO_VERSION}/mod
-          rsync -ah --progress /go/pkg/mod /cache/${GO_VERSION}/mod
-          ls -lah /cache/${GO_VERSION}/mod
-          exit 0
-        else
-          echo "unit test failed!"
-          exit 1
-        fi
+        # if [ $? -eq 0 ]; then
+        #   echo "Update cache!"
+        #   mkdir -p /cache/${GO_VERSION}/mod
+        #   # cp -R /go/pkg/mod/* /cache/${GO_VERSION}/mod
+        #   rsync -ah --progress /go/pkg/mod /cache/${GO_VERSION}/mod
+        #   ls -lah /cache/${GO_VERSION}/mod
+        #   exit 0
+        # else
+        #   echo "unit test failed!"
+        #   exit 1
+        # fi
 
 ---
 apiVersion: tekton.dev/v1

@@ -41,6 +41,18 @@ spec:
         - name: task-pvc
           workspace: go-tracer-ci-pipeline-pvc
 
+    - name: cacherestore
+      params:
+      - name: imageTag
+        value: $(params.go-version)
+      taskRef:
+        name: go-tracer-cache-restore-task
+      workspaces:
+        - name: task-pvc
+          workspace: go-tracer-ci-pipeline-pvc
+        - name: cache-pvc
+          workspace: cache-pvc
+
     - name: gofmt
       runAfter:
         - clone
@@ -115,6 +127,20 @@ spec:
         value: $(params.excludeDirs)
       taskRef:
         name: go-tracer-integration-couchbase-task
+      workspaces:
+        - name: task-pvc
+          workspace: go-tracer-ci-pipeline-pvc
+        - name: cache-pvc
+          workspace: cache-pvc
+
+    - name: cacheupdate
+      runAfter:
+        - integrationtestcouchbase
+      params:
+      - name: imageTag
+        value: $(params.go-version)
+      taskRef:
+        name: go-tracer-cache-update-task
       workspaces:
         - name: task-pvc
           workspace: go-tracer-ci-pipeline-pvc
