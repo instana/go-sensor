@@ -1,6 +1,6 @@
 module github.com/instana/go-sensor/instrumentation/instaredis
 
-go 1.13
+go 1.21
 
 require (
 	github.com/go-redis/redis/v8 v8.11.5
