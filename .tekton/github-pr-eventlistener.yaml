@@ -1,0 +1,343 @@
+apiVersion: triggers.tekton.dev/v1beta1
+kind: TriggerTemplate
+metadata:
+  name: github-pr-pipeline-template
+spec:
+  params:
+    - description: The git branch name
+      name: git-branch
+    - description: The git branch name shortened and converted to RFC 1123 subdomain names
+      name: git-branch-normalized
+    - description: The full sha of the git commit
+      name: git-commit-sha
+    - description: The short 7 digit sha of the git commit
+      name: git-commit-short-sha
+  resourcetemplates:
+    - apiVersion: tekton.dev/v1
+      kind: PipelineRun
+      metadata:
+        # After variable resolution, this has to be maximum 63 character long,
+        # lower case, RFC 1123 subdomain name. The regex used for validation is
+        # '[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*'
+        name: $(tt.params.git-branch-normalized)-go20-$(tt.params.git-commit-short-sha)
+      spec:
+        params:
+        - name: revision
+          value: $(tt.params.git-branch)
+        - name: git-commit-sha
+          value: $(tt.params.git-commit-sha)
+        - name: go-version
+          value: "1.20"
+        - name: excludeDirs
+          value: ""
+        pipelineRef:
+          name: go-tracer-ci-pipeline
+        workspaces:
+        - name: go-tracer-ci-pipeline-pvc
+          volumeClaimTemplate:
+            spec:
+              accessModes:
+                - ReadWriteOnce
+              resources:
+                requests:
+                  storage: 1Gi
+        - name: cache-pvc
+          persistentVolumeClaim:
+            claimName: cache-pvc
+
+    - apiVersion: tekton.dev/v1
+      kind: PipelineRun
+      metadata:
+        name: $(tt.params.git-branch-normalized)-go21-$(tt.params.git-commit-short-sha)
+      spec:
+        params:
+        - name: revision
+          value: $(tt.params.git-branch)
+        - name: git-commit-sha
+          value: $(tt.params.git-commit-sha)
+        - name: go-version
+          value: "1.21"
+        - name: excludeDirs
+          value: ""
+        pipelineRef:
+          name: go-tracer-ci-pipeline
+        workspaces:
+        - name: go-tracer-ci-pipeline-pvc
+          volumeClaimTemplate:
+            spec:
+              accessModes:
+                - ReadWriteOnce
+              resources:
+                requests:
+                  storage: 1Gi
+        - name: cache-pvc
+          persistentVolumeClaim:
+            claimName: cache-pvc
+
+    - apiVersion: tekton.dev/v1
+      kind: PipelineRun
+      metadata:
+        name: $(tt.params.git-branch-normalized)-go19-$(tt.params.git-commit-short-sha)
+      spec:
+        params:
+        - name: revision
+          value: $(tt.params.git-branch)
+        - name: git-commit-sha
+          value: $(tt.params.git-commit-sha)
+        - name: go-version
+          value: "1.19"
+        - name: excludeDirs
+          value: ""
+        pipelineRef:
+          name: go-tracer-ci-pipeline
+        workspaces:
+        - name: go-tracer-ci-pipeline-pvc
+          volumeClaimTemplate:
+            spec:
+              accessModes:
+                - ReadWriteOnce
+              resources:
+                requests:
+                  storage: 1Gi
+        - name: cache-pvc
+          persistentVolumeClaim:
+            claimName: cache-pvc
+
+    - apiVersion: tekton.dev/v1
+      kind: PipelineRun
+      metadata:
+        name: $(tt.params.git-branch-normalized)-go18-$(tt.params.git-commit-short-sha)
+      spec:
+        params:
+        - name: revision
+          value: $(tt.params.git-branch)
+        - name: git-commit-sha
+          value: $(tt.params.git-commit-sha)
+        - name: go-version
+          value: "1.18"
+        - name: excludeDirs
+          value: "./example/grpc-client-server ./instrumentation/cloud.google.com/go ./instrumentation/instaawsv2 ./instrumentation/instaamqp ./instrumentation/instaawssdk ./instrumentation/instagocb ./example/couchbase"
+        pipelineRef:
+          name: go-tracer-ci-pipeline
+        workspaces:
+        - name: go-tracer-ci-pipeline-pvc
+          volumeClaimTemplate:
+            spec:
+              accessModes:
+                - ReadWriteOnce
+              resources:
+                requests:
+                  storage: 1Gi
+        - name: cache-pvc
+          persistentVolumeClaim:
+            claimName: cache-pvc
+
+    - apiVersion: tekton.dev/v1
+      kind: PipelineRun
+      metadata:
+        name: $(tt.params.git-branch-normalized)-go17-$(tt.params.git-commit-short-sha)
+      spec:
+        params:
+        - name: revision
+          value: $(tt.params.git-branch)
+        - name: git-commit-sha
+          value: $(tt.params.git-commit-sha)
+        - name: go-version
+          value: "1.17"
+        - name: excludeDirs
+          value: "./internal/bin/sql ./example/gin ./example/sql-redis ./example/gorm-postgres ./example/gorm-sqlite ./example/grpc-client-server ./instrumentation/cloud.google.com/go ./instrumentation/instabeego ./example/beego ./instrumentation/instaawsv2 ./instrumentation/instaecho ./instrumentation/instagorm ./instrumentation/instaamqp ./instrumentation/instaawssdk ./instrumentation/instagocb ./example/couchbase ./instrumentation/instacosmos ./example/cosmos ./instrumentation/instamongo"
+        pipelineRef:
+          name: go-tracer-ci-pipeline
+        workspaces:
+        - name: go-tracer-ci-pipeline-pvc
+          volumeClaimTemplate:
+            spec:
+              accessModes:
+                - ReadWriteOnce
+              resources:
+                requests:
+                  storage: 1Gi
+        - name: cache-pvc
+          persistentVolumeClaim:
+            claimName: cache-pvc
+
+    - apiVersion: tekton.dev/v1
+      kind: PipelineRun
+      metadata:
+        name: $(tt.params.git-branch-normalized)-go16-$(tt.params.git-commit-short-sha)
+      spec:
+        params:
+        - name: revision
+          value: $(tt.params.git-branch)
+        - name: git-commit-sha
+          value: $(tt.params.git-commit-sha)
+        - name: go-version
+          value: "1.16"
+        - name: excludeDirs
+          value: "./internal/bin/sql ./example/gin ./example/sql-redis ./example/grpc-client-server ./instrumentation/instafiber ./example/gorm-postgres ./example/gorm-sqlite ./instrumentation/instasarama ./instrumentation/instasarama/example ./example/kafka-producer-consumer ./instrumentation/cloud.google.com/go ./instrumentation/instabeego ./example/beego ./instrumentation/instaawsv2 ./instrumentation/instapgx ./instrumentation/instaecho ./instrumentation/instagorm ./instrumentation/instaamqp ./instrumentation/instaawssdk ./instrumentation/instagocb ./example/couchbase ./example/sarama ./instrumentation/instacosmos ./example/cosmos ./instrumentation/instamongo ./instrumentation/instaredigo"
+        pipelineRef:
+          name: go-tracer-ci-pipeline
+        workspaces:
+        - name: go-tracer-ci-pipeline-pvc
+          volumeClaimTemplate:
+            spec:
+              accessModes:
+                - ReadWriteOnce
+              resources:
+                requests:
+                  storage: 1Gi
+        - name: cache-pvc
+          persistentVolumeClaim:
+            claimName: cache-pvc
+
+    - apiVersion: tekton.dev/v1
+      kind: PipelineRun
+      metadata:
+        name: $(tt.params.git-branch-normalized)-go15-$(tt.params.git-commit-short-sha)
+      spec:
+        params:
+        - name: revision
+          value: $(tt.params.git-branch)
+        - name: git-commit-sha
+          value: $(tt.params.git-commit-sha)
+        - name: go-version
+          value: "1.15"
+        - name: excludeDirs
+          value: "./instrumentation/instaredigo ./internal/bin/sql ./example/gin ./example/sql-redis ./instrumentation/instagorm ./example/grpc-client-server ./instrumentation/instafiber ./example/gorm-postgres ./example/gorm-sqlite ./instrumentation/instasarama ./instrumentation/instasarama/example ./example/kafka-producer-consumer ./instrumentation/cloud.google.com/go ./instrumentation/instabeego ./example/beego ./instrumentation/instaawsv2 ./instrumentation/instapgx ./instrumentation/instaecho ./instrumentation/instaamqp ./instrumentation/instaawssdk ./instrumentation/instagocb ./example/couchbase ./example/sarama ./instrumentation/instacosmos ./example/cosmos ./instrumentation/instamongo"
+        pipelineRef:
+          name: go-tracer-ci-pipeline
+        workspaces:
+        - name: go-tracer-ci-pipeline-pvc
+          volumeClaimTemplate:
+            spec:
+              accessModes:
+                - ReadWriteOnce
+              resources:
+                requests:
+                  storage: 1Gi
+        - name: cache-pvc
+          persistentVolumeClaim:
+            claimName: cache-pvc
+
+    - apiVersion: tekton.dev/v1
+      kind: PipelineRun
+      metadata:
+        name: $(tt.params.git-branch-normalized)-go14-$(tt.params.git-commit-short-sha)
+      spec:
+        params:
+        - name: revision
+          value: $(tt.params.git-branch)
+        - name: git-commit-sha
+          value: $(tt.params.git-commit-sha)
+        - name: go-version
+          value: "1.14"
+        - name: excludeDirs
+          value: "./instrumentation/instaecho ./instrumentation/instaredigo ./internal/bin/sql ./instrumentation/cloud.google.com/go ./example/gin ./instrumentation/instagorm ./example/grpc-client-server ./instrumentation/instafiber ./instrumentation/instaawsv2 ./example/sql-redis ./example/gorm-postgres ./example/gorm-sqlite ./instrumentation/instasarama ./instrumentation/instasarama/example ./example/kafka-producer-consumer ./instrumentation/instabeego ./example/beego ./instrumentation/instapgx ./instrumentation/instaamqp ./instrumentation/instaawssdk ./instrumentation/instagocb ./example/couchbase ./example/sarama ./instrumentation/instacosmos ./example/cosmos ./instrumentation/instamongo"
+        pipelineRef:
+          name: go-tracer-ci-pipeline
+        workspaces:
+        - name: go-tracer-ci-pipeline-pvc
+          volumeClaimTemplate:
+            spec:
+              accessModes:
+                - ReadWriteOnce
+              resources:
+                requests:
+                  storage: 1Gi
+        - name: cache-pvc
+          persistentVolumeClaim:
+            claimName: cache-pvc
+
+    - apiVersion: tekton.dev/v1
+      kind: PipelineRun
+      metadata:
+        name: $(tt.params.git-branch-normalized)-go13-$(tt.params.git-commit-short-sha)
+      spec:
+        params:
+        - name: revision
+          value: $(tt.params.git-branch)
+        - name: git-commit-sha
+          value: $(tt.params.git-commit-sha)
+        - name: go-version
+          value: "1.13"
+        - name: excludeDirs
+          value: "./instrumentation/instaecho ./instrumentation/instaredigo ./internal/bin/sql ./instrumentation/cloud.google.com/go ./example/gin ./instrumentation/instagorm ./example/grpc-client-server ./instrumentation/instafiber ./instrumentation/instaawsv2 ./example/sql-redis ./example/gorm-postgres ./example/gorm-sqlite ./instrumentation/instasarama ./instrumentation/instasarama/example ./example/kafka-producer-consumer ./instrumentation/instabeego ./example/beego ./instrumentation/instapgx ./instrumentation/instaamqp ./instrumentation/instaawssdk ./instrumentation/instagocb ./example/couchbase ./example/sarama ./instrumentation/instacosmos ./example/cosmos ./instrumentation/instamongo"
+        pipelineRef:
+          name: go-tracer-ci-pipeline
+        workspaces:
+        - name: go-tracer-ci-pipeline-pvc
+          volumeClaimTemplate:
+            spec:
+              accessModes:
+                - ReadWriteOnce
+              resources:
+                requests:
+                  storage: 1Gi
+        - name: cache-pvc
+          persistentVolumeClaim:
+            claimName: cache-pvc
+
+
+---
+apiVersion: triggers.tekton.dev/v1beta1
+kind: TriggerBinding
+metadata:
+  name: github-pr-binding
+spec:
+  params:
+    - name: git-branch
+      value: $(body.pull_request.head.ref)
+    - name: git-branch-normalized
+      value: $(extensions.git_branch_normalized)
+    - name: git-commit-sha
+      value: $(body.pull_request.head.sha)
+    - name: git-commit-short-sha
+      value: $(extensions.truncated_sha)
+---
+apiVersion: triggers.tekton.dev/v1beta1
+kind: EventListener
+metadata:
+  name: github-pr-eventlistener
+spec:
+  serviceAccountName: tekton-triggers-eventlistener-serviceaccount
+  triggers:
+    - name: github-pr-trigger
+      interceptors:
+        - name: receive-github-event
+          ref:
+            name: "github"
+          params:
+            - name: "secretRef"
+              value:
+                secretName: github-interceptor-secret
+                secretKey: secretToken
+            - name: "eventTypes"
+              value: ["pull_request"]
+        - name: filter-irrelevant-events
+          ref:
+            name: "cel"
+          params:
+            - name: "filter"
+              # We should not trigger on 'closed', 'assigned', 'unassigned', 'converted_to_draft'
+              value: "body.action in ['opened', 'synchronize', 'reopened']"
+        - name: add-truncated-sha
+          ref:
+            name: "cel"
+          params:
+            - name: "overlays"
+              value:
+              - key: truncated_sha
+                expression: "body.pull_request.head.sha.truncate(7)"
+        - name: add-normalized-branch-name
+          ref:
+            name: "cel"
+          params:
+            - name: "overlays"
+              value:
+              - key: git_branch_normalized
+                # The git branch name shortened and converted to RFC 1123 subdomain names
+                expression: 'body.pull_request.head.ref.truncate(32).lowerAscii().translate("_", "-").translate("/", "-")'
+      bindings:
+        - ref: github-pr-binding
+      template:
+        ref: github-pr-pipeline-template

@@ -1,0 +1,164 @@
+apiVersion: tekton.dev/v1
+kind: Pipeline
+metadata:
+  name: go-tracer-ci-pipeline
+spec:
+  params:
+  - name: revision
+    type: string
+  - name: git-commit-sha
+    type: string
+  - name: go-version
+    type: string
+  - name: excludeDirs
+    type: string
+  workspaces:
+    - name: go-tracer-ci-pipeline-pvc
+    - name: cache-pvc
+  tasks:
+
+    - name: github-set-check-status-to-pending
+      taskRef:
+        kind: Task
+        name: github-set-status
+      params:
+      - name: SHA
+        value: $(params.git-commit-sha)
+      - name: STATE
+        value: pending
+      - name: PIPELINE_RUN_NAME
+        value: $(context.pipelineRun.name)
+      - name: go-version
+        value: $(params.go-version)
+
+    - name: clone
+      params:
+      - name: revision
+        value: $(params.revision)
+      taskRef:
+        name: go-tracer-clone-task
+      workspaces:
+        - name: task-pvc
+          workspace: go-tracer-ci-pipeline-pvc
+
+    - name: cacherestore
+      params:
+      - name: imageTag
+        value: $(params.go-version)
+      taskRef:
+        name: go-tracer-cache-restore-task
+      workspaces:
+        - name: task-pvc
+          workspace: go-tracer-ci-pipeline-pvc
+        - name: cache-pvc
+          workspace: cache-pvc
+
+    - name: gofmt
+      runAfter:
+        - clone
+      params:
+      - name: imageTag
+        value: $(params.go-version)
+      - name: excludeDirs
+        value: $(params.excludeDirs)
+      taskRef:
+        name: go-tracer-gofmt-task
+      workspaces:
+        - name: task-pvc
+          workspace: go-tracer-ci-pipeline-pvc
+
+    - name: goimports
+      runAfter:
+        - gofmt
+      params:
+      - name: imageTag
+        value: $(params.go-version)
+      - name: excludeDirs
+        value: $(params.excludeDirs)
+      taskRef:
+        name: go-tracer-goimports-task
+      workspaces:
+        - name: task-pvc
+          workspace: go-tracer-ci-pipeline-pvc
+    
+    - name: unittest
+      runAfter:
+        - goimports
+        - cacherestore
+      params:
+      - name: imageTag
+        value: $(params.go-version)
+      - name: excludeDirs
+        value: $(params.excludeDirs)
+      taskRef:
+        name: go-tracer-unittest-task
+      workspaces:
+        - name: task-pvc
+          workspace: go-tracer-ci-pipeline-pvc
+        - name: cache-pvc
+          workspace: cache-pvc
+
+    - name: integrationtestcommon
+      runAfter:
+        - unittest
+      params:
+      - name: imageTag
+        value: $(params.go-version)
+      - name: excludeDirs
+        value: $(params.excludeDirs)
+      taskRef:
+        name: go-tracer-integration-common-task
+      workspaces:
+        - name: task-pvc
+          workspace: go-tracer-ci-pipeline-pvc
+        - name: cache-pvc
+          workspace: cache-pvc
+
+    - name: integrationtestcouchbase
+      runAfter:
+        - integrationtestcommon
+      when:
+        - input: "$(params.go-version)"
+          operator: in
+          values: ["1.21"]
+      params:
+      - name: imageTag
+        value: $(params.go-version)
+      - name: excludeDirs
+        value: $(params.excludeDirs)
+      taskRef:
+        name: go-tracer-integration-couchbase-task
+      workspaces:
+        - name: task-pvc
+          workspace: go-tracer-ci-pipeline-pvc
+        - name: cache-pvc
+          workspace: cache-pvc
+
+    - name: cacheupdate
+      runAfter:
+        - integrationtestcouchbase
+      params:
+      - name: imageTag
+        value: $(params.go-version)
+      taskRef:
+        name: go-tracer-cache-update-task
+      workspaces:
+        - name: task-pvc
+          workspace: go-tracer-ci-pipeline-pvc
+        - name: cache-pvc
+          workspace: cache-pvc
+
+  finally:
+    - name: github-set-check-status-to-success-or-failure
+      taskRef:
+        kind: Task
+        name: github-set-status
+      params:
+      - name: SHA
+        value: $(params.git-commit-sha)
+      - name: STATE
+        value: "$(tasks.status)"
+      - name: PIPELINE_RUN_NAME
+        value: $(context.pipelineRun.name)
+      - name: go-version
+        value: $(params.go-version)
