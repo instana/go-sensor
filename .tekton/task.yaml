@@ -1,3 +1,5 @@
+# (c) Copyright IBM Corp. 2024
+
 ---
 apiVersion: tekton.dev/v1
 kind: Task
@@ -96,7 +98,7 @@ spec:
       mountPath: /cache
 
   steps:
-    - name: unittest
+    - name: unit-test
       image: golang:$(params.imageTag)
       env:
         - name: GO_VERSION
@@ -133,7 +135,7 @@ spec:
     - name: task-pvc
       mountPath: /workspace
   steps:
-    - name: gofmt
+    - name: go-fmt
       image: golang:$(params.imageTag)
       env:
         - name: EXCLUDE_DIRS
@@ -159,7 +161,7 @@ spec:
     - name: task-pvc
       mountPath: /workspace
   steps:
-    - name: goimports
+    - name: go-imports
       image: golang:$(params.imageTag)
       env:
         - name: EXCLUDE_DIRS
@@ -200,7 +202,7 @@ spec:
     - name: cache-pvc
       mountPath: /cache
   steps:
-    - name: integrationtest
+    - name: integration-test-common
       image: golang:$(params.imageTag)
       env:
         - name: GO_VERSION
@@ -254,7 +256,7 @@ spec:
     - name: cache-pvc
       mountPath: /cache
   steps:
-    - name: integrationtestcouchbase
+    - name: integration-test-couchbase
       image: golang:$(params.imageTag)
       env:
         - name: GO_VERSION
@@ -286,8 +288,7 @@ spec:
   - name: go-version
   steps:
     - name: set-status
-      # curlimages/curl:8.6.0
-      image: curlimages/curl@sha256:f2237028bed58de91f62aea74260bb2a299cf12fbcabc23cfaf125fef276c884
+      image: curlimages/curl:8.6.0
       env:
       - name: SHA
         value: $(params.SHA)

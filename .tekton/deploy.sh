@@ -1,4 +1,6 @@
 #!/bin/sh
+# (c) Copyright IBM Corp. 2024
+
 kubectl apply --filename cache-persistent-volume.yaml
 kubectl apply --filename secrets.yaml
 kubectl apply --filename task.yaml

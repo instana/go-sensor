@@ -1,3 +1,5 @@
+# (c) Copyright IBM Corp. 2024
+
 apiVersion: tekton.dev/v1
 kind: Pipeline
 metadata:
@@ -41,7 +43,7 @@ spec:
         - name: task-pvc
           workspace: go-tracer-ci-pipeline-pvc
 
-    - name: cacherestore
+    - name: cache-restore
       params:
       - name: imageTag
         value: $(params.go-version)
@@ -53,7 +55,7 @@ spec:
         - name: cache-pvc
           workspace: cache-pvc
 
-    - name: gofmt
+    - name: go-fmt
       runAfter:
         - clone
       params:
@@ -67,9 +69,9 @@ spec:
         - name: task-pvc
           workspace: go-tracer-ci-pipeline-pvc
 
-    - name: goimports
+    - name: go-imports
       runAfter:
-        - gofmt
+        - go-fmt
       params:
       - name: imageTag
         value: $(params.go-version)
@@ -81,10 +83,10 @@ spec:
         - name: task-pvc
           workspace: go-tracer-ci-pipeline-pvc
     
-    - name: unittest
+    - name: unit-test
       runAfter:
-        - goimports
-        - cacherestore
+        - go-imports
+        - cache-restore
       params:
       - name: imageTag
         value: $(params.go-version)
@@ -98,9 +100,9 @@ spec:
         - name: cache-pvc
           workspace: cache-pvc
 
-    - name: integrationtestcommon
+    - name: integration-test-common
       runAfter:
-        - unittest
+        - unit-test
       params:
       - name: imageTag
         value: $(params.go-version)
@@ -114,9 +116,9 @@ spec:
         - name: cache-pvc
           workspace: cache-pvc
 
-    - name: integrationtestcouchbase
+    - name: integration-test-couchbase
       runAfter:
-        - integrationtestcommon
+        - integration-test-common
       when:
         - input: "$(params.go-version)"
           operator: in
@@ -134,9 +136,9 @@ spec:
         - name: cache-pvc
           workspace: cache-pvc
 
-    - name: cacheupdate
+    - name: cache-update
       runAfter:
-        - integrationtestcouchbase
+        - integration-test-couchbase
       params:
       - name: imageTag
         value: $(params.go-version)

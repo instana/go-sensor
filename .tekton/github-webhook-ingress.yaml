@@ -1,3 +1,5 @@
+# (c) Copyright IBM Corp. 2024
+
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
