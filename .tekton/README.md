@@ -62,8 +62,8 @@ sh deploy.sh
 - You will see that the statuses in the PR will update once you initiate a re-run.
 
 ## Helpful resources
-- [Ingress on in IBM Cloud](https://cloud.ibm.com/docs/containers?topic=containers-managed-ingress-about)
-- [Tekton Getting Started](https://tekton.dev/docs/getting-started/)
+- [Ingress in IBM Cloud](https://cloud.ibm.com/docs/containers?topic=containers-managed-ingress-about)
+- [Tekton: Getting Started](https://tekton.dev/docs/getting-started/)
 - [Accessing clusters through the public cloud service endpoint on ibm cloud](https://cloud.ibm.com/docs/containers?topic=containers-access_cluster#access_public_se)
 - [Creating webhooks on Github](https://docs.github.com/en/webhooks/using-webhooks/creating-webhooks)
 - [Create a commit status](https://docs.github.com/en/rest/commits/statuses?apiVersion=2022-11-28#create-a-commit-status)
