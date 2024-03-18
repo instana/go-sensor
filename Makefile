@@ -1,4 +1,4 @@
-MODULES = $(filter-out $(EXCLUDE_DIRS), $(shell find . -name go.mod -exec dirname {} \;))
+MODULES = $(filter-out $(EXCLUDE_DIRS) ./example/% , $(shell find . -name go.mod -exec dirname {} \;))
 LINTER ?= $(shell go env GOPATH)/bin/golangci-lint
 
 # The list of Go build tags as they are specified in respective integration test files
@@ -19,6 +19,8 @@ endif
 INSTAPGX_EXCLUDED := $(findstring ./instrumentation/instapgx, $(EXCLUDE_DIRS))
 INSTAGOCB_EXCLUDED := $(findstring ./instrumentation/instagocb, $(EXCLUDE_DIRS))
 INSTACOSMOS_EXCLUDED := $(findstring ./instrumentation/instacosmos, $(EXCLUDE_DIRS))
+
+# Run all integration tests
 integration: $(INTEGRATION_TESTS)
 ifndef INSTAPGX_EXCLUDED
 	cd instrumentation/instapgx && go test -tags=integration
@@ -30,8 +32,22 @@ ifndef INSTACOSMOS_EXCLUDED
 	cd instrumentation/instacosmos && go test -v -coverprofile cover.out -tags=integration ./...
 endif
 
+# Run all integration tests excluding Couchbase
+integration-common: $(INTEGRATION_TESTS)
+ifndef INSTAPGX_EXCLUDED
+	cd instrumentation/instapgx && go test -tags=integration
+endif
+ifndef INSTACOSMOS_EXCLUDED
+	cd instrumentation/instacosmos && go test -v -coverprofile cover.out -tags=integration ./...
+endif
+
 $(INTEGRATION_TESTS):
 	go test $(GOFLAGS) -tags "$@ integration" $(shell grep --exclude-dir=instagocb --exclude-dir=instapgx --exclude-dir=instacosmos  -lR '^// +build \($@,\)\?integration\(,$@\)\?' .)
+
+integration-couchbase:
+ifndef INSTAGOCB_EXCLUDED
+	cd instrumentation/instagocb && go test -v -coverprofile cover.out -tags=integration ./...
+endif
 
 $(LINTER):
 	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/a2bc9b7a99e3280805309d71036e8c2106853250/install.sh \

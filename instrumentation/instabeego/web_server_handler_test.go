@@ -9,7 +9,6 @@ import (
 	"context"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"testing"
 	"time"
 
@@ -39,7 +38,7 @@ func sleep(t time.Duration) {
 }
 
 // initBeeApp deploy a beego server for testing
-func initBeeApp(t *testing.T, r *instana.Recorder) {
+func initBeeApp(t *testing.T) {
 
 	var serverDepTime time.Duration = 2 * time.Second
 
@@ -64,23 +63,23 @@ func initBeeApp(t *testing.T, r *instana.Recorder) {
 	sleep(serverDepTime)
 }
 
-func TestMain(m *testing.M) {
-
-	instana.InitSensor(&instana.Options{
+func initCollector() {
+	instana.InitCollector(&instana.Options{
 		Service: "beego-test",
 		Tracer: instana.TracerOptions{
 			CollectableHTTPHeaders: []string{"x-custom-header-1", "x-custom-header-2"},
 		},
 		AgentClient: alwaysReadyClient{},
 	})
-
-	os.Exit(m.Run())
 }
 
 func TestPropagation(t *testing.T) {
-
+	initCollector()
 	recorder := instana.NewTestRecorder()
-	tracer := instana.NewTracerWithEverything(nil, recorder)
+	tracer := instana.NewTracerWithEverything(&instana.Options{
+		Service:     "beego-test",
+		AgentClient: alwaysReadyClient{},
+	}, recorder)
 	defer instana.ShutdownSensor()
 	sensor := instana.NewSensorWithTracer(tracer)
 
@@ -88,7 +87,7 @@ func TestPropagation(t *testing.T) {
 
 	defer shutdownBeeApp()
 
-	initBeeApp(t, recorder)
+	initBeeApp(t)
 
 	traceIDHeader := "0000000000001234"
 	spanIDHeader := "0000000000004567"
