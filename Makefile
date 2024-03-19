@@ -1,4 +1,4 @@
-MODULES = $(filter-out $(EXCLUDE_DIRS), $(shell find . -name go.mod -exec dirname {} \;))
+MODULES = $(filter-out $(EXCLUDE_DIRS) ./example/% , $(shell find . -name go.mod -exec dirname {} \;))
 LINTER ?= $(shell go env GOPATH)/bin/golangci-lint
 
 # The list of Go build tags as they are specified in respective integration test files
