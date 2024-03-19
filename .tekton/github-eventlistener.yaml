@@ -3,7 +3,7 @@
 apiVersion: triggers.tekton.dev/v1beta1
 kind: TriggerTemplate
 metadata:
-  name: github-pr-pipeline-template
+  name: github-pipeline-template
 spec:
   params:
     - description: The git branch name
@@ -295,6 +295,22 @@ spec:
       value: $(body.pull_request.head.sha)
     - name: git-commit-short-sha
       value: $(extensions.truncated_sha)
+
+---
+apiVersion: triggers.tekton.dev/v1beta1
+kind: TriggerBinding
+metadata:
+  name: github-push-binding
+spec:
+  params:
+    - name: git-branch
+      value: $(extensions.git_branch)
+    - name: git-branch-normalized
+      value: $(extensions.git_branch_normalized)
+    - name: git-commit-sha
+      value: $(body.head_commit.id)
+    - name: git-commit-short-sha
+      value: $(extensions.truncated_sha)
 ---
 apiVersion: triggers.tekton.dev/v1beta1
 kind: EventListener
@@ -315,31 +331,61 @@ spec:
                 secretKey: secretToken
             - name: "eventTypes"
               value: ["pull_request"]
-        - name: filter-irrelevant-events
+        - name: filter-and-modify
           ref:
             name: "cel"
           params:
             - name: "filter"
               # We should not trigger on 'closed', 'assigned', 'unassigned', 'converted_to_draft'
               value: "body.action in ['opened', 'synchronize', 'reopened']"
-        - name: add-truncated-sha
-          ref:
-            name: "cel"
-          params:
             - name: "overlays"
               value:
               - key: truncated_sha
                 expression: "body.pull_request.head.sha.truncate(7)"
-        - name: add-normalized-branch-name
-          ref:
-            name: "cel"
-          params:
-            - name: "overlays"
-              value:
               - key: git_branch_normalized
                 # The git branch name shortened and converted to RFC 1123 subdomain names
                 expression: 'body.pull_request.head.ref.truncate(32).lowerAscii().translate("_", "-").translate("/", "-")'
       bindings:
         - ref: github-pr-binding
       template:
-        ref: github-pr-pipeline-template
+        ref: github-pipeline-template
+---
+apiVersion: triggers.tekton.dev/v1beta1
+kind: EventListener
+metadata:
+  name: github-push-eventlistener
+spec:
+  serviceAccountName: tekton-triggers-eventlistener-serviceaccount
+  triggers:
+    - name: github-push-trigger
+      interceptors:
+        - name: receive-github-push-event
+          ref:
+            name: "github"
+          params:
+            - name: "secretRef"
+              value:
+                secretName: github-interceptor-secret
+                secretKey: secretToken
+            - name: "eventTypes"
+              value: ["push"]
+        - name: filter-and-modify
+          ref:
+            name: "cel"
+          params:
+            - name: "filter"
+              # We should trigger on push to main branch only
+              value: "body.ref in ['refs/heads/main']"
+            - name: "overlays"
+              value:
+              - key: truncated_sha
+                expression: "body.head_commit.id.truncate(7)"
+              - key: git_branch
+                expression: 'body.ref.translate("refs/heads/", "")'
+              - key: git_branch_normalized
+                # The git branch name shortened and converted to RFC 1123 subdomain names
+                expression: 'body.ref.translate("refs/heads/", "").truncate(32).lowerAscii().translate("_", "-").translate("/", "-")'
+      bindings:
+        - ref: github-push-binding
+      template:
+        ref: github-pipeline-template

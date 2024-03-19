@@ -14,7 +14,7 @@ spec:
       mountPath: /workspace
   steps:
     - name: clone
-      image: alpine/git
+      image: alpine/git@sha256:0cfba46c00b715c97df21cfa8854dfe73e7d606b95332d35637a6a6945acc341
       workingDir: /workspace/
       script: |
         #!/bin/sh
@@ -37,7 +37,7 @@ spec:
       mountPath: /cache
   steps:
     - name: cache-restore
-      image: alpinelinux/rsyncd
+      image: alpinelinux/rsyncd@sha256:6f8b68b4b15a8e6b0abfb7db0e2a765849c77a6104ac248810ff9a9fb97996fb
       env:
         - name: GO_VERSION
           value: $(params.imageTag)
@@ -67,7 +67,7 @@ spec:
       mountPath: /cache
   steps:
     - name: cache-update
-      image: alpinelinux/rsyncd
+      image: alpinelinux/rsyncd@sha256:6f8b68b4b15a8e6b0abfb7db0e2a765849c77a6104ac248810ff9a9fb97996fb
       env:
         - name: GO_VERSION
           value: $(params.imageTag)
@@ -288,7 +288,7 @@ spec:
   - name: go-version
   steps:
     - name: set-status
-      image: curlimages/curl:8.6.0
+      image: curlimages/curl@sha256:f2237028bed58de91f62aea74260bb2a299cf12fbcabc23cfaf125fef276c884
       env:
       - name: SHA
         value: $(params.SHA)

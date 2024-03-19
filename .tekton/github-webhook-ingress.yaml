@@ -13,10 +13,20 @@ spec:
     - host: <<ENTER_YOUR_DOMAIN_NAME_HERE>>
       http:
         paths:
-          - path: /hooks
+          - path: /pr-hooks
             pathType: Exact
             backend:
               service:
                 name: el-github-pr-eventlistener
+                port:
+                  number: 8080
+    - host: <<ENTER_YOUR_DOMAIN_NAME_HERE>>
+      http:
+        paths:
+          - path: /push-hooks
+            pathType: Exact
+            backend:
+              service:
+                name: el-github-push-eventlistener
                 port:
                   number: 8080
