@@ -8,7 +8,6 @@ import (
 	"time"
 
 	ot "github.com/opentracing/opentracing-go"
-	"github.com/opentracing/opentracing-go/ext"
 )
 
 const (
@@ -104,15 +103,9 @@ func (r *tracerS) StartSpanWithOptions(operationName string, opts ot.StartSpanOp
 		}
 	}
 
-	if optInExitSpans(opts.Tags[string(ext.SpanKind)]) {
-		sc.Suppressed = false
-	} else if !isExitSpans(opts.Tags[string(ext.SpanKind)]) {
-		if tag, ok := opts.Tags[suppressTracingTag]; ok {
-			sc.Suppressed = tag.(bool)
-			delete(opts.Tags, suppressTracingTag)
-		}
-	} else {
-		sc.Suppressed = true
+	if tag, ok := opts.Tags[suppressTracingTag]; ok {
+		sc.Suppressed = tag.(bool)
+		delete(opts.Tags, suppressTracingTag)
 	}
 
 	return &spanS{

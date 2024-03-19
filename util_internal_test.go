@@ -194,50 +194,56 @@ func Test_optInExitSpans(t *testing.T) {
 		kind interface{}
 	}
 	tests := []struct {
-		name      string
-		args      args
-		exportEnv bool
-		want      bool
+		name                string
+		args                args
+		exportEnv           bool
+		wantIsExit          bool
+		wantAllowExitAsRoot bool
 	}{
 		{
 			name: "exit_span_env_exported",
 			args: args{
 				kind: ext.SpanKindRPCClientEnum,
 			},
-			exportEnv: true,
-			want:      true,
+			exportEnv:           true,
+			wantIsExit:          true,
+			wantAllowExitAsRoot: true,
 		},
 		{
 			name: "exit_span_env_not_exported",
 			args: args{
 				kind: ext.SpanKindProducerEnum,
 			},
-			exportEnv: false,
-			want:      false,
+			exportEnv:           false,
+			wantIsExit:          true,
+			wantAllowExitAsRoot: false,
 		},
 		{
 			name: "not_exit_span_env_exported",
 			args: args{
 				kind: ext.SpanKindRPCServerEnum,
 			},
-			exportEnv: true,
-			want:      false,
+			exportEnv:           true,
+			wantIsExit:          false,
+			wantAllowExitAsRoot: true,
 		},
 		{
 			name: "not_exit_span_env_not_exported",
 			args: args{
 				kind: ext.SpanKindConsumerEnum,
 			},
-			exportEnv: false,
-			want:      false,
+			exportEnv:           false,
+			wantIsExit:          false,
+			wantAllowExitAsRoot: false,
 		},
 		{
 			name: "span_kind_is_nil",
 			args: args{
-				kind: ext.SpanKindRPCServerEnum,
+				kind: nil,
 			},
-			exportEnv: true,
-			want:      false,
+			exportEnv:           true,
+			wantIsExit:          false,
+			wantAllowExitAsRoot: true,
 		},
 	}
 	for _, tt := range tests {
@@ -247,8 +253,12 @@ func Test_optInExitSpans(t *testing.T) {
 			} else {
 				os.Unsetenv(allowExitAsRoot)
 			}
-			if got := optInExitSpans(tt.args.kind); got != tt.want {
-				t.Errorf("optInExitSpans() = %v, want %v", got, tt.want)
+			gotIsExit, gotAllowExitAsroot := optInExitSpans(tt.args.kind)
+			if gotIsExit != tt.wantIsExit {
+				t.Errorf("optInExitSpans() gotIsExit = %v, want %v", gotIsExit, tt.wantIsExit)
+			}
+			if gotAllowExitAsroot != tt.wantAllowExitAsRoot {
+				t.Errorf("optInExitSpans() gotAllowExitAsroot = %v, want %v", gotAllowExitAsroot, tt.wantAllowExitAsRoot)
 			}
 		})
 	}

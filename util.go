@@ -231,20 +231,14 @@ func cloneMapStringString(t map[string]string) map[string]string {
 	return clone
 }
 
-func isExitSpans(kind interface{}) bool {
+func optInExitSpans(kind interface{}) (isExit, optIn bool) {
 	switch kind {
 	case ext.SpanKindRPCClientEnum, string(ext.SpanKindRPCClientEnum),
 		ext.SpanKindProducerEnum, string(ext.SpanKindProducerEnum),
 		"exit":
-		return true
+		isExit = true
 	default:
-		return false
+		isExit = false
 	}
-}
-
-func optInExitSpans(kind interface{}) bool {
-	if isExitSpans(kind) {
-		return os.Getenv(allowExitAsRoot) == "1"
-	}
-	return false
+	return isExit, os.Getenv(allowExitAsRoot) == "1"
 }

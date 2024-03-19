@@ -5,6 +5,7 @@ package instana_test
 
 import (
 	"errors"
+	"os"
 	"testing"
 	"time"
 
@@ -281,4 +282,134 @@ func TestSpan_Suppressed_SetTag(t *testing.T) {
 	sp.Finish()
 
 	assert.Empty(t, recorder.GetQueuedSpans())
+}
+
+func Test_tracerS_SuppressTracing(t *testing.T) {
+	opName := "my_operation"
+	suppressTracingTag := "suppress_tracing"
+	exitSpan := ext.SpanKindRPCClientEnum
+	entrySpan := ext.SpanKindRPCServerEnum
+	allowExitAsRoot := "INSTANA_ALLOW_EXIT_AS_ROOT"
+
+	getSpanTags := func(kind ext.SpanKindEnum, suppressTracing bool) ot.Tags {
+		return ot.Tags{
+			"span.kind":        kind,
+			suppressTracingTag: suppressTracing,
+		}
+	}
+
+	type args struct {
+		operationName string
+		opts          ot.StartSpanOptions
+	}
+	tests := []struct {
+		name      string
+		exportEnv bool
+		args      args
+		want      int
+	}{
+		{
+			name:      "env_disable_tag_false_exit_true",
+			exportEnv: false,
+			args: args{
+				operationName: opName,
+				opts: ot.StartSpanOptions{
+					Tags: getSpanTags(exitSpan, false),
+				},
+			},
+			want: 0,
+		},
+		{
+			name:      "env_disable_tag_true_exit_true",
+			exportEnv: false,
+			args: args{
+				operationName: opName,
+				opts: ot.StartSpanOptions{
+					Tags: getSpanTags(exitSpan, true),
+				},
+			},
+			want: 0,
+		},
+		{
+			name:      "env_enable_tag_false_exit_true",
+			exportEnv: true,
+			args: args{
+				operationName: opName,
+				opts: ot.StartSpanOptions{
+					Tags: getSpanTags(exitSpan, false),
+				},
+			},
+			want: 1,
+		},
+		{
+			name:      "env_enable_tag_true_exit_true",
+			exportEnv: true,
+			args: args{
+				operationName: opName,
+				opts: ot.StartSpanOptions{
+					Tags: getSpanTags(exitSpan, true),
+				},
+			},
+			want: 0,
+		},
+		{
+			name:      "env_disable_tag_false_exit_false",
+			exportEnv: false,
+			args: args{
+				operationName: opName,
+				opts: ot.StartSpanOptions{
+					Tags: getSpanTags(entrySpan, false),
+				},
+			},
+			want: 1,
+		},
+		{
+			name:      "env_disable_tag_true_exit_false",
+			exportEnv: false,
+			args: args{
+				operationName: opName,
+				opts: ot.StartSpanOptions{
+					Tags: getSpanTags(entrySpan, true),
+				},
+			},
+			want: 0,
+		},
+		{
+			name:      "env_enable_tag_false_exit_false",
+			exportEnv: true,
+			args: args{
+				operationName: opName,
+				opts: ot.StartSpanOptions{
+					Tags: getSpanTags(entrySpan, false),
+				},
+			},
+			want: 1,
+		},
+		{
+			name:      "env_enable_tag_true_exit_false",
+			exportEnv: true,
+			args: args{
+				operationName: opName,
+				opts: ot.StartSpanOptions{
+					Tags: getSpanTags(entrySpan, true),
+				},
+			},
+			want: 0,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.exportEnv {
+				os.Setenv(allowExitAsRoot, "1")
+			} else {
+				os.Unsetenv(allowExitAsRoot)
+			}
+
+			recorder := instana.NewTestRecorder()
+			tracer := instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder)
+			sp := tracer.StartSpanWithOptions(tt.args.operationName, tt.args.opts)
+			sp.Finish()
+			assert.Equal(t, tt.want, len(recorder.GetQueuedSpans()))
+		})
+	}
 }

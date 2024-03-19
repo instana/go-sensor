@@ -78,7 +78,7 @@ func (r *spanS) FinishWithOptions(opts ot.FinishOptions) {
 	}
 
 	r.Duration = duration
-	if !r.context.Suppressed {
+	if r.sendSpanToAgent() {
 		if sensor.Agent().Ready() {
 			r.tracer.recorder.RecordSpan(r)
 		} else {
@@ -86,6 +86,18 @@ func (r *spanS) FinishWithOptions(opts ot.FinishOptions) {
 		}
 		r.sendOpenTracingLogRecords()
 	}
+}
+
+func (r *spanS) sendSpanToAgent() bool {
+	isExit, allowExitAsRoot := optInExitSpans(r.Tags[string(ext.SpanKind)])
+	if r.context.Suppressed {
+		return false
+	} else if isExit && allowExitAsRoot {
+		return true
+	} else if isExit {
+		return false
+	}
+	return true
 }
 
 func (r *spanS) appendLog(lr ot.LogRecord) {
@@ -179,12 +191,6 @@ func (r *spanS) SetTag(key string, value interface{}) ot.Span {
 	// If this tag indicates an error, increase the error count
 	if key == "error" {
 		r.ErrorCount++
-	}
-
-	if !isExitSpans(r.Tags[string(ext.SpanKind)]) &&
-		key == suppressTracingTag {
-		r.context.Suppressed = true
-		return r
 	}
 
 	r.Tags[key] = value
