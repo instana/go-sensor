@@ -41,7 +41,7 @@ kubectl proxy
     2. **GitHub Webhook Secret** - Create a very long random secret. You need to add this to the GitHub UI when creating a webhook for PR events.
     3. **Cosmos URL and Secret** - This is for running azcosmos integration tests.
 
-- Once you have access to the above secrets, please replace them in the `secrets.yaml` file.
+- Once you have access to the above secrets, replace them in the `secrets.yaml` file.
 - You need an ingress controller for the GitHub Webhook to come through.
 - Please replace the `ingressClassName` and ingress domain or subdomain URL in the `github-webhook-ingress.yaml` file.
 - Make sure you create a GitHub webhook for the `Pull requests` events in the settings tab of the repo. Please add the previously created webhook secret and `<<ingress_url/hooks>>` as the Payload URL in the appropriate place when creating the webhook.
