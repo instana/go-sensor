@@ -337,7 +337,7 @@ spec:
           params:
             - name: "filter"
               # We should not trigger on 'closed', 'assigned', 'unassigned', 'converted_to_draft'
-              value: "body.action in ['opened', 'synchronize', 'reopened']"
+              value: "body.action in ['opened', 'synchronize', 'reopened'] && body.pull_request.labels.exists(label, label == 'tekton_ci')"
             - name: "overlays"
               value:
               - key: truncated_sha
