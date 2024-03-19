@@ -21,7 +21,7 @@ kubectl apply --filename https://storage.googleapis.com/tekton-releases/triggers
 # Install Tekton dashboard - full installation is needed for read/write capabilities. eg: to make changes in the pipeline, such as re-running a pipeline run or deleting a pipeline run. 
 kubectl apply --filename https://storage.googleapis.com/tekton-releases/dashboard/latest/release-full.yaml
 
-# Make sure all pods are in the ready state before proceeding further.
+# Make sure all pods are in the ready state before proceeding further by issuing the following command.
 kubectl get pods --namespace tekton-pipelines --watch
 
 # Access the dashboard
