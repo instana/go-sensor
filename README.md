@@ -1,7 +1,6 @@
 # IBM Instana Go Tracer
 
 
-
 [![Build Status](https://circleci.com/gh/instana/go-sensor/tree/main.svg?style=svg)](https://circleci.com/gh/instana/go-sensor/tree/main)
 [![PkgGoDev](https://pkg.go.dev/badge/github.com/instana/go-sensor)][pkg.go.dev]
 [![OpenTracing](https://img.shields.io/badge/OpenTracing-enabled-blue.svg)](http://opentracing.io)
