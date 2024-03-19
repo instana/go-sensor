@@ -15,7 +15,7 @@ kubectl apply --filename https://storage.googleapis.com/tekton-releases/pipeline
 # Install Tekton triggers
 kubectl apply --filename https://storage.googleapis.com/tekton-releases/triggers/latest/release.yaml
 
-# Install GitHub interceptor
+# Install Tekton interceptors
 kubectl apply --filename https://storage.googleapis.com/tekton-releases/triggers/latest/interceptors.yaml
 
 # Install dashboard - full installation is needed to make changes in the pipeline, such as re-running a pipeline run or deleting a pipeline run. 
