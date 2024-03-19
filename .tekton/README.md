@@ -58,7 +58,7 @@ sh deploy.sh
 - You will find the Tekton dashboard URL for a specific pipeline run from the `details` section of the commit status.
 - You can access the Tekton dashboard if you had set up the `ibmcloud` cli and authenticated the cluster in your local machine, by using the `kubectl proxy` command. For detailed information on accessing the IBM Cloud cluster via `ibmcloud` cli, you can refer to this [documentation](https://cloud.ibm.com/docs/containers?topic=containers-access_cluster#access_public_se).
 - Once you have access to the dashboard, you can see the logs for each run and will be able to re-run the `PipelineRun` .
-- You will see that the statuses in the PR will update once you initiate a re-run.
+- The status of the Tekton CI pipeline run for the PR will be updated once you initiate a re-run.
 
 ## Helpful resources
 - [Ingress in IBM Cloud](https://cloud.ibm.com/docs/containers?topic=containers-managed-ingress-about)
