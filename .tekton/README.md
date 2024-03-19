@@ -43,7 +43,7 @@ kubectl proxy
 
 - Once you have access to the above secrets, replace them in the `secrets.yaml` file.
 - You need an ingress controller for the GitHub Webhook to come through.
-- Please replace the `ingressClassName` and ingress domain or subdomain URL in the `github-webhook-ingress.yaml` file.
+- Replace the `ingressClassName` and ingress domain or subdomain URL in the `github-webhook-ingress.yaml` file.
 - Make sure you create a GitHub webhook for the `Pull requests` events in the settings tab of the repo. Please add the previously created webhook secret and `<<ingress_url/hooks>>` as the Payload URL in the appropriate place when creating the webhook.
 
 ### Installation
