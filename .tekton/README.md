@@ -12,7 +12,7 @@
 # Install Tekton pipelines
 kubectl apply --filename https://storage.googleapis.com/tekton-releases/pipeline/latest/release.yaml
 
-# Install GitHub trigger
+# Install Tekton triggers
 kubectl apply --filename https://storage.googleapis.com/tekton-releases/triggers/latest/release.yaml
 
 # Install GitHub interceptor
