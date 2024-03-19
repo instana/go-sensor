@@ -56,7 +56,7 @@ sh deploy.sh
 ## How to debug/re-run a pipeline run
 
 - You will find the Tekton dashboard URL for a specific pipeline run from the `details` section of the commit status.
--You can access the dashboard once you have set up and authenticated the cluster in your local and using the `kubectl proxy` command.  How to do this using IBM Cloud, you can see the documentation [here](https://cloud.ibm.com/docs/containers?topic=containers-access_cluster#access_public_se) for help.
+- You can access the Tekton dashboard if you had set up the `ibmcloud` cli and authenticated the cluster in your local machine, by using the `kubectl proxy` command. For detailed information on accessing the IBM Cloud cluster via `ibmcloud` cli, you can refer to this [documentation](https://cloud.ibm.com/docs/containers?topic=containers-access_cluster#access_public_se).
 - You can see the logs or re-run the pipeline run once you have access to the dashboard.
 - You will see that the statuses in the PR will update once you initiate a re-run.
 
