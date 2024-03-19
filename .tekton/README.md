@@ -32,7 +32,7 @@ kubectl proxy
 
 
 ## Install Tekton pipelines for Go Tracer
-- You will find all the required YAML configurations in the `.tekton` folder on the go-tracer repo. This includes all the required tasks, pipelines, and GitHub triggers, etc.
+- You will find all the required YAML configurations in the `.tekton` folder, present in the root directory of the go-tracer repo. This includes all the required tasks, pipelines, and GitHub triggers, etc.
 
 ### Prerequisites before applying the YAML files
 
