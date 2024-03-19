@@ -148,7 +148,7 @@ func TestStartSNSSpan_NoActiveSpan(t *testing.T) {
 	instaawssdk.StartSNSSpan(req, sensor)
 
 	_, ok := instana.SpanFromContext(req.Context())
-	require.False(t, ok)
+	require.True(t, ok)
 }
 
 func TestFinalizeSNS_NoError(t *testing.T) {
