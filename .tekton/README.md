@@ -24,7 +24,7 @@ kubectl apply --filename https://storage.googleapis.com/tekton-releases/dashboar
 # Make sure all pods are in the ready state before proceeding further by issuing the following command.
 kubectl get pods --namespace tekton-pipelines --watch
 
-# Access the dashboard
+# To access the dashboard in localhost
 kubectl proxy
 ```
 
