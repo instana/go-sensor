@@ -229,7 +229,7 @@ func TestSendNoParentSpan(t *testing.T) {
 	})
 
 	recorderSpans := recorder.GetQueuedSpans()
-	assert.Equal(t, 0, len(recorderSpans))
+	assert.Equal(t, 1, len(recorderSpans))
 }
 
 func TestSQSUnMonitoredFunction(t *testing.T) {

@@ -81,7 +81,7 @@ func TestSNSNoParentSpan(t *testing.T) {
 	assert.NoError(t, err, "Error while publishing the sns message")
 
 	recorderSpans := recorder.GetQueuedSpans()
-	assert.Equal(t, 0, len(recorderSpans))
+	assert.Equal(t, 1, len(recorderSpans))
 }
 
 func TestSNSUnmonitoredFunction(t *testing.T) {

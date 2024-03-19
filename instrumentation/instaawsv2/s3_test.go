@@ -255,7 +255,7 @@ func TestErrorNoParentSpanS3(t *testing.T) {
 	assert.NoError(t, err)
 
 	recordedSpans := recorder.GetQueuedSpans()
-	assert.Equal(t, 0, len(recordedSpans))
+	assert.Equal(t, 1, len(recordedSpans))
 }
 
 func TestErrorUnmonitoredS3Method(t *testing.T) {

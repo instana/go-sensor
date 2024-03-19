@@ -25,16 +25,14 @@ type AWSInvokeLambdaOperations struct{}
 var _ AWSOperations = (*AWSInvokeLambdaOperations)(nil)
 
 func (o AWSInvokeLambdaOperations) injectContextWithSpan(tr instana.TracerLogger, ctx context.Context, params interface{}) context.Context {
-	// By design, we will abort the invoke lambda span creation if a parent span is not identified.
+	// An exit span will be created independently without a parent span
+	// and sent if the user has opted in.
+	opts := []ot.StartSpanOption{}
 	parent, ok := instana.SpanFromContext(ctx)
-	if !ok {
-		tr.Logger().Error("failed to retrieve the parent span. Aborting dynamodb child span creation.")
-		return ctx
+	if ok {
+		opts = append(opts, ot.ChildOf(parent.Context()))
 	}
-
-	sp := tr.Tracer().StartSpan("aws.lambda.invoke",
-		ot.ChildOf(parent.Context()),
-	)
+	sp := tr.Tracer().StartSpan("aws.lambda.invoke", opts...)
 
 	if invokeInputReq, ok := params.(*lambda.InvokeInput); ok {
 
