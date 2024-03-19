@@ -107,7 +107,7 @@ func TestTopic_Publish(t *testing.T) {
 
 func TestTopic_Publish_NoTrace(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	tracer := instana.NewTracerWithEverything(instana.DefaultOptions(), recorder)
+	tracer := instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder)
 	defer instana.ShutdownSensor()
 
 	srv, conn, teardown, err := setupMockServer()
@@ -133,6 +133,14 @@ func TestTopic_Publish_NoTrace(t *testing.T) {
 		},
 	})
 
+	require.Eventually(t, func() bool {
+		return recorder.QueuedSpansCount() == 1
+	}, 250*time.Millisecond, 25*time.Millisecond)
+
+	spans := recorder.GetQueuedSpans()
+	require.Len(t, spans, 1)
+	gcpsSpan := spans[0]
+
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 
@@ -143,6 +151,9 @@ func TestTopic_Publish_NoTrace(t *testing.T) {
 	require.NotNil(t, msg)
 
 	assert.Equal(t, map[string]string{
-		"key1": "value1",
+		"x-instana-t": instana.FormatID(gcpsSpan.TraceID),
+		"x-instana-s": instana.FormatID(gcpsSpan.SpanID),
+		"x-instana-l": "1",
+		"key1":        "value1",
 	}, msg.Attributes)
 }

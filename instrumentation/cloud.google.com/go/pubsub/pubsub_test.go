@@ -29,12 +29,10 @@ func TestClient_Topic(t *testing.T) {
 	require.NoError(t, err)
 	defer teardown()
 
-	sensor := instana.NewSensorWithTracer(
-		instana.NewTracerWithEverything(
-			instana.DefaultOptions(),
-			instana.NewTestRecorder(),
-		),
-	)
+	recorder := instana.NewTestRecorder()
+	tracer := instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder)
+
+	sensor := instana.NewSensorWithTracer(tracer)
 	defer instana.ShutdownSensor()
 
 	_, err = srv.GServer.CreateTopic(context.Background(), &pb.Topic{
@@ -106,6 +104,14 @@ func TestClient_Topic(t *testing.T) {
 				},
 			})
 
+			require.Eventually(t, func() bool {
+				return recorder.QueuedSpansCount() == 1
+			}, 250*time.Millisecond, 25*time.Millisecond)
+
+			spans := recorder.GetQueuedSpans()
+			require.Len(t, spans, 1)
+			span := spans[0]
+
 			ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 			defer cancel()
 
@@ -117,7 +123,10 @@ func TestClient_Topic(t *testing.T) {
 
 			assert.Equal(t, []byte("message data"), msg.Data)
 			assert.Equal(t, map[string]string{
-				"key1": "value1",
+				"x-instana-t": instana.FormatID(span.TraceID),
+				"x-instana-s": instana.FormatID(span.SpanID),
+				"x-instana-l": "1",
+				"key1":        "value1",
 			}, msg.Attributes)
 		})
 	}
