@@ -51,7 +51,7 @@ kubectl proxy
 ```sh
 sh deploy.sh
 ```
-- Congrats! You have successfully configured everything. You will see a status has been posted for the Tekton runs whenever a new PR gets created.
+- Congrats! You have successfully configured Tekton CI pipeline for Go Tracer. You will see a status posted in Github for the Tekton runs, whenever a new PR is created.
 
 ## How to debug/re-run a pipeline run
 
