@@ -36,7 +36,7 @@ kubectl proxy
 
 ### Prerequisites before applying the YAML files
 
-- You need to create three secrets to run the Go tracer pipelines:
+- You need three secrets to run the Go tracer pipelines successfully:
     1. **GitHub bot token** - You need a GitHub bot token with write access to the repo. This is for sending commit statuses.
     2. **GitHub Webhook Secret** - Create a very long random secret. You need to add this to the GitHub UI when creating a webhook for PR events.
     3. **Cosmos URL and Secret** - This is for running azcosmos integration tests.
