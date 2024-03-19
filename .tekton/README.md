@@ -28,7 +28,7 @@ kubectl get pods --namespace tekton-pipelines --watch
 kubectl proxy
 ```
 
-- If you have successfully completed the above steps, you can access the Tekton Dashboard from [here](http://localhost:8001/api/v1/namespaces/tekton-pipelines/services/tekton-dashboard:http/proxy/)
+- If you have successfully completed the above mentioned steps, you should be able to access the Tekton Dashboard from [here](http://localhost:8001/api/v1/namespaces/tekton-pipelines/services/tekton-dashboard:http/proxy/)
 
 
 ## Install Tekton pipelines for Go Tracer
