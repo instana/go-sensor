@@ -53,10 +53,10 @@ sh deploy.sh
 ```
 - Congrats! You have successfully configured Tekton CI pipeline for Go Tracer. You will see a status posted in Github for the Tekton runs, whenever a new PR is created.
 
-## Run Tekton Pipeline
+## Trigger Tekton Pipeline
 - Tekton pipeline can be triggered in two ways:
     1. Raising a PR
-        - The Tekton pipeline won't be immediately triggered when you raise a PR. You must apply the `tekton_ci` label to the PR to start the Tekton pipeline. Please note that if you raise a PR with a working copy, apply the label when it's ready for review. This label is for ensuring the pipelines won't trigger for every change to the PR. For any external PRs, one of the maintainers will add this label after a review.
+        - Tekton pipeline won't be immediately triggered when you raise a PR. You must apply the `tekton_ci` label to the PR to start the Tekton pipeline. Please note that if you raise a PR with a working copy, apply the label when it's ready for review. This label is for ensuring the pipelines won't trigger for every change to the PR. For any external PRs, one of the maintainers will add this label after a review.
     2. Pushing something to the `main` branch
         - Tekton pipeline will be triggered for every commit to the `main` branch.
 
