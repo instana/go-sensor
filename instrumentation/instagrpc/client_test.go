@@ -160,7 +160,41 @@ func TestUnaryClientInterceptor_NoParentSpan(t *testing.T) {
 	require.NoError(t, err)
 
 	// check recorded spans
-	assert.Empty(t, recorder.GetQueuedSpans())
+	// assert.Empty(t, recorder.GetQueuedSpans())
+
+	spans := recorder.GetQueuedSpans()
+	require.Len(t, spans, 1)
+
+	span, err := extractAgentSpan(spans[0])
+	require.NoError(t, err)
+
+	host, port, err := net.SplitHostPort(addr)
+	require.NoError(t, err)
+
+	assert.Equal(t, "rpc-client", span.Name)
+	assert.EqualValues(t, instana.ExitSpanKind, span.Kind)
+	assert.Equal(t, 0, span.Ec)
+
+	assert.Equal(t, agentRPCSpanData{
+		Host:     host,
+		Port:     port,
+		Flavor:   "grpc",
+		CallType: "unary",
+		Call:     "/grpc.testing.TestService/EmptyCall",
+	}, span.Data.RPC)
+
+	// ensure that trace context has been propagated
+	require.NotNil(t, mdRec.MD)
+
+	traceIDHeader := mdRec.MD.Get(instana.FieldT)
+	require.Len(t, traceIDHeader, 1)
+
+	assert.Equal(t, span.TraceID, traceIDHeader[0])
+
+	spanIDHeader := mdRec.MD.Get(instana.FieldS)
+	require.Len(t, spanIDHeader, 1)
+
+	assert.Equal(t, span.SpanID, spanIDHeader[0])
 }
 
 func TestStreamClientInterceptor(t *testing.T) {
@@ -347,7 +381,39 @@ func TestStreamClientInterceptor_NoParentSpan(t *testing.T) {
 		break
 	}
 
-	assert.Empty(t, recorder.GetQueuedSpans())
+	spans := recorder.GetQueuedSpans()
+	require.Len(t, spans, 1)
+
+	span, err := extractAgentSpan(spans[0])
+	require.NoError(t, err)
+
+	assert.Equal(t, "rpc-client", span.Name)
+	assert.EqualValues(t, instana.ExitSpanKind, span.Kind)
+	assert.Equal(t, 0, span.Ec)
+
+	host, port, err := net.SplitHostPort(addr)
+	require.NoError(t, err)
+
+	assert.Equal(t, agentRPCSpanData{
+		Host:     host,
+		Port:     port,
+		Flavor:   "grpc",
+		CallType: "stream",
+		Call:     "/grpc.testing.TestService/FullDuplexCall",
+	}, span.Data.RPC)
+
+	// ensure that trace context has been propagated
+	require.NotNil(t, mdRec.MD)
+
+	traceIDHeader := mdRec.MD.Get(instana.FieldT)
+	require.Len(t, traceIDHeader, 1)
+
+	assert.Equal(t, span.TraceID, traceIDHeader[0])
+
+	spanIDHeader := mdRec.MD.Get(instana.FieldS)
+	require.Len(t, spanIDHeader, 1)
+
+	assert.Equal(t, span.SpanID, spanIDHeader[0])
 }
 
 func newTestServiceClient(addr string, timeout time.Duration, opts ...grpc.DialOption) (grpctest.TestServiceClient, error) {
