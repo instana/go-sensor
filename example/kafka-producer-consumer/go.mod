@@ -1,6 +1,6 @@
 module kafka-producer-consumer
 
-go 1.17
+go 1.21
 
 require (
 	github.com/IBM/sarama v1.41.3
