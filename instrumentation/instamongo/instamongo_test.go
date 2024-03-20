@@ -454,21 +454,30 @@ func TestWrapCommandMonitor_Failed_NotTraced(t *testing.T) {
 	}
 	m.Started(context.Background(), started)
 
-	failed := &event.CommandFailedEvent{
+	success := &event.CommandSucceededEvent{
 		CommandFinishedEvent: event.CommandFinishedEvent{
 			DurationNanos: 123,
 			CommandName:   "listDatabases",
 			RequestID:     1,
 			ConnectionID:  "localhost:27017-1",
 		},
-		Failure: "something went wrong",
+		Reply: marshalBSON(t, bson.M{
+			"databases": bson.A{},
+		}),
 	}
-	m.Failed(context.Background(), failed)
+	m.Succeeded(context.Background(), success)
 
-	assert.Empty(t, recorder.GetQueuedSpans())
+	// expecting an exit span is created even without having a parent span
+	spans := recorder.GetQueuedSpans()
+	require.Len(t, spans, 1)
 
-	// Check that events were propagated to the original CommandMonitor
-	assert.Equal(t, []interface{}{started, failed}, mon.Events())
+	dbSpan := spans[0]
+
+	assert.Equal(t, "mongo", dbSpan.Name)
+	assert.EqualValues(t, instana.ExitSpanKind, dbSpan.Kind)
+	assert.Empty(t, dbSpan.Ec)
+
+	require.IsType(t, instana.MongoDBSpanData{}, dbSpan.Data)
 }
 
 // To instrument a mongo.Client created with mongo.Connect() replace mongo.Connect() with instamongo.Connect()
