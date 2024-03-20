@@ -11,6 +11,7 @@ import (
 
 	"github.com/instana/go-sensor/logger"
 	ot "github.com/opentracing/opentracing-go"
+	"github.com/opentracing/opentracing-go/ext"
 	otlog "github.com/opentracing/opentracing-go/log"
 )
 
@@ -77,7 +78,7 @@ func (r *spanS) FinishWithOptions(opts ot.FinishOptions) {
 	}
 
 	r.Duration = duration
-	if !r.context.Suppressed {
+	if r.sendSpanToAgent() {
 		if sensor.Agent().Ready() {
 			r.tracer.recorder.RecordSpan(r)
 		} else {
@@ -85,6 +86,18 @@ func (r *spanS) FinishWithOptions(opts ot.FinishOptions) {
 		}
 		r.sendOpenTracingLogRecords()
 	}
+}
+
+func (r *spanS) sendSpanToAgent() bool {
+	isExit, allowExitAsRoot := optInExitSpans(r.Tags[string(ext.SpanKind)])
+	if r.context.Suppressed {
+		return false
+	} else if isExit && allowExitAsRoot {
+		return true
+	} else if isExit {
+		return false
+	}
+	return true
 }
 
 func (r *spanS) appendLog(lr ot.LogRecord) {

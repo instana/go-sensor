@@ -9,6 +9,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/opentracing/opentracing-go/ext"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -185,5 +186,80 @@ eth0	00000000	010011AC	0003	0	0	0	00000000	0	0	0
 func BenchmarkFormatID(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		FormatID(int64(i))
+	}
+}
+
+func Test_optInExitSpans(t *testing.T) {
+	type args struct {
+		kind interface{}
+	}
+	tests := []struct {
+		name                string
+		args                args
+		exportEnv           bool
+		wantIsExit          bool
+		wantAllowExitAsRoot bool
+	}{
+		{
+			name: "exit_span_env_exported",
+			args: args{
+				kind: ext.SpanKindRPCClientEnum,
+			},
+			exportEnv:           true,
+			wantIsExit:          true,
+			wantAllowExitAsRoot: true,
+		},
+		{
+			name: "exit_span_env_not_exported",
+			args: args{
+				kind: ext.SpanKindProducerEnum,
+			},
+			exportEnv:           false,
+			wantIsExit:          true,
+			wantAllowExitAsRoot: false,
+		},
+		{
+			name: "not_exit_span_env_exported",
+			args: args{
+				kind: ext.SpanKindRPCServerEnum,
+			},
+			exportEnv:           true,
+			wantIsExit:          false,
+			wantAllowExitAsRoot: true,
+		},
+		{
+			name: "not_exit_span_env_not_exported",
+			args: args{
+				kind: ext.SpanKindConsumerEnum,
+			},
+			exportEnv:           false,
+			wantIsExit:          false,
+			wantAllowExitAsRoot: false,
+		},
+		{
+			name: "span_kind_is_nil",
+			args: args{
+				kind: nil,
+			},
+			exportEnv:           true,
+			wantIsExit:          false,
+			wantAllowExitAsRoot: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.exportEnv {
+				os.Setenv(allowExitAsRoot, "1")
+			} else {
+				os.Unsetenv(allowExitAsRoot)
+			}
+			gotIsExit, gotAllowExitAsroot := optInExitSpans(tt.args.kind)
+			if gotIsExit != tt.wantIsExit {
+				t.Errorf("optInExitSpans() gotIsExit = %v, want %v", gotIsExit, tt.wantIsExit)
+			}
+			if gotAllowExitAsroot != tt.wantAllowExitAsRoot {
+				t.Errorf("optInExitSpans() gotAllowExitAsroot = %v, want %v", gotAllowExitAsroot, tt.wantAllowExitAsRoot)
+			}
+		})
 	}
 }

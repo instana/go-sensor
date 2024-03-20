@@ -18,6 +18,11 @@ import (
 	"time"
 
 	ot "github.com/opentracing/opentracing-go"
+	"github.com/opentracing/opentracing-go/ext"
+)
+
+const (
+	allowExitAsRoot = "INSTANA_ALLOW_EXIT_AS_ROOT"
 )
 
 var (
@@ -224,4 +229,16 @@ func cloneMapStringString(t map[string]string) map[string]string {
 	}
 
 	return clone
+}
+
+func optInExitSpans(kind interface{}) (isExit, optIn bool) {
+	switch kind {
+	case ext.SpanKindRPCClientEnum, string(ext.SpanKindRPCClientEnum),
+		ext.SpanKindProducerEnum, string(ext.SpanKindProducerEnum),
+		"exit":
+		isExit = true
+	default:
+		isExit = false
+	}
+	return isExit, os.Getenv(allowExitAsRoot) == "1"
 }
