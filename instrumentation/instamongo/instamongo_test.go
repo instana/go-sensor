@@ -323,10 +323,17 @@ func TestWrapCommandMonitor_Succeeded_NotTraced(t *testing.T) {
 	}
 	m.Succeeded(context.Background(), success)
 
-	assert.Empty(t, recorder.GetQueuedSpans())
+	// expecting an exit span is created even without having a parent span
+	spans := recorder.GetQueuedSpans()
+	require.Len(t, spans, 1)
 
-	// Check that events were propagated to the original CommandMonitor
-	assert.Equal(t, []interface{}{started, success}, mon.Events())
+	dbSpan := spans[0]
+
+	assert.Equal(t, "mongo", dbSpan.Name)
+	assert.EqualValues(t, instana.ExitSpanKind, dbSpan.Kind)
+	assert.Empty(t, dbSpan.Ec)
+
+	require.IsType(t, instana.MongoDBSpanData{}, dbSpan.Data)
 }
 
 func TestWrapCommandMonitor_Failed(t *testing.T) {
@@ -454,30 +461,32 @@ func TestWrapCommandMonitor_Failed_NotTraced(t *testing.T) {
 	}
 	m.Started(context.Background(), started)
 
-	success := &event.CommandSucceededEvent{
+	failed := &event.CommandFailedEvent{
 		CommandFinishedEvent: event.CommandFinishedEvent{
 			DurationNanos: 123,
 			CommandName:   "listDatabases",
 			RequestID:     1,
 			ConnectionID:  "localhost:27017-1",
 		},
-		Reply: marshalBSON(t, bson.M{
-			"databases": bson.A{},
-		}),
+		Failure: "something went wrong",
 	}
-	m.Succeeded(context.Background(), success)
+	m.Failed(context.Background(), failed)
 
 	// expecting an exit span is created even without having a parent span
 	spans := recorder.GetQueuedSpans()
-	require.Len(t, spans, 1)
+	require.Len(t, spans, 2)
 
-	dbSpan := spans[0]
+	dbSpan, logSpan := spans[0], spans[1]
 
 	assert.Equal(t, "mongo", dbSpan.Name)
 	assert.EqualValues(t, instana.ExitSpanKind, dbSpan.Kind)
-	assert.Empty(t, dbSpan.Ec)
+	assert.Equal(t, dbSpan.Ec, 1)
 
 	require.IsType(t, instana.MongoDBSpanData{}, dbSpan.Data)
+
+	assert.Equal(t, dbSpan.TraceID, logSpan.TraceID)
+	assert.Equal(t, dbSpan.SpanID, logSpan.ParentID)
+	assert.Equal(t, "log.go", logSpan.Name)
 }
 
 // To instrument a mongo.Client created with mongo.Connect() replace mongo.Connect() with instamongo.Connect()
