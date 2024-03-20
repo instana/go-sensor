@@ -1,4 +1,3 @@
-
 MODULES = $(filter-out $(EXCLUDE_DIRS) ./example/% , $(shell find . -name go.mod -exec dirname {} \;))
 LINTER ?= $(shell go env GOPATH)/bin/golangci-lint
 
