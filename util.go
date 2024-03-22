@@ -22,7 +22,7 @@ import (
 )
 
 const (
-	allowRootExitSpan = "INSTANA_ALLOW_ROOT_EXIT_SPAN"
+	allowRootExitSpanEnv = "INSTANA_ALLOW_ROOT_EXIT_SPAN"
 )
 
 var (
@@ -231,14 +231,26 @@ func cloneMapStringString(t map[string]string) map[string]string {
 	return clone
 }
 
-func optInExitSpans(kind interface{}) (isExit, optIn bool) {
+func isExitSpan(kind interface{}) bool {
+
 	switch kind {
 	case ext.SpanKindRPCClientEnum, string(ext.SpanKindRPCClientEnum),
 		ext.SpanKindProducerEnum, string(ext.SpanKindProducerEnum),
 		"exit":
-		isExit = true
+		return true
+
 	default:
-		isExit = false
+		return false
 	}
-	return isExit, os.Getenv(allowRootExitSpan) == "1"
+}
+
+func allowRootExitSpan(isRootExitSpan bool) bool {
+
+	// if the span is root exit span, it is allowed to send to agent
+	// only if the user is configured INSTANA_ALLOW_ROOT_EXIT_SPAN env
+	if isRootExitSpan {
+		return os.Getenv(allowRootExitSpanEnv) == "1"
+	}
+
+	return false
 }

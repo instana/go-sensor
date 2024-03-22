@@ -289,7 +289,7 @@ func Test_tracerS_SuppressTracing(t *testing.T) {
 	suppressTracingTag := "suppress_tracing"
 	exitSpan := ext.SpanKindRPCClientEnum
 	entrySpan := ext.SpanKindRPCServerEnum
-	allowRootExitSpan := "INSTANA_ALLOW_ROOT_EXIT_SPAN"
+	allowRootExitSpanEnv := "INSTANA_ALLOW_ROOT_EXIT_SPAN"
 
 	getSpanTags := func(kind ext.SpanKindEnum, suppressTracing bool) ot.Tags {
 		return ot.Tags{
@@ -400,10 +400,10 @@ func Test_tracerS_SuppressTracing(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.exportEnv {
-				os.Setenv(allowRootExitSpan, "1")
+				os.Setenv(allowRootExitSpanEnv, "1")
 
 				defer func() {
-					os.Unsetenv(allowRootExitSpan)
+					os.Unsetenv(allowRootExitSpanEnv)
 				}()
 			}
 
