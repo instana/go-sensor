@@ -9,6 +9,7 @@ import (
 	"database/sql/driver"
 	"errors"
 	"io"
+	"os"
 	"testing"
 
 	instana "github.com/instana/go-sensor"
@@ -17,6 +18,14 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+func beforeTest() {
+	os.Setenv("INSTANA_ALLOW_ROOT_EXIT_SPAN", "1")
+}
+
+func afterTest() {
+	os.Unsetenv("INSTANA_ALLOW_ROOT_EXIT_SPAN")
+}
 
 func TestInstrumentSQLDriver(t *testing.T) {
 	recorder := instana.NewTestRecorder()
@@ -59,6 +68,8 @@ func BenchmarkSQLOpenAndExec(b *testing.B) {
 }
 
 func TestOpenSQLDB(t *testing.T) {
+	beforeTest()
+	defer afterTest()
 	recorder := instana.NewTestRecorder()
 	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{
 		Service:     "go-sensor-test",
@@ -215,6 +226,8 @@ func TestDSNParing(t *testing.T) {
 }
 
 func TestOpenSQLDB_URIConnString(t *testing.T) {
+	beforeTest()
+	defer afterTest()
 	recorder := instana.NewTestRecorder()
 	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{
 		Service:     "go-sensor-test",
@@ -255,6 +268,8 @@ func TestOpenSQLDB_URIConnString(t *testing.T) {
 }
 
 func TestOpenSQLDB_PostgresKVConnString(t *testing.T) {
+	beforeTest()
+	defer afterTest()
 	recorder := instana.NewTestRecorder()
 	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{
 		Service:     "go-sensor-test",
@@ -288,6 +303,8 @@ func TestOpenSQLDB_PostgresKVConnString(t *testing.T) {
 }
 
 func TestOpenSQLDB_MySQLKVConnString(t *testing.T) {
+	beforeTest()
+	defer afterTest()
 	recorder := instana.NewTestRecorder()
 	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{
 		Service:     "go-sensor-test",
@@ -321,6 +338,8 @@ func TestOpenSQLDB_MySQLKVConnString(t *testing.T) {
 }
 
 func TestOpenSQLDB_RedisConnString(t *testing.T) {
+	beforeTest()
+	defer afterTest()
 	recorder := instana.NewTestRecorder()
 	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{
 		Service:     "go-sensor-test",
@@ -351,6 +370,8 @@ func TestOpenSQLDB_RedisConnString(t *testing.T) {
 }
 
 func TestConnPrepareContext(t *testing.T) {
+	beforeTest()
+	defer afterTest()
 	recorder := instana.NewTestRecorder()
 	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{
 		Service:     "go-sensor-test",
@@ -395,6 +416,8 @@ func TestConnPrepareContext(t *testing.T) {
 }
 
 func TestConnPrepareContextWithError(t *testing.T) {
+	beforeTest()
+	defer afterTest()
 	recorder := instana.NewTestRecorder()
 	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{
 		Service:     "go-sensor-test",
@@ -442,6 +465,8 @@ func TestConnPrepareContextWithError(t *testing.T) {
 }
 
 func TestStmtExecContext(t *testing.T) {
+	beforeTest()
+	defer afterTest()
 	recorder := instana.NewTestRecorder()
 	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{
 		Service:     "go-sensor-test",
@@ -486,6 +511,8 @@ func TestStmtExecContext(t *testing.T) {
 }
 
 func TestStmtExecContextWithError(t *testing.T) {
+	beforeTest()
+	defer afterTest()
 	recorder := instana.NewTestRecorder()
 	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{
 		Service:     "go-sensor-test",
@@ -551,6 +578,8 @@ func TestConnPrepareContextWithErrorOnReturn(t *testing.T) {
 }
 
 func TestOpenSQLDB_RedisConnString_WithError(t *testing.T) {
+	beforeTest()
+	defer afterTest()
 	recorder := instana.NewTestRecorder()
 	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{
 		Service:     "go-sensor-test",
@@ -582,6 +611,8 @@ func TestOpenSQLDB_RedisConnString_WithError(t *testing.T) {
 }
 
 func TestOpenSQLDB_RedisKVConnString(t *testing.T) {
+	beforeTest()
+	defer afterTest()
 	recorder := instana.NewTestRecorder()
 	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{
 		Service:     "go-sensor-test",

@@ -13,6 +13,8 @@ import (
 )
 
 func TestRecorderBasics(t *testing.T) {
+	beforeTest()
+	defer afterTest()
 	recorder := instana.NewTestRecorder()
 	tracer := instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder)
 	defer instana.ShutdownSensor()
