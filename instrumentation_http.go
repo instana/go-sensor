@@ -182,23 +182,27 @@ func RoundTripper(sensor TracerLogger, original http.RoundTripper) http.RoundTri
 	}
 	return tracingRoundTripper(func(req *http.Request) (*http.Response, error) {
 		ctx := req.Context()
-		parentSpan, ok := SpanFromContext(ctx)
-		if !ok {
-			// don't trace the exit call if there was no entry span provided
-			return original.RoundTrip(req)
-		}
 
 		sanitizedURL := cloneURL(req.URL)
 		sanitizedURL.RawQuery = ""
 		sanitizedURL.User = nil
 
-		span := sensor.Tracer().StartSpan("http",
+		opts := []ot.StartSpanOption{
 			ext.SpanKindRPCClient,
-			ot.ChildOf(parentSpan.Context()),
 			ot.Tags{
 				"http.url":    sanitizedURL.String(),
 				"http.method": req.Method,
-			})
+			},
+		}
+
+		tracer := sensor.Tracer()
+		parentSpan, ok := SpanFromContext(ctx)
+		if ok {
+			tracer = parentSpan.Tracer()
+			opts = append(opts, ot.ChildOf(parentSpan.Context()))
+		}
+
+		span := tracer.StartSpan("http", opts...)
 		defer span.Finish()
 
 		// clone the request since the RoundTrip should not modify the original one

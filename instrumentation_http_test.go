@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"strings"
 	"testing"
 
@@ -580,8 +581,10 @@ func TestRoundTripper_WithoutParentSpan(t *testing.T) {
 	defer instana.ShutdownSensor()
 
 	rt := instana.RoundTripper(s, testRoundTripper(func(req *http.Request) (*http.Response, error) {
-		assert.Empty(t, req.Header.Get(instana.FieldT))
-		assert.Empty(t, req.Header.Get(instana.FieldS))
+		// This fields will be present as an exit span would be created
+		// The exit spans will not be recorded as it will not be sent to agent
+		assert.NotEmpty(t, req.Header.Get(instana.FieldT))
+		assert.NotEmpty(t, req.Header.Get(instana.FieldS))
 
 		return &http.Response{
 			Status:     http.StatusText(http.StatusNotImplemented),
@@ -594,6 +597,40 @@ func TestRoundTripper_WithoutParentSpan(t *testing.T) {
 	assert.Equal(t, http.StatusNotImplemented, resp.StatusCode)
 
 	assert.Empty(t, recorder.GetQueuedSpans())
+}
+
+func TestRoundTripper_AllowRootExitSpan(t *testing.T) {
+
+	os.Setenv("INSTANA_ALLOW_ROOT_EXIT_SPAN", "1")
+	defer func() {
+		os.Unsetenv("INSTANA_ALLOW_ROOT_EXIT_SPAN")
+	}()
+
+	recorder := instana.NewTestRecorder()
+	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder))
+	defer instana.ShutdownSensor()
+
+	rt := instana.RoundTripper(s, testRoundTripper(func(req *http.Request) (*http.Response, error) {
+		// This fields will be present as an exit span would be created
+		assert.NotEmpty(t, req.Header.Get(instana.FieldT))
+		assert.NotEmpty(t, req.Header.Get(instana.FieldS))
+
+		return &http.Response{
+			Status:     http.StatusText(http.StatusNotImplemented),
+			StatusCode: http.StatusNotImplemented,
+		}, nil
+	}))
+
+	resp, err := rt.RoundTrip(httptest.NewRequest("GET", "http://example.com/hello", nil))
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusNotImplemented, resp.StatusCode)
+
+	// the spans are present in the recorder as INSTANA_ALLOW_ROOT_EXIT_SPAN is configured
+	spans := recorder.GetQueuedSpans()
+	require.Len(t, spans, 1)
+	span := spans[0]
+	assert.Equal(t, 0, span.Ec)
+	assert.EqualValues(t, instana.ExitSpanKind, span.Kind)
 }
 
 func TestRoundTripper_Error(t *testing.T) {

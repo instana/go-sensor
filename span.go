@@ -100,9 +100,10 @@ func (r *spanS) sendSpanToAgent() bool {
 		return true
 	}
 
-	// if the span is an exit span, then it should be forwarded
-	// ALLOW_ROOT_EXIT_SPAN is configured by the user
-	return allowRootExitSpan
+	// if the span is an exit span without a parent span, then it should be forwarded
+	// only if ALLOW_ROOT_EXIT_SPAN is configured by the user
+	return allowRootExitSpan || r.context.ParentID != 0
+
 }
 
 func (r *spanS) appendLog(lr ot.LogRecord) {

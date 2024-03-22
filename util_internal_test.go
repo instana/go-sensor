@@ -194,56 +194,56 @@ func Test_optInExitSpans(t *testing.T) {
 		kind interface{}
 	}
 	tests := []struct {
-		name                string
-		args                args
-		exportEnv           bool
-		wantIsExit          bool
-		wantAllowExitAsRoot bool
+		name                  string
+		args                  args
+		exportEnv             bool
+		wantIsExit            bool
+		wantAllowRootExitSpan bool
 	}{
 		{
 			name: "exit_span_env_exported",
 			args: args{
 				kind: ext.SpanKindRPCClientEnum,
 			},
-			exportEnv:           true,
-			wantIsExit:          true,
-			wantAllowExitAsRoot: true,
+			exportEnv:             true,
+			wantIsExit:            true,
+			wantAllowRootExitSpan: true,
 		},
 		{
 			name: "exit_span_env_not_exported",
 			args: args{
 				kind: ext.SpanKindProducerEnum,
 			},
-			exportEnv:           false,
-			wantIsExit:          true,
-			wantAllowExitAsRoot: false,
+			exportEnv:             false,
+			wantIsExit:            true,
+			wantAllowRootExitSpan: false,
 		},
 		{
 			name: "not_exit_span_env_exported",
 			args: args{
 				kind: ext.SpanKindRPCServerEnum,
 			},
-			exportEnv:           true,
-			wantIsExit:          false,
-			wantAllowExitAsRoot: true,
+			exportEnv:             true,
+			wantIsExit:            false,
+			wantAllowRootExitSpan: true,
 		},
 		{
 			name: "not_exit_span_env_not_exported",
 			args: args{
 				kind: ext.SpanKindConsumerEnum,
 			},
-			exportEnv:           false,
-			wantIsExit:          false,
-			wantAllowExitAsRoot: false,
+			exportEnv:             false,
+			wantIsExit:            false,
+			wantAllowRootExitSpan: false,
 		},
 		{
 			name: "span_kind_is_nil",
 			args: args{
 				kind: nil,
 			},
-			exportEnv:           true,
-			wantIsExit:          false,
-			wantAllowExitAsRoot: true,
+			exportEnv:             true,
+			wantIsExit:            false,
+			wantAllowRootExitSpan: true,
 		},
 	}
 
@@ -258,10 +258,10 @@ func Test_optInExitSpans(t *testing.T) {
 				}()
 			}
 
-			gotIsExit, gotAllowExitAsroot := optInExitSpans(tt.args.kind)
+			gotIsExit, gotAllowRootExitSpan := optInExitSpans(tt.args.kind)
 
 			assert.Equal(t, tt.wantIsExit, gotIsExit)
-			assert.Equal(t, tt.wantAllowExitAsRoot, gotAllowExitAsroot)
+			assert.Equal(t, tt.wantAllowRootExitSpan, gotAllowRootExitSpan)
 
 		})
 	}
