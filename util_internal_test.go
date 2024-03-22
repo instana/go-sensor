@@ -251,10 +251,10 @@ func Test_optInExitSpans(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 
 			if tt.exportEnv {
-				os.Setenv(allowExitAsRoot, "1")
+				os.Setenv(allowRootExitSpan, "1")
 
 				defer func() {
-					os.Unsetenv(allowExitAsRoot)
+					os.Unsetenv(allowRootExitSpan)
 				}()
 			}
 

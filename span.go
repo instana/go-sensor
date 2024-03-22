@@ -89,15 +89,20 @@ func (r *spanS) FinishWithOptions(opts ot.FinishOptions) {
 }
 
 func (r *spanS) sendSpanToAgent() bool {
-	isExit, allowExitAsRoot := optInExitSpans(r.Tags[string(ext.SpanKind)])
+	//if suppress tag is present, span shouldn't be forwarded
 	if r.context.Suppressed {
 		return false
-	} else if isExit && allowExitAsRoot {
-		return true
-	} else if isExit {
-		return false
 	}
-	return true
+
+	isExit, allowRootExitSpan := optInExitSpans(r.Tags[string(ext.SpanKind)])
+	// if the span is an Entry span, it should be sent to the agent
+	if !isExit {
+		return true
+	}
+
+	// if the span is an exit span, then it should be forwarded is
+	// allow-exit-span is configured by the user
+	return allowRootExitSpan
 }
 
 func (r *spanS) appendLog(lr ot.LogRecord) {

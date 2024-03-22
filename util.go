@@ -22,7 +22,7 @@ import (
 )
 
 const (
-	allowExitAsRoot = "INSTANA_ALLOW_EXIT_AS_ROOT"
+	allowRootExitSpan = "INSTANA_ALLOW_ROOT_EXIT_SPAN"
 )
 
 var (
@@ -240,5 +240,5 @@ func optInExitSpans(kind interface{}) (isExit, optIn bool) {
 	default:
 		isExit = false
 	}
-	return isExit, os.Getenv(allowExitAsRoot) == "1"
+	return isExit, os.Getenv(allowRootExitSpan) == "1"
 }

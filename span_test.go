@@ -289,7 +289,7 @@ func Test_tracerS_SuppressTracing(t *testing.T) {
 	suppressTracingTag := "suppress_tracing"
 	exitSpan := ext.SpanKindRPCClientEnum
 	entrySpan := ext.SpanKindRPCServerEnum
-	allowExitAsRoot := "INSTANA_ALLOW_EXIT_AS_ROOT"
+	allowRootExitSpan := "INSTANA_ALLOW_ROOT_EXIT_SPAN"
 
 	getSpanTags := func(kind ext.SpanKindEnum, suppressTracing bool) ot.Tags {
 		return ot.Tags{
@@ -309,7 +309,7 @@ func Test_tracerS_SuppressTracing(t *testing.T) {
 		want      int
 	}{
 		{
-			name:      "env_disable_tag_false_exit_true",
+			name:      "env_unset_suppress_false_spanType_exit",
 			exportEnv: false,
 			args: args{
 				operationName: opName,
@@ -320,7 +320,7 @@ func Test_tracerS_SuppressTracing(t *testing.T) {
 			want: 0,
 		},
 		{
-			name:      "env_disable_tag_true_exit_true",
+			name:      "env_unset_suppress_true_spanType_exit",
 			exportEnv: false,
 			args: args{
 				operationName: opName,
@@ -331,7 +331,7 @@ func Test_tracerS_SuppressTracing(t *testing.T) {
 			want: 0,
 		},
 		{
-			name:      "env_enable_tag_false_exit_true",
+			name:      "env_set_suppress_false_spanType_exit",
 			exportEnv: true,
 			args: args{
 				operationName: opName,
@@ -342,7 +342,7 @@ func Test_tracerS_SuppressTracing(t *testing.T) {
 			want: 1,
 		},
 		{
-			name:      "env_enable_tag_true_exit_true",
+			name:      "env_set_suppress_true_spanType_exit",
 			exportEnv: true,
 			args: args{
 				operationName: opName,
@@ -353,7 +353,7 @@ func Test_tracerS_SuppressTracing(t *testing.T) {
 			want: 0,
 		},
 		{
-			name:      "env_disable_tag_false_exit_false",
+			name:      "env_unset_suppress_false_spanType_entry",
 			exportEnv: false,
 			args: args{
 				operationName: opName,
@@ -364,7 +364,7 @@ func Test_tracerS_SuppressTracing(t *testing.T) {
 			want: 1,
 		},
 		{
-			name:      "env_disable_tag_true_exit_false",
+			name:      "env_unset_suppress_true_spanType_entry",
 			exportEnv: false,
 			args: args{
 				operationName: opName,
@@ -375,7 +375,7 @@ func Test_tracerS_SuppressTracing(t *testing.T) {
 			want: 0,
 		},
 		{
-			name:      "env_enable_tag_false_exit_false",
+			name:      "env_set_suppress_false_spanType_entry",
 			exportEnv: true,
 			args: args{
 				operationName: opName,
@@ -386,7 +386,7 @@ func Test_tracerS_SuppressTracing(t *testing.T) {
 			want: 1,
 		},
 		{
-			name:      "env_enable_tag_true_exit_false",
+			name:      "env_set_suppress_true_spanType_entry",
 			exportEnv: true,
 			args: args{
 				operationName: opName,
@@ -400,9 +400,11 @@ func Test_tracerS_SuppressTracing(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.exportEnv {
-				os.Setenv(allowExitAsRoot, "1")
-			} else {
-				os.Unsetenv(allowExitAsRoot)
+				os.Setenv(allowRootExitSpan, "1")
+
+				defer func() {
+					os.Unsetenv(allowRootExitSpan)
+				}()
 			}
 
 			recorder := instana.NewTestRecorder()
