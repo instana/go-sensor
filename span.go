@@ -100,8 +100,8 @@ func (r *spanS) sendSpanToAgent() bool {
 		return true
 	}
 
-	// if the span is an exit span, then it should be forwarded is
-	// allow-exit-span is configured by the user
+	// if the span is an exit span, then it should be forwarded
+	// ALLOW_ROOT_EXIT_SPAN is configured by the user
 	return allowRootExitSpan
 }
 
