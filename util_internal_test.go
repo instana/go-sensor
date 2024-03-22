@@ -246,20 +246,23 @@ func Test_optInExitSpans(t *testing.T) {
 			wantAllowExitAsRoot: true,
 		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+
 			if tt.exportEnv {
 				os.Setenv(allowExitAsRoot, "1")
-			} else {
-				os.Unsetenv(allowExitAsRoot)
+
+				defer func() {
+					os.Unsetenv(allowExitAsRoot)
+				}()
 			}
+
 			gotIsExit, gotAllowExitAsroot := optInExitSpans(tt.args.kind)
-			if gotIsExit != tt.wantIsExit {
-				t.Errorf("optInExitSpans() gotIsExit = %v, want %v", gotIsExit, tt.wantIsExit)
-			}
-			if gotAllowExitAsroot != tt.wantAllowExitAsRoot {
-				t.Errorf("optInExitSpans() gotAllowExitAsroot = %v, want %v", gotAllowExitAsroot, tt.wantAllowExitAsRoot)
-			}
+
+			assert.Equal(t, tt.wantIsExit, gotIsExit)
+			assert.Equal(t, tt.wantAllowExitAsRoot, gotAllowExitAsroot)
+
 		})
 	}
 }
