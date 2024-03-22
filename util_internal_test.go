@@ -262,7 +262,7 @@ func Test_allowRootExitSpan(t *testing.T) {
 				isRootExitSpan: false,
 			},
 			exportEnv: true,
-			want:      false,
+			want:      true,
 		},
 		{
 			name: "not_root_exit_span_env_unset",
@@ -270,7 +270,7 @@ func Test_allowRootExitSpan(t *testing.T) {
 				isRootExitSpan: false,
 			},
 			exportEnv: false,
-			want:      false,
+			want:      true,
 		},
 	}
 	for _, tt := range tests {

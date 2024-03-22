@@ -291,6 +291,9 @@ func Test_tracerS_SuppressTracing(t *testing.T) {
 	entrySpan := ext.SpanKindRPCServerEnum
 	allowRootExitSpanEnv := "INSTANA_ALLOW_ROOT_EXIT_SPAN"
 
+	tracer := instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, nil)
+	parentSpan := tracer.StartSpan("parent-span")
+
 	getSpanTags := func(kind ext.SpanKindEnum, suppressTracing bool) ot.Tags {
 		return ot.Tags{
 			"span.kind":        kind,
@@ -395,6 +398,34 @@ func Test_tracerS_SuppressTracing(t *testing.T) {
 				},
 			},
 			want: 0,
+		},
+		{
+			name:      "env_unset_suppress_false_spanType_ExitSpanButNotRoot",
+			exportEnv: false,
+			args: args{
+				operationName: opName,
+				opts: ot.StartSpanOptions{
+					Tags: getSpanTags(exitSpan, false),
+					References: []ot.SpanReference{
+						ot.ChildOf(parentSpan.Context()),
+					},
+				},
+			},
+			want: 1,
+		},
+		{
+			name:      "env_set_suppress_false_spanType_ExitSpanButNotRoot",
+			exportEnv: true,
+			args: args{
+				operationName: opName,
+				opts: ot.StartSpanOptions{
+					Tags: getSpanTags(exitSpan, false),
+					References: []ot.SpanReference{
+						ot.ChildOf(parentSpan.Context()),
+					},
+				},
+			},
+			want: 1,
 		},
 	}
 	for _, tt := range tests {

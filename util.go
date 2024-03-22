@@ -252,5 +252,5 @@ func allowRootExitSpan(isRootExitSpan bool) bool {
 		return os.Getenv(allowRootExitSpanEnv) == "1"
 	}
 
-	return false
+	return true
 }
