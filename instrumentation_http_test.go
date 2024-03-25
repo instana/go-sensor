@@ -581,7 +581,7 @@ func TestRoundTripper_WithoutParentSpan(t *testing.T) {
 	defer instana.ShutdownSensor()
 
 	rt := instana.RoundTripper(s, testRoundTripper(func(req *http.Request) (*http.Response, error) {
-		// This fields will be present as an exit span would be created
+		// These fields will be present, as an exit span would be created
 		// The exit spans will not be recorded as it will not be sent to agent
 		assert.NotEmpty(t, req.Header.Get(instana.FieldT))
 		assert.NotEmpty(t, req.Header.Get(instana.FieldS))
