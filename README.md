@@ -145,6 +145,14 @@ col.StartSpan("log.go", []ot.StartSpanOption{
 
 This log can then be visualized in the dashboard under Analytics/Logs. You can add a filter by service name. In our example, the service name is "My Go App".
 
+### Opt-in Exit Spans
+
+ Go tracer support the opt-in feature for the exit spans. When enabled, the collector can start capturing exit spans, even without an entry span. This capability is particularly useful for scenarios like cronjobs and other background tasks, enabling the users to tailor the tracing according to their specific requirements. By setting the `INSTANA_ALLOW_ROOT_EXIT_SPAN` variable, users can choose whether the tracer should start a trace with an exit span or not. The environment variable can have 2 values. (1: Tracer should record exit spans for the outgoing calls, when it has no active entry span. 0 or any other values: Tracer should not start a trace with an exit span).
+
+ ```bash
+export INSTANA_ALLOW_ROOT_EXIT_SPAN=1
+ ```
+
 ### Complete Example
 
 [Basic Usage](./example/basic_usage/main.go)

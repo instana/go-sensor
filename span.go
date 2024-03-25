@@ -94,15 +94,15 @@ func (r *spanS) sendSpanToAgent() bool {
 		return false
 	}
 
-	// if the span is an Entry span, it should be sent to the agent
-	if !isExitSpan(r.Tags[string(ext.SpanKind)]) {
+	if !isRootExitSpan(r.Tags[string(ext.SpanKind)], r.context.ParentID == 0) {
+		// if the span is an entry span, intermediate span, exit span with a parent
+		// it should be forwarded to the agent
 		return true
 	}
 
 	// if the span is an exit span without a parent span, then it should be forwarded
 	// only if ALLOW_ROOT_EXIT_SPAN is configured by the user
-	return allowRootExitSpan(r.context.ParentID == 0)
-
+	return allowRootExitSpan()
 }
 
 func (r *spanS) appendLog(lr ot.LogRecord) {

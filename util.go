@@ -231,26 +231,19 @@ func cloneMapStringString(t map[string]string) map[string]string {
 	return clone
 }
 
-func isExitSpan(kind interface{}) bool {
+func isRootExitSpan(kind interface{}, isRootSpan bool) bool {
 
 	switch kind {
 	case ext.SpanKindRPCClientEnum, string(ext.SpanKindRPCClientEnum),
 		ext.SpanKindProducerEnum, string(ext.SpanKindProducerEnum),
 		"exit":
-		return true
+		return isRootSpan
 
 	default:
 		return false
 	}
 }
 
-func allowRootExitSpan(isRootExitSpan bool) bool {
-
-	// if the span is root exit span, it is allowed to send to agent
-	// only if the user is configured INSTANA_ALLOW_ROOT_EXIT_SPAN env
-	if isRootExitSpan {
-		return os.Getenv(allowRootExitSpanEnv) == "1"
-	}
-
-	return true
+func allowRootExitSpan() bool {
+	return os.Getenv(allowRootExitSpanEnv) == "1"
 }

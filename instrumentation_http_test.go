@@ -611,7 +611,7 @@ func TestRoundTripper_AllowRootExitSpan(t *testing.T) {
 	defer instana.ShutdownSensor()
 
 	rt := instana.RoundTripper(s, testRoundTripper(func(req *http.Request) (*http.Response, error) {
-		// This fields will be present as an exit span would be created
+		// These fields will be present as an exit span would be created
 		assert.NotEmpty(t, req.Header.Get(instana.FieldT))
 		assert.NotEmpty(t, req.Header.Get(instana.FieldS))
 

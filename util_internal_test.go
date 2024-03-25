@@ -189,9 +189,10 @@ func BenchmarkFormatID(b *testing.B) {
 	}
 }
 
-func Test_isExitSpan(t *testing.T) {
+func Test_isRootExitSpan(t *testing.T) {
 	type args struct {
-		kind interface{}
+		kind       interface{}
+		isRootSpan bool
 	}
 	tests := []struct {
 		name string
@@ -199,21 +200,36 @@ func Test_isExitSpan(t *testing.T) {
 		want bool
 	}{
 		{
-			name: "exit_span",
+			name: "spanType_exit_rootSpan_true",
 			args: args{
-				kind: ext.SpanKindRPCClientEnum,
+				kind:       ext.SpanKindRPCClientEnum,
+				isRootSpan: true,
 			},
 			want: true,
 		},
 		{
-			name: "entry_span",
+			name: "spanType_exit_rootSpan_false",
 			args: args{
 				kind: ext.SpanKindRPCServerEnum,
 			},
 			want: false,
 		},
 		{
-			name: "span_kind_is_nil",
+			name: "spanType_entry_rootSpan_true",
+			args: args{
+				kind: nil,
+			},
+			want: false,
+		},
+		{
+			name: "spanType_entry_rootSpan_false",
+			args: args{
+				kind: nil,
+			},
+			want: false,
+		},
+		{
+			name: "spanType_nil_rootSpan_true",
 			args: args{
 				kind: nil,
 			},
@@ -222,8 +238,7 @@ func Test_isExitSpan(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-
-			got := isExitSpan(tt.args.kind)
+			got := isRootExitSpan(tt.args.kind, tt.args.isRootSpan)
 
 			assert.Equal(t, tt.want, got)
 		})
@@ -231,46 +246,20 @@ func Test_isExitSpan(t *testing.T) {
 }
 
 func Test_allowRootExitSpan(t *testing.T) {
-	type args struct {
-		isRootExitSpan bool
-	}
 	tests := []struct {
 		name      string
-		args      args
 		exportEnv bool
 		want      bool
 	}{
 		{
-			name: "root_exit_span_env_set",
-			args: args{
-				isRootExitSpan: true,
-			},
+			name:      "env_set",
 			exportEnv: true,
 			want:      true,
 		},
 		{
-			name: "root_exit_span_env_unset",
-			args: args{
-				isRootExitSpan: true,
-			},
+			name:      "env_unset",
 			exportEnv: false,
 			want:      false,
-		},
-		{
-			name: "not_root_exit_span_env_set",
-			args: args{
-				isRootExitSpan: false,
-			},
-			exportEnv: true,
-			want:      true,
-		},
-		{
-			name: "not_root_exit_span_env_unset",
-			args: args{
-				isRootExitSpan: false,
-			},
-			exportEnv: false,
-			want:      true,
 		},
 	}
 	for _, tt := range tests {
@@ -284,9 +273,9 @@ func Test_allowRootExitSpan(t *testing.T) {
 				}()
 			}
 
-			got := allowRootExitSpan(tt.args.isRootExitSpan)
-
-			assert.Equal(t, tt.want, got)
+			if got := allowRootExitSpan(); got != tt.want {
+				t.Errorf("allowRootExitSpan() = %v, want %v", got, tt.want)
+			}
 		})
 	}
 }
