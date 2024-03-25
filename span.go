@@ -11,6 +11,7 @@ import (
 
 	"github.com/instana/go-sensor/logger"
 	ot "github.com/opentracing/opentracing-go"
+	"github.com/opentracing/opentracing-go/ext"
 	otlog "github.com/opentracing/opentracing-go/log"
 )
 
@@ -77,7 +78,7 @@ func (r *spanS) FinishWithOptions(opts ot.FinishOptions) {
 	}
 
 	r.Duration = duration
-	if !r.context.Suppressed {
+	if r.sendSpanToAgent() {
 		if sensor.Agent().Ready() {
 			r.tracer.recorder.RecordSpan(r)
 		} else {
@@ -85,6 +86,23 @@ func (r *spanS) FinishWithOptions(opts ot.FinishOptions) {
 		}
 		r.sendOpenTracingLogRecords()
 	}
+}
+
+func (r *spanS) sendSpanToAgent() bool {
+	//if suppress tag is present, span shouldn't be forwarded
+	if r.context.Suppressed {
+		return false
+	}
+
+	if !isRootExitSpan(r.Tags[string(ext.SpanKind)], r.context.ParentID == 0) {
+		// if the span is an entry span, intermediate span, exit span with a parent
+		// it should be forwarded to the agent
+		return true
+	}
+
+	// if the span is an exit span without a parent span, then it should be forwarded
+	// only if ALLOW_ROOT_EXIT_SPAN is configured by the user
+	return allowRootExitSpan()
 }
 
 func (r *spanS) appendLog(lr ot.LogRecord) {
