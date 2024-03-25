@@ -491,8 +491,6 @@ func TestConnPrepareContext(t *testing.T) {
 	db, err := instana.SQLOpen("fake_pc", "conn string")
 	require.NoError(t, err)
 
-	// ctx := context.Background()
-
 	stmt, err := db.PrepareContext(ctx, "select 1 from table")
 	require.NoError(t, err)
 
@@ -541,8 +539,6 @@ func TestConnPrepareContextWithError(t *testing.T) {
 
 	db, err := instana.SQLOpen("fake_conn_pc_error", "conn string")
 	require.NoError(t, err)
-
-	// ctx := context.Background()
 
 	stmt, err := db.PrepareContext(ctx, "select 1 from table")
 	require.NoError(t, err)
@@ -596,8 +592,6 @@ func TestStmtExecContext(t *testing.T) {
 		ctx = instana.ContextWithSpan(ctx, span)
 	}
 
-	// ctx := context.Background()
-
 	stmt, err := db.PrepareContext(ctx, "select 1 from table")
 	require.NoError(t, err)
 
@@ -646,8 +640,6 @@ func TestStmtExecContextWithError(t *testing.T) {
 
 	db, err := instana.SQLOpen("fake_stmt_ec_with_error", "conn string")
 	require.NoError(t, err)
-
-	// ctx := context.Background()
 
 	stmt, err := db.PrepareContext(ctx, "select 1 from table")
 	require.NoError(t, err)
