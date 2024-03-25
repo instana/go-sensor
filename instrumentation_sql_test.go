@@ -19,14 +19,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func beforeTest() {
-	os.Setenv("INSTANA_ALLOW_ROOT_EXIT_SPAN", "1")
-}
-
-func afterTest() {
-	os.Unsetenv("INSTANA_ALLOW_ROOT_EXIT_SPAN")
-}
-
 func TestInstrumentSQLDriver(t *testing.T) {
 	recorder := instana.NewTestRecorder()
 	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{
@@ -67,9 +59,11 @@ func BenchmarkSQLOpenAndExec(b *testing.B) {
 	}
 }
 
-func TestOpenSQLDB(t *testing.T) {
-	beforeTest()
-	defer afterTest()
+func TestOpenSQLDB_WithoutContext(t *testing.T) {
+
+	os.Setenv("INSTANA_ALLOW_ROOT_EXIT_SPAN", "1")
+	defer os.Unsetenv("INSTANA_ALLOW_ROOT_EXIT_SPAN")
+
 	recorder := instana.NewTestRecorder()
 	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{
 		Service:     "go-sensor-test",
@@ -118,6 +112,93 @@ func TestOpenSQLDB(t *testing.T) {
 
 	t.Run("Query", func(t *testing.T) {
 		res, err := db.Query("TEST QUERY")
+		require.NoError(t, err)
+
+		cols, err := res.Columns()
+		require.NoError(t, err)
+		assert.Equal(t, []string{"col1", "col2"}, cols)
+
+		spans := recorder.GetQueuedSpans()
+		require.Len(t, spans, 1)
+
+		span := spans[0]
+		assert.Equal(t, 0, span.Ec)
+		assert.EqualValues(t, instana.ExitSpanKind, span.Kind)
+
+		require.IsType(t, instana.SDKSpanData{}, span.Data)
+		data := span.Data.(instana.SDKSpanData)
+
+		assert.Equal(t, instana.SDKSpanTags{
+			Name: "sdk.database",
+			Type: "exit",
+			Custom: map[string]interface{}{
+				"tags": ot.Tags{
+					"span.kind":    ext.SpanKindRPCClientEnum,
+					"db.instance":  "connection string",
+					"db.statement": "TEST QUERY",
+					"db.type":      "sql",
+					"peer.address": "connection string",
+				},
+			},
+		}, data.Tags)
+	})
+}
+
+func TestOpenSQLDB(t *testing.T) {
+
+	recorder := instana.NewTestRecorder()
+	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{
+		Service:     "go-sensor-test",
+		AgentClient: alwaysReadyClient{},
+	}, recorder))
+	defer instana.ShutdownSensor()
+
+	span := s.Tracer().StartSpan("parent-span")
+	ctx := context.Background()
+	if span != nil {
+		ctx = instana.ContextWithSpan(ctx, span)
+	}
+	instana.InstrumentSQLDriver(s, "test_driver", sqlDriver{})
+	require.Contains(t, sql.Drivers(), "test_driver_with_instana")
+
+	db, err := instana.SQLOpen("test_driver", "connection string")
+	require.NoError(t, err)
+
+	t.Run("Exec", func(t *testing.T) {
+		res, err := db.ExecContext(ctx, "TEST QUERY")
+		require.NoError(t, err)
+
+		lastID, err := res.LastInsertId()
+		require.NoError(t, err)
+		assert.Equal(t, int64(42), lastID)
+
+		spans := recorder.GetQueuedSpans()
+		require.Len(t, spans, 1)
+
+		span := spans[0]
+		assert.Equal(t, 0, span.Ec)
+		assert.EqualValues(t, instana.ExitSpanKind, span.Kind)
+
+		require.IsType(t, instana.SDKSpanData{}, span.Data)
+		data := span.Data.(instana.SDKSpanData)
+
+		assert.Equal(t, instana.SDKSpanTags{
+			Name: "sdk.database",
+			Type: "exit",
+			Custom: map[string]interface{}{
+				"tags": ot.Tags{
+					"span.kind":    ext.SpanKindRPCClientEnum,
+					"db.instance":  "connection string",
+					"db.statement": "TEST QUERY",
+					"db.type":      "sql",
+					"peer.address": "connection string",
+				},
+			},
+		}, data.Tags)
+	})
+
+	t.Run("Query", func(t *testing.T) {
+		res, err := db.QueryContext(ctx, "TEST QUERY")
 		require.NoError(t, err)
 
 		cols, err := res.Columns()
@@ -226,8 +307,7 @@ func TestDSNParing(t *testing.T) {
 }
 
 func TestOpenSQLDB_URIConnString(t *testing.T) {
-	beforeTest()
-	defer afterTest()
+
 	recorder := instana.NewTestRecorder()
 	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{
 		Service:     "go-sensor-test",
@@ -235,13 +315,19 @@ func TestOpenSQLDB_URIConnString(t *testing.T) {
 	}, recorder))
 	defer instana.ShutdownSensor()
 
+	span := s.Tracer().StartSpan("parent-span")
+	ctx := context.Background()
+	if span != nil {
+		ctx = instana.ContextWithSpan(ctx, span)
+	}
+
 	instana.InstrumentSQLDriver(s, "fake_db_driver", sqlDriver{})
 	require.Contains(t, sql.Drivers(), "test_driver_with_instana")
 
 	db, err := instana.SQLOpen("fake_db_driver", "db://user1:p@55w0rd@db-host:1234/test-schema?param=value")
 	require.NoError(t, err)
 
-	_, err = db.Exec("TEST QUERY")
+	_, err = db.ExecContext(ctx, "TEST QUERY")
 	require.NoError(t, err)
 
 	spans := recorder.GetQueuedSpans()
@@ -268,8 +354,7 @@ func TestOpenSQLDB_URIConnString(t *testing.T) {
 }
 
 func TestOpenSQLDB_PostgresKVConnString(t *testing.T) {
-	beforeTest()
-	defer afterTest()
+
 	recorder := instana.NewTestRecorder()
 	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{
 		Service:     "go-sensor-test",
@@ -277,13 +362,19 @@ func TestOpenSQLDB_PostgresKVConnString(t *testing.T) {
 	}, recorder))
 	defer instana.ShutdownSensor()
 
+	span := s.Tracer().StartSpan("parent-span")
+	ctx := context.Background()
+	if span != nil {
+		ctx = instana.ContextWithSpan(ctx, span)
+	}
+
 	instana.InstrumentSQLDriver(s, "fake_postgres_driver", sqlDriver{})
 	require.Contains(t, sql.Drivers(), "fake_postgres_driver_with_instana")
 
 	db, err := instana.SQLOpen("fake_postgres_driver", "host=db-host1,db-host-2 hostaddr=1.2.3.4,2.3.4.5 connect_timeout=10  port=1234 user=user1 password=p@55w0rd dbname=test-schema")
 	require.NoError(t, err)
 
-	_, err = db.Exec("TEST QUERY")
+	_, err = db.ExecContext(ctx, "TEST QUERY")
 	require.NoError(t, err)
 
 	spans := recorder.GetQueuedSpans()
@@ -303,8 +394,7 @@ func TestOpenSQLDB_PostgresKVConnString(t *testing.T) {
 }
 
 func TestOpenSQLDB_MySQLKVConnString(t *testing.T) {
-	beforeTest()
-	defer afterTest()
+
 	recorder := instana.NewTestRecorder()
 	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{
 		Service:     "go-sensor-test",
@@ -312,13 +402,19 @@ func TestOpenSQLDB_MySQLKVConnString(t *testing.T) {
 	}, recorder))
 	defer instana.ShutdownSensor()
 
+	span := s.Tracer().StartSpan("parent-span")
+	ctx := context.Background()
+	if span != nil {
+		ctx = instana.ContextWithSpan(ctx, span)
+	}
+
 	instana.InstrumentSQLDriver(s, "fake_mysql_driver", sqlDriver{})
 	require.Contains(t, sql.Drivers(), "fake_mysql_driver_with_instana")
 
 	db, err := instana.SQLOpen("fake_mysql_driver", "Server=db-host1, db-host2;Database=test-schema;Port=1234;Uid=user1;Pwd=p@55w0rd;")
 	require.NoError(t, err)
 
-	_, err = db.Exec("TEST QUERY")
+	_, err = db.ExecContext(ctx, "TEST QUERY")
 	require.NoError(t, err)
 
 	spans := recorder.GetQueuedSpans()
@@ -338,8 +434,7 @@ func TestOpenSQLDB_MySQLKVConnString(t *testing.T) {
 }
 
 func TestOpenSQLDB_RedisConnString(t *testing.T) {
-	beforeTest()
-	defer afterTest()
+
 	recorder := instana.NewTestRecorder()
 	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{
 		Service:     "go-sensor-test",
@@ -347,13 +442,19 @@ func TestOpenSQLDB_RedisConnString(t *testing.T) {
 	}, recorder))
 	defer instana.ShutdownSensor()
 
+	span := s.Tracer().StartSpan("parent-span")
+	ctx := context.Background()
+	if span != nil {
+		ctx = instana.ContextWithSpan(ctx, span)
+	}
+
 	instana.InstrumentSQLDriver(s, "fake_redis_driver", sqlDriver{})
 	require.Contains(t, sql.Drivers(), "fake_redis_driver_with_instana")
 
 	db, err := instana.SQLOpen("fake_redis_driver", ":p455w0rd@192.168.2.10:6790")
 	require.NoError(t, err)
 
-	_, err = db.Exec("SET name Instana EX 15")
+	_, err = db.ExecContext(ctx, "SET name Instana EX 15")
 	require.NoError(t, err)
 
 	spans := recorder.GetQueuedSpans()
@@ -370,8 +471,7 @@ func TestOpenSQLDB_RedisConnString(t *testing.T) {
 }
 
 func TestConnPrepareContext(t *testing.T) {
-	beforeTest()
-	defer afterTest()
+
 	recorder := instana.NewTestRecorder()
 	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{
 		Service:     "go-sensor-test",
@@ -379,13 +479,19 @@ func TestConnPrepareContext(t *testing.T) {
 	}, recorder))
 	defer instana.ShutdownSensor()
 
+	span := s.Tracer().StartSpan("parent-span")
+	ctx := context.Background()
+	if span != nil {
+		ctx = instana.ContextWithSpan(ctx, span)
+	}
+
 	instana.InstrumentSQLDriver(s, "fake_pc", sqlDriver{})
 	require.Contains(t, sql.Drivers(), "fake_pc_with_instana")
 
 	db, err := instana.SQLOpen("fake_pc", "conn string")
 	require.NoError(t, err)
 
-	ctx := context.Background()
+	// ctx := context.Background()
 
 	stmt, err := db.PrepareContext(ctx, "select 1 from table")
 	require.NoError(t, err)
@@ -416,8 +522,7 @@ func TestConnPrepareContext(t *testing.T) {
 }
 
 func TestConnPrepareContextWithError(t *testing.T) {
-	beforeTest()
-	defer afterTest()
+
 	recorder := instana.NewTestRecorder()
 	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{
 		Service:     "go-sensor-test",
@@ -425,13 +530,19 @@ func TestConnPrepareContextWithError(t *testing.T) {
 	}, recorder))
 	defer instana.ShutdownSensor()
 
+	span := s.Tracer().StartSpan("parent-span")
+	ctx := context.Background()
+	if span != nil {
+		ctx = instana.ContextWithSpan(ctx, span)
+	}
+
 	instana.InstrumentSQLDriver(s, "fake_conn_pc_error", sqlDriver{Error: errors.New("some error")})
 	require.Contains(t, sql.Drivers(), "fake_conn_pc_error_with_instana")
 
 	db, err := instana.SQLOpen("fake_conn_pc_error", "conn string")
 	require.NoError(t, err)
 
-	ctx := context.Background()
+	// ctx := context.Background()
 
 	stmt, err := db.PrepareContext(ctx, "select 1 from table")
 	require.NoError(t, err)
@@ -465,8 +576,7 @@ func TestConnPrepareContextWithError(t *testing.T) {
 }
 
 func TestStmtExecContext(t *testing.T) {
-	beforeTest()
-	defer afterTest()
+
 	recorder := instana.NewTestRecorder()
 	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{
 		Service:     "go-sensor-test",
@@ -480,7 +590,13 @@ func TestStmtExecContext(t *testing.T) {
 	db, err := instana.SQLOpen("fake_stmt_ec", "conn string")
 	require.NoError(t, err)
 
+	span := s.Tracer().StartSpan("parent-span")
 	ctx := context.Background()
+	if span != nil {
+		ctx = instana.ContextWithSpan(ctx, span)
+	}
+
+	// ctx := context.Background()
 
 	stmt, err := db.PrepareContext(ctx, "select 1 from table")
 	require.NoError(t, err)
@@ -511,8 +627,7 @@ func TestStmtExecContext(t *testing.T) {
 }
 
 func TestStmtExecContextWithError(t *testing.T) {
-	beforeTest()
-	defer afterTest()
+
 	recorder := instana.NewTestRecorder()
 	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{
 		Service:     "go-sensor-test",
@@ -520,13 +635,19 @@ func TestStmtExecContextWithError(t *testing.T) {
 	}, recorder))
 	defer instana.ShutdownSensor()
 
+	span := s.Tracer().StartSpan("parent-span")
+	ctx := context.Background()
+	if span != nil {
+		ctx = instana.ContextWithSpan(ctx, span)
+	}
+
 	instana.InstrumentSQLDriver(s, "fake_stmt_ec_with_error", sqlDriver{Error: errors.New("oh no")})
 	require.Contains(t, sql.Drivers(), "fake_stmt_ec_with_error_with_instana")
 
 	db, err := instana.SQLOpen("fake_stmt_ec_with_error", "conn string")
 	require.NoError(t, err)
 
-	ctx := context.Background()
+	// ctx := context.Background()
 
 	stmt, err := db.PrepareContext(ctx, "select 1 from table")
 	require.NoError(t, err)
@@ -578,8 +699,7 @@ func TestConnPrepareContextWithErrorOnReturn(t *testing.T) {
 }
 
 func TestOpenSQLDB_RedisConnString_WithError(t *testing.T) {
-	beforeTest()
-	defer afterTest()
+
 	recorder := instana.NewTestRecorder()
 	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{
 		Service:     "go-sensor-test",
@@ -587,13 +707,19 @@ func TestOpenSQLDB_RedisConnString_WithError(t *testing.T) {
 	}, recorder))
 	defer instana.ShutdownSensor()
 
+	span := s.Tracer().StartSpan("parent-span")
+	ctx := context.Background()
+	if span != nil {
+		ctx = instana.ContextWithSpan(ctx, span)
+	}
+
 	instana.InstrumentSQLDriver(s, "fake_redis_driver_with_error", sqlDriver{Error: errors.New("oops")})
 	require.Contains(t, sql.Drivers(), "fake_redis_driver_with_error_with_instana")
 
 	db, err := instana.SQLOpen("fake_redis_driver_with_error", ":p455w0rd@192.168.2.10:6790")
 	require.NoError(t, err)
 
-	_, err = db.Exec("SET name Instana EX 15")
+	_, err = db.ExecContext(ctx, "SET name Instana EX 15")
 
 	require.Error(t, err)
 
@@ -611,8 +737,7 @@ func TestOpenSQLDB_RedisConnString_WithError(t *testing.T) {
 }
 
 func TestOpenSQLDB_RedisKVConnString(t *testing.T) {
-	beforeTest()
-	defer afterTest()
+
 	recorder := instana.NewTestRecorder()
 	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{
 		Service:     "go-sensor-test",
@@ -620,13 +745,19 @@ func TestOpenSQLDB_RedisKVConnString(t *testing.T) {
 	}, recorder))
 	defer instana.ShutdownSensor()
 
+	span := s.Tracer().StartSpan("parent-span")
+	ctx := context.Background()
+	if span != nil {
+		ctx = instana.ContextWithSpan(ctx, span)
+	}
+
 	instana.InstrumentSQLDriver(s, "fake_redis_kv_driver", sqlDriver{})
 	require.Contains(t, sql.Drivers(), "fake_redis_kv_driver_with_instana")
 
 	db, err := instana.SQLOpen("fake_redis_kv_driver", "192.168.2.10:6790")
 	require.NoError(t, err)
 
-	_, err = db.Exec("SET name Instana EX 15")
+	_, err = db.ExecContext(ctx, "SET name Instana EX 15")
 	require.NoError(t, err)
 
 	spans := recorder.GetQueuedSpans()
