@@ -59,7 +59,7 @@ func BenchmarkSQLOpenAndExec(b *testing.B) {
 	}
 }
 
-func TestOpenSQLDB_WithoutContext(t *testing.T) {
+func TestOpenSQLDB_WithoutParentSpan(t *testing.T) {
 
 	os.Setenv("INSTANA_ALLOW_ROOT_EXIT_SPAN", "1")
 	defer os.Unsetenv("INSTANA_ALLOW_ROOT_EXIT_SPAN")
@@ -71,10 +71,10 @@ func TestOpenSQLDB_WithoutContext(t *testing.T) {
 	}, recorder))
 	defer instana.ShutdownSensor()
 
-	instana.InstrumentSQLDriver(s, "test_driver", sqlDriver{})
-	require.Contains(t, sql.Drivers(), "test_driver_with_instana")
+	instana.InstrumentSQLDriver(s, "test_driver_without_parent_span", sqlDriver{})
+	require.Contains(t, sql.Drivers(), "test_driver_without_parent_span_with_instana")
 
-	db, err := instana.SQLOpen("test_driver", "connection string")
+	db, err := instana.SQLOpen("test_driver_without_parent_span", "connection string")
 	require.NoError(t, err)
 
 	t.Run("Exec", func(t *testing.T) {
