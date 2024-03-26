@@ -6,6 +6,7 @@ package instaawssdk
 import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/lambda"
+	"github.com/opentracing/opentracing-go/ext"
 	otlog "github.com/opentracing/opentracing-go/log"
 
 	"github.com/aws/aws-sdk-go/aws/request"
@@ -20,7 +21,9 @@ func StartInvokeLambdaSpan(req *request.Request, sensor instana.TracerLogger) {
 	// an exit span will be created without a parent span
 	// and forwarded if user chose to opt in
 	// TODO: check what is the type of span for lambda and add it in options
-	opts := []opentracing.StartSpanOption{}
+	opts := []opentracing.StartSpanOption{
+		opentracing.Tag{Key: string(ext.SpanKind), Value: "exit"},
+	}
 	parent, ok := instana.SpanFromContext(req.Context())
 	if ok {
 		opts = append(opts, opentracing.ChildOf(parent.Context()))
