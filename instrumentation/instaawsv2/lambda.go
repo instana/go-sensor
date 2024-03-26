@@ -14,6 +14,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/lambda/types"
 	instana "github.com/instana/go-sensor"
 	ot "github.com/opentracing/opentracing-go"
+	"github.com/opentracing/opentracing-go/ext"
 	otlog "github.com/opentracing/opentracing-go/log"
 	"github.com/pkg/errors"
 )
@@ -27,8 +28,9 @@ var _ AWSOperations = (*AWSInvokeLambdaOperations)(nil)
 func (o AWSInvokeLambdaOperations) injectContextWithSpan(tr instana.TracerLogger, ctx context.Context, params interface{}) context.Context {
 	// An exit span will be created independently without a parent span
 	// and sent if the user has opted in.
-	// TODO: check what is the type of span for lambda and add it in options
-	opts := []ot.StartSpanOption{}
+	opts := []ot.StartSpanOption{
+		ot.Tag{Key: string(ext.SpanKind), Value: "exit"},
+	}
 	parent, ok := instana.SpanFromContext(ctx)
 	if ok {
 		opts = append(opts, ot.ChildOf(parent.Context()))
