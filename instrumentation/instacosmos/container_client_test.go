@@ -249,7 +249,6 @@ func TestInstaContainerClient_CreateItem_WithError(t *testing.T) {
 	require.Len(t, spans, 2)
 
 	span, logSpan := spans[0], spans[1]
-	assert.Empty(t, span.ParentID)
 	assert.Equal(t, 1, span.Ec)
 
 	a.EqualValues(instana.ExitSpanKind, span.Kind)
@@ -301,13 +300,13 @@ func TestInstaContainerClient_DeleteItem(t *testing.T) {
 
 func TestInstaContainerClient_NewQueryItemsPager(t *testing.T) {
 
-	_, recorder, cc, a := prepareContainerClient(t)
+	ctx, recorder, cc, a := prepareContainerClient(t)
 
 	spanID := fmt.Sprintf("span-%s", ID1)
 	pk := cc.NewPartitionKeyString(spanID)
 
 	query := fmt.Sprintf("SELECT * FROM %v", container)
-	resp := cc.NewQueryItemsPager(query, pk, &azcosmos.QueryOptions{})
+	resp := cc.NewQueryItemsPager(ctx, query, pk, &azcosmos.QueryOptions{})
 	a.NotEmpty(resp)
 
 	span := getLatestSpan(recorder)
@@ -649,7 +648,11 @@ func prepare(t *testing.T) (context.Context, *instana.Recorder, instacosmos.Clie
 	tracer := instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, rec)
 	sensor := instana.NewSensorWithTracer(tracer)
 
+	pSpan := sensor.Tracer().StartSpan("parent-span")
 	ctx := context.Background()
+	if pSpan != nil {
+		ctx = instana.ContextWithSpan(ctx, pSpan)
+	}
 
 	client, err := getInstaClient(sensor)
 	a.NoError(err)
