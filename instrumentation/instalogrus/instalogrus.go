@@ -6,6 +6,7 @@ package instalogrus
 import (
 	instana "github.com/instana/go-sensor"
 	"github.com/opentracing/opentracing-go"
+	"github.com/opentracing/opentracing-go/ext"
 	"github.com/sirupsen/logrus"
 )
 
@@ -32,25 +33,29 @@ func (h *hook) Fire(entry *logrus.Entry) error {
 		return nil
 	}
 
-	parent, ok := instana.SpanFromContext(entry.Context)
-	if !ok {
-		return nil
-	}
-
 	msg, err := entry.String()
 	if err != nil {
 		h.sensor.Logger().Error("failed to obtain logrus.Entry data:", err)
 		return nil
 	}
 
-	h.sensor.Tracer().StartSpan("log.go",
-		opentracing.ChildOf(parent.Context()),
+	// An exit span will be created independently without a parent span
+	// and sent if the user has opted in.
+	opts := []opentracing.StartSpanOption{
+		opentracing.Tag{Key: string(ext.SpanKind), Value: "exit"},
 		opentracing.StartTime(entry.Time),
 		opentracing.Tags{
 			"log.level":   convertLevel(entry.Level),
 			"log.message": string(msg),
 		},
-	).FinishWithOptions(opentracing.FinishOptions{
+	}
+
+	parent, ok := instana.SpanFromContext(entry.Context)
+	if ok {
+		opts = append(opts, opentracing.ChildOf(parent.Context()))
+	}
+
+	h.sensor.Tracer().StartSpan("log.go", opts...).FinishWithOptions(opentracing.FinishOptions{
 		FinishTime: entry.Time,
 	})
 
