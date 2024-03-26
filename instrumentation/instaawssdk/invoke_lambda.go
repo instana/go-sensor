@@ -16,14 +16,15 @@ import (
 // StartInvokeLambdaSpan initiates a new span from an AWS Invoke request and injects it into the
 // request.Request context
 func StartInvokeLambdaSpan(req *request.Request, sensor instana.TracerLogger) {
-	parent, ok := instana.SpanFromContext(req.Context())
-	if !ok {
-		return
-	}
 
-	sp := sensor.Tracer().StartSpan("aws.lambda.invoke",
-		opentracing.ChildOf(parent.Context()),
-	)
+	// an exit span will be created without a parent span
+	// and forwarded if user chose to opt in
+	opts := []opentracing.StartSpanOption{}
+	parent, ok := instana.SpanFromContext(req.Context())
+	if ok {
+		opts = append(opts, opentracing.ChildOf(parent.Context()))
+	}
+	sp := sensor.Tracer().StartSpan("aws.lambda.invoke", opts...)
 
 	if ii, ok := req.Params.(*lambda.InvokeInput); ok {
 		sp.SetTag(lambdaFunction, aws.StringValue(ii.FunctionName))
