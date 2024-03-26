@@ -17,14 +17,19 @@ import (
 // StartExitSpan starts a new span and injects in into returned context. If provided context already
 // contains an active span, it will be used as a parent.
 func StartExitSpan(ctx context.Context, op string, opts ...ot.StartSpanOption) context.Context {
+	// if user opts in to forward exit span without an entry span,
+	// we need to create the exit span even there is no entry span
+	sensor := instana.NewSensor("google-cloud")
+	tracer := sensor.Tracer()
+
 	sp, ok := instana.SpanFromContext(ctx)
-	if !ok {
-		return ctx
+	if ok {
+		tracer = sp.Tracer()
+		opts = append(opts, ot.ChildOf(sp.Context()))
 	}
+	span := tracer.StartSpan(op, opts...)
 
-	opts = append(opts, ot.ChildOf(sp.Context()))
-
-	return instana.ContextWithSpan(ctx, sp.Tracer().StartSpan(op, opts...))
+	return instana.ContextWithSpan(ctx, span)
 }
 
 // FinishSpan finishes an active span found in context, optionally logging an error if it's not nil.
