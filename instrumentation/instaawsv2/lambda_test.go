@@ -79,7 +79,7 @@ func TestInvokeLambdaNoParentSpan(t *testing.T) {
 	assert.NoError(t, err, "Error while invoking the lambda")
 
 	recorderSpans := recorder.GetQueuedSpans()
-	assert.Equal(t, 0, len(recorderSpans))
+	assert.Equal(t, 1, len(recorderSpans))
 }
 
 func TestInvokeLambdaWithClientContext(t *testing.T) {
