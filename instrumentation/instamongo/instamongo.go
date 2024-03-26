@@ -11,6 +11,7 @@ import (
 
 	instana "github.com/instana/go-sensor"
 	"github.com/opentracing/opentracing-go"
+	"github.com/opentracing/opentracing-go/ext"
 	otlog "github.com/opentracing/opentracing-go/log"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/bsontype"
@@ -88,21 +89,24 @@ func (m *wrappedCommandMonitor) Started(ctx context.Context, evt *event.CommandS
 		defer m.mon.Started(ctx, evt)
 	}
 
-	parent, ok := instana.SpanFromContext(ctx)
-	if !ok {
-		return
-	}
-
 	ns := evt.DatabaseName
 	if collection, ok := evt.Command.Lookup(evt.CommandName).StringValueOK(); ok {
 		ns += "." + collection
 	}
 
-	sp := m.sensor.Tracer().StartSpan(
-		"mongo",
-		opentracing.ChildOf(parent.Context()),
+	// an exit span will be created without a parent span
+	// and forwarded if user chose to opt in
+	opts := []opentracing.StartSpanOption{
+		opentracing.Tag{Key: string(ext.SpanKind), Value: "exit"},
 		m.extractSpanTags(evt),
-	)
+	}
+
+	parent, ok := instana.SpanFromContext(ctx)
+	if ok {
+		opts = append(opts, opentracing.ChildOf(parent.Context()))
+	}
+
+	sp := m.sensor.Tracer().StartSpan("mongo", opts...)
 
 	m.spans.Add(evt.RequestID, sp)
 }
