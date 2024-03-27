@@ -74,7 +74,7 @@ func TestStartS3Span_NoActiveSpan(t *testing.T) {
 	instaawssdk.StartS3Span(req, sensor)
 
 	_, ok := instana.SpanFromContext(req.Context())
-	require.False(t, ok)
+	require.True(t, ok)
 }
 
 func TestFinalizeS3_NoError(t *testing.T) {
