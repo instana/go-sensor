@@ -7,17 +7,20 @@ import (
 	"testing"
 
 	instana "github.com/instana/go-sensor"
+	ot "github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestRecorderBasics(t *testing.T) {
+
 	recorder := instana.NewTestRecorder()
 	tracer := instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder)
 	defer instana.ShutdownSensor()
 
-	span := tracer.StartSpan("http-client")
+	pSpan := tracer.StartSpan("parent-span")
+	span := tracer.StartSpan("http-client", ot.ChildOf(pSpan.Context()))
 	span.SetTag(string(ext.SpanKind), "exit")
 	span.SetTag("http.status", 200)
 	span.SetTag("http.url", "https://www.instana.com/product/")
