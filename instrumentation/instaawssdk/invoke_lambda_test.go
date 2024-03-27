@@ -93,7 +93,7 @@ func TestStartInvokeLambdaSpan_NoActiveSpan(t *testing.T) {
 	instaawssdk.StartInvokeLambdaSpan(req, sensor)
 
 	_, ok := instana.SpanFromContext(req.Context())
-	require.False(t, ok)
+	require.True(t, ok)
 }
 
 func TestFinalizeInvoke_NoError(t *testing.T) {

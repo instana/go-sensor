@@ -99,7 +99,7 @@ func TestStartDynamoDBSpan_NoActiveSpan(t *testing.T) {
 	instaawssdk.StartDynamoDBSpan(req, sensor)
 
 	_, ok := instana.SpanFromContext(req.Context())
-	require.False(t, ok)
+	require.True(t, ok)
 }
 
 func TestFinalizeDynamoDB_NoError(t *testing.T) {

@@ -13,6 +13,11 @@ import (
 )
 
 func TestCollection_DS_Set(t *testing.T) {
+
+	// setting this environment variable as the operation doesn't support parent span
+	setAllowRootExitSpanEnv()
+	defer unsetAllowRootExitSpanEnv()
+
 	defer instana.ShutdownSensor()
 	recorder, _, cluster, a, _ := prepareWithATestDocumentInCollection(t, "ds_set")
 

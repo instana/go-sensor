@@ -28,17 +28,18 @@ func StartSQSSpan(req *request.Request, sensor instana.TracerLogger) {
 		sensor.Logger().Warn("failed to extract SQS tags: ", err)
 	}
 
-	parent, ok := instana.SpanFromContext(req.Context())
-	if !ok {
-		return
-	}
-
-	sp := sensor.Tracer().StartSpan("sqs",
+	// an exit span will be created without a parent span
+	// and forwarded if user chose to opt in
+	opts := []opentracing.StartSpanOption{
 		ext.SpanKindProducer,
-		opentracing.ChildOf(parent.Context()),
 		opentracing.Tags{sqsSort: "exit"},
 		tags,
-	)
+	}
+	parent, ok := instana.SpanFromContext(req.Context())
+	if ok {
+		opts = append(opts, opentracing.ChildOf(parent.Context()))
+	}
+	sp := sensor.Tracer().StartSpan("sqs", opts...)
 
 	req.SetContext(instana.ContextWithSpan(req.Context(), sp))
 	injectTraceContext(sp, req, sensor.Logger())

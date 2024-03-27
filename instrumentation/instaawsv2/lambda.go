@@ -14,6 +14,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/lambda/types"
 	instana "github.com/instana/go-sensor"
 	ot "github.com/opentracing/opentracing-go"
+	"github.com/opentracing/opentracing-go/ext"
 	otlog "github.com/opentracing/opentracing-go/log"
 	"github.com/pkg/errors"
 )
@@ -25,16 +26,16 @@ type AWSInvokeLambdaOperations struct{}
 var _ AWSOperations = (*AWSInvokeLambdaOperations)(nil)
 
 func (o AWSInvokeLambdaOperations) injectContextWithSpan(tr instana.TracerLogger, ctx context.Context, params interface{}) context.Context {
-	// By design, we will abort the invoke lambda span creation if a parent span is not identified.
-	parent, ok := instana.SpanFromContext(ctx)
-	if !ok {
-		tr.Logger().Error("failed to retrieve the parent span. Aborting dynamodb child span creation.")
-		return ctx
+	// An exit span will be created independently without a parent span
+	// and sent if the user has opted in.
+	opts := []ot.StartSpanOption{
+		ot.Tag{Key: string(ext.SpanKind), Value: "exit"},
 	}
-
-	sp := tr.Tracer().StartSpan("aws.lambda.invoke",
-		ot.ChildOf(parent.Context()),
-	)
+	parent, ok := instana.SpanFromContext(ctx)
+	if ok {
+		opts = append(opts, ot.ChildOf(parent.Context()))
+	}
+	sp := tr.Tracer().StartSpan("aws.lambda.invoke", opts...)
 
 	if invokeInputReq, ok := params.(*lambda.InvokeInput); ok {
 
