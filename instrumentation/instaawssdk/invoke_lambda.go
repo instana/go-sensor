@@ -20,7 +20,6 @@ func StartInvokeLambdaSpan(req *request.Request, sensor instana.TracerLogger) {
 
 	// an exit span will be created without a parent span
 	// and forwarded if user chose to opt in
-	// TODO: check what is the type of span for lambda and add it in options
 	opts := []opentracing.StartSpanOption{
 		ext.SpanKindRPCClient,
 	}
