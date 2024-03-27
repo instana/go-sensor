@@ -107,33 +107,47 @@ func TestTopic_Publish(t *testing.T) {
 
 func TestTopic_Publish_NoTrace(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	tracer := instana.NewTracerWithEverything(instana.DefaultOptions(), recorder)
+	tracer := instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder)
 	defer instana.ShutdownSensor()
+
+	pSpan := tracer.StartSpan("parent-span")
+	ctx := context.Background()
+	if pSpan != nil {
+		ctx = instana.ContextWithSpan(ctx, pSpan)
+	}
 
 	srv, conn, teardown, err := setupMockServer()
 	require.NoError(t, err)
 	defer teardown()
 
-	srv.GServer.CreateTopic(context.Background(), &pb.Topic{
+	srv.GServer.CreateTopic(ctx, &pb.Topic{
 		Name: "projects/test-project/topics/test-topic",
 	})
 
 	client, err := pubsub.NewClient(
-		context.Background(),
+		ctx,
 		"test-project",
 		instana.NewSensorWithTracer(tracer),
 		option.WithGRPCConn(conn),
 	)
 	require.NoError(t, err)
 
-	res := client.Topic("test-topic").Publish(context.Background(), &pubsub.Message{
+	res := client.Topic("test-topic").Publish(ctx, &pubsub.Message{
 		Data: []byte("message data"),
 		Attributes: map[string]string{
 			"key1": "value1",
 		},
 	})
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	require.Eventually(t, func() bool {
+		return recorder.QueuedSpansCount() == 1
+	}, 250*time.Millisecond, 25*time.Millisecond)
+
+	spans := recorder.GetQueuedSpans()
+	require.Len(t, spans, 1)
+	gcpsSpan := spans[0]
+
+	ctx, cancel := context.WithTimeout(ctx, time.Second)
 	defer cancel()
 
 	msgID, err := res.Get(ctx)
@@ -143,6 +157,9 @@ func TestTopic_Publish_NoTrace(t *testing.T) {
 	require.NotNil(t, msg)
 
 	assert.Equal(t, map[string]string{
-		"key1": "value1",
+		"x-instana-t": instana.FormatID(gcpsSpan.TraceID),
+		"x-instana-s": instana.FormatID(gcpsSpan.SpanID),
+		"x-instana-l": "1",
+		"key1":        "value1",
 	}, msg.Attributes)
 }

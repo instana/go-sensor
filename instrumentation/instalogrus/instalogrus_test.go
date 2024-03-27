@@ -135,7 +135,7 @@ func TestNewHook_IgnoreLowLevels(t *testing.T) {
 func TestNewHook_NoContext(t *testing.T) {
 	recorder := instana.NewTestRecorder()
 	sensor := instana.NewSensorWithTracer(
-		instana.NewTracerWithEverything(instana.DefaultOptions(), recorder),
+		instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder),
 	)
 	defer instana.ShutdownSensor()
 
@@ -145,7 +145,8 @@ func TestNewHook_NoContext(t *testing.T) {
 
 	logger.AddHook(instalogrus.NewHook(sensor))
 
-	logger.Error("log message")
+	// logging with empty context
+	logger.WithContext(context.TODO()).WithFields(logrus.Fields{"value": 42}).Error("log message")
 
 	assert.Empty(t, recorder.GetQueuedSpans())
 }
