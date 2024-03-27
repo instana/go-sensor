@@ -42,7 +42,7 @@ func (h *hook) Fire(entry *logrus.Entry) error {
 	// An exit span will be created independently without a parent span
 	// and sent if the user has opted in.
 	opts := []opentracing.StartSpanOption{
-		opentracing.Tag{Key: string(ext.SpanKind), Value: "exit"},
+		ext.SpanKindRPCClient,
 		opentracing.StartTime(entry.Time),
 		opentracing.Tags{
 			"log.level":   convertLevel(entry.Level),

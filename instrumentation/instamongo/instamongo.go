@@ -97,7 +97,7 @@ func (m *wrappedCommandMonitor) Started(ctx context.Context, evt *event.CommandS
 	// an exit span will be created without a parent span
 	// and forwarded if user chose to opt in
 	opts := []opentracing.StartSpanOption{
-		opentracing.Tag{Key: string(ext.SpanKind), Value: "exit"},
+		ext.SpanKindRPCClient,
 		m.extractSpanTags(evt),
 	}
 

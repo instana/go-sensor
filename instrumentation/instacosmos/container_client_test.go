@@ -300,13 +300,16 @@ func TestInstaContainerClient_DeleteItem(t *testing.T) {
 
 func TestInstaContainerClient_NewQueryItemsPager(t *testing.T) {
 
-	ctx, recorder, cc, a := prepareContainerClient(t)
+	os.Setenv("INSTANA_ALLOW_ROOT_EXIT_SPAN", "1")
+	defer os.Unsetenv("INSTANA_ALLOW_ROOT_EXIT_SPAN")
+
+	_, recorder, cc, a := prepareContainerClient(t)
 
 	spanID := fmt.Sprintf("span-%s", ID1)
 	pk := cc.NewPartitionKeyString(spanID)
 
 	query := fmt.Sprintf("SELECT * FROM %v", container)
-	resp := cc.NewQueryItemsPager(ctx, query, pk, &azcosmos.QueryOptions{})
+	resp := cc.NewQueryItemsPager(query, pk, &azcosmos.QueryOptions{})
 	a.NotEmpty(resp)
 
 	span := getLatestSpan(recorder)

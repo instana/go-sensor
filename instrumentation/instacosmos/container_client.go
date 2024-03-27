@@ -42,7 +42,7 @@ type ContainerClient interface {
 		b azcosmos.TransactionalBatch,
 		o *azcosmos.TransactionalBatchOptions) (azcosmos.TransactionalBatchResponse, error)
 	ID() string
-	NewQueryItemsPager(ctx context.Context, query string,
+	NewQueryItemsPager(query string,
 		partitionKey azcosmos.PartitionKey,
 		o *azcosmos.QueryOptions) *runtime.Pager[azcosmos.QueryItemsResponse]
 	NewTransactionalBatch(partitionKey azcosmos.PartitionKey) azcosmos.TransactionalBatch
@@ -198,11 +198,11 @@ func (icc *instaContainerClient) ID() string {
 // query - The SQL query to execute.
 // partitionKey - The partition key to scope the query on.
 // o - Options for the operation.
-func (icc *instaContainerClient) NewQueryItemsPager(ctx context.Context, query string,
+func (icc *instaContainerClient) NewQueryItemsPager(query string,
 	partitionKey azcosmos.PartitionKey,
 	o *azcosmos.QueryOptions) *runtime.Pager[azcosmos.QueryItemsResponse] {
 
-	_, s := icc.t.Start(ctx, "QUERY", &tracing.SpanOptions{
+	_, s := icc.t.Start(context.TODO(), "QUERY", &tracing.SpanOptions{
 		Attributes: []tracing.Attribute{
 			{
 				Key:   dataCommand,

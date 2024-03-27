@@ -22,7 +22,7 @@ func StartInvokeLambdaSpan(req *request.Request, sensor instana.TracerLogger) {
 	// and forwarded if user chose to opt in
 	// TODO: check what is the type of span for lambda and add it in options
 	opts := []opentracing.StartSpanOption{
-		opentracing.Tag{Key: string(ext.SpanKind), Value: "exit"},
+		ext.SpanKindRPCClient,
 	}
 	parent, ok := instana.SpanFromContext(req.Context())
 	if ok {
