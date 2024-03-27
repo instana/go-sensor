@@ -191,11 +191,11 @@ func TestExecWithParameters(t *testing.T) {
 
 func TestQueryFunc(t *testing.T) {
 	defer instana.ShutdownSensor()
-	recorder, _, conn := prepare(t)
+	recorder, ctx, conn := prepare(t)
 
 	var a, b int
 	_, err := conn.QueryFunc(
-		context.Background(),
+		ctx,
 		"select n, n * 2 from generate_series(1, $1) n",
 		[]interface{}{3},
 		[]interface{}{&a, &b},
@@ -213,11 +213,11 @@ func TestQueryFunc(t *testing.T) {
 
 func TestQueryFuncError(t *testing.T) {
 	defer instana.ShutdownSensor()
-	recorder, _, conn := prepare(t)
+	recorder, ctx, conn := prepare(t)
 
 	var a, b int
 	_, err := conn.QueryFunc(
-		context.Background(),
+		ctx,
 		"select n, n * 2 from BAD_FUNCTION(1, $1) n",
 		[]interface{}{3},
 		[]interface{}{&a, &b},
@@ -417,9 +417,9 @@ func TestSendBatchClose(t *testing.T) {
 
 func TestCopyFrom(t *testing.T) {
 	defer instana.ShutdownSensor()
-	recorder, _, conn := prepare(t)
+	recorder, ctx, conn := prepare(t)
 
-	_, err := conn.Exec(context.Background(), `create temporary table foo(a int2, b int4, c int8, d varchar, e text, f date, g timestamptz)`)
+	_, err := conn.Exec(ctx, `create temporary table foo(a int2, b int4, c int8, d varchar, e text, f date, g timestamptz)`)
 	assert.NoError(t, err)
 
 	tzedTime := time.Date(2010, 2, 3, 4, 5, 6, 0, time.Local)
@@ -429,11 +429,11 @@ func TestCopyFrom(t *testing.T) {
 		{nil, nil, nil, nil, nil, nil, nil},
 	}
 
-	copyCount, err := conn.CopyFrom(context.Background(), pgx.Identifier{"foo"}, []string{"a", "b", "c", "d", "e", "f", "g"}, pgx.CopyFromRows(inputRows))
+	copyCount, err := conn.CopyFrom(ctx, pgx.Identifier{"foo"}, []string{"a", "b", "c", "d", "e", "f", "g"}, pgx.CopyFromRows(inputRows))
 	assert.NoError(t, err)
 	assert.EqualValues(t, len(inputRows), copyCount)
 
-	rows, err := conn.Query(context.Background(), "select * from foo")
+	rows, err := conn.Query(ctx, "select * from foo")
 	assert.NoError(t, err)
 
 	var outputRows [][]interface{}
@@ -457,7 +457,7 @@ func TestPrepare(t *testing.T) {
 	defer instana.ShutdownSensor()
 	recorder, ctx, conn := prepare(t)
 
-	_, err := conn.Exec(context.Background(), `create temporary table foo(a int2, b int4, c int8, d varchar, e text, f date, g timestamptz)`)
+	_, err := conn.Exec(ctx, `create temporary table foo(a int2, b int4, c int8, d varchar, e text, f date, g timestamptz)`)
 	assert.NoError(t, err)
 
 	_, err = conn.Prepare(ctx, "test", "select * from foo;")

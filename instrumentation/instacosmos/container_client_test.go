@@ -249,7 +249,6 @@ func TestInstaContainerClient_CreateItem_WithError(t *testing.T) {
 	require.Len(t, spans, 2)
 
 	span, logSpan := spans[0], spans[1]
-	assert.Empty(t, span.ParentID)
 	assert.Equal(t, 1, span.Ec)
 
 	a.EqualValues(instana.ExitSpanKind, span.Kind)
@@ -300,6 +299,9 @@ func TestInstaContainerClient_DeleteItem(t *testing.T) {
 }
 
 func TestInstaContainerClient_NewQueryItemsPager(t *testing.T) {
+
+	os.Setenv("INSTANA_ALLOW_ROOT_EXIT_SPAN", "1")
+	defer os.Unsetenv("INSTANA_ALLOW_ROOT_EXIT_SPAN")
 
 	_, recorder, cc, a := prepareContainerClient(t)
 
@@ -649,7 +651,11 @@ func prepare(t *testing.T) (context.Context, *instana.Recorder, instacosmos.Clie
 	tracer := instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, rec)
 	sensor := instana.NewSensorWithTracer(tracer)
 
+	pSpan := sensor.Tracer().StartSpan("parent-span")
 	ctx := context.Background()
+	if pSpan != nil {
+		ctx = instana.ContextWithSpan(ctx, pSpan)
+	}
 
 	client, err := getInstaClient(sensor)
 	a.NoError(err)

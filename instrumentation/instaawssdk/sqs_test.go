@@ -4,6 +4,7 @@
 package instaawssdk_test
 
 import (
+	"context"
 	"errors"
 	"testing"
 
@@ -309,9 +310,8 @@ func TestStartSQSSpan_TraceContextPropagation_Batch(t *testing.T) {
 
 func TestStartSQSSpan_TraceContextPropagation_Single_NoActiveSpan(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	sensor := instana.NewSensorWithTracer(
-		instana.NewTracerWithEverything(instana.DefaultOptions(), recorder),
-	)
+	tracer := instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder)
+	sensor := instana.NewSensorWithTracer(tracer)
 	defer instana.ShutdownSensor()
 
 	svc := sqs.New(unit.Session)
@@ -322,25 +322,44 @@ func TestStartSQSSpan_TraceContextPropagation_Single_NoActiveSpan(t *testing.T) 
 		QueueUrl:       aws.String("test-queue"),
 	})
 
+	pSpan := tracer.StartSpan("parent-span")
+	ctx := context.Background()
+	if pSpan != nil {
+		ctx = instana.ContextWithSpan(ctx, pSpan)
+	}
+
+	req.SetContext(ctx)
+
 	instaawssdk.StartSQSSpan(req, sensor)
 
-	_, ok := instana.SpanFromContext(req.Context())
-	require.False(t, ok)
+	sp, ok := instana.SpanFromContext(req.Context())
+	require.True(t, ok)
+	sp.Finish()
 
-	assert.Empty(t, recorder.GetQueuedSpans())
+	spans := recorder.GetQueuedSpans()
+	assert.Len(t, spans, 1)
+	sqsSpan := spans[0]
 
-	params := req.Params.(*sqs.SendMessageInput)
-
-	assert.NotContains(t, params.MessageAttributes, instaawssdk.FieldT)
-	assert.NotContains(t, params.MessageAttributes, instaawssdk.FieldS)
-	assert.NotContains(t, params.MessageAttributes, instaawssdk.FieldL)
+	assert.Equal(t, map[string]*sqs.MessageAttributeValue{
+		instaawssdk.FieldT: {
+			DataType:    aws.String("String"),
+			StringValue: aws.String(instana.FormatID(sqsSpan.TraceID)),
+		},
+		instaawssdk.FieldS: {
+			DataType:    aws.String("String"),
+			StringValue: aws.String(instana.FormatID(sqsSpan.SpanID)),
+		},
+		instaawssdk.FieldL: {
+			DataType:    aws.String("String"),
+			StringValue: aws.String("1"),
+		},
+	}, req.Params.(*sqs.SendMessageInput).MessageAttributes)
 }
 
 func TestStartSQSSpan_TraceContextPropagation_Batch_NoActiveSpan(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	sensor := instana.NewSensorWithTracer(
-		instana.NewTracerWithEverything(instana.DefaultOptions(), recorder),
-	)
+	tracer := instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder)
+	sensor := instana.NewSensorWithTracer(tracer)
 	defer instana.ShutdownSensor()
 
 	svc := sqs.New(unit.Session)
@@ -353,18 +372,41 @@ func TestStartSQSSpan_TraceContextPropagation_Batch_NoActiveSpan(t *testing.T) {
 		QueueUrl: aws.String("test-queue"),
 	})
 
+	pSpan := tracer.StartSpan("parent-span")
+	ctx := context.Background()
+	if pSpan != nil {
+		ctx = instana.ContextWithSpan(ctx, pSpan)
+	}
+
+	req.SetContext(ctx)
+
 	instaawssdk.StartSQSSpan(req, sensor)
 
-	_, ok := instana.SpanFromContext(req.Context())
-	require.False(t, ok)
+	sp, ok := instana.SpanFromContext(req.Context())
+	require.True(t, ok)
+	sp.Finish()
 
-	assert.Empty(t, recorder.GetQueuedSpans())
+	spans := recorder.GetQueuedSpans()
+	assert.Len(t, spans, 1)
+
+	sqsSpan := spans[0]
 
 	params := req.Params.(*sqs.SendMessageBatchInput)
 	for _, entry := range params.Entries {
-		assert.NotContains(t, entry.MessageAttributes, instaawssdk.FieldT)
-		assert.NotContains(t, entry.MessageAttributes, instaawssdk.FieldS)
-		assert.NotContains(t, entry.MessageAttributes, instaawssdk.FieldL)
+		assert.Equal(t, map[string]*sqs.MessageAttributeValue{
+			instaawssdk.FieldT: {
+				DataType:    aws.String("String"),
+				StringValue: aws.String(instana.FormatID(sqsSpan.TraceID)),
+			},
+			instaawssdk.FieldS: {
+				DataType:    aws.String("String"),
+				StringValue: aws.String(instana.FormatID(sqsSpan.SpanID)),
+			},
+			instaawssdk.FieldL: {
+				DataType:    aws.String("String"),
+				StringValue: aws.String("1"),
+			},
+		}, entry.MessageAttributes)
 	}
 }
 

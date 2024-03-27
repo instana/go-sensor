@@ -35,20 +35,23 @@ type Topic struct {
 //
 // See https://pkg.go.dev/cloud.google.com/go/pubsub?tab=doc#Topic.Publish for further details on wrapped method.
 func (top *Topic) Publish(ctx context.Context, msg *pubsub.Message) *pubsub.PublishResult {
-	parent, ok := instana.SpanFromContext(ctx)
-	if !ok {
-		return top.Topic.Publish(ctx, msg)
-	}
 
-	sp := parent.Tracer().StartSpan("gcps",
+	tracer := top.sensor.Tracer()
+	opts := []opentracing.StartSpanOption{
 		ext.SpanKindProducer,
-		opentracing.ChildOf(parent.Context()),
 		opentracing.Tags{
 			tags.GcpsOp:     "PUBLISH",
 			tags.GcpsProjid: top.projectID,
 			tags.GcpsTop:    top.ID(),
 		},
-	)
+	}
+
+	parent, ok := instana.SpanFromContext(ctx)
+	if ok {
+		tracer = parent.Tracer()
+		opts = append(opts, opentracing.ChildOf(parent.Context()))
+	}
+	sp := tracer.StartSpan("gcps", opts...)
 
 	if msg.Attributes == nil {
 		msg.Attributes = make(map[string]string)
