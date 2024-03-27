@@ -120,14 +120,19 @@ func prepare(t *testing.T) (*instana.Recorder, context.Context, instagocb.Cluste
 	a := assert.New(t)
 	var recorder *instana.Recorder
 	if rec == nil {
-		rec = instana.NewRecorder()
+		rec = instana.NewTestRecorder()
 	}
 
 	recorder = rec
 	tracer := instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder)
 	sensor := instana.NewSensorWithTracer(tracer)
 
+	pSpan := sensor.Tracer().StartSpan("parent-span")
 	ctx := context.Background()
+	if pSpan != nil {
+		ctx = instana.ContextWithSpan(ctx, pSpan)
+	}
+
 	conn, err := instagocb.Connect(sensor, connStr, gocb.ClusterOptions{
 		Authenticator: gocb.PasswordAuthenticator{
 			Username: username,
