@@ -6,6 +6,7 @@
 package instagocb_test
 
 import (
+	"os"
 	"testing"
 	"time"
 
@@ -13,6 +14,14 @@ import (
 	instana "github.com/instana/go-sensor"
 	"github.com/instana/go-sensor/instrumentation/instagocb"
 )
+
+func setAllowRootExitSpanEnv() {
+	os.Setenv("INSTANA_ALLOW_ROOT_EXIT_SPAN", "1")
+}
+
+func unsetAllowRootExitSpanEnv() {
+	os.Unsetenv("INSTANA_ALLOW_ROOT_EXIT_SPAN")
+}
 
 func TestCollection_CRUD(t *testing.T) {
 	testDocumentValue := getTestDocumentValue()
@@ -235,7 +244,9 @@ func TestCollection_CRUD(t *testing.T) {
 	a.NoError(err)
 	_, err = collection.MutateIn(testDocumentID, []gocb.MutateInSpec{
 		gocb.UpsertSpec("foo", "311-555-0151", &gocb.UpsertSpecOptions{}),
-	}, &gocb.MutateInOptions{})
+	}, &gocb.MutateInOptions{
+		ParentSpan: instagocb.GetParentSpanFromContext(ctx),
+	})
 	a.NoError(err)
 
 	span = getLatestSpan(recorder)

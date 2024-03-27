@@ -4,7 +4,7 @@ go 1.17
 
 require (
 	github.com/google/uuid v1.6.0
-	github.com/instana/go-sensor v1.60.0
+	github.com/instana/go-sensor v1.61.0
 	github.com/jackc/pgconn v1.14.3
 	github.com/jackc/pgx/v4 v4.18.3
 	github.com/lib/pq v1.10.9

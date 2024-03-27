@@ -18,6 +18,7 @@ import (
 )
 
 func TestWrapSQLConnector_Exec(t *testing.T) {
+
 	recorder := instana.NewTestRecorder()
 	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{
 		Service:     "go-sensor-test",
@@ -27,7 +28,13 @@ func TestWrapSQLConnector_Exec(t *testing.T) {
 
 	db := sql.OpenDB(instana.WrapSQLConnector(s, "connection string", sqlConnector{}))
 
-	res, err := db.Exec("TEST QUERY")
+	pSpan := s.Tracer().StartSpan("parent-span")
+	ctx := context.Background()
+	if pSpan != nil {
+		ctx = instana.ContextWithSpan(ctx, pSpan)
+	}
+
+	res, err := db.ExecContext(ctx, "TEST QUERY")
 	require.NoError(t, err)
 
 	lastID, err := res.LastInsertId()
@@ -60,6 +67,7 @@ func TestWrapSQLConnector_Exec(t *testing.T) {
 }
 
 func TestWrapSQLConnector_Exec_Error(t *testing.T) {
+
 	recorder := instana.NewTestRecorder()
 	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{
 		Service:     "go-sensor-test",
@@ -67,11 +75,17 @@ func TestWrapSQLConnector_Exec_Error(t *testing.T) {
 	}, recorder))
 	defer instana.ShutdownSensor()
 
+	pSpan := s.Tracer().StartSpan("parent-span")
+	ctx := context.Background()
+	if pSpan != nil {
+		ctx = instana.ContextWithSpan(ctx, pSpan)
+	}
+
 	db := sql.OpenDB(instana.WrapSQLConnector(s, "connection string", sqlConnector{
 		Error: errors.New("something went wrong"),
 	}))
 
-	_, err := db.Exec("TEST QUERY")
+	_, err := db.ExecContext(ctx, "TEST QUERY")
 	assert.Error(t, err)
 
 	spans := recorder.GetQueuedSpans()
@@ -101,6 +115,7 @@ func TestWrapSQLConnector_Exec_Error(t *testing.T) {
 }
 
 func TestWrapSQLConnector_Query(t *testing.T) {
+
 	recorder := instana.NewTestRecorder()
 	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{
 		Service:     "go-sensor-test",
@@ -108,9 +123,15 @@ func TestWrapSQLConnector_Query(t *testing.T) {
 	}, recorder))
 	defer instana.ShutdownSensor()
 
+	pSpan := s.Tracer().StartSpan("parent-span")
+	ctx := context.Background()
+	if pSpan != nil {
+		ctx = instana.ContextWithSpan(ctx, pSpan)
+	}
+
 	db := sql.OpenDB(instana.WrapSQLConnector(s, "connection string", sqlConnector{}))
 
-	res, err := db.Query("TEST QUERY")
+	res, err := db.QueryContext(ctx, "TEST QUERY")
 	require.NoError(t, err)
 
 	cols, err := res.Columns()
@@ -143,6 +164,7 @@ func TestWrapSQLConnector_Query(t *testing.T) {
 }
 
 func TestWrapSQLConnector_Query_Error(t *testing.T) {
+
 	recorder := instana.NewTestRecorder()
 	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{
 		Service:     "go-sensor-test",
@@ -155,7 +177,13 @@ func TestWrapSQLConnector_Query_Error(t *testing.T) {
 		Error: dbErr,
 	}))
 
-	_, err := db.Query("TEST QUERY")
+	pSpan := s.Tracer().StartSpan("parent-span")
+	ctx := context.Background()
+	if pSpan != nil {
+		ctx = instana.ContextWithSpan(ctx, pSpan)
+	}
+
+	_, err := db.QueryContext(ctx, "TEST QUERY")
 	assert.Error(t, err)
 
 	spans := recorder.GetQueuedSpans()

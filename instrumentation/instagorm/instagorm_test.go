@@ -48,6 +48,12 @@ func TestInsertRecord(t *testing.T) {
 	}, recorder))
 	defer instana.ShutdownSensor()
 
+	pSpan := s.Tracer().StartSpan("parent-span")
+	ctx := context.Background()
+	if pSpan != nil {
+		ctx = instana.ContextWithSpan(ctx, pSpan)
+	}
+
 	t.Run("Exec", func(t *testing.T) {
 		dsn, tearDownFn := setupEnv(t)
 		defer tearDownFn(t)
@@ -57,6 +63,7 @@ func TestInsertRecord(t *testing.T) {
 			panic("failed to connect database")
 		}
 
+		db.Statement.Context = ctx
 		instagorm.Instrument(db, s, dsn)
 
 		if err = db.AutoMigrate(&product{}); err != nil {
@@ -100,6 +107,12 @@ func TestUpdateRecord(t *testing.T) {
 	}, recorder))
 	defer instana.ShutdownSensor()
 
+	pSpan := s.Tracer().StartSpan("parent-span")
+	ctx := context.Background()
+	if pSpan != nil {
+		ctx = instana.ContextWithSpan(ctx, pSpan)
+	}
+
 	t.Run("Exec", func(t *testing.T) {
 		dsn, tearDownFn := setupEnv(t)
 		defer tearDownFn(t)
@@ -109,6 +122,7 @@ func TestUpdateRecord(t *testing.T) {
 			panic("failed to connect database")
 		}
 
+		db.Statement.Context = ctx
 		instagorm.Instrument(db, s, dsn)
 
 		if err = db.AutoMigrate(&product{}); err != nil {
@@ -157,6 +171,12 @@ func TestSelectRecord(t *testing.T) {
 	}, recorder))
 	defer instana.ShutdownSensor()
 
+	pSpan := s.Tracer().StartSpan("parent-span")
+	ctx := context.Background()
+	if pSpan != nil {
+		ctx = instana.ContextWithSpan(ctx, pSpan)
+	}
+
 	t.Run("Exec", func(t *testing.T) {
 		dsn, tearDownFn := setupEnv(t)
 		defer tearDownFn(t)
@@ -166,6 +186,7 @@ func TestSelectRecord(t *testing.T) {
 			panic("failed to connect database")
 		}
 
+		db.Statement.Context = ctx
 		instagorm.Instrument(db, s, dsn)
 
 		if err = db.AutoMigrate(&product{}); err != nil {
@@ -212,6 +233,12 @@ func TestDeleteRecord(t *testing.T) {
 	}, recorder))
 	defer instana.ShutdownSensor()
 
+	pSpan := s.Tracer().StartSpan("parent-span")
+	ctx := context.Background()
+	if pSpan != nil {
+		ctx = instana.ContextWithSpan(ctx, pSpan)
+	}
+
 	t.Run("Exec", func(t *testing.T) {
 		dsn, tearDownFn := setupEnv(t)
 		defer tearDownFn(t)
@@ -221,6 +248,7 @@ func TestDeleteRecord(t *testing.T) {
 			panic("failed to connect database")
 		}
 
+		db.Statement.Context = ctx
 		instagorm.Instrument(db, s, dsn)
 
 		if err = db.AutoMigrate(&product{}); err != nil {
@@ -265,6 +293,12 @@ func TestRawSQL(t *testing.T) {
 	}, recorder))
 	defer instana.ShutdownSensor()
 
+	pSpan := s.Tracer().StartSpan("parent-span")
+	ctx := context.Background()
+	if pSpan != nil {
+		ctx = instana.ContextWithSpan(ctx, pSpan)
+	}
+
 	t.Run("Exec", func(t *testing.T) {
 		dsn, tearDownFn := setupEnv(t)
 		defer tearDownFn(t)
@@ -274,6 +308,7 @@ func TestRawSQL(t *testing.T) {
 			panic("failed to connect database")
 		}
 
+		db.Statement.Context = ctx
 		instagorm.Instrument(db, s, dsn)
 
 		if err = db.AutoMigrate(&product{}); err != nil {

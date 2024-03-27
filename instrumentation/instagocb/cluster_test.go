@@ -70,7 +70,9 @@ func TestCluster(t *testing.T) {
 			},
 			SourceParams: map[string]interface{}{},
 		},
-		&gocb.UpsertSearchIndexOptions{},
+		&gocb.UpsertSearchIndexOptions{
+			ParentSpan: instagocb.GetParentSpanFromContext(ctx),
+		},
 	)
 
 	a.NoError(err)
@@ -80,8 +82,9 @@ func TestCluster(t *testing.T) {
 		"sample-index",
 		search.NewMatchQuery("test"),
 		&gocb.SearchOptions{
-			Limit:  10,
-			Fields: []string{"foo", "bar"},
+			Limit:      10,
+			Fields:     []string{"foo", "bar"},
+			ParentSpan: instagocb.GetParentSpanFromContext(ctx),
 		},
 	)
 	a.NoError(err)
