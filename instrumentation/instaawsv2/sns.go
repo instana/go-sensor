@@ -29,18 +29,17 @@ func (o AWSSNSOperations) injectContextWithSpan(tr instana.TracerLogger, ctx con
 		}
 	}
 
-	// By design, we will abort the sns span creation if a parent span is not identified.
-	parent, ok := instana.SpanFromContext(ctx)
-	if !ok {
-		tr.Logger().Error("failed to retrieve the parent span. Aborting sqs child span creation.")
-		return ctx
-	}
-
-	sp := tr.Tracer().StartSpan("sns",
+	// An exit span will be created independently without a parent span
+	// and sent if the user has opted in.
+	opts := []ot.StartSpanOption{
 		ext.SpanKindRPCClient,
-		ot.ChildOf(parent.Context()),
 		tags,
-	)
+	}
+	parent, ok := instana.SpanFromContext(ctx)
+	if ok {
+		opts = append(opts, ot.ChildOf(parent.Context()))
+	}
+	sp := tr.Tracer().StartSpan("sns", opts...)
 
 	if err = o.injectSpanToCarrier(params, sp); err != nil {
 		tr.Logger().Error("failed to inject span context to the sns carrier: ", err.Error())

@@ -4,7 +4,7 @@ go 1.18
 
 require (
 	github.com/beego/beego/v2 v2.1.6
-	github.com/instana/go-sensor v1.60.0
+	github.com/instana/go-sensor v1.61.0
 	github.com/opentracing/opentracing-go v1.2.0
 	github.com/stretchr/testify v1.8.1
 )
