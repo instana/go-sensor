@@ -344,7 +344,7 @@ spec:
                 expression: "body.pull_request.head.sha.truncate(7)"
               - key: git_branch_normalized
                 # The git branch name shortened and converted to RFC 1123 subdomain names
-                expression: 'body.pull_request.head.ref.truncate(32).lowerAscii().translate("_", "-").translate("/", "-")'
+                expression: 'body.pull_request.head.ref.truncate(32).lowerAscii().translate("_", "-").translate("/", "-").translate("\\.", "-")'
       bindings:
         - ref: github-pr-binding
       template:
