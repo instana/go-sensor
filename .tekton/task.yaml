@@ -9,6 +9,8 @@ spec:
   params:
     - name: revision
       type: string
+    - name: SHA
+      type: string
   workspaces:
     - name: task-pvc
       mountPath: /workspace
@@ -19,7 +21,7 @@ spec:
       script: |
         #!/bin/sh
         echo "Cloning repo!"
-        git clone --depth 1 -b $(params.revision) https://github.com/instana/go-sensor && cd /workspace/go-sensor && git status
+        git clone --depth 1 -b $(params.revision) https://github.com/instana/go-sensor && cd /workspace/go-sensor && git checkout $(params.SHA) && git status
 
 ---
 apiVersion: tekton.dev/v1

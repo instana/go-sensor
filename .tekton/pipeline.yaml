@@ -37,6 +37,8 @@ spec:
       params:
       - name: revision
         value: $(params.revision)
+      - name: SHA
+        value: $(params.git-commit-sha)
       taskRef:
         name: go-tracer-clone-task
       workspaces:
