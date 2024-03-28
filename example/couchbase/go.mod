@@ -7,7 +7,7 @@ toolchain go1.21.0
 require github.com/couchbase/gocb/v2 v2.8.0
 
 require (
-	github.com/instana/go-sensor v1.60.0
+	github.com/instana/go-sensor v1.61.0
 	github.com/instana/go-sensor/instrumentation/instagocb v0.0.0-20231107055240-4ac1225b817a
 )
 
