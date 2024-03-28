@@ -96,3 +96,6 @@ workflows:
       - build:
           name: "go1.21"
           image: "cimg/go:1.21"
+      - build:
+          name: "go1.22"
+          image: "cimg/go:1.22"
