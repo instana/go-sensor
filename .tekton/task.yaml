@@ -1,0 +1,335 @@
+# (c) Copyright IBM Corp. 2024
+
+---
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: go-tracer-clone-task
+spec:
+  params:
+    - name: revision
+      type: string
+    - name: SHA
+      type: string
+  workspaces:
+    - name: task-pvc
+      mountPath: /workspace
+  steps:
+    - name: clone
+      image: alpine/git@sha256:0cfba46c00b715c97df21cfa8854dfe73e7d606b95332d35637a6a6945acc341
+      workingDir: /workspace/
+      script: |
+        #!/bin/sh
+        echo "Cloning repo!"
+        git clone --depth 1 -b $(params.revision) https://github.com/instana/go-sensor && cd /workspace/go-sensor && git checkout $(params.SHA) && git status
+
+---
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: go-tracer-cache-restore-task
+spec:
+  params:
+  - name: imageTag
+    type: string
+  workspaces:
+    - name: task-pvc
+      mountPath: /workspace
+    - name: cache-pvc
+      mountPath: /cache
+  steps:
+    - name: cache-restore
+      image: alpinelinux/rsyncd@sha256:6f8b68b4b15a8e6b0abfb7db0e2a765849c77a6104ac248810ff9a9fb97996fb
+      env:
+        - name: GO_VERSION
+          value: $(params.imageTag)
+      workingDir: /workspace/
+      script: |
+        #!/bin/sh
+        echo "Creating Go path!"
+        mkdir -p ./go/pkg/mod
+
+        echo "Restoring cache!"
+        rsync -ah --progress /cache/${GO_VERSION}/mod/ ./go/pkg/mod || ls -lah ./go/pkg/mod
+
+
+---
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: go-tracer-cache-update-task
+spec:
+  params:
+  - name: imageTag
+    type: string
+  workspaces:
+    - name: task-pvc
+      mountPath: /workspace
+    - name: cache-pvc
+      mountPath: /cache
+  steps:
+    - name: cache-update
+      image: alpinelinux/rsyncd@sha256:6f8b68b4b15a8e6b0abfb7db0e2a765849c77a6104ac248810ff9a9fb97996fb
+      env:
+        - name: GO_VERSION
+          value: $(params.imageTag)
+      workingDir: /workspace/
+      script: |
+        #!/bin/sh
+        echo "Sync cache path!"
+        mkdir -p /cache/${GO_VERSION}/mod
+        echo "Updating cache!"
+        rsync -ah --progress ./go/pkg/mod/ /cache/${GO_VERSION}/mod
+        ls -lah /cache/${GO_VERSION}/mod
+        
+---
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: go-tracer-unittest-task
+spec:
+  params:
+    - name: imageTag
+      type: string
+    - name: excludeDirs
+      type: string
+  workspaces:
+    - name: task-pvc
+      mountPath: /workspace
+    - name: cache-pvc
+      mountPath: /cache
+
+  steps:
+    - name: unit-test
+      image: golang:$(params.imageTag)
+      env:
+        - name: GO_VERSION
+          value: $(params.imageTag)
+        - name: RUN_LINTER
+          # TODO : Change this to "yes" when the existing issues with linting are resolved.
+          value: "no"
+        - name: GO111MODULE
+          value: "auto"
+        - name: VENDOR_DEPS
+          value: "no"
+        - name: EXCLUDE_DIRS
+          value: $(params.excludeDirs)
+        - name: GOPATH
+          value: "/workspace/go"
+      workingDir: /workspace/go-sensor/
+      script: |
+        #!/bin/sh
+        echo "Running unit tests!"
+        make test
+
+---
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: go-tracer-gofmt-task
+spec:
+  params:
+    - name: imageTag
+      type: string
+    - name: excludeDirs
+      type: string
+  workspaces:
+    - name: task-pvc
+      mountPath: /workspace
+  steps:
+    - name: go-fmt
+      image: golang:$(params.imageTag)
+      env:
+        - name: EXCLUDE_DIRS
+          value: $(params.excludeDirs)
+      workingDir: /workspace/go-sensor/
+      script: |
+        #!/bin/sh
+        echo "Running go fmt check!"
+        make fmtcheck
+
+---
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: go-tracer-goimports-task
+spec:
+  params:
+    - name: imageTag
+      type: string
+    - name: excludeDirs
+      type: string
+  workspaces:
+    - name: task-pvc
+      mountPath: /workspace
+  steps:
+    - name: go-imports
+      image: golang:$(params.imageTag)
+      env:
+        - name: EXCLUDE_DIRS
+          value: $(params.excludeDirs)
+      workingDir: /workspace/go-sensor/
+      script: |
+        #!/bin/sh
+        echo "Installing go imports!"
+        go install golang.org/x/tools/cmd/goimports@latest || true
+        echo "Running import check"
+        make importcheck
+        
+
+---
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: go-tracer-integration-common-task
+spec:
+  sidecars:
+    - name: postgresql
+      image: postgres:14
+      env:
+        - name: POSTGRES_USER
+          value: "postgres"
+        - name: POSTGRES_DB
+          value: "postgres"
+        - name: POSTGRES_PASSWORD
+          value: "mysecretpassword"
+  params:
+  - name: imageTag
+    type: string
+  - name: excludeDirs
+    type: string
+  workspaces:
+    - name: task-pvc
+      mountPath: /workspace
+    - name: cache-pvc
+      mountPath: /cache
+  steps:
+    - name: integration-test-common
+      image: golang:$(params.imageTag)
+      env:
+        - name: GO_VERSION
+          value: $(params.imageTag)
+        - name: GO111MODULE
+          value: "auto"
+        - name: VENDOR_DEPS
+          value: "no"
+        - name: COSMOS_CONNECTION_URL
+          valueFrom:
+            secretKeyRef:
+              name: "cosmos-conn-url"
+              key: "connUrl"
+        - name: COSMOS_KEY
+          valueFrom:
+            secretKeyRef:
+              name: "cosmos-conn-key"
+              key: "connKey"
+        - name: EXCLUDE_DIRS
+          value: $(params.excludeDirs)
+        - name: GOPATH
+          value: "/workspace/go"
+      workingDir: /workspace/go-sensor/
+      script: |
+        #!/bin/sh
+        echo "Running integration tests!"
+        make integration-common
+
+---
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: go-tracer-integration-couchbase-task
+spec:
+  sidecars:
+    - name: couchbase
+      image: couchbase/server-sandbox:7.2.4
+      readinessProbe:
+        httpGet:
+           path: /ui/index.html
+           port: 8091
+        initialDelaySeconds: 60
+  params:
+  - name: imageTag
+    type: string
+  - name: excludeDirs
+    type: string
+  workspaces:
+    - name: task-pvc
+      mountPath: /workspace
+    - name: cache-pvc
+      mountPath: /cache
+  steps:
+    - name: integration-test-couchbase
+      image: golang:$(params.imageTag)
+      env:
+        - name: GO_VERSION
+          value: $(params.imageTag)
+        - name: GO111MODULE
+          value: "auto"
+        - name: VENDOR_DEPS
+          value: "no"
+        - name: EXCLUDE_DIRS
+          value: $(params.excludeDirs)
+        - name: GOPATH
+          value: "/workspace/go"
+      workingDir: /workspace/go-sensor/
+      script: |
+        #!/bin/sh
+        echo "Running couchbase integration tests!"
+        make integration-couchbase
+
+---
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: github-set-status
+spec:
+  params:
+  - name: SHA
+  - name: STATE
+  - name: PIPELINE_RUN_NAME
+  - name: go-version
+  steps:
+    - name: set-status
+      image: curlimages/curl@sha256:f2237028bed58de91f62aea74260bb2a299cf12fbcabc23cfaf125fef276c884
+      env:
+      - name: SHA
+        value: $(params.SHA)
+      - name: STATE
+        value: $(params.STATE)
+      - name: PIPELINE_RUN_NAME
+        value: $(params.PIPELINE_RUN_NAME)
+      - name: GO_VERSION
+        value: $(params.go-version)
+      - name: GITHUB_TOKEN
+        valueFrom:
+          secretKeyRef:
+            name: "github-token"
+            key: "token"
+      script: |
+        #!/bin/sh
+
+        if [ "$STATE" = "pending" ]; then
+          status="pending"
+          description="Tekton is running your tests"
+        elif [ "$STATE" = "Succeeded" ] || [ "$STATE" = "Completed" ]; then
+          status="success"
+          description="Your tests passed on Tekton"
+        else
+          status="failure"
+          description="Your tests failed on Tekton"
+        fi
+        echo $STATE,$status
+
+        curl -L \
+             -X POST \
+             -H "Accept: application/vnd.github+json" \
+             -H "Authorization: Bearer ${GITHUB_TOKEN}" \
+             -H "Content-Type: application/json" \
+             -H "X-GitHub-Api-Version: 2022-11-28" \
+             "https://api.github.com/repos/instana/go-sensor/statuses/${SHA}" \
+             -d '{
+                   "state": "'"${status}"'",
+                   "target_url":"http://localhost:8001/api/v1/namespaces/tekton-pipelines/services/tekton-dashboard:http/proxy/#/namespaces/default/pipelineruns/'"${PIPELINE_RUN_NAME}"'",
+                   "description": "'"${description}"'",
+                   "context":"Tekton Build Pipeline: go'"${GO_VERSION}"'"
+                 }'
