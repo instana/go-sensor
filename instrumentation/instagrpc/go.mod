@@ -1,6 +1,6 @@
 module github.com/instana/go-sensor/instrumentation/instagrpc
 
-go 1.19
+go 1.21
 
 require (
 	github.com/instana/go-sensor v1.61.0

@@ -1,6 +1,6 @@
 module github.com/instana/go-sensor/instrumentation/instapgx
 
-go 1.17
+go 1.21
 
 require (
 	github.com/google/uuid v1.6.0

@@ -1,6 +1,6 @@
 module github.com/instana/go-sensor/instrumentation/instagin
 
-go 1.18
+go 1.21
 
 require (
 	github.com/gin-gonic/gin v1.9.1

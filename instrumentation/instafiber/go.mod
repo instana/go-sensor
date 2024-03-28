@@ -1,6 +1,6 @@
 module github.com/instana/go-sensor/instrumentation/instafiber
 
-go 1.17
+go 1.21
 
 require (
 	github.com/gofiber/fiber/v2 v2.52.4

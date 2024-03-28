@@ -1,6 +1,6 @@
 module github.com/instana/go-sensor/instrumentation/instaawssdk
 
-go 1.19
+go 1.21
 
 require (
 	github.com/aws/aws-sdk-go v1.51.9

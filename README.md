@@ -11,8 +11,9 @@ The IBM Instana Go Tracer is an SDK that collects traces, metrics, logs and prov
 
 |Tracer Version | Go version |
 |-----|-----|
-|Up to v1.46.0|v1.9.0 and higher|
-|v1.47.0 and higher|v1.13.0 and higher|
+|v1.62.0 and higher|v1.21.0 and higher|
+|v1.47.0 to v1.60.0|v1.13.0 and higher|
+|Less than v1.47.0|v1.9.0 and higher|
 
 > [!NOTE]
 > Make sure to always use the latest version of the tracer, as it provides new features, improvements, security updates and fixes.

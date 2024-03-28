@@ -1,6 +1,6 @@
 module basic_usage
 
-go 1.19
+go 1.21
 
 require github.com/instana/go-sensor v1.58.0
 
