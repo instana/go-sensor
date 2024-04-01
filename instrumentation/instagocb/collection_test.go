@@ -50,7 +50,7 @@ func TestCollection_CRUD(t *testing.T) {
 	// Get
 	var result myDoc
 	res, err := collection.Get(testDocumentID, &gocb.GetOptions{ParentSpan: instagocb.GetParentSpanFromContext(ctx)})
-	a.NoError(err)
+	a.Error(err)
 	res.Content(&result)
 	a.Equal(testDocumentValue, result)
 	span = getLatestSpan(recorder)
