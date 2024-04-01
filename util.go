@@ -18,6 +18,11 @@ import (
 	"time"
 
 	ot "github.com/opentracing/opentracing-go"
+	"github.com/opentracing/opentracing-go/ext"
+)
+
+const (
+	allowRootExitSpanEnv = "INSTANA_ALLOW_ROOT_EXIT_SPAN"
 )
 
 var (
@@ -224,4 +229,21 @@ func cloneMapStringString(t map[string]string) map[string]string {
 	}
 
 	return clone
+}
+
+func isRootExitSpan(kind interface{}, isRootSpan bool) bool {
+
+	switch kind {
+	case ext.SpanKindRPCClientEnum, string(ext.SpanKindRPCClientEnum),
+		ext.SpanKindProducerEnum, string(ext.SpanKindProducerEnum),
+		"exit":
+		return isRootSpan
+
+	default:
+		return false
+	}
+}
+
+func allowRootExitSpan() bool {
+	return os.Getenv(allowRootExitSpanEnv) == "1"
 }

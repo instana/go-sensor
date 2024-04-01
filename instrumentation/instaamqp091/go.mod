@@ -1,9 +1,9 @@
 module github.com/instana/go-sensor/instrumentation/instaamqp091
 
-go 1.18
+go 1.21
 
 require (
-	github.com/instana/go-sensor v1.60.0
+	github.com/instana/go-sensor v1.61.0
 	github.com/opentracing/opentracing-go v1.2.0
 	github.com/rabbitmq/amqp091-go v1.9.0
 	github.com/stretchr/testify v1.8.1

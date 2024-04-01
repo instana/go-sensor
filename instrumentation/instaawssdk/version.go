@@ -4,4 +4,4 @@
 package instaawssdk
 
 // Version is the instrumentation module semantic version
-const Version = "1.21.2"
+const Version = "1.22.4"

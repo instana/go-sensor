@@ -1,12 +1,12 @@
 module cosmos.example
 
-go 1.18
+go 1.21
 
 require (
 	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.9.0
 	github.com/Azure/azure-sdk-for-go/sdk/data/azcosmos v0.3.6
 	github.com/google/uuid v1.4.0
-	github.com/instana/go-sensor v1.58.0
+	github.com/instana/go-sensor v1.61.0
 	github.com/instana/go-sensor/instrumentation/instacosmos v1.0.0
 )
 
@@ -16,7 +16,7 @@ require (
 	github.com/looplab/fsm v1.0.1 // indirect
 	github.com/opentracing/opentracing-go v1.2.0 // indirect
 	golang.org/x/net v0.17.0 // indirect
-	golang.org/x/text v0.13.0 // indirect
+	golang.org/x/text v0.14.0 // indirect
 )
 
 replace (

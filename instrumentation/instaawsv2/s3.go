@@ -30,21 +30,21 @@ func (o AWSS3Operations) injectContextWithSpan(tr instana.TracerLogger, ctx cont
 		}
 	}
 
-	// By design, we will abort the s3 span creation if a parent span is not identified.
-	parent, ok := instana.SpanFromContext(ctx)
-	if !ok {
-		tr.Logger().Error("failed to retrieve the parent span. Aborting s3 child span creation.")
-		return ctx
-	}
-
-	sp := tr.Tracer().StartSpan("s3",
+	opts := []ot.StartSpanOption{
 		ext.SpanKindRPCClient,
-		ot.ChildOf(parent.Context()),
 		ot.Tags{
 			s3Region: awsmiddleware.GetRegion(ctx),
 		},
 		tags,
-	)
+	}
+
+	// An exit span will be created independently without a parent span
+	// and sent if the user has opted in.
+	parent, ok := instana.SpanFromContext(ctx)
+	if ok {
+		opts = append(opts, ot.ChildOf(parent.Context()))
+	}
+	sp := tr.Tracer().StartSpan("s3", opts...)
 
 	return instana.ContextWithSpan(ctx, sp)
 }

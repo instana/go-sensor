@@ -29,21 +29,20 @@ func (o AWSDynamoDBOperations) injectContextWithSpan(tr instana.TracerLogger, ct
 		}
 	}
 
-	// By design, we will abort the dynamodb span creation if a parent span is not identified.
-	parent, ok := instana.SpanFromContext(ctx)
-	if !ok {
-		tr.Logger().Error("failed to retrieve the parent span. Aborting dynamodb child span creation.")
-		return ctx
-	}
-
-	sp := tr.Tracer().StartSpan("dynamodb",
+	// An exit span will be created independently without a parent span
+	// and sent if the user has opted in.
+	opts := []ot.StartSpanOption{
 		ext.SpanKindRPCClient,
-		ot.ChildOf(parent.Context()),
 		ot.Tags{
 			dynamodbRegion: awsmiddleware.GetRegion(ctx),
 		},
 		tags,
-	)
+	}
+	parent, ok := instana.SpanFromContext(ctx)
+	if ok {
+		opts = append(opts, ot.ChildOf(parent.Context()))
+	}
+	sp := tr.Tracer().StartSpan("dynamodb", opts...)
 
 	return instana.ContextWithSpan(ctx, sp)
 }

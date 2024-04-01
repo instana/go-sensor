@@ -9,6 +9,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/opentracing/opentracing-go/ext"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -185,5 +186,96 @@ eth0	00000000	010011AC	0003	0	0	0	00000000	0	0	0
 func BenchmarkFormatID(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		FormatID(int64(i))
+	}
+}
+
+func Test_isRootExitSpan(t *testing.T) {
+	type args struct {
+		kind       interface{}
+		isRootSpan bool
+	}
+	tests := []struct {
+		name string
+		args args
+		want bool
+	}{
+		{
+			name: "spanType_exit_rootSpan_true",
+			args: args{
+				kind:       ext.SpanKindRPCClientEnum,
+				isRootSpan: true,
+			},
+			want: true,
+		},
+		{
+			name: "spanType_exit_rootSpan_false",
+			args: args{
+				kind: ext.SpanKindRPCServerEnum,
+			},
+			want: false,
+		},
+		{
+			name: "spanType_entry_rootSpan_true",
+			args: args{
+				kind: nil,
+			},
+			want: false,
+		},
+		{
+			name: "spanType_entry_rootSpan_false",
+			args: args{
+				kind: nil,
+			},
+			want: false,
+		},
+		{
+			name: "spanType_nil_rootSpan_true",
+			args: args{
+				kind: nil,
+			},
+			want: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := isRootExitSpan(tt.args.kind, tt.args.isRootSpan)
+
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
+func Test_allowRootExitSpan(t *testing.T) {
+	tests := []struct {
+		name      string
+		exportEnv bool
+		want      bool
+	}{
+		{
+			name:      "env_set",
+			exportEnv: true,
+			want:      true,
+		},
+		{
+			name:      "env_unset",
+			exportEnv: false,
+			want:      false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+
+			if tt.exportEnv {
+				os.Setenv(allowRootExitSpanEnv, "1")
+
+				defer func() {
+					os.Unsetenv(allowRootExitSpanEnv)
+				}()
+			}
+
+			if got := allowRootExitSpan(); got != tt.want {
+				t.Errorf("allowRootExitSpan() = %v, want %v", got, tt.want)
+			}
+		})
 	}
 }

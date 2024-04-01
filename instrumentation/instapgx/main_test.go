@@ -81,7 +81,12 @@ func prepare(t *testing.T) (*instana.Recorder, context.Context, *instapgx.Conn) 
 
 	conf, err := pgx.ParseConfig(databaseUrl)
 	assert.NoError(t, err)
+
+	pSpan := sensor.Tracer().StartSpan("parent-span")
 	ctx := context.Background()
+	if pSpan != nil {
+		ctx = instana.ContextWithSpan(ctx, pSpan)
+	}
 	conn, err := instapgx.ConnectConfig(ctx, sensor, conf)
 
 	assert.NoError(t, err)

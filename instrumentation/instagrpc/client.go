@@ -25,12 +25,9 @@ import (
 // If the server call results with an error, its message will be attached to the span logs.
 func UnaryClientInterceptor(sensor instana.TracerLogger) grpc.UnaryClientInterceptor {
 	return func(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, callOpts ...grpc.CallOption) error {
-		parentSpan, ok := instana.SpanFromContext(ctx)
-		if !ok {
-			// don't trace the exit call if there was no entry span provided
-			return invoker(ctx, method, req, reply, cc, callOpts...)
-		}
-
+		// An exit span will be created independently without a parent span
+		// and sent if the user has opted in.
+		parentSpan, _ := instana.SpanFromContext(ctx)
 		sp := startClientSpan(parentSpan, cc.Target(), method, "unary", sensor)
 		defer sp.Finish()
 
@@ -50,13 +47,9 @@ func UnaryClientInterceptor(sensor instana.TracerLogger) grpc.UnaryClientInterce
 // Any error occurred during the request is attached to the span logs.
 func StreamClientInterceptor(sensor instana.TracerLogger) grpc.StreamClientInterceptor {
 	return func(ctx context.Context, desc *grpc.StreamDesc, cc *grpc.ClientConn, method string, streamer grpc.Streamer, opts ...grpc.CallOption) (grpc.ClientStream, error) {
-
-		parentSpan, ok := instana.SpanFromContext(ctx)
-		if !ok {
-			// don't trace the exit call if there was no entry span provided
-			return streamer(ctx, desc, cc, method, opts...)
-		}
-
+		// An exit span will be created independently without a parent span
+		// and sent if the user has opted in.
+		parentSpan, _ := instana.SpanFromContext(ctx)
 		sp := startClientSpan(parentSpan, cc.Target(), method, "stream", sensor)
 		stream, err := streamer(outgoingTracingContext(ctx, sp), desc, cc, method, opts...)
 		if err != nil {
@@ -83,9 +76,9 @@ func startClientSpan(parentSpan ot.Span, target, method, callType string, sensor
 		host, port = target, ""
 	}
 
+	tracer := sensor.Tracer()
 	opts := []ot.StartSpanOption{
 		ext.SpanKindRPCClient,
-		ot.ChildOf(parentSpan.Context()),
 		ot.Tags{
 			"rpc.flavor":    "grpc",
 			"rpc.call":      method,
@@ -95,7 +88,12 @@ func startClientSpan(parentSpan ot.Span, target, method, callType string, sensor
 		},
 	}
 
-	return parentSpan.Tracer().StartSpan("rpc-client", opts...)
+	if parentSpan != nil {
+		tracer = parentSpan.Tracer()
+		opts = append(opts, ot.ChildOf(parentSpan.Context()))
+	}
+
+	return tracer.StartSpan("rpc-client", opts...)
 }
 
 func outgoingTracingContext(ctx context.Context, span ot.Span) context.Context {
