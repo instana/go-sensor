@@ -8,3 +8,4 @@ kubectl apply --filename pipeline.yaml
 kubectl apply --filename tekton-triggers-eventlistener-serviceaccount.yaml
 kubectl apply --filename github-eventlistener.yaml
 kubectl apply --filename github-webhook-ingress.yaml
+kubectl apply --filename cleanup-cron-job.yaml
