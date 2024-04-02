@@ -4,7 +4,7 @@ go 1.21
 
 require (
 	github.com/gin-gonic/gin v1.9.1
-	github.com/instana/go-sensor v1.61.0
+	github.com/instana/go-sensor v1.62.0
 	github.com/opentracing/opentracing-go v1.2.0
 	github.com/stretchr/testify v1.8.3
 )
