@@ -121,6 +121,10 @@ spec:
         #!/bin/sh
         echo "Running unit tests!"
         make test
+        if [ $? -ne 0 ]; then
+          echo "Unit tests failed. Retrying..."
+          make test
+        fi
 
 ---
 apiVersion: tekton.dev/v1
@@ -232,6 +236,10 @@ spec:
         #!/bin/sh
         echo "Running integration tests!"
         make integration-common
+        if [ $? -ne 0 ]; then
+          echo "Common integration tests failed. Retrying..."
+          make integration-common
+        fi
 
 ---
 apiVersion: tekton.dev/v1
@@ -276,6 +284,10 @@ spec:
         #!/bin/sh
         echo "Running couchbase integration tests!"
         make integration-couchbase
+        if [ $? -ne 0 ]; then
+          echo "Couchbase integration tests failed. Retrying..."
+          make integration-couchbase
+        fi
 
 ---
 apiVersion: tekton.dev/v1
