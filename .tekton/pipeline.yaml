@@ -124,7 +124,7 @@ spec:
       when:
         - input: "$(params.go-version)"
           operator: in
-          values: ["1.21"]
+          values: ["1.22"]
       params:
       - name: imageTag
         value: $(params.go-version)
