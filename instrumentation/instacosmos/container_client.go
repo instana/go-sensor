@@ -534,9 +534,11 @@ func (icc *instaContainerClient) setError(s tracing.Span, err error) {
 	})
 
 	// setting status code of error response
-	var responseErr *azcore.ResponseError
-	errors.As(err, &responseErr)
-	icc.setStatus(s, responseErr.StatusCode)
+	var responseErr = new(azcore.ResponseError)
+	ok := errors.As(err, &responseErr)
+	if ok {
+		icc.setStatus(s, responseErr.StatusCode)
+	}
 }
 
 func (icc *instaContainerClient) setStatus(s tracing.Span, statusCode int) {
