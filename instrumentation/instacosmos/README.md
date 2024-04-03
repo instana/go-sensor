@@ -43,7 +43,7 @@ Sample Usage
  ```go
 
     var collector instana.TracerLogger
-	collector := instana.InitCollector(&instana.Options{
+	collector = instana.InitCollector(&instana.Options{
 		Service: "cosmos-example",
 	})
 
