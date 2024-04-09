@@ -125,6 +125,14 @@ git config user.email "github-actions@github.com"
 
 git add version.go
 git commit -m "Updated version.go to $NEW_VERSION"
+
+#TODO: Run go mod tidy recursively on all the examples
+for f in $(find ./example -name go.mod)
+  do (cd $(dirname $f); go mod tidy)
+done
+git add *.mod *.sum
+git commit -m "Updated the go.mod, go.sum files present in the examples
+
 git push origin @
 
 # Tags to be created after version.go is merged to the main branch with the new version
