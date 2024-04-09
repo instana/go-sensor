@@ -76,8 +76,13 @@ func handler(w http.ResponseWriter, r *http.Request) {
 
 	itemResponse, err := cosmosTest(r.Context(), needError)
 	if err != nil {
-		var responseErr *azcore.ResponseError
-		errors.As(err, &responseErr)
+		var responseErr = new(azcore.ResponseError)
+		ok := errors.As(err, &responseErr)
+		if !ok {
+			log.Println("Error:", err.Error())
+			sendErrResp(w, http.StatusInternalServerError)
+			return
+		}
 		defer responseErr.RawResponse.Body.Close()
 		errBytes, err := io.ReadAll(responseErr.RawResponse.Body)
 		if err != nil {

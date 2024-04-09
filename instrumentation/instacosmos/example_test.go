@@ -61,6 +61,8 @@ func Example() {
 	}
 
 	// create the item in the Cosmos DB container
+	// NOTE: All Cosmos DB operations requires a parent context to be passed in.
+	// Otherwise, the trace will not occur, unless the user explicitly allows opt-in exit spans without an entry span.
 	itemResponse, err := containerClient.CreateItem(context.Background(), pk, marshalled, nil)
 	if err != nil {
 		log.Print("Failed to create the item:", err)

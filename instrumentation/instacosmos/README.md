@@ -43,7 +43,7 @@ Sample Usage
  ```go
 
     var collector instana.TracerLogger
-	collector := instana.InitCollector(&instana.Options{
+	collector = instana.InitCollector(&instana.Options{
 		Service: "cosmos-example",
 	})
 
@@ -54,13 +54,13 @@ Sample Usage
 	}
 
     // creates an instance of instrumented *azcosmos.Client
-	client, err := instacosmos.NewClientWithKey(endpoint, cred, &azcosmos.ClientOptions{})
+	client, err := instacosmos.NewClientWithKey(collector, endpoint, cred, &azcosmos.ClientOptions{})
 	if err != nil {
 		// handle error
 	}
 
 	// creates an instance of instrumented *azcosmos.Client
-	containerClient, err := client.NewContainer(t, dbName, containerName)
+	containerClient, err := client.NewContainer(dbName, containerName)
 	if err != nil {
 		// handle error
 	}
@@ -78,6 +78,8 @@ Sample Usage
 		// handle error
 	}
 
+	// NOTE: All Cosmos DB operations requires a parent context to be passed in. 
+	// Otherwise, the trace will not occur, unless the user explicitly allows opt-in exit spans without an entry span.
 	itemResponse, err := containerClient.CreateItem(context.Background(), pk, marshalled, nil)
 	if err != nil {
         // handle error
