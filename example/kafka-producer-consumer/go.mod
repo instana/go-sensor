@@ -4,7 +4,7 @@ go 1.21
 
 require (
 	github.com/IBM/sarama v1.41.3
-	github.com/instana/go-sensor v1.61.0
+	github.com/instana/go-sensor v1.62.0
 	github.com/instana/go-sensor/instrumentation/instasarama v1.12.0
 	github.com/opentracing/opentracing-go v1.2.0
 )
@@ -27,8 +27,8 @@ require (
 	github.com/looplab/fsm v1.0.1 // indirect
 	github.com/pierrec/lz4/v4 v4.1.18 // indirect
 	github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475 // indirect
-	golang.org/x/crypto v0.17.0 // indirect
-	golang.org/x/net v0.17.0 // indirect
+	golang.org/x/crypto v0.21.0 // indirect
+	golang.org/x/net v0.23.0 // indirect
 )
 
 replace (
