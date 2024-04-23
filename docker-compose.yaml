@@ -42,3 +42,13 @@ services:
       MYSQL_USER: go
       MYSQL_PASSWORD: gopw
       MYSQL_ROOT_HOST: 0.0.0.0
+
+  pgxv5-sandbox:
+    image: postgres
+    restart: always
+    ports:
+      - 5434:5432
+    environment:
+      - POSTGRES_USER=pgxadmin
+      - POSTGRES_DB=students
+      - POSTGRES_PASSWORD=pgxpwd
