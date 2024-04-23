@@ -45,17 +45,17 @@ spec:
         - name: task-pvc
           workspace: go-tracer-ci-pipeline-pvc
 
-    - name: cache-restore
-      params:
-      - name: imageTag
-        value: $(params.go-version)
-      taskRef:
-        name: go-tracer-cache-restore-task
-      workspaces:
-        - name: task-pvc
-          workspace: go-tracer-ci-pipeline-pvc
-        - name: cache-pvc
-          workspace: cache-pvc
+    # - name: cache-restore
+    #   params:
+    #   - name: imageTag
+    #     value: $(params.go-version)
+    #   taskRef:
+    #     name: go-tracer-cache-restore-task
+    #   workspaces:
+    #     - name: task-pvc
+    #       workspace: go-tracer-ci-pipeline-pvc
+    #     - name: cache-pvc
+    #       workspace: cache-pvc
 
     - name: go-fmt
       runAfter:
@@ -88,7 +88,7 @@ spec:
     - name: unit-test
       runAfter:
         - go-imports
-        - cache-restore
+        # - cache-restore
       params:
       - name: imageTag
         value: $(params.go-version)
@@ -138,19 +138,19 @@ spec:
         - name: cache-pvc
           workspace: cache-pvc
 
-    - name: cache-update
-      runAfter:
-        - integration-test-couchbase
-      params:
-      - name: imageTag
-        value: $(params.go-version)
-      taskRef:
-        name: go-tracer-cache-update-task
-      workspaces:
-        - name: task-pvc
-          workspace: go-tracer-ci-pipeline-pvc
-        - name: cache-pvc
-          workspace: cache-pvc
+    # - name: cache-update
+    #   runAfter:
+    #     - integration-test-couchbase
+    #   params:
+    #   - name: imageTag
+    #     value: $(params.go-version)
+    #   taskRef:
+    #     name: go-tracer-cache-update-task
+    #   workspaces:
+    #     - name: task-pvc
+    #       workspace: go-tracer-ci-pipeline-pvc
+    #     - name: cache-pvc
+    #       workspace: cache-pvc
 
   finally:
     - name: github-set-check-status-to-success-or-failure
