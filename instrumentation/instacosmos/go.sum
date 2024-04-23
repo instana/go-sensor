@@ -22,8 +22,8 @@ github.com/golang-jwt/jwt/v4 v4.2.0/go.mod h1:/xlHOz8bRuivTWchD4jCa+NbatV+wEUSzw
 github.com/google/uuid v1.1.1/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
 github.com/google/uuid v1.4.0 h1:MtMxsa51/r9yyhkyLsVeVt0B+BGQZzpQiTQ4eHZ8bc4=
 github.com/google/uuid v1.4.0/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
-github.com/instana/go-sensor v1.62.0 h1:SVHeDpkv8QGtJjGp351nmQpHtsigtuonAp1JZl2dHac=
-github.com/instana/go-sensor v1.62.0/go.mod h1:VANqbeoHzgsGeilVYvTG8Kl/zFPuk2tr2DlyvBt8200=
+github.com/instana/go-sensor v1.62.1 h1:WkZ3Foej8UtvuJlmnPO9PDyRbEHMVVn3Dmzt9GQpLd8=
+github.com/instana/go-sensor v1.62.1/go.mod h1:VANqbeoHzgsGeilVYvTG8Kl/zFPuk2tr2DlyvBt8200=
 github.com/kylelemons/godebug v1.1.0 h1:RPNrshWIDI6G2gRW9EHilWtl7Z6Sb1BR0xunSBf0SNc=
 github.com/kylelemons/godebug v1.1.0/go.mod h1:9/0rRGxNHcop5bhtWyNeEfOS8JIWk580+fNqagV/RAw=
 github.com/looplab/fsm v1.0.1 h1:OEW0ORrIx095N/6lgoGkFkotqH6s7vaFPsgjLAaF5QU=
