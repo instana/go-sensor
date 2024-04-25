@@ -65,6 +65,7 @@ version_compare() {
         fi
     elif [ "$major_version1" -gt "$major_version2" ]; then
         echo "Major version update needed"
+        UPDATE_NEEDED="true"
     fi
 
 }
