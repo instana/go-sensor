@@ -1,11 +1,13 @@
 module github.com/instana/go-sensor/instrumentation/instacosmos
 
-go 1.21
+go 1.22.0
+
+toolchain go1.22.2
 
 require (
-	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.9.0
+	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.10.0
 	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.0.0
-	github.com/Azure/azure-sdk-for-go/sdk/data/azcosmos v0.3.6
+	github.com/Azure/azure-sdk-for-go/sdk/data/azcosmos v1.0.0
 	github.com/google/uuid v1.4.0
 	github.com/instana/go-sensor v1.62.1
 	github.com/opentracing/opentracing-go v1.2.0
@@ -14,7 +16,7 @@ require (
 
 require (
 	github.com/Azure/azure-sdk-for-go v68.0.0+incompatible // indirect
-	github.com/Azure/azure-sdk-for-go/sdk/internal v1.5.0 // indirect
+	github.com/Azure/azure-sdk-for-go/sdk/internal v1.5.2 // indirect
 	github.com/AzureAD/microsoft-authentication-library-for-go v0.4.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/golang-jwt/jwt v3.2.1+incompatible // indirect
