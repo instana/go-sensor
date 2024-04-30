@@ -51,7 +51,16 @@ GO_REPORTS_MD_PATH_TMP=$TRACER_REPORTS_REPO_PATH/automated/currency/go/report_te
 cp $GO_REPORTS_MD_PATH $GO_REPORTS_MD_PATH_COPY
 
 skip_execution=true
+first_line=true
 while IFS= read -r line; do
+
+    if [ "$first_line" = true ]; then
+        first_line=false
+        changed_line="#### Note: This page is auto-generated. Any change will be overwritten after the next sync. For more details on Go Tracer SDK, please visit our [Github](https://github.com/instana/go-sensor) page. Last updated on $(date +'%d.%m.%Y')."
+        # Update the markdown report file
+        awk -v new_line="$changed_line" '{ if ($0 == old_line) print new_line; else print }' old_line="$line" $GO_REPORTS_MD_PATH > $GO_REPORTS_MD_PATH_TMP && mv $GO_REPORTS_MD_PATH_TMP $GO_REPORTS_MD_PATH
+        continue
+    fi
 
     # For skipping first few lines from the md file.
     if [ "$skip_execution" = true ]; then
