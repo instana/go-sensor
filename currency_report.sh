@@ -20,7 +20,7 @@ find_latest_version() {
     local url="https://proxy.golang.org/${pkg}/@latest"
     local url1=$(echo "$url" | awk '{ print tolower($0) }')
     echo $url1
-    LATEST_VERSION=$(curl -s "$url1" | jq .Version | tr -d '"' | tr -d 'v')
+    LATEST_VERSION=$(curl -s "$url1" | gojq .Version | tr -d '"' | tr -d 'v')
   else
       LATEST_VERSION=""
       echo "Invalid package location: $pkg"
