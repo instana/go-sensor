@@ -155,7 +155,11 @@ func (a *azureAgent) sendRequest(req *http.Request) error {
 	req.Header.Set("X-Instana-Host", a.snapshot.Host)
 	req.Header.Set("X-Instana-Key", a.Key)
 
-	resp, err := a.client.Do(req)
+	client := http.Client{
+		Timeout: 2 * time.Second,
+	}
+
+	resp, err := client.Do(req)
 	if err != nil {
 		return fmt.Errorf("failed to send request to the serverless agent: %s", err)
 	}
