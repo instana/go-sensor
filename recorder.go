@@ -110,6 +110,7 @@ func (r *Recorder) Flush(ctx context.Context) error {
 		return nil
 	}
 
+	sensor.logger.Info("**In Common Flush Function**")
 	if err := sensor.Agent().SendSpans(spansToSend); err != nil {
 		r.Lock()
 		defer r.Unlock()

@@ -93,6 +93,10 @@ func (a *azureAgent) Flush(ctx context.Context) error {
 		return ErrAgentNotReady
 	}
 
+	if len(a.spanQueue) > 0 {
+		a.logger.Info("In Azure Agent Flush Function: span-queue:", len(a.spanQueue))
+	}
+
 	from := newServerlessAgentFromS(a.snapshot.EntityID, "azure")
 
 	payload := struct {
@@ -148,12 +152,16 @@ func (a *azureAgent) enqueueSpans(spans []Span) {
 	a.mu.Lock()
 	defer a.mu.Unlock()
 
+	a.logger.Info("enqueued spans", len(spans))
 	a.spanQueue = append(a.spanQueue, spans...)
 }
 
 func (a *azureAgent) sendRequest(req *http.Request) error {
 	req.Header.Set("X-Instana-Host", a.snapshot.Host)
 	req.Header.Set("X-Instana-Key", a.Key)
+
+	a.logger.Debug("X-Instana-Key", a.Key)
+	a.logger.Debug("X-Instana-Host", a.snapshot.Host)
 
 	client := http.Client{
 		Timeout: 2 * time.Second,
@@ -163,6 +171,8 @@ func (a *azureAgent) sendRequest(req *http.Request) error {
 	if err != nil {
 		return fmt.Errorf("failed to send request to the serverless agent: %s", err)
 	}
+
+	a.logger.Debug("serverless agent has responded with ", resp.Status)
 
 	defer resp.Body.Close()
 

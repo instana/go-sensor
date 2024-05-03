@@ -189,6 +189,8 @@ func (agent *agentS) SendSpans(spans []Span) error {
 		spans[i].From = agent.agentComm.from
 	}
 
+	agent.logger.Info("** In Common SendSpans **")
+
 	err := agent.agentComm.sendDataToAgent(agentTracesURL, spans)
 	if err != nil {
 		if err == payloadTooLargeErr {

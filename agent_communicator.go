@@ -159,6 +159,8 @@ func (a *agentCommunicator) pingAgent() bool {
 // sendDataToAgent makes a POST to the agent sending some data as payload. eg: spans, events or metrics
 func (a *agentCommunicator) sendDataToAgent(suffix string, data interface{}) error {
 	url := a.buildURL(suffix)
+	a.l.Info("** In sendDataToAgent **")
+	a.l.Info("sendDataToAgent: URL ->", url)
 	ctx, cancel := context.WithTimeout(context.Background(), clientTimeout)
 	defer cancel()
 
@@ -195,6 +197,8 @@ func (a *agentCommunicator) sendDataToAgent(suffix string, data interface{}) err
 	if resp == nil {
 		a.l.Debug("Sending data to agent: response nil for URL ", url)
 	}
+
+	a.l.Debug("Sending data to agent: response code: ", resp.StatusCode, "-", resp.Status, "; ", url)
 
 	if resp != nil {
 		respCode := resp.StatusCode
