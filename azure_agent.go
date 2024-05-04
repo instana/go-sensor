@@ -137,6 +137,9 @@ func (a *azureAgent) Flush(ctx context.Context) error {
 		return fmt.Errorf("failed to prepare send traces request: %s", err)
 	}
 
+	a.logger.Debug("endpoint: ", a.Endpoint+"/bundle")
+	a.logger.Debug("buf: ", buf.String())
+
 	req.Header.Set("Content-Type", "application/json")
 
 	if err := a.sendRequest(req.WithContext(ctx)); err != nil {
@@ -160,8 +163,8 @@ func (a *azureAgent) sendRequest(req *http.Request) error {
 	req.Header.Set("X-Instana-Host", a.snapshot.Host)
 	req.Header.Set("X-Instana-Key", a.Key)
 
-	a.logger.Debug("X-Instana-Key", a.Key)
-	a.logger.Debug("X-Instana-Host", a.snapshot.Host)
+	a.logger.Debug("X-Instana-Key: ", a.Key)
+	a.logger.Debug("X-Instana-Host: ", a.snapshot.Host)
 
 	client := http.Client{
 		Timeout: 2 * time.Second,
