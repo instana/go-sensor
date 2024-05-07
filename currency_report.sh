@@ -39,6 +39,7 @@ find_latest_version() {
   else
       LATEST_VERSION=""
       echo "Invalid package location: $pkg"
+      echo "Invalid package location: $pkg" >> $OUTPUT_TO_SLACK
   fi
 
 }
@@ -61,9 +62,11 @@ TRACER_REPORTS_REPO_PATH=$(pwd)/../tracer-reports
 GO_REPORTS_MD_PATH=$TRACER_REPORTS_REPO_PATH/automated/currency/go/report.md
 GO_REPORTS_MD_PATH_COPY=$TRACER_REPORTS_REPO_PATH/automated/currency/go/report_copy.md
 GO_REPORTS_MD_PATH_TMP=$TRACER_REPORTS_REPO_PATH/automated/currency/go/report_temp.md
+OUTPUT_TO_SLACK=$GO_TRACER_REPO_PATH/output.txt
 
 # Copy the original file
 cp $GO_REPORTS_MD_PATH $GO_REPORTS_MD_PATH_COPY
+rm $OUTPUT_TO_SLACK
 
 skip_execution=true
 first_line=true
@@ -88,6 +91,8 @@ while IFS= read -r line; do
     # echo "Processing line: $line"
     extract_info_from_markdown_line "$line"
 
+    # echo $TARGET_PACKAGE_NAME
+
     if [ "$IS_STANDARD_LIBRARY" = "true" ] || [ "$IS_DEPRECATED" = "true" ]; then
         # skip execution
         continue
@@ -110,6 +115,8 @@ while IFS= read -r line; do
         echo "Some difference!"
         echo "Latest version:" "$LATEST_VERSION"
         echo "Current version:" "$CURRENT_VERSION"
+
+        echo "$TARGET_PACKAGE_NAME - $CURRENT_VERSION - $LATEST_VERSION" >> $OUTPUT_TO_SLACK
 
         changed_line=$(echo "$changed_line" | awk -v new_val=" No " 'BEGIN{OFS=FS="|"} {$7=new_val} 1')
     else
