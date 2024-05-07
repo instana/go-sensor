@@ -10,6 +10,19 @@ extract_info_from_markdown_line() {
         INSTANA_PKG_URL=$(echo "$markdown_line" | awk -F '[(|)]' '{print $13}')
         TARGET_PACKAGE_NAME=$(echo "$markdown_line" | awk -F '|' '{print $2}')
         LOCAL_PATH=$(echo "$INSTANA_PKG_URL" | awk -F 'github.com/instana/go-sensor/' '{print $2}')
+
+        IS_STANDARD_LIBRARY="false"
+        IS_DEPRECATED="false"
+
+        if [[ $(echo "$markdown_line" | awk -F'|' '{print $11') == " Standard library " ]]; then
+            IS_STANDARD_LIBRARY="true"
+        fi
+
+        if [[ $(echo "$markdown_line" | awk -F'|' '{print $3') == " Deprecated " ]]; then
+            IS_DEPRECATED="true"
+        fi
+
+        
 }
 
 # Function to query the latest released version of the package
@@ -73,6 +86,11 @@ while IFS= read -r line; do
     # echo "Processing line: $line"
     extract_info_from_markdown_line "$line"
 
+    if [ "$IS_STANDARD_LIBRARY" = "true" ] || [ "$IS_DEPRECATED" = "true" ]; then
+        # skip execution
+        continue
+    fi
+    
     folder=$GO_TRACER_REPO_PATH/$LOCAL_PATH
 
     cd $folder
