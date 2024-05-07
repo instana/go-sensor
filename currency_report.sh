@@ -128,3 +128,5 @@ while IFS= read -r line; do
 
     cd $GO_TRACER_REPO_PATH
 done < "$GO_REPORTS_MD_PATH_COPY"
+
+rm $GO_REPORTS_MD_PATH_COPY
