@@ -64,7 +64,7 @@ while IFS= read -r line; do
 
     # For skipping first few lines from the md file.
     if [ "$skip_execution" = true ]; then
-        if [ "$line" = "| --- | --- | --- | --- | --- | --- | --- | --- | --- |" ]; then
+        if [ "$line" = "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |" ]; then
             skip_execution=false
         fi
         continue
