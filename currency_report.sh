@@ -14,11 +14,13 @@ extract_info_from_markdown_line() {
         IS_STANDARD_LIBRARY="false"
         IS_DEPRECATED="false"
 
-        if [[ $(echo "$markdown_line" | awk -F'|' '{print $11') == " Standard library " ]]; then
+        if [[ $(echo "$markdown_line" | awk -F '|' '{print $11}') == " Standard library " ]]; then
+            echo "Standard library"
             IS_STANDARD_LIBRARY="true"
         fi
 
-        if [[ $(echo "$markdown_line" | awk -F'|' '{print $3') == " Deprecated " ]]; then
+        if [[ $(echo "$markdown_line" | awk -F '|' '{print $3}') == " Deprecated " ]]; then
+            echo "Deprecated"
             IS_DEPRECATED="true"
         fi
 
