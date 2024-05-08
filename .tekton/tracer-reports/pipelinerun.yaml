@@ -1,0 +1,18 @@
+# (c) Copyright IBM Corp. 2024
+
+apiVersion: tekton.dev/v1
+kind: PipelineRun
+metadata:
+  generateName: tracer-reports-ci-pipeline-run-
+spec:
+  pipelineRef:
+    name: tracer-reports-ci-pipeline
+  workspaces:
+  - name: tracer-reports-ci-pipeline-pvc
+    volumeClaimTemplate:
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 5Gi
