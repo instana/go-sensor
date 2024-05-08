@@ -31,7 +31,7 @@ kubectl proxy
 - If you have successfully completed the above mentioned steps, you should be able to access the Tekton Dashboard from [here](http://localhost:8001/api/v1/namespaces/tekton-pipelines/services/tekton-dashboard:http/proxy/)
 
 ## Pipelines present in Go Tracer
-- Individual pipelines can br found from the indivbidual directory here. You will find detailed ussage instructions in a readme from each of the directory.
+- Individual pipelines can be found in their respective directories here. You will find detailed usage instructions in a README file within each directory.
 
   1. [CI Build](./ci-build/README.md)
   2. [Tracer Reports](./tracer-reports/README.md)
