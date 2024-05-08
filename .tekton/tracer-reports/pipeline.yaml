@@ -1,0 +1,43 @@
+# (c) Copyright IBM Corp. 2024
+
+apiVersion: tekton.dev/v1
+kind: Pipeline
+metadata:
+  name: tracer-reports-ci-pipeline
+spec:
+  workspaces:
+    - name: tracer-reports-ci-pipeline-pvc
+  tasks:
+    - name: clone
+      taskRef:
+        name: repos-clone-task
+      workspaces:
+        - name: task-pvc
+          workspace: tracer-reports-ci-pipeline-pvc
+    - name: script-run
+      runAfter:
+        - clone
+      taskRef:
+        name: script-run-task
+      workspaces:
+        - name: task-pvc
+          workspace: tracer-reports-ci-pipeline-pvc
+    - name: git-push
+      runAfter:
+        - script-run
+      taskRef:
+        name: git-push-task
+      workspaces:
+        - name: task-pvc
+          workspace: tracer-reports-ci-pipeline-pvc
+  finally:
+    - name: notify-slack
+      taskRef:
+        kind: Task
+        name: notify-slack-task
+      workspaces:
+        - name: task-pvc
+          workspace: tracer-reports-ci-pipeline-pvc
+      params:
+      - name: STATE
+        value: "$(tasks.status)"

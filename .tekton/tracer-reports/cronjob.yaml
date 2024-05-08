@@ -1,0 +1,18 @@
+# (c) Copyright IBM Corp. 2024
+
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: tracer-reports-cron
+spec:
+  # 04.00 PM daily
+  schedule: "0 16 * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: tracer-reports-cron
+            image: curlimages/curl
+            args: ["curl", "-X", "POST", "--data", "{}", "el-cron-listener.default.svc.cluster.local:8080"]
+          restartPolicy: Never
