@@ -16,7 +16,7 @@ spec:
       script: |
         #!/bin/sh
         echo "Cloning repo!"
-        git clone --depth 1 -b tracer-reports https://github.com/instana/go-sensor && cd /workspace/go-sensor && git status
+        git clone --depth 1 -b main https://github.com/instana/go-sensor && cd /workspace/go-sensor && git status
     - name: clone-tracer-reports
       image: alpine/git:2.43.0
       env:
@@ -34,7 +34,7 @@ spec:
       script: |
         #!/bin/sh
         echo "Cloning repo!"
-        git clone --depth 1 -b go-tracer-update https://oauth2:$GITHUB_ENTERPRISE_TOKEN@$REPO_URL && cd /workspace/tracer-reports && git status
+        git clone --depth 1 -b main https://oauth2:$GITHUB_ENTERPRISE_TOKEN@$REPO_URL && cd /workspace/tracer-reports && git status
 
 ---
 apiVersion: tekton.dev/v1

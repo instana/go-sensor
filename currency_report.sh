@@ -88,10 +88,8 @@ while IFS= read -r line; do
         continue
     fi
 
-    # echo "Processing line: $line"
     extract_info_from_markdown_line "$line"
 
-    # echo $TARGET_PACKAGE_NAME
 
     if [ "$IS_STANDARD_LIBRARY" = "true" ] || [ "$IS_DEPRECATED" = "true" ]; then
         # skip execution
@@ -103,16 +101,13 @@ while IFS= read -r line; do
     cd $folder
     # Find the latest version of the instrumented package
     find_latest_version "$TARGET_PKG_URL"
-    # echo "Latest version:" "$LATEST_VERSION"
     find_current_version "$TARGET_PKG_URL"
-    # echo "Current version:" "$CURRENT_VERSION"
 
     # Replace supported and latest version in the markdown line
     changed_line=$(echo "$line" | awk -v new_val="$(printf ' %s ' "$CURRENT_VERSION")" 'BEGIN{OFS=FS="|"} {$5=new_val} 1')
     changed_line=$(echo "$changed_line" | awk -v new_val="$(printf ' %s ' "$LATEST_VERSION")" 'BEGIN{OFS=FS="|"} {$6=new_val} 1')
 
     if [ "$LATEST_VERSION" != "$CURRENT_VERSION" ]; then
-        echo "Some difference!"
         echo "Latest version:" "$LATEST_VERSION"
         echo "Current version:" "$CURRENT_VERSION"
 
