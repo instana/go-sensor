@@ -44,7 +44,8 @@ spec:
       workspaces:
         - name: task-pvc
           workspace: go-tracer-ci-pipeline-pvc
-
+    # TODO : Revisit cache implementation. Disabling cache for now, as it causes memory issues.
+    
     # - name: cache-restore
     #   params:
     #   - name: imageTag
