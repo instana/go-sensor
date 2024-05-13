@@ -60,7 +60,7 @@ spec:
         - name: go-version
           value: "1.21"
         - name: excludeDirs
-          value: ""
+          value: "./instrumentation/instacosmos"
         pipelineRef:
           name: go-tracer-ci-pipeline
         workspaces:
