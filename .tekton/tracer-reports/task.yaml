@@ -1,0 +1,125 @@
+# (c) Copyright IBM Corp. 2024
+
+---
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: repos-clone-task
+spec:
+  workspaces:
+    - name: task-pvc
+      mountPath: /workspace
+  steps:
+    - name: clone-go-sensor-repo
+      image: alpine/git:2.43.0
+      workingDir: /workspace/
+      script: |
+        #!/bin/sh
+        echo "Cloning repo!"
+        git clone --depth 1 -b main https://github.com/instana/go-sensor && cd /workspace/go-sensor && git status
+    - name: clone-tracer-reports
+      image: alpine/git:2.43.0
+      env:
+        - name: GITHUB_ENTERPRISE_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: "github-enterprise-token"
+              key: "token"
+        - name: REPO_URL
+          valueFrom:
+            secretKeyRef:
+              name: "tracer-reports-repo-url"
+              key: "url"
+      workingDir: /workspace/
+      script: |
+        #!/bin/sh
+        echo "Cloning repo!"
+        git clone --depth 1 -b main https://oauth2:$GITHUB_ENTERPRISE_TOKEN@$REPO_URL && cd /workspace/tracer-reports && git status
+
+---
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: script-run-task
+spec:
+  workspaces:
+    - name: task-pvc
+      mountPath: /workspace
+  steps:
+    - name: run-tracer-reports-script
+      image: golang:1.22.0
+      workingDir: /workspace/
+      script: |
+        cd /workspace/go-sensor
+        bash currency_report.sh
+
+---
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: git-push-task
+spec:
+  workspaces:
+    - name: task-pvc
+      mountPath: /workspace
+  steps:
+    - name: push-tracer-reports
+      image: alpine/git:2.43.0
+      env:
+        - name: GITHUB_ENTERPRISE_USER_EMAIL
+          valueFrom:
+            secretKeyRef:
+              name: "github-enterprise-user-email"
+              key: "email"
+      workingDir: /workspace/tracer-reports/
+      script: |
+        git config user.name "IBM/Instana/Team Go"
+        git config user.email "$GITHUB_ENTERPRISE_USER_EMAIL"
+        git add automated/currency/go/report.md || true
+        git commit -m "Updated tracer reports for Team Go : $(date +'%d-%b-%Y %H:%M:%S')" || true
+        git push origin @ || true
+
+
+---
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: notify-slack-task
+spec:
+  params:
+  - name: STATE
+  workspaces:
+    - name: task-pvc
+      mountPath: /workspace
+  steps:
+    - name: slack-notification
+      image: curlimages/curl:8.7.1
+      env:
+        - name: STATE
+          value: $(params.STATE)
+        - name: SLACK_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: "slack-token"
+              key: "token"
+        - name: SLACK_CHANNEL_ID
+          valueFrom:
+            secretKeyRef:
+              name: "slack-channel-id"
+              key: "id"
+      workingDir: /workspace/go-sensor/
+      script: |
+        #!/bin/sh
+
+        if [ "$STATE" = "Failed" ] || [ "$STATE" = "None" ]; then
+          message=":alert-8281: Go Tracer - Currency reports generation failed :alert-blue:"
+        else
+          if [ -s output.txt ]; then
+            content=$(cat output.txt)
+            message=":mega: Go Tracer - Currency reports generated successfully :mega: \`\`\`$content\`\`\`"
+          else
+            message=":mega: Go Tracer - Currency reports generated successfully :mega:"
+          fi
+        fi
+
+        curl -d "text=$message" -d "channel=$SLACK_CHANNEL_ID" -H "Authorization: Bearer $SLACK_TOKEN" -X POST https://slack.com/api/chat.postMessage

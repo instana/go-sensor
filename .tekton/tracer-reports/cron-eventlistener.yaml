@@ -1,0 +1,48 @@
+# (c) Copyright IBM Corp. 2024
+
+apiVersion: triggers.tekton.dev/v1beta1
+kind: TriggerTemplate
+metadata:
+  name: tracer-reports-pipeline-template
+spec:
+  resourcetemplates:
+  - apiVersion: tekton.dev/v1beta1
+    kind: PipelineRun
+    metadata:
+      generateName: tracer-reports-ci-pipeline-run-
+    spec:
+      pipelineRef:
+        name: tracer-reports-ci-pipeline
+      workspaces:
+      - name: tracer-reports-ci-pipeline-pvc
+        volumeClaimTemplate:
+          spec:
+            accessModes:
+              - ReadWriteOnce
+            resources:
+              requests:
+                storage: 5Gi
+
+---
+apiVersion: triggers.tekton.dev/v1beta1
+kind: TriggerBinding
+metadata:
+  name: tracer-reports-cron-binding
+# TriggerBinding without spec is not supported; so adding a temporary spec
+spec:
+  params:
+  - name: temp
+    value: temp
+---
+apiVersion: triggers.tekton.dev/v1beta1
+kind: EventListener
+metadata:
+  name: cron-listener
+spec:
+  serviceAccountName: tekton-triggers-eventlistener-serviceaccount
+  triggers:
+    - name: cron-trig
+      bindings:
+      - ref: tracer-reports-cron-binding
+      template:
+        ref: tracer-reports-pipeline-template
