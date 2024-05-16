@@ -56,7 +56,7 @@ jobs:
         id: send_message
         run: |
           echo "Release content: $RELEASE_CONTENT"
-          if [[ $RELEASE_CONTENT == "" ]];then exit 1; fi
+          if [[ $RELEASE_CONTENT == "" ]];then exit 0; fi
 
           curl -H "Content-type: application/json" \
           --data '{"channel":"'"$SLACK_CHANNEL_ID"'","blocks":'"$MESSAGE"'}' \
