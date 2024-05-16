@@ -1,0 +1,70 @@
+name: Post release summary for the day
+run-name: Posting the releases in Slack once a day
+on:
+    schedule:
+      - cron: "0 16 * * 1-5"
+    workflow_dispatch:
+
+jobs:
+  publish-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Compile the releases for the day and compose the message
+        id: compose_message
+        run: |
+          today=$(date +%Y-%m-%d)
+
+          data=$(curl -L \
+          -H "Accept: application/vnd.github+json" \
+          -H "X-GitHub-Api-Version: 2022-11-28" \
+          https://api.github.com/repos/instana/go-sensor/releases?per_page=30 \
+          | jq -r --arg today "$today" '.[] | select(.published_at | startswith($today)) | select(.body | test("--auto-generated--") | not) | "name:\(.name), url:\(.html_url)"')
+
+          if [[ $data == "" ]]; then
+            echo "No releases for the day"
+            exit 0
+          fi
+
+          transform_message() {
+            local input="$1"
+            local name=""
+            local version=""
+            if [[ $input != *"instrumentation"* ]]; then
+              name="go-sensor/core"
+              version=$(echo "$input" | sed -n 's/.*name:\([^,]*\),.*/\1/p')
+            else
+              name=$(echo "$input" | sed -n 's/^name:instrumentation\/\(.*\)\/v\([^,]*\),.*$/\1/p')
+              version=$(echo "$input" | sed -n 's/^name:instrumentation\/.*\/v\([^,]*\),.*$/\1/p')
+            fi
+            
+            local url=$(echo "$input" | sed -n 's/^.*url:\([^,]*\)$/\1/p')
+
+            echo "- $name - <$url|$version>\n"
+          }
+
+          final_msg=""
+          while IFS= read -r line; do
+              transformed_line=$(transform_message "$line")
+              final_msg="$final_msg$transformed_line\n"
+          done <<< "$data"
+          
+          MESSAGE='[{"type":"section","text":{"type":"mrkdwn","text":":mega: *GoTracer Team* has released the following packages on *'"$today"'*"}},{"type":"section","text":{"type":"mrkdwn","text":"'"$final_msg"'"}}]'
+          echo "RELEASE_CONTENT=$final_msg" >> $GITHUB_ENV
+          echo "MESSAGE=$MESSAGE" >> $GITHUB_ENV
+
+      - name: Send success message to tracer release channel
+        id: send_message
+        run: |
+          echo "Release content: $RELEASE_CONTENT"
+          if [[ $RELEASE_CONTENT == "" ]];then exit 0; fi
+
+          curl -H "Content-type: application/json" \
+          --data '{"channel":"'"$SLACK_CHANNEL_ID"'","blocks":'"$MESSAGE"'}' \
+          -H "Authorization: Bearer $SLACK_BOT_TOKEN" \
+          -X POST https://slack.com/api/chat.postMessage
+        env:
+          SLACK_BOT_TOKEN: ${{secrets.SLACK_BOT_TOKEN }}
+          SLACK_CHANNEL_ID: ${{secrets.SLACK_TEST_CHANNEL_ID }}
+          MESSAGE: ${{ env.MESSAGE }}
+          RELEASE_CONTENT: ${{ env.RELEASE_CONTENT }}
+
