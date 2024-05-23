@@ -28,6 +28,28 @@ const (
 	defaultServerlessTimeout = 500 * time.Millisecond
 )
 
+// aws constants
+const (
+	awsExecutionEnv         = "AWS_EXECUTION_ENV"
+	awsECSFargate           = "AWS_ECS_FARGATE"
+	ecsContainerMetadataURI = "ECS_CONTAINER_METADATA_URI"
+	awsLambdaPrefix         = "AWS_Lambda_"
+)
+
+// knative constants
+const (
+	kService       = "K_SERVICE"
+	kConfiguration = "K_CONFIGURATION"
+	kRevision      = "K_REVISION"
+)
+
+// azure constants
+const (
+	azureExecutionEnv     = "AZURE_EXECUTION_ENV"
+	azureFunctionsRuntime = "FUNCTIONS_WORKER_RUNTIME"
+	azureContainerApps    = "AZURE_CONTAINER_APPS"
+)
+
 type AgentClient interface {
 	Ready() bool
 	SendMetrics(data acceptor.Metrics) error
@@ -261,25 +283,34 @@ func ShutdownSensor() {
 	muSensor.Unlock()
 }
 
-func newServerlessAgent(serviceName, agentEndpoint, agentKey string, client *http.Client, logger LeveledLogger) AgentClient {
+func newServerlessAgent(serviceName, agentEndpoint, agentKey string,
+	client *http.Client, logger LeveledLogger) AgentClient {
+
 	switch {
-	case os.Getenv("AWS_EXECUTION_ENV") == "AWS_ECS_FARGATE" && os.Getenv("ECS_CONTAINER_METADATA_URI") != "":
-		// AWS Fargate
+	// AWS Fargate
+	case os.Getenv(awsExecutionEnv) == awsECSFargate &&
+		os.Getenv(ecsContainerMetadataURI) != "":
 		return newFargateAgent(
 			serviceName,
 			agentEndpoint,
 			agentKey,
 			client,
-			aws.NewECSMetadataProvider(os.Getenv("ECS_CONTAINER_METADATA_URI"), client),
+			aws.NewECSMetadataProvider(os.Getenv(ecsContainerMetadataURI), client),
 			logger,
 		)
-	case strings.HasPrefix(os.Getenv("AWS_EXECUTION_ENV"), "AWS_Lambda_"):
-		// AWS Lambda
+
+	// AWS Lambda
+	case strings.HasPrefix(os.Getenv(awsExecutionEnv), awsLambdaPrefix):
 		return newLambdaAgent(serviceName, agentEndpoint, agentKey, client, logger)
-	case os.Getenv("K_SERVICE") != "" && os.Getenv("K_CONFIGURATION") != "" && os.Getenv("K_REVISION") != "":
-		// Knative, e.g. Google Cloud Run
+
+	// Knative, e.g. Google Cloud Run
+	case os.Getenv(kService) != "" && os.Getenv(kConfiguration) != "" &&
+		os.Getenv(kRevision) != "":
 		return newGCRAgent(serviceName, agentEndpoint, agentKey, client, logger)
-	case os.Getenv("FUNCTIONS_WORKER_RUNTIME") == azureCustomRuntime:
+
+	// azure functions or container apps
+	case os.Getenv(azureFunctionsRuntime) == azureCustomRuntime ||
+		os.Getenv(azureExecutionEnv) == azureContainerApps:
 		return newAzureAgent(agentEndpoint, agentKey, client, logger)
 	default:
 		return nil
