@@ -3,7 +3,7 @@ module github.com/instana/go-sensor/example/httprouter
 go 1.21
 
 require (
-	github.com/instana/go-sensor v1.62.0
+	github.com/instana/go-sensor v1.62.1
 	github.com/instana/go-sensor/instrumentation/instahttprouter v1.10.0
 	github.com/julienschmidt/httprouter v1.3.0
 )
