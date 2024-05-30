@@ -3,9 +3,7 @@
 package acceptor
 
 // NewAzurePluginPayload returns payload for the Azure plugin of Instana acceptor
-func NewAzurePluginPayload(entityID string) PluginPayload {
-	const pluginName = "com.instana.plugin.azure.functionapp"
-
+func NewAzurePluginPayload(entityID, pluginName string) PluginPayload {
 	return PluginPayload{
 		Name:     pluginName,
 		EntityID: entityID,

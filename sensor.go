@@ -45,9 +45,8 @@ const (
 
 // azure constants
 const (
-	azureExecutionEnv     = "AZURE_EXECUTION_ENV"
+	containerAppHostName  = "CONTAINER_APP_HOSTNAME"
 	azureFunctionsRuntime = "FUNCTIONS_WORKER_RUNTIME"
-	azureContainerApps    = "AZURE_CONTAINER_APPS"
 )
 
 type AgentClient interface {
@@ -310,7 +309,7 @@ func newServerlessAgent(serviceName, agentEndpoint, agentKey string,
 
 	// azure functions or container apps
 	case os.Getenv(azureFunctionsRuntime) == azureCustomRuntime ||
-		os.Getenv(azureExecutionEnv) == azureContainerApps:
+		os.Getenv(containerAppHostName) != "":
 		return newAzureAgent(agentEndpoint, agentKey, client, logger)
 	default:
 		return nil
