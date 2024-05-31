@@ -1,7 +1,7 @@
 // (c) Copyright IBM Corp. 2022
 
-//go:build azure && integration
-// +build azure,integration
+//go:build azureContainerApps && integration
+// +build azureContainerApps,integration
 
 package instana_test
 
