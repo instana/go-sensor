@@ -26,7 +26,7 @@ const (
 	DefaultForceSpanSendAt = 500
 
 	// TODO: defaultServerlessTimeout is increased from 500 millisecond to 2 second
-	// as serverless latency is high. This should be reduced once API latency is minimized.
+	// as serverless API latency is high. This should be reduced once latency is minimized.
 	defaultServerlessTimeout = 2 * time.Second
 )
 
