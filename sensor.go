@@ -25,7 +25,9 @@ const (
 	// DefaultForceSpanSendAt is the default max number of spans to buffer before force sending them to the agent
 	DefaultForceSpanSendAt = 500
 
-	defaultServerlessTimeout = 500 * time.Millisecond
+	// TODO: defaultServerlessTimeout is increased from 500 millisecond to 2 second
+	// as serverless latency is high. This should be reduced once API latency is minimized.
+	defaultServerlessTimeout = 2 * time.Second
 )
 
 // aws constants

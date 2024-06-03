@@ -63,7 +63,9 @@ func newAzureAgent(acceptorEndpoint, agentKey string, client *http.Client, logge
 
 	if client == nil {
 		client = http.DefaultClient
-		client.Timeout = 500 * time.Millisecond
+		// TODO: defaultServerlessTimeout is increased from 500 millisecond to 2 second
+		// as serverless latency is high. This should be reduced once API latency is minimized.
+		client.Timeout = 2 * time.Millisecond
 	}
 
 	logger.Debug("initializing azure agent")
