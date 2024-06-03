@@ -256,6 +256,8 @@ func (a *azureAgent) collectContainerAppsSnapshot() {
 	entityID := fmt.Sprintf("/subscriptions/%s/resourceGroups/%s/providers/Microsoft.App/containerapps/%s",
 		subscriptionID, resourceGrp, containerApp)
 
+	a.logger.Debug("entityID: ", entityID)
+
 	a.snapshot = serverlessSnapshot{
 		EntityID: entityID,
 		PID:      a.PID,
