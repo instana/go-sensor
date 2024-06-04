@@ -3,7 +3,7 @@ module github.com/instana/go-sensor/instrumentation/instaawsv2
 go 1.21
 
 require (
-	github.com/aws/aws-sdk-go-v2 v1.27.0
+	github.com/aws/aws-sdk-go-v2 v1.27.1
 	github.com/aws/aws-sdk-go-v2/config v1.25.5
 	github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue v1.12.3
 	github.com/aws/aws-sdk-go-v2/service/dynamodb v1.26.5
