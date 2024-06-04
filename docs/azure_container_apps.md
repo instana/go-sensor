@@ -1,6 +1,6 @@
 ## How to Monitor Serverless Go Application Deployed in Container Apps
 
-Monitoring a Go application deployed in Azure Container Apps is straightforward and almost identical to monitoring any other application. Simply instrument your application with the Instana Go Tracer SDK, deploy it to the container apps, and ensure the necessary environment variables for infrastructure correlation are set. 
+Monitoring a Go application deployed in Azure Container Apps is straightforward and similar to monitoring any other application. Simply instrument your application with Instana Go Tracer SDK, deploy it to the container apps, and ensure that the necessary environment variables for infrastructure correlation are set. 
 
 > **AZURE_SUBSCRIPTION_ID** = <[azure_subscription_id](https://learn.microsoft.com/en-us/azure/azure-portal/get-subscription-tenant-id#find-your-azure-subscription)>
 > **AZURE_RESOURCE_GROUP** = <[azure_resource_group_name](https://learn.microsoft.com/en-us/azure/azure-resource-manager/management/manage-resource-groups-portal#what-is-a-resource-group)>
