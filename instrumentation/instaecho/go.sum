@@ -1,8 +1,8 @@
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
-github.com/instana/go-sensor v1.62.1 h1:WkZ3Foej8UtvuJlmnPO9PDyRbEHMVVn3Dmzt9GQpLd8=
-github.com/instana/go-sensor v1.62.1/go.mod h1:VANqbeoHzgsGeilVYvTG8Kl/zFPuk2tr2DlyvBt8200=
+github.com/instana/go-sensor v1.63.0 h1:6+oad7bXDIaZUoLGGSqGhPStKgwstA5rz9vg7EK1RuI=
+github.com/instana/go-sensor v1.63.0/go.mod h1:VANqbeoHzgsGeilVYvTG8Kl/zFPuk2tr2DlyvBt8200=
 github.com/labstack/echo/v4 v4.12.0 h1:IKpw49IMryVB2p1a4dzwlhP1O2Tf2E0Ir/450lH+kI0=
 github.com/labstack/echo/v4 v4.12.0/go.mod h1:UP9Cr2DJXbOK3Kr9ONYzNowSh7HP0aG0ShAyycHSJvM=
 github.com/labstack/gommon v0.4.2 h1:F8qTUNXgG1+6WQmqoUWnz8WiEU60mXVVw0P4ht1WRA0=
