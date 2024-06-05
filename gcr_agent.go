@@ -289,9 +289,9 @@ func (a *gcrAgent) collectSnapshot(ctx context.Context) (gcrSnapshot, bool) {
 
 	snapshot := newGCRSnapshot(a.PID, gcrMetadata{
 		ComputeMetadata: md,
-		Service:         os.Getenv("K_SERVICE"),
-		Configuration:   os.Getenv("K_CONFIGURATION"),
-		Revision:        os.Getenv("K_REVISION"),
+		Service:         os.Getenv(kService),
+		Configuration:   os.Getenv(kConfiguration),
+		Revision:        os.Getenv(kRevision),
 		Port:            os.Getenv("PORT"),
 	})
 	snapshot.Service.Zone = a.Zone
