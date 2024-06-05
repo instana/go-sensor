@@ -25,7 +25,30 @@ const (
 	// DefaultForceSpanSendAt is the default max number of spans to buffer before force sending them to the agent
 	DefaultForceSpanSendAt = 500
 
-	defaultServerlessTimeout = 500 * time.Millisecond
+	// TODO: defaultServerlessTimeout is increased from 500 millisecond to 2 second
+	// as serverless API latency is high. This should be reduced once latency is minimized.
+	defaultServerlessTimeout = 2 * time.Second
+)
+
+// aws constants
+const (
+	awsExecutionEnv         = "AWS_EXECUTION_ENV"
+	awsECSFargate           = "AWS_ECS_FARGATE"
+	ecsContainerMetadataURI = "ECS_CONTAINER_METADATA_URI"
+	awsLambdaPrefix         = "AWS_Lambda_"
+)
+
+// knative constants
+const (
+	kService       = "K_SERVICE"
+	kConfiguration = "K_CONFIGURATION"
+	kRevision      = "K_REVISION"
+)
+
+// azure constants
+const (
+	containerAppHostName  = "CONTAINER_APP_HOSTNAME"
+	azureFunctionsRuntime = "FUNCTIONS_WORKER_RUNTIME"
 )
 
 type AgentClient interface {
@@ -261,25 +284,34 @@ func ShutdownSensor() {
 	muSensor.Unlock()
 }
 
-func newServerlessAgent(serviceName, agentEndpoint, agentKey string, client *http.Client, logger LeveledLogger) AgentClient {
+func newServerlessAgent(serviceName, agentEndpoint, agentKey string,
+	client *http.Client, logger LeveledLogger) AgentClient {
+
 	switch {
-	case os.Getenv("AWS_EXECUTION_ENV") == "AWS_ECS_FARGATE" && os.Getenv("ECS_CONTAINER_METADATA_URI") != "":
-		// AWS Fargate
+	// AWS Fargate
+	case os.Getenv(awsExecutionEnv) == awsECSFargate &&
+		os.Getenv(ecsContainerMetadataURI) != "":
 		return newFargateAgent(
 			serviceName,
 			agentEndpoint,
 			agentKey,
 			client,
-			aws.NewECSMetadataProvider(os.Getenv("ECS_CONTAINER_METADATA_URI"), client),
+			aws.NewECSMetadataProvider(os.Getenv(ecsContainerMetadataURI), client),
 			logger,
 		)
-	case strings.HasPrefix(os.Getenv("AWS_EXECUTION_ENV"), "AWS_Lambda_"):
-		// AWS Lambda
+
+	// AWS Lambda
+	case strings.HasPrefix(os.Getenv(awsExecutionEnv), awsLambdaPrefix):
 		return newLambdaAgent(serviceName, agentEndpoint, agentKey, client, logger)
-	case os.Getenv("K_SERVICE") != "" && os.Getenv("K_CONFIGURATION") != "" && os.Getenv("K_REVISION") != "":
-		// Knative, e.g. Google Cloud Run
+
+	// Knative, e.g. Google Cloud Run
+	case os.Getenv(kService) != "" && os.Getenv(kConfiguration) != "" &&
+		os.Getenv(kRevision) != "":
 		return newGCRAgent(serviceName, agentEndpoint, agentKey, client, logger)
-	case os.Getenv("FUNCTIONS_WORKER_RUNTIME") == azureCustomRuntime:
+
+	// azure functions or container apps
+	case os.Getenv(azureFunctionsRuntime) == azureCustomRuntime ||
+		os.Getenv(containerAppHostName) != "":
 		return newAzureAgent(agentEndpoint, agentKey, client, logger)
 	default:
 		return nil

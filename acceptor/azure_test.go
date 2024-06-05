@@ -15,5 +15,5 @@ func TestAzurePluginPayload(t *testing.T) {
 			Name:     "com.instana.plugin.azure.functionapp",
 			EntityID: "test-entity-id",
 		},
-		acceptor.NewAzurePluginPayload("test-entity-id"))
+		acceptor.NewAzurePluginPayload("test-entity-id", "com.instana.plugin.azure.functionapp"))
 }
