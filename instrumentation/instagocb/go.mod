@@ -5,7 +5,7 @@ go 1.21
 require (
 	github.com/couchbase/gocb/v2 v2.8.1
 	github.com/couchbase/gocbcore/v10 v10.4.1
-	github.com/instana/go-sensor v1.62.1
+	github.com/instana/go-sensor v1.63.0
 	github.com/opentracing/opentracing-go v1.2.0
 	github.com/stretchr/testify v1.9.0
 )
