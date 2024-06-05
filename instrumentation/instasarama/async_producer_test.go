@@ -265,12 +265,16 @@ func TestAsyncProducer_Input_WithAwaitResult_Error(t *testing.T) {
 	}, cSpan.Data.Kafka)
 
 	assert.Contains(t, published.Headers, sarama.RecordHeader{
-		Key:   []byte("X_INSTANA_C"),
-		Value: instasarama.PackTraceContextHeader(cSpan.TraceID, cSpan.SpanID),
+		Key:   []byte("X_INSTANA_T"),
+		Value: []byte("0000000000000000" + cSpan.TraceID),
 	})
 	assert.Contains(t, published.Headers, sarama.RecordHeader{
-		Key:   []byte("X_INSTANA_L"),
-		Value: instasarama.PackTraceLevelHeader("1"),
+		Key:   []byte("X_INSTANA_S"),
+		Value: []byte(cSpan.SpanID),
+	})
+	assert.Contains(t, published.Headers, sarama.RecordHeader{
+		Key:   []byte("X_INSTANA_L_S"),
+		Value: []byte("1"),
 	})
 
 	assert.Equal(t, pSpan.TraceID, cSpan.TraceID)
