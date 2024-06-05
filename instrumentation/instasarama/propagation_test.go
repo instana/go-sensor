@@ -1419,7 +1419,7 @@ func TestConsumerMessageCarrier_Set_FieldS(t *testing.T) {
 		var expected []*sarama.RecordHeader
 		c := instasarama.ConsumerMessageCarrier{&msg}
 
-		if headerFormat == "both" || headerFormat == "binary" || headerFormat == "" /* -> default, currently both */ {
+		if headerFormat == "both" || headerFormat == "binary" {
 			expected = append(expected, []*sarama.RecordHeader{
 				{
 					Key: []byte(instasarama.FieldC),
@@ -1434,7 +1434,7 @@ func TestConsumerMessageCarrier_Set_FieldS(t *testing.T) {
 			}...)
 		}
 
-		if headerFormat == "both" || headerFormat == "string" || headerFormat == "" /* -> default, currently both */ {
+		if headerFormat == "both" || headerFormat == "string" || headerFormat == "" /* -> default, currently string */ {
 			expected = append(expected, []*sarama.RecordHeader{
 				{
 					Key:   []byte(instasarama.FieldS),
