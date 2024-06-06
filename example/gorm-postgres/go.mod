@@ -3,7 +3,7 @@ module github.com/instana/go-sensor/gorm-postgres
 go 1.21
 
 require (
-	github.com/instana/go-sensor v1.62.1
+	github.com/instana/go-sensor v1.63.0
 	github.com/instana/go-sensor/instrumentation/instagorm v1.3.0
 	gorm.io/driver/postgres v1.5.3
 	gorm.io/gorm v1.25.10

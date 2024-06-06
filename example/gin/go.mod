@@ -4,7 +4,7 @@ go 1.21
 
 require (
 	github.com/gin-gonic/gin v1.10.0
-	github.com/instana/go-sensor v1.62.1
+	github.com/instana/go-sensor v1.63.0
 	github.com/instana/go-sensor/instrumentation/instagin v1.6.0
 )
 
