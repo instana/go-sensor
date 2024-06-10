@@ -179,7 +179,7 @@ func (c ProducerMessageCarrier) ForeachKey(handler func(key, val string) error) 
 		switch {
 		// If the customer sets kafka headers to be both binary and string, we don't want to duplicate the values for
 		// X_INSTANA_T, X_INSTANA_S and X_INSTANA_L, so we bypass the binary one
-		case bytes.EqualFold(header.Key, fieldCKey) && kafkaHeaderFormat != bothFormat:
+		case bytes.EqualFold(header.Key, fieldCKey) && kafkaHeaderFormat != bothFormat && kafkaHeaderFormat != stringFormat:
 			traceID, spanID, err := UnpackTraceContextHeader(header.Value)
 			if err != nil {
 				return fmt.Errorf("malformed %q header: %s", header.Key, err)
@@ -192,7 +192,7 @@ func (c ProducerMessageCarrier) ForeachKey(handler func(key, val string) error) 
 			if err := handler(instana.FieldS, string(spanID)); err != nil {
 				return err
 			}
-		case bytes.EqualFold(header.Key, fieldLKey) && kafkaHeaderFormat != bothFormat:
+		case bytes.EqualFold(header.Key, fieldLKey) && kafkaHeaderFormat != bothFormat && kafkaHeaderFormat != stringFormat:
 			val, err := UnpackTraceLevelHeader(header.Value)
 			if err != nil {
 				return fmt.Errorf("malformed %q header: %s", header.Key, err)
@@ -343,7 +343,7 @@ func (c ConsumerMessageCarrier) ForeachKey(handler func(key, val string) error) 
 		}
 
 		switch {
-		case bytes.EqualFold(header.Key, fieldCKey) && kafkaHeaderFormat != bothFormat:
+		case bytes.EqualFold(header.Key, fieldCKey) && kafkaHeaderFormat != bothFormat && kafkaHeaderFormat != stringFormat:
 			traceID, spanID, err := UnpackTraceContextHeader(header.Value)
 			if err != nil {
 				return fmt.Errorf("malformed %q header: %s", header.Key, err)
@@ -356,7 +356,7 @@ func (c ConsumerMessageCarrier) ForeachKey(handler func(key, val string) error) 
 			if err := handler(instana.FieldS, string(spanID)); err != nil {
 				return err
 			}
-		case bytes.EqualFold(header.Key, fieldLKey) && kafkaHeaderFormat != bothFormat:
+		case bytes.EqualFold(header.Key, fieldLKey) && kafkaHeaderFormat != bothFormat && kafkaHeaderFormat != stringFormat:
 			val, err := UnpackTraceLevelHeader(header.Value)
 			if err != nil {
 				return fmt.Errorf("malformed %q header: %s", header.Key, err)

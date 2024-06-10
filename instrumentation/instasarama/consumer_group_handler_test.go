@@ -101,14 +101,6 @@ func TestConsumerGroupHandler_ConsumeClaim(t *testing.T) {
 			Key:   []byte("x_instana_l_s"),
 			Value: []byte("1"),
 		})
-		assert.Contains(t, h.Messages[0].Headers, &sarama.RecordHeader{
-			Key:   []byte("x_instana_c"),
-			Value: instasarama.PackTraceContextHeader(span.TraceID, span.SpanID),
-		})
-		assert.Contains(t, h.Messages[0].Headers, &sarama.RecordHeader{
-			Key:   []byte("x_instana_l"),
-			Value: instasarama.PackTraceLevelHeader("1"),
-		})
 	})
 
 	t.Run("span for message without trace headers", func(t *testing.T) {
@@ -138,14 +130,6 @@ func TestConsumerGroupHandler_ConsumeClaim(t *testing.T) {
 		assert.Contains(t, h.Messages[1].Headers, &sarama.RecordHeader{
 			Key:   []byte("X_INSTANA_L_S"),
 			Value: []byte("1"),
-		})
-		assert.Contains(t, h.Messages[1].Headers, &sarama.RecordHeader{
-			Key:   []byte("X_INSTANA_C"),
-			Value: instasarama.PackTraceContextHeader(span.TraceID, span.SpanID),
-		})
-		assert.Contains(t, h.Messages[1].Headers, &sarama.RecordHeader{
-			Key:   []byte("X_INSTANA_L"),
-			Value: instasarama.PackTraceLevelHeader("1"),
 		})
 	})
 }

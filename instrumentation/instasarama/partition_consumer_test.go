@@ -99,12 +99,16 @@ CONSUMER_LOOP:
 		assert.EqualValues(t, "00000000deadbeef", span.ParentID)
 
 		assert.Contains(t, msg.Headers, &sarama.RecordHeader{
-			Key:   []byte("x_instana_c"),
-			Value: instasarama.PackTraceContextHeader(span.TraceID, span.SpanID),
+			Key:   []byte("x_instana_t"),
+			Value: []byte(span.TraceID),
 		})
 		assert.Contains(t, msg.Headers, &sarama.RecordHeader{
-			Key:   []byte("x_instana_l"),
-			Value: []byte{0x01},
+			Key:   []byte("x_instana_s"),
+			Value: []byte(span.SpanID),
+		})
+		assert.Contains(t, msg.Headers, &sarama.RecordHeader{
+			Key:   []byte("x_instana_l_s"),
+			Value: []byte("1"),
 		})
 	})
 
@@ -131,14 +135,6 @@ CONSUMER_LOOP:
 			{
 				Key:   []byte("X_INSTANA_L_S"),
 				Value: []byte("1"),
-			},
-			{
-				Key:   []byte("X_INSTANA_C"),
-				Value: instasarama.PackTraceContextHeader(span.TraceID, span.SpanID),
-			},
-			{
-				Key:   []byte("X_INSTANA_L"),
-				Value: []byte{0x01},
 			},
 		})
 	})
