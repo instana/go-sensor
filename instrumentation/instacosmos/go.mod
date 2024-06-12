@@ -7,7 +7,7 @@ toolchain go1.22.2
 require (
 	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.11.1
 	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.5.2
-	github.com/Azure/azure-sdk-for-go/sdk/data/azcosmos v1.0.1
+	github.com/Azure/azure-sdk-for-go/sdk/data/azcosmos v1.0.2
 	github.com/google/uuid v1.6.0
 	github.com/instana/go-sensor v1.63.0
 	github.com/opentracing/opentracing-go v1.2.0
