@@ -37,19 +37,6 @@ func TestPartitionConsumer_Messages(t *testing.T) {
 					Key:   []byte("x_instana_l_s"),
 					Value: []byte("1"),
 				},
-				{
-					// We deliberately send a different trace and span id in the binary header as in the string header to validate
-					// that the string headers get preference when both formats are present in the incoming message.
-					Key: []byte("x_instana_c"),
-					Value: []byte{
-						// trace id
-						0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-						0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef,
-						// span id
-						0xfe, 0xdc, 0xba, 0x98, 0x76, 0x54, 0x32, 0x10,
-					},
-				},
-				{Key: []byte("x_instana_l"), Value: []byte{0x01}},
 			},
 		},
 		{Topic: "not-instrumented-producer"},

@@ -8,8 +8,6 @@ package instasarama
 import (
 	"bytes"
 	"context"
-	"fmt"
-	"os"
 	"strings"
 
 	"github.com/IBM/sarama"
@@ -17,17 +15,8 @@ import (
 	ot "github.com/opentracing/opentracing-go"
 )
 
-const KafkaHeaderEnvVarKey = "INSTANA_KAFKA_HEADER_FORMAT"
-
 const (
-	// Legacy binary headers
-
-	// FieldC is the trace context header key
-	FieldC = "X_INSTANA_C"
-	// FieldL is the trace level header key
-	FieldL = "X_INSTANA_L"
-
-	// New string headers
+	// String headers
 
 	// FieldT is the trace id
 	FieldT = "X_INSTANA_T"
@@ -44,9 +33,6 @@ const (
 )
 
 var (
-	fieldCKey = []byte(FieldC)
-	fieldLKey = []byte(FieldL)
-
 	fieldTKey  = []byte(FieldT)
 	fieldSKey  = []byte(FieldS)
 	fieldLSKey = []byte(FieldLS)
@@ -78,77 +64,28 @@ type ProducerMessageCarrier struct {
 
 // Set implements opentracing.TextMapWriter for ProducerMessageCarrier
 func (c ProducerMessageCarrier) Set(key, val string) {
-	kafkaHeaderFormat := getKafkaHeaderFormat()
 	switch strings.ToLower(key) {
 	case instana.FieldT:
-		if kafkaHeaderFormat == bothFormat || kafkaHeaderFormat == binaryFormat {
-			if len(val) > 32 {
-				return // ignore hex-encoded trace IDs longer than 128 bit
-			}
+		existingT := val
+		valLen := len(val)
 
-			traceContext := PackTraceContextHeader(val, "")
-			if i, ok := c.indexOf(fieldCKey); ok {
-				// preserve the trace ID if the trace context header already present
-				existingC := c.Message.Headers[i].Value
-				if len(existingC) >= 16 {
-					copy(traceContext[16:], existingC[16:])
-				}
-			}
-
-			c.addOrReplaceHeader(fieldCKey, traceContext)
+		if valLen < 32 {
+			existingT = strings.Repeat("0", 32-valLen) + val
 		}
 
-		if kafkaHeaderFormat == bothFormat || kafkaHeaderFormat == stringFormat {
-			// There is no need to preserve any values, as thr trace context (aka X_INSTANA_C) is no longer present when the
-			// header is of string format, wehre we have 2 separated header values: X_INSTANA_T and X_INSTANA_S
-			existingT := val
-			valLen := len(val)
-
-			if valLen < 32 {
-				existingT = strings.Repeat("0", 32-valLen) + val
-			}
-
-			if valLen > 32 {
-				existingT = existingT[:32]
-			}
-
-			c.addOrReplaceHeader(fieldTKey, []byte(existingT))
+		if valLen > 32 {
+			existingT = existingT[:32]
 		}
+
+		c.addOrReplaceHeader(fieldTKey, []byte(existingT))
 	case instana.FieldS:
-		if kafkaHeaderFormat == bothFormat || kafkaHeaderFormat == binaryFormat {
-			if len(val) > 16 {
-				return // ignore hex-encoded span IDs longer than 64 bit
-			}
-
-			traceContext := PackTraceContextHeader("", val)
-			if i, ok := c.indexOf(fieldCKey); ok {
-				// preserve the span ID if the trace context header already present
-				existingC := c.Message.Headers[i].Value
-				if len(existingC) >= 16 {
-					copy(traceContext[:16], existingC[:16])
-				}
-			}
-
-			c.addOrReplaceHeader(fieldCKey, traceContext)
+		if len(val) > 16 {
+			return // ignore hex-encoded span IDs longer than 64 bit
 		}
 
-		if kafkaHeaderFormat == bothFormat || kafkaHeaderFormat == stringFormat {
-			if len(val) > 16 {
-				return // ignore hex-encoded span IDs longer than 64 bit
-			}
-
-			// There is no need to preserve any values, as thr trace context (aka X_INSTANA_C) is no longer present when the
-			// header is of string format, wehre we have 2 separated header values: X_INSTANA_T and X_INSTANA_S
-			c.addOrReplaceHeader(fieldSKey, []byte(val))
-		}
+		c.addOrReplaceHeader(fieldSKey, []byte(val))
 	case instana.FieldL:
-		if kafkaHeaderFormat == bothFormat || kafkaHeaderFormat == binaryFormat {
-			c.addOrReplaceHeader(fieldLKey, PackTraceLevelHeader(val))
-		}
-
-		if kafkaHeaderFormat == bothFormat || kafkaHeaderFormat == stringFormat {
-			c.addOrReplaceHeader(fieldLSKey, []byte(val))
-		}
+		c.addOrReplaceHeader(fieldLSKey, []byte(val))
 	}
 }
 
@@ -156,9 +93,7 @@ func (c ProducerMessageCarrier) Set(key, val string) {
 func (c ProducerMessageCarrier) RemoveAll() {
 	var ln int
 	for _, header := range c.Message.Headers {
-		if bytes.EqualFold(header.Key, fieldCKey) ||
-			bytes.EqualFold(header.Key, fieldLKey) ||
-			bytes.EqualFold(header.Key, fieldTKey) ||
+		if bytes.EqualFold(header.Key, fieldTKey) ||
 			bytes.EqualFold(header.Key, fieldSKey) ||
 			bytes.EqualFold(header.Key, fieldLSKey) {
 			continue
@@ -173,34 +108,9 @@ func (c ProducerMessageCarrier) RemoveAll() {
 
 // ForeachKey implements opentracing.TextMapReader for ProducerMessageCarrier
 func (c ProducerMessageCarrier) ForeachKey(handler func(key, val string) error) error {
-	kafkaHeaderFormat := getKafkaHeaderFormat()
 
 	for _, header := range c.Message.Headers {
 		switch {
-		// If the customer sets kafka headers to be both binary and string, we don't want to duplicate the values for
-		// X_INSTANA_T, X_INSTANA_S and X_INSTANA_L, so we bypass the binary one
-		case bytes.EqualFold(header.Key, fieldCKey) && kafkaHeaderFormat != bothFormat && kafkaHeaderFormat != stringFormat:
-			traceID, spanID, err := UnpackTraceContextHeader(header.Value)
-			if err != nil {
-				return fmt.Errorf("malformed %q header: %s", header.Key, err)
-			}
-
-			if err := handler(instana.FieldT, string(traceID)); err != nil {
-				return err
-			}
-
-			if err := handler(instana.FieldS, string(spanID)); err != nil {
-				return err
-			}
-		case bytes.EqualFold(header.Key, fieldLKey) && kafkaHeaderFormat != bothFormat && kafkaHeaderFormat != stringFormat:
-			val, err := UnpackTraceLevelHeader(header.Value)
-			if err != nil {
-				return fmt.Errorf("malformed %q header: %s", header.Key, err)
-			}
-
-			if err := handler(instana.FieldL, val); err != nil {
-				return err
-			}
 		case bytes.EqualFold(header.Key, fieldTKey):
 			if err := handler(instana.FieldT, string(header.Value)); err != nil {
 				return err
@@ -255,63 +165,14 @@ type ConsumerMessageCarrier struct {
 
 // Set implements opentracing.TextMapWriter for ConsumerMessageCarrier
 func (c ConsumerMessageCarrier) Set(key, val string) {
-	kafkaHeaderFormat := getKafkaHeaderFormat()
 
 	switch strings.ToLower(key) {
 	case instana.FieldT:
-		if kafkaHeaderFormat == bothFormat || kafkaHeaderFormat == binaryFormat {
-			if len(val) > 32 {
-				return // ignore hex-encoded trace IDs longer than 128 bit
-			}
-
-			traceContext := PackTraceContextHeader(val, "")
-			if i, ok := c.indexOf(fieldCKey); ok {
-				// preserve the trace ID if the trace context header already present
-				existingC := c.Message.Headers[i].Value
-				if len(existingC) >= 16 {
-					copy(traceContext[16:], existingC[16:])
-				}
-			}
-
-			c.addOrReplaceHeader(fieldCKey, traceContext)
-		}
-
-		if kafkaHeaderFormat == bothFormat || kafkaHeaderFormat == stringFormat {
-			// There is no need to preserve any values, as thr trace context (aka X_INSTANA_C) is no longer present when the
-			// header is of string format, wehre we have 2 separated header values: X_INSTANA_T and X_INSTANA_S
-			c.addOrReplaceHeader(fieldTKey, []byte(val))
-		}
+		c.addOrReplaceHeader(fieldTKey, []byte(val))
 	case instana.FieldS:
-		if kafkaHeaderFormat == bothFormat || kafkaHeaderFormat == binaryFormat {
-			if len(val) > 16 {
-				return // ignore hex-encoded span IDs longer than 64 bit
-			}
-
-			traceContext := PackTraceContextHeader("", val)
-			if i, ok := c.indexOf(fieldCKey); ok {
-				// preserve the span ID if the trace context header already present
-				existingC := c.Message.Headers[i].Value
-				if len(existingC) >= 16 {
-					copy(traceContext[:16], existingC[:16])
-				}
-			}
-
-			c.addOrReplaceHeader(fieldCKey, traceContext)
-		}
-
-		if kafkaHeaderFormat == bothFormat || kafkaHeaderFormat == stringFormat {
-			// There is no need to preserve any values, as thr trace context (aka X_INSTANA_C) is no longer present when the
-			// header is of string format, wehre we have 2 separated header values: X_INSTANA_T and X_INSTANA_S
-			c.addOrReplaceHeader(fieldSKey, []byte(val))
-		}
+		c.addOrReplaceHeader(fieldSKey, []byte(val))
 	case instana.FieldL:
-		if kafkaHeaderFormat == bothFormat || kafkaHeaderFormat == binaryFormat {
-			c.addOrReplaceHeader(fieldLKey, PackTraceLevelHeader(val))
-		}
-
-		if kafkaHeaderFormat == bothFormat || kafkaHeaderFormat == stringFormat {
-			c.addOrReplaceHeader(fieldLSKey, []byte(val))
-		}
+		c.addOrReplaceHeader(fieldLSKey, []byte(val))
 	}
 }
 
@@ -319,11 +180,9 @@ func (c ConsumerMessageCarrier) Set(key, val string) {
 func (c ConsumerMessageCarrier) RemoveAll() {
 	var ln int
 	for _, header := range c.Message.Headers {
-		if header != nil && (bytes.EqualFold(header.Key, fieldCKey) ||
-			bytes.EqualFold(header.Key, fieldTKey) ||
+		if header != nil && (bytes.EqualFold(header.Key, fieldTKey) ||
 			bytes.EqualFold(header.Key, fieldSKey) ||
-			bytes.EqualFold(header.Key, fieldLSKey) ||
-			bytes.EqualFold(header.Key, fieldLKey)) {
+			bytes.EqualFold(header.Key, fieldLSKey)) {
 			continue
 		}
 
@@ -336,35 +195,12 @@ func (c ConsumerMessageCarrier) RemoveAll() {
 
 // ForeachKey implements opentracing.TextMapReader for ConsumerMessageCarrier
 func (c ConsumerMessageCarrier) ForeachKey(handler func(key, val string) error) error {
-	kafkaHeaderFormat := getKafkaHeaderFormat()
 	for _, header := range c.Message.Headers {
 		if header == nil {
 			continue
 		}
 
 		switch {
-		case bytes.EqualFold(header.Key, fieldCKey) && kafkaHeaderFormat != bothFormat && kafkaHeaderFormat != stringFormat:
-			traceID, spanID, err := UnpackTraceContextHeader(header.Value)
-			if err != nil {
-				return fmt.Errorf("malformed %q header: %s", header.Key, err)
-			}
-
-			if err := handler(instana.FieldT, string(traceID)); err != nil {
-				return err
-			}
-
-			if err := handler(instana.FieldS, string(spanID)); err != nil {
-				return err
-			}
-		case bytes.EqualFold(header.Key, fieldLKey) && kafkaHeaderFormat != bothFormat && kafkaHeaderFormat != stringFormat:
-			val, err := UnpackTraceLevelHeader(header.Value)
-			if err != nil {
-				return fmt.Errorf("malformed %q header: %s", header.Key, err)
-			}
-
-			if err := handler(instana.FieldL, val); err != nil {
-				return err
-			}
 		case bytes.EqualFold(header.Key, fieldTKey):
 			if err := handler(instana.FieldT, string(header.Value)); err != nil {
 				return err
@@ -423,18 +259,4 @@ func extractTraceSpanID(msg *sarama.ProducerMessage) (string, string, error) {
 	})
 
 	return traceID, spanID, err
-}
-
-func getKafkaHeaderFormat() string {
-	kafkaHeaderEnvVar, ok := os.LookupEnv(KafkaHeaderEnvVarKey)
-
-	if ok && isValidFormat(kafkaHeaderEnvVar) {
-		return kafkaHeaderEnvVar
-	}
-
-	return stringFormat
-}
-
-func isValidFormat(format string) bool {
-	return format == binaryFormat || format == stringFormat || format == bothFormat
 }
