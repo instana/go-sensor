@@ -3,4 +3,4 @@
 package instacosmos
 
 // Version is the instrumentation module semantic version
-const Version = "1.1.2"
+const Version = "1.1.3"
