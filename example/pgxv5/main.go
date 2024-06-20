@@ -21,11 +21,11 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-const DB_NAME string = "students"
-const DB_USER string = "pgxadmin"
-const DB_PASS string = "pgxpwd"
+const DB_NAME string = "postgres"
+const DB_USER string = "postgres"
+const DB_PASS string = "mysecretpassword"
 const DB_HOST string = "localhost"
-const DB_PORT string = "5434"
+const DB_PORT string = "5432"
 
 var TableName = "deutsch"
 

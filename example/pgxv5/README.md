@@ -34,6 +34,6 @@ After issuing a couple of queries, you will be able to see the call traces in th
 ### Notes:
 Additionally, one can connect to the database using the `psql` tool, by issuing the following command,
 ```
-psql -h localhost -p 5434 -U pgxadmin -d students
+psql -h localhost -p 5434 -U postgres -d postgres
 ```
-and provide the password: `pgxpwd`
+and provide the password: `mysecretpassword`

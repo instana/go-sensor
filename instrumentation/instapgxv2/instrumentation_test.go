@@ -21,6 +21,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+const DB_URL = "postgres://postgres:mysecretpassword@localhost:5432/postgres?sslmode=disable"
+
 func TestQueryAPI(t *testing.T) {
 	recorder := instana.NewTestRecorder()
 	tracer := instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder)
@@ -29,8 +31,7 @@ func TestQueryAPI(t *testing.T) {
 	parentSpan := sensor.StartSpan("test-service")
 	defer parentSpan.Finish()
 
-	urlExample := "postgres://pgxadmin:pgxpwd@localhost:5434/students"
-	cfg, err := pgx.ParseConfig(urlExample)
+	cfg, err := pgx.ParseConfig(DB_URL)
 	if err != nil {
 		t.Error("unable to create pgx cfg")
 	}
@@ -65,9 +66,7 @@ func TestExecAPI(t *testing.T) {
 	parentSpan := sensor.StartSpan("test-service")
 	defer parentSpan.Finish()
 
-	urlExample := "postgres://pgxadmin:pgxpwd@localhost:5434/students"
-
-	cfg, err := pgx.ParseConfig(urlExample)
+	cfg, err := pgx.ParseConfig(DB_URL)
 	if err != nil {
 		t.Error("unable to create pgx cfg")
 	}
@@ -104,9 +103,7 @@ func TestQueryRowAPI(t *testing.T) {
 	parentSpan := sensor.StartSpan("test-service")
 	defer parentSpan.Finish()
 
-	urlExample := "postgres://pgxadmin:pgxpwd@localhost:5434/students"
-
-	cfg, err := pgx.ParseConfig(urlExample)
+	cfg, err := pgx.ParseConfig(DB_URL)
 	if err != nil {
 		t.Error("unable to create pgx cfg")
 	}
@@ -144,9 +141,7 @@ func TestBeginAPI(t *testing.T) {
 	parentSpan := sensor.StartSpan("test-service")
 	defer parentSpan.Finish()
 
-	urlExample := "postgres://pgxadmin:pgxpwd@localhost:5434/students"
-
-	cfg, err := pgx.ParseConfig(urlExample)
+	cfg, err := pgx.ParseConfig(DB_URL)
 	if err != nil {
 		t.Error("unable to create pgx cfg")
 	}
@@ -206,9 +201,7 @@ func TestBeginTransactionAPI(t *testing.T) {
 	parentSpan := sensor.StartSpan("test-service")
 	defer parentSpan.Finish()
 
-	urlExample := "postgres://pgxadmin:pgxpwd@localhost:5434/students"
-
-	cfg, err := pgx.ParseConfig(urlExample)
+	cfg, err := pgx.ParseConfig(DB_URL)
 	if err != nil {
 		t.Error("unable to create pgx cfg")
 	}
@@ -271,9 +264,7 @@ func TestCopyFromAPI(t *testing.T) {
 	parentSpan := sensor.StartSpan("test-service")
 	defer parentSpan.Finish()
 
-	urlExample := "postgres://pgxadmin:pgxpwd@localhost:5434/students"
-
-	cfg, err := pgx.ParseConfig(urlExample)
+	cfg, err := pgx.ParseConfig(DB_URL)
 	if err != nil {
 		t.Error("unable to create pgx cfg")
 	}
@@ -317,9 +308,7 @@ func TestBatchAPI(t *testing.T) {
 	parentSpan := sensor.StartSpan("test-service")
 	defer parentSpan.Finish()
 
-	urlExample := "postgres://pgxadmin:pgxpwd@localhost:5434/students"
-
-	cfg, err := pgx.ParseConfig(urlExample)
+	cfg, err := pgx.ParseConfig(DB_URL)
 	if err != nil {
 		t.Error("unable to create pgx cfg")
 	}
