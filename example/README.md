@@ -18,6 +18,7 @@ This folder contains examples of instrumenting the common use-cases with `github
 * [sarama](./sarama) - an example of instrumenting application using `instasarama`.
 * [sql-mysql](./sql-mysql) - an example of instrumenting a SQL application using `go-sensor` SDK.
 * [sql-redis](./sql-redis) - an example of instrumenting a Redis application using `go-sensor` SDK.
+* [pgxv5](./pgxv5) - an example of instrumenting pgx v5 library using `go-sensor` SDK.
 
 For more up-to-date instrumentation code examples please consult the respective package documentation page:
 
