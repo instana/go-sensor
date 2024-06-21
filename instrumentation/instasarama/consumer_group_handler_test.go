@@ -37,6 +37,22 @@ func TestConsumerGroupHandler_ConsumeClaim(t *testing.T) {
 			},
 		},
 		{Topic: "topic-2"},
+		{
+			Topic: "topic-3",
+			Headers: []*sarama.RecordHeader{
+				{
+					Key: []byte("x_instana_c"),
+					Value: []byte{
+						// trace id
+						0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+						0x00, 0x00, 0x00, 0x00, 0x0a, 0xbc, 0xde, 0x12,
+						// span id
+						0x00, 0x00, 0x00, 0x00, 0xde, 0xad, 0xbe, 0xef,
+					},
+				},
+				{Key: []byte("x_instana_l"), Value: []byte{0x01}},
+			},
+		},
 	}
 
 	claim := &testConsumerGroupClaim{
@@ -58,7 +74,7 @@ func TestConsumerGroupHandler_ConsumeClaim(t *testing.T) {
 	assert.Equal(t, h.Messages, sess.Messages) // all messages are marked
 
 	spans := recorder.GetQueuedSpans()
-	require.Len(t, spans, 2)
+	require.Len(t, spans, 3)
 
 	t.Run("span for message with trace headers", func(t *testing.T) {
 		span, err := extractAgentSpan(spans[0])
@@ -115,6 +131,39 @@ func TestConsumerGroupHandler_ConsumeClaim(t *testing.T) {
 			Value: []byte(span.SpanID),
 		})
 		assert.Contains(t, h.Messages[1].Headers, &sarama.RecordHeader{
+			Key:   []byte("X_INSTANA_L_S"),
+			Value: []byte("1"),
+		})
+	})
+
+	t.Run("span for message with binary trace headers", func(t *testing.T) {
+		// Binary headers are no longer supported.
+		// The expected behavior, in the absence of string headers, should match the behavior observed when there are no trace headers at all.
+		span, err := extractAgentSpan(spans[2])
+		require.NoError(t, err)
+
+		// Verify that the processed trace and parent IDs do not match the values passed in the headers (since they were binary headers).
+		assert.NotEqualValues(t, "000000000abcde12", span.TraceID)
+		assert.NotEqualValues(t, "00000000deadbeef", span.ParentID)
+		assert.EqualValues(t, span.TraceID, span.SpanID)
+
+		assert.Equal(t, span.Name, "kafka")
+		assert.EqualValues(t, span.Kind, instana.EntrySpanKind)
+
+		assert.Equal(t, agentKafkaSpanData{
+			Service: "topic-3",
+			Access:  "consume",
+		}, span.Data.Kafka)
+
+		assert.Contains(t, h.Messages[2].Headers, &sarama.RecordHeader{
+			Key:   []byte("X_INSTANA_T"),
+			Value: []byte(span.TraceID),
+		})
+		assert.Contains(t, h.Messages[2].Headers, &sarama.RecordHeader{
+			Key:   []byte("X_INSTANA_S"),
+			Value: []byte(span.SpanID),
+		})
+		assert.Contains(t, h.Messages[2].Headers, &sarama.RecordHeader{
 			Key:   []byte("X_INSTANA_L_S"),
 			Value: []byte("1"),
 		})
