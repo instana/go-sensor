@@ -1,7 +1,7 @@
 Instana instrumentation for pgx/v5
 =============================================
 
-This package provides Instana instrumentation for the [`pgx/v5`](https://github.com/jackc/pgx/v5) package.
+This package provides Instana instrumentation for the [`pgx/v5`](https://github.com/jackc/pgx) package.
 
 [![PkgGoDev](https://pkg.go.dev/badge/github.com/instana/go-sensor/instrumentation/instapgx/v2)](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instapgx/v2)
 
