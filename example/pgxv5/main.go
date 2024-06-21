@@ -17,7 +17,7 @@ import (
 
 	"github.com/gorilla/mux"
 	instana "github.com/instana/go-sensor"
-	"github.com/instana/go-sensor/instrumentation/instapgxv2"
+	"github.com/instana/go-sensor/instrumentation/instapgx/v2"
 	"github.com/jackc/pgx/v5"
 )
 
@@ -95,7 +95,7 @@ func initDatabase(db string, table string, tr instana.TracerLogger) (*pgx.Conn, 
 	}
 
 	// Here we are assigning the Instana tracer for pgx/v5 to the Tracer interface
-	cfg.Tracer = instapgxv2.InstanaTracer(cfg, tr.LegacySensor())
+	cfg.Tracer = instapgx.InstanaTracer(cfg, tr.LegacySensor())
 
 	conn, err := pgx.ConnectConfig(context.Background(), cfg)
 	if err != nil {

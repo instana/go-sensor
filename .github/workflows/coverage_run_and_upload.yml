@@ -42,7 +42,7 @@ jobs:
               do echo "Generating test coverage for $lib" && cd "$lib" && go mod tidy && go test -v -coverpkg=./... -cover -covermode atomic -coverprofile $TRACER_PATH/coverage/coverage_$(date +%s%N)_$RANDOM.out ./... -json > $TRACER_PATH/coverage/coverage_$(date +%s%N)_$RANDOM.json && cd -;
             done
 
-            INTEGRATIONS_TESTS=("instagocb" "instapgx" "instacosmos" "instapgxv2")
+            INTEGRATIONS_TESTS=("instagocb" "instapgx" "instacosmos" "instapgx/v2")
 
             for str in ${INTEGRATIONS_TESTS[@]}; do
               dir=./instrumentation/$str

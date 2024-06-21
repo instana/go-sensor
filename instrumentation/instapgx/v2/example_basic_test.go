@@ -1,6 +1,6 @@
 // (c) Copyright IBM Corp. 2024
 
-package instapgxv2_test
+package instapgx_test
 
 import (
 	"context"
@@ -8,7 +8,7 @@ import (
 	"os"
 
 	instana "github.com/instana/go-sensor"
-	"github.com/instana/go-sensor/instrumentation/instapgxv2"
+	"github.com/instana/go-sensor/instrumentation/instapgx/v2"
 	"github.com/jackc/pgx/v5"
 )
 
@@ -19,7 +19,7 @@ func Example_basicUsage() {
 	// Initialising Instana Sensor
 	sensor := instana.NewSensor("pgx-v5-service")
 	// Assigning the Instana tracer to the cfg.Tracer interface
-	cfg.Tracer = instapgxv2.InstanaTracer(cfg, sensor)
+	cfg.Tracer = instapgx.InstanaTracer(cfg, sensor)
 
 	// Use the cfg in the normal way to create a connection and use it
 	ctx := context.Background()

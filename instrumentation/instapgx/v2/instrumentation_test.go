@@ -3,7 +3,7 @@
 //go:build integration
 // +build integration
 
-package instapgxv2
+package instapgx
 
 import (
 	"context"

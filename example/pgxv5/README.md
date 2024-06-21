@@ -1,7 +1,7 @@
 
 Student Database Service
 ----
-This application demonstrates the instrumentation capabilities of `instapgxv2`, which is an instrumentation package for the 
+This application demonstrates the instrumentation capabilities of `instapgx/v2`, which is an instrumentation package for the 
 [pgx/v5](https://github.com/jackc/pgx) library. Also, this example showcases how trace propagation occurs from an instrumented HTTP query to the database 
 calls. Comments have been added in relevant places and that should provide sufficient guidance for using the instrumentation library. 
 

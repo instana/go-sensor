@@ -1,4 +1,4 @@
-module github.com/instana/go-sensor/instrumentation/instapgxv2
+module github.com/instana/go-sensor/instrumentation/instapgx/v2
 
 go 1.21
 
@@ -18,7 +18,7 @@ require (
 )
 
 require (
-	github.com/instana/go-sensor v1.62.1
+	github.com/instana/go-sensor v1.63.0
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20231201235250-de7065d80cb9 // indirect
 	github.com/stretchr/testify v1.9.0

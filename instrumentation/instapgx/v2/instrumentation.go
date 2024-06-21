@@ -1,7 +1,7 @@
 // (c) Copyright IBM Corp. 2024
 
-// Package instapgxv2 provides Instana instrumentation for pgx/v5 package.
-package instapgxv2
+// Package instapgx provides Instana instrumentation for pgx/v5 package.
+package instapgx
 
 import (
 	"context"

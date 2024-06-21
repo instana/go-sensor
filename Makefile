@@ -19,7 +19,7 @@ endif
 INSTAPGX_EXCLUDED := $(findstring ./instrumentation/instapgx, $(EXCLUDE_DIRS))
 INSTAGOCB_EXCLUDED := $(findstring ./instrumentation/instagocb, $(EXCLUDE_DIRS))
 INSTACOSMOS_EXCLUDED := $(findstring ./instrumentation/instacosmos, $(EXCLUDE_DIRS))
-INSTAPGXV2_EXCLUDED := $(findstring ./instrumentation/instapgxv2, $(EXCLUDE_DIRS))
+INSTAPGXV2_EXCLUDED := $(findstring ./instrumentation/instapgx/v2, $(EXCLUDE_DIRS))
 
 # Run all integration tests
 integration: $(INTEGRATION_TESTS)
@@ -27,7 +27,7 @@ ifndef INSTAPGX_EXCLUDED
 	cd instrumentation/instapgx && go test -tags=integration
 endif
 ifndef INSTAPGXV2_EXCLUDED
-	cd instrumentation/instapgxv2 && go test -tags=integration
+	cd instrumentation/instapgx/v2 && go test -tags=integration
 endif
 ifndef INSTAGOCB_EXCLUDED
 	cd instrumentation/instagocb && go test -v -coverprofile cover.out -tags=integration ./...
@@ -42,14 +42,14 @@ ifndef INSTAPGX_EXCLUDED
 	cd instrumentation/instapgx && go test -tags=integration
 endif
 ifndef INSTAPGXV2_EXCLUDED
-	cd instrumentation/instapgxv2 && go test -tags=integration
+	cd instrumentation/instapgx/v2 && go test -tags=integration
 endif
 ifndef INSTACOSMOS_EXCLUDED
 	cd instrumentation/instacosmos && go test -v -coverprofile cover.out -tags=integration ./...
 endif
 
 $(INTEGRATION_TESTS):
-	go test $(GOFLAGS) -tags "$@ integration" $(shell grep --exclude-dir=instagocb --exclude-dir=instapgx --exclude-dir=instapgxv2 --exclude-dir=instacosmos  -lR '^// +build \($@,\)\?integration\(,$@\)\?' .)
+	go test $(GOFLAGS) -tags "$@ integration" $(shell grep --exclude-dir=instagocb --exclude-dir=instapgx --exclude-dir=instapgx/v2 --exclude-dir=instacosmos  -lR '^// +build \($@,\)\?integration\(,$@\)\?' .)
 
 integration-couchbase:
 ifndef INSTAGOCB_EXCLUDED

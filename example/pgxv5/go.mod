@@ -5,7 +5,7 @@ go 1.21
 require (
 	github.com/gorilla/mux v1.8.1
 	github.com/instana/go-sensor v1.63.0
-	github.com/instana/go-sensor/instrumentation/instapgxv2 v0.0.0
+	github.com/instana/go-sensor/instrumentation/instapgx/v2 v2.0.0-00010101000000-000000000000
 	github.com/jackc/pgx/v5 v5.6.0
 )
 
@@ -18,4 +18,4 @@ require (
 	golang.org/x/text v0.16.0 // indirect
 )
 
-replace github.com/instana/go-sensor/instrumentation/instapgxv2 => ../../instrumentation/instapgxv2
+replace github.com/instana/go-sensor/instrumentation/instapgx/v2 => ../../instrumentation/instapgx/v2
