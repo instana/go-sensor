@@ -1,7 +1,7 @@
 Instana instrumentation for pgx
 =============================================
 
-This module contains the middleware to instrument services written with [`github.com/jackc/pgx/v4`](https://github.com/jackc/pgx/v4).
+This module contains the middleware to instrument services written with [`pgx/v4`](https://pkg.go.dev/github.com/jackc/pgx/v4).
 
 [![PkgGoDev](https://pkg.go.dev/badge/github.com/instana/go-sensor/instrumentation/instapgx)](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instapgx)
 
