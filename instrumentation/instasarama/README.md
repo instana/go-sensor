@@ -121,23 +121,13 @@ in the message handler to continue the trace.
 
 ### Working With Kafka Header Formats
 
-Since v1.2.0, the instrumentation supports Instana's trace correlation headers in both binary (legacy) and string (new) formats.
+Instana is currently changing how Kafka headers are handled. This change affects how Instana headers are propagated via a producer when a message is sent. 
 
-By default, both sets of headers (binary and string) will be added to messages. Versions prior to v1.2.0 will only add headers in the binary format.
+Starting from [instasarama](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instasarama) v1.24.0, binary headers are no longer used, and you can't set the header format using the environment variable (INSTANA_KAFKA_HEADER_FORMAT). The only available format now is 'string'.
 
-This change affects how Instana headers are propagated via a producer when a message is sent.
-Consumers will always look for the string headers first and fallback to the binary format if necessary.
+In versions between 1.2.0 and 1.24.0, Instana supports trace correlation headers in both 'binary'(old) and 'string'(new) formats. By default, messages in these versions will include both 'binary' and 'string' headers.
 
-In the future, the binary headers will be discontinued and only the headers in the string format will be considered.
-
-To choose a header format provide the `INSTANA_KAFKA_HEADER_FORMAT` environment variable to the application.
-The following are valid values:
-
-* `binary`: Producers will only add binary headers to Kafka messages.
-* `string`: Producers will only add string headers to Kafka messages.
-* `both`: Producers will add both sets of headers to Kafka messages.
-
-> If no environment variable is provided, or its value is empty or if it's not a valid value, Kafka headers will be treated as binary
+Versions before 1.2.0 will only use 'binary' headers.
 
 See the topic [Kafka header migration](https://www.ibm.com/docs/en/instana-observability/current?topic=references-kafka-header-migration) in Instana's documentation for more information.
 
