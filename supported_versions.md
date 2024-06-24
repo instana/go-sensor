@@ -26,6 +26,7 @@
 | 24 | HTTP | [beego](https://pkg.go.dev/github.com/beego/beego/v2) | [instabeego](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instabeego) | v2.1.3 | v2.2.1 |
 | 25 | Other | [aws-sdk-go](https://pkg.go.dev/github.com/aws/aws-sdk-go-v2) | [instaawsv2](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instaawsv2) | v1.21.0 | v1.30.0 |
 | 26 | Databases | [azcosmos](https://pkg.go.dev/github.com/Azure/azure-sdk-for-go/sdk/data/azcosmos) | [instacosmos](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instacosmos) | v0.3.6 | v1.0.3 |
+| 27 | Databases | [pgx/v5](https://pkg.go.dev/github.com/jackc/pgx/v5) | [instapgx/v2](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instapgx/v2) | v5.6.0 | v5.6.0 |
 
 
 
