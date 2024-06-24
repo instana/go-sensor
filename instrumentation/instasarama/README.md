@@ -123,11 +123,11 @@ in the message handler to continue the trace.
 
 Instana is currently changing how Kafka headers are handled. This change affects how Instana headers are propagated via a producer when a message is sent. 
 
-Starting from version 1.24.0, binary headers are no longer used, and you can't set the header format using the environment variable (INSTANA_KAFKA_HEADER_FORMAT). The only available format now is string, and it will be the default.
+Starting from [instasarama](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instasarama) v1.24.0, binary headers are no longer used, and you can't set the header format using the environment variable (INSTANA_KAFKA_HEADER_FORMAT). The only available format now is 'string'.
 
-In versions between 1.2.0 and 1.24.0, Instana supports trace correlation headers in both binary (old) and string (new) formats. By default, messages in these versions will include both binary and string headers.
+In versions between 1.2.0 and 1.24.0, Instana supports trace correlation headers in both 'binary'(old) and 'string'(new) formats. By default, messages in these versions will include both 'binary' and 'string' headers.
 
-Versions before 1.2.0 will only use binary headers.
+Versions before 1.2.0 will only use 'binary' headers.
 
 See the topic [Kafka header migration](https://www.ibm.com/docs/en/instana-observability/current?topic=references-kafka-header-migration) in Instana's documentation for more information.
 
