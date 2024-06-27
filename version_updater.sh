@@ -88,13 +88,13 @@ cp $LIBRARY_INFO_MD_PATH $LIBRARY_INFO_MD_PATH_COPY
 # Open the file and read it line by line
 first_line=true
 while IFS= read -r line; do
-    # Skip the first line 
+    # Skip the first line
     # As it only contains the markdown headers
     if [ "$first_line" = true ]; then
         first_line=false
         continue
     fi
-    
+
     echo "Processing line: $line"
     extract_info_from_markdown_line "$line"
 
@@ -110,7 +110,7 @@ while IFS= read -r line; do
 
     echo "--------------$INSTRUMENTATION-----------------"
 
-    # Print the extracted values 
+    # Print the extracted values
     echo "Target Package URL: $TARGET_PKG_URL"
     echo "Instana Package URL: $INSTANA_PKG_URL"
     echo "Target Package Text: $TARGET_PACKAGE_NAME"
@@ -173,7 +173,7 @@ while IFS= read -r line; do
     # Create a PR request for the changes
     # shellcheck disable=SC2046
     gh pr create --title "Updating instrumentation $INSTRUMENTATION for new version $LATEST_VERSION. Id: $CURRENT_TIME_UNIX" \
-    --body "This PR adds changes for the newer version $LATEST_VERSION for the instrumented package" --head $(git branch --show-current)
+    --body "This PR adds changes for the newer version $LATEST_VERSION for the instrumented package" --head $(git branch --show-current) --label "tekton_ci"
 
     # Back to working directry
     cd $TRACER_PATH
