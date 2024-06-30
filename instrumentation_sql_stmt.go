@@ -5,6 +5,7 @@ package instana
 import (
 	"context"
 	"database/sql/driver"
+	"fmt"
 
 	otlog "github.com/opentracing/opentracing-go/log"
 )
@@ -33,6 +34,7 @@ func (stmt *wStmt) Exec(args []driver.Value) (driver.Result, error) {
 
 func (stmt *wStmt) Query(args []driver.Value) (driver.Rows, error) {
 	ctx := context.Background()
+	fmt.Printf("In wStmt Query, Query: %s \n", stmt.query)
 	sp, dbKey := startSQLSpan(ctx, stmt.connDetails, stmt.query, stmt.sensor)
 	defer sp.Finish()
 

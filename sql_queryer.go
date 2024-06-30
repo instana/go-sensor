@@ -5,6 +5,7 @@ package instana
 import (
 	"context"
 	"database/sql/driver"
+	"fmt"
 
 	otlog "github.com/opentracing/opentracing-go/log"
 )
@@ -19,6 +20,8 @@ type wQueryer struct {
 
 func (conn *wQueryer) Query(query string, args []driver.Value) (driver.Rows, error) {
 	ctx := context.Background()
+
+	fmt.Printf("In wQueryer Query, Query: %s \n", query)
 
 	sp, dbKey := startSQLSpan(ctx, conn.connDetails, query, conn.sensor)
 	defer sp.Finish()

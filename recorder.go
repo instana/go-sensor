@@ -110,6 +110,10 @@ func (r *Recorder) Flush(ctx context.Context) error {
 		return nil
 	}
 
+	for _, span := range spansToSend {
+		fmt.Printf("In Flush, sending span : %s \n", span.Name)
+	}
+
 	if err := sensor.Agent().SendSpans(spansToSend); err != nil {
 		r.Lock()
 		defer r.Unlock()

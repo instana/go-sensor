@@ -7,6 +7,7 @@ import (
 	"context"
 	"database/sql"
 	"database/sql/driver"
+	"fmt"
 	"net/url"
 	"regexp"
 	"strings"
@@ -70,6 +71,8 @@ var drivers map[string]driver.Driver
 // requires to explicitly provide an instance of the driver to instrument.
 func SQLInstrumentAndOpen(sensor TracerLogger, driverName, dataSourceName string) (*sql.DB, error) {
 	if d, ok := drivers[driverName]; ok {
+		fmt.Printf("instrumenting sql driver, drivername: %s, datasourcename: %s \n",
+			driverName, dataSourceName)
 		InstrumentSQLDriver(sensor, driverName, d)
 	}
 

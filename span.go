@@ -5,6 +5,7 @@ package instana
 
 import (
 	"bytes"
+	"fmt"
 	"strings"
 	"sync"
 	"time"
@@ -79,9 +80,12 @@ func (r *spanS) FinishWithOptions(opts ot.FinishOptions) {
 
 	r.Duration = duration
 	if r.sendSpanToAgent() {
+		fmt.Printf("Sending to agent \n")
 		if sensor.Agent().Ready() {
+			fmt.Printf("agent is ready. Recording span \n")
 			r.tracer.recorder.RecordSpan(r)
 		} else {
+			fmt.Printf("agent is not ready. sending to agent will be delayed \n")
 			delayed.append(r)
 		}
 		r.sendOpenTracingLogRecords()
