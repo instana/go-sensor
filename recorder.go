@@ -36,6 +36,7 @@ func NewRecorder() *Recorder {
 	go func() {
 		for range ticker.C {
 			if sensor.Agent().Ready() {
+				fmt.Println("Calling Flush function")
 				go r.Flush(context.Background())
 			}
 		}
@@ -106,6 +107,7 @@ func (r *Recorder) GetQueuedSpans() []Span {
 // Flush sends queued spans to the agent
 func (r *Recorder) Flush(ctx context.Context) error {
 	spansToSend := r.GetQueuedSpans()
+	fmt.Printf("In Flush, spans count: %d \n", len(spansToSend))
 	if len(spansToSend) == 0 {
 		return nil
 	}
