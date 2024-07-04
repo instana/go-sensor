@@ -21,7 +21,7 @@ type wQueryer struct {
 func (conn *wQueryer) Query(query string, args []driver.Value) (driver.Rows, error) {
 	ctx := context.Background()
 
-	fmt.Printf("In wQueryer Query, Query: %s \n", query)
+	fmt.Printf("In wQueryer Query, Query: %s, DatabaseName: %s \n", query, conn.connDetails.DatabaseName)
 
 	sp, dbKey := startSQLSpan(ctx, conn.connDetails, query, conn.sensor)
 	defer sp.Finish()

@@ -91,6 +91,8 @@ func (drv *wrappedSQLDriver) Open(name string) (driver.Conn, error) {
 		return conn, err
 	}
 
+	fmt.Printf("wrappedSQLDriver Open name: %s \n", name)
+
 	if connAlreadyWrapped(conn) {
 		return conn, nil
 	}
@@ -302,6 +304,8 @@ func ParseDBConnDetails(connStr string) DbConnDetails {
 	}
 	for _, parseFn := range strategies {
 		if details, ok := parseFn(connStr); ok {
+			fmt.Printf("ParseDBConnDetails, connStr: %s, details: %v \n",
+				connStr, details)
 			return details
 		}
 	}
@@ -345,6 +349,8 @@ func parseDBConnDetailsURI(connStr string) (DbConnDetails, bool) {
 	if u.Scheme == "postgres" {
 		details.DatabaseName = u.Scheme
 	}
+
+	fmt.Println("In parseDBConnDetailsURI")
 
 	return details, true
 }
@@ -400,6 +406,8 @@ var mysqlKVPasswordRegex = regexp.MustCompile(`(?i)(^|;)Pwd=[^;]+(;|$)`)
 // parseMySQLConnDetailsKV parses a semicolon-separated MySQL-style connection string
 func parseMySQLConnDetailsKV(connStr string) (DbConnDetails, bool) {
 	details := DbConnDetails{RawString: connStr, DatabaseName: "mysql"}
+
+	fmt.Printf("parseMySQLConnDetailsKV, connStr : %s \n", connStr)
 
 	for _, field := range strings.Split(connStr, ";") {
 		fieldNorm := strings.ToLower(field)
@@ -475,6 +483,8 @@ func parseMySQLGoSQLDriver(connStr string) (DbConnDetails, bool) {
 		Schema:       values[7],
 		DatabaseName: "mysql",
 	}
+
+	fmt.Printf("parseMySQLGoSQLDriver, connStr : %s \n", connStr)
 
 	return d, true
 }
