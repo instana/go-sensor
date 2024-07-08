@@ -300,7 +300,7 @@ func TestDSNParing(t *testing.T) {
 
 	for name, testcase := range testcases {
 		t.Run(name, func(t *testing.T) {
-			connDetails := instana.ParseDBConnDetails(testcase.DSN)
+			connDetails := instana.ParseDBConnDetails(testcase.DSN, "")
 			assert.Equal(t, testcase.ExpectedConfig, connDetails)
 		})
 	}

@@ -7,8 +7,10 @@ import (
 	"context"
 	"database/sql"
 	"database/sql/driver"
+	"fmt"
 	"net/url"
 	"regexp"
+	"slices"
 	"strings"
 	"sync"
 	_ "unsafe"
@@ -42,8 +44,9 @@ func InstrumentSQLDriver(sensor TracerLogger, name string, driver driver.Driver)
 	}
 
 	sql.Register(instrumentedName, &wrappedSQLDriver{
-		Driver: driver,
-		sensor: sensor,
+		Driver:     driver,
+		driverName: name,
+		sensor:     sensor,
 	})
 }
 
@@ -79,7 +82,8 @@ func SQLInstrumentAndOpen(sensor TracerLogger, driverName, dataSourceName string
 type wrappedSQLDriver struct {
 	driver.Driver
 
-	sensor TracerLogger
+	driverName string
+	sensor     TracerLogger
 }
 
 func (drv *wrappedSQLDriver) Open(name string) (driver.Conn, error) {
@@ -92,7 +96,7 @@ func (drv *wrappedSQLDriver) Open(name string) (driver.Conn, error) {
 		return conn, nil
 	}
 
-	w := wrapConn(ParseDBConnDetails(name), conn, drv.sensor)
+	w := wrapConn(ParseDBConnDetails(name, drv.driverName), conn, drv.sensor)
 
 	return w, nil
 }
@@ -289,7 +293,17 @@ type DbConnDetails struct {
 	Error        error
 }
 
-func ParseDBConnDetails(connStr string) DbConnDetails {
+func ParseDBConnDetails(connStr, driverName string) DbConnDetails {
+
+	fmt.Println("driver name: ", driverName)
+	if isDB2driver(driverName) {
+		if details, ok := parseDBConnDetailsURI(connStr); ok {
+			fmt.Printf("ParseDBConnDetails, details: %+v \n", details)
+			details.DatabaseName = "db2"
+			return details
+		}
+	}
+
 	strategies := [...]func(string) (DbConnDetails, bool){
 		parseMySQLGoSQLDriver,
 		parsePostgresConnDetailsKV,
@@ -304,6 +318,19 @@ func ParseDBConnDetails(connStr string) DbConnDetails {
 	}
 
 	return DbConnDetails{RawString: connStr}
+}
+
+// isDB2driver checks the driver belongs to IBM Db2 database.
+// The driver name is checked against known Db2 drivers.
+func isDB2driver(name string) bool {
+
+	// Add the driver name in the knownDB2drivers array
+	// if a new Db2 driver needs to be supported.
+	knownDB2drivers := []string{
+		"go_ibm_db",
+	}
+
+	return slices.Contains(knownDB2drivers, name)
 }
 
 // parseDBConnDetailsURI attempts to parse a connection string as an URI, assuming that it has
