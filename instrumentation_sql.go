@@ -475,13 +475,10 @@ func parseDB2ConnDetailsKV(connStr string) (DbConnDetails, bool) {
 		switch {
 		case strings.HasPrefix(fieldNorm, "server="):
 			address := field[len("server="):]
-			for i, v := range strings.Split(address, ":") {
-				switch i {
-				case 0:
-					details.Host = v
-				case 1:
-					details.Port = v
-				}
+			addrFields := strings.Split(address, ":")
+			details.Host = addrFields[0]
+			if len(addrFields) > 1 {
+				details.Port = addrFields[1]
 			}
 			continue
 		case strings.HasPrefix(fieldNorm, "hostname="):
