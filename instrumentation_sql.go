@@ -95,9 +95,24 @@ func (drv *wrappedSQLDriver) Open(name string) (driver.Conn, error) {
 		return conn, nil
 	}
 
-	w := wrapConn(ParseDBConnDetails(name, drv.driverName), conn, drv.sensor)
+	w := wrapConn(getDBConnDetails(name, drv.driverName), conn, drv.sensor)
 
 	return w, nil
+}
+
+// getDBConnDetails returns db connection details parsing connection URI and checking driver name
+func getDBConnDetails(connStr, driverName string) DbConnDetails {
+
+	if isDB2driver(driverName) {
+		if details, ok := parseDB2ConnDetailsKV(connStr); ok {
+			return details
+		}
+
+		return DbConnDetails{RawString: connStr}
+	}
+
+	return ParseDBConnDetails(connStr)
+
 }
 
 func postgresSpan(ctx context.Context, conn DbConnDetails, query string, sensor TracerLogger) ot.Span {
@@ -292,14 +307,7 @@ type DbConnDetails struct {
 	Error        error
 }
 
-func ParseDBConnDetails(connStr, driverName string) DbConnDetails {
-
-	if isDB2driver(driverName) {
-		if details, ok := parseDB2ConnDetailsKV(connStr); ok {
-			return details
-		}
-	}
-
+func ParseDBConnDetails(connStr string) DbConnDetails {
 	strategies := [...]func(string) (DbConnDetails, bool){
 		parseMySQLGoSQLDriver,
 		parsePostgresConnDetailsKV,

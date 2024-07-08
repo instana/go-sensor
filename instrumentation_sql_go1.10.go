@@ -23,7 +23,7 @@ func WrapSQLConnector(sensor TracerLogger, name string, connector driver.Connect
 
 	return &wrappedSQLConnector{
 		Connector:   connector,
-		connDetails: ParseDBConnDetails(name, ""),
+		connDetails: ParseDBConnDetails(name),
 		sensor:      sensor,
 	}
 }
