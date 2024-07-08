@@ -297,9 +297,8 @@ func ParseDBConnDetails(connStr, driverName string) DbConnDetails {
 
 	fmt.Println("driver name: ", driverName)
 	if isDB2driver(driverName) {
-		if details, ok := parseDBConnDetailsURI(connStr); ok {
+		if details, ok := parseDB2ConnDetailsKV(connStr); ok {
 			fmt.Printf("ParseDBConnDetails, details: %+v \n", details)
-			details.DatabaseName = "db2"
 			return details
 		}
 	}
@@ -450,6 +449,49 @@ func parseMySQLConnDetailsKV(connStr string) (DbConnDetails, bool) {
 
 	if details.Schema == "" {
 		return DbConnDetails{}, false
+	}
+
+	details.RawString = mysqlKVPasswordRegex.ReplaceAllString(connStr, ";")
+
+	return details, true
+}
+
+// parseDB2ConnDetailsKV parses a semicolon-separated MySQL-style connection string for DB2
+func parseDB2ConnDetailsKV(connStr string) (DbConnDetails, bool) {
+	details := DbConnDetails{RawString: connStr, DatabaseName: "db2"}
+
+	for _, field := range strings.Split(connStr, ";") {
+		fieldNorm := strings.ToLower(field)
+
+		var (
+			prefix   string
+			fieldPtr *string
+		)
+		switch {
+		case strings.HasPrefix(fieldNorm, "server="):
+			address := field[len("server="):]
+			for i, v := range strings.Split(address, ":") {
+				switch i {
+				case 0:
+					details.Host = v
+				case 1:
+					details.Port = v
+				}
+			}
+			continue
+		case strings.HasPrefix(fieldNorm, "hostname="):
+			prefix, fieldPtr = "hostname=", &details.Host
+		case strings.HasPrefix(fieldNorm, "port="):
+			prefix, fieldPtr = "port=", &details.Port
+		case strings.HasPrefix(fieldNorm, "uid="):
+			prefix, fieldPtr = "uid=", &details.User
+		case strings.HasPrefix(fieldNorm, "database="):
+			prefix, fieldPtr = "database=", &details.Schema
+		default:
+			continue
+		}
+
+		*fieldPtr = field[len(prefix):]
 	}
 
 	details.RawString = mysqlKVPasswordRegex.ReplaceAllString(connStr, ";")
