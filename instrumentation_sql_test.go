@@ -334,7 +334,7 @@ func TestDSNParing(t *testing.T) {
 				DatabaseName: "db2",
 			},
 		},
-		// without driver name, sensor will find IBM Db2 as a my sql db.
+		// without driver name, tracer will find IBM Db2 as a mysql db.
 		// It is STRONGLY recommended that the customer should provide driver name
 		// as `go_ibm_db` for Db2 database.
 		// The mismatch in host and port is expected if driver name is not provided.
