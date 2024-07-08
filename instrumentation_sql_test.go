@@ -11,6 +11,7 @@ import (
 	"io"
 	"os"
 	"testing"
+	_ "unsafe"
 
 	instana "github.com/instana/go-sensor"
 	ot "github.com/opentracing/opentracing-go"
@@ -234,6 +235,7 @@ func TestOpenSQLDB(t *testing.T) {
 func TestDSNParing(t *testing.T) {
 	testcases := map[string]struct {
 		DSN            string
+		DriverName     string
 		ExpectedConfig instana.DbConnDetails
 	}{
 		"URI": {
@@ -296,11 +298,62 @@ func TestDSNParing(t *testing.T) {
 				RawString: "/home/user/products.db",
 			},
 		},
+		"DB2_With_Server_Field": {
+			DSN:        "Server=localhost:50000;DATABASE=sample;UID=db2inst1;PWD=password",
+			DriverName: "go_ibm_db",
+			ExpectedConfig: instana.DbConnDetails{
+				RawString:    "Server=localhost:50000;DATABASE=sample;UID=db2inst1;",
+				Host:         "localhost",
+				Port:         "50000",
+				Schema:       "sample",
+				User:         "db2inst1",
+				DatabaseName: "db2",
+			},
+		},
+		"DB2_With_No_Port_In_Server_Field": {
+			DSN:        "Server=localhost;DATABASE=sample;UID=db2inst1;PWD=password",
+			DriverName: "go_ibm_db",
+			ExpectedConfig: instana.DbConnDetails{
+				RawString:    "Server=localhost;DATABASE=sample;UID=db2inst1;",
+				Host:         "localhost",
+				Port:         "",
+				Schema:       "sample",
+				User:         "db2inst1",
+				DatabaseName: "db2",
+			},
+		},
+		"DB2_With_Hostname_And_Port": {
+			DSN:        "Hostname=localhost;Port=50000;DATABASE=sample;UID=db2inst1;PWD=password",
+			DriverName: "go_ibm_db",
+			ExpectedConfig: instana.DbConnDetails{
+				RawString:    "Hostname=localhost;Port=50000;DATABASE=sample;UID=db2inst1;",
+				Host:         "localhost",
+				Port:         "50000",
+				Schema:       "sample",
+				User:         "db2inst1",
+				DatabaseName: "db2",
+			},
+		},
+		// without driver name, sensor will find IBM Db2 as a my sql db.
+		// It is STRONGLY recommended that the customer should provide driver name
+		// as `go_ibm_db` for Db2 database.
+		// The mismatch in host and port is expected if driver name is not provided.
+		"DB2_Without_driver_name": {
+			DSN: "Server=localhost:50000;DATABASE=sample;UID=db2inst1;PWD=password",
+			ExpectedConfig: instana.DbConnDetails{
+				RawString:    "Server=localhost:50000;DATABASE=sample;UID=db2inst1;",
+				Host:         "localhost:50000",
+				Port:         "",
+				Schema:       "sample",
+				User:         "db2inst1",
+				DatabaseName: "mysql",
+			},
+		},
 	}
 
 	for name, testcase := range testcases {
 		t.Run(name, func(t *testing.T) {
-			connDetails := instana.ParseDBConnDetails(testcase.DSN, "")
+			connDetails := instana.ParseDBConnDetails(testcase.DSN, testcase.DriverName)
 			assert.Equal(t, testcase.ExpectedConfig, connDetails)
 		})
 	}
