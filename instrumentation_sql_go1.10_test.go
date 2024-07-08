@@ -26,7 +26,7 @@ func TestWrapSQLConnector_Exec(t *testing.T) {
 	}, recorder))
 	defer instana.ShutdownSensor()
 
-	db := sql.OpenDB(instana.WrapSQLConnector(s, "connection string", "driver name", sqlConnector{}))
+	db := sql.OpenDB(instana.WrapSQLConnector(s, "connection string", sqlConnector{}))
 
 	pSpan := s.Tracer().StartSpan("parent-span")
 	ctx := context.Background()
@@ -81,7 +81,7 @@ func TestWrapSQLConnector_Exec_Error(t *testing.T) {
 		ctx = instana.ContextWithSpan(ctx, pSpan)
 	}
 
-	db := sql.OpenDB(instana.WrapSQLConnector(s, "connection string", "driver name", sqlConnector{
+	db := sql.OpenDB(instana.WrapSQLConnector(s, "connection string", sqlConnector{
 		Error: errors.New("something went wrong"),
 	}))
 
@@ -129,7 +129,7 @@ func TestWrapSQLConnector_Query(t *testing.T) {
 		ctx = instana.ContextWithSpan(ctx, pSpan)
 	}
 
-	db := sql.OpenDB(instana.WrapSQLConnector(s, "connection string", "driver name", sqlConnector{}))
+	db := sql.OpenDB(instana.WrapSQLConnector(s, "connection string", sqlConnector{}))
 
 	res, err := db.QueryContext(ctx, "TEST QUERY")
 	require.NoError(t, err)
@@ -173,7 +173,7 @@ func TestWrapSQLConnector_Query_Error(t *testing.T) {
 	defer instana.ShutdownSensor()
 
 	dbErr := errors.New("something went wrong")
-	db := sql.OpenDB(instana.WrapSQLConnector(s, "connection string", "driver name", sqlConnector{
+	db := sql.OpenDB(instana.WrapSQLConnector(s, "connection string", sqlConnector{
 		Error: dbErr,
 	}))
 

@@ -7,7 +7,6 @@ import (
 	"context"
 	"database/sql"
 	"database/sql/driver"
-	"fmt"
 	"net/url"
 	"regexp"
 	"slices"
@@ -295,10 +294,8 @@ type DbConnDetails struct {
 
 func ParseDBConnDetails(connStr, driverName string) DbConnDetails {
 
-	fmt.Println("driver name: ", driverName)
 	if isDB2driver(driverName) {
 		if details, ok := parseDB2ConnDetailsKV(connStr); ok {
-			fmt.Printf("ParseDBConnDetails, details: %+v \n", details)
 			return details
 		}
 	}
