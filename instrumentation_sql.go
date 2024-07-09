@@ -112,7 +112,6 @@ func getDBConnDetails(connStr, driverName string) DbConnDetails {
 	}
 
 	return ParseDBConnDetails(connStr)
-
 }
 
 func postgresSpan(ctx context.Context, conn DbConnDetails, query string, sensor TracerLogger) ot.Span {
