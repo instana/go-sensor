@@ -9,6 +9,7 @@ import (
 	"database/sql/driver"
 	"net/url"
 	"regexp"
+	"slices"
 	"strings"
 	"sync"
 	_ "unsafe"
@@ -42,8 +43,9 @@ func InstrumentSQLDriver(sensor TracerLogger, name string, driver driver.Driver)
 	}
 
 	sql.Register(instrumentedName, &wrappedSQLDriver{
-		Driver: driver,
-		sensor: sensor,
+		Driver:     driver,
+		driverName: name,
+		sensor:     sensor,
 	})
 }
 
@@ -79,7 +81,8 @@ func SQLInstrumentAndOpen(sensor TracerLogger, driverName, dataSourceName string
 type wrappedSQLDriver struct {
 	driver.Driver
 
-	sensor TracerLogger
+	driverName string
+	sensor     TracerLogger
 }
 
 func (drv *wrappedSQLDriver) Open(name string) (driver.Conn, error) {
@@ -92,9 +95,23 @@ func (drv *wrappedSQLDriver) Open(name string) (driver.Conn, error) {
 		return conn, nil
 	}
 
-	w := wrapConn(ParseDBConnDetails(name), conn, drv.sensor)
+	w := wrapConn(getDBConnDetails(name, drv.driverName), conn, drv.sensor)
 
 	return w, nil
+}
+
+// getDBConnDetails returns db connection details parsing connection URI and checking driver name
+func getDBConnDetails(connStr, driverName string) DbConnDetails {
+
+	if isDB2driver(driverName) {
+		if details, ok := parseDB2ConnDetailsKV(connStr); ok {
+			return details
+		}
+
+		return DbConnDetails{RawString: connStr}
+	}
+
+	return ParseDBConnDetails(connStr)
 }
 
 func postgresSpan(ctx context.Context, conn DbConnDetails, query string, sensor TracerLogger) ot.Span {
@@ -306,6 +323,19 @@ func ParseDBConnDetails(connStr string) DbConnDetails {
 	return DbConnDetails{RawString: connStr}
 }
 
+// isDB2driver checks whether the driver belongs to IBM Db2 database.
+// The driver name is checked against known Db2 drivers.
+func isDB2driver(name string) bool {
+
+	// Add the driver name in the knownDB2drivers array
+	// if a new Db2 driver needs to be supported.
+	knownDB2drivers := []string{
+		"go_ibm_db",
+	}
+
+	return slices.Contains(knownDB2drivers, name)
+}
+
 // parseDBConnDetailsURI attempts to parse a connection string as an URI, assuming that it has
 // following format: [scheme://][user[:[password]]@]host[:port][/schema][?attribute1=value1&attribute2=value2...]
 func parseDBConnDetailsURI(connStr string) (DbConnDetails, bool) {
@@ -423,6 +453,46 @@ func parseMySQLConnDetailsKV(connStr string) (DbConnDetails, bool) {
 
 	if details.Schema == "" {
 		return DbConnDetails{}, false
+	}
+
+	details.RawString = mysqlKVPasswordRegex.ReplaceAllString(connStr, ";")
+
+	return details, true
+}
+
+// parseDB2ConnDetailsKV parses a semicolon-separated MySQL-style connection string for DB2
+func parseDB2ConnDetailsKV(connStr string) (DbConnDetails, bool) {
+	details := DbConnDetails{RawString: connStr, DatabaseName: "db2"}
+
+	for _, field := range strings.Split(connStr, ";") {
+		fieldNorm := strings.ToLower(field)
+
+		var (
+			prefix   string
+			fieldPtr *string
+		)
+		switch {
+		case strings.HasPrefix(fieldNorm, "server="):
+			address := field[len("server="):]
+			addrFields := strings.Split(address, ":")
+			details.Host = addrFields[0]
+			if len(addrFields) > 1 {
+				details.Port = addrFields[1]
+			}
+			continue
+		case strings.HasPrefix(fieldNorm, "hostname="):
+			prefix, fieldPtr = "hostname=", &details.Host
+		case strings.HasPrefix(fieldNorm, "port="):
+			prefix, fieldPtr = "port=", &details.Port
+		case strings.HasPrefix(fieldNorm, "uid="):
+			prefix, fieldPtr = "uid=", &details.User
+		case strings.HasPrefix(fieldNorm, "database="):
+			prefix, fieldPtr = "database=", &details.Schema
+		default:
+			continue
+		}
+
+		*fieldPtr = field[len(prefix):]
 	}
 
 	details.RawString = mysqlKVPasswordRegex.ReplaceAllString(connStr, ";")

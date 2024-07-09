@@ -11,6 +11,7 @@ import (
 	"io"
 	"os"
 	"testing"
+	_ "unsafe"
 
 	instana "github.com/instana/go-sensor"
 	ot "github.com/opentracing/opentracing-go"
@@ -231,9 +232,153 @@ func TestOpenSQLDB(t *testing.T) {
 	})
 }
 
+func TestOpenDB2(t *testing.T) {
+
+	recorder := instana.NewTestRecorder()
+	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{
+		Service:     "go-sensor-test",
+		AgentClient: alwaysReadyClient{},
+	}, recorder))
+	defer instana.ShutdownSensor()
+
+	span := s.Tracer().StartSpan("parent-span")
+	ctx := context.Background()
+	if span != nil {
+		ctx = instana.ContextWithSpan(ctx, span)
+	}
+	instana.InstrumentSQLDriver(s, "go_ibm_db", sqlDriver{})
+	require.Contains(t, sql.Drivers(), "go_ibm_db_with_instana")
+
+	testcases := map[string]struct {
+		DSN            string
+		DriverName     string
+		ExpectedConfig instana.SDKSpanTags
+	}{
+		"DB2_With_Server_Field": {
+			DSN: "Server=localhost:50000;DATABASE=sample;UID=db2inst1;PWD=password",
+			ExpectedConfig: instana.SDKSpanTags{
+				Name: "sdk.database",
+				Type: "exit",
+				Custom: map[string]interface{}{
+					"tags": ot.Tags{
+						"span.kind":     ext.SpanKindRPCClientEnum,
+						"db.instance":   "sample",
+						"db.statement":  "TEST QUERY",
+						"db.type":       "sql",
+						"peer.address":  "Server=localhost:50000;DATABASE=sample;UID=db2inst1;",
+						"peer.hostname": "localhost",
+						"peer.port":     "50000",
+					},
+				},
+			},
+		},
+		"DB2_With_No_Port_In_Server_Field": {
+			DSN: "Server=localhost;DATABASE=sample;UID=db2inst1;PWD=password",
+			ExpectedConfig: instana.SDKSpanTags{
+				Name: "sdk.database",
+				Type: "exit",
+				Custom: map[string]interface{}{
+					"tags": ot.Tags{
+						"span.kind":     ext.SpanKindRPCClientEnum,
+						"db.instance":   "sample",
+						"db.statement":  "TEST QUERY",
+						"db.type":       "sql",
+						"peer.address":  "Server=localhost;DATABASE=sample;UID=db2inst1;",
+						"peer.hostname": "localhost",
+					},
+				},
+			},
+		},
+		"DB2_With_Hostname_And_Port": {
+			DSN: "Hostname=localhost;Port=50000;DATABASE=sample;UID=db2inst1;PWD=password",
+			ExpectedConfig: instana.SDKSpanTags{
+				Name: "sdk.database",
+				Type: "exit",
+				Custom: map[string]interface{}{
+					"tags": ot.Tags{
+						"span.kind":     ext.SpanKindRPCClientEnum,
+						"db.instance":   "sample",
+						"db.statement":  "TEST QUERY",
+						"db.type":       "sql",
+						"peer.address":  "Hostname=localhost;Port=50000;DATABASE=sample;UID=db2inst1;",
+						"peer.hostname": "localhost",
+						"peer.port":     "50000",
+					},
+				},
+			},
+		},
+	}
+
+	for name, testcase := range testcases {
+		t.Run(name, func(t *testing.T) {
+			db, err := instana.SQLOpen("go_ibm_db", testcase.DSN)
+			require.NoError(t, err)
+
+			res, err := db.ExecContext(ctx, "TEST QUERY")
+			require.NoError(t, err)
+
+			lastID, err := res.LastInsertId()
+			require.NoError(t, err)
+			assert.Equal(t, int64(42), lastID)
+
+			spans := recorder.GetQueuedSpans()
+			require.Len(t, spans, 1)
+
+			span := spans[0]
+			assert.Equal(t, 0, span.Ec)
+			assert.EqualValues(t, instana.ExitSpanKind, span.Kind)
+
+			require.IsType(t, instana.SDKSpanData{}, span.Data)
+			data := span.Data.(instana.SDKSpanData)
+
+			assert.Equal(t, testcase.ExpectedConfig, data.Tags)
+		})
+	}
+
+	// without known driver name, tracer will find IBM Db2 as a mysql db.
+	// It is STRONGLY recommended that the customer should provide driver name
+	// as `go_ibm_db` for Db2 database.
+	// The mismatch in host and port is expected if driver name is not provided.
+	t.Run("DB2_Without_unknown_driver_name", func(t *testing.T) {
+
+		instana.InstrumentSQLDriver(s, "unknown_db2_driver", sqlDriver{})
+		require.Contains(t, sql.Drivers(), "unknown_db2_driver_with_instana")
+
+		db, err := instana.SQLOpen("unknown_db2_driver", "Server=localhost:50000;DATABASE=sample;UID=db2inst1;PWD=password")
+		require.NoError(t, err)
+
+		res, err := db.ExecContext(ctx, "TEST QUERY")
+		require.NoError(t, err)
+
+		lastID, err := res.LastInsertId()
+		require.NoError(t, err)
+		assert.Equal(t, int64(42), lastID)
+
+		spans := recorder.GetQueuedSpans()
+		require.Len(t, spans, 1)
+
+		span := spans[0]
+		assert.Equal(t, 0, span.Ec)
+		assert.EqualValues(t, instana.ExitSpanKind, span.Kind)
+
+		require.IsType(t, instana.MySQLSpanData{}, span.Data)
+		data := span.Data.(instana.MySQLSpanData)
+
+		assert.Equal(t, instana.MySQLSpanTags{
+			Host:  "localhost:50000",
+			Port:  "",
+			DB:    "sample",
+			User:  "db2inst1",
+			Stmt:  "TEST QUERY",
+			Error: "",
+		}, data.Tags)
+	})
+}
+
 func TestDSNParing(t *testing.T) {
 	testcases := map[string]struct {
 		DSN            string
+		DriverName     string
 		ExpectedConfig instana.DbConnDetails
 	}{
 		"URI": {

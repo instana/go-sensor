@@ -63,6 +63,27 @@ func main() {
 }
 ```
 
+## Tracing IBM Db2 Driver Databases
+
+In Go Tracer, connection strings are used to distinguish between SQL-like databases based on the database/sql package. This approach has a limitation: MySQL and IBM Db2 connection strings are very similar, which can result in the IBM Db2 driver being incorrectly identified as MySQL.
+
+To resolve this issue, the driver name is now used to differentiate between MySQL and IBM Db2. Currently, only the `go_ibm_db` driver is recognized as the official driver for IBM Db2. If a different driver or driver name is used, the database will still be identified as MySQL. If you need support for a new driver for IBM Db2, please raise a [GitHub issue](https://github.com/instana/go-sensor/issues) in the Go Tracer repository.
+
+Example: Instrumenting Db2
+Instrumenting Db2 is the same as in the above example. You only need to pass the driver name as `go_ibm_db` to the `SQLInstrumentAndOpen` function.
+
+```go
+
+  // Example of instrumenting Db2
+  db, err := instana.SQLInstrumentAndOpen(s, "go_ibm_db", "connection_string")
+  if err != nil {
+      log.Fatal(err)
+  }
+
+```
+
+Ensure you use `go_ibm_db` as the driver name to correctly identify the IBM Db2 database.
+
 -----
 [README](../README.md) |
 [Tracer Options](options.md) |
