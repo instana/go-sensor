@@ -6,4 +6,4 @@
 package instagorm
 
 // Version is the instrumentation module semantic version
-const Version = "1.11.0"
+const Version = "1.12.0"
