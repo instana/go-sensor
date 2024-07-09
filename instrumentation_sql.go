@@ -323,7 +323,7 @@ func ParseDBConnDetails(connStr string) DbConnDetails {
 	return DbConnDetails{RawString: connStr}
 }
 
-// isDB2driver checks the driver belongs to IBM Db2 database.
+// isDB2driver checks whether the driver belongs to IBM Db2 database.
 // The driver name is checked against known Db2 drivers.
 func isDB2driver(name string) bool {
 
