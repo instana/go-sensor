@@ -6,6 +6,8 @@ package instana
 import (
 	"context"
 	"errors"
+	"io"
+	"log"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -103,6 +105,13 @@ func newSensor(options *Options) *sensorS {
 	}
 
 	s.setLogger(defaultLogger)
+
+	// prevent logger populating terminal
+	if isDisabled, ok := os.LookupEnv("DISABLE_INSTANA_LOGGING"); ok && strings.TrimSpace(isDisabled) != "" {
+		if isDisabled == "true" {
+			s.setLogger(logger.New(log.New(io.Discard, "", log.LstdFlags)))
+		}
+	}
 
 	// override service name with an env value if set
 	if name, ok := os.LookupEnv("INSTANA_SERVICE_NAME"); ok && strings.TrimSpace(name) != "" {
