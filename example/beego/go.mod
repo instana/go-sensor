@@ -4,7 +4,7 @@ go 1.21
 
 require (
 	github.com/beego/beego/v2 v2.2.2
-	github.com/instana/go-sensor v1.63.0
+	github.com/instana/go-sensor v1.63.1
 	github.com/instana/go-sensor/instrumentation/instabeego v0.1.0
 	github.com/opentracing/opentracing-go v1.2.0
 )
