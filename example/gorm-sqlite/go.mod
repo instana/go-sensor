@@ -6,7 +6,7 @@ require (
 	github.com/instana/go-sensor v1.63.1
 	github.com/instana/go-sensor/instrumentation/instagorm v1.3.0
 	gorm.io/driver/sqlite v1.5.4
-	gorm.io/gorm v1.25.10
+	gorm.io/gorm v1.25.11
 )
 
 require (
@@ -15,6 +15,7 @@ require (
 	github.com/looplab/fsm v1.0.1 // indirect
 	github.com/mattn/go-sqlite3 v1.14.17 // indirect
 	github.com/opentracing/opentracing-go v1.2.0 // indirect
+	golang.org/x/text v0.14.0 // indirect
 )
 
 replace (
