@@ -3,8 +3,8 @@ module github.com/instana/go-sensor/instrumentation/instagocb
 go 1.21
 
 require (
-	github.com/couchbase/gocb/v2 v2.9.0
-	github.com/couchbase/gocbcore/v10 v10.5.0
+	github.com/couchbase/gocb/v2 v2.9.1
+	github.com/couchbase/gocbcore/v10 v10.5.1
 	github.com/instana/go-sensor v1.63.1
 	github.com/opentracing/opentracing-go v1.2.0
 	github.com/stretchr/testify v1.9.0
