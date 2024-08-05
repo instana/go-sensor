@@ -25,7 +25,7 @@ jobs:
             mkdir coverage
 
             echo "Starting Couchbase"
-            docker-compose -f docker-compose-integration.yaml up -d
+            docker compose -f docker-compose-integration.yaml up -d
 
             echo "Starting Postgres"
             sudo systemctl start postgresql.service
