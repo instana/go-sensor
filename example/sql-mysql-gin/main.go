@@ -13,7 +13,7 @@ var s instana.TracerLogger
 
 func init() {
 	s = instana.InitCollector(&instana.Options{
-		Service: "MySQL app Nithin 1",
+		Service: "mysql-service",
 	})
 }
 
