@@ -17,6 +17,7 @@ This folder contains examples of instrumenting the common use-cases with `github
 * [openTracing](./opentracing) - an example of usage of Instana tracer in an app instrumented with OpenTracing.
 * [sarama](./sarama) - an example of instrumenting application using `instasarama`.
 * [sql-mysql](./sql-mysql) - an example of instrumenting a SQL application using `go-sensor` SDK.
+* [sql-mysql-gin](./sql-mysql-gin) - an example of instrumenting a Gin web server that uses MySQL for database operations with the `go-sensor` SDK..
 * [sql-redis](./sql-redis) - an example of instrumenting a Redis application using `go-sensor` SDK.
 * [pgxv5](./pgxv5) - an example of instrumenting pgx v5 library using `go-sensor` SDK.
 * [sql-opendb](./sql-opendb) - an example of instrumenting `sql.OpenDB` using `go-sensor` SDK.
