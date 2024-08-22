@@ -1,6 +1,6 @@
 // (c) Copyright IBM Corp. 2024
 
-//go:build  && integration
+//go:build integration
 // +build integration
 
 package instana_test

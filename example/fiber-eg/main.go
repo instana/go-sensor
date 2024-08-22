@@ -21,12 +21,7 @@ var db *gorm.DB
 
 func main() {
 
-	// os.Setenv("CONTAINER_APP_HOSTNAME", "azure_app_host")
-	// os.Setenv("CONTAINER_APP_NAME", "azureapp")
 	os.Setenv("INSTANA_TIMEOUT", "2000")
-
-	// os.Setenv("AZURE_SUBSCRIPTION_ID", "b564ebc3-ccf7-4476-848c-f8e8db966889")
-	// os.Setenv("AZURE_RESOURCE_GROUP", "team-go-tracer-in")
 
 	// Create a sensor for instana instrumentation
 	sensor := instana.InitCollector(&instana.Options{
