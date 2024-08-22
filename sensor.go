@@ -314,6 +314,6 @@ func newServerlessAgent(serviceName, agentEndpoint, agentKey string,
 		os.Getenv(containerAppHostName) != "":
 		return newAzureAgent(agentEndpoint, agentKey, client, logger)
 	default:
-		return nil
+		return newLocalAgent(agentEndpoint, agentKey, client, logger)
 	}
 }
