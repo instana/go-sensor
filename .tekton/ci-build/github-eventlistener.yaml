@@ -61,36 +61,7 @@ spec:
         - name: go-version
           value: "1.22"
         - name: excludeDirs
-          value: "./instrumentation/instacosmos"
-        pipelineRef:
-          name: go-tracer-ci-pipeline
-        workspaces:
-        - name: go-tracer-ci-pipeline-pvc
-          volumeClaimTemplate:
-            spec:
-              accessModes:
-                - ReadWriteOnce
-              resources:
-                requests:
-                  storage: 1Gi
-        - name: cache-pvc
-          persistentVolumeClaim:
-            claimName: cache-pvc
-
-    - apiVersion: tekton.dev/v1
-      kind: PipelineRun
-      metadata:
-        name: $(tt.params.git-branch-normalized)-go21-$(tt.params.git-commit-short-sha)
-      spec:
-        params:
-        - name: revision
-          value: $(tt.params.git-branch)
-        - name: git-commit-sha
-          value: $(tt.params.git-commit-sha)
-        - name: go-version
-          value: "1.21"
-        - name: excludeDirs
-          value: "./instrumentation/instacosmos"
+          value: ""
         pipelineRef:
           name: go-tracer-ci-pipeline
         workspaces:
