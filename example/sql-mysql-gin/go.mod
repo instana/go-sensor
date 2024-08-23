@@ -1,6 +1,6 @@
 module sql-mysql-gin
 
-go 1.21
+go 1.22
 
 require (
 	github.com/gin-gonic/gin v1.10.0
