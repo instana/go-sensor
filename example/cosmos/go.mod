@@ -2,8 +2,6 @@ module cosmos.example
 
 go 1.22.0
 
-toolchain go1.22.2
-
 require (
 	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.11.1
 	github.com/Azure/azure-sdk-for-go/sdk/data/azcosmos v1.0.3

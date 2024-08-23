@@ -2,8 +2,6 @@ module kafka-producer-consumer
 
 go 1.22
 
-toolchain go1.23.0
-
 require (
 	github.com/IBM/sarama v1.43.3
 	github.com/instana/go-sensor v1.64.0

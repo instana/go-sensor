@@ -2,8 +2,6 @@ module http-database-greeter
 
 go 1.22
 
-toolchain go1.23.0
-
 require (
 	github.com/instana/go-sensor v1.59.0
 	github.com/lib/pq v1.10.9

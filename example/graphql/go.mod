@@ -2,8 +2,6 @@ module example.com/instagraphql
 
 go 1.22
 
-toolchain go1.23.0
-
 require (
 	github.com/google/uuid v1.4.0
 	github.com/gorilla/websocket v1.5.0

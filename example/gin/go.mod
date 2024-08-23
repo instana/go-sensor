@@ -2,8 +2,6 @@ module github.com/instana/go-sensor/example/gin
 
 go 1.22
 
-toolchain go1.23.0
-
 require (
 	github.com/gin-gonic/gin v1.10.0
 	github.com/instana/go-sensor v1.64.0

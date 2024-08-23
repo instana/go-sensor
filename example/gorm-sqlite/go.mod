@@ -2,8 +2,6 @@ module github.com/instana/go-sensor/gorm-sqlite
 
 go 1.22
 
-toolchain go1.23.0
-
 require (
 	github.com/instana/go-sensor v1.64.0
 	github.com/instana/go-sensor/instrumentation/instagorm v1.3.0

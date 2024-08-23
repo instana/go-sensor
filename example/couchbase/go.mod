@@ -2,8 +2,6 @@ module couchbase.example
 
 go 1.22
 
-toolchain go1.23.0
-
 require github.com/couchbase/gocb/v2 v2.9.1
 
 require (
