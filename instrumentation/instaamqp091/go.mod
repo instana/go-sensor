@@ -1,6 +1,6 @@
 module github.com/instana/go-sensor/instrumentation/instaamqp091
 
-go 1.21
+go 1.22
 
 require (
 	github.com/instana/go-sensor v1.63.1
