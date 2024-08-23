@@ -1,8 +1,8 @@
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
-github.com/instana/go-sensor v1.63.1 h1:SJuU4rT/qsquC3Ha0kCYILe0/yl+Er2EnF7zSjJkGS4=
-github.com/instana/go-sensor v1.63.1/go.mod h1:VANqbeoHzgsGeilVYvTG8Kl/zFPuk2tr2DlyvBt8200=
+github.com/instana/go-sensor v1.64.0 h1:sago7DnfjuQ0OYDbs6amhc9RqSc76AkOfkyV2W209k8=
+github.com/instana/go-sensor v1.64.0/go.mod h1:xRwSUW7zoxo2mKzzKGc163N82F8CuX5EpeNDQeg689M=
 github.com/jackc/pgpassfile v1.0.0 h1:/6Hmqy13Ss2zCq62VdNG8tM1wchn8zjSGOBJ6icpsIM=
 github.com/jackc/pgpassfile v1.0.0/go.mod h1:CEx0iS5ambNFdcRtxPj5JhEz+xB6uRky5eyVu/W2HEg=
 github.com/jackc/pgservicefile v0.0.0-20221227161230-091c0ba34f0a h1:bbPeKD0xmW/Y25WS6cokEszi5g+S0QxI/d45PkRi7Nk=

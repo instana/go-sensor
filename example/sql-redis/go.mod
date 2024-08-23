@@ -1,6 +1,8 @@
 module sql-go-redis.com
 
-go 1.21
+go 1.22
+
+toolchain go1.23.0
 
 require (
 	github.com/bonede/go-redis-driver v0.1.0

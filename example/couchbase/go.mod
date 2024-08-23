@@ -1,13 +1,13 @@
 module couchbase.example
 
-go 1.21
+go 1.22
 
-toolchain go1.21.0
+toolchain go1.23.0
 
 require github.com/couchbase/gocb/v2 v2.9.1
 
 require (
-	github.com/instana/go-sensor v1.63.1
+	github.com/instana/go-sensor v1.64.0
 	github.com/instana/go-sensor/instrumentation/instagocb v1.4.1
 )
 

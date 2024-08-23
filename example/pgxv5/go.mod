@@ -1,10 +1,12 @@
 module pgxsample
 
-go 1.21
+go 1.22
+
+toolchain go1.23.0
 
 require (
 	github.com/gorilla/mux v1.8.1
-	github.com/instana/go-sensor v1.63.1
+	github.com/instana/go-sensor v1.64.0
 	github.com/instana/go-sensor/instrumentation/instapgx/v2 v2.0.0-00010101000000-000000000000
 	github.com/jackc/pgx/v5 v5.6.0
 )
