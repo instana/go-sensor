@@ -89,6 +89,16 @@ func newServerlessAgentFromS(entityID, provider string) *fromS {
 	}
 }
 
+func newServerlessAgentFromS1(entityID, provider string) *fromS {
+	return &fromS{
+		// EntityID: entityID,
+		// Hostless:      true,
+		// CloudProvider: provider,
+		EntityID: strconv.Itoa(12345),
+		HostID:   entityID,
+	}
+}
+
 type httpClient interface {
 	Do(req *http.Request) (*http.Response, error)
 }

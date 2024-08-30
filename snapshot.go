@@ -4,6 +4,7 @@
 package instana
 
 import (
+	"fmt"
 	"runtime"
 	"sync"
 	"time"
@@ -36,7 +37,7 @@ func (sc *SnapshotCollector) Collect() *acceptor.RuntimeInfo {
 
 	sc.lastCollectionTime = time.Now()
 
-	return &acceptor.RuntimeInfo{
+	cr := &acceptor.RuntimeInfo{
 		Name:          sc.ServiceName,
 		Version:       runtime.Version(),
 		Root:          runtime.GOROOT(),
@@ -45,4 +46,8 @@ func (sc *SnapshotCollector) Collect() *acceptor.RuntimeInfo {
 		NumCPU:        runtime.NumCPU(),
 		SensorVersion: Version,
 	}
+
+	fmt.Println("CR", cr)
+
+	return cr
 }

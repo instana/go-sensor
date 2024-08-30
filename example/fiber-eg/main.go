@@ -25,7 +25,7 @@ func main() {
 
 	// Create a sensor for instana instrumentation
 	sensor := instana.InitCollector(&instana.Options{
-		Service:  "nithin-fb-example-with-host-agent",
+		Service:  "nithin-nithin-test-test",
 		LogLevel: instana.Debug,
 	})
 

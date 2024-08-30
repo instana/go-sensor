@@ -33,11 +33,15 @@ type localAgent struct {
 	mu        sync.Mutex
 	spanQueue []Span
 
+	lastProcessStats processStats
+	processStats     *processStatsCollector
+	runtimeSnapshot  *SnapshotCollector
+
 	client *http.Client
 	logger LeveledLogger
 }
 
-func newLocalAgent(acceptorEndpoint, agentKey string, client *http.Client, logger LeveledLogger) *localAgent {
+func newLocalAgent(acceptorEndpoint, agentKey string, client *http.Client, logger LeveledLogger, serviceName string) *localAgent {
 	if logger == nil {
 		logger = defaultLogger
 	}
@@ -57,6 +61,13 @@ func newLocalAgent(acceptorEndpoint, agentKey string, client *http.Client, logge
 		PID:      os.Getpid(),
 		client:   client,
 		logger:   logger,
+		runtimeSnapshot: &SnapshotCollector{
+			CollectionInterval: snapshotCollectionInterval,
+			ServiceName:        serviceName,
+		},
+		processStats: &processStatsCollector{
+			logger: logger,
+		},
 	}
 
 	go func() {
@@ -75,7 +86,59 @@ func newLocalAgent(acceptorEndpoint, agentKey string, client *http.Client, logge
 
 func (a *localAgent) Ready() bool { return true }
 
-func (a *localAgent) SendMetrics(acceptor.Metrics) error { return nil }
+func (a *localAgent) SendMetrics(data acceptor.Metrics) (err error) {
+
+	processStats := a.processStats.Collect()
+	fmt.Println("Sending metrics!", processStats)
+	defer func() {
+		if err == nil {
+			// only update the last sent stats if they were transmitted successfully
+			// since they are updated on the backend incrementally using received
+			// deltas
+			a.lastProcessStats = processStats
+		}
+	}()
+
+	payload := struct {
+		Metrics metricsPayload `json:"metrics,omitempty"`
+		Spans   []Span         `json:"spans,omitempty"`
+	}{
+		Metrics: metricsPayload{
+			Plugins: []acceptor.PluginPayload{
+				newProcessPluginPayload(a.snapshot, a.lastProcessStats, processStats),
+				acceptor.NewGoProcessPluginPayload(acceptor.GoProcessData{
+					PID:      a.PID,
+					Snapshot: a.runtimeSnapshot.Collect(),
+					Metrics:  data,
+				}),
+			},
+		},
+	}
+
+	a.mu.Lock()
+	if len(a.spanQueue) > 0 {
+		payload.Spans = make([]Span, len(a.spanQueue))
+		copy(payload.Spans, a.spanQueue)
+		a.spanQueue = a.spanQueue[:0]
+	}
+	a.mu.Unlock()
+
+	buf := bytes.NewBuffer(nil)
+	if err := json.NewEncoder(buf).Encode(payload); err != nil {
+		return fmt.Errorf("failed to marshal metrics payload: %s", err)
+	}
+
+	req, err := http.NewRequest(http.MethodPost, a.Endpoint+"/bundle", buf)
+	if err != nil {
+		return fmt.Errorf("failed to prepare send metrics request: %s", err)
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+
+	fmt.Println("Payload", payload)
+
+	return a.sendRequest(req)
+}
 
 func (a *localAgent) SendEvent(*EventData) error { return nil }
 
@@ -88,7 +151,7 @@ func (a *localAgent) SendProfiles([]autoprofile.Profile) error { return nil }
 
 func (a *localAgent) Flush(ctx context.Context) error {
 
-	from := newServerlessAgentFromS("Generic_Agent"+uuid.New().String(), "local")
+	from := newServerlessAgentFromS1("Generic_Agent"+uuid.New().String(), "local")
 
 	payload := struct {
 		Spans []Span `json:"spans,omitempty"`
