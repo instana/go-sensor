@@ -1,6 +1,6 @@
 module github.com/instana/go-sensor
 
-go 1.21
+go 1.22
 
 require (
 	github.com/looplab/fsm v1.0.1

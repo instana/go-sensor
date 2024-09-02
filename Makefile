@@ -11,7 +11,7 @@ endif
 test: $(MODULES) legal
 
 $(MODULES):
-	cd $@ && go get -d -t ./... && go test $(GOFLAGS) ./...
+	cd $@ && go get -t ./... && go test $(GOFLAGS) ./...
 ifeq ($(RUN_LINTER),yes)
 	cd $@ && $(LINTER) run
 endif
@@ -66,7 +66,8 @@ install:
 
 # Make sure there is a copyright at the first line of each .go file
 legal:
-	awk 'FNR==1 { if (tolower($$0) !~ "^//.+copyright") { print FILENAME" does not contain copyright header"; rc=1 } }; END { exit rc }' $$(find . -name '*.go' -type f | grep -v "/vendor/")
+	@printf "Verifying that Go files include copyright headers\n"
+	@awk 'FNR==1 { if (tolower($$0) !~ "^//.+copyright") { print FILENAME" does not contain copyright header"; rc=1 } }; END { print "Done!"; exit rc }' $$(find . -name '*.go' -type f | grep -v "/vendor/")
 
 instrumentation/% :
 	mkdir -p $@

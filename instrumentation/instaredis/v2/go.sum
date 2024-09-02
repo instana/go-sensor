@@ -9,8 +9,8 @@ github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f h1:lO4WD4F/rVNCu3HqELle0jiPLLBs70cWOduZpkS1E78=
 github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f/go.mod h1:cuUVRXasLTGF7a8hSLbxyZXjz+1KgoB3wDUb6vlszIc=
-github.com/instana/go-sensor v1.63.1 h1:SJuU4rT/qsquC3Ha0kCYILe0/yl+Er2EnF7zSjJkGS4=
-github.com/instana/go-sensor v1.63.1/go.mod h1:VANqbeoHzgsGeilVYvTG8Kl/zFPuk2tr2DlyvBt8200=
+github.com/instana/go-sensor v1.64.0 h1:sago7DnfjuQ0OYDbs6amhc9RqSc76AkOfkyV2W209k8=
+github.com/instana/go-sensor v1.64.0/go.mod h1:xRwSUW7zoxo2mKzzKGc163N82F8CuX5EpeNDQeg689M=
 github.com/looplab/fsm v1.0.1 h1:OEW0ORrIx095N/6lgoGkFkotqH6s7vaFPsgjLAaF5QU=
 github.com/looplab/fsm v1.0.1/go.mod h1:PmD3fFvQEIsjMEfvZdrCDZ6y8VwKTwWNjlpEr6IKPO4=
 github.com/opentracing/opentracing-go v1.2.0 h1:uEJPy/1a5RIPAJ0Ov+OIO8OxWu77jEv+1B0VhjKrZUs=

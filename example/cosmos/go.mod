@@ -2,13 +2,11 @@ module cosmos.example
 
 go 1.22.0
 
-toolchain go1.22.2
-
 require (
 	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.11.1
 	github.com/Azure/azure-sdk-for-go/sdk/data/azcosmos v1.0.3
 	github.com/google/uuid v1.6.0
-	github.com/instana/go-sensor v1.63.1
+	github.com/instana/go-sensor v1.64.0
 	github.com/instana/go-sensor/instrumentation/instacosmos v1.0.0
 )
 

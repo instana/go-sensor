@@ -1,5 +1,5 @@
-github.com/aws/aws-sdk-go-v2 v1.30.3 h1:jUeBtG0Ih+ZIFH0F4UkmL9w3cSpaMv9tYYDbzILP8dY=
-github.com/aws/aws-sdk-go-v2 v1.30.3/go.mod h1:nIQjQVp5sfpQcTc9mPSr1B0PaWK5ByX9MOoDadSN4lc=
+github.com/aws/aws-sdk-go-v2 v1.30.4 h1:frhcagrVNrzmT95RJImMHgabt99vkXGslubDaDagTk8=
+github.com/aws/aws-sdk-go-v2 v1.30.4/go.mod h1:CT+ZPWXbYrci8chcARI3OmI/qgd+f6WtuLOoaIA8PR0=
 github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.5.4 h1:OCs21ST2LrepDfD3lwlQiOqIGp6JiEUqG84GzTDoyJs=
 github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.5.4/go.mod h1:usURWEKSNNAcAZuzRn/9ZYPT8aZQkR7xcCtunK/LkJo=
 github.com/aws/aws-sdk-go-v2/config v1.25.5 h1:UGKm9hpQS2hoK8CEJ1BzAW8NbUpvwDJJ4lyqXSzu8bk=
@@ -48,15 +48,15 @@ github.com/aws/aws-sdk-go-v2/service/ssooidc v1.20.1 h1:cbRqFTVnJV+KRpwFl76GJdIZ
 github.com/aws/aws-sdk-go-v2/service/ssooidc v1.20.1/go.mod h1:hHL974p5auvXlZPIjJTblXJpbkfK4klBczlsEaMCGVY=
 github.com/aws/aws-sdk-go-v2/service/sts v1.25.4 h1:yEvZ4neOQ/KpUqyR+X0ycUTW/kVRNR4nDZ38wStHGAA=
 github.com/aws/aws-sdk-go-v2/service/sts v1.25.4/go.mod h1:feTnm2Tk/pJxdX+eooEsxvlvTWBvDm6CasRZ+JOs2IY=
-github.com/aws/smithy-go v1.20.3 h1:ryHwveWzPV5BIof6fyDvor6V3iUL7nTfiTKXHiW05nE=
-github.com/aws/smithy-go v1.20.3/go.mod h1:krry+ya/rV9RDcV/Q16kpu6ypI4K2czasz0NC3qS14E=
+github.com/aws/smithy-go v1.20.4 h1:2HK1zBdPgRbjFOHlfeQZfpC4r72MOb9bZkiFwggKO+4=
+github.com/aws/smithy-go v1.20.4/go.mod h1:irrKGvNn1InZwb2d7fkIRNucdfwR8R+Ts3wxYa/cJHg=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/google/go-cmp v0.5.8 h1:e6P7q2lk1O+qJJb4BtCQXlK8vWEO8V1ZeuEdJNOqZyg=
 github.com/google/go-cmp v0.5.8/go.mod h1:17dUlkBOakJ0+DkrSSNjCkIjxS6bF9zb3elmeNGIjoY=
-github.com/instana/go-sensor v1.63.1 h1:SJuU4rT/qsquC3Ha0kCYILe0/yl+Er2EnF7zSjJkGS4=
-github.com/instana/go-sensor v1.63.1/go.mod h1:VANqbeoHzgsGeilVYvTG8Kl/zFPuk2tr2DlyvBt8200=
+github.com/instana/go-sensor v1.64.0 h1:sago7DnfjuQ0OYDbs6amhc9RqSc76AkOfkyV2W209k8=
+github.com/instana/go-sensor v1.64.0/go.mod h1:xRwSUW7zoxo2mKzzKGc163N82F8CuX5EpeNDQeg689M=
 github.com/jmespath/go-jmespath v0.4.0 h1:BEgLn5cpjn8UN1mAw4NjwDrS35OdebyEtFe+9YPoQUg=
 github.com/jmespath/go-jmespath v0.4.0/go.mod h1:T8mJZnbsbmF+m6zOOFylbeCJqk5+pHWvzYPziyZiYoo=
 github.com/jmespath/go-jmespath/internal/testify v1.5.1 h1:shLQSRRSCCPj3f2gpwzGwWFoC7ycTf1rcQZHOlsJ6N8=

@@ -4,3 +4,4 @@ debug.test
 .go-version
 .coverage.out
 .coverage.json
+.envrc
