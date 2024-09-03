@@ -1,4 +1,4 @@
-// (c) Copyright IBM Corp. 2022
+// (c) Copyright IBM Corp. 2024
 
 package instana
 
@@ -44,12 +44,14 @@ func newGenericServerlessAgent(acceptorEndpoint, agentKey string, client *http.C
 
 	if client == nil {
 		client = http.DefaultClient
-		// TODO: defaultServerlessTimeout is increased from 500 millisecond to 2 second
-		// as serverless API latency is high. This should be reduced once latency is minimized.
+		// You can change this timeout by setting the INSTANA_TIMEOUT environment variable.
 		client.Timeout = 2 * time.Second
 	}
 
-	logger.Debug("initializing local serverless agent")
+	logger.Debug("initializing generic serverless agent")
+
+	// Creating a unique serverless host ID.
+	uniqHostId := "Generic_Serverless_Agent" + uuid.New().String()
 
 	agent := &genericServerlessAgent{
 		Endpoint: acceptorEndpoint,
@@ -57,6 +59,10 @@ func newGenericServerlessAgent(acceptorEndpoint, agentKey string, client *http.C
 		PID:      os.Getpid(),
 		client:   client,
 		logger:   logger,
+		snapshot: serverlessSnapshot{
+			Host:     uniqHostId,
+			EntityID: uniqHostId,
+		},
 	}
 
 	go func() {
@@ -87,10 +93,7 @@ func (a *genericServerlessAgent) SendSpans(spans []Span) error {
 func (a *genericServerlessAgent) SendProfiles([]autoprofile.Profile) error { return nil }
 
 func (a *genericServerlessAgent) Flush(ctx context.Context) error {
-	// Since we currently don't send metrics in the generic_serverless setup and infrastructure correlation isn't possible,
-	// these values can be anything. We just need to ensure there's no conflict with the existing infrastructure tags.
-	// This will need to change if we add metrics and infrastructure correlation in the future.
-	from := newServerlessAgentFromS("Generic_Serverless_Agent"+uuid.New().String(), "generic_serverless")
+	from := newServerlessAgentFromS(a.snapshot.EntityID, "generic_serverless")
 
 	payload := struct {
 		Spans []Span `json:"spans,omitempty"`
