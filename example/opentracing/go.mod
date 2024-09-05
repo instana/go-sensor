@@ -7,6 +7,9 @@ require (
 	github.com/opentracing/opentracing-go v1.2.0
 )
 
-require github.com/looplab/fsm v1.0.1 // indirect
+require (
+	github.com/google/uuid v1.6.0 // indirect
+	github.com/looplab/fsm v1.0.1 // indirect
+)
 
 replace github.com/instana/go-sensor => ../../../go-sensor
