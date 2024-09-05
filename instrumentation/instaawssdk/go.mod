@@ -4,13 +4,14 @@ go 1.22
 
 require (
 	github.com/aws/aws-sdk-go v1.55.5
-	github.com/instana/go-sensor v1.64.0
+	github.com/instana/go-sensor v1.65.0
 	github.com/opentracing/opentracing-go v1.2.0
 	github.com/stretchr/testify v1.8.1
 )
 
 require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/google/uuid v1.6.0 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/kr/pretty v0.1.0 // indirect
 	github.com/looplab/fsm v1.0.1 // indirect

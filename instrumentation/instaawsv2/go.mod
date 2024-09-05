@@ -13,7 +13,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/sns v1.26.4
 	github.com/aws/aws-sdk-go-v2/service/sqs v1.29.4
 	github.com/aws/smithy-go v1.20.4
-	github.com/instana/go-sensor v1.64.0
+	github.com/instana/go-sensor v1.65.0
 	github.com/opentracing/opentracing-go v1.2.0
 	github.com/pkg/errors v0.9.1
 	github.com/stretchr/testify v1.8.4
@@ -37,6 +37,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.20.1 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sts v1.25.4 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/google/uuid v1.6.0 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/looplab/fsm v1.0.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect

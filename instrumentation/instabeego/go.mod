@@ -4,7 +4,7 @@ go 1.22
 
 require (
 	github.com/beego/beego/v2 v2.3.0
-	github.com/instana/go-sensor v1.64.0
+	github.com/instana/go-sensor v1.65.0
 	github.com/opentracing/opentracing-go v1.2.0
 	github.com/stretchr/testify v1.9.0
 )
@@ -13,6 +13,7 @@ require (
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/google/uuid v1.6.0 // indirect
 	github.com/hashicorp/golang-lru v0.5.4 // indirect
 	github.com/kr/text v0.2.0 // indirect
 	github.com/looplab/fsm v1.0.1 // indirect

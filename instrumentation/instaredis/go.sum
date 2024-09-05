@@ -9,8 +9,10 @@ github.com/fsnotify/fsnotify v1.4.9 h1:hsms1Qyu0jgnwNXIxa+/V/PDsU6CfLf6CNO8H7IWo
 github.com/fsnotify/fsnotify v1.4.9/go.mod h1:znqG4EE+3YCdAaPaxE2ZRY/06pZUdp0tY4IgpuI1SZQ=
 github.com/go-redis/redis/v8 v8.11.5 h1:AcZZR7igkdvfVmQTPnu9WE37LRrO/YrBH5zWyjDC0oI=
 github.com/go-redis/redis/v8 v8.11.5/go.mod h1:gREzHqY1hg6oD9ngVRbLStwAWKhA0FEgq8Jd4h5lpwo=
-github.com/instana/go-sensor v1.64.0 h1:sago7DnfjuQ0OYDbs6amhc9RqSc76AkOfkyV2W209k8=
-github.com/instana/go-sensor v1.64.0/go.mod h1:xRwSUW7zoxo2mKzzKGc163N82F8CuX5EpeNDQeg689M=
+github.com/google/uuid v1.6.0 h1:NIvaJDMOsjHA8n1jAhLSgzrAzy1Hgr+hNrb57e+94F0=
+github.com/google/uuid v1.6.0/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
+github.com/instana/go-sensor v1.65.0 h1:tvghnyNsSE2Bj1nsARLwLFc7GIR9+NXN7QAjMRw6EHg=
+github.com/instana/go-sensor v1.65.0/go.mod h1:Ngi6H3q4iZ6yn4EH9zQYUflI/eDTULrM3B+RW9HN4zI=
 github.com/looplab/fsm v1.0.1 h1:OEW0ORrIx095N/6lgoGkFkotqH6s7vaFPsgjLAaF5QU=
 github.com/looplab/fsm v1.0.1/go.mod h1:PmD3fFvQEIsjMEfvZdrCDZ6y8VwKTwWNjlpEr6IKPO4=
 github.com/nxadm/tail v1.4.8 h1:nPr65rt6Y5JFSKQO7qToXr7pePgD6Gwiw05lkbyAQTE=
