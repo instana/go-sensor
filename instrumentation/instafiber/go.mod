@@ -4,7 +4,7 @@ go 1.22
 
 require (
 	github.com/gofiber/fiber/v2 v2.52.5
-	github.com/instana/go-sensor v1.64.0
+	github.com/instana/go-sensor v1.65.0
 	github.com/opentracing/opentracing-go v1.2.0
 	github.com/stretchr/testify v1.8.1
 	github.com/valyala/fasthttp v1.51.0
@@ -13,7 +13,7 @@ require (
 require (
 	github.com/andybalholm/brotli v1.0.5 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/google/uuid v1.5.0 // indirect
+	github.com/google/uuid v1.6.0 // indirect
 	github.com/klauspost/compress v1.17.0 // indirect
 	github.com/looplab/fsm v1.0.1 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
