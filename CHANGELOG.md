@@ -5,7 +5,7 @@ go-sensor project.
 
 ## v1.65.0
 
-* feat:Added support for generic serverless agent.
+* feat:Added support for generic the serverless agent.
 
 ## v1.64.0
 
@@ -15,7 +15,7 @@ go-sensor project.
 
 * fix:Fix for DB2 spans being tagged as MySQL spans instead of generic DB spans.
 * chore:Updated dependencies of example programs.
-* chore:Added example for the sql instrumentation using sql.OpenDB API.
+* chore:Added example for the SQL instrumentation using sql.OpenDB API.
 
 ## v1.63.0
 
