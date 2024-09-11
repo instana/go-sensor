@@ -249,12 +249,21 @@ metadata:
 spec:
   sidecars:
     - name: couchbase
-      image: couchbase/server-sandbox:7.2.4
+      image: couchbase/server:7.1.4
       readinessProbe:
         httpGet:
            path: /ui/index.html
            port: 8091
         initialDelaySeconds: 60
+    - name: couchbase-setup
+      image: curlimages/curl
+      script: |
+        #!/bin/sh
+        sleep 30 && \
+        curl -v -X POST http://127.0.0.1:8091/pools/default -d memoryQuota=2024 -d indexMemoryQuota=512 && \
+        curl -v http://127.0.0.1:8091/node/controller/setupServices -d services=kv%2Ceventing%2Cindex%2Cn1ql%2Ccbas%2Cfts && \
+        curl -v http://127.0.0.1:8091/settings/web -d port=8091 -d username=Administrator -d password=password && \
+        curl -i -u Administrator:password -X POST http://127.0.0.1:8091/settings/indexes -d 'storageMode=memory_optimized'
   params:
   - name: imageTag
     type: string
