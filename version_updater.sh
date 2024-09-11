@@ -169,7 +169,7 @@ while IFS= read -r line; do
 
   # Create a PR request for the changes
   # shellcheck disable=SC2046
-  gh pr create --title "currency: updated instrumentation $INSTRUMENTATION for new version $LATEST_VERSION. Id: $CURRENT_TIME_UNIX" \
+  gh pr create --title "currency: updated instrumentation of $INSTRUMENTATION for new version $LATEST_VERSION. Id: $CURRENT_TIME_UNIX" \
     --body "This PR adds changes for the newer version $LATEST_VERSION for the instrumented package" --head $(git branch --show-current)
 
   # Back to working directry
