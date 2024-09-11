@@ -164,12 +164,12 @@ while IFS= read -r line; do
   git checkout -b "update-instrumentations-$INSTRUMENTATION-id-$CURRENT_TIME_UNIX"
 
   git add go.mod go.sum $LIBRARY_INFO_MD_PATH
-  git commit -m "currency: updated go.mod, go.sum files, README.md for $INSTRUMENTATION"
+  git commit -m "feat:(currency): updated go.mod, go.sum files, README.md for $INSTRUMENTATION"
   git push origin @
 
   # Create a PR request for the changes
   # shellcheck disable=SC2046
-  gh pr create --title "currency: updated instrumentation of $INSTRUMENTATION for new version $LATEST_VERSION. Id: $CURRENT_TIME_UNIX" \
+  gh pr create --title "feat(currency): updated instrumentation of $INSTRUMENTATION for new version $LATEST_VERSION. Id: $CURRENT_TIME_UNIX" \
     --body "This PR adds changes for the newer version $LATEST_VERSION for the instrumented package" --head $(git branch --show-current)
 
   # Back to working directry
