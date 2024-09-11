@@ -128,10 +128,6 @@ func (ic *instaCluster) WrapTransactionAttemptContext(tac *gocb.TransactionAttem
 	return createTransactionAttemptContext(ic.iTracer, tac, parentSpan)
 }
 
-func (ic *instaCluster) Close(opts *gocb.ClusterCloseOptions) error {
-	return ic.Cluster.Close(opts)
-}
-
 // Helper functions
 
 // createCluster will wrap *gocb.Cluster in to instaCluster and will return it as Cluster interface
