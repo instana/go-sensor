@@ -17,10 +17,12 @@ import (
 
 func TestCluster(t *testing.T) {
 	defer instana.ShutdownSensor()
-	recorder, ctx, cluster, a, _ := prepareWithATestDocumentInCollection(t, "cluster")
+
+	recorder, ctx, cluster, a := prepare(t)
+	defer cluster.Close(&gocb.ClusterCloseOptions{})
 
 	// Query
-	q := "SELECT count(*) FROM `" + testBucketName + "`." + testScope + "." + testCollection + ";"
+	q := "SELECT count(*) FROM `" + cbTestBucket + "`." + cbTestScope + "." + cbTestCollection + ";"
 	_, err := cluster.Query(q, &gocb.QueryOptions{ParentSpan: instagocb.GetParentSpanFromContext(ctx)})
 	a.NoError(err)
 
@@ -41,8 +43,8 @@ func TestCluster(t *testing.T) {
 	err = cluster.SearchIndexes().UpsertIndex(
 		gocb.SearchIndex{
 			Type:       "fulltext-index",
-			Name:       "sample-index",
-			SourceName: testBucketName,
+			Name:       "sample-index" + testID,
+			SourceName: cbTestBucket,
 			SourceType: "couchbase",
 			PlanParams: map[string]interface{}{
 				"maxPartitionsPerPIndex": 171,
@@ -79,7 +81,7 @@ func TestCluster(t *testing.T) {
 	time.Sleep(4 * time.Second)
 
 	matchResult, err := cluster.SearchQuery(
-		"sample-index",
+		"sample-index"+testID,
 		search.NewMatchQuery("test"),
 		&gocb.SearchOptions{
 			Limit:      10,
@@ -106,7 +108,7 @@ func TestCluster(t *testing.T) {
 		Bucket: "",
 		Host:   "localhost",
 		Type:   "",
-		SQL:    "SEARCH sample-index",
+		SQL:    "SEARCH sample-index" + testID,
 		Error:  "",
 	}, data.Tags)
 
