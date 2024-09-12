@@ -16,7 +16,7 @@ import (
 func TestTransactions(t *testing.T) {
 	testDocumentValue := getTestDocumentValue()
 	defer instana.ShutdownSensor()
-	recorder, ctx, cluster, a := prepareWithCollection(t)
+	recorder, ctx, cluster, a := prepareWithCollection(t, testBucketName, testScope, testCollection)
 
 	scope := cluster.Bucket(testBucketName).Scope(testScope)
 
@@ -117,16 +117,18 @@ func TestTransactions(t *testing.T) {
 		}
 	}
 
-	recorder, ctx, cluster, a, _ = prepareWithATestDocumentInCollection(t, "scope")
-	scope = cluster.Bucket(testBucketName).Scope(testScope)
-	collection = scope.Collection(testCollection)
-	transaction = cluster.Transactions()
+	cluster.Close(&gocb.ClusterCloseOptions{})
 
-	q := "SELECT count(*) FROM `" + testBucketName + "`." + testScope + "." + testCollection + ";"
+	recorder, ctx, conn, a := prepare(t)
+	scope = conn.Bucket(cbTestBucket).Scope(cbTestScope)
+	collection = scope.Collection(cbTestCollection)
+	transaction = conn.Transactions()
+
+	q := "SELECT count(*) FROM `" + cbTestBucket + "`." + cbTestScope + "." + cbTestCollection + ";"
 	_, err = transaction.Run(
 		func(tac *gocb.TransactionAttemptContext) error {
 			// Query
-			c := cluster.WrapTransactionAttemptContext(tac, instagocb.GetParentSpanFromContext(ctx))
+			c := conn.WrapTransactionAttemptContext(tac, instagocb.GetParentSpanFromContext(ctx))
 			_, err := c.Query(q, &gocb.TransactionQueryOptions{})
 			a.NoError(err)
 
@@ -150,5 +152,7 @@ func TestTransactions(t *testing.T) {
 		SQL:    q,
 		Error:  "",
 	}, data.Tags)
+
+	conn.Close(&gocb.ClusterCloseOptions{})
 
 }
