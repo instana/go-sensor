@@ -8,7 +8,6 @@
 
 # Function to extract the package url, current version and local path from the markdown line
 extract_info_from_markdown_line() {
-  # if [ -e "$1" ]; then
   local markdown_line=$1
   # Extract target-package-url, current version and local path from the markdown line usin awk
   TARGET_PKG_URL=$(echo "$markdown_line" | awk -F '[(|)]' '{print $5}' | awk -F'https://pkg.go.dev/' '{print $2}')
@@ -17,7 +16,6 @@ extract_info_from_markdown_line() {
   INSTANA_PACKAGE_NAME=$(echo "$markdown_line" | awk -F '[][]' '{print $4}' | tr -d '[:space:]' | tr -d '()')
   LOCAL_PATH=$(echo "$INSTANA_PKG_URL" | awk -F 'github.com/instana/go-sensor/' '{print $2}')
   CURRENT_VERSION=$(echo "$markdown_line" | awk -F '|' '{print $7}' | tr -d '[:space:]')
-
 }
 
 # Function to query the latest released version of the package
