@@ -19,12 +19,14 @@ func TestCollection_DS_Set(t *testing.T) {
 	defer unsetAllowRootExitSpanEnv()
 
 	defer instana.ShutdownSensor()
-	recorder, _, cluster, a, _ := prepareWithATestDocumentInCollection(t, "ds_set")
 
-	collection := cluster.Bucket(testBucketName).Scope(testScope).Collection(testCollection)
+	recorder, _, cluster, a := prepare(t)
+	defer cluster.Close(&gocb.ClusterCloseOptions{})
+
+	collection := cluster.Bucket(cbTestBucket).Scope(cbTestScope).Collection(cbTestCollection)
 
 	// Set
-	s := collection.Set(testDocumentID)
+	s := collection.Set(dsSetTestDocumentID)
 
 	// Iterator
 	_, err := s.Iterator()
@@ -36,7 +38,7 @@ func TestCollection_DS_Set(t *testing.T) {
 	a.IsType(instana.CouchbaseSpanData{}, span.Data)
 	data := span.Data.(instana.CouchbaseSpanData)
 	a.Equal(instana.CouchbaseSpanTags{
-		Bucket: testBucketName,
+		Bucket: cbTestBucket,
 		Host:   "localhost",
 		Type:   string(gocb.CouchbaseBucketType),
 		SQL:    "SET_ITERATOR",
@@ -53,7 +55,7 @@ func TestCollection_DS_Set(t *testing.T) {
 	a.IsType(instana.CouchbaseSpanData{}, span.Data)
 	data = span.Data.(instana.CouchbaseSpanData)
 	a.Equal(instana.CouchbaseSpanTags{
-		Bucket: testBucketName,
+		Bucket: cbTestBucket,
 		Host:   "localhost",
 		Type:   string(gocb.CouchbaseBucketType),
 		SQL:    "SET_ADD",
@@ -70,7 +72,7 @@ func TestCollection_DS_Set(t *testing.T) {
 	a.IsType(instana.CouchbaseSpanData{}, span.Data)
 	data = span.Data.(instana.CouchbaseSpanData)
 	a.Equal(instana.CouchbaseSpanTags{
-		Bucket: testBucketName,
+		Bucket: cbTestBucket,
 		Host:   "localhost",
 		Type:   string(gocb.CouchbaseBucketType),
 		SQL:    "SET_REMOVE",
@@ -88,7 +90,7 @@ func TestCollection_DS_Set(t *testing.T) {
 	a.IsType(instana.CouchbaseSpanData{}, span.Data)
 	data = span.Data.(instana.CouchbaseSpanData)
 	a.Equal(instana.CouchbaseSpanTags{
-		Bucket: testBucketName,
+		Bucket: cbTestBucket,
 		Host:   "localhost",
 		Type:   string(gocb.CouchbaseBucketType),
 		SQL:    "SET_CONTAINS",
@@ -106,7 +108,7 @@ func TestCollection_DS_Set(t *testing.T) {
 	a.IsType(instana.CouchbaseSpanData{}, span.Data)
 	data = span.Data.(instana.CouchbaseSpanData)
 	a.Equal(instana.CouchbaseSpanTags{
-		Bucket: testBucketName,
+		Bucket: cbTestBucket,
 		Host:   "localhost",
 		Type:   string(gocb.CouchbaseBucketType),
 		SQL:    "SET_VALUES",
@@ -124,7 +126,7 @@ func TestCollection_DS_Set(t *testing.T) {
 	a.IsType(instana.CouchbaseSpanData{}, span.Data)
 	data = span.Data.(instana.CouchbaseSpanData)
 	a.Equal(instana.CouchbaseSpanTags{
-		Bucket: testBucketName,
+		Bucket: cbTestBucket,
 		Host:   "localhost",
 		Type:   string(gocb.CouchbaseBucketType),
 		SQL:    "SET_SIZE",
@@ -141,7 +143,7 @@ func TestCollection_DS_Set(t *testing.T) {
 	a.IsType(instana.CouchbaseSpanData{}, span.Data)
 	data = span.Data.(instana.CouchbaseSpanData)
 	a.Equal(instana.CouchbaseSpanTags{
-		Bucket: testBucketName,
+		Bucket: cbTestBucket,
 		Host:   "localhost",
 		Type:   string(gocb.CouchbaseBucketType),
 		SQL:    "SET_CLEAR",

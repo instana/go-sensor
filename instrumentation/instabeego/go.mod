@@ -3,8 +3,8 @@ module github.com/instana/go-sensor/instrumentation/instabeego
 go 1.22
 
 require (
-	github.com/beego/beego/v2 v2.3.0
-	github.com/instana/go-sensor v1.64.0
+	github.com/beego/beego/v2 v2.3.1
+	github.com/instana/go-sensor v1.65.0
 	github.com/opentracing/opentracing-go v1.2.0
 	github.com/stretchr/testify v1.9.0
 )
@@ -13,6 +13,7 @@ require (
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/google/uuid v1.6.0 // indirect
 	github.com/hashicorp/golang-lru v0.5.4 // indirect
 	github.com/kr/text v0.2.0 // indirect
 	github.com/looplab/fsm v1.0.1 // indirect
@@ -27,6 +28,6 @@ require (
 	golang.org/x/net v0.23.0 // indirect
 	golang.org/x/sys v0.21.0 // indirect
 	golang.org/x/text v0.16.0 // indirect
-	google.golang.org/protobuf v1.34.1 // indirect
+	google.golang.org/protobuf v1.34.2 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
