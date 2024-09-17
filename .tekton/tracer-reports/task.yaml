@@ -73,11 +73,17 @@ spec:
               key: "email"
       workingDir: /workspace/tracer-reports/
       script: |
+        #!/bin/sh
+
         git config user.name "IBM/Instana/Team Go"
         git config user.email "$GITHUB_ENTERPRISE_USER_EMAIL"
         git add automated/currency/go/report.md || true
         git commit -m "Updated tracer reports for Team Go : $(date +'%d-%b-%Y %H:%M:%S')" || true
-        git push origin @ || true
+        if [ -s output.txt ]; then
+          echo "Some error occurred!"
+        else
+          git push origin @ || true
+        fi
 
 
 ---
