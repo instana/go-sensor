@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # (c) Copyright IBM Corp. 2024
 
@@ -105,7 +105,7 @@ find_immediate_next_version(){
         else
             IMMEDIATE_NEXT_VERSION=""
             IMMEDIATE_NEXT_VERSION_DATE=""
-            echo "Something wrong with querying immediate next versiion" >> $OUTPUT_TO_SLACK
+            echo "Something wrong with querying immediate next version - $pkg" >> $OUTPUT_TO_SLACK
         fi
 
     else
@@ -113,7 +113,7 @@ find_immediate_next_version(){
         IMMEDIATE_NEXT_VERSION_DATE=""
         debug_log "Invalid package location: $pkg"
         echo "Invalid package location: $pkg" >> $OUTPUT_TO_SLACK
-        echo "Something wrong with finding immediate next versiion" >> $OUTPUT_TO_SLACK
+        echo "Something wrong with finding immediate next version - $pkg" >> $OUTPUT_TO_SLACK
   fi
 
 }
@@ -126,6 +126,8 @@ find_days_behind_last_support() {
     local difference=$((date2 - date1))
     DAYS_BEHIND=$((difference / 86400))
 }
+
+
 
 # This script needs to be called from the go-sensor folder.
 GO_TRACER_REPO_PATH=$(pwd)
@@ -176,7 +178,6 @@ while IFS= read -r line; do
     # Find the latest version of the instrumented package
     find_latest_version "$TARGET_PKG_URL"
     find_current_version "$TARGET_PKG_URL"
-    find_immediate_next_version "$TARGET_PKG_URL" "$CURRENT_VERSION"
 
     # Replace supported, latest version and latest version published date in the markdown line
     changed_line=$(echo "$line" | awk -v new_val="$(printf ' %s ' "$CURRENT_VERSION")" 'BEGIN{OFS=FS="|"} {$5=new_val} 1')
@@ -184,6 +185,8 @@ while IFS= read -r line; do
     changed_line=$(echo "$changed_line" | awk -v new_val="$(printf ' %s ' "$LATEST_VERSION_DATE")" 'BEGIN{OFS=FS="|"} {$7=new_val} 1')
 
     if [ "$LATEST_VERSION" != "$CURRENT_VERSION" ]; then
+        find_immediate_next_version "$TARGET_PKG_URL" "$CURRENT_VERSION"
+
         debug_log "Latest version:" "$LATEST_VERSION"
         debug_log "Current version:" "$CURRENT_VERSION"
         debug_log "Immediate next version:" "$IMMEDIATE_NEXT_VERSION"
