@@ -122,10 +122,6 @@ spec:
     - name: integration-test-couchbase
       runAfter:
         - integration-test-common
-      when:
-        - input: "$(params.go-version)"
-          operator: in
-          values: ["1.23"]
       params:
       - name: imageTag
         value: $(params.go-version)

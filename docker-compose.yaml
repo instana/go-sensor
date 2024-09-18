@@ -19,11 +19,28 @@ services:
       - 5671:5671
       - 5672:5672
 
-  couchbase-server-sandbox:
-    image: couchbase/server-sandbox:7.1.1
+  couchbase:
+    image: couchbase/server:7.1.4
+    hostname: couchbase
     ports:
-      - 8091-8094:8091-8094
-      - 11210:11210
+      - '8091-8096:8091-8096'
+      - '11210:11210'
+    
+  couchbase-setup:
+    image: amd64/centos:7
+    platform: linux/amd64
+    depends_on:
+      - couchbase
+    restart: "no"
+    entrypoint:
+      - "bash"
+      - "-ecx"
+      - |
+          sleep 30 && \
+          curl -v -X POST http://couchbase:8091/pools/default -d memoryQuota=2048 -d indexMemoryQuota=1024 && \
+          curl -v http://couchbase:8091/node/controller/setupServices -d services=kv%2Ceventing%2Cindex%2Cn1ql%2Ccbas%2Cfts && \
+          curl -v http://couchbase:8091/settings/web -d port=8091 -d username=Administrator -d password=password && \
+          curl -i -u Administrator:password -X POST http://couchbase:8091/settings/indexes -d 'storageMode=memory_optimized'
 
   redis:
     image: redis
