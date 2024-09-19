@@ -36,13 +36,15 @@ var (
 
 // test document IDs
 var (
-	testDocumentID        = "test-doc-id"
-	clusterTestDocumentID = "cluster-test-doc-id"
-	dsListTestDocumentID  = "ds-list-test-doc-id"
-	dsMapTestDocumentID   = "ds-map-test-doc-id"
-	dsQueueTestDocumentID = "ds-queue-test-doc-id"
-	dsSetTestDocumentID   = "ds-set-test-doc-id"
-	scopeTestDocumentID   = "scope-test-doc-id"
+	testDocumentID            = "test-doc-id"
+	clusterTestDocumentID     = "cluster-test-doc-id"
+	dsListTestDocumentID      = "ds-list-test-doc-id"
+	dsMapTestDocumentID       = "ds-map-test-doc-id"
+	dsQueueTestDocumentID     = "ds-queue-test-doc-id"
+	dsSetTestDocumentID       = "ds-set-test-doc-id"
+	scopeTestDocumentID       = "scope-test-doc-id"
+	crudTestDocumentID        = "crud-test-doc-id"
+	transactionTestDocumentID = "transaction-test-doc-id"
 )
 
 var rec *instana.Recorder
@@ -232,8 +234,10 @@ func setup() error {
 		dsMapTestDocumentID: map[string]interface{}{
 			"test-key": getTestStringValue(),
 		},
-		scopeTestDocumentID:   getTestDocumentValue(),
-		clusterTestDocumentID: getTestDocumentValue(),
+		scopeTestDocumentID:       getTestDocumentValue(),
+		clusterTestDocumentID:     getTestDocumentValue(),
+		crudTestDocumentID:        getTestDocumentValue(),
+		transactionTestDocumentID: getTestDocumentValue(),
 	}
 
 	// Create an Array of BulkOps for Insert
