@@ -16,11 +16,11 @@ import (
 func TestTransactions(t *testing.T) {
 	testDocumentValue := getTestDocumentValue()
 	defer instana.ShutdownSensor()
-	recorder, ctx, cluster, a := prepareWithCollection(t, testBucketName, testScope, testCollection)
+	recorder, ctx, cluster, a := prepare(t)
 
-	scope := cluster.Bucket(testBucketName).Scope(testScope)
+	scope := cluster.Bucket(cbTestBucket).Scope(cbTestScope)
 
-	collection := scope.Collection(testCollection)
+	collection := scope.Collection(cbTestCollection)
 
 	transaction := cluster.Transactions()
 
@@ -31,12 +31,10 @@ func TestTransactions(t *testing.T) {
 		func(tac *gocb.TransactionAttemptContext) error {
 			// Insert
 			c := cluster.WrapTransactionAttemptContext(tac, instagocb.GetParentSpanFromContext(ctx))
-			_, err := c.Insert(collection.Unwrap(), testDocumentID, testDocumentValue)
-			a.NoError(err)
 
 			//Get
 			var result myDoc
-			res, err := c.Get(collection.Unwrap(), testDocumentID)
+			res, err := c.Get(collection.Unwrap(), transactionTestDocumentID)
 			a.NoError(err)
 			res.Content(&result)
 			a.Equal(testDocumentValue, result)
@@ -46,7 +44,7 @@ func TestTransactions(t *testing.T) {
 			a.NoError(err)
 
 			// Remove
-			res, err = c.Get(collection.Unwrap(), testDocumentID)
+			res, err = c.Get(collection.Unwrap(), transactionTestDocumentID)
 			a.NoError(err)
 			err = c.Remove(collection.Unwrap(), res)
 			a.NoError(err)
@@ -63,52 +61,39 @@ func TestTransactions(t *testing.T) {
 	spans := recorder.GetQueuedSpans()
 	for i, span := range spans {
 		switch i {
-		case 0:
+		case 0, 2:
 			a.Equal(0, span.Ec)
 			a.EqualValues(instana.ExitSpanKind, span.Kind)
 			a.IsType(instana.CouchbaseSpanData{}, span.Data)
 			data := span.Data.(instana.CouchbaseSpanData)
 			a.Equal(instana.CouchbaseSpanTags{
-				Bucket: testBucketName,
-				Host:   "localhost",
-				Type:   string(gocb.CouchbaseBucketType),
-				SQL:    "TRANSACTION_INSERT",
-				Error:  "",
-			}, data.Tags)
-
-		case 1, 3:
-			a.Equal(0, span.Ec)
-			a.EqualValues(instana.ExitSpanKind, span.Kind)
-			a.IsType(instana.CouchbaseSpanData{}, span.Data)
-			data := span.Data.(instana.CouchbaseSpanData)
-			a.Equal(instana.CouchbaseSpanTags{
-				Bucket: testBucketName,
+				Bucket: cbTestBucket,
 				Host:   "localhost",
 				Type:   string(gocb.CouchbaseBucketType),
 				SQL:    "TRANSACTION_GET",
 				Error:  "",
 			}, data.Tags)
 
-		case 2:
+		case 1:
 			a.Equal(0, span.Ec)
 			a.EqualValues(instana.ExitSpanKind, span.Kind)
 			a.IsType(instana.CouchbaseSpanData{}, span.Data)
 			data := span.Data.(instana.CouchbaseSpanData)
 			a.Equal(instana.CouchbaseSpanTags{
-				Bucket: testBucketName,
+				Bucket: cbTestBucket,
 				Host:   "localhost",
 				Type:   string(gocb.CouchbaseBucketType),
 				SQL:    "TRANSACTION_REPLACE",
 				Error:  "",
 			}, data.Tags)
 
-		case 4:
+		case 3:
 			a.Equal(0, span.Ec)
 			a.EqualValues(instana.ExitSpanKind, span.Kind)
 			a.IsType(instana.CouchbaseSpanData{}, span.Data)
 			data := span.Data.(instana.CouchbaseSpanData)
 			a.Equal(instana.CouchbaseSpanTags{
-				Bucket: testBucketName,
+				Bucket: cbTestBucket,
 				Host:   "localhost",
 				Type:   string(gocb.CouchbaseBucketType),
 				SQL:    "TRANSACTION_REMOVE",

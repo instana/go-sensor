@@ -27,41 +27,24 @@ func TestCollection_CRUD(t *testing.T) {
 	testDocumentValue := getTestDocumentValue()
 	defer instana.ShutdownSensor()
 
-	recorder, ctx, cluster, a := prepareWithCollection(t, testBucketName, testScope, testCollection)
+	recorder, ctx, cluster, a := prepare(t)
 	defer cluster.Close(&gocb.ClusterCloseOptions{})
 
-	collection := cluster.Bucket(testBucketName).Scope(testScope).Collection(testCollection)
+	collection := cluster.Bucket(cbTestBucket).Scope(cbTestScope).Collection(cbTestCollection)
 
-	// Insert
-	_, err := collection.Insert(testDocumentID, testDocumentValue, &gocb.InsertOptions{ParentSpan: instagocb.GetParentSpanFromContext(ctx)})
+	// Get
+	var result myDoc
+	res, err := collection.Get(crudTestDocumentID, &gocb.GetOptions{ParentSpan: instagocb.GetParentSpanFromContext(ctx)})
 	a.NoError(err)
-
+	res.Content(&result)
+	a.Equal(testDocumentValue, result)
 	span := getLatestSpan(recorder)
 	a.Equal(0, span.Ec)
 	a.EqualValues(instana.ExitSpanKind, span.Kind)
 	a.IsType(instana.CouchbaseSpanData{}, span.Data)
 	data := span.Data.(instana.CouchbaseSpanData)
 	a.Equal(instana.CouchbaseSpanTags{
-		Bucket: testBucketName,
-		Host:   "localhost",
-		Type:   string(gocb.CouchbaseBucketType),
-		SQL:    "INSERT",
-		Error:  "",
-	}, data.Tags)
-
-	// Get
-	var result myDoc
-	res, err := collection.Get(testDocumentID, &gocb.GetOptions{ParentSpan: instagocb.GetParentSpanFromContext(ctx)})
-	a.NoError(err)
-	res.Content(&result)
-	a.Equal(testDocumentValue, result)
-	span = getLatestSpan(recorder)
-	a.Equal(0, span.Ec)
-	a.EqualValues(instana.ExitSpanKind, span.Kind)
-	a.IsType(instana.CouchbaseSpanData{}, span.Data)
-	data = span.Data.(instana.CouchbaseSpanData)
-	a.Equal(instana.CouchbaseSpanTags{
-		Bucket: testBucketName,
+		Bucket: cbTestBucket,
 		Host:   "localhost",
 		Type:   string(gocb.CouchbaseBucketType),
 		SQL:    "GET",
@@ -69,7 +52,7 @@ func TestCollection_CRUD(t *testing.T) {
 	}, data.Tags)
 
 	// Upsert
-	_, err = collection.Upsert(testDocumentID, &myDoc{}, &gocb.UpsertOptions{ParentSpan: instagocb.GetParentSpanFromContext(ctx)})
+	_, err = collection.Upsert(crudTestDocumentID, &myDoc{}, &gocb.UpsertOptions{ParentSpan: instagocb.GetParentSpanFromContext(ctx)})
 	a.NoError(err)
 
 	span = getLatestSpan(recorder)
@@ -78,7 +61,7 @@ func TestCollection_CRUD(t *testing.T) {
 	a.IsType(instana.CouchbaseSpanData{}, span.Data)
 	data = span.Data.(instana.CouchbaseSpanData)
 	a.Equal(instana.CouchbaseSpanTags{
-		Bucket: testBucketName,
+		Bucket: cbTestBucket,
 		Host:   "localhost",
 		Type:   string(gocb.CouchbaseBucketType),
 		SQL:    "UPSERT",
@@ -86,7 +69,7 @@ func TestCollection_CRUD(t *testing.T) {
 	}, data.Tags)
 
 	// Replace
-	_, err = collection.Replace(testDocumentID, "newValue2", &gocb.ReplaceOptions{ParentSpan: instagocb.GetParentSpanFromContext(ctx)})
+	_, err = collection.Replace(crudTestDocumentID, "newValue2", &gocb.ReplaceOptions{ParentSpan: instagocb.GetParentSpanFromContext(ctx)})
 	a.NoError(err)
 
 	span = getLatestSpan(recorder)
@@ -95,7 +78,7 @@ func TestCollection_CRUD(t *testing.T) {
 	a.IsType(instana.CouchbaseSpanData{}, span.Data)
 	data = span.Data.(instana.CouchbaseSpanData)
 	a.Equal(instana.CouchbaseSpanTags{
-		Bucket: testBucketName,
+		Bucket: cbTestBucket,
 		Host:   "localhost",
 		Type:   string(gocb.CouchbaseBucketType),
 		SQL:    "REPLACE",
@@ -103,7 +86,7 @@ func TestCollection_CRUD(t *testing.T) {
 	}, data.Tags)
 
 	// Exists
-	res1, err := collection.Exists(testDocumentID, &gocb.ExistsOptions{ParentSpan: instagocb.GetParentSpanFromContext(ctx)})
+	res1, err := collection.Exists(crudTestDocumentID, &gocb.ExistsOptions{ParentSpan: instagocb.GetParentSpanFromContext(ctx)})
 	a.NoError(err)
 	a.True(res1.Exists())
 
@@ -113,7 +96,7 @@ func TestCollection_CRUD(t *testing.T) {
 	a.IsType(instana.CouchbaseSpanData{}, span.Data)
 	data = span.Data.(instana.CouchbaseSpanData)
 	a.Equal(instana.CouchbaseSpanTags{
-		Bucket: testBucketName,
+		Bucket: cbTestBucket,
 		Host:   "localhost",
 		Type:   string(gocb.CouchbaseBucketType),
 		SQL:    "EXISTS",
@@ -121,7 +104,7 @@ func TestCollection_CRUD(t *testing.T) {
 	}, data.Tags)
 
 	// GetAllReplicas
-	_, err = collection.GetAllReplicas(testDocumentID, &gocb.GetAllReplicaOptions{ParentSpan: instagocb.GetParentSpanFromContext(ctx)})
+	_, err = collection.GetAllReplicas(crudTestDocumentID, &gocb.GetAllReplicaOptions{ParentSpan: instagocb.GetParentSpanFromContext(ctx)})
 	a.NoError(err)
 
 	span = getLatestSpan(recorder)
@@ -130,7 +113,7 @@ func TestCollection_CRUD(t *testing.T) {
 	a.IsType(instana.CouchbaseSpanData{}, span.Data)
 	data = span.Data.(instana.CouchbaseSpanData)
 	a.Equal(instana.CouchbaseSpanTags{
-		Bucket: testBucketName,
+		Bucket: cbTestBucket,
 		Host:   "localhost",
 		Type:   string(gocb.CouchbaseBucketType),
 		SQL:    "GET_ALL_REPLICAS",
@@ -138,7 +121,7 @@ func TestCollection_CRUD(t *testing.T) {
 	}, data.Tags)
 
 	// GetAnyReplica
-	_, err = collection.GetAnyReplica(testDocumentID, &gocb.GetAnyReplicaOptions{ParentSpan: instagocb.GetParentSpanFromContext(ctx)})
+	_, err = collection.GetAnyReplica(crudTestDocumentID, &gocb.GetAnyReplicaOptions{ParentSpan: instagocb.GetParentSpanFromContext(ctx)})
 	a.NoError(err)
 
 	span = getLatestSpan(recorder)
@@ -147,7 +130,7 @@ func TestCollection_CRUD(t *testing.T) {
 	a.IsType(instana.CouchbaseSpanData{}, span.Data)
 	data = span.Data.(instana.CouchbaseSpanData)
 	a.Equal(instana.CouchbaseSpanTags{
-		Bucket: testBucketName,
+		Bucket: cbTestBucket,
 		Host:   "localhost",
 		Type:   string(gocb.CouchbaseBucketType),
 		SQL:    "GET_ANY_REPLICA",
@@ -155,7 +138,7 @@ func TestCollection_CRUD(t *testing.T) {
 	}, data.Tags)
 
 	// GetAndTouch
-	_, err = collection.GetAndTouch(testDocumentID, time.Minute*20, &gocb.GetAndTouchOptions{ParentSpan: instagocb.GetParentSpanFromContext(ctx)})
+	_, err = collection.GetAndTouch(crudTestDocumentID, time.Minute*20, &gocb.GetAndTouchOptions{ParentSpan: instagocb.GetParentSpanFromContext(ctx)})
 	a.NoError(err)
 
 	span = getLatestSpan(recorder)
@@ -164,7 +147,7 @@ func TestCollection_CRUD(t *testing.T) {
 	a.IsType(instana.CouchbaseSpanData{}, span.Data)
 	data = span.Data.(instana.CouchbaseSpanData)
 	a.Equal(instana.CouchbaseSpanTags{
-		Bucket: testBucketName,
+		Bucket: cbTestBucket,
 		Host:   "localhost",
 		Type:   string(gocb.CouchbaseBucketType),
 		SQL:    "GET_AND_TOUCH",
@@ -172,7 +155,7 @@ func TestCollection_CRUD(t *testing.T) {
 	}, data.Tags)
 
 	// GetAndLock
-	ress, err := collection.GetAndLock(testDocumentID, time.Minute*20, &gocb.GetAndLockOptions{ParentSpan: instagocb.GetParentSpanFromContext(ctx)})
+	ress, err := collection.GetAndLock(crudTestDocumentID, time.Minute*20, &gocb.GetAndLockOptions{ParentSpan: instagocb.GetParentSpanFromContext(ctx)})
 	a.NoError(err)
 
 	span = getLatestSpan(recorder)
@@ -181,7 +164,7 @@ func TestCollection_CRUD(t *testing.T) {
 	a.IsType(instana.CouchbaseSpanData{}, span.Data)
 	data = span.Data.(instana.CouchbaseSpanData)
 	a.Equal(instana.CouchbaseSpanTags{
-		Bucket: testBucketName,
+		Bucket: cbTestBucket,
 		Host:   "localhost",
 		Type:   string(gocb.CouchbaseBucketType),
 		SQL:    "GET_AND_LOCK",
@@ -189,7 +172,7 @@ func TestCollection_CRUD(t *testing.T) {
 	}, data.Tags)
 
 	// Unlock
-	err = collection.Unlock(testDocumentID, ress.Cas(), &gocb.UnlockOptions{ParentSpan: instagocb.GetParentSpanFromContext(ctx)})
+	err = collection.Unlock(crudTestDocumentID, ress.Cas(), &gocb.UnlockOptions{ParentSpan: instagocb.GetParentSpanFromContext(ctx)})
 	a.NoError(err)
 
 	span = getLatestSpan(recorder)
@@ -198,7 +181,7 @@ func TestCollection_CRUD(t *testing.T) {
 	a.IsType(instana.CouchbaseSpanData{}, span.Data)
 	data = span.Data.(instana.CouchbaseSpanData)
 	a.Equal(instana.CouchbaseSpanTags{
-		Bucket: testBucketName,
+		Bucket: cbTestBucket,
 		Host:   "localhost",
 		Type:   string(gocb.CouchbaseBucketType),
 		SQL:    "UNLOCK",
@@ -206,7 +189,7 @@ func TestCollection_CRUD(t *testing.T) {
 	}, data.Tags)
 
 	// Touch
-	_, err = collection.Touch(testDocumentID, time.Minute*20, &gocb.TouchOptions{ParentSpan: instagocb.GetParentSpanFromContext(ctx)})
+	_, err = collection.Touch(crudTestDocumentID, time.Minute*20, &gocb.TouchOptions{ParentSpan: instagocb.GetParentSpanFromContext(ctx)})
 	a.NoError(err)
 
 	span = getLatestSpan(recorder)
@@ -215,7 +198,7 @@ func TestCollection_CRUD(t *testing.T) {
 	a.IsType(instana.CouchbaseSpanData{}, span.Data)
 	data = span.Data.(instana.CouchbaseSpanData)
 	a.Equal(instana.CouchbaseSpanTags{
-		Bucket: testBucketName,
+		Bucket: cbTestBucket,
 		Host:   "localhost",
 		Type:   string(gocb.CouchbaseBucketType),
 		SQL:    "TOUCH",
@@ -223,7 +206,7 @@ func TestCollection_CRUD(t *testing.T) {
 	}, data.Tags)
 
 	// LookupIn
-	_, err = collection.LookupIn(testDocumentID, []gocb.LookupInSpec{
+	_, err = collection.LookupIn(crudTestDocumentID, []gocb.LookupInSpec{
 		gocb.GetSpec("test", &gocb.GetSpecOptions{}),
 	}, &gocb.LookupInOptions{ParentSpan: instagocb.GetParentSpanFromContext(ctx)})
 	a.NoError(err)
@@ -234,7 +217,7 @@ func TestCollection_CRUD(t *testing.T) {
 	a.IsType(instana.CouchbaseSpanData{}, span.Data)
 	data = span.Data.(instana.CouchbaseSpanData)
 	a.Equal(instana.CouchbaseSpanTags{
-		Bucket: testBucketName,
+		Bucket: cbTestBucket,
 		Host:   "localhost",
 		Type:   string(gocb.CouchbaseBucketType),
 		SQL:    "LOOKUP_IN",
@@ -242,9 +225,9 @@ func TestCollection_CRUD(t *testing.T) {
 	}, data.Tags)
 
 	// MutateIn
-	_, err = collection.Upsert(testDocumentID, testDocumentValue, &gocb.UpsertOptions{ParentSpan: instagocb.GetParentSpanFromContext(ctx)})
+	_, err = collection.Upsert(crudTestDocumentID, testDocumentValue, &gocb.UpsertOptions{ParentSpan: instagocb.GetParentSpanFromContext(ctx)})
 	a.NoError(err)
-	_, err = collection.MutateIn(testDocumentID, []gocb.MutateInSpec{
+	_, err = collection.MutateIn(crudTestDocumentID, []gocb.MutateInSpec{
 		gocb.UpsertSpec("foo", "311-555-0151", &gocb.UpsertSpecOptions{}),
 	}, &gocb.MutateInOptions{
 		ParentSpan: instagocb.GetParentSpanFromContext(ctx),
@@ -257,7 +240,7 @@ func TestCollection_CRUD(t *testing.T) {
 	a.IsType(instana.CouchbaseSpanData{}, span.Data)
 	data = span.Data.(instana.CouchbaseSpanData)
 	a.Equal(instana.CouchbaseSpanTags{
-		Bucket: testBucketName,
+		Bucket: cbTestBucket,
 		Host:   "localhost",
 		Type:   string(gocb.CouchbaseBucketType),
 		SQL:    "MUTATE_IN",
@@ -268,7 +251,7 @@ func TestCollection_CRUD(t *testing.T) {
 	bc := collection.Binary()
 
 	// Append
-	_, err = bc.Append(testDocumentID, []byte{23}, &gocb.AppendOptions{ParentSpan: instagocb.GetParentSpanFromContext(ctx)})
+	_, err = bc.Append(crudTestDocumentID, []byte{23}, &gocb.AppendOptions{ParentSpan: instagocb.GetParentSpanFromContext(ctx)})
 	a.NoError(err)
 
 	span = getLatestSpan(recorder)
@@ -277,7 +260,7 @@ func TestCollection_CRUD(t *testing.T) {
 	a.IsType(instana.CouchbaseSpanData{}, span.Data)
 	data = span.Data.(instana.CouchbaseSpanData)
 	a.Equal(instana.CouchbaseSpanTags{
-		Bucket: testBucketName,
+		Bucket: cbTestBucket,
 		Host:   "localhost",
 		Type:   string(gocb.CouchbaseBucketType),
 		SQL:    "APPEND",
@@ -285,7 +268,7 @@ func TestCollection_CRUD(t *testing.T) {
 	}, data.Tags)
 
 	// Prepend
-	_, err = bc.Prepend(testDocumentID, []byte{23}, &gocb.PrependOptions{ParentSpan: instagocb.GetParentSpanFromContext(ctx)})
+	_, err = bc.Prepend(crudTestDocumentID, []byte{23}, &gocb.PrependOptions{ParentSpan: instagocb.GetParentSpanFromContext(ctx)})
 	a.NoError(err)
 
 	span = getLatestSpan(recorder)
@@ -294,7 +277,7 @@ func TestCollection_CRUD(t *testing.T) {
 	a.IsType(instana.CouchbaseSpanData{}, span.Data)
 	data = span.Data.(instana.CouchbaseSpanData)
 	a.Equal(instana.CouchbaseSpanTags{
-		Bucket: testBucketName,
+		Bucket: cbTestBucket,
 		Host:   "localhost",
 		Type:   string(gocb.CouchbaseBucketType),
 		SQL:    "PREPEND",
@@ -302,7 +285,7 @@ func TestCollection_CRUD(t *testing.T) {
 	}, data.Tags)
 
 	// Remove
-	_, err = collection.Remove(testDocumentID, &gocb.RemoveOptions{ParentSpan: instagocb.GetParentSpanFromContext(ctx)})
+	_, err = collection.Remove(crudTestDocumentID, &gocb.RemoveOptions{ParentSpan: instagocb.GetParentSpanFromContext(ctx)})
 	a.NoError(err)
 
 	span = getLatestSpan(recorder)
@@ -311,7 +294,7 @@ func TestCollection_CRUD(t *testing.T) {
 	a.IsType(instana.CouchbaseSpanData{}, span.Data)
 	data = span.Data.(instana.CouchbaseSpanData)
 	a.Equal(instana.CouchbaseSpanTags{
-		Bucket: testBucketName,
+		Bucket: cbTestBucket,
 		Host:   "localhost",
 		Type:   string(gocb.CouchbaseBucketType),
 		SQL:    "REMOVE",
@@ -319,7 +302,7 @@ func TestCollection_CRUD(t *testing.T) {
 	}, data.Tags)
 
 	// Increment
-	_, err = bc.Increment(testDocumentID, &gocb.IncrementOptions{
+	_, err = bc.Increment(crudTestDocumentID, &gocb.IncrementOptions{
 		Initial:    2,
 		ParentSpan: instagocb.GetParentSpanFromContext(ctx),
 	})
@@ -331,7 +314,7 @@ func TestCollection_CRUD(t *testing.T) {
 	a.IsType(instana.CouchbaseSpanData{}, span.Data)
 	data = span.Data.(instana.CouchbaseSpanData)
 	a.Equal(instana.CouchbaseSpanTags{
-		Bucket: testBucketName,
+		Bucket: cbTestBucket,
 		Host:   "localhost",
 		Type:   string(gocb.CouchbaseBucketType),
 		SQL:    "INCREMENT",
@@ -339,7 +322,7 @@ func TestCollection_CRUD(t *testing.T) {
 	}, data.Tags)
 
 	// Decrement
-	_, err = bc.Decrement(testDocumentID, &gocb.DecrementOptions{
+	_, err = bc.Decrement(crudTestDocumentID, &gocb.DecrementOptions{
 		Initial:    2,
 		ParentSpan: instagocb.GetParentSpanFromContext(ctx),
 	})
@@ -351,7 +334,7 @@ func TestCollection_CRUD(t *testing.T) {
 	a.IsType(instana.CouchbaseSpanData{}, span.Data)
 	data = span.Data.(instana.CouchbaseSpanData)
 	a.Equal(instana.CouchbaseSpanTags{
-		Bucket: testBucketName,
+		Bucket: cbTestBucket,
 		Host:   "localhost",
 		Type:   string(gocb.CouchbaseBucketType),
 		SQL:    "DECREMENT",
