@@ -128,7 +128,7 @@ while IFS= read -r line; do
     continue
   fi
 
-  if gh pr list | grep -q "instrumentation $INSTRUMENTATION for new version $LATEST_VERSION"; then
+  if gh pr list | grep -q "feat(currency): updated instrumentation of $INSTRUMENTATION for new version $LATEST_VERSION"; then
     echo "PR for $INSTRUMENTATION newer version:$LATEST_VERSION already exists. Skipping to next iteration"
     continue
   fi
