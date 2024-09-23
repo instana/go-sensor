@@ -192,7 +192,7 @@ while IFS= read -r line; do
         debug_log "Immediate next version:" "$IMMEDIATE_NEXT_VERSION"
         debug_log "Immediate next version date:" "$IMMEDIATE_NEXT_VERSION_DATE"
 
-        debug_log "$TARGET_PACKAGE_NAME - $CURRENT_VERSION - $LATEST_VERSION - $IMMEDIATE_NEXT_VERSION" >> $OUTPUT_TO_SLACK
+        echo "$TARGET_PACKAGE_NAME - $CURRENT_VERSION - $LATEST_VERSION - $IMMEDIATE_NEXT_VERSION" >> $OUTPUT_TO_SLACK
 
         find_days_behind_last_support "$IMMEDIATE_NEXT_VERSION_DATE"
 
