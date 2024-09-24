@@ -129,6 +129,7 @@ while IFS= read -r line; do
   fi
 
   PR_TITLE="feat(currency): updated instrumentation of $INSTRUMENTATION for new version $LATEST_VERSION"
+COMMIT_MSG="feat(currency): updated go.mod, go.sum files, README.md for $INSTRUMENTATION"
 
   if gh pr list | grep -q "$PR_TITLE"; then
     echo "PR for $INSTRUMENTATION newer version:$LATEST_VERSION already exists. Skipping to next iteration"
