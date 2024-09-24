@@ -128,7 +128,10 @@ while IFS= read -r line; do
     continue
   fi
 
-  if gh pr list | grep -q "feat(currency): updated instrumentation of $INSTRUMENTATION for new version $LATEST_VERSION"; then
+  PR_TITLE="feat(currency): updated instrumentation of $INSTRUMENTATION for new version $LATEST_VERSION"
+COMMIT_MSG="feat(currency): updated go.mod, go.sum files, README.md for $INSTRUMENTATION"
+
+  if gh pr list | grep -q "$PR_TITLE"; then
     echo "PR for $INSTRUMENTATION newer version:$LATEST_VERSION already exists. Skipping to next iteration"
     continue
   fi
@@ -162,13 +165,13 @@ while IFS= read -r line; do
   git checkout -b "update-instrumentations-$INSTRUMENTATION-id-$CURRENT_TIME_UNIX"
 
   git add go.mod go.sum $LIBRARY_INFO_MD_PATH
-  git commit -m "feat(currency): updated go.mod, go.sum files, README.md for $INSTRUMENTATION"
+  git commit -m "$COMMIT_MSG"
   git push origin @
 
   # Create a PR request for the changes
   # shellcheck disable=SC2046
-  gh pr create --title "feat(currency): updated instrumentation of $INSTRUMENTATION for new version $LATEST_VERSION. Id: $CURRENT_TIME_UNIX" \
-    --body "This PR adds changes for the newer version $LATEST_VERSION for the instrumented package" --head $(git branch --show-current)
+  gh pr create --title "$PR_TITLE. Id: $CURRENT_TIME_UNIX" \
+    --body "This PR adds changes for the newer version $LATEST_VERSION for the instrumented package" --head $(git branch --show-current) --label "tekton_ci"
 
   # Back to working directry
   cd $TRACER_PATH
