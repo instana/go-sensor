@@ -165,7 +165,7 @@ COMMIT_MSG="feat(currency): updated go.mod, go.sum files, README.md for $INSTRUM
   git checkout -b "update-instrumentations-$INSTRUMENTATION-id-$CURRENT_TIME_UNIX"
 
   git add go.mod go.sum $LIBRARY_INFO_MD_PATH
-  git commit -m "$PR_TITLE"
+  git commit -m "$COMMIT_MSG"
   git push origin @
 
   # Create a PR request for the changes
