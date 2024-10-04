@@ -1,0 +1,116 @@
+name: Run unit & integration tests against Golang RC version
+run-name: Running unit & integration tests against Golang RC version - once a week
+on:
+    schedule:
+      - cron: "0 0 * * 6" # Weekly once; 12 AM every saturday
+    workflow_dispatch:
+
+jobs:
+  build:
+    name: RC version tests
+    runs-on: ubuntu-latest
+    env:
+      COSMOS_CONNECTION_URL: ${{ secrets.COSMOS_CONNECTION_URL }}
+      COSMOS_KEY: ${{ secrets.COSMOS_KEY }}
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Run coverage commands
+        shell: bash
+        id: run_tests_with_rc
+        continue-on-error: true
+        run: |
+            #!/bin/bash
+            shopt -s expand_aliases
+            TRACER_PATH=$(pwd)
+            echo $TRACER_PATH
+
+            echo "Fetch latest Golang RC version!"
+            rcToInstall=$(git ls-remote -t https://github.com/golang/go | awk -F/ '{ print $NF }' | sort -V | grep rc | tail -1 | tr -d ' ')
+            echo "RC version : $rcToInstall"
+            echo "GO_RC_VERSION=$rcToInstall" >> $GITHUB_ENV
+
+            url="golang.org/dl/$rcToInstall@latest"
+            echo "RC URL : $url"
+            go install $url
+            ls ~/go
+            ls ~/go/bin
+
+            alias gorc="~/go/bin/$rcToInstall"
+            gorc download
+            gorc version
+
+            echo "Starting Couchbase"
+            docker compose -f docker-compose-integration.yaml up -d
+            echo "Starting Postgres"
+            sudo systemctl start postgresql.service
+            sudo -u postgres psql -c "ALTER USER postgres PASSWORD 'mysecretpassword'"
+            echo "After starting Postgres"
+
+            echo "Running unit test for core!"
+            gorc test -v -coverpkg=./... -cover -covermode atomic ./... 
+
+            DEPRECATED_PKGS=".*instaamqp$"
+
+            LIB_LIST=$(find ./instrumentation -name go.mod -exec dirname {} \; | grep -E -v "$DEPRECATED_PKGS")
+
+            for lib in $LIB_LIST
+              do echo "Running unit test for $lib" && cd "$lib" && gorc mod tidy && gorc test -v -coverpkg=./... -cover -covermode atomic ./... && cd -;
+            done
+
+            INTEGRATIONS_TESTS=("instagocb" "instapgx" "instacosmos" "instapgx/v2")
+
+            for str in ${INTEGRATIONS_TESTS[@]}; do
+              dir=./instrumentation/$str
+              echo "Running integration test for $dir"
+              cd $dir
+              gorc mod tidy
+              gorc test -v -tags=integration -coverpkg=./... -cover -covermode atomic ./... && cd -
+            done
+
+            echo "All done!"
+          
+      - name: Send sucess to slack channel
+        if: ${{ steps.run_tests_with_rc.outcome == 'success'}}
+        uses: slackapi/slack-github-action@v1.24.0
+        with:
+          channel-id: ${{ secrets.SLACK_RELEASE_INTERNAL_CHANNEL_ID }}
+          payload: |
+            {
+              "text": ":mega: Unit tests executed successfully with Golang RC version ${{ env.GO_RC_VERSION }}. :tada:",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": ":mega: Unit tests executed successfully with Golang RC version ${{ env.GO_RC_VERSION }}. :tada:"
+                  }
+                }
+              ]
+            }
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+          SLACK_RELEASE_INTERNAL_CHANNEL_ID: ${{ secrets.SLACK_RELEASE_INTERNAL_CHANNEL_ID }}
+      - name: Send failure to slack channel
+        if: ${{ steps.run_tests_with_rc.outcome == 'failure'}}
+        uses: slackapi/slack-github-action@v1.24.0
+        with:
+          channel-id: ${{ secrets.SLACK_RELEASE_INTERNAL_CHANNEL_ID }}
+          payload: |
+            {
+              "text": ":alert2: Unit tests run with Golang RC version ${{ env.GO_RC_VERSION }} have failed! :alert2:",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": ":alert2: Unit tests run with Golang RC version ${{ env.GO_RC_VERSION }} have failed! :alert2:"
+                  }
+                }
+              ]
+            }
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+          SLACK_RELEASE_INTERNAL_CHANNEL_ID: ${{ secrets.SLACK_RELEASE_INTERNAL_CHANNEL_ID }}
+          
