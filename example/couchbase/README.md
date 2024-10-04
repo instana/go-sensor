@@ -5,11 +5,9 @@
 
 ### Run the application
 ```sh
-cd /path/to/go-sensor
-
+cd /path/to/go-sensor/examples/couchbase
 # setup couchbase/server-sandbox container 
 docker-compose up
-cd ./examples/couchbase
 go mod tidy
 go run .
 ```
