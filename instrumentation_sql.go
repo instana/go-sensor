@@ -22,6 +22,88 @@ var (
 	sqlDriverRegistrationMu sync.Mutex
 )
 
+var redisCommands = map[string]struct{}{
+	"SET":           {},
+	"GET":           {},
+	"DEL":           {},
+	"INCR":          {},
+	"DECR":          {},
+	"APPEND":        {},
+	"GETRANGE":      {},
+	"SETRANGE":      {},
+	"STRLEN":        {},
+	"HSET":          {},
+	"HGET":          {},
+	"HMSET":         {},
+	"HMGET":         {},
+	"HDEL":          {},
+	"HGETALL":       {},
+	"HKEYS":         {},
+	"HVALS":         {},
+	"HLEN":          {},
+	"HINCRBY":       {},
+	"LPUSH":         {},
+	"RPUSH":         {},
+	"LPOP":          {},
+	"RPOP":          {},
+	"LLEN":          {},
+	"LRANGE":        {},
+	"LREM":          {},
+	"LINDEX":        {},
+	"LSET":          {},
+	"SADD":          {},
+	"SREM":          {},
+	"SMEMBERS":      {},
+	"SISMEMBER":     {},
+	"SCARD":         {},
+	"SINTER":        {},
+	"SUNION":        {},
+	"SDIFF":         {},
+	"SRANDMEMBER":   {},
+	"SPOP":          {},
+	"ZADD":          {},
+	"ZREM":          {},
+	"ZRANGE":        {},
+	"ZREVRANGE":     {},
+	"ZRANK":         {},
+	"ZREVRANK":      {},
+	"ZRANGEBYSCORE": {},
+	"ZCARD":         {},
+	"ZSCORE":        {},
+	"PFADD":         {},
+	"PFCOUNT":       {},
+	"PFMERGE":       {},
+	"SUBSCRIBE":     {},
+	"UNSUBSCRIBE":   {},
+	"PUBLISH":       {},
+	"MULTI":         {},
+	"EXEC":          {},
+	"DISCARD":       {},
+	"WATCH":         {},
+	"UNWATCH":       {},
+	"KEYS":          {},
+	"EXISTS":        {},
+	"EXPIRE":        {},
+	"TTL":           {},
+	"PERSIST":       {},
+	"RENAME":        {},
+	"RENAMENX":      {},
+	"TYPE":          {},
+	"SCAN":          {},
+	"PING":          {},
+	"INFO":          {},
+	"CLIENT LIST":   {},
+	"CONFIG GET":    {},
+	"CONFIG SET":    {},
+	"FLUSHDB":       {},
+	"FLUSHALL":      {},
+	"DBSIZE":        {},
+	"SAVE":          {},
+	"BGSAVE":        {},
+	"BGREWRITEAOF":  {},
+	"SHUTDOWN":      {},
+}
+
 // InstrumentSQLDriver instruments provided database driver for  use with `sql.Open()`.
 // This method will ignore any attempt to register the driver with the same name again.
 //
@@ -164,14 +246,12 @@ func mySQLSpan(ctx context.Context, conn DbConnDetails, query string, sensor Tra
 	return sensor.StartSpan(string(MySQLSpanType), opts...)
 }
 
-var redisCmds = regexp.MustCompile(`(?i)SET|GET|DEL|INCR|DECR|APPEND|GETRANGE|SETRANGE|STRLEN|HSET|HGET|HMSET|HMGET|HDEL|HGETALL|HKEYS|HVALS|HLEN|HINCRBY|LPUSH|RPUSH|LPOP|RPOP|LLEN|LRANGE|LREM|LINDEX|LSET|SADD|SREM|SMEMBERS|SISMEMBER|SCARD|SINTER|SUNION|SDIFF|SRANDMEMBER|SPOP|ZADD|ZREM|ZRANGE|ZREVRANGE|ZRANK|ZREVRANK|ZRANGEBYSCORE|ZCARD|ZSCORE|PFADD|PFCOUNT|PFMERGE|SUBSCRIBE|UNSUBSCRIBE|PUBLISH|MULTI|EXEC|DISCARD|WATCH|UNWATCH|KEYS|EXISTS|EXPIRE|TTL|PERSIST|RENAME|RENAMENX|TYPE|SCAN|PING|INFO|CLIENT LIST|CONFIG GET|CONFIG SET|FLUSHDB|FLUSHALL|DBSIZE|SAVE|BGSAVE|BGREWRITEAOF|SHUTDOWN`)
-
 func redisSpan(ctx context.Context, conn DbConnDetails, query string, sensor TracerLogger) ot.Span {
 	qarr := strings.Fields(query)
 	var q string
 
 	for _, w := range qarr {
-		if redisCmds.MatchString(w) {
+		if isRedisQuery(w) {
 			q += w + " "
 		}
 	}
@@ -259,13 +339,26 @@ func genericSQLSpan(ctx context.Context, conn DbConnDetails, query string, senso
 
 // dbNameByQuery attempts to guess what is the database based on the query.
 func dbNameByQuery(q string) string {
-	qf := strings.Fields(q)
 
-	if len(qf) > 0 && redisCmds.MatchString(qf[0]) {
+	if isRedisQuery(q) {
 		return "redis"
 	}
 
 	return ""
+}
+
+// isRedisQuery attempts to guess if the string passed is a redis query.
+func isRedisQuery(query string) bool {
+	query = strings.TrimSpace(query)
+	if len(query) == 0 {
+		return false
+	}
+
+	parts := strings.SplitN(query, " ", 2)
+	command := strings.ToUpper(parts[0])
+
+	_, exists := redisCommands[command]
+	return exists
 }
 
 // StartSQLSpan creates a span based on DbConnDetails and a query, and attempts to detect which kind of database it belongs.
