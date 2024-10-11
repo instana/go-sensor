@@ -247,17 +247,11 @@ func mySQLSpan(ctx context.Context, conn DbConnDetails, query string, sensor Tra
 }
 
 func redisSpan(ctx context.Context, conn DbConnDetails, query string, sensor TracerLogger) ot.Span {
-	qarr := strings.Fields(query)
-	var q string
 
-	for _, w := range qarr {
-		if isRedisQuery(w) {
-			q += w + " "
-		}
-	}
+	q, _ := parseRedisQuery(query)
 
 	tags := ot.Tags{
-		"redis.command": strings.TrimSpace(q),
+		"redis.command": q,
 	}
 
 	if conn.Error != nil {
@@ -340,25 +334,39 @@ func genericSQLSpan(ctx context.Context, conn DbConnDetails, query string, senso
 // dbNameByQuery attempts to guess what is the database based on the query.
 func dbNameByQuery(q string) string {
 
-	if isRedisQuery(q) {
+	if _, ok := parseRedisQuery(q); ok {
 		return "redis"
 	}
 
 	return ""
 }
 
-// isRedisQuery attempts to guess if the string passed is a redis query.
-func isRedisQuery(query string) bool {
+// parseRedisQuery attempts to guess if the input string is a valid Redis query.
+// parameters:
+//   - query (string): a string that may be a redis query
+//
+// returns:
+//   - command (string): The Redis command if the input is identified as a Redis query.
+//     This would typically be the first word of the Redis command, such as "SET", "CONFIG GET" etc.
+//     If the input is not a Redis query, this value will be an empty string.
+//   - isRedis (bool): A boolean value, `true` if the input is recognized as a Redis query,
+//     otherwise `false`.
+func parseRedisQuery(query string) (command string, isRedis bool) {
 	query = strings.TrimSpace(query)
 	if len(query) == 0 {
-		return false
+		return "", false
 	}
 
-	parts := strings.SplitN(query, " ", 2)
-	command := strings.ToUpper(parts[0])
+	// getting first two word of the query
+	parts := strings.SplitN(query, " ", 3)
+	command = strings.ToUpper(parts[0])
 
-	_, exists := redisCommands[command]
-	return exists
+	_, isRedis = redisCommands[command]
+	if !isRedis && len(parts) > 1 {
+		command = strings.ToUpper(parts[0] + " " + parts[1])
+		_, isRedis = redisCommands[command]
+	}
+	return
 }
 
 // StartSQLSpan creates a span based on DbConnDetails and a query, and attempts to detect which kind of database it belongs.
