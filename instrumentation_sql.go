@@ -248,7 +248,11 @@ func mySQLSpan(ctx context.Context, conn DbConnDetails, query string, sensor Tra
 
 func redisSpan(ctx context.Context, conn DbConnDetails, query string, sensor TracerLogger) ot.Span {
 
-	q, _ := parseRedisQuery(query)
+	var q string
+	q = GetValueFromContext(ctx, redisCommand)
+	if q == "" {
+		q, _ = parseRedisQuery(query)
+	}
 
 	tags := ot.Tags{
 		"redis.command": q,
@@ -332,13 +336,16 @@ func genericSQLSpan(ctx context.Context, conn DbConnDetails, query string, senso
 }
 
 // dbNameByQuery attempts to guess what is the database based on the query.
-func dbNameByQuery(q string) string {
+func dbNameByQuery(ctx context.Context, q string) (context.Context, string) {
 
-	if _, ok := parseRedisQuery(q); ok {
-		return "redis"
+	var command string
+	var ok bool
+
+	if command, ok = parseRedisQuery(q); ok {
+		return AddToContext(ctx, redisCommand, command), "redis"
 	}
 
-	return ""
+	return ctx, ""
 }
 
 // parseRedisQuery attempts to guess if the input string is a valid Redis query.
@@ -377,9 +384,11 @@ func StartSQLSpan(ctx context.Context, conn DbConnDetails, query string, sensor 
 	return startSQLSpan(ctx, conn, query, sensor)
 }
 
-func startSQLSpan(ctx context.Context, conn DbConnDetails, query string, sensor TracerLogger) (sp ot.Span, dbKey string) {
+func startSQLSpan(c context.Context, conn DbConnDetails, query string, sensor TracerLogger) (sp ot.Span, dbKey string) {
+
+	var ctx context.Context = c
 	if conn.DatabaseName == "" {
-		conn.DatabaseName = dbNameByQuery(query)
+		ctx, conn.DatabaseName = dbNameByQuery(c, query)
 	}
 
 	switch conn.DatabaseName {
