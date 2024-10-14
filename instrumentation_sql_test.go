@@ -925,10 +925,10 @@ func TestStmtExecContext_WithRedisCommands(t *testing.T) {
 		ctx = instana.ContextWithSpan(ctx, span)
 	}
 
-	instana.InstrumentSQLDriver(s, "fake_redis_kv_driver", sqlDriver{})
-	require.Contains(t, sql.Drivers(), "fake_redis_kv_driver_with_instana")
+	instana.InstrumentSQLDriver(s, "fake_redis_driver_2", sqlDriver{})
+	require.Contains(t, sql.Drivers(), "fake_redis_driver_2_with_instana")
 
-	db, err := instana.SQLOpen("fake_redis_kv_driver", "192.168.2.10:6790")
+	db, err := instana.SQLOpen("fake_redis_driver_2", "192.168.2.10:6790")
 	require.NoError(t, err)
 
 	t.Run("valid redis command", func(t *testing.T) {
