@@ -246,16 +246,14 @@ func mySQLSpan(ctx context.Context, conn DbConnDetails, query string, sensor Tra
 	return sensor.StartSpan(string(MySQLSpanType), opts...)
 }
 
-func redisSpan(ctx context.Context, conn DbConnDetails, query string, sensor TracerLogger) ot.Span {
+func redisSpan(ctx context.Context, conn DbConnDetails, query string, cmd string, sensor TracerLogger) ot.Span {
 
-	var q string
-	q = getValueFromContext(ctx, redisCommandKey)
-	if q == "" {
-		q, _ = parseRedisQuery(query)
+	if cmd == "" {
+		cmd, _ = parseRedisQuery(query)
 	}
 
 	tags := ot.Tags{
-		"redis.command": q,
+		"redis.command": cmd,
 	}
 
 	if conn.Error != nil {
@@ -335,17 +333,14 @@ func genericSQLSpan(ctx context.Context, conn DbConnDetails, query string, senso
 	return sensor.StartSpan("sdk.database", opts...)
 }
 
-// dbNameByQuery attempts to guess what is the database based on the query.
-func dbNameByQuery(ctx context.Context, q string) (context.Context, string) {
+// retrieveDBNameAndCmd attempts to guess what is the database based on the query.
+func retrieveDBNameAndCmd(q string) (cmd string, dbName string) {
 
-	var command string
-	var ok bool
-
-	if command, ok = parseRedisQuery(q); ok {
-		return addToContext(ctx, redisCommandKey, command), "redis"
+	if cmd, ok := parseRedisQuery(q); ok {
+		return cmd, "redis"
 	}
 
-	return ctx, ""
+	return cmd, dbName
 }
 
 // parseRedisQuery attempts to guess if the input string is a valid Redis query.
@@ -384,18 +379,18 @@ func StartSQLSpan(ctx context.Context, conn DbConnDetails, query string, sensor 
 	return startSQLSpan(ctx, conn, query, sensor)
 }
 
-func startSQLSpan(c context.Context, conn DbConnDetails, query string, sensor TracerLogger) (sp ot.Span, dbKey string) {
+func startSQLSpan(ctx context.Context, conn DbConnDetails, query string, sensor TracerLogger) (sp ot.Span, dbKey string) {
 
-	var ctx context.Context = c
+	var dbCmd string
 	if conn.DatabaseName == "" {
-		ctx, conn.DatabaseName = dbNameByQuery(c, query)
+		dbCmd, conn.DatabaseName = retrieveDBNameAndCmd(query)
 	}
 
 	switch conn.DatabaseName {
 	case "postgres":
 		return postgresSpan(ctx, conn, query, sensor), "pg"
 	case "redis":
-		return redisSpan(ctx, conn, query, sensor), "redis"
+		return redisSpan(ctx, conn, query, dbCmd, sensor), "redis"
 	case "mysql":
 		return mySQLSpan(ctx, conn, query, sensor), "mysql"
 	case "couchbase":
