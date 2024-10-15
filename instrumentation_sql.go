@@ -249,7 +249,7 @@ func mySQLSpan(ctx context.Context, conn DbConnDetails, query string, sensor Tra
 func redisSpan(ctx context.Context, conn DbConnDetails, query string, sensor TracerLogger) ot.Span {
 
 	var q string
-	q = GetValueFromContext(ctx, redisCommand)
+	q = getValueFromContext(ctx, redisCommandKey)
 	if q == "" {
 		q, _ = parseRedisQuery(query)
 	}
@@ -342,7 +342,7 @@ func dbNameByQuery(ctx context.Context, q string) (context.Context, string) {
 	var ok bool
 
 	if command, ok = parseRedisQuery(q); ok {
-		return AddToContext(ctx, redisCommand, command), "redis"
+		return addToContext(ctx, redisCommandKey, command), "redis"
 	}
 
 	return ctx, ""

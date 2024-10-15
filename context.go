@@ -9,10 +9,12 @@ import (
 	ot "github.com/opentracing/opentracing-go"
 )
 
-type ContextKey string
+type ContextKey int8
 
-var activeSpanKey ContextKey = "active_span"
-var redisCommand ContextKey = "redis_command"
+const (
+	activeSpanKey ContextKey = iota
+	redisCommandKey
+)
 
 // ContextWithSpan returns a new context.Context holding a reference to an active span
 func ContextWithSpan(ctx context.Context, sp ot.Span) context.Context {
@@ -23,21 +25,14 @@ func ContextWithSpan(ctx context.Context, sp ot.Span) context.Context {
 // span, this method returns false.
 func SpanFromContext(ctx context.Context) (ot.Span, bool) {
 	sp, ok := ctx.Value(activeSpanKey).(ot.Span)
-	if !ok {
-		return nil, false
-	}
-
-	return sp, true
+	return sp, ok
 }
 
-func AddToContext(ctx context.Context, key ContextKey, value string) context.Context {
+func addToContext(ctx context.Context, key ContextKey, value string) context.Context {
 	return context.WithValue(ctx, key, value)
 }
 
-func GetValueFromContext(ctx context.Context, key ContextKey) string {
-	val, ok := ctx.Value(key).(string)
-	if !ok {
-		return ""
-	}
+func getValueFromContext(ctx context.Context, key ContextKey) string {
+	val, _ := ctx.Value(key).(string)
 	return val
 }

@@ -26,20 +26,7 @@ func TestSpanFromContext_WithActiveSpan(t *testing.T) {
 }
 
 func TestSpanFromContext_NoActiveSpan(t *testing.T) {
-	_, ok := instana.SpanFromContext(context.Background())
+	sp, ok := instana.SpanFromContext(context.Background())
+	assert.Equal(t, sp, nil)
 	assert.False(t, ok)
-}
-
-func TestAddToContext_WithAnExistingKey(t *testing.T) {
-	ctx := instana.AddToContext(context.Background(), instana.ContextKey("redis_command"), "GET")
-
-	val := instana.GetValueFromContext(ctx, instana.ContextKey("redis_command"))
-	assert.Equal(t, val, "GET")
-}
-
-func TestAddToContext_WithOutAnExistingKey(t *testing.T) {
-	ctx := context.Background()
-
-	val := instana.GetValueFromContext(ctx, instana.ContextKey("redis_command"))
-	assert.Equal(t, val, "")
 }
