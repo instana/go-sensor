@@ -26,6 +26,7 @@ func TestSpanFromContext_WithActiveSpan(t *testing.T) {
 }
 
 func TestSpanFromContext_NoActiveSpan(t *testing.T) {
-	_, ok := instana.SpanFromContext(context.Background())
+	sp, ok := instana.SpanFromContext(context.Background())
+	assert.Equal(t, sp, nil)
 	assert.False(t, ok)
 }
