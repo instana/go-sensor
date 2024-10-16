@@ -334,6 +334,8 @@ func genericSQLSpan(ctx context.Context, conn DbConnDetails, query string, senso
 }
 
 // retrieveDBNameAndCmd attempts to guess what is the database based on the query.
+// It accepts a string that may be a database query
+// And returns the database name and query command
 func retrieveDBNameAndCmd(q string) (cmd string, dbName string) {
 
 	if cmd, ok := parseRedisQuery(q); ok {
@@ -354,12 +356,13 @@ func retrieveDBNameAndCmd(q string) (cmd string, dbName string) {
 //   - isRedis (bool): A boolean value, `true` if the input is recognized as a Redis query,
 //     otherwise `false`.
 func parseRedisQuery(query string) (command string, isRedis bool) {
+
 	query = strings.TrimSpace(query)
 	if len(query) == 0 {
 		return "", false
 	}
 
-	// getting first two word of the query
+	// getting first two words of the query
 	parts := strings.SplitN(query, " ", 3)
 	command = strings.ToUpper(parts[0])
 
