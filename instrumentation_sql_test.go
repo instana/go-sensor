@@ -914,7 +914,7 @@ func TestStmtExecContext_WithRedisCommands(t *testing.T) {
 
 	recorder := instana.NewTestRecorder()
 	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{
-		Service:     "go-sensor-test",
+		Service:     "redis-instrumentation-test",
 		AgentClient: alwaysReadyClient{},
 	}, recorder))
 	defer instana.ShutdownSensor()
