@@ -370,6 +370,7 @@ func parseRedisQuery(query string) (command string, isRedis bool) {
 		command = strings.ToUpper(parts[0] + " " + parts[1])
 		_, isRedis = redisCommands[command]
 	}
+
 	return
 }
 
