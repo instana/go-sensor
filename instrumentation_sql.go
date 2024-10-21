@@ -356,7 +356,6 @@ func retrieveDBNameAndCmd(q string) (cmd string, dbName string) {
 //   - isRedis (bool): A boolean value, `true` if the input is recognized as a Redis query,
 //     otherwise `false`.
 func parseRedisQuery(query string) (command string, isRedis bool) {
-
 	query = strings.TrimSpace(query)
 	if len(query) == 0 {
 		return "", false
