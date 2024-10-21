@@ -6,6 +6,7 @@ package instafasthttp
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 	"net/url"
 	"strings"
@@ -111,6 +112,7 @@ func tracingNamedHandlerFuncFastHttp(sensor instana.TracerLogger, routeID, pathT
 }
 
 func initSpanOptionsFastHttp(req *fasthttp.Request, routeID string) []ot.StartSpanOption {
+	fmt.Println("hello")
 	opts := []ot.StartSpanOption{
 		ext.SpanKindRPCServer,
 		ot.Tags{
@@ -195,7 +197,7 @@ func collectRequestHeadersFastHTTP(headers http.Header, collectableHTTPHeaders [
 	}
 }
 
-func extractStartSpanOptionsFromHeadersFastHttp(tracer ot.Tracer, req *fasthttp.Request, headers map[string][]string, sensor TracerLogger) []ot.StartSpanOption {
+func extractStartSpanOptionsFromHeadersFastHttp(tracer ot.Tracer, req *fasthttp.Request, headers map[string][]string, sensor instana.TracerLogger) []ot.StartSpanOption {
 	var opts []ot.StartSpanOption
 	wireContext, err := tracer.Extract(ot.HTTPHeaders, ot.HTTPHeadersCarrier(headers))
 	switch {
