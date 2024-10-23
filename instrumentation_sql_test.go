@@ -910,6 +910,162 @@ func TestOpenSQLDB_RedisKVConnString(t *testing.T) {
 	}, data.Tags)
 }
 
+func TestStmtExecContext_WithRedisCommands(t *testing.T) {
+
+	recorder := instana.NewTestRecorder()
+	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{
+		Service:     "redis-instrumentation-test",
+		AgentClient: alwaysReadyClient{},
+	}, recorder))
+	defer instana.ShutdownSensor()
+
+	span := s.Tracer().StartSpan("parent-span")
+	ctx := context.Background()
+	if span != nil {
+		ctx = instana.ContextWithSpan(ctx, span)
+	}
+
+	instana.InstrumentSQLDriver(s, "fake_redis_driver_2", sqlDriver{})
+	require.Contains(t, sql.Drivers(), "fake_redis_driver_2_with_instana")
+
+	db, err := instana.SQLOpen("fake_redis_driver_2", "192.168.2.10:6790")
+	require.NoError(t, err)
+
+	t.Run("valid redis command", func(t *testing.T) {
+
+		_, err = db.ExecContext(ctx, "GET key")
+		require.NoError(t, err)
+
+		spans := recorder.GetQueuedSpans()
+		require.Len(t, spans, 1)
+
+		require.IsType(t, instana.RedisSpanData{}, spans[0].Data)
+		data := spans[0].Data.(instana.RedisSpanData)
+
+		assert.Equal(t, instana.RedisSpanTags{
+			Connection: "192.168.2.10:6790",
+			Command:    "GET",
+			Error:      "",
+		}, data.Tags)
+	})
+
+	t.Run("With multi word command", func(t *testing.T) {
+
+		_, err = db.ExecContext(ctx, "CONFIG GET key")
+		require.NoError(t, err)
+
+		spans := recorder.GetQueuedSpans()
+		require.Len(t, spans, 1)
+
+		require.IsType(t, instana.RedisSpanData{}, spans[0].Data)
+		data := spans[0].Data.(instana.RedisSpanData)
+
+		assert.Equal(t, instana.RedisSpanTags{
+			Connection: "192.168.2.10:6790",
+			Command:    "CONFIG GET",
+			Error:      "",
+		}, data.Tags)
+	})
+
+	t.Run("wrong/unknown(to go sensor) redis command", func(t *testing.T) {
+
+		_, err = db.ExecContext(ctx, "SELECT key")
+		require.NoError(t, err)
+
+		spans := recorder.GetQueuedSpans()
+		require.Len(t, spans, 1)
+
+		require.IsType(t, instana.SDKSpanData{}, spans[0].Data)
+		data := spans[0].Data.(instana.SDKSpanData)
+
+		assert.Equal(t, instana.SDKSpanTags{
+			Name: "sdk.database",
+			Type: "exit",
+			Custom: map[string]interface{}{
+				"tags": ot.Tags{
+					"span.kind":    ext.SpanKindRPCClientEnum,
+					"db.instance":  "192.168.2.10:6790",
+					"db.statement": "SELECT key",
+					"db.type":      "sql",
+					"peer.address": "192.168.2.10:6790",
+				},
+			},
+		}, data.Tags)
+	})
+
+	t.Run("empty query", func(t *testing.T) {
+
+		_, err = db.ExecContext(ctx, "")
+		require.NoError(t, err)
+
+		spans := recorder.GetQueuedSpans()
+		require.Len(t, spans, 1)
+
+		require.IsType(t, instana.SDKSpanData{}, spans[0].Data)
+		data := spans[0].Data.(instana.SDKSpanData)
+
+		assert.Equal(t, instana.SDKSpanTags{
+			Name: "sdk.database",
+			Type: "exit",
+			Custom: map[string]interface{}{
+				"tags": ot.Tags{
+					"span.kind":    ext.SpanKindRPCClientEnum,
+					"db.instance":  "192.168.2.10:6790",
+					"db.statement": "",
+					"db.type":      "sql",
+					"peer.address": "192.168.2.10:6790",
+				},
+			},
+		}, data.Tags)
+	})
+
+	t.Run("transaction", func(t *testing.T) {
+
+		_, err = db.ExecContext(ctx, "MULTI")
+		require.NoError(t, err)
+
+		_, err = db.ExecContext(ctx, "SET", "key1", "value1")
+		require.NoError(t, err)
+
+		_, err = db.ExecContext(ctx, "INCR", "counter")
+		require.NoError(t, err)
+
+		_, err = db.ExecContext(ctx, "EXEC")
+		require.NoError(t, err)
+
+		spans := recorder.GetQueuedSpans()
+		require.Len(t, spans, 4)
+
+		testcases := []struct {
+			Command string
+		}{
+			{
+				Command: "MULTI",
+			},
+			{
+				Command: "SET",
+			},
+			{
+				Command: "INCR",
+			},
+			{
+				Command: "EXEC",
+			},
+		}
+
+		for i, tc := range testcases {
+			require.IsType(t, instana.RedisSpanData{}, spans[i].Data)
+			data := spans[i].Data.(instana.RedisSpanData)
+
+			assert.Equal(t, instana.RedisSpanTags{
+				Connection: "192.168.2.10:6790",
+				Command:    tc.Command,
+				Error:      "",
+			}, data.Tags)
+		}
+	})
+}
+
 func TestNoPanicWithNotParsableConnectionString(t *testing.T) {
 	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{
 		Service:     "go-sensor-test",

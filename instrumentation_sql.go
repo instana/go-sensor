@@ -164,20 +164,17 @@ func mySQLSpan(ctx context.Context, conn DbConnDetails, query string, sensor Tra
 	return sensor.StartSpan(string(MySQLSpanType), opts...)
 }
 
-var redisCmds = regexp.MustCompile(`(?i)SET|GET|DEL|INCR|DECR|APPEND|GETRANGE|SETRANGE|STRLEN|HSET|HGET|HMSET|HMGET|HDEL|HGETALL|HKEYS|HVALS|HLEN|HINCRBY|LPUSH|RPUSH|LPOP|RPOP|LLEN|LRANGE|LREM|LINDEX|LSET|SADD|SREM|SMEMBERS|SISMEMBER|SCARD|SINTER|SUNION|SDIFF|SRANDMEMBER|SPOP|ZADD|ZREM|ZRANGE|ZREVRANGE|ZRANK|ZREVRANK|ZRANGEBYSCORE|ZCARD|ZSCORE|PFADD|PFCOUNT|PFMERGE|SUBSCRIBE|UNSUBSCRIBE|PUBLISH|MULTI|EXEC|DISCARD|WATCH|UNWATCH|KEYS|EXISTS|EXPIRE|TTL|PERSIST|RENAME|RENAMENX|TYPE|SCAN|PING|INFO|CLIENT LIST|CONFIG GET|CONFIG SET|FLUSHDB|FLUSHALL|DBSIZE|SAVE|BGSAVE|BGREWRITEAOF|SHUTDOWN`)
+func redisSpan(ctx context.Context, conn DbConnDetails, query string, cmd string, sensor TracerLogger) ot.Span {
 
-func redisSpan(ctx context.Context, conn DbConnDetails, query string, sensor TracerLogger) ot.Span {
-	qarr := strings.Fields(query)
-	var q string
-
-	for _, w := range qarr {
-		if redisCmds.MatchString(w) {
-			q += w + " "
-		}
+	// The command string will be empty if the database name is determined
+	// from the connection URL rather than the query.
+	// Therefore, the Redis command should be parsed from the query.
+	if cmd == "" {
+		cmd, _ = parseRedisQuery(query)
 	}
 
 	tags := ot.Tags{
-		"redis.command": strings.TrimSpace(q),
+		"redis.command": cmd,
 	}
 
 	if conn.Error != nil {
@@ -257,15 +254,45 @@ func genericSQLSpan(ctx context.Context, conn DbConnDetails, query string, senso
 	return sensor.StartSpan("sdk.database", opts...)
 }
 
-// dbNameByQuery attempts to guess what is the database based on the query.
-func dbNameByQuery(q string) string {
-	qf := strings.Fields(q)
+// retrieveDBNameAndCmd attempts to guess what is the database based on the query.
+// It accepts a string that may be a database query
+// And returns the database name and query command
+func retrieveDBNameAndCmd(q string) (cmd string, dbName string) {
 
-	if len(qf) > 0 && redisCmds.MatchString(qf[0]) {
-		return "redis"
+	if cmd, ok := parseRedisQuery(q); ok {
+		return cmd, "redis"
 	}
 
-	return ""
+	return cmd, dbName
+}
+
+// parseRedisQuery attempts to guess if the input string is a valid Redis query.
+// parameters:
+//   - query (string): a string that may be a redis query
+//
+// returns:
+//   - command (string): The Redis command if the input is identified as a Redis query.
+//     This would typically be the first word of the Redis command, such as "SET", "CONFIG GET" etc.
+//     If the input is not a Redis query, this value will be an empty string.
+//   - isRedis (bool): A boolean value, `true` if the input is recognized as a Redis query,
+//     otherwise `false`.
+func parseRedisQuery(query string) (command string, isRedis bool) {
+	query = strings.TrimSpace(query)
+	if len(query) == 0 {
+		return "", false
+	}
+
+	// getting first two words of the query
+	parts := strings.SplitN(query, " ", 3)
+	command = strings.ToUpper(parts[0])
+
+	_, isRedis = redisCommands[command]
+	if !isRedis && len(parts) > 1 {
+		command = strings.ToUpper(parts[0] + " " + parts[1])
+		_, isRedis = redisCommands[command]
+	}
+
+	return
 }
 
 // StartSQLSpan creates a span based on DbConnDetails and a query, and attempts to detect which kind of database it belongs.
@@ -277,15 +304,17 @@ func StartSQLSpan(ctx context.Context, conn DbConnDetails, query string, sensor 
 }
 
 func startSQLSpan(ctx context.Context, conn DbConnDetails, query string, sensor TracerLogger) (sp ot.Span, dbKey string) {
+
+	var dbCmd string
 	if conn.DatabaseName == "" {
-		conn.DatabaseName = dbNameByQuery(query)
+		dbCmd, conn.DatabaseName = retrieveDBNameAndCmd(query)
 	}
 
 	switch conn.DatabaseName {
 	case "postgres":
 		return postgresSpan(ctx, conn, query, sensor), "pg"
 	case "redis":
-		return redisSpan(ctx, conn, query, sensor), "redis"
+		return redisSpan(ctx, conn, query, dbCmd, sensor), "redis"
 	case "mysql":
 		return mySQLSpan(ctx, conn, query, sensor), "mysql"
 	case "couchbase":
