@@ -26,6 +26,7 @@ type sqlSpan interface {
 	start(ctx context.Context, sensor TracerLogger) (sp ot.Span, dbKey string)
 }
 
+// sqlSpanData implements sqlSpan
 type sqlSpanData struct {
 	m           *sync.Mutex
 	connDetails DbConnDetails
@@ -33,6 +34,7 @@ type sqlSpanData struct {
 	tags        ot.Tags
 }
 
+// getSQLSpanData returns instance of sqlSpanData while creating a connection to DB
 func getSQLSpanData(c DbConnDetails, q string) *sqlSpanData {
 	var m sync.Mutex
 	tags := make(ot.Tags)
@@ -48,6 +50,7 @@ func getSQLSpanData(c DbConnDetails, q string) *sqlSpanData {
 
 }
 
+// applyTags applies db tags in tags map
 func (c DbConnDetails) applyTags(tags ot.Tags) {
 	switch c.DatabaseName {
 	case "postgres":
@@ -77,6 +80,7 @@ func (s *sqlSpanData) addTag(key string, val string) {
 
 }
 
+// start a new sql span
 func (s *sqlSpanData) start(
 	ctx context.Context,
 	sensor TracerLogger) (sp ot.Span, dbKey string) {
@@ -92,6 +96,7 @@ func (s *sqlSpanData) start(
 
 	// *-------------------* //
 
+	// calling new postgresSpan method
 	case "postgres":
 		return s.postgresSpan(ctx, sensor), "pg"
 
@@ -111,6 +116,7 @@ func (s *sqlSpanData) start(
 
 }
 
+// postgresSpan creates a new postgres span
 func (s *sqlSpanData) postgresSpan(
 	ctx context.Context,
 	sensor TracerLogger) (sp ot.Span) {

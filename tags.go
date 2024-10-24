@@ -16,6 +16,7 @@ const (
 	syntheticCallTag   = "synthetic_call"
 )
 
+// Tags is the interface that applies new tags to ot.Tags map
 type Tags interface {
 	Apply(ot.Tags)
 }
