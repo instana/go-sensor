@@ -2059,14 +2059,12 @@ func get_stmt_StmtExecContext_StmtQueryContext_NamedValueChecker_ColumnConverter
 	return &w_stmt_StmtExecContext_StmtQueryContext_NamedValueChecker_ColumnConverter{
 		Stmt: &wStmt{
 			Stmt:        stmt,
-			connDetails: connDetails,
-			query:       query,
+			sqlSpan: getSQLSpanData(connDetails, query),
 			sensor:      sensor,
 		}, StmtExecContext: &wStmtExecContext{
 			StmtExecContext: StmtExecContext,
-			connDetails:     connDetails,
 			sensor:          sensor,
-			query:           query,
+			sqlSpan: getSQLSpanData(connDetails, query),
 		}, StmtQueryContext: &wStmtQueryContext{
 			StmtQueryContext: StmtQueryContext,
 			connDetails:      connDetails,
@@ -2080,14 +2078,12 @@ func get_stmt_StmtExecContext_StmtQueryContext_NamedValueChecker(stmt driver.Stm
 	return &w_stmt_StmtExecContext_StmtQueryContext_NamedValueChecker{
 		Stmt: &wStmt{
 			Stmt:        stmt,
-			connDetails: connDetails,
-			query:       query,
+			sqlSpan: getSQLSpanData(connDetails, query),
 			sensor:      sensor,
 		}, StmtExecContext: &wStmtExecContext{
 			StmtExecContext: StmtExecContext,
-			connDetails:     connDetails,
 			sensor:          sensor,
-			query:           query,
+			sqlSpan: getSQLSpanData(connDetails, query),
 		}, StmtQueryContext: &wStmtQueryContext{
 			StmtQueryContext: StmtQueryContext,
 			connDetails:      connDetails,
@@ -2100,8 +2096,7 @@ func get_stmt_StmtQueryContext_NamedValueChecker_ColumnConverter(stmt driver.Stm
 	return &w_stmt_StmtQueryContext_NamedValueChecker_ColumnConverter{
 		Stmt: &wStmt{
 			Stmt:        stmt,
-			connDetails: connDetails,
-			query:       query,
+			sqlSpan: getSQLSpanData(connDetails, query),
 			sensor:      sensor,
 		}, StmtQueryContext: &wStmtQueryContext{
 			StmtQueryContext: StmtQueryContext,
@@ -2116,14 +2111,12 @@ func get_stmt_StmtExecContext_NamedValueChecker_ColumnConverter(stmt driver.Stmt
 	return &w_stmt_StmtExecContext_NamedValueChecker_ColumnConverter{
 		Stmt: &wStmt{
 			Stmt:        stmt,
-			connDetails: connDetails,
-			query:       query,
+			sqlSpan: getSQLSpanData(connDetails, query),
 			sensor:      sensor,
 		}, StmtExecContext: &wStmtExecContext{
 			StmtExecContext: StmtExecContext,
-			connDetails:     connDetails,
 			sensor:          sensor,
-			query:           query,
+			sqlSpan: getSQLSpanData(connDetails, query),
 		}, NamedValueChecker: NamedValueChecker,
 		cc: ColumnConverter}
 }
@@ -2132,14 +2125,12 @@ func get_stmt_StmtExecContext_StmtQueryContext_ColumnConverter(stmt driver.Stmt,
 	return &w_stmt_StmtExecContext_StmtQueryContext_ColumnConverter{
 		Stmt: &wStmt{
 			Stmt:        stmt,
-			connDetails: connDetails,
-			query:       query,
+			sqlSpan: getSQLSpanData(connDetails, query),
 			sensor:      sensor,
 		}, StmtExecContext: &wStmtExecContext{
 			StmtExecContext: StmtExecContext,
-			connDetails:     connDetails,
 			sensor:          sensor,
-			query:           query,
+			sqlSpan: getSQLSpanData(connDetails, query),
 		}, StmtQueryContext: &wStmtQueryContext{
 			StmtQueryContext: StmtQueryContext,
 			connDetails:      connDetails,
@@ -2153,8 +2144,7 @@ func get_stmt_StmtQueryContext_ColumnConverter(stmt driver.Stmt, query string, c
 	return &w_stmt_StmtQueryContext_ColumnConverter{
 		Stmt: &wStmt{
 			Stmt:        stmt,
-			connDetails: connDetails,
-			query:       query,
+			sqlSpan: getSQLSpanData(connDetails, query),
 			sensor:      sensor,
 		}, StmtQueryContext: &wStmtQueryContext{
 			StmtQueryContext: StmtQueryContext,
@@ -2169,8 +2159,7 @@ func get_stmt_StmtQueryContext_NamedValueChecker(stmt driver.Stmt, query string,
 	return &w_stmt_StmtQueryContext_NamedValueChecker{
 		Stmt: &wStmt{
 			Stmt:        stmt,
-			connDetails: connDetails,
-			query:       query,
+			sqlSpan: getSQLSpanData(connDetails, query),
 			sensor:      sensor,
 		}, StmtQueryContext: &wStmtQueryContext{
 			StmtQueryContext: StmtQueryContext,
@@ -2184,14 +2173,12 @@ func get_stmt_StmtExecContext_ColumnConverter(stmt driver.Stmt, query string, co
 	return &w_stmt_StmtExecContext_ColumnConverter{
 		Stmt: &wStmt{
 			Stmt:        stmt,
-			connDetails: connDetails,
-			query:       query,
+			sqlSpan: getSQLSpanData(connDetails, query),
 			sensor:      sensor,
 		}, StmtExecContext: &wStmtExecContext{
 			StmtExecContext: StmtExecContext,
-			connDetails:     connDetails,
 			sensor:          sensor,
-			query:           query,
+			sqlSpan: getSQLSpanData(connDetails, query),
 		},
 		cc: ColumnConverter}
 }
@@ -2200,14 +2187,12 @@ func get_stmt_StmtExecContext_NamedValueChecker(stmt driver.Stmt, query string, 
 	return &w_stmt_StmtExecContext_NamedValueChecker{
 		Stmt: &wStmt{
 			Stmt:        stmt,
-			connDetails: connDetails,
-			query:       query,
+			sqlSpan: getSQLSpanData(connDetails, query),
 			sensor:      sensor,
 		}, StmtExecContext: &wStmtExecContext{
 			StmtExecContext: StmtExecContext,
-			connDetails:     connDetails,
 			sensor:          sensor,
-			query:           query,
+			sqlSpan: getSQLSpanData(connDetails, query),
 		}, NamedValueChecker: NamedValueChecker}
 }
 
@@ -2215,8 +2200,7 @@ func get_stmt_NamedValueChecker_ColumnConverter(stmt driver.Stmt, query string, 
 	return &w_stmt_NamedValueChecker_ColumnConverter{
 		Stmt: &wStmt{
 			Stmt:        stmt,
-			connDetails: connDetails,
-			query:       query,
+			sqlSpan: getSQLSpanData(connDetails, query),
 			sensor:      sensor,
 		}, NamedValueChecker: NamedValueChecker,
 		cc: ColumnConverter}
@@ -2226,14 +2210,12 @@ func get_stmt_StmtExecContext_StmtQueryContext(stmt driver.Stmt, query string, c
 	return &w_stmt_StmtExecContext_StmtQueryContext{
 		Stmt: &wStmt{
 			Stmt:        stmt,
-			connDetails: connDetails,
-			query:       query,
+			sqlSpan: getSQLSpanData(connDetails, query),
 			sensor:      sensor,
 		}, StmtExecContext: &wStmtExecContext{
 			StmtExecContext: StmtExecContext,
-			connDetails:     connDetails,
 			sensor:          sensor,
-			query:           query,
+			sqlSpan: getSQLSpanData(connDetails, query),
 		}, StmtQueryContext: &wStmtQueryContext{
 			StmtQueryContext: StmtQueryContext,
 			connDetails:      connDetails,
@@ -2246,8 +2228,7 @@ func get_stmt_ColumnConverter(stmt driver.Stmt, query string, connDetails DbConn
 	return &w_stmt_ColumnConverter{
 		Stmt: &wStmt{
 			Stmt:        stmt,
-			connDetails: connDetails,
-			query:       query,
+			sqlSpan: getSQLSpanData(connDetails, query),
 			sensor:      sensor,
 		},
 		cc: ColumnConverter}
@@ -2257,14 +2238,12 @@ func get_stmt_StmtExecContext(stmt driver.Stmt, query string, connDetails DbConn
 	return &w_stmt_StmtExecContext{
 		Stmt: &wStmt{
 			Stmt:        stmt,
-			connDetails: connDetails,
-			query:       query,
+			sqlSpan: getSQLSpanData(connDetails, query),
 			sensor:      sensor,
 		}, StmtExecContext: &wStmtExecContext{
 			StmtExecContext: StmtExecContext,
-			connDetails:     connDetails,
 			sensor:          sensor,
-			query:           query,
+			sqlSpan: getSQLSpanData(connDetails, query),
 		}}
 }
 
@@ -2272,8 +2251,7 @@ func get_stmt_NamedValueChecker(stmt driver.Stmt, query string, connDetails DbCo
 	return &w_stmt_NamedValueChecker{
 		Stmt: &wStmt{
 			Stmt:        stmt,
-			connDetails: connDetails,
-			query:       query,
+			sqlSpan: getSQLSpanData(connDetails, query),
 			sensor:      sensor,
 		}, NamedValueChecker: NamedValueChecker}
 }
@@ -2282,8 +2260,7 @@ func get_stmt_StmtQueryContext(stmt driver.Stmt, query string, connDetails DbCon
 	return &w_stmt_StmtQueryContext{
 		Stmt: &wStmt{
 			Stmt:        stmt,
-			connDetails: connDetails,
-			query:       query,
+			sqlSpan: getSQLSpanData(connDetails, query),
 			sensor:      sensor,
 		}, StmtQueryContext: &wStmtQueryContext{
 			StmtQueryContext: StmtQueryContext,
@@ -2317,8 +2294,7 @@ func wrapStmt(stmt driver.Stmt, query string, connDetails DbConnDetails, sensor 
 
 	return &wStmt{
 		Stmt:        stmt,
-		connDetails: connDetails,
-		query:       query,
+		sqlSpan: getSQLSpanData(connDetails, query),
 		sensor:      sensor,
 	}
 }
