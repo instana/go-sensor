@@ -22,6 +22,109 @@ var (
 	sqlDriverRegistrationMu sync.Mutex
 )
 
+type sqlSpan interface {
+	start(ctx context.Context, sensor TracerLogger) (sp ot.Span, dbKey string)
+}
+
+type sqlSpanData struct {
+	m           *sync.Mutex
+	connDetails DbConnDetails
+	query       string
+	tags        ot.Tags
+}
+
+func getSQLSpanData(c DbConnDetails, q string) *sqlSpanData {
+	var m sync.Mutex
+	tags := make(ot.Tags)
+
+	c.applyTags(tags)
+
+	return &sqlSpanData{
+		m:           &m,
+		connDetails: c,
+		query:       q,
+		tags:        tags,
+	}
+
+}
+
+func (c DbConnDetails) applyTags(tags ot.Tags) {
+	switch c.DatabaseName {
+	case "postgres":
+		WithPostgresTags(&c).Apply(tags)
+	case "redis":
+		WithRedisTags(&c).Apply(tags)
+	case "mysql":
+		WithMySQLTags(&c).Apply(tags)
+	case "couchbase":
+		WithCouchbaseTags(&c).Apply(tags)
+	}
+	WithGenericSQLTags(&c).Apply(tags)
+}
+
+func (s *sqlSpanData) updateDBNameInSpanData(dbName string) {
+	if dbName != "" {
+		s.m.Lock()
+		s.connDetails.DatabaseName = dbName
+		s.m.Unlock()
+	}
+}
+
+func (s *sqlSpanData) addTag(key string, val string) {
+	s.m.Lock()
+	s.tags[key] = val
+	s.m.Unlock()
+
+}
+
+func (s *sqlSpanData) start(
+	ctx context.Context,
+	sensor TracerLogger) (sp ot.Span, dbKey string) {
+
+	var dbCmd, dbName string
+
+	if s.connDetails.DatabaseName == "" {
+		dbCmd, dbName = retrieveDBNameAndCmd(s.query)
+		s.updateDBNameInSpanData(dbName)
+	}
+
+	switch s.connDetails.DatabaseName {
+
+	// *-------------------* //
+
+	case "postgres":
+		return s.postgresSpan(ctx, sensor), "pg"
+
+	// *-------------------* //
+
+	case "redis":
+		return redisSpan(ctx, s.connDetails, s.query, dbCmd, sensor), "redis"
+	case "mysql":
+		return mySQLSpan(ctx, s.connDetails, s.query, sensor), "mysql"
+	case "couchbase":
+		return couchbaseSpan(ctx, s.connDetails, s.query, sensor), "couchbase"
+	case "cosmos":
+		return cosmosSpan(ctx, s.connDetails, s.query, sensor), "cosmos"
+	}
+
+	return genericSQLSpan(ctx, s.connDetails, s.query, sensor), "db"
+
+}
+
+func (s *sqlSpanData) postgresSpan(
+	ctx context.Context,
+	sensor TracerLogger) (sp ot.Span) {
+	s.addTag("pg.stmt", s.query)
+
+	opts := []ot.StartSpanOption{ext.SpanKindRPCClient, s.tags}
+	if parentSpan, ok := SpanFromContext(ctx); ok {
+		opts = append(opts, ot.ChildOf(parentSpan.Context()))
+	}
+
+	return sensor.StartSpan(string(PostgreSQLSpanType), opts...)
+
+}
+
 // InstrumentSQLDriver instruments provided database driver for  use with `sql.Open()`.
 // This method will ignore any attempt to register the driver with the same name again.
 //
