@@ -40,7 +40,7 @@ func tracingNamedHandlerFuncFastHttp(sensor instana.TracerLogger, routeID, pathT
 			opts = append(opts, ot.ChildOf(ps.Context()))
 		}
 
-		headers := collectAllHeaders(req)
+		headers := collectAllReqHeaders(req)
 
 		opts = append(opts, extractStartSpanOptionsFromHeadersFastHttp(tracer, req, headers, sensor)...)
 
@@ -126,10 +126,26 @@ func initSpanOptionsFastHttp(req *fasthttp.Request, routeID string) []ot.StartSp
 	return opts
 }
 
-func collectAllHeaders(req *fasthttp.Request) http.Header {
+func collectAllReqHeaders(req *fasthttp.Request) http.Header {
 	headers := make(http.Header, 0)
 
 	req.Header.VisitAll(func(key, value []byte) {
+		headerKey := make([]byte, len(key))
+		copy(headerKey, key)
+
+		headerVal := make([]byte, len(value))
+		copy(headerVal, value)
+
+		headers.Add(string(headerKey), string(headerVal))
+	})
+
+	return headers
+}
+
+func collectAllResHeaders(res *fasthttp.Response) http.Header {
+	headers := make(http.Header, 0)
+
+	res.Header.VisitAll(func(key, value []byte) {
 		headerKey := make([]byte, len(key))
 		copy(headerKey, key)
 
@@ -223,4 +239,105 @@ func collectHTTPParamsFastHttp(req *fasthttp.Request, matcher instana.Matcher) u
 	}
 
 	return params
+}
+
+type tracingRoundTripper func(*fasthttp.HostClient, *fasthttp.Request, *fasthttp.Response) (bool, error)
+
+func (rt tracingRoundTripper) RoundTrip(hc *fasthttp.HostClient, req *fasthttp.Request, resp *fasthttp.Response) (retry bool, err error) {
+	return rt(hc, req, resp)
+}
+
+// RoundTripper wraps an existing http.RoundTripper and injects the tracing headers into the outgoing request.
+// If the original RoundTripper is nil, the http.DefaultTransport will be used.
+func RoundTripper(ctx context.Context, sensor instana.TracerLogger, original fasthttp.RoundTripper) fasthttp.RoundTripper {
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	if original == nil {
+		original = fasthttp.DefaultTransport
+	}
+	return tracingRoundTripper(func(hc *fasthttp.HostClient, req *fasthttp.Request, resp *fasthttp.Response) (bool, error) {
+		sanitizedURL := new(fasthttp.URI)
+		req.URI().CopyTo(sanitizedURL)
+		sanitizedURL.SetUsername("")
+		sanitizedURL.SetPassword("")
+		sanitizedURL.SetQueryString("")
+
+		opts := []ot.StartSpanOption{
+			ext.SpanKindRPCClient,
+			ot.Tags{
+				"http.url":    sanitizedURL.String(),
+				"http.method": req.Header.Method(),
+			},
+		}
+
+		tracer := sensor.Tracer()
+		parentSpan, ok := instana.SpanFromContext(ctx)
+		if ok {
+			tracer = parentSpan.Tracer()
+			opts = append(opts, ot.ChildOf(parentSpan.Context()))
+		}
+
+		span := tracer.StartSpan("http", opts...)
+		defer span.Finish()
+
+		// clone the request since the RoundTrip should not modify the original one
+		// req = cloneRequest(ContextWithSpan(ctx, span), req)
+
+		var reqClone *fasthttp.Request
+		req.CopyTo(reqClone)
+		// sensor.Tracer().Inject(span.Context(), ot.HTTPHeaders, ot.HTTPHeadersCarrier(req.Header))
+
+		// Inject the span details to the headers
+		h := make(ot.HTTPHeadersCarrier)
+		tracer.Inject(span.Context(), ot.HTTPHeaders, h)
+		for k, v := range h {
+			req.Header.Del(k)
+			req.Header.Set(k, strings.Join(v, ","))
+		}
+
+		var params url.Values
+		collectedHeaders := make(map[string]string)
+
+		// ensure collected headers/params are sent in case of panic/error
+		defer func() {
+			if len(collectedHeaders) > 0 {
+				span.SetTag("http.header", collectedHeaders)
+			}
+			if len(params) > 0 {
+				span.SetTag("http.params", params.Encode())
+			}
+		}()
+
+		var collectableHTTPHeaders []string
+		if t, ok := tracer.(instana.Tracer); ok {
+			opts := t.Options()
+			params = collectHTTPParamsFastHttp(req, opts.Secrets)
+			collectableHTTPHeaders = opts.CollectableHTTPHeaders
+		}
+
+		headers := collectAllReqHeaders(req)
+		collectRequestHeadersFastHTTP(headers, collectableHTTPHeaders, collectedHeaders)
+
+		retry, err := original.RoundTrip(hc, reqClone, resp)
+		if err != nil {
+			span.SetTag("http.error", err.Error())
+			span.LogFields(otlog.Error(err))
+			return retry, err
+		}
+
+		// // collect response headers
+		// for _, h := range collectableHTTPHeaders {
+		// 	if v := resp.Header.Get(h); v != "" {
+		// 		collectedHeaders[h] = v
+		// 	}
+		// }
+
+		headers = collectAllResHeaders(resp)
+		collectRequestHeadersFastHTTP(headers, collectableHTTPHeaders, collectedHeaders)
+
+		span.SetTag(string(ext.HTTPStatusCode), resp.StatusCode())
+
+		return retry, err
+	})
 }
