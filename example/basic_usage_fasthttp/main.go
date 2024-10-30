@@ -34,6 +34,41 @@ func sampleEndpointHandler(ctx *fasthttp.RequestCtx) {
 
 }
 
+func roundTripHandler(ctx *fasthttp.RequestCtx) {
+	uCtx := instafasthttp.UserContext(ctx)
+
+	url := fasthttp.AcquireURI()
+	url.Parse(nil, []byte("http://localhost:7070/greet"))
+
+	hc := &fasthttp.HostClient{
+		Transport: instafasthttp.RoundTripper(uCtx, sensor, nil),
+		Addr:      "localhost:7070",
+	}
+
+	req := fasthttp.AcquireRequest()
+	defer fasthttp.ReleaseRequest(req)
+	req.SetURI(url)
+	fasthttp.ReleaseURI(url) // now you may release the URI
+	req.Header.SetMethod(fasthttp.MethodGet)
+
+	resp := fasthttp.AcquireResponse()
+	defer fasthttp.ReleaseResponse(resp)
+
+	// Make the request
+	err := hc.Do(req, resp)
+	if err != nil {
+		log.Fatalf("failed to GET https://www.instana.com: %s", err)
+	}
+
+	bs := string(resp.Body())
+
+	fmt.Println(bs)
+
+	ctx.SetStatusCode(fasthttp.StatusOK)
+	fmt.Fprintf(ctx, bs)
+
+}
+
 // request handler in fasthttp style, i.e. just plain function.
 func fastHTTPHandler(ctx *fasthttp.RequestCtx) {
 	fmt.Fprintf(ctx, "Hi there! RequestURI is %q\n", ctx.RequestURI())
@@ -50,6 +85,8 @@ func fastHTTPHandler(ctx *fasthttp.RequestCtx) {
 			fmt.Fprintf(ctx, "This is a panic!\n")
 			panic(errors.New("Panic nithin"))
 		})(ctx)
+	case "/round-trip":
+		instafasthttp.TraceHandler(sensor, "/round-trip", roundTripHandler)(ctx)
 	default:
 		ctx.Error("Unsupported path", fasthttp.StatusNotFound)
 	}
@@ -58,7 +95,7 @@ func fastHTTPHandler(ctx *fasthttp.RequestCtx) {
 func init() {
 	// Create a sensor for instana instrumentation
 	sensor = instana.InitCollector(&instana.Options{
-		Service:  "nithin-fasthttp-example",
+		Service:  "nithin-fasthttp-example2",
 		LogLevel: instana.Debug,
 	})
 }

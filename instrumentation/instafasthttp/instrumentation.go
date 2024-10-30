@@ -284,7 +284,7 @@ func RoundTripper(ctx context.Context, sensor instana.TracerLogger, original fas
 		// clone the request since the RoundTrip should not modify the original one
 		// req = cloneRequest(ContextWithSpan(ctx, span), req)
 
-		var reqClone *fasthttp.Request
+		reqClone := &fasthttp.Request{}
 		req.CopyTo(reqClone)
 		// sensor.Tracer().Inject(span.Context(), ot.HTTPHeaders, ot.HTTPHeadersCarrier(req.Header))
 
@@ -292,8 +292,8 @@ func RoundTripper(ctx context.Context, sensor instana.TracerLogger, original fas
 		h := make(ot.HTTPHeadersCarrier)
 		tracer.Inject(span.Context(), ot.HTTPHeaders, h)
 		for k, v := range h {
-			req.Header.Del(k)
-			req.Header.Set(k, strings.Join(v, ","))
+			reqClone.Header.Del(k)
+			reqClone.Header.Set(k, strings.Join(v, ","))
 		}
 
 		var params url.Values
