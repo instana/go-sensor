@@ -2,6 +2,37 @@
 
 package instana
 
+type database int8
+
+const (
+	sql_generic database = iota
+	postgres
+	mysql
+	redis
+	couchbase
+	cosmos
+)
+
+// database names
+const (
+	Postgres  string = "postgres"
+	MySQL     string = "mysql"
+	Redis     string = "redis"
+	Couchbase string = "couchbase"
+	Cosmos    string = "cosmos"
+	DB2       string = "db2"
+)
+
+// db Keys
+const (
+	pg_db_key          string = "pg"
+	mysql_db_key       string = "mysql"
+	redis_db_key       string = "redis"
+	couchbase_db_key   string = "couchbase"
+	cosmos_db_key      string = "cosmos"
+	generic_sql_db_key string = "db"
+)
+
 var redisCommands = map[string]struct{}{
 	"SET":           {},
 	"GET":           {},
@@ -82,4 +113,23 @@ var redisCommands = map[string]struct{}{
 	"BGSAVE":        {},
 	"BGREWRITEAOF":  {},
 	"SHUTDOWN":      {},
+}
+
+var dbMap = map[string]database{
+	Postgres:  postgres,
+	MySQL:     mysql,
+	Redis:     redis,
+	Couchbase: couchbase,
+	Cosmos:    cosmos,
+	DB2:       sql_generic,
+}
+
+func db(dbName string) database {
+
+	db, ok := dbMap[dbName]
+	if !ok {
+		return sql_generic
+	}
+
+	return db
 }

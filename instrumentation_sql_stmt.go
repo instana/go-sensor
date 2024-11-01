@@ -14,8 +14,8 @@ type wStmt struct {
 
 	// connDetails DbConnDetails
 	// query       string
-	sqlSpan
-	sensor TracerLogger
+	sqlSpan *sqlSpanData
+	sensor  TracerLogger
 }
 
 func (stmt *wStmt) Exec(args []driver.Value) (driver.Result, error) {

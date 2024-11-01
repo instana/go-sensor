@@ -22,10 +22,6 @@ var (
 	sqlDriverRegistrationMu sync.Mutex
 )
 
-type sqlSpan interface {
-	start(ctx context.Context, sensor TracerLogger) (sp ot.Span, dbKey string)
-}
-
 // sqlSpanData implements sqlSpan
 type sqlSpanData struct {
 	m           *sync.Mutex
@@ -39,7 +35,12 @@ func getSQLSpanData(c DbConnDetails, q string) *sqlSpanData {
 	var m sync.Mutex
 	tags := make(ot.Tags)
 
-	c.applyTags(tags)
+	tf, ok := tagsFuncMap[db(c.DatabaseName)]
+	if !ok {
+		tf = withGenericSQLTags
+	}
+
+	tf(c).Apply(tags)
 
 	return &sqlSpanData{
 		m:           &m,
@@ -50,34 +51,24 @@ func getSQLSpanData(c DbConnDetails, q string) *sqlSpanData {
 
 }
 
-// applyTags applies db tags in tags map
-func (c DbConnDetails) applyTags(tags ot.Tags) {
-	switch c.DatabaseName {
-	case "postgres":
-		WithPostgresTags(&c).Apply(tags)
-	case "redis":
-		WithRedisTags(&c).Apply(tags)
-	case "mysql":
-		WithMySQLTags(&c).Apply(tags)
-	case "couchbase":
-		WithCouchbaseTags(&c).Apply(tags)
-	}
-	WithGenericSQLTags(&c).Apply(tags)
-}
-
 func (s *sqlSpanData) updateDBNameInSpanData(dbName string) {
 	if dbName != "" {
 		s.m.Lock()
+		defer s.m.Unlock()
 		s.connDetails.DatabaseName = dbName
-		s.m.Unlock()
 	}
 }
 
 func (s *sqlSpanData) addTag(key string, val string) {
 	s.m.Lock()
+	defer s.m.Unlock()
 	s.tags[key] = val
-	s.m.Unlock()
+}
 
+func (s *sqlSpanData) updateDBQuery(query string) {
+	s.m.Lock()
+	defer s.m.Unlock()
+	s.query = query
 }
 
 // start a new sql span
@@ -92,27 +83,27 @@ func (s *sqlSpanData) start(
 		s.updateDBNameInSpanData(dbName)
 	}
 
-	switch s.connDetails.DatabaseName {
+	switch db(s.connDetails.DatabaseName) {
 
 	// *-------------------* //
 
 	// calling new postgresSpan method
-	case "postgres":
-		return s.postgresSpan(ctx, sensor), "pg"
+	case postgres:
+		return s.postgresSpan(ctx, sensor), pg_db_key
 
 	// *-------------------* //
 
-	case "redis":
-		return redisSpan(ctx, s.connDetails, s.query, dbCmd, sensor), "redis"
-	case "mysql":
-		return mySQLSpan(ctx, s.connDetails, s.query, sensor), "mysql"
-	case "couchbase":
-		return couchbaseSpan(ctx, s.connDetails, s.query, sensor), "couchbase"
-	case "cosmos":
-		return cosmosSpan(ctx, s.connDetails, s.query, sensor), "cosmos"
+	case redis:
+		return redisSpan(ctx, s.connDetails, s.query, dbCmd, sensor), redis_db_key
+	case mysql:
+		return mySQLSpan(ctx, s.connDetails, s.query, sensor), mysql_db_key
+	case couchbase:
+		return couchbaseSpan(ctx, s.connDetails, s.query, sensor), couchbase_db_key
+	case cosmos:
+		return cosmosSpan(ctx, s.connDetails, s.query, sensor), cosmos_db_key
 	}
 
-	return genericSQLSpan(ctx, s.connDetails, s.query, sensor), "db"
+	return genericSQLSpan(ctx, s.connDetails, s.query, sensor), generic_sql_db_key
 
 }
 

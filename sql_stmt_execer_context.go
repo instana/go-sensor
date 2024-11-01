@@ -14,7 +14,7 @@ type wStmtExecContext struct {
 	// connDetails DbConnDetails
 	sensor TracerLogger
 	// query       string
-	sqlSpan
+	sqlSpan *sqlSpanData
 }
 
 func (stmt *wStmtExecContext) ExecContext(ctx context.Context, args []driver.NamedValue) (driver.Result, error) {

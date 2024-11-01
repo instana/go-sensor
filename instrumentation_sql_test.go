@@ -232,6 +232,84 @@ func TestOpenSQLDB(t *testing.T) {
 	})
 }
 
+func TestPostgresDB(t *testing.T) {
+
+	recorder := instana.NewTestRecorder()
+	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{
+		Service:     "go-sensor-test",
+		AgentClient: alwaysReadyClient{},
+	}, recorder))
+	defer instana.ShutdownSensor()
+
+	span := s.Tracer().StartSpan("parent-span")
+	ctx := context.Background()
+	if span != nil {
+		ctx = instana.ContextWithSpan(ctx, span)
+	}
+	instana.InstrumentSQLDriver(s, "pg_driver", sqlDriver{})
+	require.Contains(t, sql.Drivers(), "pg_driver_with_instana")
+
+	db, err := instana.SQLOpen("pg_driver",
+		"host=db-host1,db-host-2 hostaddr=1.2.3.4,2.3.4.5 connect_timeout=10  port=1234 user=user1 password=p@55w0rd dbname=test-schema")
+	require.NoError(t, err)
+
+	t.Run("Exec", func(t *testing.T) {
+		res, err := db.ExecContext(ctx, "TEST QUERY")
+		require.NoError(t, err)
+
+		lastID, err := res.LastInsertId()
+		require.NoError(t, err)
+		assert.Equal(t, int64(42), lastID)
+
+		spans := recorder.GetQueuedSpans()
+		require.Len(t, spans, 1)
+
+		span := spans[0]
+		assert.Equal(t, 0, span.Ec)
+		assert.EqualValues(t, instana.ExitSpanKind, span.Kind)
+
+		require.IsType(t, instana.PostgreSQLSpanData{}, span.Data)
+		data := span.Data.(instana.PostgreSQLSpanData)
+
+		assert.Equal(t, instana.PostgreSQLSpanTags{
+			Host:  "1.2.3.4,2.3.4.5",
+			DB:    "test-schema",
+			Port:  "1234",
+			User:  "user1",
+			Stmt:  "TEST QUERY",
+			Error: "",
+		}, data.Tags)
+	})
+
+	t.Run("Query", func(t *testing.T) {
+		res, err := db.QueryContext(ctx, "TEST QUERY")
+		require.NoError(t, err)
+
+		cols, err := res.Columns()
+		require.NoError(t, err)
+		assert.Equal(t, []string{"col1", "col2"}, cols)
+
+		spans := recorder.GetQueuedSpans()
+		require.Len(t, spans, 1)
+
+		span := spans[0]
+		assert.Equal(t, 0, span.Ec)
+		assert.EqualValues(t, instana.ExitSpanKind, span.Kind)
+
+		require.IsType(t, instana.PostgreSQLSpanData{}, span.Data)
+		data := span.Data.(instana.PostgreSQLSpanData)
+
+		assert.Equal(t, instana.PostgreSQLSpanTags{
+			Host:  "1.2.3.4,2.3.4.5",
+			DB:    "test-schema",
+			Port:  "1234",
+			User:  "user1",
+			Stmt:  "TEST QUERY",
+			Error: "",
+		}, data.Tags)
+	})
+}
+
 func TestOpenDB2(t *testing.T) {
 
 	recorder := instana.NewTestRecorder()
@@ -928,10 +1006,12 @@ func TestStmtExecContext_WithRedisCommands(t *testing.T) {
 	instana.InstrumentSQLDriver(s, "fake_redis_driver_2", sqlDriver{})
 	require.Contains(t, sql.Drivers(), "fake_redis_driver_2_with_instana")
 
-	db, err := instana.SQLOpen("fake_redis_driver_2", "192.168.2.10:6790")
-	require.NoError(t, err)
-
 	t.Run("valid redis command", func(t *testing.T) {
+
+		db, err := instana.SQLOpen("fake_redis_driver_2", "192.168.2.10:6790")
+		require.NoError(t, err)
+
+		defer db.Close()
 
 		_, err = db.ExecContext(ctx, "GET key")
 		require.NoError(t, err)
@@ -951,6 +1031,11 @@ func TestStmtExecContext_WithRedisCommands(t *testing.T) {
 
 	t.Run("With multi word command", func(t *testing.T) {
 
+		db, err := instana.SQLOpen("fake_redis_driver_2", "192.168.2.10:6790")
+		require.NoError(t, err)
+
+		defer db.Close()
+
 		_, err = db.ExecContext(ctx, "CONFIG GET key")
 		require.NoError(t, err)
 
@@ -968,6 +1053,11 @@ func TestStmtExecContext_WithRedisCommands(t *testing.T) {
 	})
 
 	t.Run("wrong/unknown(to go sensor) redis command", func(t *testing.T) {
+
+		db, err := instana.SQLOpen("fake_redis_driver_2", "192.168.2.10:6790")
+		require.NoError(t, err)
+
+		defer db.Close()
 
 		_, err = db.ExecContext(ctx, "SELECT key")
 		require.NoError(t, err)
@@ -995,6 +1085,11 @@ func TestStmtExecContext_WithRedisCommands(t *testing.T) {
 
 	t.Run("empty query", func(t *testing.T) {
 
+		db, err := instana.SQLOpen("fake_redis_driver_2", "192.168.2.10:6790")
+		require.NoError(t, err)
+
+		defer db.Close()
+
 		_, err = db.ExecContext(ctx, "")
 		require.NoError(t, err)
 
@@ -1020,6 +1115,11 @@ func TestStmtExecContext_WithRedisCommands(t *testing.T) {
 	})
 
 	t.Run("transaction", func(t *testing.T) {
+
+		db, err := instana.SQLOpen("fake_redis_driver_2", "192.168.2.10:6790")
+		require.NoError(t, err)
+
+		defer db.Close()
 
 		_, err = db.ExecContext(ctx, "MULTI")
 		require.NoError(t, err)

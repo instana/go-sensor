@@ -12,12 +12,15 @@ import (
 type wExecerContext struct {
 	driver.ExecerContext
 
-	connDetails DbConnDetails
-	sensor      TracerLogger
+	// connDetails DbConnDetails
+	sqlSpan *sqlSpanData
+	sensor  TracerLogger
 }
 
 func (conn *wExecerContext) ExecContext(ctx context.Context, query string, args []driver.NamedValue) (driver.Result, error) {
-	sp, dbKey := startSQLSpan(ctx, conn.connDetails, query, conn.sensor)
+	// sp, dbKey := startSQLSpan(ctx, conn.connDetails, query, conn.sensor)
+	conn.sqlSpan.updateDBQuery(query)
+	sp, dbKey := conn.sqlSpan.start(ctx, conn.sensor)
 	defer sp.Finish()
 
 	res, err := conn.ExecerContext.ExecContext(ctx, query, args)
