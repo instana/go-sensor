@@ -125,8 +125,7 @@ func TestHexGatewayToAddr(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		gatewayHex := []rune(test.in)
-		gateway, err := hexGatewayToAddr(gatewayHex)
+		gateway, err := hexGatewayToAddr(test.in)
 		assert.Equal(t, test.expectedErr, err)
 		assert.Equal(t, test.expected, gateway)
 	}

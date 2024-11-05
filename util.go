@@ -168,9 +168,8 @@ func getDefaultGateway(routeTableFile string) (string, error) {
 
 		destination := entry[1]
 		if destination == "00000000" {
-			gatewayHex := []rune(entry[2])
 
-			gateway, err := hexGatewayToAddr(gatewayHex)
+			gateway, err := hexGatewayToAddr(entry[2])
 			if err != nil {
 				return "", err
 			}
@@ -187,28 +186,25 @@ func getDefaultGateway(routeTableFile string) (string, error) {
 }
 
 // hexGatewayToAddr converts the hex representation of the gateway address to string.
-func hexGatewayToAddr(gateway []rune) (string, error) {
+func hexGatewayToAddr(gateway string) (string, error) {
 	// gateway address is encoded in reverse order in hex
 	if len(gateway) != 8 {
 		return "", errors.New("invalid gateway length")
 	}
 
-	var octets [4]uint8
-	for i, hexOctet := range [4]string{
-		string(gateway[6:8]), // first octet of IP Address
-		string(gateway[4:6]), // second octet
-		string(gateway[2:4]), // third octet
-		string(gateway[0:2]), // last octet
-	} {
-		octet, err := strconv.ParseUint(hexOctet, 16, 8)
-		if err != nil {
-			return "", err
-		}
+	n, err := strconv.ParseInt(gateway, 16, 32)
 
-		octets[i] = uint8(octet)
+	if err != nil {
+		return "", err
 	}
 
-	return fmt.Sprintf("%v.%v.%v.%v", octets[0], octets[1], octets[2], octets[3]), nil
+	first := n >> 0 & 0xff
+	second := n >> 8 & 0xff
+	third := n >> 16 & 0xff
+	fourth := n >> 24 & 0xff
+
+	return fmt.Sprintf("%d.%d.%d.%d", first, second, third, fourth), nil
+
 }
 
 func cloneTags(t ot.Tags) ot.Tags {
