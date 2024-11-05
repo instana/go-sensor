@@ -192,7 +192,7 @@ func hexGatewayToAddr(gateway string) (string, error) {
 		return "", errors.New("invalid gateway length")
 	}
 
-	n, err := strconv.ParseInt(gateway, 16, 32)
+	n, err := strconv.ParseUint(gateway, 16, 32)
 
 	if err != nil {
 		return "", err
