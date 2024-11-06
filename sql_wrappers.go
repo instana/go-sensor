@@ -695,22 +695,22 @@ func get_conn_Execer_ExecerContext_Queryer_QueryerContext_ConnPrepareContext_Nam
 		},
 		Execer: &wExecer{
 			Execer:      Execer,
-			connDetails: connDetails,
+			sqlSpan: getSQLSpanData(connDetails),
 			sensor:      sensor,
 		},
 		ExecerContext: &wExecerContext{
 			ExecerContext: ExecerContext,
-			sqlSpan: getSQLSpanData(connDetails, ""),
+			sqlSpan: getSQLSpanData(connDetails),
 			sensor:        sensor,
 		},
 		Queryer: &wQueryer{
 			Queryer:     Queryer,
-			connDetails: connDetails,
+			sqlSpan: getSQLSpanData(connDetails),
 			sensor:      sensor,
 		},
 		QueryerContext: &wQueryerContext{
 			QueryerContext: QueryerContext,
-			connDetails:    connDetails,
+			sqlSpan: getSQLSpanData(connDetails),
 			sensor:         sensor,
 		},
 		ConnPrepareContext: &wConnPrepareContext{
@@ -729,22 +729,22 @@ func get_conn_Execer_ExecerContext_Queryer_QueryerContext_ConnPrepareContext(con
 		},
 		Execer: &wExecer{
 			Execer:      Execer,
-			connDetails: connDetails,
+			sqlSpan: getSQLSpanData(connDetails),
 			sensor:      sensor,
 		},
 		ExecerContext: &wExecerContext{
 			ExecerContext: ExecerContext,
-			sqlSpan: getSQLSpanData(connDetails, ""),
+			sqlSpan: getSQLSpanData(connDetails),
 			sensor:        sensor,
 		},
 		Queryer: &wQueryer{
 			Queryer:     Queryer,
-			connDetails: connDetails,
+			sqlSpan: getSQLSpanData(connDetails),
 			sensor:      sensor,
 		},
 		QueryerContext: &wQueryerContext{
 			QueryerContext: QueryerContext,
-			connDetails:    connDetails,
+			sqlSpan: getSQLSpanData(connDetails),
 			sensor:         sensor,
 		},
 		ConnPrepareContext: &wConnPrepareContext{
@@ -763,17 +763,17 @@ func get_conn_ExecerContext_Queryer_QueryerContext_ConnPrepareContext_NamedValue
 		},
 		ExecerContext: &wExecerContext{
 			ExecerContext: ExecerContext,
-			sqlSpan: getSQLSpanData(connDetails, ""),
+			sqlSpan: getSQLSpanData(connDetails),
 			sensor:        sensor,
 		},
 		Queryer: &wQueryer{
 			Queryer:     Queryer,
-			connDetails: connDetails,
+			sqlSpan: getSQLSpanData(connDetails),
 			sensor:      sensor,
 		},
 		QueryerContext: &wQueryerContext{
 			QueryerContext: QueryerContext,
-			connDetails:    connDetails,
+			sqlSpan: getSQLSpanData(connDetails),
 			sensor:         sensor,
 		},
 		ConnPrepareContext: &wConnPrepareContext{
@@ -792,17 +792,17 @@ func get_conn_Execer_Queryer_QueryerContext_ConnPrepareContext_NamedValueChecker
 		},
 		Execer: &wExecer{
 			Execer:      Execer,
-			connDetails: connDetails,
+			sqlSpan: getSQLSpanData(connDetails),
 			sensor:      sensor,
 		},
 		Queryer: &wQueryer{
 			Queryer:     Queryer,
-			connDetails: connDetails,
+			sqlSpan: getSQLSpanData(connDetails),
 			sensor:      sensor,
 		},
 		QueryerContext: &wQueryerContext{
 			QueryerContext: QueryerContext,
-			connDetails:    connDetails,
+			sqlSpan: getSQLSpanData(connDetails),
 			sensor:         sensor,
 		},
 		ConnPrepareContext: &wConnPrepareContext{
@@ -821,17 +821,17 @@ func get_conn_Execer_ExecerContext_QueryerContext_ConnPrepareContext_NamedValueC
 		},
 		Execer: &wExecer{
 			Execer:      Execer,
-			connDetails: connDetails,
+			sqlSpan: getSQLSpanData(connDetails),
 			sensor:      sensor,
 		},
 		ExecerContext: &wExecerContext{
 			ExecerContext: ExecerContext,
-			sqlSpan: getSQLSpanData(connDetails, ""),
+			sqlSpan: getSQLSpanData(connDetails),
 			sensor:        sensor,
 		},
 		QueryerContext: &wQueryerContext{
 			QueryerContext: QueryerContext,
-			connDetails:    connDetails,
+			sqlSpan: getSQLSpanData(connDetails),
 			sensor:         sensor,
 		},
 		ConnPrepareContext: &wConnPrepareContext{
@@ -850,17 +850,17 @@ func get_conn_Execer_ExecerContext_Queryer_ConnPrepareContext_NamedValueChecker(
 		},
 		Execer: &wExecer{
 			Execer:      Execer,
-			connDetails: connDetails,
+			sqlSpan: getSQLSpanData(connDetails),
 			sensor:      sensor,
 		},
 		ExecerContext: &wExecerContext{
 			ExecerContext: ExecerContext,
-			sqlSpan: getSQLSpanData(connDetails, ""),
+			sqlSpan: getSQLSpanData(connDetails),
 			sensor:        sensor,
 		},
 		Queryer: &wQueryer{
 			Queryer:     Queryer,
-			connDetails: connDetails,
+			sqlSpan: getSQLSpanData(connDetails),
 			sensor:      sensor,
 		},
 		ConnPrepareContext: &wConnPrepareContext{
@@ -879,22 +879,22 @@ func get_conn_Execer_ExecerContext_Queryer_QueryerContext_NamedValueChecker(conn
 		},
 		Execer: &wExecer{
 			Execer:      Execer,
-			connDetails: connDetails,
+			sqlSpan: getSQLSpanData(connDetails),
 			sensor:      sensor,
 		},
 		ExecerContext: &wExecerContext{
 			ExecerContext: ExecerContext,
-			sqlSpan: getSQLSpanData(connDetails, ""),
+			sqlSpan: getSQLSpanData(connDetails),
 			sensor:        sensor,
 		},
 		Queryer: &wQueryer{
 			Queryer:     Queryer,
-			connDetails: connDetails,
+			sqlSpan: getSQLSpanData(connDetails),
 			sensor:      sensor,
 		},
 		QueryerContext: &wQueryerContext{
 			QueryerContext: QueryerContext,
-			connDetails:    connDetails,
+			sqlSpan: getSQLSpanData(connDetails),
 			sensor:         sensor,
 		}, NamedValueChecker: NamedValueChecker}
 }
@@ -908,17 +908,17 @@ func get_conn_Execer_Queryer_QueryerContext_NamedValueChecker(connDetails DbConn
 		},
 		Execer: &wExecer{
 			Execer:      Execer,
-			connDetails: connDetails,
+			sqlSpan: getSQLSpanData(connDetails),
 			sensor:      sensor,
 		},
 		Queryer: &wQueryer{
 			Queryer:     Queryer,
-			connDetails: connDetails,
+			sqlSpan: getSQLSpanData(connDetails),
 			sensor:      sensor,
 		},
 		QueryerContext: &wQueryerContext{
 			QueryerContext: QueryerContext,
-			connDetails:    connDetails,
+			sqlSpan: getSQLSpanData(connDetails),
 			sensor:         sensor,
 		}, NamedValueChecker: NamedValueChecker}
 }
@@ -932,17 +932,17 @@ func get_conn_Execer_ExecerContext_Queryer_ConnPrepareContext(connDetails DbConn
 		},
 		Execer: &wExecer{
 			Execer:      Execer,
-			connDetails: connDetails,
+			sqlSpan: getSQLSpanData(connDetails),
 			sensor:      sensor,
 		},
 		ExecerContext: &wExecerContext{
 			ExecerContext: ExecerContext,
-			sqlSpan: getSQLSpanData(connDetails, ""),
+			sqlSpan: getSQLSpanData(connDetails),
 			sensor:        sensor,
 		},
 		Queryer: &wQueryer{
 			Queryer:     Queryer,
-			connDetails: connDetails,
+			sqlSpan: getSQLSpanData(connDetails),
 			sensor:      sensor,
 		},
 		ConnPrepareContext: &wConnPrepareContext{
@@ -961,12 +961,12 @@ func get_conn_Queryer_QueryerContext_ConnPrepareContext_NamedValueChecker(connDe
 		},
 		Queryer: &wQueryer{
 			Queryer:     Queryer,
-			connDetails: connDetails,
+			sqlSpan: getSQLSpanData(connDetails),
 			sensor:      sensor,
 		},
 		QueryerContext: &wQueryerContext{
 			QueryerContext: QueryerContext,
-			connDetails:    connDetails,
+			sqlSpan: getSQLSpanData(connDetails),
 			sensor:         sensor,
 		},
 		ConnPrepareContext: &wConnPrepareContext{
@@ -985,12 +985,12 @@ func get_conn_ExecerContext_QueryerContext_ConnPrepareContext_NamedValueChecker(
 		},
 		ExecerContext: &wExecerContext{
 			ExecerContext: ExecerContext,
-			sqlSpan: getSQLSpanData(connDetails, ""),
+			sqlSpan: getSQLSpanData(connDetails),
 			sensor:        sensor,
 		},
 		QueryerContext: &wQueryerContext{
 			QueryerContext: QueryerContext,
-			connDetails:    connDetails,
+			sqlSpan: getSQLSpanData(connDetails),
 			sensor:         sensor,
 		},
 		ConnPrepareContext: &wConnPrepareContext{
@@ -1009,12 +1009,12 @@ func get_conn_Execer_QueryerContext_ConnPrepareContext_NamedValueChecker(connDet
 		},
 		Execer: &wExecer{
 			Execer:      Execer,
-			connDetails: connDetails,
+			sqlSpan: getSQLSpanData(connDetails),
 			sensor:      sensor,
 		},
 		QueryerContext: &wQueryerContext{
 			QueryerContext: QueryerContext,
-			connDetails:    connDetails,
+			sqlSpan: getSQLSpanData(connDetails),
 			sensor:         sensor,
 		},
 		ConnPrepareContext: &wConnPrepareContext{
@@ -1033,12 +1033,12 @@ func get_conn_ExecerContext_Queryer_ConnPrepareContext_NamedValueChecker(connDet
 		},
 		ExecerContext: &wExecerContext{
 			ExecerContext: ExecerContext,
-			sqlSpan: getSQLSpanData(connDetails, ""),
+			sqlSpan: getSQLSpanData(connDetails),
 			sensor:        sensor,
 		},
 		Queryer: &wQueryer{
 			Queryer:     Queryer,
-			connDetails: connDetails,
+			sqlSpan: getSQLSpanData(connDetails),
 			sensor:      sensor,
 		},
 		ConnPrepareContext: &wConnPrepareContext{
@@ -1057,12 +1057,12 @@ func get_conn_Execer_Queryer_ConnPrepareContext_NamedValueChecker(connDetails Db
 		},
 		Execer: &wExecer{
 			Execer:      Execer,
-			connDetails: connDetails,
+			sqlSpan: getSQLSpanData(connDetails),
 			sensor:      sensor,
 		},
 		Queryer: &wQueryer{
 			Queryer:     Queryer,
-			connDetails: connDetails,
+			sqlSpan: getSQLSpanData(connDetails),
 			sensor:      sensor,
 		},
 		ConnPrepareContext: &wConnPrepareContext{
@@ -1081,22 +1081,22 @@ func get_conn_Execer_ExecerContext_Queryer_QueryerContext(connDetails DbConnDeta
 		},
 		Execer: &wExecer{
 			Execer:      Execer,
-			connDetails: connDetails,
+			sqlSpan: getSQLSpanData(connDetails),
 			sensor:      sensor,
 		},
 		ExecerContext: &wExecerContext{
 			ExecerContext: ExecerContext,
-			sqlSpan: getSQLSpanData(connDetails, ""),
+			sqlSpan: getSQLSpanData(connDetails),
 			sensor:        sensor,
 		},
 		Queryer: &wQueryer{
 			Queryer:     Queryer,
-			connDetails: connDetails,
+			sqlSpan: getSQLSpanData(connDetails),
 			sensor:      sensor,
 		},
 		QueryerContext: &wQueryerContext{
 			QueryerContext: QueryerContext,
-			connDetails:    connDetails,
+			sqlSpan: getSQLSpanData(connDetails),
 			sensor:         sensor,
 		}}
 }
@@ -1110,12 +1110,12 @@ func get_conn_Execer_ExecerContext_ConnPrepareContext_NamedValueChecker(connDeta
 		},
 		Execer: &wExecer{
 			Execer:      Execer,
-			connDetails: connDetails,
+			sqlSpan: getSQLSpanData(connDetails),
 			sensor:      sensor,
 		},
 		ExecerContext: &wExecerContext{
 			ExecerContext: ExecerContext,
-			sqlSpan: getSQLSpanData(connDetails, ""),
+			sqlSpan: getSQLSpanData(connDetails),
 			sensor:        sensor,
 		},
 		ConnPrepareContext: &wConnPrepareContext{
@@ -1134,17 +1134,17 @@ func get_conn_ExecerContext_Queryer_QueryerContext_NamedValueChecker(connDetails
 		},
 		ExecerContext: &wExecerContext{
 			ExecerContext: ExecerContext,
-			sqlSpan: getSQLSpanData(connDetails, ""),
+			sqlSpan: getSQLSpanData(connDetails),
 			sensor:        sensor,
 		},
 		Queryer: &wQueryer{
 			Queryer:     Queryer,
-			connDetails: connDetails,
+			sqlSpan: getSQLSpanData(connDetails),
 			sensor:      sensor,
 		},
 		QueryerContext: &wQueryerContext{
 			QueryerContext: QueryerContext,
-			connDetails:    connDetails,
+			sqlSpan: getSQLSpanData(connDetails),
 			sensor:         sensor,
 		}, NamedValueChecker: NamedValueChecker}
 }
@@ -1158,17 +1158,17 @@ func get_conn_Execer_ExecerContext_QueryerContext_NamedValueChecker(connDetails 
 		},
 		Execer: &wExecer{
 			Execer:      Execer,
-			connDetails: connDetails,
+			sqlSpan: getSQLSpanData(connDetails),
 			sensor:      sensor,
 		},
 		ExecerContext: &wExecerContext{
 			ExecerContext: ExecerContext,
-			sqlSpan: getSQLSpanData(connDetails, ""),
+			sqlSpan: getSQLSpanData(connDetails),
 			sensor:        sensor,
 		},
 		QueryerContext: &wQueryerContext{
 			QueryerContext: QueryerContext,
-			connDetails:    connDetails,
+			sqlSpan: getSQLSpanData(connDetails),
 			sensor:         sensor,
 		}, NamedValueChecker: NamedValueChecker}
 }
@@ -1182,17 +1182,17 @@ func get_conn_Execer_ExecerContext_Queryer_NamedValueChecker(connDetails DbConnD
 		},
 		Execer: &wExecer{
 			Execer:      Execer,
-			connDetails: connDetails,
+			sqlSpan: getSQLSpanData(connDetails),
 			sensor:      sensor,
 		},
 		ExecerContext: &wExecerContext{
 			ExecerContext: ExecerContext,
-			sqlSpan: getSQLSpanData(connDetails, ""),
+			sqlSpan: getSQLSpanData(connDetails),
 			sensor:        sensor,
 		},
 		Queryer: &wQueryer{
 			Queryer:     Queryer,
-			connDetails: connDetails,
+			sqlSpan: getSQLSpanData(connDetails),
 			sensor:      sensor,
 		}, NamedValueChecker: NamedValueChecker}
 }
@@ -1206,17 +1206,17 @@ func get_conn_ExecerContext_Queryer_QueryerContext_ConnPrepareContext(connDetail
 		},
 		ExecerContext: &wExecerContext{
 			ExecerContext: ExecerContext,
-			sqlSpan: getSQLSpanData(connDetails, ""),
+			sqlSpan: getSQLSpanData(connDetails),
 			sensor:        sensor,
 		},
 		Queryer: &wQueryer{
 			Queryer:     Queryer,
-			connDetails: connDetails,
+			sqlSpan: getSQLSpanData(connDetails),
 			sensor:      sensor,
 		},
 		QueryerContext: &wQueryerContext{
 			QueryerContext: QueryerContext,
-			connDetails:    connDetails,
+			sqlSpan: getSQLSpanData(connDetails),
 			sensor:         sensor,
 		},
 		ConnPrepareContext: &wConnPrepareContext{
@@ -1235,17 +1235,17 @@ func get_conn_Execer_Queryer_QueryerContext_ConnPrepareContext(connDetails DbCon
 		},
 		Execer: &wExecer{
 			Execer:      Execer,
-			connDetails: connDetails,
+			sqlSpan: getSQLSpanData(connDetails),
 			sensor:      sensor,
 		},
 		Queryer: &wQueryer{
 			Queryer:     Queryer,
-			connDetails: connDetails,
+			sqlSpan: getSQLSpanData(connDetails),
 			sensor:      sensor,
 		},
 		QueryerContext: &wQueryerContext{
 			QueryerContext: QueryerContext,
-			connDetails:    connDetails,
+			sqlSpan: getSQLSpanData(connDetails),
 			sensor:         sensor,
 		},
 		ConnPrepareContext: &wConnPrepareContext{
@@ -1264,17 +1264,17 @@ func get_conn_Execer_ExecerContext_QueryerContext_ConnPrepareContext(connDetails
 		},
 		Execer: &wExecer{
 			Execer:      Execer,
-			connDetails: connDetails,
+			sqlSpan: getSQLSpanData(connDetails),
 			sensor:      sensor,
 		},
 		ExecerContext: &wExecerContext{
 			ExecerContext: ExecerContext,
-			sqlSpan: getSQLSpanData(connDetails, ""),
+			sqlSpan: getSQLSpanData(connDetails),
 			sensor:        sensor,
 		},
 		QueryerContext: &wQueryerContext{
 			QueryerContext: QueryerContext,
-			connDetails:    connDetails,
+			sqlSpan: getSQLSpanData(connDetails),
 			sensor:         sensor,
 		},
 		ConnPrepareContext: &wConnPrepareContext{
@@ -1293,7 +1293,7 @@ func get_conn_Execer_ConnPrepareContext_NamedValueChecker(connDetails DbConnDeta
 		},
 		Execer: &wExecer{
 			Execer:      Execer,
-			connDetails: connDetails,
+			sqlSpan: getSQLSpanData(connDetails),
 			sensor:      sensor,
 		},
 		ConnPrepareContext: &wConnPrepareContext{
@@ -1312,17 +1312,17 @@ func get_conn_Execer_Queryer_QueryerContext(connDetails DbConnDetails, conn driv
 		},
 		Execer: &wExecer{
 			Execer:      Execer,
-			connDetails: connDetails,
+			sqlSpan: getSQLSpanData(connDetails),
 			sensor:      sensor,
 		},
 		Queryer: &wQueryer{
 			Queryer:     Queryer,
-			connDetails: connDetails,
+			sqlSpan: getSQLSpanData(connDetails),
 			sensor:      sensor,
 		},
 		QueryerContext: &wQueryerContext{
 			QueryerContext: QueryerContext,
-			connDetails:    connDetails,
+			sqlSpan: getSQLSpanData(connDetails),
 			sensor:         sensor,
 		}}
 }
@@ -1336,12 +1336,12 @@ func get_conn_Execer_QueryerContext_ConnPrepareContext(connDetails DbConnDetails
 		},
 		Execer: &wExecer{
 			Execer:      Execer,
-			connDetails: connDetails,
+			sqlSpan: getSQLSpanData(connDetails),
 			sensor:      sensor,
 		},
 		QueryerContext: &wQueryerContext{
 			QueryerContext: QueryerContext,
-			connDetails:    connDetails,
+			sqlSpan: getSQLSpanData(connDetails),
 			sensor:         sensor,
 		},
 		ConnPrepareContext: &wConnPrepareContext{
@@ -1360,12 +1360,12 @@ func get_conn_ExecerContext_QueryerContext_ConnPrepareContext(connDetails DbConn
 		},
 		ExecerContext: &wExecerContext{
 			ExecerContext: ExecerContext,
-			sqlSpan: getSQLSpanData(connDetails, ""),
+			sqlSpan: getSQLSpanData(connDetails),
 			sensor:        sensor,
 		},
 		QueryerContext: &wQueryerContext{
 			QueryerContext: QueryerContext,
-			connDetails:    connDetails,
+			sqlSpan: getSQLSpanData(connDetails),
 			sensor:         sensor,
 		},
 		ConnPrepareContext: &wConnPrepareContext{
@@ -1384,12 +1384,12 @@ func get_conn_ExecerContext_Queryer_ConnPrepareContext(connDetails DbConnDetails
 		},
 		ExecerContext: &wExecerContext{
 			ExecerContext: ExecerContext,
-			sqlSpan: getSQLSpanData(connDetails, ""),
+			sqlSpan: getSQLSpanData(connDetails),
 			sensor:        sensor,
 		},
 		Queryer: &wQueryer{
 			Queryer:     Queryer,
-			connDetails: connDetails,
+			sqlSpan: getSQLSpanData(connDetails),
 			sensor:      sensor,
 		},
 		ConnPrepareContext: &wConnPrepareContext{
@@ -1408,12 +1408,12 @@ func get_conn_Queryer_QueryerContext_ConnPrepareContext(connDetails DbConnDetail
 		},
 		Queryer: &wQueryer{
 			Queryer:     Queryer,
-			connDetails: connDetails,
+			sqlSpan: getSQLSpanData(connDetails),
 			sensor:      sensor,
 		},
 		QueryerContext: &wQueryerContext{
 			QueryerContext: QueryerContext,
-			connDetails:    connDetails,
+			sqlSpan: getSQLSpanData(connDetails),
 			sensor:         sensor,
 		},
 		ConnPrepareContext: &wConnPrepareContext{
@@ -1432,12 +1432,12 @@ func get_conn_Execer_Queryer_ConnPrepareContext(connDetails DbConnDetails, conn 
 		},
 		Execer: &wExecer{
 			Execer:      Execer,
-			connDetails: connDetails,
+			sqlSpan: getSQLSpanData(connDetails),
 			sensor:      sensor,
 		},
 		Queryer: &wQueryer{
 			Queryer:     Queryer,
-			connDetails: connDetails,
+			sqlSpan: getSQLSpanData(connDetails),
 			sensor:      sensor,
 		},
 		ConnPrepareContext: &wConnPrepareContext{
@@ -1456,17 +1456,17 @@ func get_conn_Execer_ExecerContext_QueryerContext(connDetails DbConnDetails, con
 		},
 		Execer: &wExecer{
 			Execer:      Execer,
-			connDetails: connDetails,
+			sqlSpan: getSQLSpanData(connDetails),
 			sensor:      sensor,
 		},
 		ExecerContext: &wExecerContext{
 			ExecerContext: ExecerContext,
-			sqlSpan: getSQLSpanData(connDetails, ""),
+			sqlSpan: getSQLSpanData(connDetails),
 			sensor:        sensor,
 		},
 		QueryerContext: &wQueryerContext{
 			QueryerContext: QueryerContext,
-			connDetails:    connDetails,
+			sqlSpan: getSQLSpanData(connDetails),
 			sensor:         sensor,
 		}}
 }
@@ -1480,7 +1480,7 @@ func get_conn_QueryerContext_ConnPrepareContext_NamedValueChecker(connDetails Db
 		},
 		QueryerContext: &wQueryerContext{
 			QueryerContext: QueryerContext,
-			connDetails:    connDetails,
+			sqlSpan: getSQLSpanData(connDetails),
 			sensor:         sensor,
 		},
 		ConnPrepareContext: &wConnPrepareContext{
@@ -1499,17 +1499,17 @@ func get_conn_ExecerContext_Queryer_QueryerContext(connDetails DbConnDetails, co
 		},
 		ExecerContext: &wExecerContext{
 			ExecerContext: ExecerContext,
-			sqlSpan: getSQLSpanData(connDetails, ""),
+			sqlSpan: getSQLSpanData(connDetails),
 			sensor:        sensor,
 		},
 		Queryer: &wQueryer{
 			Queryer:     Queryer,
-			connDetails: connDetails,
+			sqlSpan: getSQLSpanData(connDetails),
 			sensor:      sensor,
 		},
 		QueryerContext: &wQueryerContext{
 			QueryerContext: QueryerContext,
-			connDetails:    connDetails,
+			sqlSpan: getSQLSpanData(connDetails),
 			sensor:         sensor,
 		}}
 }
@@ -1523,7 +1523,7 @@ func get_conn_Queryer_ConnPrepareContext_NamedValueChecker(connDetails DbConnDet
 		},
 		Queryer: &wQueryer{
 			Queryer:     Queryer,
-			connDetails: connDetails,
+			sqlSpan: getSQLSpanData(connDetails),
 			sensor:      sensor,
 		},
 		ConnPrepareContext: &wConnPrepareContext{
@@ -1542,7 +1542,7 @@ func get_conn_ExecerContext_ConnPrepareContext_NamedValueChecker(connDetails DbC
 		},
 		ExecerContext: &wExecerContext{
 			ExecerContext: ExecerContext,
-			sqlSpan: getSQLSpanData(connDetails, ""),
+			sqlSpan: getSQLSpanData(connDetails),
 			sensor:        sensor,
 		},
 		ConnPrepareContext: &wConnPrepareContext{
@@ -1561,12 +1561,12 @@ func get_conn_Execer_ExecerContext_NamedValueChecker(connDetails DbConnDetails, 
 		},
 		Execer: &wExecer{
 			Execer:      Execer,
-			connDetails: connDetails,
+			sqlSpan: getSQLSpanData(connDetails),
 			sensor:      sensor,
 		},
 		ExecerContext: &wExecerContext{
 			ExecerContext: ExecerContext,
-			sqlSpan: getSQLSpanData(connDetails, ""),
+			sqlSpan: getSQLSpanData(connDetails),
 			sensor:        sensor,
 		}, NamedValueChecker: NamedValueChecker}
 }
@@ -1580,17 +1580,17 @@ func get_conn_Execer_ExecerContext_Queryer(connDetails DbConnDetails, conn drive
 		},
 		Execer: &wExecer{
 			Execer:      Execer,
-			connDetails: connDetails,
+			sqlSpan: getSQLSpanData(connDetails),
 			sensor:      sensor,
 		},
 		ExecerContext: &wExecerContext{
 			ExecerContext: ExecerContext,
-			sqlSpan: getSQLSpanData(connDetails, ""),
+			sqlSpan: getSQLSpanData(connDetails),
 			sensor:        sensor,
 		},
 		Queryer: &wQueryer{
 			Queryer:     Queryer,
-			connDetails: connDetails,
+			sqlSpan: getSQLSpanData(connDetails),
 			sensor:      sensor,
 		}}
 }
@@ -1604,12 +1604,12 @@ func get_conn_Execer_Queryer_NamedValueChecker(connDetails DbConnDetails, conn d
 		},
 		Execer: &wExecer{
 			Execer:      Execer,
-			connDetails: connDetails,
+			sqlSpan: getSQLSpanData(connDetails),
 			sensor:      sensor,
 		},
 		Queryer: &wQueryer{
 			Queryer:     Queryer,
-			connDetails: connDetails,
+			sqlSpan: getSQLSpanData(connDetails),
 			sensor:      sensor,
 		}, NamedValueChecker: NamedValueChecker}
 }
@@ -1623,12 +1623,12 @@ func get_conn_ExecerContext_Queryer_NamedValueChecker(connDetails DbConnDetails,
 		},
 		ExecerContext: &wExecerContext{
 			ExecerContext: ExecerContext,
-			sqlSpan: getSQLSpanData(connDetails, ""),
+			sqlSpan: getSQLSpanData(connDetails),
 			sensor:        sensor,
 		},
 		Queryer: &wQueryer{
 			Queryer:     Queryer,
-			connDetails: connDetails,
+			sqlSpan: getSQLSpanData(connDetails),
 			sensor:      sensor,
 		}, NamedValueChecker: NamedValueChecker}
 }
@@ -1642,12 +1642,12 @@ func get_conn_Execer_ExecerContext_ConnPrepareContext(connDetails DbConnDetails,
 		},
 		Execer: &wExecer{
 			Execer:      Execer,
-			connDetails: connDetails,
+			sqlSpan: getSQLSpanData(connDetails),
 			sensor:      sensor,
 		},
 		ExecerContext: &wExecerContext{
 			ExecerContext: ExecerContext,
-			sqlSpan: getSQLSpanData(connDetails, ""),
+			sqlSpan: getSQLSpanData(connDetails),
 			sensor:        sensor,
 		},
 		ConnPrepareContext: &wConnPrepareContext{
@@ -1666,12 +1666,12 @@ func get_conn_Queryer_QueryerContext_NamedValueChecker(connDetails DbConnDetails
 		},
 		Queryer: &wQueryer{
 			Queryer:     Queryer,
-			connDetails: connDetails,
+			sqlSpan: getSQLSpanData(connDetails),
 			sensor:      sensor,
 		},
 		QueryerContext: &wQueryerContext{
 			QueryerContext: QueryerContext,
-			connDetails:    connDetails,
+			sqlSpan: getSQLSpanData(connDetails),
 			sensor:         sensor,
 		}, NamedValueChecker: NamedValueChecker}
 }
@@ -1685,12 +1685,12 @@ func get_conn_Execer_QueryerContext_NamedValueChecker(connDetails DbConnDetails,
 		},
 		Execer: &wExecer{
 			Execer:      Execer,
-			connDetails: connDetails,
+			sqlSpan: getSQLSpanData(connDetails),
 			sensor:      sensor,
 		},
 		QueryerContext: &wQueryerContext{
 			QueryerContext: QueryerContext,
-			connDetails:    connDetails,
+			sqlSpan: getSQLSpanData(connDetails),
 			sensor:         sensor,
 		}, NamedValueChecker: NamedValueChecker}
 }
@@ -1704,12 +1704,12 @@ func get_conn_ExecerContext_QueryerContext_NamedValueChecker(connDetails DbConnD
 		},
 		ExecerContext: &wExecerContext{
 			ExecerContext: ExecerContext,
-			sqlSpan: getSQLSpanData(connDetails, ""),
+			sqlSpan: getSQLSpanData(connDetails),
 			sensor:        sensor,
 		},
 		QueryerContext: &wQueryerContext{
 			QueryerContext: QueryerContext,
-			connDetails:    connDetails,
+			sqlSpan: getSQLSpanData(connDetails),
 			sensor:         sensor,
 		}, NamedValueChecker: NamedValueChecker}
 }
@@ -1723,7 +1723,7 @@ func get_conn_Queryer_ConnPrepareContext(connDetails DbConnDetails, conn driver.
 		},
 		Queryer: &wQueryer{
 			Queryer:     Queryer,
-			connDetails: connDetails,
+			sqlSpan: getSQLSpanData(connDetails),
 			sensor:      sensor,
 		},
 		ConnPrepareContext: &wConnPrepareContext{
@@ -1742,7 +1742,7 @@ func get_conn_Queryer_NamedValueChecker(connDetails DbConnDetails, conn driver.C
 		},
 		Queryer: &wQueryer{
 			Queryer:     Queryer,
-			connDetails: connDetails,
+			sqlSpan: getSQLSpanData(connDetails),
 			sensor:      sensor,
 		}, NamedValueChecker: NamedValueChecker}
 }
@@ -1756,12 +1756,12 @@ func get_conn_Execer_ExecerContext(connDetails DbConnDetails, conn driver.Conn, 
 		},
 		Execer: &wExecer{
 			Execer:      Execer,
-			connDetails: connDetails,
+			sqlSpan: getSQLSpanData(connDetails),
 			sensor:      sensor,
 		},
 		ExecerContext: &wExecerContext{
 			ExecerContext: ExecerContext,
-			sqlSpan: getSQLSpanData(connDetails, ""),
+			sqlSpan: getSQLSpanData(connDetails),
 			sensor:        sensor,
 		}}
 }
@@ -1775,12 +1775,12 @@ func get_conn_ExecerContext_Queryer(connDetails DbConnDetails, conn driver.Conn,
 		},
 		ExecerContext: &wExecerContext{
 			ExecerContext: ExecerContext,
-			sqlSpan: getSQLSpanData(connDetails, ""),
+			sqlSpan: getSQLSpanData(connDetails),
 			sensor:        sensor,
 		},
 		Queryer: &wQueryer{
 			Queryer:     Queryer,
-			connDetails: connDetails,
+			sqlSpan: getSQLSpanData(connDetails),
 			sensor:      sensor,
 		}}
 }
@@ -1794,7 +1794,7 @@ func get_conn_QueryerContext_ConnPrepareContext(connDetails DbConnDetails, conn 
 		},
 		QueryerContext: &wQueryerContext{
 			QueryerContext: QueryerContext,
-			connDetails:    connDetails,
+			sqlSpan: getSQLSpanData(connDetails),
 			sensor:         sensor,
 		},
 		ConnPrepareContext: &wConnPrepareContext{
@@ -1827,12 +1827,12 @@ func get_conn_Execer_QueryerContext(connDetails DbConnDetails, conn driver.Conn,
 		},
 		Execer: &wExecer{
 			Execer:      Execer,
-			connDetails: connDetails,
+			sqlSpan: getSQLSpanData(connDetails),
 			sensor:      sensor,
 		},
 		QueryerContext: &wQueryerContext{
 			QueryerContext: QueryerContext,
-			connDetails:    connDetails,
+			sqlSpan: getSQLSpanData(connDetails),
 			sensor:         sensor,
 		}}
 }
@@ -1846,7 +1846,7 @@ func get_conn_ExecerContext_NamedValueChecker(connDetails DbConnDetails, conn dr
 		},
 		ExecerContext: &wExecerContext{
 			ExecerContext: ExecerContext,
-			sqlSpan: getSQLSpanData(connDetails, ""),
+			sqlSpan: getSQLSpanData(connDetails),
 			sensor:        sensor,
 		}, NamedValueChecker: NamedValueChecker}
 }
@@ -1860,12 +1860,12 @@ func get_conn_ExecerContext_QueryerContext(connDetails DbConnDetails, conn drive
 		},
 		ExecerContext: &wExecerContext{
 			ExecerContext: ExecerContext,
-			sqlSpan: getSQLSpanData(connDetails, ""),
+			sqlSpan: getSQLSpanData(connDetails),
 			sensor:        sensor,
 		},
 		QueryerContext: &wQueryerContext{
 			QueryerContext: QueryerContext,
-			connDetails:    connDetails,
+			sqlSpan: getSQLSpanData(connDetails),
 			sensor:         sensor,
 		}}
 }
@@ -1879,7 +1879,7 @@ func get_conn_Execer_NamedValueChecker(connDetails DbConnDetails, conn driver.Co
 		},
 		Execer: &wExecer{
 			Execer:      Execer,
-			connDetails: connDetails,
+			sqlSpan: getSQLSpanData(connDetails),
 			sensor:      sensor,
 		}, NamedValueChecker: NamedValueChecker}
 }
@@ -1893,12 +1893,12 @@ func get_conn_Execer_Queryer(connDetails DbConnDetails, conn driver.Conn, sensor
 		},
 		Execer: &wExecer{
 			Execer:      Execer,
-			connDetails: connDetails,
+			sqlSpan: getSQLSpanData(connDetails),
 			sensor:      sensor,
 		},
 		Queryer: &wQueryer{
 			Queryer:     Queryer,
-			connDetails: connDetails,
+			sqlSpan: getSQLSpanData(connDetails),
 			sensor:      sensor,
 		}}
 }
@@ -1912,7 +1912,7 @@ func get_conn_QueryerContext_NamedValueChecker(connDetails DbConnDetails, conn d
 		},
 		QueryerContext: &wQueryerContext{
 			QueryerContext: QueryerContext,
-			connDetails:    connDetails,
+			sqlSpan: getSQLSpanData(connDetails),
 			sensor:         sensor,
 		}, NamedValueChecker: NamedValueChecker}
 }
@@ -1926,7 +1926,7 @@ func get_conn_Execer_ConnPrepareContext(connDetails DbConnDetails, conn driver.C
 		},
 		Execer: &wExecer{
 			Execer:      Execer,
-			connDetails: connDetails,
+			sqlSpan: getSQLSpanData(connDetails),
 			sensor:      sensor,
 		},
 		ConnPrepareContext: &wConnPrepareContext{
@@ -1945,7 +1945,7 @@ func get_conn_ExecerContext_ConnPrepareContext(connDetails DbConnDetails, conn d
 		},
 		ExecerContext: &wExecerContext{
 			ExecerContext: ExecerContext,
-			sqlSpan: getSQLSpanData(connDetails, ""),
+			sqlSpan: getSQLSpanData(connDetails),
 			sensor:        sensor,
 		},
 		ConnPrepareContext: &wConnPrepareContext{
@@ -1964,12 +1964,12 @@ func get_conn_Queryer_QueryerContext(connDetails DbConnDetails, conn driver.Conn
 		},
 		Queryer: &wQueryer{
 			Queryer:     Queryer,
-			connDetails: connDetails,
+			sqlSpan: getSQLSpanData(connDetails),
 			sensor:      sensor,
 		},
 		QueryerContext: &wQueryerContext{
 			QueryerContext: QueryerContext,
-			connDetails:    connDetails,
+			sqlSpan: getSQLSpanData(connDetails),
 			sensor:         sensor,
 		}}
 }
@@ -1983,7 +1983,7 @@ func get_conn_QueryerContext(connDetails DbConnDetails, conn driver.Conn, sensor
 		},
 		QueryerContext: &wQueryerContext{
 			QueryerContext: QueryerContext,
-			connDetails:    connDetails,
+			sqlSpan: getSQLSpanData(connDetails),
 			sensor:         sensor,
 		}}
 }
@@ -1997,7 +1997,7 @@ func get_conn_Execer(connDetails DbConnDetails, conn driver.Conn, sensor TracerL
 		},
 		Execer: &wExecer{
 			Execer:      Execer,
-			connDetails: connDetails,
+			sqlSpan: getSQLSpanData(connDetails),
 			sensor:      sensor,
 		}}
 }
@@ -2025,7 +2025,7 @@ func get_conn_Queryer(connDetails DbConnDetails, conn driver.Conn, sensor Tracer
 		},
 		Queryer: &wQueryer{
 			Queryer:     Queryer,
-			connDetails: connDetails,
+			sqlSpan: getSQLSpanData(connDetails),
 			sensor:      sensor,
 		}}
 }
@@ -2048,7 +2048,7 @@ func get_conn_ExecerContext(connDetails DbConnDetails, conn driver.Conn, sensor 
 		},
 		ExecerContext: &wExecerContext{
 			ExecerContext: ExecerContext,
-			sqlSpan: getSQLSpanData(connDetails, ""),
+			sqlSpan: getSQLSpanData(connDetails),
 			sensor:        sensor,
 		}}
 }
@@ -2059,17 +2059,16 @@ func get_stmt_StmtExecContext_StmtQueryContext_NamedValueChecker_ColumnConverter
 	return &w_stmt_StmtExecContext_StmtQueryContext_NamedValueChecker_ColumnConverter{
 		Stmt: &wStmt{
 			Stmt:        stmt,
-			sqlSpan: getSQLSpanData(connDetails, query),
+			sqlSpan: getSQLSpanData(connDetails, withQuery(query)),
 			sensor:      sensor,
 		}, StmtExecContext: &wStmtExecContext{
 			StmtExecContext: StmtExecContext,
 			sensor:          sensor,
-			sqlSpan: getSQLSpanData(connDetails, query),
+			sqlSpan: getSQLSpanData(connDetails, withQuery(query)),
 		}, StmtQueryContext: &wStmtQueryContext{
 			StmtQueryContext: StmtQueryContext,
-			connDetails:      connDetails,
 			sensor:           sensor,
-			query:            query,
+			sqlSpan: getSQLSpanData(connDetails, withQuery(query)),
 		}, NamedValueChecker: NamedValueChecker,
 		cc: ColumnConverter}
 }
@@ -2078,17 +2077,16 @@ func get_stmt_StmtExecContext_StmtQueryContext_NamedValueChecker(stmt driver.Stm
 	return &w_stmt_StmtExecContext_StmtQueryContext_NamedValueChecker{
 		Stmt: &wStmt{
 			Stmt:        stmt,
-			sqlSpan: getSQLSpanData(connDetails, query),
+			sqlSpan: getSQLSpanData(connDetails, withQuery(query)),
 			sensor:      sensor,
 		}, StmtExecContext: &wStmtExecContext{
 			StmtExecContext: StmtExecContext,
 			sensor:          sensor,
-			sqlSpan: getSQLSpanData(connDetails, query),
+			sqlSpan: getSQLSpanData(connDetails, withQuery(query)),
 		}, StmtQueryContext: &wStmtQueryContext{
 			StmtQueryContext: StmtQueryContext,
-			connDetails:      connDetails,
 			sensor:           sensor,
-			query:            query,
+			sqlSpan: getSQLSpanData(connDetails, withQuery(query)),
 		}, NamedValueChecker: NamedValueChecker}
 }
 
@@ -2096,13 +2094,12 @@ func get_stmt_StmtQueryContext_NamedValueChecker_ColumnConverter(stmt driver.Stm
 	return &w_stmt_StmtQueryContext_NamedValueChecker_ColumnConverter{
 		Stmt: &wStmt{
 			Stmt:        stmt,
-			sqlSpan: getSQLSpanData(connDetails, query),
+			sqlSpan: getSQLSpanData(connDetails, withQuery(query)),
 			sensor:      sensor,
 		}, StmtQueryContext: &wStmtQueryContext{
 			StmtQueryContext: StmtQueryContext,
-			connDetails:      connDetails,
 			sensor:           sensor,
-			query:            query,
+			sqlSpan: getSQLSpanData(connDetails, withQuery(query)),
 		}, NamedValueChecker: NamedValueChecker,
 		cc: ColumnConverter}
 }
@@ -2111,12 +2108,12 @@ func get_stmt_StmtExecContext_NamedValueChecker_ColumnConverter(stmt driver.Stmt
 	return &w_stmt_StmtExecContext_NamedValueChecker_ColumnConverter{
 		Stmt: &wStmt{
 			Stmt:        stmt,
-			sqlSpan: getSQLSpanData(connDetails, query),
+			sqlSpan: getSQLSpanData(connDetails, withQuery(query)),
 			sensor:      sensor,
 		}, StmtExecContext: &wStmtExecContext{
 			StmtExecContext: StmtExecContext,
 			sensor:          sensor,
-			sqlSpan: getSQLSpanData(connDetails, query),
+			sqlSpan: getSQLSpanData(connDetails, withQuery(query)),
 		}, NamedValueChecker: NamedValueChecker,
 		cc: ColumnConverter}
 }
@@ -2125,17 +2122,16 @@ func get_stmt_StmtExecContext_StmtQueryContext_ColumnConverter(stmt driver.Stmt,
 	return &w_stmt_StmtExecContext_StmtQueryContext_ColumnConverter{
 		Stmt: &wStmt{
 			Stmt:        stmt,
-			sqlSpan: getSQLSpanData(connDetails, query),
+			sqlSpan: getSQLSpanData(connDetails, withQuery(query)),
 			sensor:      sensor,
 		}, StmtExecContext: &wStmtExecContext{
 			StmtExecContext: StmtExecContext,
 			sensor:          sensor,
-			sqlSpan: getSQLSpanData(connDetails, query),
+			sqlSpan: getSQLSpanData(connDetails, withQuery(query)),
 		}, StmtQueryContext: &wStmtQueryContext{
 			StmtQueryContext: StmtQueryContext,
-			connDetails:      connDetails,
 			sensor:           sensor,
-			query:            query,
+			sqlSpan: getSQLSpanData(connDetails, withQuery(query)),
 		},
 		cc: ColumnConverter}
 }
@@ -2144,13 +2140,12 @@ func get_stmt_StmtQueryContext_ColumnConverter(stmt driver.Stmt, query string, c
 	return &w_stmt_StmtQueryContext_ColumnConverter{
 		Stmt: &wStmt{
 			Stmt:        stmt,
-			sqlSpan: getSQLSpanData(connDetails, query),
+			sqlSpan: getSQLSpanData(connDetails, withQuery(query)),
 			sensor:      sensor,
 		}, StmtQueryContext: &wStmtQueryContext{
 			StmtQueryContext: StmtQueryContext,
-			connDetails:      connDetails,
 			sensor:           sensor,
-			query:            query,
+			sqlSpan: getSQLSpanData(connDetails, withQuery(query)),
 		},
 		cc: ColumnConverter}
 }
@@ -2159,13 +2154,12 @@ func get_stmt_StmtQueryContext_NamedValueChecker(stmt driver.Stmt, query string,
 	return &w_stmt_StmtQueryContext_NamedValueChecker{
 		Stmt: &wStmt{
 			Stmt:        stmt,
-			sqlSpan: getSQLSpanData(connDetails, query),
+			sqlSpan: getSQLSpanData(connDetails, withQuery(query)),
 			sensor:      sensor,
 		}, StmtQueryContext: &wStmtQueryContext{
 			StmtQueryContext: StmtQueryContext,
-			connDetails:      connDetails,
 			sensor:           sensor,
-			query:            query,
+			sqlSpan: getSQLSpanData(connDetails, withQuery(query)),
 		}, NamedValueChecker: NamedValueChecker}
 }
 
@@ -2173,12 +2167,12 @@ func get_stmt_StmtExecContext_ColumnConverter(stmt driver.Stmt, query string, co
 	return &w_stmt_StmtExecContext_ColumnConverter{
 		Stmt: &wStmt{
 			Stmt:        stmt,
-			sqlSpan: getSQLSpanData(connDetails, query),
+			sqlSpan: getSQLSpanData(connDetails, withQuery(query)),
 			sensor:      sensor,
 		}, StmtExecContext: &wStmtExecContext{
 			StmtExecContext: StmtExecContext,
 			sensor:          sensor,
-			sqlSpan: getSQLSpanData(connDetails, query),
+			sqlSpan: getSQLSpanData(connDetails, withQuery(query)),
 		},
 		cc: ColumnConverter}
 }
@@ -2187,12 +2181,12 @@ func get_stmt_StmtExecContext_NamedValueChecker(stmt driver.Stmt, query string, 
 	return &w_stmt_StmtExecContext_NamedValueChecker{
 		Stmt: &wStmt{
 			Stmt:        stmt,
-			sqlSpan: getSQLSpanData(connDetails, query),
+			sqlSpan: getSQLSpanData(connDetails, withQuery(query)),
 			sensor:      sensor,
 		}, StmtExecContext: &wStmtExecContext{
 			StmtExecContext: StmtExecContext,
 			sensor:          sensor,
-			sqlSpan: getSQLSpanData(connDetails, query),
+			sqlSpan: getSQLSpanData(connDetails, withQuery(query)),
 		}, NamedValueChecker: NamedValueChecker}
 }
 
@@ -2200,7 +2194,7 @@ func get_stmt_NamedValueChecker_ColumnConverter(stmt driver.Stmt, query string, 
 	return &w_stmt_NamedValueChecker_ColumnConverter{
 		Stmt: &wStmt{
 			Stmt:        stmt,
-			sqlSpan: getSQLSpanData(connDetails, query),
+			sqlSpan: getSQLSpanData(connDetails, withQuery(query)),
 			sensor:      sensor,
 		}, NamedValueChecker: NamedValueChecker,
 		cc: ColumnConverter}
@@ -2210,17 +2204,16 @@ func get_stmt_StmtExecContext_StmtQueryContext(stmt driver.Stmt, query string, c
 	return &w_stmt_StmtExecContext_StmtQueryContext{
 		Stmt: &wStmt{
 			Stmt:        stmt,
-			sqlSpan: getSQLSpanData(connDetails, query),
+			sqlSpan: getSQLSpanData(connDetails, withQuery(query)),
 			sensor:      sensor,
 		}, StmtExecContext: &wStmtExecContext{
 			StmtExecContext: StmtExecContext,
 			sensor:          sensor,
-			sqlSpan: getSQLSpanData(connDetails, query),
+			sqlSpan: getSQLSpanData(connDetails, withQuery(query)),
 		}, StmtQueryContext: &wStmtQueryContext{
 			StmtQueryContext: StmtQueryContext,
-			connDetails:      connDetails,
 			sensor:           sensor,
-			query:            query,
+			sqlSpan: getSQLSpanData(connDetails, withQuery(query)),
 		}}
 }
 
@@ -2228,7 +2221,7 @@ func get_stmt_ColumnConverter(stmt driver.Stmt, query string, connDetails DbConn
 	return &w_stmt_ColumnConverter{
 		Stmt: &wStmt{
 			Stmt:        stmt,
-			sqlSpan: getSQLSpanData(connDetails, query),
+			sqlSpan: getSQLSpanData(connDetails, withQuery(query)),
 			sensor:      sensor,
 		},
 		cc: ColumnConverter}
@@ -2238,12 +2231,12 @@ func get_stmt_StmtExecContext(stmt driver.Stmt, query string, connDetails DbConn
 	return &w_stmt_StmtExecContext{
 		Stmt: &wStmt{
 			Stmt:        stmt,
-			sqlSpan: getSQLSpanData(connDetails, query),
+			sqlSpan: getSQLSpanData(connDetails, withQuery(query)),
 			sensor:      sensor,
 		}, StmtExecContext: &wStmtExecContext{
 			StmtExecContext: StmtExecContext,
 			sensor:          sensor,
-			sqlSpan: getSQLSpanData(connDetails, query),
+			sqlSpan: getSQLSpanData(connDetails, withQuery(query)),
 		}}
 }
 
@@ -2251,7 +2244,7 @@ func get_stmt_NamedValueChecker(stmt driver.Stmt, query string, connDetails DbCo
 	return &w_stmt_NamedValueChecker{
 		Stmt: &wStmt{
 			Stmt:        stmt,
-			sqlSpan: getSQLSpanData(connDetails, query),
+			sqlSpan: getSQLSpanData(connDetails, withQuery(query)),
 			sensor:      sensor,
 		}, NamedValueChecker: NamedValueChecker}
 }
@@ -2260,13 +2253,12 @@ func get_stmt_StmtQueryContext(stmt driver.Stmt, query string, connDetails DbCon
 	return &w_stmt_StmtQueryContext{
 		Stmt: &wStmt{
 			Stmt:        stmt,
-			sqlSpan: getSQLSpanData(connDetails, query),
+			sqlSpan: getSQLSpanData(connDetails, withQuery(query)),
 			sensor:      sensor,
 		}, StmtQueryContext: &wStmtQueryContext{
 			StmtQueryContext: StmtQueryContext,
-			connDetails:      connDetails,
 			sensor:           sensor,
-			query:            query,
+			sqlSpan: getSQLSpanData(connDetails, withQuery(query)),
 		}}
 }
 
@@ -2294,7 +2286,7 @@ func wrapStmt(stmt driver.Stmt, query string, connDetails DbConnDetails, sensor 
 
 	return &wStmt{
 		Stmt:        stmt,
-		sqlSpan: getSQLSpanData(connDetails, query),
+		sqlSpan: getSQLSpanData(connDetails, withQuery(query)),
 		sensor:      sensor,
 	}
 }

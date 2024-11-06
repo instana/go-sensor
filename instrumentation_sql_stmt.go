@@ -12,15 +12,13 @@ import (
 type wStmt struct {
 	driver.Stmt
 
-	// connDetails DbConnDetails
-	// query       string
 	sqlSpan *sqlSpanData
 	sensor  TracerLogger
 }
 
 func (stmt *wStmt) Exec(args []driver.Value) (driver.Result, error) {
 	ctx := context.Background()
-	// sp, dbKey := startSQLSpan(ctx, stmt.connDetails, stmt.query, stmt.sensor)
+
 	sp, dbKey := stmt.sqlSpan.start(ctx, stmt.sensor)
 	defer sp.Finish()
 
@@ -35,7 +33,7 @@ func (stmt *wStmt) Exec(args []driver.Value) (driver.Result, error) {
 
 func (stmt *wStmt) Query(args []driver.Value) (driver.Rows, error) {
 	ctx := context.Background()
-	// sp, dbKey := startSQLSpan(ctx, stmt.connDetails, stmt.query, stmt.sensor)
+
 	sp, dbKey := stmt.sqlSpan.start(ctx, stmt.sensor)
 	defer sp.Finish()
 

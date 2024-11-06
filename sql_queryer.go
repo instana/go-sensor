@@ -13,14 +13,18 @@ import (
 
 type wQueryer struct {
 	driver.Queryer
-	connDetails DbConnDetails
-	sensor      TracerLogger
+	sensor TracerLogger
+
+	sqlSpan *sqlSpanData
 }
 
 func (conn *wQueryer) Query(query string, args []driver.Value) (driver.Rows, error) {
 	ctx := context.Background()
 
-	sp, dbKey := startSQLSpan(ctx, conn.connDetails, query, conn.sensor)
+	// updating db query in sqlSpanData instance
+	conn.sqlSpan.updateDBQuery(query)
+
+	sp, dbKey := conn.sqlSpan.start(ctx, conn.sensor)
 	defer sp.Finish()
 
 	res, err := conn.Queryer.Query(query, args)

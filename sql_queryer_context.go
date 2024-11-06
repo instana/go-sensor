@@ -11,12 +11,17 @@ import (
 
 type wQueryerContext struct {
 	driver.QueryerContext
-	connDetails DbConnDetails
-	sensor      TracerLogger
+	sensor TracerLogger
+
+	sqlSpan *sqlSpanData
 }
 
 func (conn *wQueryerContext) QueryContext(ctx context.Context, query string, args []driver.NamedValue) (driver.Rows, error) {
-	sp, dbKey := startSQLSpan(ctx, conn.connDetails, query, conn.sensor)
+
+	// updating db query in sqlSpanData instance
+	conn.sqlSpan.updateDBQuery(query)
+
+	sp, dbKey := conn.sqlSpan.start(ctx, conn.sensor)
 	defer sp.Finish()
 
 	res, err := conn.QueryerContext.QueryContext(ctx, query, args)

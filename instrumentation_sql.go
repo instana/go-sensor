@@ -22,7 +22,7 @@ var (
 	sqlDriverRegistrationMu sync.Mutex
 )
 
-// sqlSpanData implements sqlSpan
+// sqlSpanData contains the data for creating a sql db span
 type sqlSpanData struct {
 	m           *sync.Mutex
 	connDetails DbConnDetails
@@ -30,8 +30,18 @@ type sqlSpanData struct {
 	tags        ot.Tags
 }
 
+// sqlSpanOption is a function that applies a configuration to sqlSpanConfig.
+type sqlSpanOption func(*sqlSpanData)
+
+// withQuery sets a custom query.
+func withQuery(query string) sqlSpanOption {
+	return func(c *sqlSpanData) {
+		c.query = query
+	}
+}
+
 // getSQLSpanData returns instance of sqlSpanData while creating a connection to DB
-func getSQLSpanData(c DbConnDetails, q string) *sqlSpanData {
+func getSQLSpanData(c DbConnDetails, opts ...sqlSpanOption) *sqlSpanData {
 	var m sync.Mutex
 	tags := make(ot.Tags)
 
@@ -42,13 +52,17 @@ func getSQLSpanData(c DbConnDetails, q string) *sqlSpanData {
 
 	tf(c).Apply(tags)
 
-	return &sqlSpanData{
+	spanData := &sqlSpanData{
 		m:           &m,
 		connDetails: c,
-		query:       q,
 		tags:        tags,
 	}
 
+	for _, opt := range opts {
+		opt(spanData)
+	}
+
+	return spanData
 }
 
 func (s *sqlSpanData) updateDBNameInSpanData(dbName string) {
