@@ -90,49 +90,25 @@ func (s *sqlSpanData) start(
 	ctx context.Context,
 	sensor TracerLogger) (sp ot.Span, dbKey string) {
 
-	var dbCmd, dbName string
-
 	if s.connDetails.DatabaseName == "" {
-		dbCmd, dbName = retrieveDBNameAndCmd(s.query)
-		s.updateDBNameInSpanData(dbName)
+		s.parseDatabaseFromQuery()
 	}
 
 	switch db(s.connDetails.DatabaseName) {
 
-	// *-------------------* //
-
-	// calling new postgresSpan method
 	case postgres:
 		return s.postgresSpan(ctx, sensor), pg_db_key
-
-	// *-------------------* //
-
 	case redis:
-		return redisSpan(ctx, s.connDetails, s.query, dbCmd, sensor), redis_db_key
+		return s.redisSpan(ctx, sensor), redis_db_key
 	case mysql:
-		return mySQLSpan(ctx, s.connDetails, s.query, sensor), mysql_db_key
+		return s.mySQLSpan(ctx, sensor), mysql_db_key
 	case couchbase:
-		return couchbaseSpan(ctx, s.connDetails, s.query, sensor), couchbase_db_key
+		return s.couchbaseSpan(ctx, sensor), couchbase_db_key
 	case cosmos:
-		return cosmosSpan(ctx, s.connDetails, s.query, sensor), cosmos_db_key
+		return s.cosmosSpan(ctx, sensor), cosmos_db_key
 	}
 
-	return genericSQLSpan(ctx, s.connDetails, s.query, sensor), generic_sql_db_key
-
-}
-
-// postgresSpan creates a new postgres span
-func (s *sqlSpanData) postgresSpan(
-	ctx context.Context,
-	sensor TracerLogger) (sp ot.Span) {
-	s.addTag("pg.stmt", s.query)
-
-	opts := []ot.StartSpanOption{ext.SpanKindRPCClient, s.tags}
-	if parentSpan, ok := SpanFromContext(ctx); ok {
-		opts = append(opts, ot.ChildOf(parentSpan.Context()))
-	}
-
-	return sensor.StartSpan(string(PostgreSQLSpanType), opts...)
+	return s.genericSQLSpan(ctx, sensor), generic_sql_db_key
 
 }
 
@@ -228,49 +204,27 @@ func getDBConnDetails(connStr, driverName string) DbConnDetails {
 	return ParseDBConnDetails(connStr)
 }
 
-func postgresSpan(ctx context.Context, conn DbConnDetails, query string, sensor TracerLogger) ot.Span {
-	tags := ot.Tags{
-		"pg.stmt": query,
-		"pg.user": conn.User,
-		"pg.host": conn.Host,
-	}
+func (s *sqlSpanData) postgresSpan(
+	ctx context.Context,
+	sensor TracerLogger) (sp ot.Span) {
+	s.addTag("pg.stmt", s.query)
 
-	if conn.Schema != "" {
-		tags["pg.db"] = conn.Schema
-	} else {
-		tags["pg.db"] = conn.RawString
-	}
-
-	if conn.Port != "" {
-		tags["pg.port"] = conn.Port
-	}
-
-	opts := []ot.StartSpanOption{ext.SpanKindRPCClient, tags}
+	opts := []ot.StartSpanOption{ext.SpanKindRPCClient, s.tags}
 	if parentSpan, ok := SpanFromContext(ctx); ok {
 		opts = append(opts, ot.ChildOf(parentSpan.Context()))
 	}
 
 	return sensor.StartSpan(string(PostgreSQLSpanType), opts...)
+
 }
 
-func mySQLSpan(ctx context.Context, conn DbConnDetails, query string, sensor TracerLogger) ot.Span {
-	tags := ot.Tags{
-		"mysql.stmt": query,
-		"mysql.user": conn.User,
-		"mysql.host": conn.Host,
-	}
+func (s *sqlSpanData) mySQLSpan(
+	ctx context.Context,
+	sensor TracerLogger) ot.Span {
 
-	if conn.Schema != "" {
-		tags["mysql.db"] = conn.Schema
-	} else {
-		tags["mysql.db"] = conn.RawString
-	}
+	s.addTag("mysql.stmt", s.query)
 
-	if conn.Port != "" {
-		tags["mysql.port"] = conn.Port
-	}
-
-	opts := []ot.StartSpanOption{ext.SpanKindRPCClient, tags}
+	opts := []ot.StartSpanOption{ext.SpanKindRPCClient, s.tags}
 	if parentSpan, ok := SpanFromContext(ctx); ok {
 		opts = append(opts, ot.ChildOf(parentSpan.Context()))
 	}
@@ -278,33 +232,14 @@ func mySQLSpan(ctx context.Context, conn DbConnDetails, query string, sensor Tra
 	return sensor.StartSpan(string(MySQLSpanType), opts...)
 }
 
-func redisSpan(ctx context.Context, conn DbConnDetails, query string, cmd string, sensor TracerLogger) ot.Span {
+func (s *sqlSpanData) redisSpan(
+	ctx context.Context,
+	sensor TracerLogger) ot.Span {
 
-	// The command string will be empty if the database name is determined
-	// from the connection URL rather than the query.
-	// Therefore, the Redis command should be parsed from the query.
-	if cmd == "" {
-		cmd, _ = parseRedisQuery(query)
-	}
+	cmd, _ := parseRedisQuery(s.query)
+	s.addTag("redis.command", cmd)
 
-	tags := ot.Tags{
-		"redis.command": cmd,
-	}
-
-	if conn.Error != nil {
-		tags["redis.error"] = conn.Error.Error()
-	}
-
-	connection := conn.Host + ":" + conn.Port
-
-	if conn.Host == "" || conn.Port == "" {
-		i := strings.LastIndex(conn.RawString, "@")
-		connection = conn.RawString[i+1:]
-	}
-
-	tags["redis.connection"] = connection
-
-	opts := []ot.StartSpanOption{ext.SpanKindRPCClient, tags}
+	opts := []ot.StartSpanOption{ext.SpanKindRPCClient, s.tags}
 	if parentSpan, ok := SpanFromContext(ctx); ok {
 		opts = append(opts, ot.ChildOf(parentSpan.Context()))
 	}
@@ -312,13 +247,13 @@ func redisSpan(ctx context.Context, conn DbConnDetails, query string, cmd string
 	return sensor.StartSpan(string(RedisSpanType), opts...)
 }
 
-func couchbaseSpan(ctx context.Context, conn DbConnDetails, query string, sensor TracerLogger) ot.Span {
-	tags := ot.Tags{
-		"couchbase.hostname": conn.RawString,
-		"couchbase.sql":      query,
-	}
+func (s *sqlSpanData) couchbaseSpan(
+	ctx context.Context,
+	sensor TracerLogger) ot.Span {
 
-	opts := []ot.StartSpanOption{ext.SpanKindRPCClient, tags}
+	s.addTag("couchbase.sql", s.query)
+
+	opts := []ot.StartSpanOption{ext.SpanKindRPCClient, s.tags}
 	if parentSpan, ok := SpanFromContext(ctx); ok {
 		opts = append(opts, ot.ChildOf(parentSpan.Context()))
 	}
@@ -326,12 +261,13 @@ func couchbaseSpan(ctx context.Context, conn DbConnDetails, query string, sensor
 	return sensor.StartSpan(string(CouchbaseSpanType), opts...)
 }
 
-func cosmosSpan(ctx context.Context, conn DbConnDetails, query string, sensor TracerLogger) ot.Span {
-	tags := ot.Tags{
-		"cosmos.cmd": query,
-	}
+func (s *sqlSpanData) cosmosSpan(
+	ctx context.Context,
+	sensor TracerLogger) ot.Span {
 
-	opts := []ot.StartSpanOption{ext.SpanKindRPCClient, tags}
+	s.addTag("cosmos.cmd", s.query)
+
+	opts := []ot.StartSpanOption{ext.SpanKindRPCClient, s.tags}
 	if parentSpan, ok := SpanFromContext(ctx); ok {
 		opts = append(opts, ot.ChildOf(parentSpan.Context()))
 	}
@@ -339,28 +275,13 @@ func cosmosSpan(ctx context.Context, conn DbConnDetails, query string, sensor Tr
 	return sensor.StartSpan(string(CosmosSpanType), opts...)
 }
 
-func genericSQLSpan(ctx context.Context, conn DbConnDetails, query string, sensor TracerLogger) ot.Span {
-	tags := ot.Tags{
-		string(ext.DBType):      "sql",
-		string(ext.DBStatement): query,
-		string(ext.PeerAddress): conn.RawString,
-	}
+func (s *sqlSpanData) genericSQLSpan(
+	ctx context.Context,
+	sensor TracerLogger) ot.Span {
 
-	if conn.Schema != "" {
-		tags[string(ext.DBInstance)] = conn.Schema
-	} else {
-		tags[string(ext.DBInstance)] = conn.RawString
-	}
+	s.addTag(string(ext.DBStatement), s.query)
 
-	if conn.Host != "" {
-		tags[string(ext.PeerHostname)] = conn.Host
-	}
-
-	if conn.Port != "" {
-		tags[string(ext.PeerPort)] = conn.Port
-	}
-
-	opts := []ot.StartSpanOption{ext.SpanKindRPCClient, tags}
+	opts := []ot.StartSpanOption{ext.SpanKindRPCClient, s.tags}
 	if parentSpan, ok := SpanFromContext(ctx); ok {
 		opts = append(opts, ot.ChildOf(parentSpan.Context()))
 	}
@@ -368,16 +289,25 @@ func genericSQLSpan(ctx context.Context, conn DbConnDetails, query string, senso
 	return sensor.StartSpan("sdk.database", opts...)
 }
 
-// retrieveDBNameAndCmd attempts to guess what is the database based on the query.
-// It accepts a string that may be a database query
-// And returns the database name and query command
-func retrieveDBNameAndCmd(q string) (cmd string, dbName string) {
+// parseDatabaseFromQuery attempts to guess what is the database based on the query
+func (s *sqlSpanData) parseDatabaseFromQuery() {
+	s.updateSpanDataIfRedis()
+}
 
-	if cmd, ok := parseRedisQuery(q); ok {
-		return cmd, "redis"
+// updateSpanDataIfRedis validates the db query, checks if the database is redis.
+// if it is redis, update database name and tags with redis command.
+func (s *sqlSpanData) updateSpanDataIfRedis() {
+
+	if _, ok := parseRedisQuery(s.query); ok {
+
+		// The tags will be containing generic SQL tags as it was treated generic SQL span,
+		// as go sensor was not able to determine the database from connection details.
+		// Hence removing the existing tags and adding default redis connection tags.
+		s.tags = make(ot.Tags)
+		withRedisTags(s.connDetails).Apply(s.tags)
+
+		s.updateDBNameInSpanData(Redis)
 	}
-
-	return cmd, dbName
 }
 
 // parseRedisQuery attempts to guess if the input string is a valid Redis query.
@@ -414,30 +344,9 @@ func parseRedisQuery(query string) (command string, isRedis bool) {
 // database.
 // Otherwise, the span will have generic database fields.
 func StartSQLSpan(ctx context.Context, conn DbConnDetails, query string, sensor TracerLogger) (sp ot.Span, dbKey string) {
-	return startSQLSpan(ctx, conn, query, sensor)
-}
 
-func startSQLSpan(ctx context.Context, conn DbConnDetails, query string, sensor TracerLogger) (sp ot.Span, dbKey string) {
-
-	var dbCmd string
-	if conn.DatabaseName == "" {
-		dbCmd, conn.DatabaseName = retrieveDBNameAndCmd(query)
-	}
-
-	switch conn.DatabaseName {
-	case "postgres":
-		return postgresSpan(ctx, conn, query, sensor), "pg"
-	case "redis":
-		return redisSpan(ctx, conn, query, dbCmd, sensor), "redis"
-	case "mysql":
-		return mySQLSpan(ctx, conn, query, sensor), "mysql"
-	case "couchbase":
-		return couchbaseSpan(ctx, conn, query, sensor), "couchbase"
-	case "cosmos":
-		return cosmosSpan(ctx, conn, query, sensor), "cosmos"
-	}
-
-	return genericSQLSpan(ctx, conn, query, sensor), "db"
+	s := getSQLSpanData(conn, withQuery(query))
+	return s.start(ctx, sensor)
 }
 
 type DbConnDetails struct {
