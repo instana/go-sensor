@@ -47,7 +47,7 @@ spec:
       mountPath: /workspace
   steps:
     - name: run-tracer-reports-script
-      image: golang:1.22.0
+      image: golang:1.23.0
       workingDir: /workspace/
       script: |
         cd /workspace/go-sensor
