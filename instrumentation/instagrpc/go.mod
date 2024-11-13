@@ -2,8 +2,6 @@ module github.com/instana/go-sensor/instrumentation/instagrpc
 
 go 1.22.7
 
-toolchain go1.23.2
-
 require (
 	github.com/instana/go-sensor v1.65.0
 	github.com/opentracing/opentracing-go v1.2.0
