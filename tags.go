@@ -34,6 +34,7 @@ var tagsFuncMap = map[database]DBTagsFunc{
 	mysql:       withMySQLTags,
 	redis:       withRedisTags,
 	couchbase:   withCouchbaseTags,
+	cosmos:      withCosmosTags,
 	sql_generic: withGenericSQLTags,
 }
 
@@ -98,6 +99,10 @@ var withCouchbaseTags DBTagsFunc = func(c DbConnDetails) Tags {
 	return TagsFunc(func(tags ot.Tags) {
 		tags["couchbase.hostname"] = c.RawString
 	})
+}
+
+var withCosmosTags DBTagsFunc = func(c DbConnDetails) Tags {
+	return TagsFunc(func(tags ot.Tags) {})
 }
 
 var withGenericSQLTags DBTagsFunc = func(c DbConnDetails) Tags {
