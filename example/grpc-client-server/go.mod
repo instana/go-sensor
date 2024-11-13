@@ -2,8 +2,6 @@ module github.com/instana/go-sensor/example/grpc-client-server
 
 go 1.22.7
 
-toolchain go1.23.3
-
 require (
 	github.com/instana/go-sensor v1.65.0
 	github.com/instana/go-sensor/instrumentation/instagrpc v1.11.0
