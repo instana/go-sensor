@@ -210,6 +210,7 @@ while IFS= read -r line; do
     else
         changed_line=$(echo "$changed_line" | awk -v new_val=" 0 day/s " 'BEGIN{OFS=FS="|"} {$8=new_val} 1')
         changed_line=$(echo "$changed_line" | awk -v new_val=" Yes " 'BEGIN{OFS=FS="|"} {$9=new_val} 1')
+        changed_line=$(echo "$changed_line" | awk -v new_val=" " 'BEGIN{OFS=FS="|"} {$13=new_val} 1')
     fi
 
     # Update the markdown report file
