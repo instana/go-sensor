@@ -21,12 +21,15 @@ type Tags interface {
 	Apply(ot.Tags)
 }
 
+// TagsFunc implements Tags interface
 type TagsFunc func(ot.Tags)
 
 func (f TagsFunc) Apply(t ot.Tags) {
 	f(t)
 }
 
+// DBTagsFunc is a function type that takes a DbConnDetails struct as input and returns Tags interface.
+// It can be used to generate or retrieve a set of tags associated with a specific database connection.
 type DBTagsFunc func(c DbConnDetails) Tags
 
 var tagsFuncMap = map[database]DBTagsFunc{

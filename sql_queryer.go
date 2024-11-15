@@ -21,7 +21,8 @@ type wQueryer struct {
 func (conn *wQueryer) Query(query string, args []driver.Value) (driver.Rows, error) {
 	ctx := context.Background()
 
-	// updating db query in sqlSpanData instance
+	// Since the query is not a constant value like database connection details,
+	// it needs to be updated in the sqlSpanData instance with the current value.
 	conn.sqlSpan.updateDBQuery(query)
 
 	sp, dbKey := conn.sqlSpan.start(ctx, conn.sensor)

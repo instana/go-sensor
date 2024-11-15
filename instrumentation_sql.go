@@ -33,7 +33,7 @@ type sqlSpanData struct {
 // sqlSpanOption is a function that applies a configuration to sqlSpanConfig.
 type sqlSpanOption func(*sqlSpanData)
 
-// withQuery sets a custom query.
+// withQuery specifies the query that will be set to sqlSpanData.
 func withQuery(query string) sqlSpanOption {
 	return func(c *sqlSpanData) {
 		c.query = query
@@ -45,6 +45,9 @@ func getSQLSpanData(c DbConnDetails, opts ...sqlSpanOption) *sqlSpanData {
 	var m sync.Mutex
 	tags := make(ot.Tags)
 
+	// Retrieve a tagging function from tagsFuncMap based on the database name.
+	// If no specific function is found, default to using withGenericSQLTags.
+	// Apply the retrieved or default tagging function to tags.
 	tf, ok := tagsFuncMap[db(c.DatabaseName)]
 	if !ok {
 		tf = withGenericSQLTags
@@ -349,6 +352,7 @@ func StartSQLSpan(ctx context.Context, conn DbConnDetails, query string, sensor 
 	return s.start(ctx, sensor)
 }
 
+// DbConnDetails holds the details of a database connection parsed from a connection string.
 type DbConnDetails struct {
 	RawString    string
 	Host, Port   string
@@ -358,6 +362,8 @@ type DbConnDetails struct {
 	Error        error
 }
 
+// ParseDBConnDetails parses a database connection string (connStr) and returns a DbConnDetails struct.
+// This struct contains the details necessary to establish a connection to the database.
 func ParseDBConnDetails(connStr string) DbConnDetails {
 	strategies := [...]func(string) (DbConnDetails, bool){
 		parseMySQLGoSQLDriver,
