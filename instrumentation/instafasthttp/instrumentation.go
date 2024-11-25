@@ -6,7 +6,6 @@ package instafasthttp
 import (
 	"context"
 	"errors"
-	"fmt"
 	"net/http"
 	"net/url"
 	"strings"
@@ -24,7 +23,7 @@ import (
 const instanaUserContextKey = "__instana_local_user_context__"
 
 func TraceHandler(sensor instana.TracerLogger, pathTemplate string, handler fasthttp.RequestHandler) fasthttp.RequestHandler {
-	return tracingNamedHandlerFuncFastHttp(sensor, "", pathTemplate, handler)
+	return tracingNamedHandlerFuncFastHttp(sensor, "action", pathTemplate, handler)
 }
 
 func tracingNamedHandlerFuncFastHttp(sensor instana.TracerLogger, routeID, pathTemplate string, handler fasthttp.RequestHandler) fasthttp.RequestHandler {
@@ -112,7 +111,6 @@ func tracingNamedHandlerFuncFastHttp(sensor instana.TracerLogger, routeID, pathT
 }
 
 func initSpanOptionsFastHttp(req *fasthttp.Request, routeID string) []ot.StartSpanOption {
-	fmt.Println("hello")
 	opts := []ot.StartSpanOption{
 		ext.SpanKindRPCServer,
 		ot.Tags{
