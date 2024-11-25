@@ -31,5 +31,6 @@ require (
 	golang.org/x/text v0.18.0 // indirect
 )
 
-// github.com/instana/go-sensor => ../../
+replace github.com/instana/go-sensor => ../../
+
 replace github.com/instana/go-sensor/instrumentation/instafasthttp => ../../instrumentation/instafasthttp

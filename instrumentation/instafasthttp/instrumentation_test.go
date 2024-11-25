@@ -113,7 +113,6 @@ func TestTracingHandlerFunc_Write(t *testing.T) {
 	}
 
 	br := bufio.NewReader(conn)
-
 	resp := verifyResponse(t, br, fasthttp.StatusOK, "aaa/bbb", "Ok response!")
 
 	spans := recorder.GetQueuedSpans()
@@ -318,6 +317,96 @@ func TestTracingHandlerFunc_WriteHeaders(t *testing.T) {
 		Host:     "example.com",
 		Path:     "/test",
 		Params:   "q=term",
+		RouteID:  "test",
+		Protocol: "http",
+	}, data.Tags)
+
+	// check whether the trace context has been sent back to the client
+	assert.Equal(t, instana.FormatID(span.TraceID), string(resp.Header.Peek(instana.FieldT)))
+	assert.Equal(t, instana.FormatID(span.SpanID), string(resp.Header.Peek(instana.FieldS)))
+
+	// w3c trace context
+	traceparent := string(resp.Header.Peek(w3ctrace.TraceParentHeader))
+	assert.Contains(t, traceparent, instana.FormatLongID(span.TraceIDHi, span.TraceID))
+	assert.Contains(t, traceparent, instana.FormatID(span.SpanID))
+
+	tracestate := string(resp.Header.Peek(w3ctrace.TraceStateHeader))
+	assert.True(t, strings.HasPrefix(
+		tracestate,
+		"in="+instana.FormatID(span.TraceID)+";"+instana.FormatID(span.SpanID),
+	), tracestate)
+
+	if err := ln.Close(); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestTracingHandlerFunc_W3CTraceContext(t *testing.T) {
+	recorder := instana.NewTestRecorder()
+	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder))
+	// defer instana.ShutdownSensor()
+
+	h := instafasthttp.TraceHandler(s, "test", "", func(ctx *fasthttp.RequestCtx) {
+		ctx.Success("aaa/bbb", []byte("Ok response!"))
+	})
+
+	server := &fasthttp.Server{Handler: h}
+	ln := fasthttputil.NewInmemoryListener()
+	go func() {
+		if err := server.Serve(ln); err != nil {
+			assert.NoError(t, err, "unexpected error: %v", err)
+		}
+	}()
+
+	conn, err := ln.Dial()
+	if err != nil {
+		assert.NoError(t, err, "unexpected error: %v", err)
+	}
+
+	url := "GET /test HTTP/1.1\r\nHost: example.com"
+	// add trace parent header
+	url = url + "\r\n" + w3ctrace.TraceParentHeader + ": " + "00-00000000000000010000000000000002-0000000000000003-01"
+	// add trace state header
+	url = url + "\r\n" + w3ctrace.TraceStateHeader + ": " + "in=1234;5678,rojo=00f067aa0ba902b7"
+	url = url + "\r\n\r\n"
+
+	if _, err = conn.Write([]byte(url)); err != nil {
+		assert.NoError(t, err, "unexpected error: %v", err)
+	}
+
+	br := bufio.NewReader(conn)
+	resp := verifyResponse(t, br, fasthttp.StatusOK, "aaa/bbb", "Ok response!")
+
+	assert.Equal(t, fasthttp.StatusOK, resp.StatusCode())
+
+	spans := recorder.GetQueuedSpans()
+	require.Len(t, spans, 1)
+
+	span := spans[0]
+
+	assert.EqualValues(t, 0x1, span.TraceIDHi)
+	assert.EqualValues(t, 0x2, span.TraceID)
+	assert.EqualValues(t, 0x3, span.ParentID)
+
+	assert.Equal(t, 0, span.Ec)
+	assert.EqualValues(t, instana.EntrySpanKind, span.Kind)
+	assert.False(t, span.Synthetic)
+	assert.Empty(t, span.CorrelationType)
+	assert.Empty(t, span.CorrelationID)
+	assert.True(t, span.ForeignTrace)
+	assert.Equal(t, &instana.TraceReference{
+		TraceID:  "1234",
+		ParentID: "5678",
+	}, span.Ancestor)
+
+	require.IsType(t, instana.HTTPSpanData{}, span.Data)
+	data := span.Data.(instana.HTTPSpanData)
+
+	assert.Equal(t, instana.HTTPSpanTags{
+		Host:     "example.com",
+		Status:   http.StatusOK,
+		Method:   "GET",
+		Path:     "/test",
 		RouteID:  "test",
 		Protocol: "http",
 	}, data.Tags)
