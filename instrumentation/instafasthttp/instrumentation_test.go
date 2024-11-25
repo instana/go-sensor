@@ -8,12 +8,14 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strings"
 	"testing"
 
 	instana "github.com/instana/go-sensor"
 	"github.com/instana/go-sensor/acceptor"
 	"github.com/instana/go-sensor/autoprofile"
 	"github.com/instana/go-sensor/instrumentation/instafasthttp"
+	"github.com/instana/go-sensor/w3ctrace"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/valyala/fasthttp"
@@ -35,7 +37,7 @@ func BenchmarkTracingHandlerFunc(b *testing.B) {
 	s := instana.NewSensorWithTracer(tracer)
 	// defer instana.ShutdownSensor()
 
-	h := instafasthttp.TraceHandler(s, "/action", func(ctx *fasthttp.RequestCtx) {
+	h := instafasthttp.TraceHandler(s, "action", "/{action}", func(ctx *fasthttp.RequestCtx) {
 		ctx.SetStatusCode(fasthttp.StatusOK)
 		fmt.Fprintf(ctx, "Ok")
 	})
@@ -51,8 +53,6 @@ func BenchmarkTracingHandlerFunc(b *testing.B) {
 			b.Errorf("unexpected error: %v", err)
 		}
 	}()
-
-	// req := httptest.NewRequest(http.MethodGet, "/test?q=term", nil)
 
 	b.ResetTimer()
 
@@ -81,17 +81,11 @@ func TestTracingHandlerFunc_Write(t *testing.T) {
 	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(opts, recorder))
 	// defer instana.ShutdownSensor()
 
-	h := instafasthttp.TraceHandler(s, "/{action}", func(ctx *fasthttp.RequestCtx) {
+	h := instafasthttp.TraceHandler(s, "action", "/{action}", func(ctx *fasthttp.RequestCtx) {
 		ctx.Response.Header.Add("X-Response", "true")
 		ctx.Response.Header.Add("X-Custom-Header-2", "response")
 		ctx.Success("aaa/bbb", []byte("Ok response!"))
 	})
-
-	// h := instafiber.TraceHandler(s, "action", "/{action}", func(c *fiber.Ctx) error {
-	// 	c.Set("X-Response", "true")
-	// 	c.Set("X-Custom-Header-2", "response")
-	// 	return c.SendString("Ok\n")
-	// })
 
 	server := &fasthttp.Server{
 		Handler: h,
@@ -114,21 +108,9 @@ func TestTracingHandlerFunc_Write(t *testing.T) {
 		assert.NoError(t, err, "unexpected error: %v", err)
 	}
 
-	// req := httptest.NewRequest(http.MethodGet, "/test?q=term", nil)
-	// req.Header.Set("Authorization", "Basic blah")
-	// req.Header.Set("X-Custom-Header-1", "request")
-
-	// resp, err := app.Test(req)
-
-	// assert.Equal(t, err, nil)
-
 	br := bufio.NewReader(conn)
 
-	verifyResponse(t, br, fasthttp.StatusOK, "aaa/bbb", "Ok response!")
-
-	// assert.Equal(t, http.StatusOK, resp.StatusCode)
-	// b, _ := io.ReadAll(resp.Body)
-	// assert.Equal(t, "Ok\n", string(b))
+	resp := verifyResponse(t, br, fasthttp.StatusOK, "aaa/bbb", "Ok response!")
 
 	spans := recorder.GetQueuedSpans()
 	require.Len(t, spans, 1)
@@ -160,20 +142,20 @@ func TestTracingHandlerFunc_Write(t *testing.T) {
 		Protocol:     "http",
 	}, data.Tags)
 
-	// // check whether the trace context has been sent back to the client
-	// assert.Equal(t, instana.FormatID(span.TraceID), resp.Header.Get(instana.FieldT))
-	// assert.Equal(t, instana.FormatID(span.SpanID), resp.Header.Get(instana.FieldS))
+	// check whether the trace context has been sent back to the client
+	assert.Equal(t, instana.FormatID(span.TraceID), string(resp.Header.Peek(instana.FieldT)))
+	assert.Equal(t, instana.FormatID(span.SpanID), string(resp.Header.Peek(instana.FieldS)))
 
-	// // w3c trace context
-	// traceparent := resp.Header.Get(w3ctrace.TraceParentHeader)
-	// assert.Contains(t, traceparent, instana.FormatLongID(span.TraceIDHi, span.TraceID))
-	// assert.Contains(t, traceparent, instana.FormatID(span.SpanID))
+	// w3c trace context
+	traceparent := string(resp.Header.Peek(w3ctrace.TraceParentHeader))
+	assert.Contains(t, traceparent, instana.FormatLongID(span.TraceIDHi, span.TraceID))
+	assert.Contains(t, traceparent, instana.FormatID(span.SpanID))
 
-	// tracestate := resp.Header.Get(w3ctrace.TraceStateHeader)
-	// assert.True(t, strings.HasPrefix(
-	// 	tracestate,
-	// 	"in="+instana.FormatID(span.TraceID)+";"+instana.FormatID(span.SpanID),
-	// ), tracestate)
+	tracestate := string(resp.Header.Peek(w3ctrace.TraceStateHeader))
+	assert.True(t, strings.HasPrefix(
+		tracestate,
+		"in="+instana.FormatID(span.TraceID)+";"+instana.FormatID(span.SpanID),
+	), tracestate)
 }
 
 func verifyResponse(t *testing.T, r *bufio.Reader, expectedStatusCode int, expectedContentType, expectedBody string) *fasthttp.Response {

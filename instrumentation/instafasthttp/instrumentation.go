@@ -22,11 +22,7 @@ import (
 // can be used for trace propagation
 const instanaUserContextKey = "__instana_local_user_context__"
 
-func TraceHandler(sensor instana.TracerLogger, pathTemplate string, handler fasthttp.RequestHandler) fasthttp.RequestHandler {
-	return tracingNamedHandlerFuncFastHttp(sensor, "action", pathTemplate, handler)
-}
-
-func tracingNamedHandlerFuncFastHttp(sensor instana.TracerLogger, routeID, pathTemplate string, handler fasthttp.RequestHandler) fasthttp.RequestHandler {
+func TraceHandler(sensor instana.TracerLogger, routeID, pathTemplate string, handler fasthttp.RequestHandler) fasthttp.RequestHandler {
 	return func(c *fasthttp.RequestCtx) {
 		var ctx context.Context = UserContext(c)
 		req := &c.Request

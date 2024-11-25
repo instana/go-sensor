@@ -74,19 +74,19 @@ func fastHTTPHandler(ctx *fasthttp.RequestCtx) {
 	fmt.Fprintf(ctx, "Hi there! RequestURI is %q\n", ctx.RequestURI())
 	switch string(ctx.Path()) {
 	case "/greet":
-		instafasthttp.TraceHandler(sensor, "/greet", sampleEndpointHandler)(ctx)
+		instafasthttp.TraceHandler(sensor, "greet", "/greet", sampleEndpointHandler)(ctx)
 	case "/error-handler":
-		instafasthttp.TraceHandler(sensor, "/error-handler", func(ctx *fasthttp.RequestCtx) {
+		instafasthttp.TraceHandler(sensor, "error-handler", "/error-handler", func(ctx *fasthttp.RequestCtx) {
 			ctx.SetStatusCode(fasthttp.StatusBadRequest)
 			fmt.Fprintf(ctx, "This is an error!\n")
 		})(ctx)
 	case "/panic-handler":
-		instafasthttp.TraceHandler(sensor, "/panic-handler", func(ctx *fasthttp.RequestCtx) {
+		instafasthttp.TraceHandler(sensor, "panic-handler", "/panic-handler", func(ctx *fasthttp.RequestCtx) {
 			fmt.Fprintf(ctx, "This is a panic!\n")
 			panic(errors.New("Panic nithin"))
 		})(ctx)
 	case "/round-trip":
-		instafasthttp.TraceHandler(sensor, "/round-trip", roundTripHandler)(ctx)
+		instafasthttp.TraceHandler(sensor, "round-trip", "/round-trip", roundTripHandler)(ctx)
 	default:
 		ctx.Error("Unsupported path", fasthttp.StatusNotFound)
 	}
