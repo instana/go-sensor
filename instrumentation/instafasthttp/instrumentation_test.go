@@ -226,12 +226,8 @@ func TestTracingHandlerFunc_InstanaFieldLPriorityOverTraceParentHeader(t *testin
 		ctx.Success("aaa/bbb", []byte("Ok response!"))
 	})
 
-	server := &fasthttp.Server{
-		Handler: h,
-	}
-
+	server := &fasthttp.Server{Handler: h}
 	ln := fasthttputil.NewInmemoryListener()
-
 	go func() {
 		if err := server.Serve(ln); err != nil {
 			assert.NoError(t, err, "unexpected error: %v", err)
@@ -263,6 +259,83 @@ func TestTracingHandlerFunc_InstanaFieldLPriorityOverTraceParentHeader(t *testin
 		assert.Equal(t, fasthttp.StatusOK, resp.StatusCode())
 		assert.True(t, strings.HasSuffix(string(resp.Header.Peek(w3ctrace.TraceParentHeader)), testCase.traceParentHeaderSuffix), "case '"+name+"' failed")
 	}
+
+	if err := ln.Close(); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestTracingHandlerFunc_WriteHeaders(t *testing.T) {
+	recorder := instana.NewTestRecorder()
+	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder))
+	// defer instana.ShutdownSensor()
+
+	h := instafasthttp.TraceHandler(s, "test", "", func(ctx *fasthttp.RequestCtx) {
+		ctx.SetStatusCode(fasthttp.StatusNotFound)
+	})
+
+	server := &fasthttp.Server{Handler: h}
+	ln := fasthttputil.NewInmemoryListener()
+	go func() {
+		if err := server.Serve(ln); err != nil {
+			assert.NoError(t, err, "unexpected error: %v", err)
+		}
+	}()
+
+	conn, err := ln.Dial()
+	if err != nil {
+		assert.NoError(t, err, "unexpected error: %v", err)
+	}
+
+	if _, err = conn.Write([]byte("GET /test?q=term HTTP/1.1\r\nHost: example.com\r\n\r\n")); err != nil {
+		assert.NoError(t, err, "unexpected error: %v", err)
+	}
+
+	br := bufio.NewReader(conn)
+
+	resp := verifyResponse(t, br, fasthttp.StatusNotFound, "text/plain; charset=utf-8", "")
+
+	assert.Equal(t, http.StatusNotFound, resp.StatusCode())
+
+	spans := recorder.GetQueuedSpans()
+	require.Len(t, spans, 1)
+
+	span := spans[0]
+	assert.Equal(t, 0, span.Ec)
+	assert.EqualValues(t, instana.EntrySpanKind, span.Kind)
+	assert.False(t, span.Synthetic)
+	assert.Empty(t, span.CorrelationType)
+	assert.Empty(t, span.CorrelationID)
+	assert.False(t, span.ForeignTrace)
+	assert.Empty(t, span.Ancestor)
+
+	require.IsType(t, instana.HTTPSpanData{}, span.Data)
+	data := span.Data.(instana.HTTPSpanData)
+
+	assert.Equal(t, instana.HTTPSpanTags{
+		Status:   http.StatusNotFound,
+		Method:   "GET",
+		Host:     "example.com",
+		Path:     "/test",
+		Params:   "q=term",
+		RouteID:  "test",
+		Protocol: "http",
+	}, data.Tags)
+
+	// check whether the trace context has been sent back to the client
+	assert.Equal(t, instana.FormatID(span.TraceID), string(resp.Header.Peek(instana.FieldT)))
+	assert.Equal(t, instana.FormatID(span.SpanID), string(resp.Header.Peek(instana.FieldS)))
+
+	// w3c trace context
+	traceparent := string(resp.Header.Peek(w3ctrace.TraceParentHeader))
+	assert.Contains(t, traceparent, instana.FormatLongID(span.TraceIDHi, span.TraceID))
+	assert.Contains(t, traceparent, instana.FormatID(span.SpanID))
+
+	tracestate := string(resp.Header.Peek(w3ctrace.TraceStateHeader))
+	assert.True(t, strings.HasPrefix(
+		tracestate,
+		"in="+instana.FormatID(span.TraceID)+";"+instana.FormatID(span.SpanID),
+	), tracestate)
 
 	if err := ln.Close(); err != nil {
 		t.Fatalf("unexpected error: %v", err)
