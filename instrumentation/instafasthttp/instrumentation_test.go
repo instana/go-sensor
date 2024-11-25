@@ -35,7 +35,6 @@ func BenchmarkTracingHandlerFunc(b *testing.B) {
 	recorder := instana.NewTestRecorder()
 	tracer := instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder)
 	s := instana.NewSensorWithTracer(tracer)
-	// defer instana.ShutdownSensor()
 
 	h := instafasthttp.TraceHandler(s, "action", "/{action}", func(ctx *fasthttp.RequestCtx) {
 		ctx.SetStatusCode(fasthttp.StatusOK)
@@ -429,6 +428,68 @@ func TestTracingHandlerFunc_W3CTraceContext(t *testing.T) {
 	if err := ln.Close(); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
+}
+
+func TestTracingHandlerFunc_SecretsFiltering(t *testing.T) {
+	recorder := instana.NewTestRecorder()
+	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder))
+	// defer instana.ShutdownSensor()
+
+	h := instafasthttp.TraceHandler(s, "test", "/{action}", func(ctx *fasthttp.RequestCtx) {
+		ctx.Success("aaa/bbb", []byte("Ok response!"))
+	})
+
+	server := &fasthttp.Server{Handler: h}
+	ln := fasthttputil.NewInmemoryListener()
+	go func() {
+		if err := server.Serve(ln); err != nil {
+			assert.NoError(t, err, "unexpected error: %v", err)
+		}
+	}()
+
+	conn, err := ln.Dial()
+	if err != nil {
+		assert.NoError(t, err, "unexpected error: %v", err)
+	}
+
+	url := "GET /test?q=term&sensitive_key=s3cr3t&myPassword=qwerty&SECRET_VALUE=1 HTTP/1.1\r\nHost: example.com\r\n\r\n"
+
+	if _, err = conn.Write([]byte(url)); err != nil {
+		assert.NoError(t, err, "unexpected error: %v", err)
+	}
+
+	br := bufio.NewReader(conn)
+	resp := verifyResponse(t, br, fasthttp.StatusOK, "aaa/bbb", "Ok response!")
+
+	assert.Equal(t, fasthttp.StatusOK, resp.StatusCode())
+
+	spans := recorder.GetQueuedSpans()
+	require.Len(t, spans, 1)
+
+	span := spans[0]
+	assert.Equal(t, 0, span.Ec)
+	assert.EqualValues(t, instana.EntrySpanKind, span.Kind)
+	assert.False(t, span.Synthetic)
+	assert.Empty(t, span.CorrelationType)
+	assert.Empty(t, span.CorrelationID)
+
+	require.IsType(t, instana.HTTPSpanData{}, span.Data)
+	data := span.Data.(instana.HTTPSpanData)
+
+	assert.Equal(t, instana.HTTPSpanTags{
+		Host:         "example.com",
+		Status:       http.StatusOK,
+		Method:       "GET",
+		Path:         "/test",
+		Params:       "SECRET_VALUE=%3Credacted%3E&myPassword=%3Credacted%3E&q=term&sensitive_key=%3Credacted%3E",
+		PathTemplate: "/{action}",
+		RouteID:      "test",
+		Protocol:     "http",
+	}, data.Tags)
+
+	// check whether the trace context has been sent back to the client
+	assert.Equal(t, instana.FormatID(span.TraceID), string(resp.Header.Peek(instana.FieldT)))
+	assert.Equal(t, instana.FormatID(span.SpanID), string(resp.Header.Peek(instana.FieldS)))
 }
 
 func verifyResponse(t *testing.T, r *bufio.Reader, expectedStatusCode int, expectedContentType, expectedBody string) *fasthttp.Response {
