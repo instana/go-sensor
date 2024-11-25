@@ -40,7 +40,7 @@ func TraceHandler(sensor instana.TracerLogger, routeID, pathTemplate string, han
 		opts = append(opts, extractStartSpanOptionsFromHeadersFastHttp(tracer, req, headers, sensor)...)
 
 		if string(req.Header.Peek(instana.FieldSynthetic)) == "1" {
-			opts = append(opts, ot.Tag{Key: instana.FieldSynthetic, Value: true})
+			opts = append(opts, ot.Tag{Key: "synthetic_call", Value: true})
 		}
 
 		if pathTemplate != "" && string(req.URI().Path()) != pathTemplate {

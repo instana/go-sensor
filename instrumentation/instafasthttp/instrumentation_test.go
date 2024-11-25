@@ -492,6 +492,49 @@ func TestTracingHandlerFunc_SecretsFiltering(t *testing.T) {
 	assert.Equal(t, instana.FormatID(span.SpanID), string(resp.Header.Peek(instana.FieldS)))
 }
 
+func TestTracingHandlerFunc_SyntheticCall(t *testing.T) {
+	recorder := instana.NewTestRecorder()
+	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}, Tracer: instana.TracerOptions{CollectableHTTPHeaders: []string{instana.FieldSynthetic}}}, recorder))
+	// defer instana.ShutdownSensor()
+
+	h := instafasthttp.TraceHandler(s, "test", "/{action}", func(ctx *fasthttp.RequestCtx) {
+		ctx.Success("aaa/bbb", []byte("Ok response!"))
+	})
+
+	server := &fasthttp.Server{Handler: h}
+	ln := fasthttputil.NewInmemoryListener()
+	go func() {
+		if err := server.Serve(ln); err != nil {
+			assert.NoError(t, err, "unexpected error: %v", err)
+		}
+	}()
+
+	conn, err := ln.Dial()
+	if err != nil {
+		assert.NoError(t, err, "unexpected error: %v", err)
+	}
+
+	url := "GET /test\r\nHost: example.com\r\n" + instana.FieldSynthetic + ": 1" + "\r\n\r\n"
+
+	if _, err = conn.Write([]byte(url)); err != nil {
+		assert.NoError(t, err, "unexpected error: %v", err)
+	}
+
+	br := bufio.NewReader(conn)
+	resp := verifyResponse(t, br, fasthttp.StatusOK, "aaa/bbb", "Ok response!")
+
+	assert.Equal(t, fasthttp.StatusOK, resp.StatusCode())
+
+	spans := recorder.GetQueuedSpans()
+	require.Len(t, spans, 1)
+
+	span := spans[0]
+	data := span.Data.(instana.HTTPSpanData)
+
+	fmt.Println("helllo", data.Tags.Headers)
+	assert.True(t, span.Synthetic)
+}
+
 func verifyResponse(t *testing.T, r *bufio.Reader, expectedStatusCode int, expectedContentType, expectedBody string) *fasthttp.Response {
 	var resp fasthttp.Response
 	if err := resp.Read(r); err != nil {
