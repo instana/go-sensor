@@ -66,6 +66,10 @@ func BenchmarkTracingHandlerFunc(b *testing.B) {
 			b.Fatalf("unexpected error: %v", err)
 		}
 	}
+
+	if err := ln.Close(); err != nil {
+		b.Fatalf("unexpected error: %v", err)
+	}
 }
 
 func TestTracingHandlerFunc_Write(t *testing.T) {
@@ -156,6 +160,113 @@ func TestTracingHandlerFunc_Write(t *testing.T) {
 		tracestate,
 		"in="+instana.FormatID(span.TraceID)+";"+instana.FormatID(span.SpanID),
 	), tracestate)
+
+	if err := ln.Close(); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestTracingHandlerFunc_InstanaFieldLPriorityOverTraceParentHeader(t *testing.T) {
+	type testCase struct {
+		headers                 map[string]string
+		traceParentHeaderSuffix string
+	}
+
+	testCases := map[string]testCase{
+		"traceparent is suppressed, x-instana-l is not suppressed": {
+			headers: map[string]string{
+				w3ctrace.TraceParentHeader: "00-00000000000000000000000000000001-0000000000000001-00",
+				instana.FieldL:             "1",
+			},
+			traceParentHeaderSuffix: "-01",
+		},
+		"traceparent is suppressed, x-instana-l is absent (is not suppressed by default)": {
+			headers: map[string]string{
+				w3ctrace.TraceParentHeader: "00-00000000000000000000000000000001-0000000000000001-00",
+			},
+			traceParentHeaderSuffix: "-01",
+		},
+		"traceparent is not suppressed, x-instana-l is absent (tracing enabled by default)": {
+			headers: map[string]string{
+				w3ctrace.TraceParentHeader: "00-00000000000000000000000000000001-0000000000000001-01",
+			},
+			traceParentHeaderSuffix: "-01",
+		},
+		"traceparent is not suppressed, x-instana-l is not suppressed": {
+			headers: map[string]string{
+				w3ctrace.TraceParentHeader: "00-00000000000000000000000000000001-0000000000000001-01",
+				instana.FieldL:             "1",
+			},
+			traceParentHeaderSuffix: "-01",
+		},
+		"traceparent is suppressed, x-instana-l is suppressed": {
+			headers: map[string]string{
+				w3ctrace.TraceParentHeader: "00-00000000000000000000000000000001-0000000000000001-00",
+				instana.FieldL:             "0",
+			},
+			traceParentHeaderSuffix: "-00",
+		},
+		"traceparent is not suppressed, x-instana-l is suppressed": {
+			headers: map[string]string{
+				w3ctrace.TraceParentHeader: "00-00000000000000000000000000000001-0000000000000001-01",
+				instana.FieldL:             "0",
+			},
+			traceParentHeaderSuffix: "-00",
+		},
+	}
+
+	recorder := instana.NewTestRecorder()
+	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{
+		Service:     "go-sensor-test",
+		AgentClient: alwaysReadyClient{},
+	}, recorder))
+	// defer instana.ShutdownSensor()
+
+	h := instafasthttp.TraceHandler(s, "action", "/{action}", func(ctx *fasthttp.RequestCtx) {
+		ctx.Success("aaa/bbb", []byte("Ok response!"))
+	})
+
+	server := &fasthttp.Server{
+		Handler: h,
+	}
+
+	ln := fasthttputil.NewInmemoryListener()
+
+	go func() {
+		if err := server.Serve(ln); err != nil {
+			assert.NoError(t, err, "unexpected error: %v", err)
+		}
+	}()
+
+	for name, testCase := range testCases {
+
+		conn, err := ln.Dial()
+		if err != nil {
+			assert.NoError(t, err, "unexpected error: %v", err)
+		}
+
+		url := "GET /test?q=term HTTP/1.1\r\nHost: example.com"
+		for k, v := range testCase.headers {
+			url = url + "\r\n" + k + ": " + v
+		}
+		url = url + "\r\n\r\n"
+
+		_, err = conn.Write([]byte(url))
+		if err != nil {
+			assert.NoError(t, err, "unexpected error: %v", err)
+		}
+
+		br := bufio.NewReader(conn)
+
+		resp := verifyResponse(t, br, fasthttp.StatusOK, "aaa/bbb", "Ok response!")
+
+		assert.Equal(t, fasthttp.StatusOK, resp.StatusCode())
+		assert.True(t, strings.HasSuffix(string(resp.Header.Peek(w3ctrace.TraceParentHeader)), testCase.traceParentHeaderSuffix), "case '"+name+"' failed")
+	}
+
+	if err := ln.Close(); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
 }
 
 func verifyResponse(t *testing.T, r *bufio.Reader, expectedStatusCode int, expectedContentType, expectedBody string) *fasthttp.Response {
