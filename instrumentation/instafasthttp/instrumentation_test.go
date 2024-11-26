@@ -8,6 +8,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net"
 	"strings"
 	"testing"
 
@@ -38,6 +39,7 @@ func (rt testRoundTripper) RoundTrip(hc *fasthttp.HostClient, req *fasthttp.Requ
 }
 
 type transportDemo struct {
+	// if the transport returns error
 	isErr bool
 
 	br *bufio.Reader
@@ -865,6 +867,98 @@ func TestRoundTripper_Error(t *testing.T) {
 		Level:   "ERROR",
 		Message: `error.object: "something went wrong"`,
 	}, logData.Tags)
+
+	if err := ln.Close(); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestRoundTripper_DefaultTransport(t *testing.T) {
+	recorder := instana.NewTestRecorder()
+	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder))
+	// defer instana.ShutdownSensor()
+	var numCalls int
+	parentSpan := s.Tracer().StartSpan("parent")
+	ctx := instana.ContextWithSpan(context.Background(), parentSpan)
+
+	// var traceIDHeader, spanIDHeader string
+
+	server := &fasthttp.Server{
+		Handler: func(ctx *fasthttp.RequestCtx) {
+			numCalls++
+			// ctx.Response.Header.Add("X-Response", "true")
+			// ctx.Response.Header.Add("X-Custom-Header-2", "response")
+			ctx.Success("aaa/bbb", []byte("Ok response!"))
+		},
+	}
+
+	ln := fasthttputil.NewInmemoryListener()
+
+	go func() {
+		if err := server.Serve(ln); err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
+	}()
+
+	// var numCalls int
+	// ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+	// 	numCalls++
+
+	// 	assert.NotEmpty(t, req.Header.Get(instana.FieldT))
+	// 	assert.NotEmpty(t, req.Header.Get(instana.FieldS))
+
+	// 	w.Write([]byte("OK"))
+	// }))
+	// defer ts.Close()
+
+	// rt := instana.RoundTripper(s, nil)
+
+	// ctx := instana.ContextWithSpan(context.Background(), s.Tracer().StartSpan("parent"))
+	// req := httptest.NewRequest("GET", ts.URL+"/hello", nil)
+
+	// resp, err := rt.RoundTrip(req.WithContext(ctx))
+
+	hc := &fasthttp.HostClient{
+		Transport: instafasthttp.RoundTripper(ctx, s, nil),
+		Addr:      "example.com",
+		Dial:      func(addr string) (net.Conn, error) { return ln.Dial() },
+	}
+
+	r := &fasthttp.Request{}
+	r.Header.SetMethod(fasthttp.MethodGet)
+	r.Header.Set("Authorization", "Basic blah")
+	r.URI().SetPath("/hello")
+	// r.URI().SetQueryString("q=term&key=s3cr3t")
+	r.URI().SetHost("example.com")
+
+	resp := fasthttp.AcquireResponse()
+	defer fasthttp.ReleaseResponse(resp)
+
+	// Make the request
+	err := hc.Do(r, resp)
+
+	// assert.Error(t, err)
+
+	require.NoError(t, err)
+	assert.Equal(t, fasthttp.StatusOK, resp.StatusCode())
+
+	assert.Equal(t, 1, numCalls)
+
+	spans := recorder.GetQueuedSpans()
+	require.Len(t, spans, 1)
+
+	span := spans[0]
+	assert.Equal(t, 0, span.Ec)
+	assert.EqualValues(t, instana.ExitSpanKind, span.Kind)
+
+	require.IsType(t, instana.HTTPSpanData{}, span.Data)
+	data := span.Data.(instana.HTTPSpanData)
+
+	assert.Equal(t, instana.HTTPSpanTags{
+		Status: fasthttp.StatusOK,
+		Method: "GET",
+		URL:    "http://example.com/hello",
+	}, data.Tags)
 
 	if err := ln.Close(); err != nil {
 		t.Fatalf("unexpected error: %v", err)
