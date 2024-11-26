@@ -82,7 +82,6 @@ func TestTracingHandlerFunc_Write(t *testing.T) {
 
 	recorder := instana.NewTestRecorder()
 	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(opts, recorder))
-	// defer instana.ShutdownSensor()
 
 	h := instafasthttp.TraceHandler(s, "action", "/{action}", func(ctx *fasthttp.RequestCtx) {
 		ctx.Response.Header.Add("X-Response", "true")
@@ -218,7 +217,6 @@ func TestTracingHandlerFunc_InstanaFieldLPriorityOverTraceParentHeader(t *testin
 		Service:     "go-sensor-test",
 		AgentClient: alwaysReadyClient{},
 	}, recorder))
-	// defer instana.ShutdownSensor()
 
 	h := instafasthttp.TraceHandler(s, "action", "/{action}", func(ctx *fasthttp.RequestCtx) {
 		ctx.Success("aaa/bbb", []byte("Ok response!"))
@@ -266,7 +264,6 @@ func TestTracingHandlerFunc_InstanaFieldLPriorityOverTraceParentHeader(t *testin
 func TestTracingHandlerFunc_WriteHeaders(t *testing.T) {
 	recorder := instana.NewTestRecorder()
 	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder))
-	// defer instana.ShutdownSensor()
 
 	h := instafasthttp.TraceHandler(s, "test", "", func(ctx *fasthttp.RequestCtx) {
 		ctx.SetStatusCode(fasthttp.StatusNotFound)
@@ -343,7 +340,6 @@ func TestTracingHandlerFunc_WriteHeaders(t *testing.T) {
 func TestTracingHandlerFunc_W3CTraceContext(t *testing.T) {
 	recorder := instana.NewTestRecorder()
 	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder))
-	// defer instana.ShutdownSensor()
 
 	h := instafasthttp.TraceHandler(s, "test", "", func(ctx *fasthttp.RequestCtx) {
 		ctx.Success("aaa/bbb", []byte("Ok response!"))
@@ -433,7 +429,6 @@ func TestTracingHandlerFunc_W3CTraceContext(t *testing.T) {
 func TestTracingHandlerFunc_SecretsFiltering(t *testing.T) {
 	recorder := instana.NewTestRecorder()
 	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder))
-	// defer instana.ShutdownSensor()
 
 	h := instafasthttp.TraceHandler(s, "test", "/{action}", func(ctx *fasthttp.RequestCtx) {
 		ctx.Success("aaa/bbb", []byte("Ok response!"))
@@ -490,12 +485,15 @@ func TestTracingHandlerFunc_SecretsFiltering(t *testing.T) {
 	// check whether the trace context has been sent back to the client
 	assert.Equal(t, instana.FormatID(span.TraceID), string(resp.Header.Peek(instana.FieldT)))
 	assert.Equal(t, instana.FormatID(span.SpanID), string(resp.Header.Peek(instana.FieldS)))
+
+	if err := ln.Close(); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
 }
 
 func TestTracingHandlerFunc_SyntheticCall(t *testing.T) {
 	recorder := instana.NewTestRecorder()
 	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}, Tracer: instana.TracerOptions{CollectableHTTPHeaders: []string{instana.FieldSynthetic}}}, recorder))
-	// defer instana.ShutdownSensor()
 
 	h := instafasthttp.TraceHandler(s, "test", "/{action}", func(ctx *fasthttp.RequestCtx) {
 		ctx.Success("aaa/bbb", []byte("Ok response!"))
@@ -533,12 +531,15 @@ func TestTracingHandlerFunc_SyntheticCall(t *testing.T) {
 
 	fmt.Println("helllo", data.Tags.Headers)
 	assert.True(t, span.Synthetic)
+
+	if err := ln.Close(); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
 }
 
 func TestTracingHandlerFunc_EUMCall(t *testing.T) {
 	recorder := instana.NewTestRecorder()
 	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}, Tracer: instana.TracerOptions{CollectableHTTPHeaders: []string{instana.FieldSynthetic}}}, recorder))
-	// defer instana.ShutdownSensor()
 
 	h := instafasthttp.TraceHandler(s, "test", "/{action}", func(ctx *fasthttp.RequestCtx) {
 		ctx.Success("aaa/bbb", []byte("Ok response!"))
@@ -572,6 +573,70 @@ func TestTracingHandlerFunc_EUMCall(t *testing.T) {
 	require.Len(t, spans, 1)
 	assert.Equal(t, "web", spans[0].CorrelationType)
 	assert.Equal(t, "eum correlation id", spans[0].CorrelationID)
+
+	if err := ln.Close(); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestTracingHandlerFunc_PanicHandling(t *testing.T) {
+	recorder := instana.NewTestRecorder()
+	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}, Tracer: instana.TracerOptions{CollectableHTTPHeaders: []string{instana.FieldSynthetic}}}, recorder))
+
+	h := instafasthttp.TraceHandler(s, "test", "/{action}", func(ctx *fasthttp.RequestCtx) {
+		panic("something went wrong")
+	})
+
+	c := &fasthttp.RequestCtx{}
+
+	c.Request.Header.SetMethod(fasthttp.MethodGet)
+	c.Request.Header.Set(instana.FieldL, "1,correlationType=web;correlationId=eum correlation id")
+	c.URI().SetPath("/test")
+	c.URI().SetQueryString("q=term")
+	c.URI().SetHost("example.com")
+
+	assert.Panics(t, func() {
+		h(c)
+	})
+
+	spans := recorder.GetQueuedSpans()
+	require.Len(t, spans, 2)
+
+	span, logSpan := spans[0], spans[1]
+	assert.Equal(t, 1, span.Ec)
+	assert.EqualValues(t, instana.EntrySpanKind, span.Kind)
+	assert.False(t, span.Synthetic)
+
+	require.IsType(t, instana.HTTPSpanData{}, span.Data)
+	data := span.Data.(instana.HTTPSpanData)
+
+	assert.Equal(t, instana.HTTPSpanTags{
+		Status:       http.StatusInternalServerError,
+		Method:       "GET",
+		Host:         "example.com",
+		Path:         "/test",
+		Params:       "q=term",
+		RouteID:      "test",
+		Error:        "something went wrong",
+		Protocol:     "http",
+		PathTemplate: "/{action}",
+	}, data.Tags)
+
+	assert.Equal(t, span.TraceID, logSpan.TraceID)
+	assert.Equal(t, span.SpanID, logSpan.ParentID)
+	assert.Equal(t, "log.go", logSpan.Name)
+
+	// assert that log message has been recorded within the span interval
+	assert.GreaterOrEqual(t, logSpan.Timestamp, span.Timestamp)
+	assert.LessOrEqual(t, logSpan.Duration, span.Duration)
+
+	require.IsType(t, instana.LogSpanData{}, logSpan.Data)
+	logData := logSpan.Data.(instana.LogSpanData)
+
+	assert.Equal(t, instana.LogSpanTags{
+		Level:   "ERROR",
+		Message: `error: "something went wrong"`,
+	}, logData.Tags)
 }
 
 func verifyResponse(t *testing.T, r *bufio.Reader, expectedStatusCode int, expectedContentType, expectedBody string) *fasthttp.Response {
