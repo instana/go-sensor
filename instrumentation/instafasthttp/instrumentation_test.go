@@ -6,6 +6,7 @@ import (
 	"bufio"
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"testing"
@@ -37,6 +38,8 @@ func (rt testRoundTripper) RoundTrip(hc *fasthttp.HostClient, req *fasthttp.Requ
 }
 
 type transportDemo struct {
+	isErr bool
+
 	br *bufio.Reader
 	bw *bufio.Writer
 
@@ -46,6 +49,12 @@ type transportDemo struct {
 }
 
 func (t *transportDemo) RoundTrip(hc *fasthttp.HostClient, req *fasthttp.Request, res *fasthttp.Response) (retry bool, err error) {
+
+	if t.isErr {
+		serverErr := errors.New("something went wrong")
+		return false, serverErr
+	}
+
 	if err = req.Write(t.bw); err != nil {
 		return false, err
 	}
@@ -680,7 +689,7 @@ func TestRoundTripper(t *testing.T) {
 	}
 	tracer := instana.NewTracerWithEverything(opts, recorder)
 	s := instana.NewSensorWithTracer(tracer)
-	defer instana.ShutdownSensor()
+	// defer instana.ShutdownSensor()
 
 	parentSpan := tracer.StartSpan("parent")
 	ctx := instana.ContextWithSpan(context.Background(), parentSpan)
@@ -759,6 +768,103 @@ func TestRoundTripper(t *testing.T) {
 			"x-custom-header-2": "response",
 		},
 	}, data.Tags)
+
+	if err := ln.Close(); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestRoundTripper_Error(t *testing.T) {
+
+	recorder := instana.NewTestRecorder()
+	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder))
+	// defer instana.ShutdownSensor()
+
+	parentSpan := s.Tracer().StartSpan("parent")
+	ctx := instana.ContextWithSpan(context.Background(), parentSpan)
+
+	// var traceIDHeader, spanIDHeader string
+
+	server := &fasthttp.Server{
+		Handler: func(ctx *fasthttp.RequestCtx) {
+			ctx.Response.Header.Add("X-Response", "true")
+			ctx.Response.Header.Add("X-Custom-Header-2", "response")
+			ctx.Success("aaa/bbb", []byte("Ok response!"))
+		},
+	}
+
+	ln := fasthttputil.NewInmemoryListener()
+
+	go func() {
+		if err := server.Serve(ln); err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
+	}()
+
+	demoTransport := func() fasthttp.RoundTripper {
+		c, _ := ln.Dial()
+		br := bufio.NewReader(c)
+		bw := bufio.NewWriter(c)
+		return &transportDemo{br: br, bw: bw, isErr: true}
+	}()
+
+	// ctx := instana.ContextWithSpan(context.Background(), s.Tracer().StartSpan("parent"))
+	// req := httptest.NewRequest("GET", "http://example.com/hello?q=term&key=s3cr3t", nil)
+
+	// _, err := rt.RoundTrip(req.WithContext(ctx))
+
+	hc := &fasthttp.HostClient{
+		Transport: instafasthttp.RoundTripper(ctx, s, demoTransport),
+		Addr:      "example.com",
+	}
+
+	r := &fasthttp.Request{}
+	r.Header.SetMethod(fasthttp.MethodGet)
+	r.Header.Set("Authorization", "Basic blah")
+	r.URI().SetPath("/hello")
+	r.URI().SetQueryString("q=term&key=s3cr3t")
+	r.URI().SetHost("example.com")
+
+	resp := fasthttp.AcquireResponse()
+	defer fasthttp.ReleaseResponse(resp)
+
+	// Make the request
+	err := hc.Do(r, resp)
+
+	assert.Error(t, err)
+
+	spans := recorder.GetQueuedSpans()
+	require.Len(t, spans, 2)
+
+	span, logSpan := spans[0], spans[1]
+	assert.Equal(t, 1, span.Ec)
+	assert.EqualValues(t, instana.ExitSpanKind, span.Kind)
+
+	require.IsType(t, instana.HTTPSpanData{}, span.Data)
+	data := span.Data.(instana.HTTPSpanData)
+
+	assert.Equal(t, instana.HTTPSpanTags{
+		Method: "GET",
+		URL:    "http://example.com/hello",
+		Params: "key=%3Credacted%3E&q=term",
+		Error:  "something went wrong",
+	}, data.Tags)
+
+	assert.Equal(t, span.TraceID, logSpan.TraceID)
+	assert.Equal(t, span.SpanID, logSpan.ParentID)
+	assert.Equal(t, "log.go", logSpan.Name)
+
+	// assert that log message has been recorded within the span interval
+	assert.GreaterOrEqual(t, logSpan.Timestamp, span.Timestamp)
+	assert.LessOrEqual(t, logSpan.Duration, span.Duration)
+
+	require.IsType(t, instana.LogSpanData{}, logSpan.Data)
+	logData := logSpan.Data.(instana.LogSpanData)
+
+	assert.Equal(t, instana.LogSpanTags{
+		Level:   "ERROR",
+		Message: `error.object: "something went wrong"`,
+	}, logData.Tags)
 
 	if err := ln.Close(); err != nil {
 		t.Fatalf("unexpected error: %v", err)
