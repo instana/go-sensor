@@ -7,7 +7,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"net/http"
 	"strings"
 	"testing"
 
@@ -30,6 +29,37 @@ func (alwaysReadyClient) SendEvent(event *instana.EventData) error          { re
 func (alwaysReadyClient) SendSpans(spans []instana.Span) error              { return nil }
 func (alwaysReadyClient) SendProfiles(profiles []autoprofile.Profile) error { return nil }
 func (alwaysReadyClient) Flush(context.Context) error                       { return nil }
+
+type testRoundTripper func(*fasthttp.HostClient, *fasthttp.Request, *fasthttp.Response) (bool, error)
+
+func (rt testRoundTripper) RoundTrip(hc *fasthttp.HostClient, req *fasthttp.Request, resp *fasthttp.Response) (retry bool, err error) {
+	return rt(hc, req, resp)
+}
+
+type transportDemo struct {
+	br *bufio.Reader
+	bw *bufio.Writer
+
+	// for extracting tracer headers from roundtrip
+	traceIDHeader string
+	spanIDHeader  string
+}
+
+func (t *transportDemo) RoundTrip(hc *fasthttp.HostClient, req *fasthttp.Request, res *fasthttp.Response) (retry bool, err error) {
+	if err = req.Write(t.bw); err != nil {
+		return false, err
+	}
+	if err = t.bw.Flush(); err != nil {
+		return false, err
+	}
+
+	// extract tracer specific headers
+	t.traceIDHeader = string(req.Header.Peek(instana.FieldT))
+	t.spanIDHeader = string(req.Header.Peek(instana.FieldS))
+
+	err = res.Read(t.br)
+	return err != nil, err
+}
 
 func BenchmarkTracingHandlerFunc(b *testing.B) {
 	recorder := instana.NewTestRecorder()
@@ -130,7 +160,7 @@ func TestTracingHandlerFunc_Write(t *testing.T) {
 
 	assert.Equal(t, instana.HTTPSpanTags{
 		Host:   "example.com",
-		Status: http.StatusOK,
+		Status: fasthttp.StatusOK,
 		Method: "GET",
 		Path:   "/test",
 		Params: "q=term",
@@ -290,7 +320,7 @@ func TestTracingHandlerFunc_WriteHeaders(t *testing.T) {
 
 	resp := verifyResponse(t, br, fasthttp.StatusNotFound, "text/plain; charset=utf-8", "")
 
-	assert.Equal(t, http.StatusNotFound, resp.StatusCode())
+	assert.Equal(t, fasthttp.StatusNotFound, resp.StatusCode())
 
 	spans := recorder.GetQueuedSpans()
 	require.Len(t, spans, 1)
@@ -308,7 +338,7 @@ func TestTracingHandlerFunc_WriteHeaders(t *testing.T) {
 	data := span.Data.(instana.HTTPSpanData)
 
 	assert.Equal(t, instana.HTTPSpanTags{
-		Status:   http.StatusNotFound,
+		Status:   fasthttp.StatusNotFound,
 		Method:   "GET",
 		Host:     "example.com",
 		Path:     "/test",
@@ -399,7 +429,7 @@ func TestTracingHandlerFunc_W3CTraceContext(t *testing.T) {
 
 	assert.Equal(t, instana.HTTPSpanTags{
 		Host:     "example.com",
-		Status:   http.StatusOK,
+		Status:   fasthttp.StatusOK,
 		Method:   "GET",
 		Path:     "/test",
 		RouteID:  "test",
@@ -473,7 +503,7 @@ func TestTracingHandlerFunc_SecretsFiltering(t *testing.T) {
 
 	assert.Equal(t, instana.HTTPSpanTags{
 		Host:         "example.com",
-		Status:       http.StatusOK,
+		Status:       fasthttp.StatusOK,
 		Method:       "GET",
 		Path:         "/test",
 		Params:       "SECRET_VALUE=%3Credacted%3E&myPassword=%3Credacted%3E&q=term&sensitive_key=%3Credacted%3E",
@@ -611,7 +641,7 @@ func TestTracingHandlerFunc_PanicHandling(t *testing.T) {
 	data := span.Data.(instana.HTTPSpanData)
 
 	assert.Equal(t, instana.HTTPSpanTags{
-		Status:       http.StatusInternalServerError,
+		Status:       fasthttp.StatusInternalServerError,
 		Method:       "GET",
 		Host:         "example.com",
 		Path:         "/test",
@@ -637,6 +667,102 @@ func TestTracingHandlerFunc_PanicHandling(t *testing.T) {
 		Level:   "ERROR",
 		Message: `error: "something went wrong"`,
 	}, logData.Tags)
+}
+
+func TestRoundTripper(t *testing.T) {
+	recorder := instana.NewTestRecorder()
+	opts := &instana.Options{
+		Service: "test-service",
+		Tracer: instana.TracerOptions{
+			CollectableHTTPHeaders: []string{"x-custom-header-1", "x-custom-header-2"},
+		},
+		AgentClient: alwaysReadyClient{},
+	}
+	tracer := instana.NewTracerWithEverything(opts, recorder)
+	s := instana.NewSensorWithTracer(tracer)
+	defer instana.ShutdownSensor()
+
+	parentSpan := tracer.StartSpan("parent")
+	ctx := instana.ContextWithSpan(context.Background(), parentSpan)
+
+	// var traceIDHeader, spanIDHeader string
+
+	server := &fasthttp.Server{
+		Handler: func(ctx *fasthttp.RequestCtx) {
+			ctx.Response.Header.Add("X-Response", "true")
+			ctx.Response.Header.Add("X-Custom-Header-2", "response")
+			ctx.Success("aaa/bbb", []byte("Ok response!"))
+		},
+	}
+
+	ln := fasthttputil.NewInmemoryListener()
+
+	go func() {
+		if err := server.Serve(ln); err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
+	}()
+
+	demoTransport := func() fasthttp.RoundTripper {
+		c, _ := ln.Dial()
+		br := bufio.NewReader(c)
+		bw := bufio.NewWriter(c)
+		return &transportDemo{br: br, bw: bw}
+	}()
+
+	hc := &fasthttp.HostClient{
+		Transport: instafasthttp.RoundTripper(ctx, s, demoTransport),
+		Addr:      "example.com",
+	}
+
+	r := &fasthttp.Request{}
+	r.Header.SetMethod(fasthttp.MethodGet)
+	r.Header.Set("X-Custom-Header-1", "request")
+	r.Header.Set("Authorization", "Basic blah")
+	r.URI().SetPath("/hello")
+	r.URI().SetQueryString("q=term&sensitive_key=s3cr3t&myPassword=qwerty&SECRET_VALUE=1")
+	r.URI().SetHost("example.com")
+
+	resp := fasthttp.AcquireResponse()
+	defer fasthttp.ReleaseResponse(resp)
+
+	// Make the request
+	err := hc.Do(r, resp)
+
+	require.NoError(t, err)
+
+	parentSpan.Finish()
+
+	spans := recorder.GetQueuedSpans()
+	require.Len(t, spans, 2)
+
+	cSpan, pSpan := spans[0], spans[1]
+	assert.Equal(t, 0, cSpan.Ec)
+	assert.EqualValues(t, instana.ExitSpanKind, cSpan.Kind)
+
+	assert.Equal(t, pSpan.TraceID, cSpan.TraceID)
+	assert.Equal(t, pSpan.SpanID, cSpan.ParentID)
+
+	assert.Equal(t, instana.FormatID(cSpan.TraceID), demoTransport.(*transportDemo).traceIDHeader)
+	assert.Equal(t, instana.FormatID(cSpan.SpanID), demoTransport.(*transportDemo).spanIDHeader)
+
+	require.IsType(t, instana.HTTPSpanData{}, cSpan.Data)
+	data := cSpan.Data.(instana.HTTPSpanData)
+
+	assert.Equal(t, instana.HTTPSpanTags{
+		Method: "GET",
+		Status: fasthttp.StatusOK,
+		URL:    "http://example.com/hello",
+		Params: "SECRET_VALUE=%3Credacted%3E&myPassword=%3Credacted%3E&q=term&sensitive_key=%3Credacted%3E",
+		Headers: map[string]string{
+			"x-custom-header-1": "request",
+			"x-custom-header-2": "response",
+		},
+	}, data.Tags)
+
+	if err := ln.Close(); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
 }
 
 func verifyResponse(t *testing.T, r *bufio.Reader, expectedStatusCode int, expectedContentType, expectedBody string) *fasthttp.Response {
