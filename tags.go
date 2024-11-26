@@ -21,18 +21,18 @@ type Tags interface {
 	Apply(ot.Tags)
 }
 
-// TagsFunc implements Tags interface
-type TagsFunc func(ot.Tags)
+// tagsFunc implements Tags interface
+type tagsFunc func(ot.Tags)
 
-func (f TagsFunc) Apply(t ot.Tags) {
+func (f tagsFunc) Apply(t ot.Tags) {
 	f(t)
 }
 
-// DBTagsFunc is a function type that takes a DbConnDetails struct as input and returns Tags interface.
+// dbTagsFunc is a function type that takes a DbConnDetails struct as input and returns Tags interface.
 // It can be used to generate or retrieve a set of tags associated with a specific database connection.
-type DBTagsFunc func(c DbConnDetails) Tags
+type dbTagsFunc func(c *DbConnDetails) Tags
 
-var tagsFuncMap = map[database]DBTagsFunc{
+var tagsFuncMap = map[database]dbTagsFunc{
 	postgres:    withPostgresTags,
 	mysql:       withMySQLTags,
 	redis:       withRedisTags,
@@ -41,8 +41,8 @@ var tagsFuncMap = map[database]DBTagsFunc{
 	sql_generic: withGenericSQLTags,
 }
 
-var withPostgresTags DBTagsFunc = func(c DbConnDetails) Tags {
-	return TagsFunc(func(tags ot.Tags) {
+var withPostgresTags dbTagsFunc = func(c *DbConnDetails) Tags {
+	return tagsFunc(func(tags ot.Tags) {
 
 		tags["pg.user"] = c.User
 		tags["pg.host"] = c.Host
@@ -60,8 +60,8 @@ var withPostgresTags DBTagsFunc = func(c DbConnDetails) Tags {
 	})
 }
 
-var withMySQLTags DBTagsFunc = func(c DbConnDetails) Tags {
-	return TagsFunc(func(tags ot.Tags) {
+var withMySQLTags dbTagsFunc = func(c *DbConnDetails) Tags {
+	return tagsFunc(func(tags ot.Tags) {
 
 		tags["mysql.user"] = c.User
 		tags["mysql.host"] = c.Host
@@ -79,8 +79,8 @@ var withMySQLTags DBTagsFunc = func(c DbConnDetails) Tags {
 	})
 }
 
-var withRedisTags DBTagsFunc = func(c DbConnDetails) Tags {
-	return TagsFunc(func(tags ot.Tags) {
+var withRedisTags dbTagsFunc = func(c *DbConnDetails) Tags {
+	return tagsFunc(func(tags ot.Tags) {
 
 		if c.Error != nil {
 			tags["redis.error"] = c.Error.Error()
@@ -98,18 +98,18 @@ var withRedisTags DBTagsFunc = func(c DbConnDetails) Tags {
 	})
 }
 
-var withCouchbaseTags DBTagsFunc = func(c DbConnDetails) Tags {
-	return TagsFunc(func(tags ot.Tags) {
+var withCouchbaseTags dbTagsFunc = func(c *DbConnDetails) Tags {
+	return tagsFunc(func(tags ot.Tags) {
 		tags["couchbase.hostname"] = c.RawString
 	})
 }
 
-var withCosmosTags DBTagsFunc = func(c DbConnDetails) Tags {
-	return TagsFunc(func(tags ot.Tags) {})
+var withCosmosTags dbTagsFunc = func(c *DbConnDetails) Tags {
+	return tagsFunc(func(tags ot.Tags) {})
 }
 
-var withGenericSQLTags DBTagsFunc = func(c DbConnDetails) Tags {
-	return TagsFunc(func(tags ot.Tags) {
+var withGenericSQLTags dbTagsFunc = func(c *DbConnDetails) Tags {
+	return tagsFunc(func(tags ot.Tags) {
 
 		tags[string(ext.DBType)] = "sql"
 		tags[string(ext.PeerAddress)] = c.RawString

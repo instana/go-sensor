@@ -53,7 +53,7 @@ func getSQLSpanData(c DbConnDetails, opts ...sqlSpanOption) *sqlSpanData {
 		tf = withGenericSQLTags
 	}
 
-	tf(c).Apply(tags)
+	tf(&c).Apply(tags)
 
 	spanData := &sqlSpanData{
 		m:           &m,
@@ -307,7 +307,7 @@ func (s *sqlSpanData) updateSpanDataIfRedis() {
 		// as go sensor was not able to determine the database from connection details.
 		// Hence removing the existing tags and adding default redis connection tags.
 		s.tags = make(ot.Tags)
-		withRedisTags(s.connDetails).Apply(s.tags)
+		withRedisTags(&s.connDetails).Apply(s.tags)
 
 		s.updateDBNameInSpanData(Redis)
 	}
