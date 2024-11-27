@@ -47,6 +47,26 @@ log.Fatal(fasthttp.ListenAndServe(":7070", fastHTTPHandler))
 
 ```
 
+#### Trace propagation
+
+Trace propagation is achieved by correctly using the context. In an instrumented handler, if you need to perform additional operations such as a database call and want the trace propagation to ensure that spans fall under the HTTP span, you must use the `instafasthttp.UserContext` function. This function provides the appropriate context containing the parent span information, which should then be passed to the subsequent database operation to get the parent span. Refer to the example code below for further clarity.
+
+```go
+func greetEndpointHandler(ctx *fasthttp.RequestCtx) {
+	ctx.SetStatusCode(fasthttp.StatusOK)
+	fmt.Fprintf(ctx, "This is the first part of body!\n")
+
+	var stud student
+
+	// This context is required for span propagation.
+	// It will be set by instafasthttp, ensuring it contains the parent span info.
+	uCtx := instafasthttp.UserContext(ctx)
+	db.WithContext(uCtx).First(&stud)
+
+	fmt.Fprintf(ctx, "Hello "+stud.StudentName+"!\n")
+}
+```
+
 ### RoundTripper
 
 The `instafasthttp.RoundTripper` provides an implementation of the `fasthttp.RoundTripper` interface. It can be used to instrument client calls with the help of `instafasthttp.HostClient`. Refer to the details below for more information.
