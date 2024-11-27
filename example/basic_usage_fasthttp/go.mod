@@ -2,7 +2,6 @@ module basic_usage
 
 go 1.22
 
-toolchain go1.23.0
 
 require (
 	github.com/instana/go-sensor v1.65.1-0.20241021051914-d1fd3525c5b5
