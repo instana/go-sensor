@@ -17,11 +17,12 @@ import (
 	"github.com/valyala/fasthttp"
 )
 
-// instanaUserContextKey define the key name for storing context.Context in *fasthttp.RequestCtx
-// as *fasthttp.RequestCtx doesnt give any default option to store context.Context
-// can be used for trace propagation
+// instanaUserContextKey defines the key name used to store context.Context in *fasthttp.RequestCtx
+// as *fasthttp.RequestCtx does not provide any default option for storing context.Context.
+// This can be utilised for trace propagation.
 const instanaUserContextKey = "__instana_local_user_context__"
 
+// TraceHandler adds Instana instrumentation to the fasthttp.RequestHandler
 func TraceHandler(sensor instana.TracerLogger, routeID, pathTemplate string, handler fasthttp.RequestHandler) fasthttp.RequestHandler {
 	return func(c *fasthttp.RequestCtx) {
 		var ctx context.Context = UserContext(c)
