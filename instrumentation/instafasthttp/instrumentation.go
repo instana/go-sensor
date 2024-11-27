@@ -119,6 +119,7 @@ func TraceHandler(sensor instana.TracerLogger, routeID, pathTemplate string, han
 			c.Response.Header.Set(k, strings.Join(v, ","))
 		}
 
+		// setting context with span information for span propagation
 		setUserContext(c, instana.ContextWithSpan(ctx, span))
 		handler(c)
 

@@ -20,18 +20,71 @@ var (
 	db     *gorm.DB
 )
 
-func sampleEndpointHandler(ctx *fasthttp.RequestCtx) {
+type student struct {
+	StudentName string `gorm:"column:studentname"`
+	StudentID   uint   `gorm:"primarykey,column:studentid"`
+}
+
+// implementing the schema.Tabler interface
+func (student) TableName() string {
+	return "student"
+}
+
+func init() {
+	// Create a sensor for instana instrumentation
+	sensor = instana.InitCollector(&instana.Options{
+		Service:  "nithin-fasthttp-example4",
+		LogLevel: instana.Debug,
+	})
+}
+
+func main() {
+	var err error
+	dsn := "host=localhost user=postgres password=mysecretpassword dbname=postgres port=5432 sslmode=disable"
+
+	// connect to db
+	db, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	if err != nil {
+		panic(err)
+	}
+
+	instagorm.Instrument(db, sensor, dsn)
+
+	// create fasthttp server
+	log.Fatal(fasthttp.ListenAndServe(":7070", fastHTTPHandler))
+}
+
+// fasthttp request handler
+func fastHTTPHandler(ctx *fasthttp.RequestCtx) {
+	fmt.Fprintf(ctx, "Hi there! RequestURI is %q\n", ctx.RequestURI())
+
+	// routing
+	switch string(ctx.Path()) {
+	case "/greet":
+		instafasthttp.TraceHandler(sensor, "greet", "/greet", greetEndpointHandler)(ctx)
+	case "/error-handler":
+		instafasthttp.TraceHandler(sensor, "error-handler", "/error-handler", errorHandler)(ctx)
+	case "/panic-handler":
+		instafasthttp.TraceHandler(sensor, "panic-handler", "/panic-handler", panicHandler)(ctx)
+	case "/round-trip":
+		instafasthttp.TraceHandler(sensor, "round-trip", "/round-trip", roundTripHandler)(ctx)
+	default:
+		ctx.Error("Unsupported path", fasthttp.StatusNotFound)
+	}
+}
+
+func greetEndpointHandler(ctx *fasthttp.RequestCtx) {
 	ctx.SetStatusCode(fasthttp.StatusOK)
 	fmt.Fprintf(ctx, "This is the first part of body!\n")
 
 	var stud student
 
+	// This context is required for span propagation.
+	// It will be set by instafasthttp, ensuring it contains the parent span info.
 	uCtx := instafasthttp.UserContext(ctx)
-
 	db.WithContext(uCtx).First(&stud)
 
 	fmt.Fprintf(ctx, "Hello "+stud.StudentName+"!\n")
-
 }
 
 func roundTripHandler(ctx *fasthttp.RequestCtx) {
@@ -69,68 +122,12 @@ func roundTripHandler(ctx *fasthttp.RequestCtx) {
 
 }
 
-// request handler in fasthttp style, i.e. just plain function.
-func fastHTTPHandler(ctx *fasthttp.RequestCtx) {
-	fmt.Fprintf(ctx, "Hi there! RequestURI is %q\n", ctx.RequestURI())
-	switch string(ctx.Path()) {
-	case "/greet":
-		instafasthttp.TraceHandler(sensor, "greet", "/greet", sampleEndpointHandler)(ctx)
-	case "/error-handler":
-		instafasthttp.TraceHandler(sensor, "error-handler", "/error-handler", func(ctx *fasthttp.RequestCtx) {
-			ctx.SetStatusCode(fasthttp.StatusBadRequest)
-			fmt.Fprintf(ctx, "This is an error!\n")
-		})(ctx)
-	case "/panic-handler":
-		instafasthttp.TraceHandler(sensor, "panic-handler", "/panic-handler", func(ctx *fasthttp.RequestCtx) {
-			fmt.Fprintf(ctx, "This is a panic!\n")
-			panic(errors.New("Panic nithin"))
-		})(ctx)
-	case "/round-trip":
-		instafasthttp.TraceHandler(sensor, "round-trip", "/round-trip", roundTripHandler)(ctx)
-	default:
-		ctx.Error("Unsupported path", fasthttp.StatusNotFound)
-	}
+func panicHandler(ctx *fasthttp.RequestCtx) {
+	fmt.Fprintf(ctx, "This is a panic!\n")
+	panic(errors.New("This is a panic!"))
 }
 
-func init() {
-	// Create a sensor for instana instrumentation
-	sensor = instana.InitCollector(&instana.Options{
-		Service:  "nithin-fasthttp-example2",
-		LogLevel: instana.Debug,
-	})
-}
-
-func main() {
-	// col := instana.InitCollector(&instana.Options{
-	// 	Service:           "Nithin Basic Usage",
-	// 	EnableAutoProfile: true,
-	// })
-
-	// http.HandleFunc("/endpoint", instana.TracingHandlerFunc(col, "/endpoint", func(w http.ResponseWriter, r *http.Request) {
-	// 	w.WriteHeader(http.StatusOK)
-	// }))
-
-	var err error
-	dsn := "host=localhost user=postgres password=mysecretpassword dbname=postgres port=5432 sslmode=disable"
-	db, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
-
-	if err != nil {
-		panic(err)
-	}
-
-	instagorm.Instrument(db, sensor, dsn)
-
-	log.Fatal(fasthttp.ListenAndServe(":7070", fastHTTPHandler))
-
-	// log.Fatal(http.ListenAndServe(":8080", nil))
-}
-
-type student struct {
-	StudentName string `gorm:"column:studentname"`
-	StudentID   uint   `gorm:"primarykey,column:studentid"`
-}
-
-// implementing the schema.Tabler interface
-func (student) TableName() string {
-	return "student"
+func errorHandler(ctx *fasthttp.RequestCtx) {
+	ctx.SetStatusCode(fasthttp.StatusBadRequest)
+	fmt.Fprintf(ctx, "This is an error!\n")
 }
