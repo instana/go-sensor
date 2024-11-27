@@ -23,55 +23,6 @@ import (
 	"github.com/valyala/fasthttp/fasthttputil"
 )
 
-type alwaysReadyClient struct{}
-
-func (alwaysReadyClient) Ready() bool                                       { return true }
-func (alwaysReadyClient) SendMetrics(data acceptor.Metrics) error           { return nil }
-func (alwaysReadyClient) SendEvent(event *instana.EventData) error          { return nil }
-func (alwaysReadyClient) SendSpans(spans []instana.Span) error              { return nil }
-func (alwaysReadyClient) SendProfiles(profiles []autoprofile.Profile) error { return nil }
-func (alwaysReadyClient) Flush(context.Context) error                       { return nil }
-
-type testRoundTripper func(*fasthttp.HostClient, *fasthttp.Request, *fasthttp.Response) (bool, error)
-
-func (rt testRoundTripper) RoundTrip(hc *fasthttp.HostClient, req *fasthttp.Request, resp *fasthttp.Response) (retry bool, err error) {
-	return rt(hc, req, resp)
-}
-
-type transportTest struct {
-	// If the transport is expected to return an error
-	isErr bool
-
-	br *bufio.Reader
-	bw *bufio.Writer
-
-	// for extracting tracer headers from request
-	traceIDHeader string
-	spanIDHeader  string
-}
-
-func (t *transportTest) RoundTrip(hc *fasthttp.HostClient, req *fasthttp.Request, res *fasthttp.Response) (retry bool, err error) {
-
-	if t.isErr {
-		serverErr := errors.New("something went wrong")
-		return false, serverErr
-	}
-
-	if err = req.Write(t.bw); err != nil {
-		return false, err
-	}
-	if err = t.bw.Flush(); err != nil {
-		return false, err
-	}
-
-	// extract tracer specific headers
-	t.traceIDHeader = string(req.Header.Peek(instana.FieldT))
-	t.spanIDHeader = string(req.Header.Peek(instana.FieldS))
-
-	err = res.Read(t.br)
-	return err != nil, err
-}
-
 func BenchmarkTracingHandlerFunc(b *testing.B) {
 	recorder := instana.NewTestRecorder()
 	tracer := instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder)
@@ -691,12 +642,9 @@ func TestRoundTripper(t *testing.T) {
 	}
 	tracer := instana.NewTracerWithEverything(opts, recorder)
 	s := instana.NewSensorWithTracer(tracer)
-	// defer instana.ShutdownSensor()
 
 	parentSpan := tracer.StartSpan("parent")
 	ctx := instana.ContextWithSpan(context.Background(), parentSpan)
-
-	// var traceIDHeader, spanIDHeader string
 
 	server := &fasthttp.Server{
 		Handler: func(ctx *fasthttp.RequestCtx) {
@@ -780,12 +728,9 @@ func TestRoundTripper_Error(t *testing.T) {
 
 	recorder := instana.NewTestRecorder()
 	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder))
-	// defer instana.ShutdownSensor()
 
 	parentSpan := s.Tracer().StartSpan("parent")
 	ctx := instana.ContextWithSpan(context.Background(), parentSpan)
-
-	// var traceIDHeader, spanIDHeader string
 
 	server := &fasthttp.Server{
 		Handler: func(ctx *fasthttp.RequestCtx) {
@@ -809,11 +754,6 @@ func TestRoundTripper_Error(t *testing.T) {
 		bw := bufio.NewWriter(c)
 		return &transportTest{br: br, bw: bw, isErr: true}
 	}()
-
-	// ctx := instana.ContextWithSpan(context.Background(), s.Tracer().StartSpan("parent"))
-	// req := httptest.NewRequest("GET", "http://example.com/hello?q=term&key=s3cr3t", nil)
-
-	// _, err := rt.RoundTrip(req.WithContext(ctx))
 
 	hc := &fasthttp.HostClient{
 		Transport: instafasthttp.RoundTripper(ctx, s, testT),
@@ -876,12 +816,9 @@ func TestRoundTripper_Error(t *testing.T) {
 func TestRoundTripper_DefaultTransport(t *testing.T) {
 	recorder := instana.NewTestRecorder()
 	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder))
-	// defer instana.ShutdownSensor()
 	var numCalls int
 	parentSpan := s.Tracer().StartSpan("parent")
 	ctx := instana.ContextWithSpan(context.Background(), parentSpan)
-
-	// var traceIDHeader, spanIDHeader string
 
 	server := &fasthttp.Server{
 		Handler: func(ctx *fasthttp.RequestCtx) {
@@ -900,24 +837,6 @@ func TestRoundTripper_DefaultTransport(t *testing.T) {
 		}
 	}()
 
-	// var numCalls int
-	// ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-	// 	numCalls++
-
-	// 	assert.NotEmpty(t, req.Header.Get(instana.FieldT))
-	// 	assert.NotEmpty(t, req.Header.Get(instana.FieldS))
-
-	// 	w.Write([]byte("OK"))
-	// }))
-	// defer ts.Close()
-
-	// rt := instana.RoundTripper(s, nil)
-
-	// ctx := instana.ContextWithSpan(context.Background(), s.Tracer().StartSpan("parent"))
-	// req := httptest.NewRequest("GET", ts.URL+"/hello", nil)
-
-	// resp, err := rt.RoundTrip(req.WithContext(ctx))
-
 	hc := &fasthttp.HostClient{
 		Transport: instafasthttp.RoundTripper(ctx, s, nil),
 		Addr:      "example.com",
@@ -928,7 +847,6 @@ func TestRoundTripper_DefaultTransport(t *testing.T) {
 	r.Header.SetMethod(fasthttp.MethodGet)
 	r.Header.Set("Authorization", "Basic blah")
 	r.URI().SetPath("/hello")
-	// r.URI().SetQueryString("q=term&key=s3cr3t")
 	r.URI().SetHost("example.com")
 
 	resp := fasthttp.AcquireResponse()
@@ -936,8 +854,6 @@ func TestRoundTripper_DefaultTransport(t *testing.T) {
 
 	// Make the request
 	err := hc.Do(r, resp)
-
-	// assert.Error(t, err)
 
 	require.NoError(t, err)
 	assert.Equal(t, fasthttp.StatusOK, resp.StatusCode())
@@ -991,4 +907,46 @@ func verifyResponseHeader(t *testing.T, h *fasthttp.ResponseHeader, expectedStat
 	if string(h.ContentEncoding()) != expectedContentEncoding {
 		t.Fatalf("Unexpected content encoding %q. Expected %q", h.ContentEncoding(), expectedContentEncoding)
 	}
+}
+
+type alwaysReadyClient struct{}
+
+func (alwaysReadyClient) Ready() bool                                       { return true }
+func (alwaysReadyClient) SendMetrics(data acceptor.Metrics) error           { return nil }
+func (alwaysReadyClient) SendEvent(event *instana.EventData) error          { return nil }
+func (alwaysReadyClient) SendSpans(spans []instana.Span) error              { return nil }
+func (alwaysReadyClient) SendProfiles(profiles []autoprofile.Profile) error { return nil }
+func (alwaysReadyClient) Flush(context.Context) error                       { return nil }
+
+type transportTest struct {
+	// If the transport is expected to return an error
+	isErr bool
+
+	br *bufio.Reader
+	bw *bufio.Writer
+
+	// for extracting tracer headers from request
+	traceIDHeader string
+	spanIDHeader  string
+}
+
+func (t *transportTest) RoundTrip(hc *fasthttp.HostClient, req *fasthttp.Request, res *fasthttp.Response) (retry bool, err error) {
+	if t.isErr {
+		serverErr := errors.New("something went wrong")
+		return false, serverErr
+	}
+
+	if err = req.Write(t.bw); err != nil {
+		return false, err
+	}
+	if err = t.bw.Flush(); err != nil {
+		return false, err
+	}
+
+	// extract tracer specific headers
+	t.traceIDHeader = string(req.Header.Peek(instana.FieldT))
+	t.spanIDHeader = string(req.Header.Peek(instana.FieldS))
+
+	err = res.Read(t.br)
+	return err != nil, err
 }
