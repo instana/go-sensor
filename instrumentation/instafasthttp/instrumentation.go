@@ -57,8 +57,8 @@ func TraceHandler(sensor instana.TracerLogger, routeID, pathTemplate string, han
 			opts = append(opts, ot.ChildOf(ps.Context()))
 		}
 
-		headers := collectAllReqHeaders(req)
-		opts = append(opts, extractStartSpanOptionsFromHeadersFastHttp(tracer, req, headers, sensor)...)
+		reqHeaders := collectAllHeaders(&req.Header)
+		opts = append(opts, extractStartSpanOptionsFromHeadersFastHttp(tracer, req, reqHeaders, sensor)...)
 
 		if string(req.Header.Peek(instana.FieldSynthetic)) == "1" {
 			opts = append(opts, ot.Tag{Key: "synthetic_call", Value: true})
@@ -91,7 +91,7 @@ func TraceHandler(sensor instana.TracerLogger, routeID, pathTemplate string, han
 			collectableHTTPHeaders = opts.CollectableHTTPHeaders
 		}
 
-		collectRequestHeadersFastHTTP(headers, collectableHTTPHeaders, collectedHeaders)
+		collectHeadersFastHTTP(reqHeaders, collectableHTTPHeaders, collectedHeaders)
 
 		defer func() {
 			// Be sure to capture any kind of panic/error
@@ -123,7 +123,8 @@ func TraceHandler(sensor instana.TracerLogger, routeID, pathTemplate string, han
 		setUserContext(c, instana.ContextWithSpan(ctx, span))
 		handler(c)
 
-		collectResponseHeadersFasthttp(&c.Response, collectableHTTPHeaders, collectedHeaders)
+		resHeaders := collectAllHeaders(&c.Response.Header)
+		collectHeadersFastHTTP(resHeaders, collectableHTTPHeaders, collectedHeaders)
 		processResponseStatusFasthttp(&c.Response, span)
 	}
 }
@@ -142,26 +143,16 @@ func initSpanOptionsFastHttp(req *fasthttp.Request, routeID string) []ot.StartSp
 	return opts
 }
 
-func collectAllReqHeaders(req *fasthttp.Request) http.Header {
-	headers := make(http.Header, 0)
-
-	req.Header.VisitAll(func(key, value []byte) {
-		headerKey := make([]byte, len(key))
-		copy(headerKey, key)
-
-		headerVal := make([]byte, len(value))
-		copy(headerVal, value)
-
-		headers.Add(string(headerKey), string(headerVal))
-	})
-
-	return headers
+// interface for req and res headers
+// used to collect headers
+type headerVisiter interface {
+	VisitAll(f func(key, value []byte))
 }
 
-func collectAllResHeaders(res *fasthttp.Response) http.Header {
+func collectAllHeaders(header headerVisiter) http.Header {
 	headers := make(http.Header, 0)
 
-	res.Header.VisitAll(func(key, value []byte) {
+	header.VisitAll(func(key, value []byte) {
 		headerKey := make([]byte, len(key))
 		copy(headerKey, key)
 
@@ -188,18 +179,7 @@ func processResponseStatusFasthttp(response *fasthttp.Response, span ot.Span) {
 	}
 }
 
-func collectResponseHeadersFasthttp(response *fasthttp.Response, collectableHTTPHeaders []string, collectedHeaders map[string]string) {
-	for _, h := range collectableHTTPHeaders {
-
-		if value := response.Header.Peek(h); value != nil {
-			headerCopy := make([]byte, len(value))
-			copy(headerCopy, value)
-			collectedHeaders[h] = string(headerCopy)
-		}
-	}
-}
-
-func collectRequestHeadersFastHTTP(headers http.Header, collectableHTTPHeaders []string, collectedHeaders map[string]string) {
+func collectHeadersFastHTTP(headers http.Header, collectableHTTPHeaders []string, collectedHeaders map[string]string) {
 	for _, h := range collectableHTTPHeaders {
 		if v := headers.Get(h); v != "" {
 			collectedHeaders[h] = v
@@ -307,8 +287,8 @@ func RoundTripper(ctx context.Context, sensor instana.TracerLogger, original fas
 			collectableHTTPHeaders = opts.CollectableHTTPHeaders
 		}
 
-		headers := collectAllReqHeaders(req)
-		collectRequestHeadersFastHTTP(headers, collectableHTTPHeaders, collectedHeaders)
+		reqHeaders := collectAllHeaders(&req.Header)
+		collectHeadersFastHTTP(reqHeaders, collectableHTTPHeaders, collectedHeaders)
 
 		retry, err := original.RoundTrip(hc, reqClone, resp)
 		if err != nil {
@@ -317,8 +297,8 @@ func RoundTripper(ctx context.Context, sensor instana.TracerLogger, original fas
 			return retry, err
 		}
 
-		headers = collectAllResHeaders(resp)
-		collectRequestHeadersFastHTTP(headers, collectableHTTPHeaders, collectedHeaders)
+		resHeaders := collectAllHeaders(&resp.Header)
+		collectHeadersFastHTTP(resHeaders, collectableHTTPHeaders, collectedHeaders)
 
 		span.SetTag(string(ext.HTTPStatusCode), resp.StatusCode())
 
