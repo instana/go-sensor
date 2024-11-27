@@ -22,12 +22,33 @@ import (
 // This can be utilised for trace propagation.
 const instanaUserContextKey = "__instana_local_user_context__"
 
+// UserContext returns a context implementation set by the user earlier.
+// If not set, it returns a non-nil, empty context.
+func UserContext(c *fasthttp.RequestCtx) context.Context {
+	ctx, ok := c.UserValue(instanaUserContextKey).(context.Context)
+	if !ok {
+		// Since *fasthttp.RequestCtx satisfies context.Context,
+		// we use it as the user context to ensure that all default values,
+		// such as timeouts and other context-specific values, are retained.
+		// This context can then be passed to other functions.
+		ctx = c
+		setUserContext(c, ctx)
+	}
+
+	return ctx
+}
+
+// SetUserContext sets a context implementation by user.
+func setUserContext(c *fasthttp.RequestCtx, ctx context.Context) {
+	c.SetUserValue(instanaUserContextKey, ctx)
+}
+
 // TraceHandler adds Instana instrumentation to the fasthttp.RequestHandler
 func TraceHandler(sensor instana.TracerLogger, routeID, pathTemplate string, handler fasthttp.RequestHandler) fasthttp.RequestHandler {
 	return func(c *fasthttp.RequestCtx) {
 		var ctx context.Context = UserContext(c)
-		req := &c.Request
 
+		req := &c.Request
 		opts := initSpanOptionsFastHttp(req, routeID)
 
 		tracer := sensor.Tracer()
@@ -37,7 +58,6 @@ func TraceHandler(sensor instana.TracerLogger, routeID, pathTemplate string, han
 		}
 
 		headers := collectAllReqHeaders(req)
-
 		opts = append(opts, extractStartSpanOptionsFromHeadersFastHttp(tracer, req, headers, sensor)...)
 
 		if string(req.Header.Peek(instana.FieldSynthetic)) == "1" {
@@ -153,27 +173,6 @@ func collectAllResHeaders(res *fasthttp.Response) http.Header {
 	return headers
 }
 
-// UserContext returns a context implementation that was set by
-// user earlier or returns a non-nil, empty context,if it was not set earlier.
-func UserContext(c *fasthttp.RequestCtx) context.Context {
-	ctx, ok := c.UserValue(instanaUserContextKey).(context.Context)
-	if !ok {
-		// as *fasthttp.RequestCtx satisfies context.Context
-		// we are taking the same as the user context so that all the
-		// default values like timeout and other context specific values
-		// will be copied and this context can be used to pass to other functions.
-		ctx = c
-		setUserContext(c, ctx)
-	}
-
-	return ctx
-}
-
-// SetUserContext sets a context implementation by user.
-func setUserContext(c *fasthttp.RequestCtx, ctx context.Context) {
-	c.SetUserValue(instanaUserContextKey, ctx)
-}
-
 func processResponseStatusFasthttp(response *fasthttp.Response, span ot.Span) {
 	stCode := response.StatusCode()
 	if stCode > 0 {
@@ -197,7 +196,6 @@ func collectResponseHeadersFasthttp(response *fasthttp.Response, collectableHTTP
 			collectedHeaders[h] = string(headerCopy)
 		}
 	}
-
 }
 
 func collectRequestHeadersFastHTTP(headers http.Header, collectableHTTPHeaders []string, collectedHeaders map[string]string) {
@@ -242,8 +240,8 @@ func (rt tracingRoundTripper) RoundTrip(hc *fasthttp.HostClient, req *fasthttp.R
 	return rt(hc, req, resp)
 }
 
-// RoundTripper wraps an existing http.RoundTripper and injects the tracing headers into the outgoing request.
-// If the original RoundTripper is nil, the http.DefaultTransport will be used.
+// RoundTripper wraps an existing fasthttp.RoundTripper and injects the tracing headers into the outgoing request.
+// If the original RoundTripper is nil, the fasthttp.DefaultTransport will be used.
 func RoundTripper(ctx context.Context, sensor instana.TracerLogger, original fasthttp.RoundTripper) fasthttp.RoundTripper {
 	if ctx == nil {
 		ctx = context.Background()
@@ -277,11 +275,8 @@ func RoundTripper(ctx context.Context, sensor instana.TracerLogger, original fas
 		defer span.Finish()
 
 		// clone the request since the RoundTrip should not modify the original one
-		// req = cloneRequest(ContextWithSpan(ctx, span), req)
-
 		reqClone := &fasthttp.Request{}
 		req.CopyTo(reqClone)
-		// sensor.Tracer().Inject(span.Context(), ot.HTTPHeaders, ot.HTTPHeadersCarrier(req.Header))
 
 		// Inject the span details to the headers
 		h := make(ot.HTTPHeadersCarrier)
@@ -320,13 +315,6 @@ func RoundTripper(ctx context.Context, sensor instana.TracerLogger, original fas
 			span.LogFields(otlog.Error(err))
 			return retry, err
 		}
-
-		// // collect response headers
-		// for _, h := range collectableHTTPHeaders {
-		// 	if v := resp.Header.Get(h); v != "" {
-		// 		collectedHeaders[h] = v
-		// 	}
-		// }
 
 		headers = collectAllResHeaders(resp)
 		collectRequestHeadersFastHTTP(headers, collectableHTTPHeaders, collectedHeaders)
