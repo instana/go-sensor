@@ -23,7 +23,7 @@ import (
 const instanaUserContextKey = "__instana_local_user_context__"
 
 // UserContext returns a context implementation set by the user earlier.
-// If not set, it returns a non-nil, empty context.
+// If not set, it returns a context.Context derived from *fasthttp.RequestCtx.
 func UserContext(c *fasthttp.RequestCtx) context.Context {
 	ctx, ok := c.UserValue(instanaUserContextKey).(context.Context)
 	if !ok {
