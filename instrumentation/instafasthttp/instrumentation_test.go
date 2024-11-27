@@ -38,19 +38,19 @@ func (rt testRoundTripper) RoundTrip(hc *fasthttp.HostClient, req *fasthttp.Requ
 	return rt(hc, req, resp)
 }
 
-type transportDemo struct {
-	// if the transport returns error
+type transportTest struct {
+	// If the transport is expected to return an error
 	isErr bool
 
 	br *bufio.Reader
 	bw *bufio.Writer
 
-	// for extracting tracer headers from roundtrip
+	// for extracting tracer headers from request
 	traceIDHeader string
 	spanIDHeader  string
 }
 
-func (t *transportDemo) RoundTrip(hc *fasthttp.HostClient, req *fasthttp.Request, res *fasthttp.Response) (retry bool, err error) {
+func (t *transportTest) RoundTrip(hc *fasthttp.HostClient, req *fasthttp.Request, res *fasthttp.Response) (retry bool, err error) {
 
 	if t.isErr {
 		serverErr := errors.New("something went wrong")
@@ -714,15 +714,15 @@ func TestRoundTripper(t *testing.T) {
 		}
 	}()
 
-	demoTransport := func() fasthttp.RoundTripper {
+	testT := func() fasthttp.RoundTripper {
 		c, _ := ln.Dial()
 		br := bufio.NewReader(c)
 		bw := bufio.NewWriter(c)
-		return &transportDemo{br: br, bw: bw}
+		return &transportTest{br: br, bw: bw}
 	}()
 
 	hc := &fasthttp.HostClient{
-		Transport: instafasthttp.RoundTripper(ctx, s, demoTransport),
+		Transport: instafasthttp.RoundTripper(ctx, s, testT),
 		Addr:      "example.com",
 	}
 
@@ -754,8 +754,8 @@ func TestRoundTripper(t *testing.T) {
 	assert.Equal(t, pSpan.TraceID, cSpan.TraceID)
 	assert.Equal(t, pSpan.SpanID, cSpan.ParentID)
 
-	assert.Equal(t, instana.FormatID(cSpan.TraceID), demoTransport.(*transportDemo).traceIDHeader)
-	assert.Equal(t, instana.FormatID(cSpan.SpanID), demoTransport.(*transportDemo).spanIDHeader)
+	assert.Equal(t, instana.FormatID(cSpan.TraceID), testT.(*transportTest).traceIDHeader)
+	assert.Equal(t, instana.FormatID(cSpan.SpanID), testT.(*transportTest).spanIDHeader)
 
 	require.IsType(t, instana.HTTPSpanData{}, cSpan.Data)
 	data := cSpan.Data.(instana.HTTPSpanData)
@@ -803,11 +803,11 @@ func TestRoundTripper_Error(t *testing.T) {
 		}
 	}()
 
-	demoTransport := func() fasthttp.RoundTripper {
+	testT := func() fasthttp.RoundTripper {
 		c, _ := ln.Dial()
 		br := bufio.NewReader(c)
 		bw := bufio.NewWriter(c)
-		return &transportDemo{br: br, bw: bw, isErr: true}
+		return &transportTest{br: br, bw: bw, isErr: true}
 	}()
 
 	// ctx := instana.ContextWithSpan(context.Background(), s.Tracer().StartSpan("parent"))
@@ -816,7 +816,7 @@ func TestRoundTripper_Error(t *testing.T) {
 	// _, err := rt.RoundTrip(req.WithContext(ctx))
 
 	hc := &fasthttp.HostClient{
-		Transport: instafasthttp.RoundTripper(ctx, s, demoTransport),
+		Transport: instafasthttp.RoundTripper(ctx, s, testT),
 		Addr:      "example.com",
 	}
 
