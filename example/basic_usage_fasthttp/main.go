@@ -70,7 +70,7 @@ func fastHTTPHandler(ctx *fasthttp.RequestCtx) {
 	case "/round-trip":
 		instafasthttp.TraceHandler(sensor, "round-trip", "/round-trip", roundTripHandler)(ctx)
 	case "/client-call-handler":
-		instafasthttp.TraceHandler(sensor, "round-trip", "/round-trip", clientCallHandler)(ctx)
+		instafasthttp.TraceHandler(sensor, "client-call-handler", "/client-call-handler", clientCallHandler)(ctx)
 	default:
 		ctx.Error("Unsupported path", fasthttp.StatusNotFound)
 	}
@@ -126,7 +126,7 @@ func roundTripHandler(ctx *fasthttp.RequestCtx) {
 }
 
 func clientCallHandler(ctx *fasthttp.RequestCtx) {
-	// uCtx := instafasthttp.UserContext(ctx)
+	uCtx := instafasthttp.UserContext(ctx)
 
 	url := fasthttp.AcquireURI()
 	url.Parse(nil, []byte("http://localhost:7070/greet"))
@@ -149,6 +149,9 @@ func clientCallHandler(ctx *fasthttp.RequestCtx) {
 		}).Dial,
 	}
 
+	// create instana instrumented client
+	ic := instafasthttp.GetClient(sensor, c)
+
 	req := fasthttp.AcquireRequest()
 	defer fasthttp.ReleaseRequest(req)
 	req.SetURI(url)
@@ -159,7 +162,7 @@ func clientCallHandler(ctx *fasthttp.RequestCtx) {
 	defer fasthttp.ReleaseResponse(resp)
 
 	// Make the request
-	err := c.Do(req, resp)
+	err := ic.Do(uCtx, req, resp)
 	if err != nil {
 		log.Fatalf("failed to GET http://localhost:7070/greet: %s", err)
 	}
