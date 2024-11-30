@@ -33,7 +33,7 @@ func (student) TableName() string {
 func init() {
 	// Create a sensor for instana instrumentation
 	sensor = instana.InitCollector(&instana.Options{
-		Service:  "nithin-fasthttp-example4",
+		Service:  "fasthttp-example",
 		LogLevel: instana.Debug,
 	})
 }
