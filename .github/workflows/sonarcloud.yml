@@ -1,0 +1,40 @@
+name: Generate SonarCloud report
+on:
+  workflow_run:
+    workflows: [Generate code coverage and upload to artifact for sonarcloud]
+    types: [completed]
+jobs:
+  build:
+    name: Run sonarcloud analysis
+    runs-on: ubuntu-latest
+    if: github.event.workflow_run.conclusion == 'success'
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: 'Download code coverage'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            let allArtifacts = await github.rest.actions.listWorkflowRunArtifacts({
+               owner: context.repo.owner,
+               repo: context.repo.repo,
+               run_id: context.payload.workflow_run.id,
+            });
+            let matchArtifact = allArtifacts.data.artifacts.filter((artifact) => {
+              return artifact.name == "go-tracer-code-coverage-sonarcloud"
+            })[0];
+            let download = await github.rest.actions.downloadArtifact({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              artifact_id: matchArtifact.id,
+              archive_format: 'zip',
+            });
+            let fs = require('fs');
+            fs.writeFileSync(`${process.env.GITHUB_WORKSPACE}/go-tracer-code-coverage-sonarcloud.zip`, Buffer.from(download.data));
+      - name: 'Unzip code coverage'
+        run: unzip go-tracer-code-coverage-sonarcloud.zip -d coverage
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@master
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_CLOUD_TOKEN }}
