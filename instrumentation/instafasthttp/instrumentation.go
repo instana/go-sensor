@@ -75,14 +75,7 @@ func TraceHandler(sensor instana.TracerLogger, routeID, pathTemplate string, han
 		collectedHeaders := make(map[string]string)
 
 		// ensure collected headers/params are sent in case of panic/error
-		defer func() {
-			if len(collectedHeaders) > 0 {
-				span.SetTag("http.header", collectedHeaders)
-			}
-			if len(params) > 0 {
-				span.SetTag("http.params", params.Encode())
-			}
-		}()
+		defer sendParamsAndHeaders(span, params, collectedHeaders)
 
 		var collectableHTTPHeaders []string
 		if t, ok := tracer.(instana.Tracer); ok {
@@ -215,6 +208,15 @@ func collectHTTPParamsFastHttp(req *fasthttp.Request, matcher instana.Matcher) u
 	return params
 }
 
+func sendParamsAndHeaders(span ot.Span, params url.Values, collectedHeaders map[string]string) {
+	if len(collectedHeaders) > 0 {
+		span.SetTag("http.header", collectedHeaders)
+	}
+	if len(params) > 0 {
+		span.SetTag("http.params", params.Encode())
+	}
+}
+
 type tracingRoundTripper func(*fasthttp.HostClient, *fasthttp.Request, *fasthttp.Response) (bool, error)
 
 func (rt tracingRoundTripper) RoundTrip(hc *fasthttp.HostClient, req *fasthttp.Request, resp *fasthttp.Response) (retry bool, err error) {
@@ -271,14 +273,7 @@ func RoundTripper(ctx context.Context, sensor instana.TracerLogger, original fas
 		collectedHeaders := make(map[string]string)
 
 		// ensure collected headers/params are sent in case of panic/error
-		defer func() {
-			if len(collectedHeaders) > 0 {
-				span.SetTag("http.header", collectedHeaders)
-			}
-			if len(params) > 0 {
-				span.SetTag("http.params", params.Encode())
-			}
-		}()
+		defer sendParamsAndHeaders(span, params, collectedHeaders)
 
 		var collectableHTTPHeaders []string
 		if t, ok := tracer.(instana.Tracer); ok {
