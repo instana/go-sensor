@@ -74,15 +74,15 @@ func TraceHandler(sensor instana.TracerLogger, routeID, pathTemplate string, han
 		var params url.Values
 		collectedHeaders := make(map[string]string)
 
-		// ensure collected headers/params are sent in case of panic/error
-		defer sendParamsAndHeaders(span, params, collectedHeaders)
-
 		var collectableHTTPHeaders []string
 		if t, ok := tracer.(instana.Tracer); ok {
 			opts := t.Options()
 			params = collectHTTPParamsFastHttp(req, opts.Secrets)
 			collectableHTTPHeaders = opts.CollectableHTTPHeaders
 		}
+
+		// ensure collected headers/params are sent in case of panic/error
+		defer sendParamsAndHeaders(span, params, collectedHeaders)
 
 		collectHeadersFastHTTP(reqHeaders, collectableHTTPHeaders, collectedHeaders)
 
@@ -272,15 +272,15 @@ func RoundTripper(ctx context.Context, sensor instana.TracerLogger, original fas
 		var params url.Values
 		collectedHeaders := make(map[string]string)
 
-		// ensure collected headers/params are sent in case of panic/error
-		defer sendParamsAndHeaders(span, params, collectedHeaders)
-
 		var collectableHTTPHeaders []string
 		if t, ok := tracer.(instana.Tracer); ok {
 			opts := t.Options()
 			params = collectHTTPParamsFastHttp(req, opts.Secrets)
 			collectableHTTPHeaders = opts.CollectableHTTPHeaders
 		}
+
+		// ensure collected headers/params are sent in case of panic/error
+		defer sendParamsAndHeaders(span, params, collectedHeaders)
 
 		reqHeaders := collectAllHeaders(&req.Header)
 		collectHeadersFastHTTP(reqHeaders, collectableHTTPHeaders, collectedHeaders)
