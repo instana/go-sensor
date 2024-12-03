@@ -12,7 +12,9 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"os/signal"
 	"sync"
+	"syscall"
 	"testing"
 	"time"
 
@@ -65,6 +67,9 @@ var (
 	rec               *instana.Recorder
 )
 
+// exit error code
+var exitNotOk int = 1
+
 type alwaysReadyClient struct{}
 
 func (alwaysReadyClient) Ready() bool                                       { return true }
@@ -101,22 +106,26 @@ func setup(collector instana.TracerLogger) {
 
 	// getting azure cosmos client
 	client, err := getInstaClient(collector)
-	failOnError(err)
+	if err != nil {
+		log.Fatalf("instacosmos integration test failed : %s \n", err.Error())
+	}
 
 	// creating a database in azure test account
 	databaseID = databasePrefix + uuid.New().String()
 	dbProperties := azcosmos.DatabaseProperties{ID: databaseID}
 	response, err := client.CreateDatabase(context.TODO(), dbProperties, nil)
-	failOnError(err)
+	if err != nil {
+		log.Fatalf("instacosmos integration test failed : %s \n", err.Error())
+	}
 
 	if response.RawResponse.StatusCode != http.StatusCreated {
 		err = fmt.Errorf("Failed to create database. Got response status %d",
 			response.RawResponse.StatusCode)
-		failOnError(err)
+		log.Fatalf("instacosmos integration test failed : %s \n", err.Error())
 	}
 
 	dbClient, err := client.NewDatabase(databaseID)
-	failOnError(err)
+	failOnErrorAndTearDown(collector, err)
 
 	// create a container in test database
 	properties := azcosmos.ContainerProperties{
@@ -130,35 +139,52 @@ func setup(collector instana.TracerLogger) {
 
 	resp, err := dbClient.CreateContainer(context.TODO(), properties,
 		&azcosmos.CreateContainerOptions{ThroughputProperties: &throughput})
-	failOnError(err)
+	failOnErrorAndTearDown(collector, err)
 
 	if resp.RawResponse.StatusCode != http.StatusCreated {
 		err = fmt.Errorf("Failed to create container. Got response status %d",
 			resp.RawResponse.StatusCode)
-		failOnError(err)
+		failOnErrorAndTearDown(collector, err)
 	}
 
 	containerClient, err := client.NewContainer(databaseID, container)
-	failOnError(err)
-	prepareTestData(containerClient)
+	failOnErrorAndTearDown(collector, err)
 
+	err = prepareTestData(containerClient)
+	failOnErrorAndTearDown(collector, err)
 }
 
-func shutdown(collector instana.TracerLogger) {
+func gracefulShutdown(collector instana.TracerLogger, code int) {
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+
+	shutdown(collector, code)
+}
+
+func shutdown(collector instana.TracerLogger, exitCode int) {
 	client, err := getInstaClient(collector)
-	failOnError(err)
+	if err != nil {
+		log.Fatalln(err)
+	}
 
 	database, err := client.NewDatabase(databaseID)
-	failOnError(err)
+	if err != nil {
+		log.Fatalln(err)
+	}
 
 	response, err := database.Delete(context.TODO(), &azcosmos.DeleteDatabaseOptions{})
-	failOnError(err)
+	if err != nil {
+		log.Fatalln(err)
+	}
 
 	if response.RawResponse.StatusCode != http.StatusNoContent {
 		err = fmt.Errorf("Failed to delete database. Got response status %d",
 			response.RawResponse.StatusCode)
-		failOnError(err)
+		log.Fatalln(err)
 	}
+
+	os.Exit(exitCode)
 }
 
 func TestMain(m *testing.M) {
@@ -168,6 +194,18 @@ func TestMain(m *testing.M) {
 	tracer := instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder)
 	sensor := instana.NewSensorWithTracer(tracer)
 
+	// handles panic errors
+	// this will only work for the panic errors before m.Run()
+	// check this issue for more details: https://github.com/golang/go/issues/37206
+	defer func() {
+		if err := recover(); err != nil {
+			shutdown(sensor, exitNotOk)
+		}
+	}()
+
+	// handles interrupt from user
+	go gracefulShutdown(sensor, exitNotOk)
+
 	// create a database and a container in azure test account
 	setup(sensor)
 
@@ -176,9 +214,8 @@ func TestMain(m *testing.M) {
 
 	// run the tests
 	code := m.Run()
-	// delete the test database
-	shutdown(sensor)
-	os.Exit(code)
+
+	shutdown(sensor, code)
 }
 
 func TestInstaContainerClient_CreateItem(t *testing.T) {
@@ -634,14 +671,14 @@ func validateAzureCreds() {
 	key, _ = os.LookupEnv(KEY)
 
 	if endpoint == "" || key == "" {
-		failOnError(fmt.Errorf("Azure credentials are not provided"))
+		log.Fatalln("Azure credentials are not provided")
 	}
 }
 
-func failOnError(err error) {
+func failOnErrorAndTearDown(collector instana.TracerLogger, err error) {
 	if err != nil {
-		log.Fatal(err)
-		os.Exit(0)
+		fmt.Printf("instacosmos integration test failed : %s \n", err.Error())
+		shutdown(collector, exitNotOk)
 	}
 }
 
@@ -701,7 +738,7 @@ func getLatestSpan(recorder *instana.Recorder) instana.Span {
 	return span
 }
 
-func prepareTestData(client instacosmos.ContainerClient) {
+func prepareTestData(client instacosmos.ContainerClient) (err error) {
 	data := []Span{
 		{
 			ID:          ID1,
@@ -744,11 +781,16 @@ func prepareTestData(client instacosmos.ContainerClient) {
 	for _, item := range data {
 		pk := client.NewPartitionKeyString(item.SpanID)
 		jsonData, err := json.Marshal(item)
-		failOnError(err)
+		if err != nil {
+			return err
+		}
 		_, err = client.CreateItem(context.TODO(), pk, jsonData, &azcosmos.ItemOptions{})
-		failOnError(err)
+		if err != nil {
+			return err
+		}
 	}
 
+	return
 }
 
 func Test_instaContainerClient_DatabaseID(t *testing.T) {
