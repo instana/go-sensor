@@ -32,7 +32,7 @@ func TestMain(m *testing.M) {
 	os.Exit(m.Run())
 }
 
-func TestLocalServerlessAgent_SendSpans(t *testing.T) {
+func TestIntegration_LocalServerlessAgent_SendSpans(t *testing.T) {
 	defer agent.Reset()
 
 	tracer := instana.NewTracer()
@@ -61,7 +61,7 @@ func TestLocalServerlessAgent_SendSpans(t *testing.T) {
 	require.Len(t, spans, 1)
 }
 
-func TestLocalServerlessAgent_SendSpans_Error(t *testing.T) {
+func TestIntegration_LocalServerlessAgent_SendSpans_Error(t *testing.T) {
 	defer agent.Reset()
 
 	tracer := instana.NewTracer()

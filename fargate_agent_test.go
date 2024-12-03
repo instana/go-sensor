@@ -56,7 +56,7 @@ func TestMain(m *testing.M) {
 	os.Exit(m.Run())
 }
 
-func TestFargateAgent_SendMetrics(t *testing.T) {
+func TestIntegration_FargateAgent_SendMetrics(t *testing.T) {
 	defer agent.Reset()
 
 	require.Eventually(t, func() bool { return len(agent.Bundles) > 0 }, 2*time.Second, 500*time.Millisecond)
@@ -204,7 +204,7 @@ func TestFargateAgent_SendMetrics(t *testing.T) {
 	})
 }
 
-func TestFargateAgent_SendSpans(t *testing.T) {
+func TestIntegration_FargateAgent_SendSpans(t *testing.T) {
 	defer agent.Reset()
 
 	sensor := instana.NewSensor("testing")
@@ -246,7 +246,7 @@ func TestFargateAgent_SendSpans(t *testing.T) {
 	assert.JSONEq(t, `{"hl": true, "cp": "aws", "e": "arn:aws:ecs:us-east-2:012345678910:task/9781c248-0edd-4cdb-9a93-f63cb662a5d3::nginx-curl"}`, string(spans[0]["f"]))
 }
 
-func TestFargateAgent_FlushSpans(t *testing.T) {
+func TestIntegration_FargateAgent_FlushSpans(t *testing.T) {
 	defer agent.Reset()
 
 	tracer := instana.NewTracer()

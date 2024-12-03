@@ -52,7 +52,7 @@ func TestMain(m *testing.M) {
 	os.Exit(m.Run())
 }
 
-func TestLambdaAgent_SendSpans(t *testing.T) {
+func TestIntegration_LambdaAgent_SendSpans(t *testing.T) {
 	defer agent.Reset()
 
 	tracer := instana.NewTracer()
@@ -85,7 +85,7 @@ func TestLambdaAgent_SendSpans(t *testing.T) {
 	assert.JSONEq(t, `{"hl": true, "cp": "aws", "e": "aws::test-lambda::$LATEST"}`, string(spans[0]["f"]))
 }
 
-func TestLambdaAgent_SendSpans_Error(t *testing.T) {
+func TestIntegration_LambdaAgent_SendSpans_Error(t *testing.T) {
 	defer agent.Reset()
 
 	tracer := instana.NewTracer()
