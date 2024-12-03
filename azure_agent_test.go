@@ -36,7 +36,7 @@ func TestMain(m *testing.M) {
 	os.Exit(m.Run())
 }
 
-func TestAzureAgent_SendSpans(t *testing.T) {
+func TestIntegration_AzureAgent_SendSpans(t *testing.T) {
 	defer agent.Reset()
 
 	tracer := instana.NewTracer()
@@ -66,7 +66,7 @@ func TestAzureAgent_SendSpans(t *testing.T) {
 	assert.JSONEq(t, `{"hl": true, "cp": "azure", "e": "/subscriptions/testgh05-3f0d-4bf9-8f53-209408003632/resourceGroups/test-resourcegroup/providers/Microsoft.Web/sites/test-funcname"}`, string(spans[0]["f"]))
 }
 
-func TestAzureAgent_SpanDetails(t *testing.T) {
+func TestIntegration_AzureAgent_SpanDetails(t *testing.T) {
 	defer agent.Reset()
 
 	tracer := instana.NewTracer()
@@ -109,7 +109,7 @@ func TestAzureAgent_SpanDetails(t *testing.T) {
         }}`, string(spans[0]["data"]))
 }
 
-func TestAzureAgent_SendSpans_Error(t *testing.T) {
+func TestIntegration_AzureAgent_SendSpans_Error(t *testing.T) {
 	defer agent.Reset()
 
 	tracer := instana.NewTracer()
