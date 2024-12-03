@@ -12,14 +12,14 @@ import (
 type wStmt struct {
 	driver.Stmt
 
-	connDetails DbConnDetails
-	query       string
-	sensor      TracerLogger
+	sqlSpan *sqlSpanData
+	sensor  TracerLogger
 }
 
 func (stmt *wStmt) Exec(args []driver.Value) (driver.Result, error) {
 	ctx := context.Background()
-	sp, dbKey := startSQLSpan(ctx, stmt.connDetails, stmt.query, stmt.sensor)
+
+	sp, dbKey := stmt.sqlSpan.start(ctx, stmt.sensor)
 	defer sp.Finish()
 
 	res, err := stmt.Stmt.Exec(args) //nolint:staticcheck
@@ -33,7 +33,8 @@ func (stmt *wStmt) Exec(args []driver.Value) (driver.Result, error) {
 
 func (stmt *wStmt) Query(args []driver.Value) (driver.Rows, error) {
 	ctx := context.Background()
-	sp, dbKey := startSQLSpan(ctx, stmt.connDetails, stmt.query, stmt.sensor)
+
+	sp, dbKey := stmt.sqlSpan.start(ctx, stmt.sensor)
 	defer sp.Finish()
 
 	res, err := stmt.Stmt.Query(args) //nolint:staticcheck
