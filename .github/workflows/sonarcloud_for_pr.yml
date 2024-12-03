@@ -1,8 +1,7 @@
-name: Generate code coverage and upload to artifact for sonarcloud
+name: Generate SonarCloud report for PR
 on:
-  push:
-    branches:
-      - main
+  pull_request:
+    types: [opened, synchronize, reopened]
 jobs:
   generateCoverage:
     name: Code Coverage
@@ -58,9 +57,9 @@ jobs:
               go test -v -tags=integration -coverpkg=./... -cover -covermode atomic -coverprofile $TRACER_PATH/coverage/coverage_$(date +%s%N)_$RANDOM.out ./... -json > $TRACER_PATH/coverage/coverage_$(date +%s%N)_$RANDOM.json && cd -
             done
 
-      - name: Upload code coverage
-        uses: actions/upload-artifact@v3
-        with:
-          name: go-tracer-code-coverage-sonarcloud
-          path: coverage
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@master
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_CLOUD_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
