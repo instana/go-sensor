@@ -68,7 +68,7 @@ var (
 )
 
 // exit error code
-var exitNotOk int = 1
+const exitNotOk int = 1
 
 type alwaysReadyClient struct{}
 
@@ -159,23 +159,26 @@ func gracefulShutdown(collector instana.TracerLogger, code int) {
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
 
-	shutdown(collector, code)
+	// cleaning up all the test data
+	shutdown(collector)
+
+	os.Exit(code)
 }
 
-func shutdown(collector instana.TracerLogger, exitCode int) {
+func shutdown(collector instana.TracerLogger) {
 	client, err := getInstaClient(collector)
 	if err != nil {
-		log.Fatalln(err)
+		log.Fatalf("failed to create cosmos client : %s \n", err.Error())
 	}
 
 	database, err := client.NewDatabase(databaseID)
 	if err != nil {
-		log.Fatalln(err)
+		log.Fatalf("failed to get database instance : %s \n", err.Error())
 	}
 
 	response, err := database.Delete(context.TODO(), &azcosmos.DeleteDatabaseOptions{})
 	if err != nil {
-		log.Fatalln(err)
+		log.Fatalf("failed to delete database : %s \n", err.Error())
 	}
 
 	if response.RawResponse.StatusCode != http.StatusNoContent {
@@ -183,8 +186,6 @@ func shutdown(collector instana.TracerLogger, exitCode int) {
 			response.RawResponse.StatusCode)
 		log.Fatalln(err)
 	}
-
-	os.Exit(exitCode)
 }
 
 func TestMain(m *testing.M) {
@@ -199,7 +200,9 @@ func TestMain(m *testing.M) {
 	// check this issue for more details: https://github.com/golang/go/issues/37206
 	defer func() {
 		if err := recover(); err != nil {
-			shutdown(sensor, exitNotOk)
+			fmt.Printf("panic occurred: %v \n", err)
+			shutdown(sensor)
+			panic(err)
 		}
 	}()
 
@@ -215,7 +218,10 @@ func TestMain(m *testing.M) {
 	// run the tests
 	code := m.Run()
 
-	shutdown(sensor, code)
+	// cleaning up all the test data
+	shutdown(sensor)
+
+	os.Exit(code)
 }
 
 func TestInstaContainerClient_CreateItem(t *testing.T) {
@@ -678,7 +684,9 @@ func validateAzureCreds() {
 func failOnErrorAndTearDown(collector instana.TracerLogger, err error) {
 	if err != nil {
 		fmt.Printf("instacosmos integration test failed : %s \n", err.Error())
-		shutdown(collector, exitNotOk)
+		shutdown(collector)
+
+		os.Exit(exitNotOk)
 	}
 }
 
