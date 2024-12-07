@@ -84,7 +84,7 @@ type hooks struct {
 func newHooks() hooks {
 	return hooks{
 		dial:       func(ctx context.Context, network, addr string) (net.Conn, error) { return nil, nil },
-		process:    func(ctx context.Context, cmd redis.Cmder) error { return nil },
+		process:    func(ctx context.Context, cmd redis.Cmder) error { return cmd.Err() },
 		pipeline:   func(ctx context.Context, cmds []redis.Cmder) error { return nil },
 		txPipeline: func(ctx context.Context, cmds []redis.Cmder) error { return nil },
 	}
@@ -145,10 +145,10 @@ func (c mockClient) Options() *redis.Options {
 
 func (c mockClient) Do(ctx context.Context, args ...interface{}) *redis.Cmd {
 	cmd := redis.NewCmd(ctx, args...)
-	c.runHooks(ctx, cmd)
 	if c.isError {
 		cmd.SetErr(errors.New(testErrStr))
 	}
+	c.runHooks(ctx, cmd)
 	return cmd
 }
 
@@ -221,6 +221,9 @@ func (c mockClusterClient) Options() *redis.ClusterOptions {
 
 func (c mockClusterClient) Do(ctx context.Context, args ...interface{}) *redis.Cmd {
 	cmd := redis.NewCmd(ctx, args...)
+	if c.isError {
+		cmd.SetErr(errors.New(testErrStr))
+	}
 	c.runHooks(ctx, cmd)
 	return cmd
 }
@@ -385,7 +388,7 @@ func (c *MockConn) SetWriteDeadline(t time.Time) error {
 }
 
 func TestClient(t *testing.T) {
-
+	// t.Skip()
 	examples := map[string]struct {
 		doCommand       []interface{}
 		doPipeCommand   [][]interface{}
@@ -450,7 +453,7 @@ func TestClient(t *testing.T) {
 				ctx := instana.ContextWithSpan(context.Background(), sp)
 
 				if rType == Cluster || rType == ClusterFailover {
-					rdb := buildNewClusterClient(rType == ClusterFailover, false)
+					rdb := buildNewClusterClient(rType == ClusterFailover, example.isError)
 					instaredis.WrapClusterClient(rdb, sensor)
 
 					if len(example.doCommand) > 0 {
@@ -474,7 +477,7 @@ func TestClient(t *testing.T) {
 					}
 					rdb.Close()
 				} else {
-					rdb := buildNewClient(rType == SingleFailover, false)
+					rdb := buildNewClient(rType == SingleFailover, example.isError)
 					instaredis.WrapClient(rdb, sensor)
 
 					if len(example.doCommand) > 0 {
@@ -513,6 +516,95 @@ func TestClient(t *testing.T) {
 				assert.Equal(t, "redis", dbSpan.Name)
 				assert.EqualValues(t, instana.ExitSpanKind, dbSpan.Kind)
 				assert.Empty(t, dbSpan.Ec)
+
+				require.IsType(t, instana.RedisSpanData{}, dbSpan.Data)
+
+				data := dbSpan.Data.(instana.RedisSpanData)
+
+				assert.Equal(t, example.expected.Error, data.Tags.Error)
+				assert.Equal(t, example.expected.Command, data.Tags.Command)
+
+				if len(example.expected.Subcommands) > 0 {
+					assert.Equal(t, example.expected.Subcommands, data.Tags.Subcommands)
+				}
+			})
+		}
+	}
+}
+
+func TestClient_Error(t *testing.T) {
+
+	examples := map[string]struct {
+		doCommand []interface{}
+		expected  instana.RedisSpanTags
+
+		isError bool
+	}{
+		"set name - error": {
+			doCommand: []interface{}{"set", "name", "Instana"},
+			expected: instana.RedisSpanTags{
+				Command: "set",
+				Error:   testErrStr,
+			},
+
+			isError: true,
+		},
+	}
+
+	rTypes := []redisType{Cluster}
+
+	for _, rType := range rTypes {
+		for name, example := range examples {
+			t.Run(redisTypeMap[rType]+" - "+name, func(t *testing.T) {
+				recorder := instana.NewTestRecorder()
+				sensor := instana.NewSensorWithTracer(
+					instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder),
+				)
+
+				sp := sensor.Tracer().StartSpan("testing")
+				ctx := instana.ContextWithSpan(context.Background(), sp)
+
+				if rType == Cluster || rType == ClusterFailover {
+					rdb := buildNewClusterClient(rType == ClusterFailover, example.isError)
+					instaredis.WrapClusterClient(rdb, sensor)
+
+					if len(example.doCommand) > 0 {
+						rdb.Do(ctx, example.doCommand...)
+					}
+					rdb.Close()
+				}
+
+				sp.Finish()
+
+				spans := recorder.GetQueuedSpans()
+				require.Len(t, spans, 3)
+
+				dbSpan, logSpan, parentSpan := spans[0], spans[1], spans[2]
+
+				assert.Equal(t, parentSpan.TraceID, dbSpan.TraceID)
+				assert.Equal(t, parentSpan.TraceIDHi, dbSpan.TraceIDHi)
+				assert.Equal(t, parentSpan.SpanID, dbSpan.ParentID)
+
+				assert.Equal(t, "redis", dbSpan.Name)
+				assert.EqualValues(t, instana.ExitSpanKind, dbSpan.Kind)
+				assert.Equal(t, 1, dbSpan.Ec)
+
+				// assert error
+				assert.Equal(t, parentSpan.TraceID, logSpan.TraceID)
+				assert.Equal(t, dbSpan.SpanID, logSpan.ParentID)
+				assert.Equal(t, "log.go", logSpan.Name)
+
+				// assert that log message has been recorded within the span interval
+				assert.GreaterOrEqual(t, logSpan.Timestamp, dbSpan.Timestamp)
+				assert.LessOrEqual(t, logSpan.Duration, dbSpan.Duration)
+
+				require.IsType(t, instana.LogSpanData{}, logSpan.Data)
+				logData := logSpan.Data.(instana.LogSpanData)
+
+				assert.Equal(t, instana.LogSpanTags{
+					Level:   "ERROR",
+					Message: `error: "Random test error!"`,
+				}, logData.Tags)
 
 				require.IsType(t, instana.RedisSpanData{}, dbSpan.Data)
 
