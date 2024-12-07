@@ -46,13 +46,13 @@ func (p *mockPipeline) Incr(ctx context.Context, key string) *redis.IntCmd {
 func (p *mockPipeline) Do(ctx context.Context, args ...interface{}) *redis.Cmd {
 	cmd := redis.NewCmd(ctx, args...)
 	p.cmds = append(p.cmds, cmd)
-	if p.isError {
-		cmd.SetErr(errors.New(testErrStr))
-	}
 	return cmd
 }
 
 func (p *mockPipeline) Exec(ctx context.Context) {
+	if p.isError {
+		p.cmds[0].SetErr(errors.New(testErrStr))
+	}
 	p.process(ctx, p.cmds)
 }
 
@@ -85,8 +85,8 @@ func newHooks() hooks {
 	return hooks{
 		dial:       func(ctx context.Context, network, addr string) (net.Conn, error) { return nil, nil },
 		process:    func(ctx context.Context, cmd redis.Cmder) error { return cmd.Err() },
-		pipeline:   func(ctx context.Context, cmds []redis.Cmder) error { return nil },
-		txPipeline: func(ctx context.Context, cmds []redis.Cmder) error { return nil },
+		pipeline:   func(ctx context.Context, cmds []redis.Cmder) error { return cmds[0].Err() },
+		txPipeline: func(ctx context.Context, cmds []redis.Cmder) error { return cmds[0].Err() },
 	}
 }
 
@@ -388,7 +388,6 @@ func (c *MockConn) SetWriteDeadline(t time.Time) error {
 }
 
 func TestClient(t *testing.T) {
-	// t.Skip()
 	examples := map[string]struct {
 		doCommand       []interface{}
 		doPipeCommand   [][]interface{}
@@ -403,17 +402,42 @@ func TestClient(t *testing.T) {
 				Command: "set",
 			},
 		},
+		"set name error": {
+			doCommand: []interface{}{"set", "name", "Instana"},
+			expected: instana.RedisSpanTags{
+				Command: "set",
+				Error:   testErrStr,
+			},
+
+			isError: true,
+		},
 		"get name": {
 			doCommand: []interface{}{"get", "name"},
 			expected: instana.RedisSpanTags{
 				Command: "get",
 			},
 		},
+		"get name error": {
+			doCommand: []interface{}{"get", "name"},
+			expected: instana.RedisSpanTags{
+				Command: "get",
+				Error:   testErrStr,
+			},
+			isError: true,
+		},
 		"del name": {
 			doCommand: []interface{}{"del", "name"},
 			expected: instana.RedisSpanTags{
 				Command: "del",
 			},
+		},
+		"del name error": {
+			doCommand: []interface{}{"del", "name"},
+			expected: instana.RedisSpanTags{
+				Command: "del",
+				Error:   testErrStr,
+			},
+			isError: true,
 		},
 		"batch commands with pipe": {
 			doPipeCommand: [][]interface{}{
@@ -426,6 +450,19 @@ func TestClient(t *testing.T) {
 				Subcommands: []string{"set", "get", "del"},
 			},
 		},
+		"batch commands with pipe error": {
+			doPipeCommand: [][]interface{}{
+				{"set", "name", "IBM"},
+				{"get", "name"},
+				{"del", "name"},
+			},
+			expected: instana.RedisSpanTags{
+				Command:     "multi",
+				Subcommands: []string{"set", "get", "del"},
+				Error:       testErrStr,
+			},
+			isError: true,
+		},
 		"batch commands with tx pipe": {
 			doTxPipeCommand: [][]interface{}{
 				{"set", "name", "IBM"},
@@ -436,6 +473,19 @@ func TestClient(t *testing.T) {
 				Command:     "multi",
 				Subcommands: []string{"set", "get", "del"},
 			},
+		},
+		"batch commands with tx pipe error": {
+			doTxPipeCommand: [][]interface{}{
+				{"set", "name", "IBM"},
+				{"get", "name"},
+				{"del", "name"},
+			},
+			expected: instana.RedisSpanTags{
+				Command:     "multi",
+				Subcommands: []string{"set", "get", "del"},
+				Error:       testErrStr,
+			},
+			isError: true,
 		},
 	}
 
@@ -505,9 +555,36 @@ func TestClient(t *testing.T) {
 				sp.Finish()
 
 				spans := recorder.GetQueuedSpans()
-				require.Len(t, spans, 2)
 
-				dbSpan, parentSpan := spans[0], spans[1]
+				var dbSpan, parentSpan, logSpan instana.Span
+
+				// if this is an error case
+				if example.isError {
+					require.Len(t, spans, 3)
+					dbSpan, logSpan, parentSpan = spans[0], spans[1], spans[2]
+					// assert error
+					assert.Equal(t, parentSpan.TraceID, logSpan.TraceID)
+					assert.Equal(t, dbSpan.SpanID, logSpan.ParentID)
+					assert.Equal(t, "log.go", logSpan.Name)
+
+					// assert that log message has been recorded within the span interval
+					assert.GreaterOrEqual(t, logSpan.Timestamp, dbSpan.Timestamp)
+					assert.LessOrEqual(t, logSpan.Duration, dbSpan.Duration)
+
+					require.IsType(t, instana.LogSpanData{}, logSpan.Data)
+					logData := logSpan.Data.(instana.LogSpanData)
+
+					assert.Equal(t, instana.LogSpanTags{
+						Level:   "ERROR",
+						Message: `error: "Random test error!"`,
+					}, logData.Tags)
+					assert.Equal(t, 1, dbSpan.Ec)
+
+				} else {
+					require.Len(t, spans, 2)
+					dbSpan, parentSpan = spans[0], spans[1]
+					assert.Empty(t, dbSpan.Ec)
+				}
 
 				assert.Equal(t, parentSpan.TraceID, dbSpan.TraceID)
 				assert.Equal(t, parentSpan.TraceIDHi, dbSpan.TraceIDHi)
@@ -515,96 +592,6 @@ func TestClient(t *testing.T) {
 
 				assert.Equal(t, "redis", dbSpan.Name)
 				assert.EqualValues(t, instana.ExitSpanKind, dbSpan.Kind)
-				assert.Empty(t, dbSpan.Ec)
-
-				require.IsType(t, instana.RedisSpanData{}, dbSpan.Data)
-
-				data := dbSpan.Data.(instana.RedisSpanData)
-
-				assert.Equal(t, example.expected.Error, data.Tags.Error)
-				assert.Equal(t, example.expected.Command, data.Tags.Command)
-
-				if len(example.expected.Subcommands) > 0 {
-					assert.Equal(t, example.expected.Subcommands, data.Tags.Subcommands)
-				}
-			})
-		}
-	}
-}
-
-func TestClient_Error(t *testing.T) {
-
-	examples := map[string]struct {
-		doCommand []interface{}
-		expected  instana.RedisSpanTags
-
-		isError bool
-	}{
-		"set name - error": {
-			doCommand: []interface{}{"set", "name", "Instana"},
-			expected: instana.RedisSpanTags{
-				Command: "set",
-				Error:   testErrStr,
-			},
-
-			isError: true,
-		},
-	}
-
-	rTypes := []redisType{Cluster}
-
-	for _, rType := range rTypes {
-		for name, example := range examples {
-			t.Run(redisTypeMap[rType]+" - "+name, func(t *testing.T) {
-				recorder := instana.NewTestRecorder()
-				sensor := instana.NewSensorWithTracer(
-					instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder),
-				)
-
-				sp := sensor.Tracer().StartSpan("testing")
-				ctx := instana.ContextWithSpan(context.Background(), sp)
-
-				if rType == Cluster || rType == ClusterFailover {
-					rdb := buildNewClusterClient(rType == ClusterFailover, example.isError)
-					instaredis.WrapClusterClient(rdb, sensor)
-
-					if len(example.doCommand) > 0 {
-						rdb.Do(ctx, example.doCommand...)
-					}
-					rdb.Close()
-				}
-
-				sp.Finish()
-
-				spans := recorder.GetQueuedSpans()
-				require.Len(t, spans, 3)
-
-				dbSpan, logSpan, parentSpan := spans[0], spans[1], spans[2]
-
-				assert.Equal(t, parentSpan.TraceID, dbSpan.TraceID)
-				assert.Equal(t, parentSpan.TraceIDHi, dbSpan.TraceIDHi)
-				assert.Equal(t, parentSpan.SpanID, dbSpan.ParentID)
-
-				assert.Equal(t, "redis", dbSpan.Name)
-				assert.EqualValues(t, instana.ExitSpanKind, dbSpan.Kind)
-				assert.Equal(t, 1, dbSpan.Ec)
-
-				// assert error
-				assert.Equal(t, parentSpan.TraceID, logSpan.TraceID)
-				assert.Equal(t, dbSpan.SpanID, logSpan.ParentID)
-				assert.Equal(t, "log.go", logSpan.Name)
-
-				// assert that log message has been recorded within the span interval
-				assert.GreaterOrEqual(t, logSpan.Timestamp, dbSpan.Timestamp)
-				assert.LessOrEqual(t, logSpan.Duration, dbSpan.Duration)
-
-				require.IsType(t, instana.LogSpanData{}, logSpan.Data)
-				logData := logSpan.Data.(instana.LogSpanData)
-
-				assert.Equal(t, instana.LogSpanTags{
-					Level:   "ERROR",
-					Message: `error: "Random test error!"`,
-				}, logData.Tags)
 
 				require.IsType(t, instana.RedisSpanData{}, dbSpan.Data)
 
