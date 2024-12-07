@@ -21,6 +21,7 @@ This folder contains examples of instrumenting the common use-cases with `github
 * [sql-redis](./sql-redis) - an example of instrumenting a Redis application using `go-sensor` SDK.
 * [pgxv5](./pgxv5) - an example of instrumenting pgx v5 library using `go-sensor` SDK.
 * [sql-opendb](./sql-opendb) - an example of instrumenting `sql.OpenDB` using `go-sensor` SDK.
+* [instaredis-v2-example](./instaredis-v2-example) - an example of instrumenting a Redis application using `instaredis/v2` package.
 
 For more up-to-date instrumentation code examples please consult the respective package documentation page:
 

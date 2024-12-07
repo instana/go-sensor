@@ -21,10 +21,14 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+const testErrStr string = "Random test error!"
+
 type mockPipeline struct {
 	cmds    []redis.Cmder
 	hooks   []redis.Hook
 	current hooks
+
+	isError bool
 }
 
 func (p *mockPipeline) Set(ctx context.Context, key string, value interface{}, expiration time.Duration) *redis.StatusCmd {
@@ -46,6 +50,9 @@ func (p *mockPipeline) Do(ctx context.Context, args ...interface{}) *redis.Cmd {
 }
 
 func (p *mockPipeline) Exec(ctx context.Context) {
+	if p.isError {
+		p.cmds[0].SetErr(errors.New(testErrStr))
+	}
 	p.process(ctx, p.cmds)
 }
 
@@ -63,6 +70,8 @@ type mockClient struct {
 	hooks   []redis.Hook
 	options *redis.Options
 	current hooks
+
+	isError bool
 }
 
 type hooks struct {
@@ -75,9 +84,9 @@ type hooks struct {
 func newHooks() hooks {
 	return hooks{
 		dial:       func(ctx context.Context, network, addr string) (net.Conn, error) { return nil, nil },
-		process:    func(ctx context.Context, cmd redis.Cmder) error { return nil },
-		pipeline:   func(ctx context.Context, cmds []redis.Cmder) error { return nil },
-		txPipeline: func(ctx context.Context, cmds []redis.Cmder) error { return nil },
+		process:    func(ctx context.Context, cmd redis.Cmder) error { return cmd.Err() },
+		pipeline:   func(ctx context.Context, cmds []redis.Cmder) error { return cmds[0].Err() },
+		txPipeline: func(ctx context.Context, cmds []redis.Cmder) error { return cmds[0].Err() },
 	}
 }
 
@@ -98,11 +107,13 @@ func (c *mockClient) chain() {
 	}
 }
 
-func newMockClient(options *redis.Options, foOptions *redis.FailoverOptions) *mockClient {
+func newMockClient(options *redis.Options, foOptions *redis.FailoverOptions, isError bool) *mockClient {
 	if options != nil {
 		return &mockClient{
 			options: options,
 			current: newHooks(),
+
+			isError: isError,
 		}
 	}
 
@@ -115,6 +126,7 @@ func newMockClient(options *redis.Options, foOptions *redis.FailoverOptions) *mo
 			},
 		},
 		current: newHooks(),
+		isError: isError,
 	}
 }
 
@@ -133,6 +145,9 @@ func (c mockClient) Options() *redis.Options {
 
 func (c mockClient) Do(ctx context.Context, args ...interface{}) *redis.Cmd {
 	cmd := redis.NewCmd(ctx, args...)
+	if c.isError {
+		cmd.SetErr(errors.New(testErrStr))
+	}
 	c.runHooks(ctx, cmd)
 	return cmd
 }
@@ -147,6 +162,8 @@ func (c mockClient) Pipeline() mockPipeline {
 	return mockPipeline{
 		hooks:   c.hooks,
 		current: c.current,
+
+		isError: c.isError,
 	}
 }
 
@@ -154,6 +171,8 @@ func (c mockClient) TxPipeline() mockPipeline {
 	return mockPipeline{
 		hooks:   c.hooks,
 		current: c.current,
+
+		isError: c.isError,
 	}
 }
 
@@ -165,13 +184,16 @@ type mockClusterClient struct {
 	hooks   []redis.Hook
 	options *redis.ClusterOptions
 	current hooks
+
+	isError bool
 }
 
-func newMockClusterClient(options *redis.ClusterOptions, foOptions *redis.FailoverOptions) *mockClusterClient {
+func newMockClusterClient(options *redis.ClusterOptions, foOptions *redis.FailoverOptions, isError bool) *mockClusterClient {
 	if options != nil {
 		return &mockClusterClient{
 			options: options,
 			current: newHooks(),
+			isError: isError,
 		}
 	}
 
@@ -180,6 +202,7 @@ func newMockClusterClient(options *redis.ClusterOptions, foOptions *redis.Failov
 			Dialer: foOptions.Dialer,
 		},
 		current: newHooks(),
+		isError: isError,
 	}
 }
 
@@ -198,6 +221,9 @@ func (c mockClusterClient) Options() *redis.ClusterOptions {
 
 func (c mockClusterClient) Do(ctx context.Context, args ...interface{}) *redis.Cmd {
 	cmd := redis.NewCmd(ctx, args...)
+	if c.isError {
+		cmd.SetErr(errors.New(testErrStr))
+	}
 	c.runHooks(ctx, cmd)
 	return cmd
 }
@@ -212,6 +238,8 @@ func (c mockClusterClient) Pipeline() mockPipeline {
 	return mockPipeline{
 		hooks:   c.hooks,
 		current: c.current,
+
+		isError: c.isError,
 	}
 }
 
@@ -219,6 +247,8 @@ func (c mockClusterClient) TxPipeline() mockPipeline {
 	return mockPipeline{
 		hooks:   c.hooks,
 		current: c.current,
+
+		isError: c.isError,
 	}
 }
 
@@ -259,7 +289,7 @@ var redisTypeMap = map[redisType]string{
 	ClusterFailover: "Cluster Failover Server",
 }
 
-func buildNewClient(hasSentinel bool) *mockClient {
+func buildNewClient(hasSentinel bool, isError bool) *mockClient {
 	if hasSentinel {
 		return newMockClient(nil, &redis.FailoverOptions{
 			RouteRandomly: false,
@@ -270,7 +300,7 @@ func buildNewClient(hasSentinel bool) *mockClient {
 				netConn := getMockConn(SingleFailover, ctx, network, addr)
 				return netConn, nil
 			},
-		})
+		}, isError)
 	}
 
 	return newMockClient(&redis.Options{
@@ -279,10 +309,10 @@ func buildNewClient(hasSentinel bool) *mockClient {
 			netConn := getMockConn(Single, ctx, network, addr)
 			return netConn, nil
 		},
-	}, nil)
+	}, nil, isError)
 }
 
-func buildNewClusterClient(hasSentinel bool) *mockClusterClient {
+func buildNewClusterClient(hasSentinel bool, isError bool) *mockClusterClient {
 	if hasSentinel {
 		return newMockClusterClient(nil, &redis.FailoverOptions{
 			MasterName:    "redis1",
@@ -292,7 +322,7 @@ func buildNewClusterClient(hasSentinel bool) *mockClusterClient {
 				netConn := getMockConn(ClusterFailover, ctx, network, addr)
 				return netConn, nil
 			},
-		})
+		}, isError)
 	}
 
 	return newMockClusterClient(&redis.ClusterOptions{
@@ -301,7 +331,7 @@ func buildNewClusterClient(hasSentinel bool) *mockClusterClient {
 			netConn := getMockConn(Cluster, ctx, network, addr)
 			return netConn, nil
 		},
-	}, nil)
+	}, nil, isError)
 }
 
 type MockAddr struct {
@@ -358,52 +388,104 @@ func (c *MockConn) SetWriteDeadline(t time.Time) error {
 }
 
 func TestClient(t *testing.T) {
-
 	examples := map[string]struct {
-		DoCommand       []interface{}
-		DoPipeCommand   [][]interface{}
-		DoTxPipeCommand [][]interface{}
-		Expected        instana.RedisSpanTags
+		doCommand       []interface{}
+		doPipeCommand   [][]interface{}
+		doTxPipeCommand [][]interface{}
+		expected        instana.RedisSpanTags
+
+		isError bool
 	}{
 		"set name": {
-			DoCommand: []interface{}{"set", "name", "Instana"},
-			Expected: instana.RedisSpanTags{
+			doCommand: []interface{}{"set", "name", "Instana"},
+			expected: instana.RedisSpanTags{
 				Command: "set",
 			},
 		},
+		"set name error": {
+			doCommand: []interface{}{"set", "name", "Instana"},
+			expected: instana.RedisSpanTags{
+				Command: "set",
+				Error:   testErrStr,
+			},
+
+			isError: true,
+		},
 		"get name": {
-			DoCommand: []interface{}{"get", "name"},
-			Expected: instana.RedisSpanTags{
+			doCommand: []interface{}{"get", "name"},
+			expected: instana.RedisSpanTags{
 				Command: "get",
 			},
 		},
+		"get name error": {
+			doCommand: []interface{}{"get", "name"},
+			expected: instana.RedisSpanTags{
+				Command: "get",
+				Error:   testErrStr,
+			},
+			isError: true,
+		},
 		"del name": {
-			DoCommand: []interface{}{"del", "name"},
-			Expected: instana.RedisSpanTags{
+			doCommand: []interface{}{"del", "name"},
+			expected: instana.RedisSpanTags{
 				Command: "del",
 			},
 		},
+		"del name error": {
+			doCommand: []interface{}{"del", "name"},
+			expected: instana.RedisSpanTags{
+				Command: "del",
+				Error:   testErrStr,
+			},
+			isError: true,
+		},
 		"batch commands with pipe": {
-			DoPipeCommand: [][]interface{}{
+			doPipeCommand: [][]interface{}{
 				{"set", "name", "IBM"},
 				{"get", "name"},
 				{"del", "name"},
 			},
-			Expected: instana.RedisSpanTags{
+			expected: instana.RedisSpanTags{
 				Command:     "multi",
 				Subcommands: []string{"set", "get", "del"},
 			},
 		},
-		"batch commands with tx pipe": {
-			DoTxPipeCommand: [][]interface{}{
+		"batch commands with pipe error": {
+			doPipeCommand: [][]interface{}{
 				{"set", "name", "IBM"},
 				{"get", "name"},
 				{"del", "name"},
 			},
-			Expected: instana.RedisSpanTags{
+			expected: instana.RedisSpanTags{
+				Command:     "multi",
+				Subcommands: []string{"set", "get", "del"},
+				Error:       testErrStr,
+			},
+			isError: true,
+		},
+		"batch commands with tx pipe": {
+			doTxPipeCommand: [][]interface{}{
+				{"set", "name", "IBM"},
+				{"get", "name"},
+				{"del", "name"},
+			},
+			expected: instana.RedisSpanTags{
 				Command:     "multi",
 				Subcommands: []string{"set", "get", "del"},
 			},
+		},
+		"batch commands with tx pipe error": {
+			doTxPipeCommand: [][]interface{}{
+				{"set", "name", "IBM"},
+				{"get", "name"},
+				{"del", "name"},
+			},
+			expected: instana.RedisSpanTags{
+				Command:     "multi",
+				Subcommands: []string{"set", "get", "del"},
+				Error:       testErrStr,
+			},
+			isError: true,
 		},
 	}
 
@@ -421,23 +503,23 @@ func TestClient(t *testing.T) {
 				ctx := instana.ContextWithSpan(context.Background(), sp)
 
 				if rType == Cluster || rType == ClusterFailover {
-					rdb := buildNewClusterClient(rType == ClusterFailover)
+					rdb := buildNewClusterClient(rType == ClusterFailover, example.isError)
 					instaredis.WrapClusterClient(rdb, sensor)
 
-					if len(example.DoCommand) > 0 {
-						rdb.Do(ctx, example.DoCommand...)
-					} else if len(example.DoPipeCommand) > 0 {
+					if len(example.doCommand) > 0 {
+						rdb.Do(ctx, example.doCommand...)
+					} else if len(example.doPipeCommand) > 0 {
 						pipe := rdb.Pipeline()
 
-						for _, doCmd := range example.DoPipeCommand {
+						for _, doCmd := range example.doPipeCommand {
 							pipe.Do(ctx, doCmd...)
 						}
 						ctx = context.WithValue(ctx, "pipe_type", "processPipelineHook")
 						pipe.Exec(ctx)
-					} else if len(example.DoTxPipeCommand) > 0 {
+					} else if len(example.doTxPipeCommand) > 0 {
 						pipe := rdb.TxPipeline()
 
-						for _, doCmd := range example.DoTxPipeCommand {
+						for _, doCmd := range example.doTxPipeCommand {
 							pipe.Do(ctx, doCmd...)
 						}
 						ctx = context.WithValue(ctx, "pipe_type", "processTxPipelineHook")
@@ -445,23 +527,23 @@ func TestClient(t *testing.T) {
 					}
 					rdb.Close()
 				} else {
-					rdb := buildNewClient(rType == SingleFailover)
+					rdb := buildNewClient(rType == SingleFailover, example.isError)
 					instaredis.WrapClient(rdb, sensor)
 
-					if len(example.DoCommand) > 0 {
-						rdb.Do(ctx, example.DoCommand...)
-					} else if len(example.DoPipeCommand) > 0 {
+					if len(example.doCommand) > 0 {
+						rdb.Do(ctx, example.doCommand...)
+					} else if len(example.doPipeCommand) > 0 {
 						pipe := rdb.Pipeline()
 
-						for _, doCmd := range example.DoPipeCommand {
+						for _, doCmd := range example.doPipeCommand {
 							pipe.Do(ctx, doCmd...)
 						}
 						ctx = context.WithValue(ctx, "pipe_type", "processPipelineHook")
 						pipe.Exec(ctx)
-					} else if len(example.DoTxPipeCommand) > 0 {
+					} else if len(example.doTxPipeCommand) > 0 {
 						pipe := rdb.TxPipeline()
 
-						for _, doCmd := range example.DoTxPipeCommand {
+						for _, doCmd := range example.doTxPipeCommand {
 							pipe.Do(ctx, doCmd...)
 						}
 						ctx = context.WithValue(ctx, "pipe_type", "processTxPipelineHook")
@@ -473,9 +555,36 @@ func TestClient(t *testing.T) {
 				sp.Finish()
 
 				spans := recorder.GetQueuedSpans()
-				require.Len(t, spans, 2)
 
-				dbSpan, parentSpan := spans[0], spans[1]
+				var dbSpan, parentSpan, logSpan instana.Span
+
+				// if this is an error case
+				if example.isError {
+					require.Len(t, spans, 3)
+					dbSpan, logSpan, parentSpan = spans[0], spans[1], spans[2]
+					// assert error
+					assert.Equal(t, parentSpan.TraceID, logSpan.TraceID)
+					assert.Equal(t, dbSpan.SpanID, logSpan.ParentID)
+					assert.Equal(t, "log.go", logSpan.Name)
+
+					// assert that log message has been recorded within the span interval
+					assert.GreaterOrEqual(t, logSpan.Timestamp, dbSpan.Timestamp)
+					assert.LessOrEqual(t, logSpan.Duration, dbSpan.Duration)
+
+					require.IsType(t, instana.LogSpanData{}, logSpan.Data)
+					logData := logSpan.Data.(instana.LogSpanData)
+
+					assert.Equal(t, instana.LogSpanTags{
+						Level:   "ERROR",
+						Message: `error: "Random test error!"`,
+					}, logData.Tags)
+					assert.Equal(t, 1, dbSpan.Ec)
+
+				} else {
+					require.Len(t, spans, 2)
+					dbSpan, parentSpan = spans[0], spans[1]
+					assert.Empty(t, dbSpan.Ec)
+				}
 
 				assert.Equal(t, parentSpan.TraceID, dbSpan.TraceID)
 				assert.Equal(t, parentSpan.TraceIDHi, dbSpan.TraceIDHi)
@@ -483,17 +592,16 @@ func TestClient(t *testing.T) {
 
 				assert.Equal(t, "redis", dbSpan.Name)
 				assert.EqualValues(t, instana.ExitSpanKind, dbSpan.Kind)
-				assert.Empty(t, dbSpan.Ec)
 
 				require.IsType(t, instana.RedisSpanData{}, dbSpan.Data)
 
 				data := dbSpan.Data.(instana.RedisSpanData)
 
-				assert.Equal(t, example.Expected.Error, data.Tags.Error)
-				assert.Equal(t, example.Expected.Command, data.Tags.Command)
+				assert.Equal(t, example.expected.Error, data.Tags.Error)
+				assert.Equal(t, example.expected.Command, data.Tags.Command)
 
-				if len(example.Expected.Subcommands) > 0 {
-					assert.Equal(t, example.Expected.Subcommands, data.Tags.Subcommands)
+				if len(example.expected.Subcommands) > 0 {
+					assert.Equal(t, example.expected.Subcommands, data.Tags.Subcommands)
 				}
 			})
 		}
