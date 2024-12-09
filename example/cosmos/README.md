@@ -2,7 +2,8 @@
 
 ### Prerequisites
 
-* Create a cosmos database named "trace-data" in your Azure Cosmos DB account.
+* Create a cosmos database named "trace-data" in your Azure Cosmos DB account with the container id "spans" and partition key
+ "/SpanID"
 * export the endpoint and key as environment variable
 ```sh
 export COSMOS_CONNECTION_URL="<endpoint>"
