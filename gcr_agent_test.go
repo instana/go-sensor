@@ -56,7 +56,7 @@ func TestMain(m *testing.M) {
 	os.Exit(m.Run())
 }
 
-func TestGCRAgent_SendMetrics(t *testing.T) {
+func TestIntegration_GCRAgent_SendMetrics(t *testing.T) {
 	defer agent.Reset()
 
 	require.Eventually(t, func() bool { return len(agent.Bundles) > 0 }, 2*time.Second, 500*time.Millisecond)
@@ -135,7 +135,7 @@ func TestGCRAgent_SendMetrics(t *testing.T) {
 	})
 }
 
-func TestGCRAgent_SendSpans(t *testing.T) {
+func TestIntegration_GCRAgent_SendSpans(t *testing.T) {
 	defer agent.Reset()
 
 	sensor := instana.NewSensor("testing")
@@ -177,7 +177,7 @@ func TestGCRAgent_SendSpans(t *testing.T) {
 	assert.JSONEq(t, `{"hl": true, "cp": "gcp", "e": "id1"}`, string(spans[0]["f"]))
 }
 
-func TestGCRAgent_FlushSpans(t *testing.T) {
+func TestIntegration_GCRAgent_FlushSpans(t *testing.T) {
 	defer agent.Reset()
 
 	tracer := instana.NewTracer()
