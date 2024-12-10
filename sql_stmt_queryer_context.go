@@ -11,13 +11,14 @@ import (
 
 type wStmtQueryContext struct {
 	driver.StmtQueryContext
-	connDetails DbConnDetails
-	sensor      TracerLogger
-	query       string
+	sensor TracerLogger
+
+	sqlSpan *sqlSpanData
 }
 
 func (stmt *wStmtQueryContext) QueryContext(ctx context.Context, args []driver.NamedValue) (driver.Rows, error) {
-	sp, dbKey := startSQLSpan(ctx, stmt.connDetails, stmt.query, stmt.sensor)
+
+	sp, dbKey := stmt.sqlSpan.start(ctx, stmt.sensor)
 	defer sp.Finish()
 
 	res, err := stmt.StmtQueryContext.QueryContext(ctx, args)

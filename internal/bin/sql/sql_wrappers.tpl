@@ -68,10 +68,16 @@ func get_{{.TypeName}}(connDetails DbConnDetails, conn driver.Conn, sensor Trace
 			{{$theType := replace . "driver." ""}}
 			{{- if eq $theType "NamedValueChecker"}} NamedValueChecker: NamedValueChecker,
 			{{- else if eq $theType "ColumnConverter"}} cc: ColumnConverter,
+			{{- else if eq $theType "ConnPrepareContext"}}
+			{{$theType}}:	&w{{$theType -}}{
+			{{$theType}}:	{{$theType}},
+			connDetails:	connDetails,
+			sensor:	sensor,
+			},
 			{{- else}}
 			{{$theType}}: &w{{$theType -}}{
 			{{$theType}}:	{{$theType}},
-			connDetails:	connDetails,
+			sqlSpan:       getSQLSpanData(connDetails),
 			sensor:	sensor,
 		},
 			{{- end -}}
@@ -88,8 +94,7 @@ func get_{{.TypeName}}(stmt driver.Stmt, query string, connDetails DbConnDetails
 	return &w_{{.TypeName}} {
 		Stmt: &wStmt{
 			Stmt:	stmt,
-			connDetails:	connDetails,
-			query:	query,
+			sqlSpan: getSQLSpanData(connDetails, withQuery(query)),
 			sensor:	sensor,
 		},
 		{{- range .Interfaces -}}
@@ -99,9 +104,8 @@ func get_{{.TypeName}}(stmt driver.Stmt, query string, connDetails DbConnDetails
 			cc: ColumnConverter,
 			{{- else}} {{$theType}}:	&w{{$theType -}}{
 			{{$theType}}:	{{$theType}},
-			connDetails:	connDetails,
 			sensor:	sensor,
-			query:	query,
+			sqlSpan: getSQLSpanData(connDetails, withQuery(query)),
 		},
 			{{- end -}}
 		{{- end -}}
@@ -137,8 +141,7 @@ func wrapStmt(stmt driver.Stmt, query string, connDetails DbConnDetails, sensor 
 
 	return &wStmt{
 		Stmt:        stmt,
-		connDetails: connDetails,
-		query:       query,
+		sqlSpan: getSQLSpanData(connDetails, withQuery(query)),
 		sensor:      sensor,
 	}
 }
