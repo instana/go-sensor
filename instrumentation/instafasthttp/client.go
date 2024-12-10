@@ -1,3 +1,5 @@
+// (c) Copyright IBM Corp. 2024
+
 package instafasthttp
 
 import (
@@ -20,6 +22,8 @@ const (
 	doFuncWithTimeout
 	doFuncWithDeadline
 	doFuncWithRedirects
+
+	doRoundTrip
 )
 
 func GetClient(sensor instana.TracerLogger, orgClient *fasthttp.Client) Client {
@@ -130,23 +134,15 @@ func (ic *instaClient) instrumentedDo(ctx context.Context, req *fasthttp.Request
 
 	var params url.Values
 	collectedHeaders := make(map[string]string)
-
-	// ensure collected headers/params are sent in case of panic/error
-	defer func() {
-		if len(collectedHeaders) > 0 {
-			span.SetTag("http.header", collectedHeaders)
-		}
-		if len(params) > 0 {
-			span.SetTag("http.params", params.Encode())
-		}
-	}()
-
 	var collectableHTTPHeaders []string
 	if t, ok := tracer.(instana.Tracer); ok {
 		opts := t.Options()
 		params = collectHTTPParamsFastHttp(req, opts.Secrets)
 		collectableHTTPHeaders = opts.CollectableHTTPHeaders
 	}
+
+	// ensure collected headers/params are sent in case of panic/error
+	defer setHeadersAndParamsToSpan(span, collectedHeaders, params)
 
 	reqHeaders := collectAllHeaders(&req.Header)
 	collectHeadersFastHTTP(reqHeaders, collectableHTTPHeaders, collectedHeaders)
