@@ -60,6 +60,7 @@ type instaClient struct {
 }
 
 type doParams struct {
+	doType            doType
 	timeout           time.Duration
 	deadline          time.Time
 	maxRedirectsCount int
@@ -71,31 +72,36 @@ func (ic *instaClient) GetOriginal() *fasthttp.Client {
 
 func (ic *instaClient) DoTimeout(ctx context.Context, req *fasthttp.Request, resp *fasthttp.Response, timeout time.Duration) error {
 	dp := &doParams{
+		doType:  doFuncWithTimeout,
 		timeout: timeout,
 	}
-	return ic.instrumentedDo(ctx, req, resp, doFuncWithTimeout, dp)
+	return ic.instrumentedDo(ctx, req, resp, dp)
 }
 
 func (ic *instaClient) DoDeadline(ctx context.Context, req *fasthttp.Request, resp *fasthttp.Response, deadline time.Time) error {
 	dp := &doParams{
+		doType:   doFuncWithDeadline,
 		deadline: deadline,
 	}
-	return ic.instrumentedDo(ctx, req, resp, doFuncWithDeadline, dp)
+	return ic.instrumentedDo(ctx, req, resp, dp)
 }
 
 func (ic *instaClient) DoRedirects(ctx context.Context, req *fasthttp.Request, resp *fasthttp.Response, maxRedirectsCount int) error {
 	dp := &doParams{
+		doType:            doFuncWithRedirects,
 		maxRedirectsCount: maxRedirectsCount,
 	}
-	return ic.instrumentedDo(ctx, req, resp, doFuncWithRedirects, dp)
+	return ic.instrumentedDo(ctx, req, resp, dp)
 }
 
 func (ic *instaClient) Do(ctx context.Context, req *fasthttp.Request, resp *fasthttp.Response) error {
-	dp := &doParams{}
-	return ic.instrumentedDo(ctx, req, resp, doFunc, dp)
+	dp := &doParams{
+		doType: doFunc,
+	}
+	return ic.instrumentedDo(ctx, req, resp, dp)
 }
 
-func (ic *instaClient) instrumentedDo(ctx context.Context, req *fasthttp.Request, resp *fasthttp.Response, dt doType, dp *doParams) error {
+func (ic *instaClient) instrumentedDo(ctx context.Context, req *fasthttp.Request, resp *fasthttp.Response, dp *doParams) error {
 	sanitizedURL := new(fasthttp.URI)
 	req.URI().CopyTo(sanitizedURL)
 	sanitizedURL.SetUsername("")
@@ -149,7 +155,7 @@ func (ic *instaClient) instrumentedDo(ctx context.Context, req *fasthttp.Request
 
 	var err error
 
-	switch dt {
+	switch dp.doType {
 	case doFuncWithRedirects:
 		err = ic.Client.DoRedirects(reqClone, resp, dp.maxRedirectsCount)
 	case doFuncWithDeadline:
