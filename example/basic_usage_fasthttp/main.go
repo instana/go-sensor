@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"time"
 
 	instana "github.com/instana/go-sensor"
 	"github.com/instana/go-sensor/instrumentation/instafasthttp"
@@ -68,6 +69,8 @@ func fastHTTPHandler(ctx *fasthttp.RequestCtx) {
 		instafasthttp.TraceHandler(sensor, "panic-handler", "/panic-handler", panicHandler)(ctx)
 	case "/round-trip":
 		instafasthttp.TraceHandler(sensor, "round-trip", "/round-trip", roundTripHandler)(ctx)
+	case "/client-call-handler":
+		instafasthttp.TraceHandler(sensor, "client-call-handler", "/client-call-handler", clientCallHandler)(ctx)
 	default:
 		ctx.Error("Unsupported path", fasthttp.StatusNotFound)
 	}
@@ -109,6 +112,57 @@ func roundTripHandler(ctx *fasthttp.RequestCtx) {
 
 	// Make the request
 	err := hc.Do(req, resp)
+	if err != nil {
+		log.Fatalf("failed to GET http://localhost:7070/greet: %s", err)
+	}
+
+	bs := string(resp.Body())
+
+	fmt.Println(bs)
+
+	ctx.SetStatusCode(fasthttp.StatusOK)
+	fmt.Fprintf(ctx, bs)
+
+}
+
+func clientCallHandler(ctx *fasthttp.RequestCtx) {
+	uCtx := instafasthttp.UserContext(ctx)
+
+	url := fasthttp.AcquireURI()
+	url.Parse(nil, []byte("http://localhost:7070/greet"))
+
+	// You may read the timeouts from some config
+	readTimeout, _ := time.ParseDuration("500ms")
+	writeTimeout, _ := time.ParseDuration("500ms")
+	maxIdleConnDuration, _ := time.ParseDuration("1h")
+	c := &fasthttp.Client{
+		ReadTimeout:                   readTimeout,
+		WriteTimeout:                  writeTimeout,
+		MaxIdleConnDuration:           maxIdleConnDuration,
+		NoDefaultUserAgentHeader:      true, // Don't send: User-Agent: fasthttp
+		DisableHeaderNamesNormalizing: true, // If you set the case on your headers correctly you can enable this
+		DisablePathNormalizing:        true,
+		// increase DNS cache time to an hour instead of default minute
+		Dial: (&fasthttp.TCPDialer{
+			Concurrency:      4096,
+			DNSCacheDuration: time.Hour,
+		}).Dial,
+	}
+
+	// create instana instrumented client
+	ic := instafasthttp.GetClient(sensor, c)
+
+	req := fasthttp.AcquireRequest()
+	defer fasthttp.ReleaseRequest(req)
+	req.SetURI(url)
+	fasthttp.ReleaseURI(url) // now you may release the URI
+	req.Header.SetMethod(fasthttp.MethodGet)
+
+	resp := fasthttp.AcquireResponse()
+	defer fasthttp.ReleaseResponse(resp)
+
+	// Make the request
+	err := ic.Do(uCtx, req, resp)
 	if err != nil {
 		log.Fatalf("failed to GET http://localhost:7070/greet: %s", err)
 	}
