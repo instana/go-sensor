@@ -224,70 +224,13 @@ func RoundTripper(ctx context.Context, sensor instana.TracerLogger, original fas
 		original = fasthttp.DefaultTransport
 	}
 	return tracingRoundTripper(func(hc *fasthttp.HostClient, req *fasthttp.Request, resp *fasthttp.Response) (bool, error) {
-		sanitizedURL := new(fasthttp.URI)
-		req.URI().CopyTo(sanitizedURL)
-		sanitizedURL.SetUsername("")
-		sanitizedURL.SetPassword("")
-		sanitizedURL.SetQueryString("")
-
-		opts := []ot.StartSpanOption{
-			ext.SpanKindRPCClient,
-			ot.Tags{
-				"http.url":    sanitizedURL.String(),
-				"http.method": req.Header.Method(),
-			},
+		dp := &doParams{
+			sensor: sensor,
+			hc:     hc,
+			rt:     original,
+			doType: doRoundTrip,
 		}
-
-		tracer := sensor.Tracer()
-		parentSpan, ok := instana.SpanFromContext(ctx)
-		if ok {
-			tracer = parentSpan.Tracer()
-			opts = append(opts, ot.ChildOf(parentSpan.Context()))
-		}
-
-		span := tracer.StartSpan("http", opts...)
-		defer span.Finish()
-
-		// clone the request since the RoundTrip should not modify the original one
-		reqClone := &fasthttp.Request{}
-		req.CopyTo(reqClone)
-
-		// Inject the span details to the headers
-		h := make(ot.HTTPHeadersCarrier)
-		tracer.Inject(span.Context(), ot.HTTPHeaders, h)
-		for k, v := range h {
-			reqClone.Header.Del(k)
-			reqClone.Header.Set(k, strings.Join(v, ","))
-		}
-
-		var params url.Values
-		collectedHeaders := make(map[string]string)
-
-		var collectableHTTPHeaders []string
-		if t, ok := tracer.(instana.Tracer); ok {
-			opts := t.Options()
-			params = collectHTTPParamsFastHttp(req, opts.Secrets)
-			collectableHTTPHeaders = opts.CollectableHTTPHeaders
-		}
-
-		// ensure collected headers/params are sent in case of panic/error
-		defer setHeadersAndParamsToSpan(span, collectedHeaders, params)
-
-		reqHeaders := collectAllHeaders(&req.Header)
-		collectHeadersFastHTTP(reqHeaders, collectableHTTPHeaders, collectedHeaders)
-
-		retry, err := original.RoundTrip(hc, reqClone, resp)
-		if err != nil {
-			span.SetTag("http.error", err.Error())
-			span.LogFields(otlog.Error(err))
-			return retry, err
-		}
-
-		resHeaders := collectAllHeaders(&resp.Header)
-		collectHeadersFastHTTP(resHeaders, collectableHTTPHeaders, collectedHeaders)
-
-		span.SetTag(string(ext.HTTPStatusCode), resp.StatusCode())
-
+		retry, err := instrumentedDo(ctx, req, resp, dp)
 		return retry, err
 	})
 }

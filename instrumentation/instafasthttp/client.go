@@ -60,8 +60,12 @@ type instaClient struct {
 }
 
 type doParams struct {
-	ic *instaClient
+	sensor instana.TracerLogger
 
+	hc *fasthttp.HostClient
+	rt fasthttp.RoundTripper
+
+	ic                *instaClient
 	doType            doType
 	timeout           time.Duration
 	deadline          time.Time
@@ -74,40 +78,48 @@ func (ic *instaClient) GetOriginal() *fasthttp.Client {
 
 func (ic *instaClient) DoTimeout(ctx context.Context, req *fasthttp.Request, resp *fasthttp.Response, timeout time.Duration) error {
 	dp := &doParams{
+		sensor:  ic.sensor,
 		ic:      ic,
 		doType:  doFuncWithTimeout,
 		timeout: timeout,
 	}
-	return instrumentedDo(ctx, req, resp, dp)
+	_, err := instrumentedDo(ctx, req, resp, dp)
+	return err
 }
 
 func (ic *instaClient) DoDeadline(ctx context.Context, req *fasthttp.Request, resp *fasthttp.Response, deadline time.Time) error {
 	dp := &doParams{
+		sensor:   ic.sensor,
 		ic:       ic,
 		doType:   doFuncWithDeadline,
 		deadline: deadline,
 	}
-	return instrumentedDo(ctx, req, resp, dp)
+	_, err := instrumentedDo(ctx, req, resp, dp)
+	return err
 }
 
 func (ic *instaClient) DoRedirects(ctx context.Context, req *fasthttp.Request, resp *fasthttp.Response, maxRedirectsCount int) error {
 	dp := &doParams{
+		sensor:            ic.sensor,
 		ic:                ic,
 		doType:            doFuncWithRedirects,
 		maxRedirectsCount: maxRedirectsCount,
 	}
-	return instrumentedDo(ctx, req, resp, dp)
+	_, err := instrumentedDo(ctx, req, resp, dp)
+	return err
 }
 
 func (ic *instaClient) Do(ctx context.Context, req *fasthttp.Request, resp *fasthttp.Response) error {
 	dp := &doParams{
+		sensor: ic.sensor,
 		ic:     ic,
 		doType: doFunc,
 	}
-	return instrumentedDo(ctx, req, resp, dp)
+	_, err := instrumentedDo(ctx, req, resp, dp)
+	return err
 }
 
-func instrumentedDo(ctx context.Context, req *fasthttp.Request, resp *fasthttp.Response, dp *doParams) error {
+func instrumentedDo(ctx context.Context, req *fasthttp.Request, resp *fasthttp.Response, dp *doParams) (bool, error) {
 	sanitizedURL := new(fasthttp.URI)
 	req.URI().CopyTo(sanitizedURL)
 	sanitizedURL.SetUsername("")
@@ -122,7 +134,7 @@ func instrumentedDo(ctx context.Context, req *fasthttp.Request, resp *fasthttp.R
 		},
 	}
 
-	tracer := dp.ic.sensor.Tracer()
+	tracer := dp.sensor.Tracer()
 	parentSpan, ok := instana.SpanFromContext(ctx)
 	if ok {
 		tracer = parentSpan.Tracer()
@@ -160,6 +172,7 @@ func instrumentedDo(ctx context.Context, req *fasthttp.Request, resp *fasthttp.R
 	collectHeadersFastHTTP(reqHeaders, collectableHTTPHeaders, collectedHeaders)
 
 	var err error
+	var retry bool
 
 	switch dp.doType {
 	case doFuncWithRedirects:
@@ -170,12 +183,14 @@ func instrumentedDo(ctx context.Context, req *fasthttp.Request, resp *fasthttp.R
 		err = dp.ic.Client.DoTimeout(reqClone, resp, dp.timeout)
 	case doFunc:
 		err = dp.ic.Client.Do(reqClone, resp)
+	case doRoundTrip:
+		retry, err = dp.rt.RoundTrip(dp.hc, reqClone, resp)
 	}
 
 	if err != nil {
 		span.SetTag("http.error", err.Error())
 		span.LogFields(otlog.Error(err))
-		return err
+		return retry, err
 	}
 
 	resHeaders := collectAllHeaders(&resp.Header)
@@ -183,5 +198,5 @@ func instrumentedDo(ctx context.Context, req *fasthttp.Request, resp *fasthttp.R
 
 	span.SetTag(string(ext.HTTPStatusCode), resp.StatusCode())
 
-	return err
+	return retry, err
 }
