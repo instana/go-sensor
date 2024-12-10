@@ -22,9 +22,5 @@ func ContextWithSpan(ctx context.Context, sp ot.Span) context.Context {
 // span, this method returns false.
 func SpanFromContext(ctx context.Context) (ot.Span, bool) {
 	sp, ok := ctx.Value(activeSpanKey).(ot.Span)
-	if !ok {
-		return nil, false
-	}
-
-	return sp, true
+	return sp, ok
 }
