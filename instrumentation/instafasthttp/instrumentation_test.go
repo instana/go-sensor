@@ -504,7 +504,7 @@ func TestTracingHandlerFunc_SyntheticCall(t *testing.T) {
 		assert.NoError(t, err, "unexpected error: %v", err)
 	}
 
-	url := "GET /test\r\nHost: example.com\r\n" + instana.FieldSynthetic + ": 1" + "\r\n\r\n"
+	url := "GET /test HTTP/1.1\r\nHost: example.com\r\n" + instana.FieldSynthetic + ": 1" + "\r\n\r\n"
 
 	if _, err = conn.Write([]byte(url)); err != nil {
 		assert.NoError(t, err, "unexpected error: %v", err)
@@ -519,9 +519,7 @@ func TestTracingHandlerFunc_SyntheticCall(t *testing.T) {
 	require.Len(t, spans, 1)
 
 	span := spans[0]
-	data := span.Data.(instana.HTTPSpanData)
 
-	fmt.Println("helllo", data.Tags.Headers)
 	assert.True(t, span.Synthetic)
 
 	if err := ln.Close(); err != nil {
@@ -550,7 +548,7 @@ func TestTracingHandlerFunc_EUMCall(t *testing.T) {
 		assert.NoError(t, err, "unexpected error: %v", err)
 	}
 
-	url := "GET /test\r\nHost: example.com\r\n" + instana.FieldL + ": 1,correlationType=web;correlationId=eum correlation id" + "\r\n\r\n"
+	url := "GET /test HTTP/1.1\r\nHost: example.com\r\n" + instana.FieldL + ": 1,correlationType=web;correlationId=eum correlation id" + "\r\n\r\n"
 
 	if _, err = conn.Write([]byte(url)); err != nil {
 		assert.NoError(t, err, "unexpected error: %v", err)
