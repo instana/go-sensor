@@ -150,7 +150,7 @@ func clientCallHandler(ctx *fasthttp.RequestCtx) {
 	}
 
 	// create instana instrumented client
-	ic := instafasthttp.GetClient(sensor, c)
+	ic := instafasthttp.GetInstrumentedClient(sensor, c)
 
 	req := fasthttp.AcquireRequest()
 	defer fasthttp.ReleaseRequest(req)
