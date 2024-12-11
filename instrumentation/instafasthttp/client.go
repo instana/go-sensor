@@ -48,44 +48,44 @@ func (ic *instaClient) GetOriginal() *fasthttp.Client {
 }
 
 func (ic *instaClient) DoTimeout(ctx context.Context, req *fasthttp.Request, resp *fasthttp.Response, timeout time.Duration) error {
-	dp := &doParams{
-		sensor:  ic.sensor,
-		ic:      ic,
-		doType:  doFuncWithTimeout,
-		timeout: timeout,
+	cfp := &clientFuncParams{
+		sensor:         ic.sensor,
+		ic:             ic,
+		clientFuncType: doWithTimeoutFunc,
+		timeout:        timeout,
 	}
-	_, err := instrumentedDo(ctx, req, resp, dp)
+	_, err := instrumentedDo(ctx, req, resp, cfp)
 	return err
 }
 
 func (ic *instaClient) DoDeadline(ctx context.Context, req *fasthttp.Request, resp *fasthttp.Response, deadline time.Time) error {
-	dp := &doParams{
-		sensor:   ic.sensor,
-		ic:       ic,
-		doType:   doFuncWithDeadline,
-		deadline: deadline,
+	cfp := &clientFuncParams{
+		sensor:         ic.sensor,
+		ic:             ic,
+		clientFuncType: doWithDeadlineFunc,
+		deadline:       deadline,
 	}
-	_, err := instrumentedDo(ctx, req, resp, dp)
+	_, err := instrumentedDo(ctx, req, resp, cfp)
 	return err
 }
 
 func (ic *instaClient) DoRedirects(ctx context.Context, req *fasthttp.Request, resp *fasthttp.Response, maxRedirectsCount int) error {
-	dp := &doParams{
+	cfp := &clientFuncParams{
 		sensor:            ic.sensor,
 		ic:                ic,
-		doType:            doFuncWithRedirects,
+		clientFuncType:    doWithRedirectsFunc,
 		maxRedirectsCount: maxRedirectsCount,
 	}
-	_, err := instrumentedDo(ctx, req, resp, dp)
+	_, err := instrumentedDo(ctx, req, resp, cfp)
 	return err
 }
 
 func (ic *instaClient) Do(ctx context.Context, req *fasthttp.Request, resp *fasthttp.Response) error {
-	dp := &doParams{
-		sensor: ic.sensor,
-		ic:     ic,
-		doType: doFunc,
+	cfp := &clientFuncParams{
+		sensor:         ic.sensor,
+		ic:             ic,
+		clientFuncType: doFunc,
 	}
-	_, err := instrumentedDo(ctx, req, resp, dp)
+	_, err := instrumentedDo(ctx, req, resp, cfp)
 	return err
 }

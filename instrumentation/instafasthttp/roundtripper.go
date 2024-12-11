@@ -25,13 +25,13 @@ func RoundTripper(ctx context.Context, sensor instana.TracerLogger, original fas
 		original = fasthttp.DefaultTransport
 	}
 	return tracingRoundTripper(func(hc *fasthttp.HostClient, req *fasthttp.Request, resp *fasthttp.Response) (bool, error) {
-		dp := &doParams{
-			sensor: sensor,
-			hc:     hc,
-			rt:     original,
-			doType: doRoundTrip,
+		cfp := &clientFuncParams{
+			sensor:         sensor,
+			hc:             hc,
+			rt:             original,
+			clientFuncType: doRoundTripFunc,
 		}
-		retry, err := instrumentedDo(ctx, req, resp, dp)
+		retry, err := instrumentedDo(ctx, req, resp, cfp)
 		return retry, err
 	})
 }

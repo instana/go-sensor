@@ -17,31 +17,31 @@ import (
 	"github.com/valyala/fasthttp"
 )
 
-type doType int
+type clientFuncType int
 
 const (
-	doFunc doType = iota
-	doFuncWithTimeout
-	doFuncWithDeadline
-	doFuncWithRedirects
+	doFunc clientFuncType = iota
+	doWithTimeoutFunc
+	doWithDeadlineFunc
+	doWithRedirectsFunc
 
-	doRoundTrip
+	doRoundTripFunc
 )
 
-type doParams struct {
+type clientFuncParams struct {
 	sensor instana.TracerLogger
 
 	hc *fasthttp.HostClient
 	rt fasthttp.RoundTripper
 
 	ic                *instaClient
-	doType            doType
+	clientFuncType    clientFuncType
 	timeout           time.Duration
 	deadline          time.Time
 	maxRedirectsCount int
 }
 
-func instrumentedDo(ctx context.Context, req *fasthttp.Request, resp *fasthttp.Response, dp *doParams) (bool, error) {
+func instrumentedDo(ctx context.Context, req *fasthttp.Request, resp *fasthttp.Response, cfp *clientFuncParams) (bool, error) {
 	sanitizedURL := new(fasthttp.URI)
 	req.URI().CopyTo(sanitizedURL)
 	sanitizedURL.SetUsername("")
@@ -56,7 +56,7 @@ func instrumentedDo(ctx context.Context, req *fasthttp.Request, resp *fasthttp.R
 		},
 	}
 
-	tracer := dp.sensor.Tracer()
+	tracer := cfp.sensor.Tracer()
 	parentSpan, ok := instana.SpanFromContext(ctx)
 	if ok {
 		tracer = parentSpan.Tracer()
@@ -96,17 +96,17 @@ func instrumentedDo(ctx context.Context, req *fasthttp.Request, resp *fasthttp.R
 	var err error
 	var retry bool
 
-	switch dp.doType {
-	case doFuncWithRedirects:
-		err = dp.ic.Client.DoRedirects(reqClone, resp, dp.maxRedirectsCount)
-	case doFuncWithDeadline:
-		err = dp.ic.Client.DoDeadline(reqClone, resp, dp.deadline)
-	case doFuncWithTimeout:
-		err = dp.ic.Client.DoTimeout(reqClone, resp, dp.timeout)
+	switch cfp.clientFuncType {
+	case doWithRedirectsFunc:
+		err = cfp.ic.Client.DoRedirects(reqClone, resp, cfp.maxRedirectsCount)
+	case doWithDeadlineFunc:
+		err = cfp.ic.Client.DoDeadline(reqClone, resp, cfp.deadline)
+	case doWithTimeoutFunc:
+		err = cfp.ic.Client.DoTimeout(reqClone, resp, cfp.timeout)
 	case doFunc:
-		err = dp.ic.Client.Do(reqClone, resp)
-	case doRoundTrip:
-		retry, err = dp.rt.RoundTrip(dp.hc, reqClone, resp)
+		err = cfp.ic.Client.Do(reqClone, resp)
+	case doRoundTripFunc:
+		retry, err = cfp.rt.RoundTrip(cfp.hc, reqClone, resp)
 	}
 
 	if err != nil {
