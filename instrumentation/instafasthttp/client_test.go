@@ -53,7 +53,7 @@ func TestClient_Do(t *testing.T) {
 	c := &fasthttp.Client{
 		Dial: func(addr string) (net.Conn, error) { return ln.Dial() },
 	}
-	ic := instafasthttp.GetClient(s, c)
+	ic := instafasthttp.GetInstrumentedClient(s, c)
 
 	r := &fasthttp.Request{}
 	r.Header.SetMethod(fasthttp.MethodGet)
@@ -132,7 +132,7 @@ func TestClient_Do_Error(t *testing.T) {
 	c := &fasthttp.Client{
 		Dial: func(addr string) (net.Conn, error) { return ln.Dial() },
 	}
-	ic := instafasthttp.GetClient(s, c)
+	ic := instafasthttp.GetInstrumentedClient(s, c)
 
 	r := &fasthttp.Request{}
 	r.Header.SetMethod(fasthttp.MethodGet)
@@ -222,7 +222,7 @@ func TestClient_DoTimeout(t *testing.T) {
 	c := &fasthttp.Client{
 		Dial: func(addr string) (net.Conn, error) { return ln.Dial() },
 	}
-	ic := instafasthttp.GetClient(s, c)
+	ic := instafasthttp.GetInstrumentedClient(s, c)
 
 	r := &fasthttp.Request{}
 	r.Header.SetMethod(fasthttp.MethodGet)
@@ -301,7 +301,7 @@ func TestClient_DoTimeout_Error(t *testing.T) {
 	c := &fasthttp.Client{
 		Dial: func(addr string) (net.Conn, error) { return ln.Dial() },
 	}
-	ic := instafasthttp.GetClient(s, c)
+	ic := instafasthttp.GetInstrumentedClient(s, c)
 
 	r := &fasthttp.Request{}
 	r.Header.SetMethod(fasthttp.MethodGet)
@@ -391,7 +391,7 @@ func TestClient_DoDeadline(t *testing.T) {
 	c := &fasthttp.Client{
 		Dial: func(addr string) (net.Conn, error) { return ln.Dial() },
 	}
-	ic := instafasthttp.GetClient(s, c)
+	ic := instafasthttp.GetInstrumentedClient(s, c)
 
 	r := &fasthttp.Request{}
 	r.Header.SetMethod(fasthttp.MethodGet)
@@ -470,7 +470,7 @@ func TestClient_DoDeadline_Error(t *testing.T) {
 	c := &fasthttp.Client{
 		Dial: func(addr string) (net.Conn, error) { return ln.Dial() },
 	}
-	ic := instafasthttp.GetClient(s, c)
+	ic := instafasthttp.GetInstrumentedClient(s, c)
 
 	r := &fasthttp.Request{}
 	r.Header.SetMethod(fasthttp.MethodGet)
@@ -560,7 +560,7 @@ func TestClient_DoRedirects(t *testing.T) {
 	c := &fasthttp.Client{
 		Dial: func(addr string) (net.Conn, error) { return ln.Dial() },
 	}
-	ic := instafasthttp.GetClient(s, c)
+	ic := instafasthttp.GetInstrumentedClient(s, c)
 
 	r := &fasthttp.Request{}
 	r.Header.SetMethod(fasthttp.MethodGet)
@@ -639,7 +639,7 @@ func TestClient_DoRedirects_Error(t *testing.T) {
 	c := &fasthttp.Client{
 		Dial: func(addr string) (net.Conn, error) { return ln.Dial() },
 	}
-	ic := instafasthttp.GetClient(s, c)
+	ic := instafasthttp.GetInstrumentedClient(s, c)
 
 	r := &fasthttp.Request{}
 	r.Header.SetMethod(fasthttp.MethodGet)

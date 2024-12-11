@@ -10,7 +10,7 @@ import (
 	"github.com/valyala/fasthttp"
 )
 
-func GetClient(sensor instana.TracerLogger, orgClient *fasthttp.Client) Client {
+func GetInstrumentedClient(sensor instana.TracerLogger, orgClient *fasthttp.Client) Client {
 	return &instaClient{
 		Client: orgClient,
 		sensor: sensor,
