@@ -689,3 +689,27 @@ func TestClient_DoRedirects_Error(t *testing.T) {
 		Message: `error.object: "InmemoryListener is already closed: use of closed network connection"`,
 	}, logData.Tags)
 }
+
+func Test_Client_Get_Original(t *testing.T) {
+	recorder := instana.NewTestRecorder()
+	opts := &instana.Options{
+		Service: "test-service",
+		Tracer: instana.TracerOptions{
+			CollectableHTTPHeaders: []string{"x-custom-header-1", "x-custom-header-2"},
+		},
+		AgentClient: alwaysReadyClient{},
+	}
+	tracer := instana.NewTracerWithEverything(opts, recorder)
+	s := instana.NewSensorWithTracer(tracer)
+
+	ln := fasthttputil.NewInmemoryListener()
+	c := &fasthttp.Client{
+		Dial: func(addr string) (net.Conn, error) { return ln.Dial() },
+	}
+	ic := instafasthttp.GetInstrumentedClient(s, c)
+
+	org := ic.GetOriginal()
+
+	assert.IsType(t, &fasthttp.Client{}, org)
+	assert.NotNil(t, org)
+}
