@@ -31,7 +31,7 @@ func RoundTripper(ctx context.Context, sensor instana.TracerLogger, original fas
 			rt:             original,
 			clientFuncType: doRoundTripFunc,
 		}
-		retry, err := instrumentedDo(ctx, req, resp, cfp)
+		retry, err := instrumentClient(ctx, req, resp, cfp)
 		return retry, err
 	})
 }

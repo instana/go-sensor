@@ -54,7 +54,7 @@ func (ic *instaClient) DoTimeout(ctx context.Context, req *fasthttp.Request, res
 		clientFuncType: doWithTimeoutFunc,
 		timeout:        timeout,
 	}
-	_, err := instrumentedDo(ctx, req, resp, cfp)
+	_, err := instrumentClient(ctx, req, resp, cfp)
 	return err
 }
 
@@ -65,7 +65,7 @@ func (ic *instaClient) DoDeadline(ctx context.Context, req *fasthttp.Request, re
 		clientFuncType: doWithDeadlineFunc,
 		deadline:       deadline,
 	}
-	_, err := instrumentedDo(ctx, req, resp, cfp)
+	_, err := instrumentClient(ctx, req, resp, cfp)
 	return err
 }
 
@@ -76,7 +76,7 @@ func (ic *instaClient) DoRedirects(ctx context.Context, req *fasthttp.Request, r
 		clientFuncType:    doWithRedirectsFunc,
 		maxRedirectsCount: maxRedirectsCount,
 	}
-	_, err := instrumentedDo(ctx, req, resp, cfp)
+	_, err := instrumentClient(ctx, req, resp, cfp)
 	return err
 }
 
@@ -86,6 +86,6 @@ func (ic *instaClient) Do(ctx context.Context, req *fasthttp.Request, resp *fast
 		ic:             ic,
 		clientFuncType: doFunc,
 	}
-	_, err := instrumentedDo(ctx, req, resp, cfp)
+	_, err := instrumentClient(ctx, req, resp, cfp)
 	return err
 }
