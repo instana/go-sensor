@@ -20,22 +20,20 @@ func GetInstrumentedClient(sensor instana.TracerLogger, orgClient *fasthttp.Clie
 type Client interface {
 	// methods from original *fasthttp.Client
 	// no need to implement this
+
 	Get(dst []byte, url string) (statusCode int, body []byte, err error)
 	GetTimeout(dst []byte, url string, timeout time.Duration) (statusCode int, body []byte, err error)
 	GetDeadline(dst []byte, url string, deadline time.Time) (statusCode int, body []byte, err error)
 	Post(dst []byte, url string, postArgs *fasthttp.Args) (statusCode int, body []byte, err error)
 	CloseIdleConnections()
 
-	// new methods
-	// used by instana instrumentation
 	DoTimeout(ctx context.Context, req *fasthttp.Request, resp *fasthttp.Response, timeout time.Duration) error
 	DoDeadline(ctx context.Context, req *fasthttp.Request, resp *fasthttp.Response, deadline time.Time) error
 	DoRedirects(ctx context.Context, req *fasthttp.Request, resp *fasthttp.Response, maxRedirectsCount int) error
 	Do(ctx context.Context, req *fasthttp.Request, resp *fasthttp.Response) error
 
-	// new method
 	// used to return the original *fasthttp.Client
-	GetOriginal() *fasthttp.Client
+	Unwrap() *fasthttp.Client
 }
 
 type instaClient struct {
@@ -43,7 +41,7 @@ type instaClient struct {
 	sensor instana.TracerLogger
 }
 
-func (ic *instaClient) GetOriginal() *fasthttp.Client {
+func (ic *instaClient) Unwrap() *fasthttp.Client {
 	return ic.Client
 }
 

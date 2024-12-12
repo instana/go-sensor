@@ -690,7 +690,7 @@ func TestClient_DoRedirects_Error(t *testing.T) {
 	}, logData.Tags)
 }
 
-func Test_Client_Get_Original(t *testing.T) {
+func Test_Client_Unwrap(t *testing.T) {
 	recorder := instana.NewTestRecorder()
 	opts := &instana.Options{
 		Service: "test-service",
@@ -708,7 +708,7 @@ func Test_Client_Get_Original(t *testing.T) {
 	}
 	ic := instafasthttp.GetInstrumentedClient(s, c)
 
-	org := ic.GetOriginal()
+	org := ic.Unwrap()
 
 	assert.IsType(t, &fasthttp.Client{}, org)
 	assert.NotNil(t, org)
