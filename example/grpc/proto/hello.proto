@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package hello;
 
-option go_package = "example.com/grpc-example/hellopb;hellopb";
+option go_package = "./hellopb;hellopb";
 
 // The greeting service definition.
 service Greeter {
