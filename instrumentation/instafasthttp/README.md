@@ -1,4 +1,4 @@
-Instana instrumentation for fasthttp
+instafasthttp - Instana instrumentation for fasthttp
 =====================================
 
 This package provides Instana instrumentation for the [`fasthttp`](https://pkg.go.dev/github.com/valyala/fasthttp) package.
