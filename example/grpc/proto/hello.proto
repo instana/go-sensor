@@ -1,0 +1,26 @@
+// (c) Copyright IBM Corp. 2024
+
+syntax = "proto3";
+
+package hello;
+
+option go_package = "./hellopb;hellopb";
+
+// The greeting service definition.
+service Greeter {
+  // Unary RPC
+  rpc SayHello (HelloRequest) returns (HelloReply);
+
+  // Server-side streaming RPC
+  rpc SayHelloStream (HelloRequest) returns (stream HelloReply);
+}
+
+// The request message containing the user's name.
+message HelloRequest {
+  string name = 1;
+}
+
+// The response message containing the greeting.
+message HelloReply {
+  string message = 1;
+}
