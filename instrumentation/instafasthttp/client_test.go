@@ -1,3 +1,5 @@
+// (c) Copyright IBM Corp. 2024
+
 package instafasthttp_test
 
 import (
