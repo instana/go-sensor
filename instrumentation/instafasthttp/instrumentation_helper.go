@@ -78,13 +78,15 @@ func instrumentClient(ctx context.Context, req *fasthttp.Request, resp *fasthttp
 	}
 
 	var params url.Values
-	collectedHeaders := make(map[string]string)
+
 	var collectableHTTPHeaders []string
 	if t, ok := tracer.(instana.Tracer); ok {
 		opts := t.Options()
 		params = collectHTTPParamsFastHttp(req, opts.Secrets)
 		collectableHTTPHeaders = opts.CollectableHTTPHeaders
 	}
+
+	collectedHeaders := make(map[string]string, len(collectableHTTPHeaders))
 
 	// ensure collected headers/params are sent in case of panic/error
 	defer setHeadersAndParamsToSpan(span, collectedHeaders, params)

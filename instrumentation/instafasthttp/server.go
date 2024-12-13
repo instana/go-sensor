@@ -71,7 +71,6 @@ func TraceHandler(sensor instana.TracerLogger, routeID, pathTemplate string, han
 		defer span.Finish()
 
 		var params url.Values
-		collectedHeaders := make(map[string]string)
 
 		var collectableHTTPHeaders []string
 		if t, ok := tracer.(instana.Tracer); ok {
@@ -79,6 +78,8 @@ func TraceHandler(sensor instana.TracerLogger, routeID, pathTemplate string, han
 			params = collectHTTPParamsFastHttp(req, opts.Secrets)
 			collectableHTTPHeaders = opts.CollectableHTTPHeaders
 		}
+
+		collectedHeaders := make(map[string]string, len(collectableHTTPHeaders))
 
 		// ensure collected headers/params are sent in case of panic/error
 		defer setHeadersAndParamsToSpan(span, collectedHeaders, params)
