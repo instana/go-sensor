@@ -1,7 +1,7 @@
 | Serial Number | Technology | Target Package | Instana Package | Supported Lowest Version - Target Package | Supported Highest Version - Target Package |
 | ------------- | ---------- | --------------- | --------------- | ----------------------------------------- | ----------------------------------------- |
 | 1 | HTTP | net/http | | | |
-| 2 | HTTP | [echo](https://pkg.go.dev/github.com/labstack/echo/v4) | [instaecho](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instaecho) | v4.6.0 | v4.13.1 |
+| 2 | HTTP | [echo](https://pkg.go.dev/github.com/labstack/echo/v4) | [instaecho](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instaecho) | v4.6.0 | v4.13.2 |
 | 3 | HTTP | [gin](https://pkg.go.dev/github.com/gin-gonic/gin) | [instagin](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instagin) | v1.7.2 | v1.10.0 |
 | 4 | HTTP | [mux](https://pkg.go.dev/github.com/gorilla/mux) | [instamux](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instamux) | v1.8.0 | v1.8.1 |
 | 5 | HTTP | [httprouter](https://pkg.go.dev/github.com/julienschmidt/httprouter) | [instahttprouter](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instahttprouter) | v1.3.0 | v1.3.0 |
@@ -23,7 +23,7 @@
 | 21 | Other | [aws-lambda-go](https://pkg.go.dev/github.com/aws/aws-lambda-go) | [instalambda](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instalambda) | v1.20.0 | v1.47.0 |
 | 22 | Other | [logrus](https://pkg.go.dev/github.com/sirupsen/logrus) | [instalogrus](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instalogrus) | v1.5.0 | v1.9.3 |
 | 23 | Databases | [go-redis v2](https://pkg.go.dev/github.com/redis/go-redis/v9) | [instaredis/v2](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instaredis/v2) | v8.11.4 | v9.7.0 |
-| 24 | HTTP | [beego](https://pkg.go.dev/github.com/beego/beego/v2) | [instabeego](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instabeego) | v2.1.3 | v2.3.3 |
+| 24 | HTTP | [beego](https://pkg.go.dev/github.com/beego/beego/v2) | [instabeego](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instabeego) | v2.1.3 | v2.3.4 |
 | 25 | Other | [aws-sdk-go](https://pkg.go.dev/github.com/aws/aws-sdk-go-v2) | [instaawsv2](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instaawsv2) | v1.21.0 | v1.32.6 |
 | 26 | Databases | [azcosmos](https://pkg.go.dev/github.com/Azure/azure-sdk-for-go/sdk/data/azcosmos) | [instacosmos](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instacosmos) | v0.3.6 | v1.2.0 |
 | 27 | Databases | [pgx/v5](https://pkg.go.dev/github.com/jackc/pgx/v5) | [instapgx/v2](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instapgx/v2) | v5.6.0 | v5.7.1 |
