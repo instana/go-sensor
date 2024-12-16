@@ -6,7 +6,6 @@ package instafasthttp
 import (
 	"context"
 	"errors"
-	"net/http"
 	"net/url"
 	"strings"
 
@@ -72,7 +71,6 @@ func TraceHandler(sensor instana.TracerLogger, routeID, pathTemplate string, han
 		defer span.Finish()
 
 		var params url.Values
-		collectedHeaders := make(map[string]string)
 
 		var collectableHTTPHeaders []string
 		if t, ok := tracer.(instana.Tracer); ok {
@@ -81,8 +79,10 @@ func TraceHandler(sensor instana.TracerLogger, routeID, pathTemplate string, han
 			collectableHTTPHeaders = opts.CollectableHTTPHeaders
 		}
 
+		collectedHeaders := make(map[string]string, len(collectableHTTPHeaders))
+
 		// ensure collected headers/params are sent in case of panic/error
-		defer sendParamsAndHeaders(span, params, collectedHeaders)
+		defer setHeadersAndParamsToSpan(span, collectedHeaders, params)
 
 		collectHeadersFastHTTP(reqHeaders, collectableHTTPHeaders, collectedHeaders)
 
@@ -136,50 +136,6 @@ func initSpanOptionsFastHttp(req *fasthttp.Request, routeID string) []ot.StartSp
 	return opts
 }
 
-// interface for req and res headers
-// used to collect headers
-type headerVisiter interface {
-	VisitAll(f func(key, value []byte))
-}
-
-func collectAllHeaders(header headerVisiter) http.Header {
-	headers := make(http.Header, 0)
-
-	header.VisitAll(func(key, value []byte) {
-		headerKey := make([]byte, len(key))
-		copy(headerKey, key)
-
-		headerVal := make([]byte, len(value))
-		copy(headerVal, value)
-
-		headers.Add(string(headerKey), string(headerVal))
-	})
-
-	return headers
-}
-
-func processResponseStatusFasthttp(response *fasthttp.Response, span ot.Span) {
-	stCode := response.StatusCode()
-	if stCode > 0 {
-		if stCode >= fasthttp.StatusInternalServerError {
-			statusText := fasthttp.StatusMessage(stCode)
-
-			span.SetTag("http.error", statusText)
-			span.LogFields(otlog.Object("error", statusText))
-		}
-
-		span.SetTag("http.status", stCode)
-	}
-}
-
-func collectHeadersFastHTTP(headers http.Header, collectableHTTPHeaders []string, collectedHeaders map[string]string) {
-	for _, h := range collectableHTTPHeaders {
-		if v := headers.Get(h); v != "" {
-			collectedHeaders[h] = v
-		}
-	}
-}
-
 func extractStartSpanOptionsFromHeadersFastHttp(tracer ot.Tracer, req *fasthttp.Request, headers map[string][]string, sensor instana.TracerLogger) []ot.StartSpanOption {
 	var opts []ot.StartSpanOption
 	wireContext, err := tracer.Extract(ot.HTTPHeaders, ot.HTTPHeadersCarrier(headers))
@@ -196,107 +152,16 @@ func extractStartSpanOptionsFromHeadersFastHttp(tracer ot.Tracer, req *fasthttp.
 	return opts
 }
 
-func collectHTTPParamsFastHttp(req *fasthttp.Request, matcher instana.Matcher) url.Values {
-	params, _ := url.ParseQuery(string(req.URI().QueryString()))
+func processResponseStatusFasthttp(response *fasthttp.Response, span ot.Span) {
+	stCode := response.StatusCode()
+	if stCode > 0 {
+		if stCode >= fasthttp.StatusInternalServerError {
+			statusText := fasthttp.StatusMessage(stCode)
 
-	for k := range params {
-		if matcher.Match(k) {
-			params[k] = []string{"<redacted>"}
+			span.SetTag("http.error", statusText)
+			span.LogFields(otlog.Object("error", statusText))
 		}
+
+		span.SetTag("http.status", stCode)
 	}
-
-	return params
-}
-
-func sendParamsAndHeaders(span ot.Span, params url.Values, collectedHeaders map[string]string) {
-	if len(collectedHeaders) > 0 {
-		span.SetTag("http.header", collectedHeaders)
-	}
-	if len(params) > 0 {
-		span.SetTag("http.params", params.Encode())
-	}
-}
-
-type tracingRoundTripper func(*fasthttp.HostClient, *fasthttp.Request, *fasthttp.Response) (bool, error)
-
-func (rt tracingRoundTripper) RoundTrip(hc *fasthttp.HostClient, req *fasthttp.Request, resp *fasthttp.Response) (retry bool, err error) {
-	return rt(hc, req, resp)
-}
-
-// RoundTripper wraps an existing fasthttp.RoundTripper and injects the tracing headers into the outgoing request.
-// If the original RoundTripper is nil, the fasthttp.DefaultTransport will be used.
-func RoundTripper(ctx context.Context, sensor instana.TracerLogger, original fasthttp.RoundTripper) fasthttp.RoundTripper {
-	if ctx == nil {
-		ctx = context.Background()
-	}
-	if original == nil {
-		original = fasthttp.DefaultTransport
-	}
-	return tracingRoundTripper(func(hc *fasthttp.HostClient, req *fasthttp.Request, resp *fasthttp.Response) (bool, error) {
-		sanitizedURL := new(fasthttp.URI)
-		req.URI().CopyTo(sanitizedURL)
-		sanitizedURL.SetUsername("")
-		sanitizedURL.SetPassword("")
-		sanitizedURL.SetQueryString("")
-
-		opts := []ot.StartSpanOption{
-			ext.SpanKindRPCClient,
-			ot.Tags{
-				"http.url":    sanitizedURL.String(),
-				"http.method": req.Header.Method(),
-			},
-		}
-
-		tracer := sensor.Tracer()
-		parentSpan, ok := instana.SpanFromContext(ctx)
-		if ok {
-			tracer = parentSpan.Tracer()
-			opts = append(opts, ot.ChildOf(parentSpan.Context()))
-		}
-
-		span := tracer.StartSpan("http", opts...)
-		defer span.Finish()
-
-		// clone the request since the RoundTrip should not modify the original one
-		reqClone := &fasthttp.Request{}
-		req.CopyTo(reqClone)
-
-		// Inject the span details to the headers
-		h := make(ot.HTTPHeadersCarrier)
-		tracer.Inject(span.Context(), ot.HTTPHeaders, h)
-		for k, v := range h {
-			reqClone.Header.Del(k)
-			reqClone.Header.Set(k, strings.Join(v, ","))
-		}
-
-		var params url.Values
-		collectedHeaders := make(map[string]string)
-
-		var collectableHTTPHeaders []string
-		if t, ok := tracer.(instana.Tracer); ok {
-			opts := t.Options()
-			params = collectHTTPParamsFastHttp(req, opts.Secrets)
-			collectableHTTPHeaders = opts.CollectableHTTPHeaders
-		}
-
-		// ensure collected headers/params are sent in case of panic/error
-		defer sendParamsAndHeaders(span, params, collectedHeaders)
-
-		reqHeaders := collectAllHeaders(&req.Header)
-		collectHeadersFastHTTP(reqHeaders, collectableHTTPHeaders, collectedHeaders)
-
-		retry, err := original.RoundTrip(hc, reqClone, resp)
-		if err != nil {
-			span.SetTag("http.error", err.Error())
-			span.LogFields(otlog.Error(err))
-			return retry, err
-		}
-
-		resHeaders := collectAllHeaders(&resp.Header)
-		collectHeadersFastHTTP(resHeaders, collectableHTTPHeaders, collectedHeaders)
-
-		span.SetTag(string(ext.HTTPStatusCode), resp.StatusCode())
-
-		return retry, err
-	})
 }
