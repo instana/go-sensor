@@ -1,4 +1,4 @@
-Instana instrumentation for fasthttp
+instafasthttp - Instana instrumentation for fasthttp
 =====================================
 
 This package provides Instana instrumentation for the [`fasthttp`](https://pkg.go.dev/github.com/valyala/fasthttp) package.
@@ -67,7 +67,7 @@ func greetEndpointHandler(ctx *fasthttp.RequestCtx) {
 }
 ```
 
-### RoundTripper
+### HostClient
 
 The `instafasthttp.RoundTripper` provides an implementation of the `fasthttp.RoundTripper` interface. It can be used to instrument client calls with the help of `instafasthttp.HostClient`. Refer to the details below for more information.
 
@@ -125,3 +125,54 @@ func fastHTTPHandler(ctx *fasthttp.RequestCtx) {
 log.Fatal(fasthttp.ListenAndServe(":7070", fastHTTPHandler))
 
 ```
+### Client 
+
+The `client.Do` and related methods can be traced using Instana. However, the usage differs slightly from that of the standard HostClient. Below are the steps to use an Instana instrumented client.
+
+- To enable tracing, you must create an instrumented client using the `instafasthttp.GetInstrumentedClient` method as shown below:
+
+```go
+	// fasthttp client
+	client := &fasthttp.Client{
+		ReadTimeout:                   readTimeout,
+		WriteTimeout:                  writeTimeout,
+		MaxIdleConnDuration:           maxIdleConnDuration,
+		NoDefaultUserAgentHeader:      true, // Don't send: User-Agent: fasthttp
+		DisableHeaderNamesNormalizing: true, // If you set the case on your headers correctly you can enable this
+		DisablePathNormalizing:        true,
+		// increase DNS cache time to an hour instead of default minute
+		Dial: (&fasthttp.TCPDialer{
+			Concurrency:      4096,
+			DNSCacheDuration: time.Hour,
+		}).Dial,
+	}
+
+	// create instana instrumented client
+	ic := instafasthttp.GetInstrumentedClient(sensor, client)
+```
+- Use the instrumented client(ic) for all requests instead of the original client.
+- Tracing is supported for the following methods, where an additional `context.Context` parameter is required as the first argument. Ensure the context is set properly for span correlation:
+1. Do
+2. DoTimeout
+3. DoDeadline
+4. DoRedirects
+
+```go
+	req := fasthttp.AcquireRequest()
+	defer fasthttp.ReleaseRequest(req)
+	req.SetURI(url)
+	fasthttp.ReleaseURI(url) // now you may release the URI
+	req.Header.SetMethod(fasthttp.MethodGet)
+
+	resp := fasthttp.AcquireResponse()
+	defer fasthttp.ReleaseResponse(resp)
+
+	// Make the request
+	err := ic.Do(uCtx, req, resp)
+	if err != nil {
+		log.Fatalf("failed to GET http://localhost:7070/greet: %s", err)
+	}
+```
+
+- For methods other than the four listed above, use the usual method signatures without passing a context. These methods will not support tracing.
+- Use the `Unwrap()` method if you require the original fasthttp.Client instance. However, avoid using the unwrapped instance directly for the above four methods, as Instana tracing will not be applied in such cases.

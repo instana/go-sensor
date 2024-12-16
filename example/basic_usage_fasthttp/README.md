@@ -21,5 +21,6 @@ The available routes are,
 - [localhost:8080/round-trip](http://localhost:7070/round-trip)
 - [localhost:8080/error-handler](http://localhost:7070/error-handler)
 - [localhost:8080/panic-handler](http://localhost:7070/panic-handler)
+- [localhost:8080/client-call-handler](http://localhost:7070/client-call-handler)
 
 After issuing a couple of API requests, you will be able to see the call traces in the Instana dashboard.
