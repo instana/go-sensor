@@ -174,5 +174,5 @@ The `client.Do` and related methods can be traced using Instana. However, the us
 	}
 ```
 
-- For methods other than the four listed above, use the usual method signatures without passing a context. These methods will not support tracing.
+- For methods other than the four mentioned above, use the standard method signatures without passing a context. These methods do not support tracing. For example, `client.Get` and `client.Post` do not currently support Instana tracing. If you wish to trace the `GET` and `POST` requests, please use `client.Do` method instead.
 - Use the `Unwrap()` method if you require the original fasthttp.Client instance. However, avoid using the unwrapped instance directly for the above four methods, as Instana tracing will not be applied in such cases.
