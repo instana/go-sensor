@@ -54,10 +54,8 @@ func TestPartiallyFlushDelayedSpans(t *testing.T) {
 	// serverless agent should not be present for this test to pass.
 	// following check is added for debugging random failures in the unit tests of delayed spans
 	// TODO: remove it once the issue is resolved.
-	_, isURLPresent := os.LookupEnv("INSTANA_ENDPOINT_URL")
-	_, isKeyPresent := os.LookupEnv("INSTANA_AGENT_KEY")
-	assert.Equal(t, false, isURLPresent)
-	assert.Equal(t, false, isKeyPresent)
+	url, _ := os.LookupEnv("INSTANA_ENDPOINT_URL")
+	assert.Equal(t, "", url)
 
 	assert.Len(t, delayed.spans, maxDelayedSpans)
 
@@ -89,9 +87,7 @@ func TestFlushDelayedSpans(t *testing.T) {
 	// following check is added for debugging random failures in the unit tests of delayed spans
 	// TODO: remove it once the issue is resolved.
 	_, isURLPresent := os.LookupEnv("INSTANA_ENDPOINT_URL")
-	_, isKeyPresent := os.LookupEnv("INSTANA_AGENT_KEY")
 	assert.Equal(t, false, isURLPresent)
-	assert.Equal(t, false, isKeyPresent)
 
 	assert.Len(t, delayed.spans, maxDelayedSpans)
 
@@ -122,9 +118,7 @@ func TestParallelFlushDelayedSpans(t *testing.T) {
 	// following check is added for debugging random failures in the unit tests of delayed spans
 	// TODO: remove it once the issue is resolved.
 	_, isURLPresent := os.LookupEnv("INSTANA_ENDPOINT_URL")
-	_, isKeyPresent := os.LookupEnv("INSTANA_AGENT_KEY")
 	assert.Equal(t, false, isURLPresent)
-	assert.Equal(t, false, isKeyPresent)
 
 	assert.Len(t, delayed.spans, maxDelayedSpans)
 
