@@ -7,6 +7,8 @@ package main
 
 import (
 	"fmt"
+	"log"
+	"net/http"
 	"time"
 
 	instana "github.com/instana/go-sensor"
@@ -31,24 +33,38 @@ func agentReady() chan bool {
 	return ch
 }
 
-func main() {
-	hold := make(chan bool)
+var (
+	collector instana.TracerLogger
+)
 
-	s := instana.InitCollector(&instana.Options{
-		Service: "gorm-postgres",
+func init() {
+	collector = instana.InitCollector(&instana.Options{
+		Service: "gorm-sample-app-reproduce",
 	})
+}
+
+func main() {
+	http.HandleFunc("/gorm-sample", instana.TracingHandlerFunc(collector, "/gorm-sample", handler))
+	log.Fatal(http.ListenAndServe("localhost:9990", nil))
+}
+
+func handler(w http.ResponseWriter, r *http.Request) {
 
 	<-agentReady()
 	fmt.Println("agent ready")
 
-	dsn := "host=localhost user=postgres password=mysecretpassword dbname=postgres port=5432 sslmode=disable"
+	ctx := r.Context()
+
+	// dsn := "host=localhost user=postgres password=mysecretpassword dbname=postgres port=5432 sslmode=disable"
+	dsn := "postgresql://postgres@localhost:5432/postgres?sslmode=disable"
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 
 	if err != nil {
 		panic(err)
 	}
 
-	instagorm.Instrument(db, s, dsn)
+	db = db.WithContext(ctx)
+	instagorm.Instrument(db, collector, dsn)
 
 	var stud student
 
@@ -56,8 +72,8 @@ func main() {
 
 	fmt.Println(">>>", stud.StudentName)
 
-	fmt.Println("holding process up")
-	<-hold
+	w.WriteHeader(http.StatusOK)
+	_, _ = w.Write([]byte("{message:Status OK! Check terminal for full log!}"))
 }
 
 type student struct {

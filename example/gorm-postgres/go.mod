@@ -26,6 +26,6 @@ require (
 )
 
 replace (
-	github.com/instana/go-sensor v1.57.0 => ../../
+	github.com/instana/go-sensor v1.66.0 => ../../
 	github.com/instana/go-sensor/instrumentation/instagorm v1.3.0 => ../../instrumentation/instagorm
 )
