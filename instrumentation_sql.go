@@ -427,8 +427,14 @@ func parseDBConnDetailsURI(connStr string) (DbConnDetails, bool) {
 		details.RawString = u.String()
 	}
 
-	if u.Scheme == "postgres" {
-		details.DatabaseName = u.Scheme
+	//
+	// From the official postgresql doc - https://www.postgresql.org/docs/current/libpq-connect.html#LIBPQ-CONNSTRING
+	//
+	// "The URI scheme designator can be either postgresql:// or postgres://."
+	// "Each of the remaining URI parts is optional. The following examples illustrate valid URI syntax:"
+	//
+	if u.Scheme == "postgres" || u.Scheme == "postgresql" {
+		details.DatabaseName = "postgres"
 	}
 
 	return details, true
@@ -604,12 +610,25 @@ func parseMySQLGoSQLDriver(connStr string) (DbConnDetails, bool) {
 	return d, true
 }
 
-var redisOptionalUser = regexp.MustCompile(`^(.*:\/\/)?(.+)?:.+@(.+):(\d+)`)
-
 // parseRedisConnString attempts to parse: user:password@host:port
 // Based on conn string from github.com/bonede/go-redis-driver
 func parseRedisConnString(connStr string) (DbConnDetails, bool) {
-	// Expected matches
+
+	//
+	// Regex : ^(.*:\/\/)?([^:]+)?(?::(?:[^@]+))?@([^:]+):(\d+)
+	//
+	// This updated regular expression addresses an issue where connection strings for
+	// databases like PostgreSQL were incorrectly identified as Redis connections.
+	// The regex is divided into five parts:
+	// 1. The URI scheme (optional)
+	// 2. The username (optional part of the URI)
+	// 3. The optional password, which is separated from the username by a colon
+	// 4. The hostname
+	// 5. The port number
+	//
+	redisOptionalUser := regexp.MustCompile(`^(.*:\/\/)?([^:]+)?(?::(?:[^@]+))?@([^:]+):(\d+)`)
+
+	// Expected matches and index
 	// 0 - mysql://user:password@localhost:9898 or db://user:password@localhost:9898 and so on
 	// 1 - mysql:// or db:// and so on
 	// 2 - user
@@ -623,7 +642,7 @@ func parseRedisConnString(connStr string) (DbConnDetails, bool) {
 		return d, false
 	}
 
-	// We want to ignore the first match. for instance db:// or mysql:// will be ignored if matched
+	// We want to ignore the first match. for instance db://, mysql:// or postgresql:// will be ignored if matched
 	if matches[0][1] == "" {
 		return DbConnDetails{
 				Host:         matches[0][3],
