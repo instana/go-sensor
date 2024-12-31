@@ -430,8 +430,7 @@ func parseDBConnDetailsURI(connStr string) (DbConnDetails, bool) {
 	//
 	// From the official postgresql doc - https://www.postgresql.org/docs/current/libpq-connect.html#LIBPQ-CONNSTRING
 	//
-	// "The URI scheme designator can be either postgresql:// or postgres://."
-	// "Each of the remaining URI parts is optional. The following examples illustrate valid URI syntax:"
+	// "The URI scheme designator can be either postgresql:// or postgres://"
 	//
 	if u.Scheme == "postgres" || u.Scheme == "postgresql" {
 		details.DatabaseName = "postgres"
