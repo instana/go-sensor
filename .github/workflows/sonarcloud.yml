@@ -1,4 +1,4 @@
-name: Generate SonarCloud report for PR
+name: Generate SonarCloud report
 on:
   push:
     branches:
