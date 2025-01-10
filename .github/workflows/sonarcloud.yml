@@ -1,41 +1,68 @@
-name: Generate SonarCloud report
+name: Generate SonarCloud report for PR
 on:
-  workflow_run:
-    workflows: [Generate code coverage and upload to artifact for sonarcloud]
-    types: [completed]
+  push:
+    branches:
+      - main
+  pull_request:
+    types: [opened, synchronize, reopened]
 jobs:
-  build:
-    name: Run sonarcloud analysis
+  generateCoverage:
+    name: Code Coverage
     runs-on: ubuntu-latest
-    if: github.event.workflow_run.conclusion == 'success'
+    env:
+      COSMOS_CONNECTION_URL: ${{ secrets.COSMOS_CONNECTION_URL }}
+      COSMOS_KEY: ${{ secrets.COSMOS_KEY }}
     steps:
       - uses: actions/checkout@v3
         with:
           fetch-depth: 0
-      - name: 'Download code coverage'
-        uses: actions/github-script@v6
-        with:
-          script: |
-            let allArtifacts = await github.rest.actions.listWorkflowRunArtifacts({
-               owner: context.repo.owner,
-               repo: context.repo.repo,
-               run_id: context.payload.workflow_run.id,
-            });
-            let matchArtifact = allArtifacts.data.artifacts.filter((artifact) => {
-              return artifact.name == "go-tracer-code-coverage-sonarcloud"
-            })[0];
-            let download = await github.rest.actions.downloadArtifact({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              artifact_id: matchArtifact.id,
-              archive_format: 'zip',
-            });
-            let fs = require('fs');
-            fs.writeFileSync(`${process.env.GITHUB_WORKSPACE}/go-tracer-code-coverage-sonarcloud.zip`, Buffer.from(download.data));
-      - name: 'Unzip code coverage'
-        run: unzip go-tracer-code-coverage-sonarcloud.zip -d coverage
+      - name: Run coverage commands
+        run: |
+            #!/bin/bash
+
+            TRACER_PATH=$(pwd)
+            echo $TRACER_PATH
+            mkdir coverage
+
+            echo "Starting Couchbase"
+            docker compose -f docker-compose-integration.yaml up -d
+
+            echo "Starting Postgres"
+            sudo systemctl start postgresql.service
+            sudo -u postgres psql -c "ALTER USER postgres PASSWORD 'mysecretpassword'"
+            echo "After starting Postgres"
+
+            echo "unit tests - core package"
+            go test -v -coverpkg=./... -cover -covermode atomic -coverprofile $TRACER_PATH/coverage/coverage.out ./... -json > $TRACER_PATH/coverage/coverage.json
+
+            echo "integration tests - core package"
+            INTEGRATION_TESTS_TAGS=("fargate" "gcr" "lambda" "azure" "generic_serverless" "azureContainerApps")
+            for str in ${INTEGRATION_TESTS_TAGS[@]}; do
+              go test -v -coverpkg=./... -cover -covermode atomic -coverprofile $TRACER_PATH/coverage/coverage_$(date +%s%N)_$RANDOM.out -tags="$str integration" ./... -run TestIntegration -json > $TRACER_PATH/coverage/coverage_$(date +%s%N)_$RANDOM.json
+            done
+
+            DEPRECATED_PKGS=".*instaamqp$"
+  
+            LIB_LIST=$(find ./instrumentation -name go.mod -exec dirname {} \; | grep -E -v "$DEPRECATED_PKGS")
+
+            echo "unit tests - instrumentation packages"
+            for lib in $LIB_LIST
+              do echo "Generating test coverage for $lib" && cd "$lib" && go mod tidy && go test -v -coverpkg=./... -cover -covermode atomic -coverprofile $TRACER_PATH/coverage/coverage_$(date +%s%N)_$RANDOM.out ./... -json > $TRACER_PATH/coverage/coverage_$(date +%s%N)_$RANDOM.json && cd -;
+            done
+
+            echo "integration tests - instrumentation packages"
+            INTEGRATIONS_TESTS=("instagocb" "instapgx" "instacosmos" "instapgx/v2")
+            for str in ${INTEGRATIONS_TESTS[@]}; do
+              dir=./instrumentation/$str
+              echo "Generating test coverage for $dir"
+              cd $dir
+              go mod tidy
+              go test -v -tags=integration -coverpkg=./... -cover -covermode atomic -coverprofile $TRACER_PATH/coverage/coverage_$(date +%s%N)_$RANDOM.out ./... -json > $TRACER_PATH/coverage/coverage_$(date +%s%N)_$RANDOM.json && cd -
+            done
+
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@master
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_CLOUD_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
