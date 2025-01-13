@@ -32,6 +32,7 @@ const (
 	SELECT  = "SELECT * FROM `products` WHERE code = ? AND `products`.`deleted_at` IS NULL ORDER BY `products`.`id` LIMIT 1"
 	RAWSQL  = "SELECT * FROM products"
 	DB_TYPE = "sqlite"
+	ROW     = "SELECT code,price FROM `product` WHERE code = ?"
 )
 
 type product struct {
@@ -329,7 +330,6 @@ func TestRawSQL(t *testing.T) {
 		assert.EqualValues(t, instana.ExitSpanKind, rawSQLSpan.Kind)
 		require.IsType(t, instana.SDKSpanData{}, rawSQLSpan.Data)
 
-		RawSqlOutput := "SELECT * FROM `products` WHERE code = ? AND `products`.`deleted_at` IS NULL ORDER BY `products`.`id` LIMIT 1"
 		data := rawSQLSpan.Data.(instana.SDKSpanData)
 		assert.Equal(t, instana.SDKSpanTags{
 			Name: "sdk.database",
@@ -339,7 +339,70 @@ func TestRawSQL(t *testing.T) {
 				"tags": ot.Tags{
 					"span.kind":    ext.SpanKindRPCClientEnum,
 					"db.instance":  dsn,
-					"db.statement": RawSqlOutput,
+					"db.statement": RAWSQL,
+					"db.type":      DB_TYPE,
+					"peer.address": dsn,
+				},
+			},
+		}, data.Tags)
+
+	})
+}
+
+func TestRow(t *testing.T) {
+	recorder := instana.NewTestRecorder()
+	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{
+		Service:     "go-sensor-test",
+		AgentClient: alwaysReadyClient{},
+	}, recorder))
+	defer instana.ShutdownSensor()
+
+	pSpan := s.Tracer().StartSpan("parent-span")
+	ctx := context.Background()
+	if pSpan != nil {
+		ctx = instana.ContextWithSpan(ctx, pSpan)
+	}
+
+	t.Run("Exec", func(t *testing.T) {
+		dsn, tearDownFn := setupEnv(t)
+		defer tearDownFn(t)
+
+		db, err := gorm.Open(sqlite.Open(dsn), &gorm.Config{})
+		if err != nil {
+			panic("failed to connect database")
+		}
+
+		db.Statement.Context = ctx
+		instagorm.Instrument(db, s, dsn)
+
+		if err = db.AutoMigrate(&product{}); err != nil {
+			panic("failed to migrate the schema")
+		}
+		require.NoError(t, err)
+
+		db.Create(&product{Code: "D42", Price: 100})
+
+		var p product
+		rw := db.Table("product").Where("code = ?", "D42").Select("code", "price").Row()
+		rw.Scan(&p)
+
+		spans := recorder.GetQueuedSpans()
+
+		rowSpan := spans[len(spans)-1]
+		assert.Equal(t, 0, rowSpan.Ec)
+		assert.EqualValues(t, instana.ExitSpanKind, rowSpan.Kind)
+		require.IsType(t, instana.SDKSpanData{}, rowSpan.Data)
+
+		data := rowSpan.Data.(instana.SDKSpanData)
+		assert.Equal(t, instana.SDKSpanTags{
+			Name: "sdk.database",
+			Type: "exit",
+			Custom: map[string]interface{}{
+				"baggage": map[string]string{"dbKey": "db"},
+				"tags": ot.Tags{
+					"span.kind":    ext.SpanKindRPCClientEnum,
+					"db.instance":  dsn,
+					"db.statement": ROW,
 					"db.type":      DB_TYPE,
 					"peer.address": dsn,
 				},
