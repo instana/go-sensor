@@ -77,10 +77,10 @@ func (wdB *wrappedDB) registerQueryCallbacks() {
 }
 
 func (wdB *wrappedDB) registerRowCallbacks() {
-	wdB.logError(wdB.Callback().Raw().Before("gorm:row").Register("instagorm:before_row",
+	wdB.logError(wdB.Callback().Row().Before("gorm:row").Register("instagorm:before_row",
 		preOpCb(wdB)))
 
-	wdB.logError(wdB.Callback().Raw().After("gorm:row").Register("instagorm:after_row",
+	wdB.logError(wdB.Callback().Row().After("gorm:row").Register("instagorm:after_row",
 		postOpCb()))
 }
 
