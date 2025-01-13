@@ -613,6 +613,28 @@ func TestDSNParing(t *testing.T) {
 				DatabaseName: "postgres",
 			},
 		},
+		"Postgres - URI - with password": {
+			DSN: "postgresql://postgres:mysecretpassword@localhost:5432/postgres?sslmode=disable",
+			ExpectedConfig: instana.DbConnDetails{
+				Schema:       "postgres",
+				RawString:    "postgresql://postgres@localhost:5432/postgres?sslmode=disable",
+				Host:         "localhost",
+				Port:         "5432",
+				User:         "postgres",
+				DatabaseName: "postgres",
+			},
+		},
+		"Postgres - URI - without password": {
+			DSN: "postgresql://postgres@localhost:5432/postgres?sslmode=disable",
+			ExpectedConfig: instana.DbConnDetails{
+				Schema:       "postgres",
+				RawString:    "postgresql://postgres@localhost:5432/postgres?sslmode=disable",
+				Host:         "localhost",
+				Port:         "5432",
+				User:         "postgres",
+				DatabaseName: "postgres",
+			},
+		},
 		"MySQL": {
 			DSN: "Server=db-host1, db-host2;Database=test-schema;Port=1234;Uid=user1;Pwd=p@55w0rd;",
 			ExpectedConfig: instana.DbConnDetails{
