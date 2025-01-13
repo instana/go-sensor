@@ -1,12 +1,12 @@
 | Serial Number | Technology | Target Package | Instana Package | Supported Lowest Version - Target Package | Supported Highest Version - Target Package |
 | ------------- | ---------- | --------------- | --------------- | ----------------------------------------- | ----------------------------------------- |
 | 1 | HTTP | net/http | | | |
-| 2 | HTTP | [echo](https://pkg.go.dev/github.com/labstack/echo/v4) | [instaecho](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instaecho) | v4.6.0 | v4.13.2 |
+| 2 | HTTP | [echo](https://pkg.go.dev/github.com/labstack/echo/v4) | [instaecho](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instaecho) | v4.6.0 | v4.13.3 |
 | 3 | HTTP | [gin](https://pkg.go.dev/github.com/gin-gonic/gin) | [instagin](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instagin) | v1.7.2 | v1.10.0 |
 | 4 | HTTP | [mux](https://pkg.go.dev/github.com/gorilla/mux) | [instamux](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instamux) | v1.8.0 | v1.8.1 |
 | 5 | HTTP | [httprouter](https://pkg.go.dev/github.com/julienschmidt/httprouter) | [instahttprouter](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instahttprouter) | v1.3.0 | v1.3.0 |
 | 6 | HTTP | [fiber](https://pkg.go.dev/github.com/gofiber/fiber/v2) | [instafiber](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instafiber) | v2.48.0 | v2.52.5 |
-| 7 | RPC | [grpc](https://pkg.go.dev/google.golang.org/grpc) | [instagrpc](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instagrpc) | v1.15.0 | v1.69.0 |
+| 7 | RPC | [grpc](https://pkg.go.dev/google.golang.org/grpc) | [instagrpc](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instagrpc) | v1.15.0 | v1.69.2 |
 | 8 | Databases | database/sql | | | |
 | 9 | Databases | [mongo-driver](https://pkg.go.dev/go.mongodb.org/mongo-driver) | [instamongo](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instamongo) | v1.7.2 | v1.17.1 |
 | 10 | Databases | [pgx](https://pkg.go.dev/github.com/jackc/pgx/v4) | [instapgx](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instapgx) | v4.14.1 | v4.18.3 |

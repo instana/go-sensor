@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -50,6 +51,12 @@ func TestPartiallyFlushDelayedSpans(t *testing.T) {
 
 	generateSomeTraffic(s, maxDelayedSpans)
 
+	// serverless agent should not be present for this test to pass.
+	// following check is added for debugging random failures in the unit tests of delayed spans
+	// TODO: remove it once the issue is resolved.
+	url, _ := os.LookupEnv("INSTANA_ENDPOINT_URL")
+	assert.Equal(t, "", url)
+
 	assert.Len(t, delayed.spans, maxDelayedSpans)
 
 	notReadyAfter := maxDelayedSpans / 10
@@ -76,6 +83,12 @@ func TestFlushDelayedSpans(t *testing.T) {
 
 	generateSomeTraffic(s, maxDelayedSpans)
 
+	// serverless agent should not be present for this test to pass.
+	// following check is added for debugging random failures in the unit tests of delayed spans
+	// TODO: remove it once the issue is resolved.
+	_, isURLPresent := os.LookupEnv("INSTANA_ENDPOINT_URL")
+	assert.Equal(t, false, isURLPresent)
+
 	assert.Len(t, delayed.spans, maxDelayedSpans)
 
 	sensor.agent = alwaysReadyClient{}
@@ -100,6 +113,12 @@ func TestParallelFlushDelayedSpans(t *testing.T) {
 	defer ShutdownSensor()
 
 	generateSomeTraffic(s, maxDelayedSpans*2)
+
+	// serverless agent should not be present for this test to pass.
+	// following check is added for debugging random failures in the unit tests of delayed spans
+	// TODO: remove it once the issue is resolved.
+	_, isURLPresent := os.LookupEnv("INSTANA_ENDPOINT_URL")
+	assert.Equal(t, false, isURLPresent)
 
 	assert.Len(t, delayed.spans, maxDelayedSpans)
 
