@@ -4,7 +4,7 @@ go 1.22
 
 require (
 	github.com/beego/beego/v2 v2.3.4
-	github.com/instana/go-sensor v1.66.0
+	github.com/instana/go-sensor v1.66.1
 	github.com/instana/go-sensor/instrumentation/instabeego v0.1.0
 	github.com/opentracing/opentracing-go v1.2.0
 )
@@ -22,7 +22,7 @@ require (
 	github.com/prometheus/procfs v0.12.0 // indirect
 	github.com/shiena/ansicolor v0.0.0-20200904210342-c7312218db18 // indirect
 	golang.org/x/crypto v0.31.0 // indirect
-	golang.org/x/net v0.23.0 // indirect
+	golang.org/x/net v0.33.0 // indirect
 	golang.org/x/sys v0.28.0 // indirect
 	golang.org/x/text v0.21.0 // indirect
 	google.golang.org/protobuf v1.34.2 // indirect
