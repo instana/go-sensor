@@ -26,6 +26,7 @@ func Test_Collector_Noop(t *testing.T) {
 }
 
 func Test_Collector_LegacySensor(t *testing.T) {
+	t.Cleanup(cleanupFn)
 	recorder := instana.NewTestRecorder()
 	c := instana.InitCollector(&instana.Options{AgentClient: alwaysReadyClient{}, Recorder: recorder})
 	s := c.LegacySensor()
@@ -45,7 +46,7 @@ func Test_Collector_LegacySensor(t *testing.T) {
 }
 
 func Test_Collector_Singleton(t *testing.T) {
-	instana.C = nil
+	t.Cleanup(cleanupFn)
 	var ok bool
 	var instance instana.TracerLogger
 
@@ -92,7 +93,7 @@ func Test_Collector_EmbeddedTracer(t *testing.T) {
 }
 
 func Test_Collector_Logger(t *testing.T) {
-	instana.C = nil
+	t.Cleanup(cleanupFn)
 	instana.InitCollector(nil)
 
 	l := &mylogger{}

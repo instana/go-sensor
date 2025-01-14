@@ -46,16 +46,18 @@ func BenchmarkTracingNamedHandlerFunc(b *testing.B) {
 }
 
 func TestTracingNamedHandlerFunc_Write(t *testing.T) {
+	t.Cleanup(cleanupFn)
+	recorder := instana.NewTestRecorder()
 	opts := &instana.Options{
 		Service: "go-sensor-test",
 		Tracer: instana.TracerOptions{
 			CollectableHTTPHeaders: []string{"x-custom-header-1", "x-custom-header-2"},
 		},
 		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
 	}
 
-	recorder := instana.NewTestRecorder()
-	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(opts, recorder))
+	s := instana.InitCollector(opts)
 	defer instana.ShutdownSensor()
 
 	h := instana.TracingNamedHandlerFunc(s, "action", "/{action}", func(w http.ResponseWriter, req *http.Request) {
