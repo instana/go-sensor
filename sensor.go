@@ -86,11 +86,11 @@ var (
 	muSensor         sync.Mutex
 	binaryName       = filepath.Base(os.Args[0])
 	processStartedAt = time.Now()
-	C                TracerLogger
+	c                TracerLogger
 )
 
 func init() {
-	C = newNoopCollector()
+	c = newNoopCollector()
 }
 
 func newSensor(options *Options) *sensorS {
@@ -276,12 +276,27 @@ func Flush(ctx context.Context) error {
 
 // ShutdownSensor cleans up the internal global sensor reference. The next time that instana.InitSensor is called,
 // directly or indirectly, the internal sensor will be reinitialized.
+//
+// Deprecated: Use [ShutdownCollector] instead.
 func ShutdownSensor() {
 	muSensor.Lock()
 	if sensor != nil {
 		sensor = nil
 	}
 	muSensor.Unlock()
+}
+
+// ShutdownCollector cleans up the collector and sensor reference.
+// It will also reset the singleton as the next time that instana.InitCollector API is called,
+// collector and sensor will be reinitialized.
+func ShutdownCollector() {
+	muCollector.Lock()
+	defer muCollector.Unlock()
+	if sensor != nil {
+		sensor = nil
+	}
+	c = nil
+	once = sync.Once{}
 }
 
 func newServerlessAgent(serviceName, agentEndpoint, agentKey string,
