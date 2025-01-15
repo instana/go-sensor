@@ -46,7 +46,6 @@ func BenchmarkTracingNamedHandlerFunc(b *testing.B) {
 }
 
 func TestTracingNamedHandlerFunc_Write(t *testing.T) {
-	t.Cleanup(cleanupFn)
 	recorder := instana.NewTestRecorder()
 	opts := &instana.Options{
 		Service: "go-sensor-test",

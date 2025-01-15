@@ -3,13 +3,4 @@
 
 package instana_test
 
-import (
-	instana "github.com/instana/go-sensor"
-)
-
 const TestServiceName = "test_service"
-
-var cleanupFn = func() {
-	// reset instana collector
-	instana.C = nil
-}

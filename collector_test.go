@@ -16,23 +16,22 @@ import (
 )
 
 func Test_Collector_Noop(t *testing.T) {
-	assert.NotNil(t, instana.C, "instana.C should never be nil and be initialized as noop")
+	assert.NotNil(t, instana.GetC(), "instana collector should never be nil and be initialized as noop")
 
-	sc, err := instana.C.Extract(nil, nil)
+	sc, err := instana.GetC().Extract(nil, nil)
 	assert.Nil(t, sc)
 	assert.Error(t, err)
-	assert.Nil(t, instana.C.StartSpan(""))
-	assert.Nil(t, instana.C.LegacySensor())
+	assert.Nil(t, instana.GetC().StartSpan(""))
+	assert.Nil(t, instana.GetC().LegacySensor())
 }
 
 func Test_Collector_LegacySensor(t *testing.T) {
-	t.Cleanup(cleanupFn)
 	recorder := instana.NewTestRecorder()
 	c := instana.InitCollector(&instana.Options{AgentClient: alwaysReadyClient{}, Recorder: recorder})
 	s := c.LegacySensor()
-	defer instana.ShutdownSensor()
+	defer instana.ShutdownCollector()
 
-	assert.NotNil(t, instana.C.LegacySensor())
+	assert.NotNil(t, instana.GetC().LegacySensor())
 
 	h := instana.TracingHandlerFunc(s, "/{action}", func(w http.ResponseWriter, req *http.Request) {
 		fmt.Fprintln(w, "Ok")
@@ -42,30 +41,31 @@ func Test_Collector_LegacySensor(t *testing.T) {
 
 	h.ServeHTTP(httptest.NewRecorder(), req)
 
-	assert.Len(t, recorder.GetQueuedSpans(), 1, "Instrumentations should still work fine with instana.C.LegacySensor()")
+	assert.Len(t, recorder.GetQueuedSpans(), 1, "Instrumentations should still work fine with instana.GetC().LegacySensor()")
 }
 
 func Test_Collector_Singleton(t *testing.T) {
-	t.Cleanup(cleanupFn)
 	var ok bool
 	var instance instana.TracerLogger
 
-	_, ok = instana.C.(*instana.Collector)
-	assert.False(t, ok, "instana.C is noop before InitCollector is called")
+	defer instana.ShutdownCollector()
+
+	_, ok = instana.GetC().(*instana.Collector)
+	assert.False(t, ok, "instana collector is noop before InitCollector is called")
 
 	instana.InitCollector(instana.DefaultOptions())
 
-	instance, ok = instana.C.(*instana.Collector)
-	assert.True(t, ok, "instana.C is of type instana.Collector after InitCollector is called")
+	instance, ok = instana.GetC().(*instana.Collector)
+	assert.True(t, ok, "instana collector is of type instana.Collector after InitCollector is called")
 
 	instana.InitCollector(instana.DefaultOptions())
 
-	assert.Equal(t, instana.C, instance, "instana.C is singleton and should not be reassigned if InitCollector is called again")
+	assert.Equal(t, instana.GetC(), instance, "instana collector is singleton and should not be reassigned if InitCollector is called again")
 }
 
 func Test_Collector_EmbeddedTracer(t *testing.T) {
-	instana.C = nil
 	c := instana.InitCollector(nil)
+	defer instana.ShutdownCollector()
 
 	sp := c.StartSpan("my-span")
 
@@ -93,18 +93,18 @@ func Test_Collector_EmbeddedTracer(t *testing.T) {
 }
 
 func Test_Collector_Logger(t *testing.T) {
-	t.Cleanup(cleanupFn)
 	instana.InitCollector(nil)
+	defer instana.ShutdownCollector()
 
 	l := &mylogger{}
 
-	instana.C.SetLogger(l)
+	instana.GetC().SetLogger(l)
 
-	instana.C.Debug()
-	instana.C.Info()
-	instana.C.Warn()
-	instana.C.Error()
-	instana.C.Error()
+	instana.GetC().Debug()
+	instana.GetC().Info()
+	instana.GetC().Warn()
+	instana.GetC().Error()
+	instana.GetC().Error()
 
 	assert.Equal(t, 1, l.counter["debug"])
 	assert.Equal(t, 1, l.counter["info"])
