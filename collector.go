@@ -4,6 +4,7 @@ package instana
 
 import (
 	"context"
+	"fmt"
 	"sync"
 
 	ot "github.com/opentracing/opentracing-go"
@@ -27,8 +28,8 @@ type Collector struct {
 var _ TracerLogger = (*Collector)(nil)
 
 var (
-	once        sync.Once
-	muCollector sync.Mutex
+	once sync.Once
+	muc  sync.Mutex
 )
 
 // InitCollector creates a new [Collector]
@@ -51,8 +52,8 @@ func InitCollector(opts *Options) TracerLogger {
 			recorder: opts.Recorder,
 		}
 
-		muCollector.Lock()
-		defer muCollector.Unlock()
+		muc.Lock()
+		defer muc.Unlock()
 
 		c = &Collector{
 			t:             tracer,
@@ -65,11 +66,16 @@ func InitCollector(opts *Options) TracerLogger {
 	return c
 }
 
-// GetC return the instance of instana Collector
-func GetC() TracerLogger {
-	muCollector.Lock()
-	defer muCollector.Unlock()
-	return c
+// GetCollector return the instance of instana Collector
+func GetCollector() (TracerLogger, error) {
+	muc.Lock()
+	defer muc.Unlock()
+
+	if _, ok := c.(*Collector); !ok {
+		return c, fmt.Errorf("collector is not initialized")
+	}
+
+	return c, nil
 }
 
 // Extract() returns a SpanContext instance given `format` and `carrier`. It matches [opentracing.Tracer.Extract].
