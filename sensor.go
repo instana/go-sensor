@@ -295,7 +295,7 @@ func ShutdownCollector() {
 	if sensor != nil {
 		sensor = nil
 	}
-	c = nil
+	c = newNoopCollector()
 	once = sync.Once{}
 }
 
