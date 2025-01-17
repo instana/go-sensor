@@ -36,7 +36,7 @@ func Test_Collector_LegacySensor(t *testing.T) {
 	s := c.LegacySensor()
 	defer instana.ShutdownCollector()
 
-	assert.NotNil(t, getInstanaCollector().LegacySensor())
+	assert.NotNil(t, c.LegacySensor())
 
 	h := instana.TracingHandlerFunc(s, "/{action}", func(w http.ResponseWriter, req *http.Request) {
 		fmt.Fprintln(w, "Ok")
