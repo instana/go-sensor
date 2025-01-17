@@ -72,7 +72,7 @@ func GetCollector() (TracerLogger, error) {
 	defer muc.Unlock()
 
 	if _, ok := c.(*Collector); !ok {
-		return c, fmt.Errorf("collector is not initialized")
+		return c, fmt.Errorf("Collector has not been initialised yet. Please use InitCollector first")
 	}
 
 	return c, nil
