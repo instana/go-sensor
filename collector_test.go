@@ -88,6 +88,7 @@ func Test_InitCollector_With_Goroutines(t *testing.T) {
 			assert.NotNil(t, c)
 		}(i)
 	}
+	wg.Wait()
 }
 
 func Test_Collector_EmbeddedTracer(t *testing.T) {
