@@ -52,9 +52,6 @@ func InitCollector(opts *Options) TracerLogger {
 			recorder: opts.Recorder,
 		}
 
-		muc.Lock()
-		defer muc.Unlock()
-
 		c = &Collector{
 			t:             tracer,
 			LeveledLogger: defaultLogger,
