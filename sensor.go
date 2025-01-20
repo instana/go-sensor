@@ -280,6 +280,7 @@ func Flush(ctx context.Context) error {
 // Deprecated: Use [ShutdownCollector] instead.
 func ShutdownSensor() {
 	muSensor.Lock()
+	defer muSensor.Unlock()
 	if sensor != nil {
 		sensor = nil
 	}
