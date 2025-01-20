@@ -290,11 +290,15 @@ func ShutdownSensor() {
 // It will also reset the singleton as the next time that instana.InitCollector API is called,
 // collector and sensor will be reinitialized.
 func ShutdownCollector() {
-	muc.Lock()
-	defer muc.Unlock()
+
+	muSensor.Lock()
 	if sensor != nil {
 		sensor = nil
 	}
+	muSensor.Unlock()
+
+	muc.Lock()
+	defer muc.Unlock()
 	c = newNoopCollector()
 	once = sync.Once{}
 }
