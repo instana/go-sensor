@@ -291,12 +291,7 @@ func ShutdownSensor() {
 // collector and sensor will be reinitialized.
 func ShutdownCollector() {
 
-	muSensor.Lock()
-	if sensor != nil {
-		sensor = nil
-	}
-	muSensor.Unlock()
-
+	ShutdownSensor()
 	muc.Lock()
 	defer muc.Unlock()
 	c = newNoopCollector()
