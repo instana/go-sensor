@@ -16,9 +16,6 @@ Go Collector 1.64 or later supports Go 1.23 and 1.22.
 > [!NOTE]
 > Make sure to always use the latest version of the tracer, as it provides new features, improvements, security updates and fixes.
 
-> [!IMPORTANT]
-> Since v1.53.0, the Go Tracer uses fsm v1.0.1 internally. Customers using fsm prior to v1 in their projects will need to update it to v1.
-
 ## Installation
 
 To add the tracer to your project, run:
