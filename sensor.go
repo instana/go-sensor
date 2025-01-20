@@ -283,7 +283,6 @@ func ShutdownSensor() {
 	if sensor != nil {
 		sensor = nil
 	}
-	muSensor.Unlock()
 }
 
 // ShutdownCollector cleans up the collector and sensor reference.
