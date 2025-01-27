@@ -113,8 +113,8 @@ func Test_fsmS_testAgent_Error(t *testing.T) {
 
 func Test_fsmS_announceSensor(t *testing.T) {
 	// initializes the global sensor as it is needed when the announcement is successful
-	InitSensor(DefaultOptions())
-	defer ShutdownSensor()
+	InitCollector(DefaultOptions())
+	defer ShutdownCollector()
 
 	// Forces the mocked agent to fail with HTTP 400 in the first call to lead fsm to retry once
 	var serverGaveErrorOnFirstCall bool
