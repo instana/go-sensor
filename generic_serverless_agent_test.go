@@ -35,9 +35,8 @@ func TestMain(m *testing.M) {
 func TestIntegration_LocalServerlessAgent_SendSpans(t *testing.T) {
 	defer agent.Reset()
 
-	tracer := instana.NewTracer()
-	sensor := instana.NewSensorWithTracer(tracer)
-	defer instana.ShutdownSensor()
+	sensor := instana.InitCollector(instana.DefaultOptions())
+	defer instana.ShutdownCollector()
 
 	sp := sensor.Tracer().StartSpan("generic_serverless")
 	sp.Finish()
@@ -45,7 +44,7 @@ func TestIntegration_LocalServerlessAgent_SendSpans(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 
-	require.NoError(t, tracer.Flush(ctx))
+	require.NoError(t, sensor.Flush(ctx))
 	require.Len(t, agent.Bundles, 1)
 
 	var spans []map[string]json.RawMessage
@@ -64,9 +63,8 @@ func TestIntegration_LocalServerlessAgent_SendSpans(t *testing.T) {
 func TestIntegration_LocalServerlessAgent_SendSpans_Error(t *testing.T) {
 	defer agent.Reset()
 
-	tracer := instana.NewTracer()
-	sensor := instana.NewSensorWithTracer(tracer)
-	defer instana.ShutdownSensor()
+	sensor := instana.InitCollector(instana.DefaultOptions())
+	defer instana.ShutdownCollector()
 
 	sp := sensor.Tracer().StartSpan("http")
 	sp.SetTag("returnError", "true")
@@ -75,7 +73,7 @@ func TestIntegration_LocalServerlessAgent_SendSpans_Error(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 	defer cancel()
 
-	require.NoError(t, tracer.Flush(ctx))
+	require.NoError(t, sensor.Flush(ctx))
 	require.Len(t, agent.Bundles, 0)
 }
 

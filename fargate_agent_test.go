@@ -51,7 +51,8 @@ func TestMain(m *testing.M) {
 		log.Fatalf("failed to initialize serverless agent: %s", err)
 	}
 
-	instana.InitSensor(instana.DefaultOptions())
+	instana.InitCollector(instana.DefaultOptions())
+	defer instana.ShutdownCollector()
 
 	os.Exit(m.Run())
 }
@@ -207,7 +208,8 @@ func TestIntegration_FargateAgent_SendMetrics(t *testing.T) {
 func TestIntegration_FargateAgent_SendSpans(t *testing.T) {
 	defer agent.Reset()
 
-	sensor := instana.NewSensor("testing")
+	sensor := instana.InitCollector(instana.DefaultOptions())
+	defer instana.ShutdownCollector()
 
 	sp := sensor.Tracer().StartSpan("entry")
 	sp.SetTag("value", "42")
@@ -249,8 +251,8 @@ func TestIntegration_FargateAgent_SendSpans(t *testing.T) {
 func TestIntegration_FargateAgent_FlushSpans(t *testing.T) {
 	defer agent.Reset()
 
-	tracer := instana.NewTracer()
-	sensor := instana.NewSensorWithTracer(tracer)
+	sensor := instana.InitCollector(instana.DefaultOptions())
+	defer instana.ShutdownCollector()
 
 	sp := sensor.Tracer().StartSpan("entry")
 	sp.SetTag("value", "42")
@@ -259,7 +261,7 @@ func TestIntegration_FargateAgent_FlushSpans(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 
-	require.NoError(t, tracer.Flush(ctx))
+	require.NoError(t, sensor.Flush(ctx))
 }
 
 func setupAWSFargateEnv() func() {
