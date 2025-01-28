@@ -4,6 +4,8 @@ package instana
 
 import (
 	"context"
+	"fmt"
+	"sync"
 
 	ot "github.com/opentracing/opentracing-go"
 )
@@ -25,38 +27,52 @@ type Collector struct {
 
 var _ TracerLogger = (*Collector)(nil)
 
+var (
+	once sync.Once
+	muc  sync.Mutex
+)
+
 // InitCollector creates a new [Collector]
 func InitCollector(opts *Options) TracerLogger {
 
-	// if instana.C is already an instance of Collector, we just return
-	if _, ok := C.(*Collector); ok {
-		C.Warn("InitCollector was previously called. instana.C is reused")
-		return C
-	}
-
-	if opts == nil {
-		opts = &Options{
-			Recorder: NewRecorder(),
+	once.Do(func() {
+		if opts == nil {
+			opts = &Options{
+				Recorder: NewRecorder(),
+			}
 		}
+
+		if opts.Recorder == nil {
+			opts.Recorder = NewRecorder()
+		}
+
+		StartMetrics(opts)
+
+		tracer := &tracerS{
+			recorder: opts.Recorder,
+		}
+
+		c = &Collector{
+			t:             tracer,
+			LeveledLogger: defaultLogger,
+			Sensor:        NewSensorWithTracer(tracer),
+		}
+
+	})
+
+	return c
+}
+
+// GetCollector return the instance of instana Collector
+func GetCollector() (TracerLogger, error) {
+	muc.Lock()
+	defer muc.Unlock()
+
+	if _, ok := c.(*Collector); !ok {
+		return c, fmt.Errorf("collector has not been initialised yet. Please use InitCollector first")
 	}
 
-	if opts.Recorder == nil {
-		opts.Recorder = NewRecorder()
-	}
-
-	StartMetrics(opts)
-
-	tracer := &tracerS{
-		recorder: opts.Recorder,
-	}
-
-	C = &Collector{
-		t:             tracer,
-		LeveledLogger: defaultLogger,
-		Sensor:        NewSensorWithTracer(tracer),
-	}
-
-	return C
+	return c, nil
 }
 
 // Extract() returns a SpanContext instance given `format` and `carrier`. It matches [opentracing.Tracer.Extract].
