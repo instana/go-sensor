@@ -47,7 +47,8 @@ func TestMain(m *testing.M) {
 		log.Fatalf("failed to initialize serverless agent: %s", err)
 	}
 
-	instana.InitSensor(instana.DefaultOptions())
+	instana.InitCollector(instana.DefaultOptions())
+	defer instana.ShutdownCollector()
 
 	os.Exit(m.Run())
 }
@@ -55,8 +56,8 @@ func TestMain(m *testing.M) {
 func TestIntegration_LambdaAgent_SendSpans(t *testing.T) {
 	defer agent.Reset()
 
-	tracer := instana.NewTracer()
-	sensor := instana.NewSensorWithTracer(tracer)
+	sensor := instana.InitCollector(instana.DefaultOptions())
+	defer instana.ShutdownCollector()
 
 	sp := sensor.Tracer().StartSpan("aws.lambda.entry", opentracing.Tags{
 		"lambda.arn":     "aws::test-lambda::$LATEST",
@@ -88,9 +89,8 @@ func TestIntegration_LambdaAgent_SendSpans(t *testing.T) {
 func TestIntegration_LambdaAgent_SendSpans_Error(t *testing.T) {
 	defer agent.Reset()
 
-	tracer := instana.NewTracer()
-	sensor := instana.NewSensorWithTracer(tracer)
-	defer instana.ShutdownSensor()
+	sensor := instana.InitCollector(instana.DefaultOptions())
+	defer instana.ShutdownCollector()
 
 	sp := sensor.Tracer().StartSpan("aws.lambda.entry", opentracing.Tags{
 		"lambda.arn":     "aws::test-lambda::$LATEST",
