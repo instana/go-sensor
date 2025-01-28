@@ -31,14 +31,14 @@ func TestAppendALotDelayedSpans(t *testing.T) {
 	assert.Len(t, ds.spans, maxDelayedSpans)
 }
 
-func resetDelayedSpans() {
-	delayed = &delayedSpans{
-		spans: make(chan *spanS, maxDelayedSpans),
-	}
-}
-
 func TestPartiallyFlushDelayedSpans(t *testing.T) {
 	defer resetDelayedSpans()
+
+	//We need to simulate that the agent is not ready.
+	ok, cleanupFunc := setupEnv()
+	if ok {
+		defer cleanupFunc()
+	}
 
 	recorder := NewTestRecorder()
 	s := NewSensorWithTracer(NewTracerWithEverything(&Options{
@@ -50,12 +50,6 @@ func TestPartiallyFlushDelayedSpans(t *testing.T) {
 	defer ShutdownSensor()
 
 	generateSomeTraffic(s, maxDelayedSpans)
-
-	// serverless agent should not be present for this test to pass.
-	// following check is added for debugging random failures in the unit tests of delayed spans
-	// TODO: remove it once the issue is resolved.
-	url, _ := os.LookupEnv("INSTANA_ENDPOINT_URL")
-	assert.Equal(t, "", url)
 
 	assert.Len(t, delayed.spans, maxDelayedSpans)
 
@@ -72,6 +66,12 @@ func TestPartiallyFlushDelayedSpans(t *testing.T) {
 func TestFlushDelayedSpans(t *testing.T) {
 	defer resetDelayedSpans()
 
+	//We need to simulate that the agent is not ready.
+	ok, cleanupFunc := setupEnv()
+	if ok {
+		defer cleanupFunc()
+	}
+
 	recorder := NewTestRecorder()
 	s := NewSensorWithTracer(NewTracerWithEverything(&Options{
 		Service: "go-sensor-test",
@@ -82,12 +82,6 @@ func TestFlushDelayedSpans(t *testing.T) {
 	defer ShutdownSensor()
 
 	generateSomeTraffic(s, maxDelayedSpans)
-
-	// serverless agent should not be present for this test to pass.
-	// following check is added for debugging random failures in the unit tests of delayed spans
-	// TODO: remove it once the issue is resolved.
-	_, isURLPresent := os.LookupEnv("INSTANA_ENDPOINT_URL")
-	assert.Equal(t, false, isURLPresent)
 
 	assert.Len(t, delayed.spans, maxDelayedSpans)
 
@@ -101,6 +95,12 @@ func TestFlushDelayedSpans(t *testing.T) {
 func TestParallelFlushDelayedSpans(t *testing.T) {
 	defer resetDelayedSpans()
 
+	//We need to simulate that the agent is not ready.
+	ok, cleanupFunc := setupEnv()
+	if ok {
+		defer cleanupFunc()
+	}
+
 	m, _ := NamedMatcher(ContainsIgnoreCaseMatcher, []string{"q", "secret"})
 
 	recorder := NewTestRecorder()
@@ -113,12 +113,6 @@ func TestParallelFlushDelayedSpans(t *testing.T) {
 	defer ShutdownSensor()
 
 	generateSomeTraffic(s, maxDelayedSpans*2)
-
-	// serverless agent should not be present for this test to pass.
-	// following check is added for debugging random failures in the unit tests of delayed spans
-	// TODO: remove it once the issue is resolved.
-	_, isURLPresent := os.LookupEnv("INSTANA_ENDPOINT_URL")
-	assert.Equal(t, false, isURLPresent)
 
 	assert.Len(t, delayed.spans, maxDelayedSpans)
 
@@ -151,6 +145,43 @@ func TestParallelFlushDelayedSpans(t *testing.T) {
 	}
 }
 
+func generateSomeTraffic(s TracerLogger, amount int) {
+	h := TracingNamedHandlerFunc(s, "action", "/{action}", func(w http.ResponseWriter, req *http.Request) {
+		_, _ = fmt.Fprintln(w, "Ok")
+	})
+
+	req := httptest.NewRequest(http.MethodGet, "/test?q=term&secret=mypassword", nil)
+
+	rec := httptest.NewRecorder()
+
+	for i := 0; i < amount; i++ {
+		h.ServeHTTP(rec, req)
+	}
+}
+
+func resetDelayedSpans() {
+	delayed = &delayedSpans{
+		spans: make(chan *spanS, maxDelayedSpans),
+	}
+}
+
+func setupEnv() (bool, func()) {
+	// The presence of INSTANA_ENDPOINT_URL will lead to the creation of serverless agent client.
+	if url, ok := os.LookupEnv("INSTANA_ENDPOINT_URL"); ok {
+		if err := os.Unsetenv("INSTANA_ENDPOINT_URL"); err != nil {
+			fmt.Println("failed to unset INSTANA_ENDPOINT_URL")
+			panic(err)
+		}
+		return ok, func() {
+			if err := os.Setenv("INSTANA_ENDPOINT_URL", url); err != nil {
+				fmt.Println("failed to set INSTANA_ENDPOINT_URL")
+				panic(err)
+			}
+		}
+	}
+	return false, nil
+}
+
 type eventuallyNotReadyClient struct {
 	notReadyAfter uint64
 	ops           uint64
@@ -166,17 +197,3 @@ func (*eventuallyNotReadyClient) SendEvent(event *EventData) error              
 func (*eventuallyNotReadyClient) SendSpans(spans []Span) error                      { return nil }
 func (*eventuallyNotReadyClient) SendProfiles(profiles []autoprofile.Profile) error { return nil }
 func (*eventuallyNotReadyClient) Flush(context.Context) error                       { return nil }
-
-func generateSomeTraffic(s TracerLogger, amount int) {
-	h := TracingNamedHandlerFunc(s, "action", "/{action}", func(w http.ResponseWriter, req *http.Request) {
-		fmt.Fprintln(w, "Ok")
-	})
-
-	req := httptest.NewRequest(http.MethodGet, "/test?q=term&secret=mypassword", nil)
-
-	rec := httptest.NewRecorder()
-
-	for i := 0; i < amount; i++ {
-		h.ServeHTTP(rec, req)
-	}
-}
