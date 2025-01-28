@@ -69,7 +69,7 @@ func TestIntegration_LambdaAgent_SendSpans(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 
-	require.NoError(t, tracer.Flush(ctx))
+	require.NoError(t, sensor.Flush(ctx))
 	require.Len(t, agent.Bundles, 1)
 
 	var spans []map[string]json.RawMessage
@@ -103,7 +103,7 @@ func TestIntegration_LambdaAgent_SendSpans_Error(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 
-	require.NoError(t, tracer.Flush(ctx))
+	require.NoError(t, sensor.Flush(ctx))
 	require.Len(t, agent.Bundles, 0)
 }
 
