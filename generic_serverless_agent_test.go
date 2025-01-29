@@ -35,16 +35,16 @@ func TestMain(m *testing.M) {
 func TestIntegration_LocalServerlessAgent_SendSpans(t *testing.T) {
 	defer agent.Reset()
 
-	sensor := instana.InitCollector(instana.DefaultOptions())
+	c := instana.InitCollector(instana.DefaultOptions())
 	defer instana.ShutdownCollector()
 
-	sp := sensor.Tracer().StartSpan("generic_serverless")
+	sp := c.Tracer().StartSpan("generic_serverless")
 	sp.Finish()
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 
-	require.NoError(t, sensor.Flush(ctx))
+	require.NoError(t, c.Flush(ctx))
 	require.Len(t, agent.Bundles, 1)
 
 	var spans []map[string]json.RawMessage
@@ -63,17 +63,17 @@ func TestIntegration_LocalServerlessAgent_SendSpans(t *testing.T) {
 func TestIntegration_LocalServerlessAgent_SendSpans_Error(t *testing.T) {
 	defer agent.Reset()
 
-	sensor := instana.InitCollector(instana.DefaultOptions())
+	c := instana.InitCollector(instana.DefaultOptions())
 	defer instana.ShutdownCollector()
 
-	sp := sensor.Tracer().StartSpan("http")
+	sp := c.Tracer().StartSpan("http")
 	sp.SetTag("returnError", "true")
 	sp.Finish()
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 	defer cancel()
 
-	require.NoError(t, sensor.Flush(ctx))
+	require.NoError(t, c.Flush(ctx))
 	require.Len(t, agent.Bundles, 0)
 }
 

@@ -39,16 +39,16 @@ func TestMain(m *testing.M) {
 func TestIntegration_AzureAgent_SendSpans(t *testing.T) {
 	defer agent.Reset()
 
-	sensor := instana.InitCollector(instana.DefaultOptions())
+	c := instana.InitCollector(instana.DefaultOptions())
 	defer instana.ShutdownCollector()
 
-	sp := sensor.Tracer().StartSpan("azf")
+	sp := c.Tracer().StartSpan("azf")
 	sp.Finish()
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 
-	require.NoError(t, sensor.Flush(ctx))
+	require.NoError(t, c.Flush(ctx))
 	require.Len(t, agent.Bundles, 1)
 
 	var spans []map[string]json.RawMessage
@@ -68,10 +68,10 @@ func TestIntegration_AzureAgent_SendSpans(t *testing.T) {
 func TestIntegration_AzureAgent_SpanDetails(t *testing.T) {
 	defer agent.Reset()
 
-	sensor := instana.InitCollector(instana.DefaultOptions())
+	c := instana.InitCollector(instana.DefaultOptions())
 	defer instana.ShutdownCollector()
 
-	sp := sensor.Tracer().StartSpan("azf")
+	sp := c.Tracer().StartSpan("azf")
 	sp.SetTag("azf.triggername", "HTTP")
 	sp.SetTag("azf.functionname", "testfunction")
 	sp.SetTag("azf.name", "testapp")
@@ -82,7 +82,7 @@ func TestIntegration_AzureAgent_SpanDetails(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 
-	require.NoError(t, sensor.Flush(ctx))
+	require.NoError(t, c.Flush(ctx))
 	require.Len(t, agent.Bundles, 1)
 
 	var spans []map[string]json.RawMessage
@@ -110,17 +110,17 @@ func TestIntegration_AzureAgent_SpanDetails(t *testing.T) {
 func TestIntegration_AzureAgent_SendSpans_Error(t *testing.T) {
 	defer agent.Reset()
 
-	sensor := instana.InitCollector(instana.DefaultOptions())
+	c := instana.InitCollector(instana.DefaultOptions())
 	defer instana.ShutdownCollector()
 
-	sp := sensor.Tracer().StartSpan("azf")
+	sp := c.Tracer().StartSpan("azf")
 	sp.SetTag("returnError", "true")
 	sp.Finish()
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 
-	require.NoError(t, sensor.Flush(ctx))
+	require.NoError(t, c.Flush(ctx))
 	require.Len(t, agent.Bundles, 0)
 }
 

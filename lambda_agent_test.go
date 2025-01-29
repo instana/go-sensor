@@ -56,10 +56,10 @@ func TestMain(m *testing.M) {
 func TestIntegration_LambdaAgent_SendSpans(t *testing.T) {
 	defer agent.Reset()
 
-	sensor := instana.InitCollector(instana.DefaultOptions())
+	c := instana.InitCollector(instana.DefaultOptions())
 	defer instana.ShutdownCollector()
 
-	sp := sensor.Tracer().StartSpan("aws.lambda.entry", opentracing.Tags{
+	sp := c.Tracer().StartSpan("aws.lambda.entry", opentracing.Tags{
 		"lambda.arn":     "aws::test-lambda::$LATEST",
 		"lambda.name":    "test-lambda",
 		"lambda.version": "$LATEST",
@@ -69,7 +69,7 @@ func TestIntegration_LambdaAgent_SendSpans(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 
-	require.NoError(t, sensor.Flush(ctx))
+	require.NoError(t, c.Flush(ctx))
 	require.Len(t, agent.Bundles, 1)
 
 	var spans []map[string]json.RawMessage
@@ -89,10 +89,10 @@ func TestIntegration_LambdaAgent_SendSpans(t *testing.T) {
 func TestIntegration_LambdaAgent_SendSpans_Error(t *testing.T) {
 	defer agent.Reset()
 
-	sensor := instana.InitCollector(instana.DefaultOptions())
+	c := instana.InitCollector(instana.DefaultOptions())
 	defer instana.ShutdownCollector()
 
-	sp := sensor.Tracer().StartSpan("aws.lambda.entry", opentracing.Tags{
+	sp := c.Tracer().StartSpan("aws.lambda.entry", opentracing.Tags{
 		"lambda.arn":     "aws::test-lambda::$LATEST",
 		"lambda.name":    "test-lambda",
 		"lambda.version": "$LATEST",
@@ -103,7 +103,7 @@ func TestIntegration_LambdaAgent_SendSpans_Error(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 
-	require.NoError(t, sensor.Flush(ctx))
+	require.NoError(t, c.Flush(ctx))
 	require.Len(t, agent.Bundles, 0)
 }
 

@@ -139,10 +139,10 @@ func TestIntegration_GCRAgent_SendMetrics(t *testing.T) {
 func TestIntegration_GCRAgent_SendSpans(t *testing.T) {
 	defer agent.Reset()
 
-	sensor := instana.InitCollector(instana.DefaultOptions())
+	c := instana.InitCollector(instana.DefaultOptions())
 	defer instana.ShutdownCollector()
 
-	sp := sensor.Tracer().StartSpan("entry")
+	sp := c.Tracer().StartSpan("entry")
 	sp.SetTag("value", "42")
 	sp.Finish()
 
@@ -182,17 +182,17 @@ func TestIntegration_GCRAgent_SendSpans(t *testing.T) {
 func TestIntegration_GCRAgent_FlushSpans(t *testing.T) {
 	defer agent.Reset()
 
-	sensor := instana.InitCollector(instana.DefaultOptions())
+	c := instana.InitCollector(instana.DefaultOptions())
 	defer instana.ShutdownCollector()
 
-	sp := sensor.Tracer().StartSpan("entry")
+	sp := c.Tracer().StartSpan("entry")
 	sp.SetTag("value", "42")
 	sp.Finish()
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 
-	require.NoError(t, sensor.Flush(ctx))
+	require.NoError(t, c.Flush(ctx))
 }
 
 func setupGCREnv() func() {
