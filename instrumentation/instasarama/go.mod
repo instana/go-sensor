@@ -4,7 +4,7 @@ go 1.22
 
 require (
 	github.com/IBM/sarama v1.45.0
-	github.com/instana/go-sensor v1.66.1
+	github.com/instana/go-sensor v1.66.2
 	github.com/opentracing/opentracing-go v1.2.0
 	github.com/stretchr/testify v1.10.0
 )
