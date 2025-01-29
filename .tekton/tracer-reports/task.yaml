@@ -11,14 +11,16 @@ spec:
       mountPath: /workspace
   steps:
     - name: clone-go-sensor-repo
-      image: alpine/git:2.43.0
+      image: public.ecr.aws/docker/library/alpine:3.21.2
       workingDir: /workspace/
       script: |
         #!/bin/sh
+        echo "Installing git"
+        apk fix && apk --no-cache --update add git
         echo "Cloning repo!"
         git clone --depth 1 -b main https://github.com/instana/go-sensor && cd /workspace/go-sensor && git status
     - name: clone-tracer-reports
-      image: alpine/git:2.43.0
+      image: public.ecr.aws/docker/library/alpine:3.21.2
       env:
         - name: GITHUB_ENTERPRISE_TOKEN
           valueFrom:
@@ -33,6 +35,8 @@ spec:
       workingDir: /workspace/
       script: |
         #!/bin/sh
+        echo "Installing git"
+        apk fix && apk --no-cache --update add git
         echo "Cloning repo!"
         git clone --depth 1 -b main https://oauth2:$GITHUB_ENTERPRISE_TOKEN@$REPO_URL && cd /workspace/tracer-reports && git status
 
@@ -47,7 +51,7 @@ spec:
       mountPath: /workspace
   steps:
     - name: run-tracer-reports-script
-      image: golang:1.22
+      image: public.ecr.aws/docker/library/golang:1.23
       imagePullPolicy: Always
       workingDir: /workspace/
       script: |
@@ -65,7 +69,7 @@ spec:
       mountPath: /workspace
   steps:
     - name: push-tracer-reports
-      image: alpine/git:2.43.0
+      image: public.ecr.aws/docker/library/alpine:3.21.2
       env:
         - name: GITHUB_ENTERPRISE_USER_EMAIL
           valueFrom:
@@ -75,7 +79,8 @@ spec:
       workingDir: /workspace/tracer-reports/
       script: |
         #!/bin/sh
-
+        echo "Installing git"
+        apk fix && apk --no-cache --update add git
         git config user.name "IBM/Instana/Team Go"
         git config user.email "$GITHUB_ENTERPRISE_USER_EMAIL"
         git add automated/currency/go/report.md || true
@@ -96,7 +101,7 @@ spec:
       mountPath: /workspace
   steps:
     - name: slack-notification
-      image: curlimages/curl:8.7.1
+      image: quay.io/curl/curl:8.11.1
       env:
         - name: STATE
           value: $(params.STATE)
