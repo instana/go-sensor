@@ -24,14 +24,14 @@ import (
 
 func BenchmarkTracingNamedHandlerFunc(b *testing.B) {
 	recorder := instana.NewTestRecorder()
-	s := instana.InitCollector(&instana.Options{
+	c := instana.InitCollector(&instana.Options{
 		Service:     "go-sensor-test",
 		AgentClient: alwaysReadyClient{},
 		Recorder:    recorder,
 	})
 	defer instana.ShutdownCollector()
 
-	h := instana.TracingNamedHandlerFunc(s, "action", "/{action}", func(w http.ResponseWriter, req *http.Request) {
+	h := instana.TracingNamedHandlerFunc(c, "action", "/{action}", func(w http.ResponseWriter, req *http.Request) {
 		fmt.Fprintln(w, "Ok")
 	})
 
@@ -57,10 +57,10 @@ func TestTracingNamedHandlerFunc_Write(t *testing.T) {
 		Recorder:    recorder,
 	}
 
-	s := instana.InitCollector(opts)
+	c := instana.InitCollector(opts)
 	defer instana.ShutdownCollector()
 
-	h := instana.TracingNamedHandlerFunc(s, "action", "/{action}", func(w http.ResponseWriter, req *http.Request) {
+	h := instana.TracingNamedHandlerFunc(c, "action", "/{action}", func(w http.ResponseWriter, req *http.Request) {
 		w.Header().Set("X-Response", "true")
 		w.Header().Set("X-Custom-Header-2", "response")
 		fmt.Fprintln(w, "Ok")
@@ -171,13 +171,13 @@ func TestTracingNamedHandlerFunc_InstanaFieldLPriorityOverTraceParentHeader(t *t
 	}
 
 	recorder := instana.NewTestRecorder()
-	s := instana.InitCollector(&instana.Options{
+	c := instana.InitCollector(&instana.Options{
 		AgentClient: alwaysReadyClient{},
 		Recorder:    recorder,
 	})
 	defer instana.ShutdownCollector()
 
-	h := instana.TracingNamedHandlerFunc(s, "action", "/test", func(w http.ResponseWriter, req *http.Request) {})
+	h := instana.TracingNamedHandlerFunc(c, "action", "/test", func(w http.ResponseWriter, req *http.Request) {})
 
 	for name, testCase := range testCases {
 		req := httptest.NewRequest(http.MethodGet, "/test", nil)
@@ -193,13 +193,13 @@ func TestTracingNamedHandlerFunc_InstanaFieldLPriorityOverTraceParentHeader(t *t
 
 func TestTracingNamedHandlerFunc_WriteHeaders(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	s := instana.InitCollector(&instana.Options{
+	c := instana.InitCollector(&instana.Options{
 		AgentClient: alwaysReadyClient{},
 		Recorder:    recorder,
 	})
 	defer instana.ShutdownCollector()
 
-	h := instana.TracingNamedHandlerFunc(s, "test", "/test", func(w http.ResponseWriter, req *http.Request) {
+	h := instana.TracingNamedHandlerFunc(c, "test", "/test", func(w http.ResponseWriter, req *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
 	})
 
@@ -250,14 +250,14 @@ func TestTracingNamedHandlerFunc_WriteHeaders(t *testing.T) {
 
 func TestTracingNamedHandlerFunc_W3CTraceContext(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	s := instana.InitCollector(&instana.Options{
+	c := instana.InitCollector(&instana.Options{
 		Service:     "go-sensor-test",
 		AgentClient: alwaysReadyClient{},
 		Recorder:    recorder,
 	})
 	defer instana.ShutdownCollector()
 
-	h := instana.TracingNamedHandlerFunc(s, "test", "/test", func(w http.ResponseWriter, req *http.Request) {
+	h := instana.TracingNamedHandlerFunc(c, "test", "/test", func(w http.ResponseWriter, req *http.Request) {
 		fmt.Fprintln(w, "Ok")
 	})
 
@@ -320,14 +320,14 @@ func TestTracingNamedHandlerFunc_W3CTraceContext(t *testing.T) {
 
 func TestTracingHandlerFunc_SecretsFiltering(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	s := instana.InitCollector(&instana.Options{
+	c := instana.InitCollector(&instana.Options{
 		Service:     "go-sensor-test",
 		AgentClient: alwaysReadyClient{},
 		Recorder:    recorder,
 	})
 	defer instana.ShutdownCollector()
 
-	h := instana.TracingNamedHandlerFunc(s, "action", "/{action}", func(w http.ResponseWriter, req *http.Request) {
+	h := instana.TracingNamedHandlerFunc(c, "action", "/{action}", func(w http.ResponseWriter, req *http.Request) {
 		fmt.Fprintln(w, "Ok")
 	})
 
@@ -369,13 +369,13 @@ func TestTracingHandlerFunc_SecretsFiltering(t *testing.T) {
 
 func TestTracingHandlerFunc_Error(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	s := instana.InitCollector(&instana.Options{
+	c := instana.InitCollector(&instana.Options{
 		AgentClient: alwaysReadyClient{},
 		Recorder:    recorder,
 	})
 	defer instana.ShutdownCollector()
 
-	h := instana.TracingNamedHandlerFunc(s, "test", "/test", func(w http.ResponseWriter, req *http.Request) {
+	h := instana.TracingNamedHandlerFunc(c, "test", "/test", func(w http.ResponseWriter, req *http.Request) {
 		http.Error(w, "something went wrong", http.StatusInternalServerError)
 	})
 
@@ -423,13 +423,13 @@ func TestTracingHandlerFunc_Error(t *testing.T) {
 
 func TestTracingHandlerFunc_SyntheticCall(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	s := instana.InitCollector(&instana.Options{
+	c := instana.InitCollector(&instana.Options{
 		AgentClient: alwaysReadyClient{},
 		Recorder:    recorder,
 	})
 	defer instana.ShutdownCollector()
 
-	h := instana.TracingNamedHandlerFunc(s, "test-handler", "/", func(w http.ResponseWriter, req *http.Request) {
+	h := instana.TracingNamedHandlerFunc(c, "test-handler", "/", func(w http.ResponseWriter, req *http.Request) {
 		fmt.Fprintln(w, "Ok")
 	})
 
@@ -449,13 +449,13 @@ func TestTracingHandlerFunc_SyntheticCall(t *testing.T) {
 
 func TestTracingHandlerFunc_EUMCall(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	s := instana.InitCollector(&instana.Options{
+	c := instana.InitCollector(&instana.Options{
 		AgentClient: alwaysReadyClient{},
 		Recorder:    recorder,
 	})
 	defer instana.ShutdownCollector()
 
-	h := instana.TracingNamedHandlerFunc(s, "test-handler", "/", func(w http.ResponseWriter, req *http.Request) {
+	h := instana.TracingNamedHandlerFunc(c, "test-handler", "/", func(w http.ResponseWriter, req *http.Request) {
 		fmt.Fprintln(w, "Ok")
 	})
 
@@ -476,13 +476,13 @@ func TestTracingHandlerFunc_EUMCall(t *testing.T) {
 
 func TestTracingHandlerFunc_PanicHandling(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	s := instana.InitCollector(&instana.Options{
+	c := instana.InitCollector(&instana.Options{
 		AgentClient: alwaysReadyClient{},
 		Recorder:    recorder,
 	})
 	defer instana.ShutdownCollector()
 
-	h := instana.TracingNamedHandlerFunc(s, "test", "/test", func(w http.ResponseWriter, req *http.Request) {
+	h := instana.TracingNamedHandlerFunc(c, "test", "/test", func(w http.ResponseWriter, req *http.Request) {
 		panic("something went wrong")
 	})
 
@@ -539,13 +539,13 @@ func TestRoundTripper(t *testing.T) {
 		AgentClient: alwaysReadyClient{},
 		Recorder:    recorder,
 	}
-	s := instana.InitCollector(opts)
+	c := instana.InitCollector(opts)
 	defer instana.ShutdownCollector()
 
-	parentSpan := s.StartSpan("parent")
+	parentSpan := c.StartSpan("parent")
 
 	var traceIDHeader, spanIDHeader string
-	rt := instana.RoundTripper(s.LegacySensor(), testRoundTripper(func(req *http.Request) (*http.Response, error) {
+	rt := instana.RoundTripper(c.LegacySensor(), testRoundTripper(func(req *http.Request) (*http.Response, error) {
 		traceIDHeader = req.Header.Get(instana.FieldT)
 		spanIDHeader = req.Header.Get(instana.FieldS)
 
@@ -599,13 +599,13 @@ func TestRoundTripper(t *testing.T) {
 
 func TestRoundTripper_WithoutParentSpan(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	s := instana.InitCollector(&instana.Options{
+	c := instana.InitCollector(&instana.Options{
 		AgentClient: alwaysReadyClient{},
 		Recorder:    recorder,
 	})
 	defer instana.ShutdownCollector()
 
-	rt := instana.RoundTripper(s, testRoundTripper(func(req *http.Request) (*http.Response, error) {
+	rt := instana.RoundTripper(c, testRoundTripper(func(req *http.Request) (*http.Response, error) {
 		// These fields will be present, as an exit span would be created
 		// However the exit spans will not be recorded, as they are discarded before sending to the agent.
 		assert.NotEmpty(t, req.Header.Get(instana.FieldT))
@@ -632,13 +632,13 @@ func TestRoundTripper_AllowRootExitSpan(t *testing.T) {
 	}()
 
 	recorder := instana.NewTestRecorder()
-	s := instana.InitCollector(&instana.Options{
+	c := instana.InitCollector(&instana.Options{
 		AgentClient: alwaysReadyClient{},
 		Recorder:    recorder,
 	})
 	defer instana.ShutdownCollector()
 
-	rt := instana.RoundTripper(s, testRoundTripper(func(req *http.Request) (*http.Response, error) {
+	rt := instana.RoundTripper(c, testRoundTripper(func(req *http.Request) (*http.Response, error) {
 		// These fields will be present as an exit span would be created
 		assert.NotEmpty(t, req.Header.Get(instana.FieldT))
 		assert.NotEmpty(t, req.Header.Get(instana.FieldS))
@@ -665,17 +665,17 @@ func TestRoundTripper_Error(t *testing.T) {
 	serverErr := errors.New("something went wrong")
 
 	recorder := instana.NewTestRecorder()
-	s := instana.InitCollector(&instana.Options{
+	c := instana.InitCollector(&instana.Options{
 		AgentClient: alwaysReadyClient{},
 		Recorder:    recorder,
 	})
 	defer instana.ShutdownCollector()
 
-	rt := instana.RoundTripper(s, testRoundTripper(func(req *http.Request) (*http.Response, error) {
+	rt := instana.RoundTripper(c, testRoundTripper(func(req *http.Request) (*http.Response, error) {
 		return nil, serverErr
 	}))
 
-	ctx := instana.ContextWithSpan(context.Background(), s.Tracer().StartSpan("parent"))
+	ctx := instana.ContextWithSpan(context.Background(), c.Tracer().StartSpan("parent"))
 	req := httptest.NewRequest("GET", "http://example.com/hello?q=term&key=s3cr3t", nil)
 
 	_, err := rt.RoundTrip(req.WithContext(ctx))
@@ -717,7 +717,7 @@ func TestRoundTripper_Error(t *testing.T) {
 
 func TestRoundTripper_DefaultTransport(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	s := instana.InitCollector(&instana.Options{
+	c := instana.InitCollector(&instana.Options{
 		AgentClient: alwaysReadyClient{},
 		Recorder:    recorder,
 	})
@@ -734,9 +734,9 @@ func TestRoundTripper_DefaultTransport(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	rt := instana.RoundTripper(s, nil)
+	rt := instana.RoundTripper(c, nil)
 
-	ctx := instana.ContextWithSpan(context.Background(), s.Tracer().StartSpan("parent"))
+	ctx := instana.ContextWithSpan(context.Background(), c.Tracer().StartSpan("parent"))
 	req := httptest.NewRequest("GET", ts.URL+"/hello", nil)
 
 	resp, err := rt.RoundTrip(req.WithContext(ctx))

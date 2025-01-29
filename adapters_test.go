@@ -17,7 +17,7 @@ import (
 
 func TestWithTracingSpan(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	s := instana.InitCollector(&instana.Options{
+	c := instana.InitCollector(&instana.Options{
 		AgentClient: alwaysReadyClient{},
 		Recorder:    recorder,
 	})
@@ -26,7 +26,7 @@ func TestWithTracingSpan(t *testing.T) {
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest("GET", "/test", nil)
 
-	s.LegacySensor().WithTracingSpan("test-span", rec, req, func(sp ot.Span) {
+	c.LegacySensor().WithTracingSpan("test-span", rec, req, func(sp ot.Span) {
 		sp.SetTag("custom-tag", "value")
 	})
 
@@ -56,7 +56,7 @@ func TestWithTracingSpan(t *testing.T) {
 
 func TestWithTracingSpan_PanicHandling(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	s := instana.InitCollector(&instana.Options{AgentClient: alwaysReadyClient{},
+	c := instana.InitCollector(&instana.Options{AgentClient: alwaysReadyClient{},
 		Recorder: recorder,
 	})
 	defer instana.ShutdownCollector()
@@ -65,7 +65,7 @@ func TestWithTracingSpan_PanicHandling(t *testing.T) {
 	req := httptest.NewRequest("GET", "/test", nil)
 
 	require.Panics(t, func() {
-		s.LegacySensor().WithTracingSpan("test-span", rec, req, func(sp ot.Span) {
+		c.LegacySensor().WithTracingSpan("test-span", rec, req, func(sp ot.Span) {
 			panic("something went wrong")
 		})
 	})
@@ -110,7 +110,7 @@ func TestWithTracingSpan_PanicHandling(t *testing.T) {
 
 func TestWithTracingSpan_WithActiveParentSpan(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	s := instana.InitCollector(&instana.Options{
+	c := instana.InitCollector(&instana.Options{
 		AgentClient: alwaysReadyClient{},
 		Recorder:    recorder,
 	})
@@ -119,10 +119,10 @@ func TestWithTracingSpan_WithActiveParentSpan(t *testing.T) {
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest("GET", "/test", nil)
 
-	parentSpan := s.StartSpan("parent-span")
+	parentSpan := c.StartSpan("parent-span")
 	ctx := instana.ContextWithSpan(req.Context(), parentSpan)
 
-	s.LegacySensor().WithTracingSpan("test-span", rec, req.WithContext(ctx), func(sp ot.Span) {})
+	c.LegacySensor().WithTracingSpan("test-span", rec, req.WithContext(ctx), func(sp ot.Span) {})
 	parentSpan.Finish()
 
 	spans := recorder.GetQueuedSpans()
@@ -134,7 +134,7 @@ func TestWithTracingSpan_WithActiveParentSpan(t *testing.T) {
 
 func TestWithTracingSpan_WithWireContext(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	s := instana.InitCollector(&instana.Options{
+	c := instana.InitCollector(&instana.Options{
 		AgentClient: alwaysReadyClient{},
 		Recorder:    recorder,
 	})
@@ -148,7 +148,7 @@ func TestWithTracingSpan_WithWireContext(t *testing.T) {
 	req.Header.Set(instana.FieldT, traceID)
 	req.Header.Set(instana.FieldS, parentSpanID)
 
-	s.LegacySensor().WithTracingSpan("test-span", rec, req, func(sp ot.Span) {})
+	c.LegacySensor().WithTracingSpan("test-span", rec, req, func(sp ot.Span) {})
 
 	spans := recorder.GetQueuedSpans()
 	require.Len(t, spans, 1)
