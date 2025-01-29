@@ -41,15 +41,16 @@ func TestPartiallyFlushDelayedSpans(t *testing.T) {
 	defer resetDelayedSpans()
 
 	recorder := NewTestRecorder()
-	s := NewSensorWithTracer(NewTracerWithEverything(&Options{
+	c := InitCollector(&Options{
 		Service: "go-sensor-test",
 		Tracer: TracerOptions{
 			Secrets: DefaultSecretsMatcher(),
 		},
-	}, recorder))
-	defer ShutdownSensor()
+		Recorder: recorder,
+	})
+	defer ShutdownCollector()
 
-	generateSomeTraffic(s, maxDelayedSpans)
+	generateSomeTraffic(c, maxDelayedSpans)
 
 	// serverless agent should not be present for this test to pass.
 	// following check is added for debugging random failures in the unit tests of delayed spans
@@ -73,15 +74,16 @@ func TestFlushDelayedSpans(t *testing.T) {
 	defer resetDelayedSpans()
 
 	recorder := NewTestRecorder()
-	s := NewSensorWithTracer(NewTracerWithEverything(&Options{
+	c := InitCollector(&Options{
 		Service: "go-sensor-test",
 		Tracer: TracerOptions{
 			Secrets: DefaultSecretsMatcher(),
 		},
-	}, recorder))
-	defer ShutdownSensor()
+		Recorder: recorder,
+	})
+	defer ShutdownCollector()
 
-	generateSomeTraffic(s, maxDelayedSpans)
+	generateSomeTraffic(c, maxDelayedSpans)
 
 	// serverless agent should not be present for this test to pass.
 	// following check is added for debugging random failures in the unit tests of delayed spans
@@ -104,15 +106,16 @@ func TestParallelFlushDelayedSpans(t *testing.T) {
 	m, _ := NamedMatcher(ContainsIgnoreCaseMatcher, []string{"q", "secret"})
 
 	recorder := NewTestRecorder()
-	s := NewSensorWithTracer(NewTracerWithEverything(&Options{
+	c := InitCollector(&Options{
 		Service: "go-sensor-test",
 		Tracer: TracerOptions{
 			Secrets: m,
 		},
-	}, recorder))
-	defer ShutdownSensor()
+		Recorder: recorder,
+	})
+	defer ShutdownCollector()
 
-	generateSomeTraffic(s, maxDelayedSpans*2)
+	generateSomeTraffic(c, maxDelayedSpans*2)
 
 	// serverless agent should not be present for this test to pass.
 	// following check is added for debugging random failures in the unit tests of delayed spans

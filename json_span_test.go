@@ -46,15 +46,14 @@ func TestSpanKind_String(t *testing.T) {
 
 func TestServiceNameViaConfig(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	tracer := instana.NewTracerWithEverything(
-		&instana.Options{
-			AgentClient: alwaysReadyClient{},
-			Service:     "Service Name",
-		},
-		recorder,
-	)
-	defer instana.ShutdownSensor()
-	sp := tracer.StartSpan("g.http")
+	c := instana.InitCollector(&instana.Options{
+		Service:     "Service Name",
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
+
+	sp := c.StartSpan("g.http")
 	sp.Finish()
 	spans := recorder.GetQueuedSpans()
 
@@ -76,14 +75,14 @@ func TestServiceNameViaEnvVar(t *testing.T) {
 	}()
 
 	recorder := instana.NewTestRecorder()
-	tracer := instana.NewTracerWithEverything(
-		&instana.Options{
-			AgentClient: alwaysReadyClient{},
-		},
-		recorder,
-	)
-	defer instana.ShutdownSensor()
-	sp := tracer.StartSpan("g.http")
+	c := instana.InitCollector(&instana.Options{
+		Service:     "Service Name",
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
+
+	sp := c.StartSpan("g.http")
 	sp.Finish()
 	spans := recorder.GetQueuedSpans()
 
@@ -95,14 +94,13 @@ func TestServiceNameViaEnvVar(t *testing.T) {
 
 func TestServiceNameEmpty(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	tracer := instana.NewTracerWithEverything(
-		&instana.Options{
-			AgentClient: alwaysReadyClient{},
-		},
-		recorder,
-	)
-	defer instana.ShutdownSensor()
-	sp := tracer.StartSpan("g.http")
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
+
+	sp := c.StartSpan("g.http")
 	sp.Finish()
 	spans := recorder.GetQueuedSpans()
 
@@ -120,10 +118,13 @@ func spanToJson(t *testing.T, span instana.Span) string {
 
 func TestNewSDKSpanData(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	tracer := instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder)
-	defer instana.ShutdownSensor()
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
 
-	sp := tracer.StartSpan("sdk",
+	sp := c.StartSpan("sdk",
 		ext.SpanKindRPCServer,
 		opentracing.Tags{
 			"host":       "localhost",
@@ -153,10 +154,13 @@ func TestNewSDKSpanData(t *testing.T) {
 
 func TestSpanData_CustomTags(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	tracer := instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder)
-	defer instana.ShutdownSensor()
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
 
-	sp := tracer.StartSpan("g.http", opentracing.Tags{
+	sp := c.StartSpan("g.http", opentracing.Tags{
 		"http.host":   "localhost",
 		"http.path":   "/",
 		"custom.tag":  "42",

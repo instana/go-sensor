@@ -124,11 +124,13 @@ func (e rowsAffected) Exec(
 func Test_wExecerContext_ExecContext(t *testing.T) {
 
 	recorder := NewTestRecorder()
-	s := NewSensorWithTracer(NewTracerWithEverything(&Options{
+
+	c := InitCollector(&Options{
 		Service:     "go-sensor-test",
 		AgentClient: alwaysReadyClient{},
-	}, recorder))
-	defer ShutdownSensor()
+		Recorder:    recorder,
+	})
+	defer ShutdownCollector()
 
 	type fields struct {
 		ExecerContext driver.ExecerContext
@@ -151,7 +153,7 @@ func Test_wExecerContext_ExecContext(t *testing.T) {
 			name: "ResultNoRows",
 			fields: fields{
 				ExecerContext: returnNoRows{},
-				sensor:        s,
+				sensor:        c,
 				sqlSpan:       getSQLSpanData(connDetails),
 			},
 			args: args{
@@ -166,7 +168,7 @@ func Test_wExecerContext_ExecContext(t *testing.T) {
 			name: "ReturnError",
 			fields: fields{
 				ExecerContext: returnError{},
-				sensor:        s,
+				sensor:        c,
 				sqlSpan:       getSQLSpanData(connDetails),
 			},
 			args: args{
@@ -181,7 +183,7 @@ func Test_wExecerContext_ExecContext(t *testing.T) {
 			name: "RowsAffected",
 			fields: fields{
 				ExecerContext: rowsAffected{},
-				sensor:        s,
+				sensor:        c,
 				sqlSpan:       getSQLSpanData(connDetails),
 			},
 			args: args{
@@ -215,11 +217,12 @@ func Test_wExecerContext_ExecContext(t *testing.T) {
 func Test_wExecer_Exec(t *testing.T) {
 
 	recorder := NewTestRecorder()
-	s := NewSensorWithTracer(NewTracerWithEverything(&Options{
+	c := InitCollector(&Options{
 		Service:     "go-sensor-test",
 		AgentClient: alwaysReadyClient{},
-	}, recorder))
-	defer ShutdownSensor()
+		Recorder:    recorder,
+	})
+	defer ShutdownCollector()
 
 	type fields struct {
 		Execer  driver.Execer
@@ -241,7 +244,7 @@ func Test_wExecer_Exec(t *testing.T) {
 			name: "ResultNoRows",
 			fields: fields{
 				Execer:  returnNoRows{},
-				sensor:  s,
+				sensor:  c,
 				sqlSpan: getSQLSpanData(connDetails),
 			},
 			args: args{
@@ -255,7 +258,7 @@ func Test_wExecer_Exec(t *testing.T) {
 			name: "ReturnError",
 			fields: fields{
 				Execer:  returnError{},
-				sensor:  s,
+				sensor:  c,
 				sqlSpan: getSQLSpanData(connDetails),
 			},
 			args: args{
@@ -269,7 +272,7 @@ func Test_wExecer_Exec(t *testing.T) {
 			name: "RowsAffected",
 			fields: fields{
 				Execer:  rowsAffected{},
-				sensor:  s,
+				sensor:  c,
 				sqlSpan: getSQLSpanData(connDetails),
 			},
 			args: args{
@@ -302,11 +305,12 @@ func Test_wExecer_Exec(t *testing.T) {
 func Test_wQueryerContext_QueryContext(t *testing.T) {
 
 	recorder := NewTestRecorder()
-	s := NewSensorWithTracer(NewTracerWithEverything(&Options{
+	c := InitCollector(&Options{
 		Service:     "go-sensor-test",
 		AgentClient: alwaysReadyClient{},
-	}, recorder))
-	defer ShutdownSensor()
+		Recorder:    recorder,
+	})
+	defer ShutdownCollector()
 
 	type fields struct {
 		QueryerContext driver.QueryerContext
@@ -329,7 +333,7 @@ func Test_wQueryerContext_QueryContext(t *testing.T) {
 			name: "ResultNoRows",
 			fields: fields{
 				QueryerContext: returnNoRows{},
-				sensor:         s,
+				sensor:         c,
 				sqlSpan:        getSQLSpanData(connDetails),
 			},
 			args: args{
@@ -344,7 +348,7 @@ func Test_wQueryerContext_QueryContext(t *testing.T) {
 			name: "ReturnError",
 			fields: fields{
 				QueryerContext: returnError{},
-				sensor:         s,
+				sensor:         c,
 				sqlSpan:        getSQLSpanData(connDetails),
 			},
 			args: args{
@@ -359,7 +363,7 @@ func Test_wQueryerContext_QueryContext(t *testing.T) {
 			name: "RowsAffected",
 			fields: fields{
 				QueryerContext: rowsAffected{},
-				sensor:         s,
+				sensor:         c,
 				sqlSpan:        getSQLSpanData(connDetails),
 			},
 			args: args{
@@ -393,11 +397,12 @@ func Test_wQueryerContext_QueryContext(t *testing.T) {
 func Test_wQueryer_Query(t *testing.T) {
 
 	recorder := NewTestRecorder()
-	s := NewSensorWithTracer(NewTracerWithEverything(&Options{
+	c := InitCollector(&Options{
 		Service:     "go-sensor-test",
 		AgentClient: alwaysReadyClient{},
-	}, recorder))
-	defer ShutdownSensor()
+		Recorder:    recorder,
+	})
+	defer ShutdownCollector()
 
 	type fields struct {
 		Queryer driver.Queryer
@@ -419,7 +424,7 @@ func Test_wQueryer_Query(t *testing.T) {
 			name: "ResultNoRows",
 			fields: fields{
 				Queryer: returnNoRows{},
-				sensor:  s,
+				sensor:  c,
 				sqlSpan: getSQLSpanData(connDetails),
 			},
 			args: args{
@@ -433,7 +438,7 @@ func Test_wQueryer_Query(t *testing.T) {
 			name: "ReturnError",
 			fields: fields{
 				Queryer: returnError{},
-				sensor:  s,
+				sensor:  c,
 				sqlSpan: getSQLSpanData(connDetails),
 			},
 			args: args{
@@ -447,7 +452,7 @@ func Test_wQueryer_Query(t *testing.T) {
 			name: "RowsAffected",
 			fields: fields{
 				Queryer: rowsAffected{},
-				sensor:  s,
+				sensor:  c,
 				sqlSpan: getSQLSpanData(connDetails),
 			},
 			args: args{
@@ -508,11 +513,12 @@ func (s stmtErr) NumInput() int { return -1 }
 func Test_wStmt_Query(t *testing.T) {
 
 	recorder := NewTestRecorder()
-	s := NewSensorWithTracer(NewTracerWithEverything(&Options{
+	c := InitCollector(&Options{
 		Service:     "go-sensor-test",
 		AgentClient: alwaysReadyClient{},
-	}, recorder))
-	defer ShutdownSensor()
+		Recorder:    recorder,
+	})
+	defer ShutdownCollector()
 
 	type fields struct {
 		Stmt    driver.Stmt
@@ -533,7 +539,7 @@ func Test_wStmt_Query(t *testing.T) {
 			name: "sql stmt Query",
 			fields: fields{
 				Stmt:    stmt{},
-				sensor:  s,
+				sensor:  c,
 				sqlSpan: getSQLSpanData(connDetails),
 			},
 			args: args{
@@ -546,7 +552,7 @@ func Test_wStmt_Query(t *testing.T) {
 			name: "sql stmt Query with error",
 			fields: fields{
 				Stmt:    stmtErr{},
-				sensor:  s,
+				sensor:  c,
 				sqlSpan: getSQLSpanData(connDetails),
 			},
 			args: args{
@@ -559,7 +565,7 @@ func Test_wStmt_Query(t *testing.T) {
 			name: "sql stmt Exec with error",
 			fields: fields{
 				Stmt:    stmtErr{},
-				sensor:  s,
+				sensor:  c,
 				sqlSpan: getSQLSpanData(connDetails),
 			},
 			args: args{
@@ -591,11 +597,12 @@ func Test_wStmt_Query(t *testing.T) {
 func Test_wStmt_Exec(t *testing.T) {
 
 	recorder := NewTestRecorder()
-	s := NewSensorWithTracer(NewTracerWithEverything(&Options{
+	c := InitCollector(&Options{
 		Service:     "go-sensor-test",
 		AgentClient: alwaysReadyClient{},
-	}, recorder))
-	defer ShutdownSensor()
+		Recorder:    recorder,
+	})
+	defer ShutdownCollector()
 
 	type fields struct {
 		Stmt    driver.Stmt
@@ -616,7 +623,7 @@ func Test_wStmt_Exec(t *testing.T) {
 			name: "sql stmt Exec with error",
 			fields: fields{
 				Stmt:    stmtErr{},
-				sensor:  s,
+				sensor:  c,
 				sqlSpan: getSQLSpanData(connDetails),
 			},
 			args: args{

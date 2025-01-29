@@ -20,11 +20,12 @@ import (
 func TestWrapSQLConnector_Exec(t *testing.T) {
 
 	recorder := instana.NewTestRecorder()
-	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{
+	s := instana.InitCollector(&instana.Options{
 		Service:     "go-sensor-test",
 		AgentClient: alwaysReadyClient{},
-	}, recorder))
-	defer instana.ShutdownSensor()
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
 
 	db := sql.OpenDB(instana.WrapSQLConnector(s, "connection string", sqlConnector{}))
 
@@ -69,11 +70,12 @@ func TestWrapSQLConnector_Exec(t *testing.T) {
 func TestWrapSQLConnector_Exec_Error(t *testing.T) {
 
 	recorder := instana.NewTestRecorder()
-	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{
+	s := instana.InitCollector(&instana.Options{
 		Service:     "go-sensor-test",
 		AgentClient: alwaysReadyClient{},
-	}, recorder))
-	defer instana.ShutdownSensor()
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
 
 	pSpan := s.Tracer().StartSpan("parent-span")
 	ctx := context.Background()
@@ -117,11 +119,12 @@ func TestWrapSQLConnector_Exec_Error(t *testing.T) {
 func TestWrapSQLConnector_Query(t *testing.T) {
 
 	recorder := instana.NewTestRecorder()
-	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{
+	s := instana.InitCollector(&instana.Options{
 		Service:     "go-sensor-test",
 		AgentClient: alwaysReadyClient{},
-	}, recorder))
-	defer instana.ShutdownSensor()
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
 
 	pSpan := s.Tracer().StartSpan("parent-span")
 	ctx := context.Background()
@@ -166,11 +169,12 @@ func TestWrapSQLConnector_Query(t *testing.T) {
 func TestWrapSQLConnector_Query_Error(t *testing.T) {
 
 	recorder := instana.NewTestRecorder()
-	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{
+	s := instana.InitCollector(&instana.Options{
 		Service:     "go-sensor-test",
 		AgentClient: alwaysReadyClient{},
-	}, recorder))
-	defer instana.ShutdownSensor()
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
 
 	dbErr := errors.New("something went wrong")
 	db := sql.OpenDB(instana.WrapSQLConnector(s, "connection string", sqlConnector{

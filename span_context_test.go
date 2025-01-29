@@ -88,8 +88,10 @@ func TestNewSpanContext_EmptyParent(t *testing.T) {
 	for name, parent := range examples {
 		t.Run(name, func(t *testing.T) {
 
-			instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, nil)
-			defer instana.ShutdownSensor()
+			instana.InitCollector(&instana.Options{
+				AgentClient: alwaysReadyClient{},
+			})
+			defer instana.ShutdownCollector()
 
 			c := instana.NewSpanContext(parent)
 
@@ -113,8 +115,10 @@ func TestNewSpanContext_FromW3CTraceContext(t *testing.T) {
 		},
 	}
 
-	instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, nil)
-	defer instana.ShutdownSensor()
+	instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+	})
+	defer instana.ShutdownCollector()
 
 	c := instana.NewSpanContext(parent)
 

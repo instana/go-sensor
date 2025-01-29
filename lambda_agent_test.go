@@ -47,7 +47,8 @@ func TestMain(m *testing.M) {
 		log.Fatalf("failed to initialize serverless agent: %s", err)
 	}
 
-	instana.InitSensor(instana.DefaultOptions())
+	instana.InitCollector(instana.DefaultOptions())
+	defer instana.ShutdownCollector()
 
 	os.Exit(m.Run())
 }
@@ -55,10 +56,10 @@ func TestMain(m *testing.M) {
 func TestIntegration_LambdaAgent_SendSpans(t *testing.T) {
 	defer agent.Reset()
 
-	tracer := instana.NewTracer()
-	sensor := instana.NewSensorWithTracer(tracer)
+	c := instana.InitCollector(instana.DefaultOptions())
+	defer instana.ShutdownCollector()
 
-	sp := sensor.Tracer().StartSpan("aws.lambda.entry", opentracing.Tags{
+	sp := c.Tracer().StartSpan("aws.lambda.entry", opentracing.Tags{
 		"lambda.arn":     "aws::test-lambda::$LATEST",
 		"lambda.name":    "test-lambda",
 		"lambda.version": "$LATEST",
@@ -68,7 +69,7 @@ func TestIntegration_LambdaAgent_SendSpans(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 
-	require.NoError(t, tracer.Flush(ctx))
+	require.NoError(t, c.Flush(ctx))
 	require.Len(t, agent.Bundles, 1)
 
 	var spans []map[string]json.RawMessage
@@ -88,11 +89,10 @@ func TestIntegration_LambdaAgent_SendSpans(t *testing.T) {
 func TestIntegration_LambdaAgent_SendSpans_Error(t *testing.T) {
 	defer agent.Reset()
 
-	tracer := instana.NewTracer()
-	sensor := instana.NewSensorWithTracer(tracer)
-	defer instana.ShutdownSensor()
+	c := instana.InitCollector(instana.DefaultOptions())
+	defer instana.ShutdownCollector()
 
-	sp := sensor.Tracer().StartSpan("aws.lambda.entry", opentracing.Tags{
+	sp := c.Tracer().StartSpan("aws.lambda.entry", opentracing.Tags{
 		"lambda.arn":     "aws::test-lambda::$LATEST",
 		"lambda.name":    "test-lambda",
 		"lambda.version": "$LATEST",
@@ -103,7 +103,7 @@ func TestIntegration_LambdaAgent_SendSpans_Error(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 
-	require.NoError(t, tracer.Flush(ctx))
+	require.NoError(t, c.Flush(ctx))
 	require.Len(t, agent.Bundles, 0)
 }
 
