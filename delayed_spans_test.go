@@ -41,15 +41,16 @@ func TestPartiallyFlushDelayedSpans(t *testing.T) {
 	}
 
 	recorder := NewTestRecorder()
-	s := NewSensorWithTracer(NewTracerWithEverything(&Options{
+	c := InitCollector(&Options{
 		Service: "go-sensor-test",
 		Tracer: TracerOptions{
 			Secrets: DefaultSecretsMatcher(),
 		},
-	}, recorder))
-	defer ShutdownSensor()
+		Recorder: recorder,
+	})
+	defer ShutdownCollector()
 
-	generateSomeTraffic(s, maxDelayedSpans)
+	generateSomeTraffic(c, maxDelayedSpans)
 
 	assert.Len(t, delayed.spans, maxDelayedSpans)
 
@@ -73,15 +74,16 @@ func TestFlushDelayedSpans(t *testing.T) {
 	}
 
 	recorder := NewTestRecorder()
-	s := NewSensorWithTracer(NewTracerWithEverything(&Options{
+	c := InitCollector(&Options{
 		Service: "go-sensor-test",
 		Tracer: TracerOptions{
 			Secrets: DefaultSecretsMatcher(),
 		},
-	}, recorder))
-	defer ShutdownSensor()
+		Recorder: recorder,
+	})
+	defer ShutdownCollector()
 
-	generateSomeTraffic(s, maxDelayedSpans)
+	generateSomeTraffic(c, maxDelayedSpans)
 
 	assert.Len(t, delayed.spans, maxDelayedSpans)
 
@@ -104,15 +106,16 @@ func TestParallelFlushDelayedSpans(t *testing.T) {
 	m, _ := NamedMatcher(ContainsIgnoreCaseMatcher, []string{"q", "secret"})
 
 	recorder := NewTestRecorder()
-	s := NewSensorWithTracer(NewTracerWithEverything(&Options{
+	c := InitCollector(&Options{
 		Service: "go-sensor-test",
 		Tracer: TracerOptions{
 			Secrets: m,
 		},
-	}, recorder))
-	defer ShutdownSensor()
+		Recorder: recorder,
+	})
+	defer ShutdownCollector()
 
-	generateSomeTraffic(s, maxDelayedSpans*2)
+	generateSomeTraffic(c, maxDelayedSpans*2)
 
 	assert.Len(t, delayed.spans, maxDelayedSpans)
 

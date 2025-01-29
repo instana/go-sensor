@@ -95,10 +95,13 @@ func TestRegisteredSpanType_ExtractData(t *testing.T) {
 	for name, example := range examples {
 		t.Run(name, func(t *testing.T) {
 			recorder := instana.NewTestRecorder()
-			tracer := instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder)
-			defer instana.ShutdownSensor()
+			c := instana.InitCollector(&instana.Options{
+				AgentClient: alwaysReadyClient{},
+				Recorder:    recorder,
+			})
+			defer instana.ShutdownCollector()
 
-			sp := tracer.StartSpan(example.Operation)
+			sp := c.StartSpan(example.Operation)
 			sp.Finish()
 
 			spans := recorder.GetQueuedSpans()
@@ -313,10 +316,13 @@ func TestNewAWSLambdaSpanData(t *testing.T) {
 	for trigger, example := range examples {
 		t.Run(trigger, func(t *testing.T) {
 			recorder := instana.NewTestRecorder()
-			tracer := instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder)
-			defer instana.ShutdownSensor()
+			c := instana.InitCollector(&instana.Options{
+				AgentClient: alwaysReadyClient{},
+				Recorder:    recorder,
+			})
+			defer instana.ShutdownCollector()
 
-			sp := tracer.StartSpan("aws.lambda.entry", opentracing.Tags{
+			sp := c.StartSpan("aws.lambda.entry", opentracing.Tags{
 				"lambda.arn":       "lambda-arn-1",
 				"lambda.name":      "test-lambda",
 				"lambda.version":   "42",

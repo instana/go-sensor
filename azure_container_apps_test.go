@@ -39,17 +39,16 @@ func TestMain(m *testing.M) {
 func TestIntegration_AzureContainerApps_SendSpans(t *testing.T) {
 	defer agent.Reset()
 
-	tracer := instana.NewTracer()
-	sensor := instana.NewSensorWithTracer(tracer)
-	defer instana.ShutdownSensor()
+	c := instana.InitCollector(instana.DefaultOptions())
+	defer instana.ShutdownCollector()
 
-	sp := sensor.Tracer().StartSpan("aca")
+	sp := c.Tracer().StartSpan("aca")
 	sp.Finish()
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 
-	require.NoError(t, tracer.Flush(ctx))
+	require.NoError(t, c.Flush(ctx))
 	require.Len(t, agent.Bundles, 1)
 
 	var spans []map[string]json.RawMessage
@@ -69,18 +68,17 @@ func TestIntegration_AzureContainerApps_SendSpans(t *testing.T) {
 func TestIntegration_AzureAgent_SendSpans_Error(t *testing.T) {
 	defer agent.Reset()
 
-	tracer := instana.NewTracer()
-	sensor := instana.NewSensorWithTracer(tracer)
-	defer instana.ShutdownSensor()
+	c := instana.InitCollector(instana.DefaultOptions())
+	defer instana.ShutdownCollector()
 
-	sp := sensor.Tracer().StartSpan("azf")
+	sp := c.Tracer().StartSpan("azf")
 	sp.SetTag("returnError", "true")
 	sp.Finish()
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 
-	require.NoError(t, tracer.Flush(ctx))
+	require.NoError(t, c.Flush(ctx))
 	require.Len(t, agent.Bundles, 0)
 }
 
