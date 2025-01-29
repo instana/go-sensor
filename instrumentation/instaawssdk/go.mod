@@ -4,7 +4,7 @@ go 1.22
 
 require (
 	github.com/aws/aws-sdk-go v1.55.6
-	github.com/instana/go-sensor v1.66.1
+	github.com/instana/go-sensor v1.66.2
 	github.com/opentracing/opentracing-go v1.2.0
 	github.com/stretchr/testify v1.8.1
 )
