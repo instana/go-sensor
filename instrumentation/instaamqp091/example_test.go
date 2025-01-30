@@ -27,7 +27,13 @@ func failOnError(err error, msg string) {
 }
 
 func publish(numMessages int) {
-	sensor := instana.NewSensor("rabbitmq-client")
+	// Create the Instana collector
+	ic := instana.InitCollector(&instana.Options{
+		Service:     "rabbitmq-client",
+		AgentClient: alwaysReadyClient{},
+	})
+	defer instana.ShutdownCollector()
+
 	url := "amqp://guest:guest@localhost:5672/"
 
 	conn, err := amqp.Dial(url)
@@ -41,12 +47,12 @@ func publish(numMessages int) {
 	err = ch.ExchangeDeclare(exchangeName, "fanout", true, false, false, false, nil)
 	failOnError(err, "Could not declare the exchange")
 
-	instaCh := instaamqp.WrapChannel(sensor, ch, url)
+	instaCh := instaamqp.WrapChannel(ic, ch, url)
 
 	for i := 0; i < numMessages; i++ {
 		time.Sleep(time.Millisecond * 500)
 		// There must be one span per publish call
-		entrySpan := sensor.Tracer().StartSpan("testing")
+		entrySpan := ic.Tracer().StartSpan("testing")
 		ext.SpanKind.Set(entrySpan, ext.SpanKindRPCServerEnum)
 
 		err = instaCh.Publish(entrySpan, exchangeName, "", false, false, amqp.Publishing{
@@ -64,7 +70,14 @@ func publish(numMessages int) {
 
 func consume() {
 	url := "amqp://guest:guest@localhost:5672/"
-	sensor := instana.NewSensor("rabbitmq-client")
+
+	// Create the Instana collector
+	ic := instana.InitCollector(&instana.Options{
+		Service:     "rabbitmq-client",
+		AgentClient: alwaysReadyClient{},
+	})
+	defer instana.ShutdownCollector()
+
 	conn, err := amqp.Dial(url)
 
 	failOnError(err, "Could not connect to the server")
@@ -84,7 +97,7 @@ func consume() {
 	failOnError(err, "Could not bind the queue to the exchange")
 
 	// Instana wrapper of amqp.Channel
-	instaCh := instaamqp.WrapChannel(sensor, ch, url)
+	instaCh := instaamqp.WrapChannel(ic, ch, url)
 
 	msgs, err := instaCh.Consume(q.Name, "", true, false, false, false, nil)
 	failOnError(err, "Could not consume messages")

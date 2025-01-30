@@ -81,22 +81,24 @@ func TestClient(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			wg.Add(1)
+			wg.Add(2)
 
 			url := "amqp://user:password@some_host:9999"
 			chMock := newAmqpChannelMock()
 			chMock.publishError = tc.publishError
 			chMock.consumeError = tc.consumeError
 			recorder := instana.NewTestRecorder()
-			sensor := instana.NewSensorWithTracer(
-				instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder),
-			)
+			ic := instana.InitCollector(&instana.Options{
+				Service:     "rabbitmq-client",
+				AgentClient: alwaysReadyClient{},
+				Recorder:    recorder,
+			})
 
-			instaCh := instaamqp.WrapChannel(sensor, chMock, url)
+			instaCh := instaamqp.WrapChannel(ic, chMock, url)
 
 			// Start waiting for messages to consume
 			go func(s string) {
-				defer instana.ShutdownSensor()
+				defer instana.ShutdownCollector()
 				ch, _ := instaCh.Consume("queue", "consumer", true, false, false, false, nil)
 
 				for range ch {
@@ -128,7 +130,7 @@ func TestClient(t *testing.T) {
 
 			// Publish the message
 
-			entrySpan := sensor.Tracer().StartSpan("testing")
+			entrySpan := ic.Tracer().StartSpan("testing")
 			ext.SpanKind.Set(entrySpan, ext.SpanKindRPCServerEnum)
 			defer entrySpan.Finish()
 
