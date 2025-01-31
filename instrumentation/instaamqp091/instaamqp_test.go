@@ -88,18 +88,23 @@ func TestClient(t *testing.T) {
 			chMock.publishError = tc.publishError
 			chMock.consumeError = tc.consumeError
 			recorder := instana.NewTestRecorder()
-			ic := instana.InitCollector(&instana.Options{
+			c := instana.InitCollector(&instana.Options{
 				Service:     "rabbitmq-client",
 				AgentClient: alwaysReadyClient{},
 				Recorder:    recorder,
 			})
 
-			instaCh := instaamqp.WrapChannel(ic, chMock, url)
+			defer instana.ShutdownCollector()
+
+			instaCh := instaamqp.WrapChannel(c, chMock, url)
 
 			// Start waiting for messages to consume
 			go func(s string) {
-				defer instana.ShutdownCollector()
 				ch, _ := instaCh.Consume("queue", "consumer", true, false, false, false, nil)
+
+				if tc.publishError {
+					wg.Done()
+				}
 
 				for range ch {
 					// Give it some time to assure that all spans are added
@@ -130,9 +135,9 @@ func TestClient(t *testing.T) {
 
 			// Publish the message
 
-			entrySpan := ic.Tracer().StartSpan("testing")
+			entrySpan := c.Tracer().StartSpan("testing")
 			ext.SpanKind.Set(entrySpan, ext.SpanKindRPCServerEnum)
-			defer entrySpan.Finish()
+			entrySpan.Finish()
 
 			msg := amqp.Publishing{
 				Body: []byte("Test message"),
@@ -149,7 +154,6 @@ func TestClient(t *testing.T) {
 
 				if err != nil {
 					spans := recorder.GetQueuedSpans()
-
 					require.Len(t, spans, 3, "Expects SDK entry span, failed exit publish span and log error span")
 
 					spanMap := getSpanMap(spans)
@@ -163,13 +167,13 @@ func TestClient(t *testing.T) {
 					if publisherData, ok := publishSp.Data.(instana.RabbitMQSpanData); ok {
 						checkPublisher(t, publisherData, tc.publishError)
 					}
-
-					wg.Done()
 				}
+				wg.Done()
 			}(entrySpan)
+
+			wg.Wait()
 		})
 	}
-	wg.Wait()
 }
 
 func checkCorrelation(t *testing.T, entrySp1, exitSp1, entrySp2 instana.Span) {
