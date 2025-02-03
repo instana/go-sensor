@@ -17,13 +17,10 @@ import (
 // Note: This file contains the testcases for testing the private methods of the package.
 
 func TestSpanContextFromSQSMessage(t *testing.T) {
-	sensor := instana.NewSensorWithTracer(
-		instana.NewTracerWithEverything(
-			instana.DefaultOptions(),
-			instana.NewTestRecorder(),
-		),
-	)
-	defer instana.ShutdownSensor()
+	opts := instana.DefaultOptions()
+	opts.Recorder = instana.NewTestRecorder()
+	c := instana.InitCollector(opts)
+	defer instana.ShutdownCollector()
 
 	examples := map[string]sqstypes.Message{
 		"standard keys": {
@@ -50,7 +47,7 @@ func TestSpanContextFromSQSMessage(t *testing.T) {
 
 	for name, msg := range examples {
 		t.Run(name, func(t *testing.T) {
-			spCtx, err := SpanContextFromSQSMessage(msg, sensor)
+			spCtx, err := SpanContextFromSQSMessage(msg, c)
 			assert.NoError(t, err)
 			assert.Equal(t, instana.SpanContext{
 				TraceIDHi: 0x01,
@@ -62,7 +59,7 @@ func TestSpanContextFromSQSMessage(t *testing.T) {
 	}
 
 	t.Run("no context", func(t *testing.T) {
-		_, err := SpanContextFromSQSMessage(sqstypes.Message{}, sensor)
+		_, err := SpanContextFromSQSMessage(sqstypes.Message{}, c)
 		assert.Error(t, err)
 	})
 }
