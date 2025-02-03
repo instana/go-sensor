@@ -43,13 +43,14 @@ type product struct {
 
 func TestInsertRecord(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{
+	c := instana.InitCollector(&instana.Options{
 		Service:     "go-sensor-test",
 		AgentClient: alwaysReadyClient{},
-	}, recorder))
-	defer instana.ShutdownSensor()
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
 
-	pSpan := s.Tracer().StartSpan("parent-span")
+	pSpan := c.Tracer().StartSpan("parent-span")
 	ctx := context.Background()
 	if pSpan != nil {
 		ctx = instana.ContextWithSpan(ctx, pSpan)
@@ -65,7 +66,7 @@ func TestInsertRecord(t *testing.T) {
 		}
 
 		db.Statement.Context = ctx
-		instagorm.Instrument(db, s, dsn)
+		instagorm.Instrument(db, c, dsn)
 
 		if err = db.AutoMigrate(&product{}); err != nil {
 			panic("failed to migrate the schema")
