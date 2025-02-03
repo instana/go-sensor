@@ -33,19 +33,13 @@ func TestMain(m *testing.M) {
 	gin.SetMode(gin.TestMode)
 	gin.DefaultWriter = ioutil.Discard
 
-	instana.InitSensor(&instana.Options{
-		Service: "gin-test",
-		Tracer: instana.TracerOptions{
-			CollectableHTTPHeaders: []string{"x-custom-header-1", "x-custom-header-2"},
-		},
-		AgentClient: alwaysReadyClient{},
-	})
-
 	os.Exit(m.Run())
 }
 
 func TestAddMiddleware(t *testing.T) {
 	const expectedHandlersAmount = 3
+
+	defer instana.ShutdownCollector()
 
 	// create a gin engine with default handlers
 	engine := gin.Default()
@@ -67,21 +61,27 @@ func TestAddMiddleware(t *testing.T) {
 
 func TestPropagation(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	tracer := instana.NewTracerWithEverything(nil, recorder)
-	defer instana.ShutdownSensor()
-	sensor := instana.NewSensorWithTracer(tracer)
+	c := instana.InitCollector(&instana.Options{
+		Service: "gin-test",
+		Tracer: instana.TracerOptions{
+			CollectableHTTPHeaders: []string{"x-custom-header-1", "x-custom-header-2"},
+		},
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
 
 	engines := map[string]func() *gin.Engine{
 		"AddMiddleware": func() *gin.Engine {
 			engine := gin.Default()
-			instagin.AddMiddleware(sensor, engine)
+			instagin.AddMiddleware(c, engine)
 			return engine
 		},
 		"New": func() *gin.Engine {
-			return instagin.New(sensor)
+			return instagin.New(c)
 		},
 		"Default": func() *gin.Engine {
-			return instagin.Default(sensor)
+			return instagin.Default(c)
 		},
 	}
 
