@@ -196,11 +196,11 @@ func assertSample(t *testing.T, sample sampleData, data instana.GraphQLSpanData)
 func TestGraphQLWithoutHTTP(t *testing.T) {
 	pool := &pubsub{}
 	recorder := instana.NewTestRecorder()
-	sensor := instana.NewSensorWithTracer(
-		instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder),
-	)
-
-	defer instana.ShutdownSensor()
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
 
 	schema, err := getSchema(false, pool)
 
@@ -212,7 +212,7 @@ func TestGraphQLWithoutHTTP(t *testing.T) {
 		t.Run(title, func(t *testing.T) {
 			params := graphql.Params{Schema: schema, RequestString: sample.query}
 
-			instagraphql.Do(context.Background(), sensor, params)
+			instagraphql.Do(context.Background(), c, params)
 
 			var spans []instana.Span
 
