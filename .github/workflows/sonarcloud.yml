@@ -24,8 +24,11 @@ jobs:
             echo $TRACER_PATH
             mkdir coverage
 
+            sudo apt-get -y install podman
+            pip3 install podman-compose
+
             echo "Starting Couchbase"
-            docker compose -f docker-compose-integration.yaml up -d
+            podman-compose -f docker-compose-integration.yaml up -d
 
             echo "Starting Postgres"
             sudo systemctl start postgresql.service

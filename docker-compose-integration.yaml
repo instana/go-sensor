@@ -3,22 +3,24 @@ version: '3'
 services:
 
   couchbase:
-    image: couchbase/server:7.1.4
+    image: public.ecr.aws/docker/library/couchbase:7.6.5
     hostname: couchbase
     ports:
       - '8091-8096:8091-8096'
       - '11210:11210'
     
   couchbase-setup:
-    image: amd64/centos:7
-    platform: linux/amd64
+    image: public.ecr.aws/docker/library/alpine:3.21.2
     depends_on:
       - couchbase
     restart: "no"
     entrypoint:
-      - "bash"
+      - "sh"
       - "-ecx"
       - |
+          # Install curl 
+          apk fix && apk --no-cache --update add curl && rm -rf /var/cache/apk/* \
+          # Run setup commands
           sleep 30 && \
           curl -v -X POST http://couchbase:8091/pools/default -d memoryQuota=2024 -d indexMemoryQuota=512 && \
           curl -v http://couchbase:8091/node/controller/setupServices -d services=kv%2Ceventing%2Cindex%2Cn1ql%2Ccbas%2Cfts && \
