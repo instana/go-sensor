@@ -334,16 +334,18 @@ func TestClient(t *testing.T) {
 		for name, example := range examples {
 			t.Run(redisTypeMap[rType]+" - "+name, func(t *testing.T) {
 				recorder := instana.NewTestRecorder()
-				sensor := instana.NewSensorWithTracer(
-					instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder),
-				)
+				c := instana.InitCollector(&instana.Options{
+					AgentClient: alwaysReadyClient{},
+					Recorder:    recorder,
+				})
+				defer instana.ShutdownCollector()
 
-				sp := sensor.Tracer().StartSpan("testing")
+				sp := c.Tracer().StartSpan("testing")
 				ctx := instana.ContextWithSpan(context.Background(), sp)
 
 				if rType == Cluster || rType == ClusterFailover {
 					rdb := buildNewClusterClient(rType == ClusterFailover)
-					instaredis.WrapClusterClient(rdb, sensor)
+					instaredis.WrapClusterClient(rdb, c)
 
 					if len(example.DoCommand) > 0 {
 						rdb.Do(ctx, example.DoCommand...)
@@ -365,7 +367,7 @@ func TestClient(t *testing.T) {
 					rdb.Close()
 				} else {
 					rdb := buildNewClient(rType == SingleFailover)
-					instaredis.WrapClient(rdb, sensor)
+					instaredis.WrapClient(rdb, c)
 
 					if len(example.DoCommand) > 0 {
 						rdb.Do(ctx, example.DoCommand...)
