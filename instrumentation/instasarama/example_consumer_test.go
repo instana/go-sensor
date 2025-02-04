@@ -17,21 +17,25 @@ import (
 // This example demonstrates how to instrument a Kafka consumer using instasarama
 // and extract the trace context to ensure continuation. Error handling is omitted for brevity.
 func Example_consumer() {
-	sensor := instana.NewSensor("my-service")
+	c := instana.InitCollector(&instana.Options{
+		Service: "my-service",
+	})
+	defer instana.ShutdownCollector()
+
 	brokers := []string{"localhost:9092"}
 
 	conf := sarama.NewConfig()
 	conf.Version = sarama.V0_11_0_0
 
 	// create a new instrumented instance of sarama.Consumer
-	consumer, _ := instasarama.NewConsumer(brokers, conf, sensor)
+	consumer, _ := instasarama.NewConsumer(brokers, conf, c)
 
-	c, _ := consumer.ConsumePartition("test-topic-1", 0, sarama.OffsetNewest)
-	defer c.Close()
+	cp, _ := consumer.ConsumePartition("test-topic-1", 0, sarama.OffsetNewest)
+	defer cp.Close()
 
-	for msg := range c.Messages() {
+	for msg := range cp.Messages() {
 		fmt.Println("Got messagge", msg)
-		processMessage(msg, sensor)
+		processMessage(msg, c)
 	}
 }
 

@@ -15,7 +15,11 @@ import (
 // This example demonstrates how to instrument a sync Kafka producer using instasarama.
 // Error handling is omitted for brevity.
 func Example_syncProducer() {
-	sensor := instana.NewSensor("my-service")
+	c := instana.InitCollector(&instana.Options{
+		Service: "my-service",
+	})
+	defer instana.ShutdownCollector()
+
 	brokers := []string{"localhost:9092"}
 
 	config := sarama.NewConfig()
@@ -26,10 +30,10 @@ func Example_syncProducer() {
 	config.Version = sarama.V0_11_0_0
 
 	// create a new instrumented instance of sarama.SyncProducer
-	producer, _ := instasarama.NewSyncProducer(brokers, config, sensor)
+	producer, _ := instasarama.NewSyncProducer(brokers, config, c)
 
 	// start a new entry span
-	sp := sensor.Tracer().StartSpan("my-producing-method")
+	sp := c.Tracer().StartSpan("my-producing-method")
 	ext.SpanKind.Set(sp, "entry")
 
 	msg := &sarama.ProducerMessage{
