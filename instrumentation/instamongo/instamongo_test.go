@@ -184,15 +184,16 @@ func TestWrapCommandMonitor_Succeeded(t *testing.T) {
 	for name, example := range examples {
 		t.Run(name, func(t *testing.T) {
 			recorder := instana.NewTestRecorder()
-			sensor := instana.NewSensorWithTracer(
-				instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder),
-			)
-			defer instana.ShutdownSensor()
+			c := instana.InitCollector(&instana.Options{
+				AgentClient: alwaysReadyClient{},
+				Recorder:    recorder,
+			})
+			defer instana.ShutdownCollector()
+
 			mon := &monitorMock{}
+			m := instamongo.WrapCommandMonitor(mon.Monitor(), c)
 
-			m := instamongo.WrapCommandMonitor(mon.Monitor(), sensor)
-
-			sp := sensor.Tracer().StartSpan("testing")
+			sp := c.Tracer().StartSpan("testing")
 			ctx := instana.ContextWithSpan(context.Background(), sp)
 
 			started := &event.CommandStartedEvent{
@@ -263,13 +264,14 @@ func TestWrapCommandMonitor_Succeeded(t *testing.T) {
 
 func TestWrapCommandMonitor_Succeeded_NotStarted(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	sensor := instana.NewSensorWithTracer(
-		instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder),
-	)
-	defer instana.ShutdownSensor()
-	mon := &monitorMock{}
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
 
-	m := instamongo.WrapCommandMonitor(mon.Monitor(), sensor)
+	mon := &monitorMock{}
+	m := instamongo.WrapCommandMonitor(mon.Monitor(), c)
 
 	success := &event.CommandSucceededEvent{
 		CommandFinishedEvent: event.CommandFinishedEvent{
@@ -292,13 +294,14 @@ func TestWrapCommandMonitor_Succeeded_NotStarted(t *testing.T) {
 
 func TestWrapCommandMonitor_Succeeded_NotTraced(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	sensor := instana.NewSensorWithTracer(
-		instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder),
-	)
-	defer instana.ShutdownSensor()
-	mon := &monitorMock{}
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
 
-	m := instamongo.WrapCommandMonitor(mon.Monitor(), sensor)
+	mon := &monitorMock{}
+	m := instamongo.WrapCommandMonitor(mon.Monitor(), c)
 
 	started := &event.CommandStartedEvent{
 		Command: marshalBSON(t, bson.M{
@@ -331,15 +334,16 @@ func TestWrapCommandMonitor_Succeeded_NotTraced(t *testing.T) {
 
 func TestWrapCommandMonitor_Failed(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	sensor := instana.NewSensorWithTracer(
-		instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder),
-	)
-	defer instana.ShutdownSensor()
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
+
 	mon := &monitorMock{}
+	m := instamongo.WrapCommandMonitor(mon.Monitor(), c)
 
-	m := instamongo.WrapCommandMonitor(mon.Monitor(), sensor)
-
-	sp := sensor.Tracer().StartSpan("testing")
+	sp := c.Tracer().StartSpan("testing")
 	ctx := instana.ContextWithSpan(context.Background(), sp)
 
 	started := &event.CommandStartedEvent{
@@ -409,13 +413,14 @@ func TestWrapCommandMonitor_Failed(t *testing.T) {
 
 func TestWrapCommandMonitor_Failed_NotStarted(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	sensor := instana.NewSensorWithTracer(
-		instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder),
-	)
-	defer instana.ShutdownSensor()
-	mon := &monitorMock{}
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
 
-	m := instamongo.WrapCommandMonitor(mon.Monitor(), sensor)
+	mon := &monitorMock{}
+	m := instamongo.WrapCommandMonitor(mon.Monitor(), c)
 
 	failed := &event.CommandFailedEvent{
 		CommandFinishedEvent: event.CommandFinishedEvent{
@@ -436,13 +441,14 @@ func TestWrapCommandMonitor_Failed_NotStarted(t *testing.T) {
 
 func TestWrapCommandMonitor_Failed_NotTraced(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	sensor := instana.NewSensorWithTracer(
-		instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder),
-	)
-	defer instana.ShutdownSensor()
-	mon := &monitorMock{}
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
 
-	m := instamongo.WrapCommandMonitor(mon.Monitor(), sensor)
+	mon := &monitorMock{}
+	m := instamongo.WrapCommandMonitor(mon.Monitor(), c)
 
 	started := &event.CommandStartedEvent{
 		Command: marshalBSON(t, bson.M{
@@ -474,11 +480,14 @@ func TestWrapCommandMonitor_Failed_NotTraced(t *testing.T) {
 // To instrument a mongo.Client created with mongo.Connect() replace mongo.Connect() with instamongo.Connect()
 // and pass an instana.Sensor instance to use
 func ExampleConnect() {
-	// Initialize Instana sensor
-	sensor := instana.NewSensor("mongo-client")
+	// Initialize Instana collector
+	c := instana.InitCollector(&instana.Options{
+		Service: "mongo-client",
+	})
+	defer instana.ShutdownCollector()
 
 	// Replace mongo.Connect() with instamongo.Connect and pass the sensor instance
-	client, err := instamongo.Connect(context.Background(), sensor, options.Client().ApplyURI("mongodb://localhost:27017"))
+	client, err := instamongo.Connect(context.Background(), c, options.Client().ApplyURI("mongodb://localhost:27017"))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -491,11 +500,14 @@ func ExampleConnect() {
 // To instrument a mongo.Client created with mongo.NewClient() replace mongo.NewClient() with instamongo.NewClient()
 // and pass an instana.Sensor instance to use
 func ExampleNewClient() {
-	// Initialize Instana sensor
-	sensor := instana.NewSensor("mongo-client")
+	// Initialize Instana collector
+	c := instana.InitCollector(&instana.Options{
+		Service: "mongo-client",
+	})
+	defer instana.ShutdownCollector()
 
 	// Replace mongo.Connect() with instamongo.Connect and pass the sensor instance
-	client, err := instamongo.NewClient(sensor, options.Client().ApplyURI("mongodb://localhost:27017"))
+	client, err := instamongo.NewClient(c, options.Client().ApplyURI("mongodb://localhost:27017"))
 	if err != nil {
 		log.Fatal(err)
 	}
