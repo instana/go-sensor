@@ -16,10 +16,12 @@ import (
 
 func Example_basicCommand() {
 	// Create a sensor for instana instrumentation
-	sensor := instana.NewSensor("mysensor")
+	c := instana.InitCollector(&instana.Options{
+		Service: "mysensor",
+	})
 
 	// Create an InstaRedigo connection
-	conn, err := instaredigo.Dial(sensor, "tcp", ":7001")
+	conn, err := instaredigo.Dial(c, "tcp", ":7001")
 	if err != nil {
 		os.Exit(1)
 	}
