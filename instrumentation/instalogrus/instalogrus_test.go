@@ -20,19 +20,22 @@ import (
 )
 
 func TestNewHook_Levels(t *testing.T) {
-	sensor := instana.NewSensor("testing")
-	defer instana.ShutdownSensor()
-	h := instalogrus.NewHook(sensor)
+	c := instana.InitCollector(&instana.Options{
+		Service: "my-service",
+	})
+	defer instana.ShutdownCollector()
 
+	h := instalogrus.NewHook(c)
 	assert.ElementsMatch(t, []logrus.Level{logrus.ErrorLevel, logrus.WarnLevel}, h.Levels())
 }
 
 func TestNewHook_SendLogSpans(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	sensor := instana.NewSensorWithTracer(
-		instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder),
-	)
-	defer instana.ShutdownSensor()
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
 
 	logger := logrus.New()
 	logger.Level = logrus.DebugLevel
@@ -41,7 +44,7 @@ func TestNewHook_SendLogSpans(t *testing.T) {
 		DisableTimestamp: true, // for easier comparison later
 	}
 
-	logger.AddHook(instalogrus.NewHook(sensor))
+	logger.AddHook(instalogrus.NewHook(c))
 
 	examples := map[string]struct {
 		Log             func(ctx context.Context)
@@ -63,7 +66,7 @@ func TestNewHook_SendLogSpans(t *testing.T) {
 
 	for lvl, example := range examples {
 		t.Run(lvl, func(t *testing.T) {
-			parentSp := sensor.Tracer().StartSpan("testing")
+			parentSp := c.Tracer().StartSpan("testing")
 			example.Log(instana.ContextWithSpan(context.Background(), parentSp))
 			parentSp.Finish()
 
@@ -98,16 +101,17 @@ func TestNewHook_SendLogSpans(t *testing.T) {
 
 func TestNewHook_IgnoreLowLevels(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	sensor := instana.NewSensorWithTracer(
-		instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder),
-	)
-	defer instana.ShutdownSensor()
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
 
 	logger := logrus.New()
 	logger.Level = logrus.DebugLevel
 	logger.Out = ioutil.Discard
 
-	logger.AddHook(instalogrus.NewHook(sensor))
+	logger.AddHook(instalogrus.NewHook(c))
 
 	examples := map[string]func(ctx context.Context){
 		"INFO": func(ctx context.Context) {
@@ -123,7 +127,7 @@ func TestNewHook_IgnoreLowLevels(t *testing.T) {
 
 	for name, logFn := range examples {
 		t.Run(name, func(t *testing.T) {
-			parentSp := sensor.Tracer().StartSpan("testing")
+			parentSp := c.Tracer().StartSpan("testing")
 			logFn(instana.ContextWithSpan(context.Background(), parentSp))
 			parentSp.Finish()
 
@@ -134,16 +138,17 @@ func TestNewHook_IgnoreLowLevels(t *testing.T) {
 
 func TestNewHook_NoContext(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	sensor := instana.NewSensorWithTracer(
-		instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder),
-	)
-	defer instana.ShutdownSensor()
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
 
 	logger := logrus.New()
 	logger.Level = logrus.DebugLevel
 	logger.Out = ioutil.Discard
 
-	logger.AddHook(instalogrus.NewHook(sensor))
+	logger.AddHook(instalogrus.NewHook(c))
 
 	// logging with empty context
 	logger.WithContext(context.TODO()).WithFields(logrus.Fields{"value": 42}).Error("log message")
