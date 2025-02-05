@@ -21,8 +21,11 @@ func TestNewClientFromConnectionString(t *testing.T) {
 	connStr := "AccountEndpoint=" + endpoint + ";AccountKey=" + key + ";"
 
 	rec = getInstaRecorder()
-	tracer := instana.NewTracerWithEverything(nil, rec)
-	sensor := instana.NewSensorWithTracer(tracer)
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    rec,
+	})
+	defer instana.ShutdownCollector()
 
 	type args struct {
 		collector        instana.TracerLogger
@@ -37,7 +40,7 @@ func TestNewClientFromConnectionString(t *testing.T) {
 		{
 			name: "success",
 			args: args{
-				collector:        sensor,
+				collector:        c,
 				connectionString: connStr,
 				o:                &azcosmos.ClientOptions{},
 			},
@@ -46,7 +49,7 @@ func TestNewClientFromConnectionString(t *testing.T) {
 		{
 			name: "	error",
 			args: args{
-				collector:        sensor,
+				collector:        c,
 				connectionString: "",
 				o:                &azcosmos.ClientOptions{},
 			},
@@ -69,8 +72,11 @@ func TestNewClientFromConnectionString(t *testing.T) {
 func TestNewClient(t *testing.T) {
 
 	rec = getInstaRecorder()
-	tracer := instana.NewTracerWithEverything(nil, rec)
-	sensor := instana.NewSensorWithTracer(tracer)
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    rec,
+	})
+	defer instana.ShutdownCollector()
 
 	cred, err := azidentity.NewClientSecretCredential("tenantId", "clientId", "clientSecret",
 		&azidentity.ClientSecretCredentialOptions{})
@@ -90,7 +96,7 @@ func TestNewClient(t *testing.T) {
 		{
 			name: "success",
 			args: args{
-				collector: sensor,
+				collector: c,
 				endpoint:  endpoint,
 				cred:      cred,
 				o:         &azcosmos.ClientOptions{},
@@ -100,7 +106,7 @@ func TestNewClient(t *testing.T) {
 		{
 			name: "error",
 			args: args{
-				collector: sensor,
+				collector: c,
 				endpoint:  "http://{example.com",
 				cred:      cred,
 				o:         &azcosmos.ClientOptions{},
