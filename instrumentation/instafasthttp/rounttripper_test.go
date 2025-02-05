@@ -27,11 +27,13 @@ func TestRoundTripper(t *testing.T) {
 			CollectableHTTPHeaders: []string{"x-custom-header-1", "x-custom-header-2"},
 		},
 		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
 	}
-	tracer := instana.NewTracerWithEverything(opts, recorder)
-	s := instana.NewSensorWithTracer(tracer)
 
-	parentSpan := tracer.StartSpan("parent")
+	collector := instana.InitCollector(opts)
+	defer instana.ShutdownCollector()
+
+	parentSpan := collector.StartSpan("parent")
 	ctx := instana.ContextWithSpan(context.Background(), parentSpan)
 
 	server := &fasthttp.Server{
@@ -58,7 +60,7 @@ func TestRoundTripper(t *testing.T) {
 	}()
 
 	hc := &fasthttp.HostClient{
-		Transport: instafasthttp.RoundTripper(ctx, s, testT),
+		Transport: instafasthttp.RoundTripper(ctx, collector, testT),
 		Addr:      "example.com",
 	}
 
@@ -115,9 +117,13 @@ func TestRoundTripper(t *testing.T) {
 func TestRoundTripper_Error(t *testing.T) {
 
 	recorder := instana.NewTestRecorder()
-	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder))
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
 
-	parentSpan := s.Tracer().StartSpan("parent")
+	parentSpan := c.Tracer().StartSpan("parent")
 	ctx := instana.ContextWithSpan(context.Background(), parentSpan)
 
 	server := &fasthttp.Server{
@@ -144,7 +150,7 @@ func TestRoundTripper_Error(t *testing.T) {
 	}()
 
 	hc := &fasthttp.HostClient{
-		Transport: instafasthttp.RoundTripper(ctx, s, testT),
+		Transport: instafasthttp.RoundTripper(ctx, c, testT),
 		Addr:      "example.com",
 	}
 
@@ -203,9 +209,14 @@ func TestRoundTripper_Error(t *testing.T) {
 
 func TestRoundTripper_DefaultTransport(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder))
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
+
 	var numCalls int
-	parentSpan := s.Tracer().StartSpan("parent")
+	parentSpan := c.Tracer().StartSpan("parent")
 	ctx := instana.ContextWithSpan(context.Background(), parentSpan)
 
 	server := &fasthttp.Server{
@@ -226,7 +237,7 @@ func TestRoundTripper_DefaultTransport(t *testing.T) {
 	}()
 
 	hc := &fasthttp.HostClient{
-		Transport: instafasthttp.RoundTripper(ctx, s, nil),
+		Transport: instafasthttp.RoundTripper(ctx, c, nil),
 		Addr:      "example.com",
 		Dial:      func(addr string) (net.Conn, error) { return ln.Dial() },
 	}
