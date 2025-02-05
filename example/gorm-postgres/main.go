@@ -6,7 +6,9 @@
 package main
 
 import (
+	"context"
 	"fmt"
+	"net/http"
 	"time"
 
 	instana "github.com/instana/go-sensor"
@@ -14,6 +16,68 @@ import (
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
+
+var (
+	dsn string
+	db  *gorm.DB
+)
+
+func main() {
+	//hold := make(chan bool)
+
+	col := instana.InitCollector(&instana.Options{
+		Service: "gorm-postgres",
+	})
+
+	//<-agentReady()
+
+	if err := initDb(col); err != nil {
+		panic(err)
+	}
+
+	initDb(col)
+
+	fmt.Println("agent ready")
+
+	mux := http.NewServeMux()
+	mux.HandleFunc("/home", instana.TracingHandlerFunc(col, "/home", handleDbOps))
+
+	if err := http.ListenAndServe(":8080", mux); err != nil {
+		panic(err)
+	}
+
+	fmt.Println("holding process up")
+	//<-hold
+}
+
+func initDb(col instana.TracerLogger) error {
+	var err error
+
+	dsn := "host=localhost user=postgres password=mysecretpassword dbname=postgres port=5432 sslmode=disable"
+	db, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	if err != nil {
+		return err
+	}
+
+	instagorm.Instrument(db, col, dsn)
+
+	return nil
+}
+
+func handleDbOps(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("handleDbOps called")
+
+	databaseOperation(r.Context())
+
+}
+
+func databaseOperation(ctx context.Context) {
+	var stud student
+
+	db.WithContext(ctx).First(&stud)
+
+	fmt.Println(">>>", stud.StudentName)
+}
 
 func agentReady() chan bool {
 	ch := make(chan bool)
@@ -29,35 +93,6 @@ func agentReady() chan bool {
 	}()
 
 	return ch
-}
-
-func main() {
-	hold := make(chan bool)
-
-	s := instana.InitCollector(&instana.Options{
-		Service: "gorm-postgres",
-	})
-
-	<-agentReady()
-	fmt.Println("agent ready")
-
-	dsn := "host=localhost user=postgres password=mysecretpassword dbname=postgres port=5432 sslmode=disable"
-	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
-
-	if err != nil {
-		panic(err)
-	}
-
-	instagorm.Instrument(db, s, dsn)
-
-	var stud student
-
-	db.First(&stud)
-
-	fmt.Println(">>>", stud.StudentName)
-
-	fmt.Println("holding process up")
-	<-hold
 }
 
 type student struct {
