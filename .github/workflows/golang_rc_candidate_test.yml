@@ -41,8 +41,11 @@ jobs:
             gorc download
             gorc version
 
+            sudo apt-get -y install podman
+            pip3 install podman-compose
+
             echo "Starting Couchbase"
-            docker compose -f docker-compose-integration.yaml up -d
+            podman-compose -f docker-compose-integration.yaml up -d
             echo "Starting Postgres"
             sudo systemctl start postgresql.service
             sudo -u postgres psql -c "ALTER USER postgres PASSWORD 'mysecretpassword'"

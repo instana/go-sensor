@@ -13,6 +13,11 @@ spec:
         spec:
           containers:
           - name: tracer-reports-cron
-            image: curlimages/curl
-            args: ["curl", "-X", "POST", "--data", "{}", "el-cron-listener.default.svc.cluster.local:8080"]
+            image: public.ecr.aws/docker/library/alpine:3.21.2
+            command: ["/bin/sh", "-c"]
+            args: 
+              - |
+                # Install curl
+                apk fix && apk --no-cache --update add curl && rm -rf /var/cache/apk/* && \
+                curl -X POST --data '{}' el-cron-listener.default.svc.cluster.local:8080
           restartPolicy: Never
