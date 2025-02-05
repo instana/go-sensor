@@ -155,9 +155,13 @@ func TestPropagation(t *testing.T) {
 }
 
 func getInstrumentedEngine() *gin.Engine {
-	sensor := instana.NewSensor("gin-test")
+	c := instana.InitCollector(&instana.Options{
+		Service: "gin-test",
+	})
+	defer instana.ShutdownCollector()
+
 	engine := gin.Default()
-	instagin.AddMiddleware(sensor, engine)
+	instagin.AddMiddleware(c, engine)
 	return engine
 }
 

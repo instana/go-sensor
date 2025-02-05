@@ -50,8 +50,11 @@ func ExampleDo() {
 }
 
 func ExampleResultCallbackFn() {
-	// create an instance of the Instana sensor
-	sensor := instana.NewSensor("go-graphql")
+	// create an instance of the Instana collector
+	c := instana.InitCollector(&instana.Options{
+		Service: "go-graphql",
+	})
+	defer instana.ShutdownCollector()
 
 	// setup GraphQL normally
 	fields := graphql.Fields{
@@ -81,7 +84,7 @@ func ExampleResultCallbackFn() {
 		Pretty:   true,
 		GraphiQL: true,
 		// instagraphql.ResultCallbackFn instruments the code and returns the original function, if any.
-		ResultCallbackFn: instagraphql.ResultCallbackFn(sensor, fn),
+		ResultCallbackFn: instagraphql.ResultCallbackFn(c, fn),
 	})
 
 	http.Handle("/graphql", h)

@@ -11,11 +11,14 @@ import (
 
 // This example demonstrates how to instrument a custom handler for Azure Functions
 func Example_handler() {
-	// Initialize a new sensor.
-	sensor := instana.NewSensor("my-azf-sensor")
+	// Initialize a new collector.
+	c := instana.InitCollector(&instana.Options{
+		Service: "my-azf-sensor",
+	})
+	defer instana.ShutdownCollector()
 
 	// Instrument your handler before passing it to the http router.
-	http.HandleFunc("/api/azf-test", instaazurefunction.WrapFunctionHandler(sensor, handlerFn))
+	http.HandleFunc("/api/azf-test", instaazurefunction.WrapFunctionHandler(c, handlerFn))
 }
 
 func handlerFn(w http.ResponseWriter, r *http.Request) {

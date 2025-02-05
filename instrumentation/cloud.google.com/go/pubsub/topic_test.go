@@ -130,7 +130,7 @@ func TestTopic_Publish_NoTrace(t *testing.T) {
 	client, err := pubsub.NewClient(
 		ctx,
 		"test-project",
-		instana.NewSensorWithTracer(c),
+		c,
 		option.WithGRPCConn(conn),
 	)
 	require.NoError(t, err)
