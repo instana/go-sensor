@@ -235,10 +235,11 @@ func TestGraphQLWithoutHTTP(t *testing.T) {
 func TestGraphQLWithCustomHTTP(t *testing.T) {
 	pool := &pubsub{}
 	recorder := instana.NewTestRecorder()
-	sensor := instana.NewSensorWithTracer(
-		instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder),
-	)
-	defer instana.ShutdownSensor()
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
 
 	schema, err := getSchema(false, pool)
 
@@ -248,7 +249,7 @@ func TestGraphQLWithCustomHTTP(t *testing.T) {
 
 	for title, sample := range samples {
 		t.Run(title, func(t *testing.T) {
-			srv := httptest.NewServer(instana.TracingHandlerFunc(sensor, "/graphql", http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+			srv := httptest.NewServer(instana.TracingHandlerFunc(c, "/graphql", http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 				b, err := ioutil.ReadAll(req.Body)
 
 				if err != nil {
@@ -275,7 +276,7 @@ func TestGraphQLWithCustomHTTP(t *testing.T) {
 
 				params := graphql.Params{Schema: schema, RequestString: p.Query}
 
-				instagraphql.Do(req.Context(), sensor, params)
+				instagraphql.Do(req.Context(), c, params)
 			})))
 
 			defer srv.Close()
@@ -305,10 +306,11 @@ func TestGraphQLWithCustomHTTP(t *testing.T) {
 func TestGraphQLWithBuiltinHTTP(t *testing.T) {
 	pool := &pubsub{}
 	recorder := instana.NewTestRecorder()
-	sensor := instana.NewSensorWithTracer(
-		instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder),
-	)
-	defer instana.ShutdownSensor()
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
 
 	schema, err := getSchema(false, pool)
 
@@ -327,7 +329,7 @@ func TestGraphQLWithBuiltinHTTP(t *testing.T) {
 				Schema:           &schema,
 				Pretty:           true,
 				GraphiQL:         true,
-				ResultCallbackFn: instagraphql.ResultCallbackFn(sensor, fn),
+				ResultCallbackFn: instagraphql.ResultCallbackFn(c, fn),
 			})
 
 			srv := httptest.NewServer(h)
@@ -360,10 +362,11 @@ func TestGraphQLWithBuiltinHTTP(t *testing.T) {
 func TestGraphQLWithSubscription(t *testing.T) {
 	pool := &pubsub{}
 	recorder := instana.NewTestRecorder()
-	sensor := instana.NewSensorWithTracer(
-		instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder),
-	)
-	defer instana.ShutdownSensor()
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
 
 	schema, err := getSchema(true, pool)
 
@@ -375,7 +378,7 @@ func TestGraphQLWithSubscription(t *testing.T) {
 		Schema:           &schema,
 		Pretty:           true,
 		GraphiQL:         true,
-		ResultCallbackFn: instagraphql.ResultCallbackFn(sensor, nil),
+		ResultCallbackFn: instagraphql.ResultCallbackFn(c, nil),
 	})
 
 	srv := httptest.NewServer(h)
@@ -425,13 +428,13 @@ func TestGraphQLWithSubscription(t *testing.T) {
 			Schema:        schema,
 		}
 
-		instagraphql.Subscribe(ctx, sensor, subscribeParams)
+		instagraphql.Subscribe(ctx, c, subscribeParams)
 	}()
 
-	c := http.DefaultClient
+	dc := http.DefaultClient
 	r := bytes.NewReader([]byte(mutSample.queryAsJSON()))
 	req, _ := http.NewRequest(http.MethodPost, srv.URL, r)
-	c.Do(req)
+	dc.Do(req)
 
 	var spans []instana.Span
 
@@ -462,10 +465,11 @@ func TestGraphQLWithSubscription(t *testing.T) {
 func TestGraphQLQueryParseError(t *testing.T) {
 	pool := &pubsub{}
 	recorder := instana.NewTestRecorder()
-	sensor := instana.NewSensorWithTracer(
-		instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder),
-	)
-	defer instana.ShutdownSensor()
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
 
 	schema, err := getSchema(false, pool)
 
@@ -488,7 +492,7 @@ func TestGraphQLQueryParseError(t *testing.T) {
 
 	params := graphql.Params{Schema: schema, RequestString: sample.query}
 
-	instagraphql.Do(context.Background(), sensor, params)
+	instagraphql.Do(context.Background(), c, params)
 
 	var spans []instana.Span
 
