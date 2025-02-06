@@ -5,7 +5,7 @@ go 1.22
 require (
 	github.com/IBM/sarama v1.45.0
 	github.com/instana/go-sensor v1.66.2
-	github.com/instana/go-sensor/instrumentation/instasarama v1.17.0
+	github.com/instana/go-sensor/instrumentation/instasarama v1.32.0
 	github.com/opentracing/opentracing-go v1.2.0
 )
 
@@ -25,7 +25,7 @@ require (
 	github.com/jcmturner/gokrb5/v8 v8.4.4 // indirect
 	github.com/jcmturner/rpc/v2 v2.0.3 // indirect
 	github.com/klauspost/compress v1.17.11 // indirect
-	github.com/looplab/fsm v1.0.1 // indirect
+	github.com/looplab/fsm v1.0.2 // indirect
 	github.com/pierrec/lz4/v4 v4.1.22 // indirect
 	github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475 // indirect
 	golang.org/x/crypto v0.32.0 // indirect

@@ -7,7 +7,8 @@
 ```sh
 cd /path/to/go-sensor/examples/couchbase
 # setup couchbase/server-sandbox container 
-docker-compose up
+cd ./sandbox
+podman-compose up --build #Or you can use docker compose
 go mod tidy
 go run .
 ```
