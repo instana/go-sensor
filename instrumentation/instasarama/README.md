@@ -22,8 +22,8 @@ For detailed usage examples see [the documentation][godoc] or the following link
 - [Consumer_group example](./example_consumer_group_test.go)
 - [Consumer_example](./example_consumer_group_test.go)
 
-This instrumentation requires an instance of `instana.Sensor` to initialize spans and handle the trace context propagation.
-You can create a new instance of Instana sensor using `instana.NewSensor()`.
+This instrumentation requires an instance of [`instana.Collector`][Collector] to initialize spans and handle the trace context propagation.
+You can create a new instance of Instana collector using [`instana.InitCollector()`][InitCollector].
 
 `instasarama` provides a set of convenience wrappers for constructor functions exported by `github.com/IBM/sarama`. These
 wrappers are named the same way as their origins and use the same set of arguments. In most cases it's enough to replace
@@ -39,18 +39,18 @@ For more detailed example code please consult the [package documentation][godoc]
 To create an instrumented instance of `sarama.SyncProducer` from a list of broker addresses use [instasarama.NewSyncProducer()][NewSyncProducer]:
 
 ```go
-producer := instasarama.NewSyncProducer(brokers, config, sensor)
+producer := instasarama.NewSyncProducer(brokers, config, collector)
 ```
 
 [instasarama.NewSyncProducerFromClient()][NewSyncProducerFromClient] does the same, but from an existing `sarama.Client`:
 
 ```go
-producer := instasarama.NewSyncProducerFromClient(client, sensor)
+producer := instasarama.NewSyncProducerFromClient(client, collector)
 ```
 
 The wrapped producer takes care of trace context propagation by creating an exit span and injecting the trace context into each Kafka
 message headers. Since `github.com/IBM/sarama` does not use `context.Context`, which is a conventional way of passing the parent
-span in Instana Go sensor, the caller needs to inject the parent span context using [`instasarama.ProducerMessageWithSpan()`][ProducerMessageWithSpan]
+span in Instana Go collector, the caller needs to inject the parent span context using [`instasarama.ProducerMessageWithSpan()`][ProducerMessageWithSpan]
 before passing it to the wrapped producer.
 
 ### Instrumenting `sarama.AsyncProducer`
@@ -63,18 +63,18 @@ For more detailed example code please consult the [package documentation][godoc]
 To create an instrumented instance of `sarama.AsyncProducer` from a list of broker addresses use [instasarama.NewAsyncProducer()][NewAsyncProducer]:
 
 ```go
-producer := instasarama.NewAsyncProducer(brokers, config, sensor)
+producer := instasarama.NewAsyncProducer(brokers, config, collector)
 ```
 
 [instasarama.NewAsyncProducerFromClient()][NewAsyncProducerFromClient] does the same, but from an existing `sarama.Client`:
 
 ```go
-producer := instasarama.NewAsyncProducerFromClient(client, sensor)
+producer := instasarama.NewAsyncProducerFromClient(client, collector)
 ```
 
 The wrapped producer takes care of trace context propagation by creating an exit span and injecting the trace context into each Kafka
 message headers. Since `github.com/IBM/sarama` does not use `context.Context`, which is a conventional way of passing the parent
-span in Instana Go sensor, the caller needs to inject the parent span context using [`instasarama.ProducerMessageWithSpan()`][ProducerMessageWithSpan]
+span in Instana Go collector, the caller needs to inject the parent span context using [`instasarama.ProducerMessageWithSpan()`][ProducerMessageWithSpan]
 before passing it to the wrapped producer.
 
 ### Instrumenting `sarama.Consumer`
@@ -84,13 +84,13 @@ For more detailed example code please consult the [package documentation][godoc]
 To create an instrumented instance of `sarama.Consumer` from a list of broker addresses use [instasarama.NewConsumer()][NewConsumer]:
 
 ```go
-consumer := instasarama.NewConsumer(brokers, config, sensor)
+consumer := instasarama.NewConsumer(brokers, config, collector)
 ```
 
 [instasarama.NewConsumerFromClient()][NewConsumerFromClient] does the same, but from an existing `sarama.Client`:
 
 ```go
-consumer := instasarama.NewConsumerFromClient(client, sensor)
+consumer := instasarama.NewConsumerFromClient(client, collector)
 ```
 
 The wrapped consumer will pick up the existing trace context if found in message headers, start a new entry span and inject its context
@@ -107,7 +107,7 @@ into a wrapper that takes care of trace context extraction, creating an entry sp
 ```go
 var client sarama.ConsumerGroup
 
-consumer := instasarama.WrapConsumerGroupHandler(&Consumer{}, sensor)
+consumer := instasarama.WrapConsumerGroupHandler(&Consumer{}, collector)
 
 // use the wrapped consumer in the Consume() call
 for {
@@ -141,3 +141,5 @@ See the topic [Kafka header migration](https://www.ibm.com/docs/en/instana-obser
 [WrapConsumerGroupHandler]: https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instasarama?tab=doc#WrapConsumerGroupHandler
 [ProducerMessageWithSpan]: https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instasarama?tab=doc#ProducerMessageWithSpan
 [SpanContextFromConsumerMessage]: https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instasarama?tab=doc#SpanContextFromConsumerMessage
+[Collector]: https://pkg.go.dev/github.com/instana/go-sensor#Collector
+[InitCollector]: https://pkg.go.dev/github.com/instana/go-sensor#InitCollector

@@ -21,11 +21,13 @@ The `instalogrus.NewHook()` collects any warning or errors logged with `logrus.L
 and sends to Instana.
 
 ```go
-// Create a sensor
-sensor := instana.NewSensor("my-web-server")
+// Create a collector
+collector := instana.InitCollector(&instana.Options{
+	Service: "my-web-server",
+})
 
 // Register the instalogrus hook
-logrus.AddHook(instalogrus.NewHook(sensor))
+logrus.AddHook(instalogrus.NewHook(collector))
 
 // ...
 

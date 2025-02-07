@@ -19,13 +19,15 @@ Usage
 -----
 
 ```go
-// Create a sensor for instana instrumentation
-sensor := instana.NewSensor("my-web-server")
+// Create a collector for instana instrumentation
+collector := instana.InitCollector(&instana.Options{
+  Service: "fiber-app",
+})
 
 app := fiber.New()
 
 // Use the instafiber.TraceHandler for instrumenting the handler
-app.Get("/greet", instafiber.TraceHandler(sensor, "greet", "/greet", func(c *fiber.Ctx) error {
+app.Get("/greet", instafiber.TraceHandler(collector, "greet", "/greet", func(c *fiber.Ctx) error {
 return c.SendString("Hello world!")
 }))
 ```

@@ -24,24 +24,26 @@ Usage
 
 For detailed usage example see [the documentation][godoc] or [`example_test.go`](./example_test.go).
 
-This instrumentation requires an `instana.Sensor` to initialize spans and handle the trace context propagation.
-You can create a new instance of Instana tracer using [`instana.NewSensor()`][NewSensor].
+This instrumentation requires an [`instana.Collector`][Collector] to initialize spans and handle the trace context propagation.
+You can create a new instance of Instana collector using [`instana.InitCollector()`][InitCollector].
 
 ### Instrumenting a server
 
 To instrument your GRPC server instance include [`instagrpc.UnaryServerInterceptor()`][UnaryServerInterceptor] and
 [`instagrpc.StreamServerInterceptor()`][StreamServerInterceptor] into the list of server options passed to `grpc.NewServer()`.
-These interceptors will use the provided [`instana.Sensor`][Sensor] to handle the OpenTracing headers, start a new span for each incoming
+These interceptors will use the provided [`instana.Collector`][Collector] to handle the OpenTracing headers, start a new span for each incoming
 request and inject it into the handler:
 
 ```go
-// initialize a new tracer instance
-sensor := instana.NewSensor("my-server")
+// initialize a new collector instance
+collector := instana.InitCollector(&instana.Options{
+	Service: "grpc-app",
+})
 
 // instrument the server
 srv := grpc.NewServer(
-	grpc.UnaryInterceptor(instagrpc.UnaryServerInterceptor(sensor)),
-	grpc.StreamInterceptor(instagrpc.StreamServerInterceptor(sensor)),
+	grpc.UnaryInterceptor(instagrpc.UnaryServerInterceptor(collector)),
+	grpc.StreamInterceptor(instagrpc.StreamServerInterceptor(collector)),
 	// ...
 )
 ```
@@ -74,6 +76,8 @@ If the context contains an active span stored using [`instana.ContextWithSpan()`
 
 [godoc]: https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instagrpc
 [NewSensor]: https://pkg.go.dev/github.com/instana/go-sensor?tab=doc#NewSensor
+[Collector]: https://pkg.go.dev/github.com/instana/go-sensor#Collector
+[InitCollector]: https://pkg.go.dev/github.com/instana/go-sensor#InitCollector
 [StreamClientInterceptor]: https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instagrpc?tab=doc#StreamClientInterceptor
 [StreamServerInterceptor]: https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instagrpc?tab=doc#StreamServerInterceptor
 [UnaryClientInterceptor]: https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instagrpc?tab=doc#UnaryClientInterceptor

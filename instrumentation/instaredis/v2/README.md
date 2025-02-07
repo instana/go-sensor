@@ -21,14 +21,14 @@ Usage
 `instaredis` offers function wrappers for [`redis.NewClient()`][instaredis.WrapClient], [`redis.NewFailoverClient()`][instaredis.WrapClient],
 [`redis.NewClusterClient()`][instaredis.WrapClusterClient] and [`redis.NewFailoverClusterClient()`][instaredis.WrapClusterClient]
 that instrument an instance of `redis.Client` or `redis.ClusterClient` by adding hooks to the redis client. These hooks then
-use the provided `instana.Sensor` to trace Redis calls made with this client instance:
+use the provided [`instana.Collector`][Collector] to trace Redis calls made with this client instance:
 
 ```go
 rdb := redis.NewClient(&redis.Options{
 	Addr: "localhost:6382",
 })
 
-instaredis.WrapClient(rdb, sensor)
+instaredis.WrapClient(rdb, collector)
 ```
 
 
@@ -38,3 +38,4 @@ See the [`instaredis` package documentation][godoc] for detailed examples.
 [godoc]: https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instaredis/v2
 [instaredis.WrapClient]: https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instaredis/v2#WrapClient
 [instaredis.WrapClusterClient]: https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instaredis/v2#WrapClusterClient
+[Collector]: https://pkg.go.dev/github.com/instana/go-sensor#Collector

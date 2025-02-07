@@ -19,11 +19,13 @@ Usage
 -----
 
 ```go
-// Create a sensor
-sensor := instana.NewSensor("my-web-server")
+// Create a collector
+collector := instana.InitCollector(&instana.Options{
+  Service: "my-web-app",
+})
 
 // Create router and wrap it with Instana
-r := instahttprouter.Wrap(httprouter.New(), sensor)
+r := instahttprouter.Wrap(httprouter.New(), collector)
 
 // Define handlers
 r.GET("/foo", func(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {})

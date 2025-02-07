@@ -27,11 +27,13 @@ Usage
 // init gin engine
 engine := gin.Default()
 
-// create a sensor
-sensor := instana.NewSensor("gin-sensor")
+// create a collector
+collector := instana.InitCollector(&instana.Options{
+    Service: "rabbitmq-client",
+})
 
 // add middleware to the gin handlers
-instagin.AddMiddleware(sensor, engine)
+instagin.AddMiddleware(collector, engine)
 
 // define API
 engine.GET("/api", func(c *gin.Context) {}
