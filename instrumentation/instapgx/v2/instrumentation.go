@@ -28,14 +28,14 @@ type dbConfig struct {
 }
 
 // InstanaTracer returns Instana tracer which can be used for instrumenting pgx/v5 	database calls.
-func InstanaTracer(cfg *pgx.ConnConfig, s *instana.Sensor) pgx.QueryTracer {
+func InstanaTracer(cfg *pgx.ConnConfig, collector instana.TracerLogger) pgx.QueryTracer {
 	if cfg == nil {
-		s.Logger().Error("cfg is nil. Check your database URL")
+		collector.Logger().Error("cfg is nil. Check your database URL")
 		return nil
 	}
 
 	tr := pgxTracer{
-		col: s,
+		col: collector,
 		dbDetails: dbConfig{
 			Host:     cfg.Host,
 			Port:     strconv.Itoa(int(cfg.Port)),
