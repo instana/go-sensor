@@ -36,7 +36,7 @@ func (Handler) Invoke(ctx context.Context, payload []byte) ([]byte, error) {
 }
 
 func main() {
-	// Initialize a new sensor
+	// Initialize a new collector
 	collector := instana.InitCollector(&instana.Options{
 		Service: "go-lambda",
 	})
@@ -93,7 +93,7 @@ func MyHandler(ctx context.Context) error {
 	// using an instrumented http.Client
 	req, err := http.NewRequest("GET", url, nil)
     client := &http.Client{
-	    Transport: instana.RoundTripper(sensor, nil),
+	    Transport: instana.RoundTripper(collector, nil),
 	}
 
 	client.Do(req.WithContext(ctx))

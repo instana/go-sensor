@@ -68,8 +68,8 @@ An SQS client that uses instrumented `session.Session` automatically creates ent
 
 ```go
 func handleMessage(ctx context.Context, msg *sqs.Message) {
-	if parent, ok := instaawssdk.SpanContextFromSQSMessage(msg, sensor); ok {
-		sp := sensor.Tracer().StartSpan("handleMessage", opentracing.ChildOf(parent))
+	if parent, ok := instaawssdk.SpanContextFromSQSMessage(msg, collector); ok {
+		sp := collector.Tracer().StartSpan("handleMessage", opentracing.ChildOf(parent))
 		defer sp.Finish()
 
 		ctx = instana.ContextWithSpan(ctx, sp)
@@ -86,7 +86,7 @@ If a session is instrumented, it will propagate tracing context automatically us
 Example:
 ```go
 collector := instana.InitCollector(&instana.Options{
-  Service: "my-new-sensor",
+  Service: "my-lambda-service",
 })
 sess, _ := session.NewSession()
 instaawssdk.InstrumentSession(sess, collector)

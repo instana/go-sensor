@@ -18,7 +18,7 @@ Usage
 -----
 
 ```go
-// create a sensor
+// create an instana collector
 collector := instana.InitCollector(&instana.Options{
     Service: "echo-app",
 })
