@@ -20,13 +20,15 @@ import (
 
 func main() {
 
-	sensor := instana.NewSensor("grpc-client")
+	collector := instana.InitCollector(&instana.Options{
+		Service: "grpc-client",
+	})
 
 	// Connect to the server.
 	conn, err := grpc.Dial("localhost:50051",
 		grpc.WithInsecure(),
-		grpc.WithUnaryInterceptor(instagrpc.UnaryClientInterceptor(sensor)),
-		grpc.WithStreamInterceptor(instagrpc.StreamClientInterceptor(sensor)))
+		grpc.WithUnaryInterceptor(instagrpc.UnaryClientInterceptor(collector)),
+		grpc.WithStreamInterceptor(instagrpc.StreamClientInterceptor(collector)))
 	if err != nil {
 		log.Fatalf("Failed to connect: %v", err)
 	}
@@ -35,20 +37,20 @@ func main() {
 	client := pb.NewGreeterClient(conn)
 
 	// Unary call
-	doUnaryCall(sensor, client)
+	doUnaryCall(collector, client)
 
 	// Server-side streaming call
-	doStreamingCall(sensor, client)
+	doStreamingCall(collector, client)
 
 	// Make a call to an unknown service/method.
-	doUnknownServiceCall(sensor, conn)
+	doUnknownServiceCall(collector, conn)
 
 	time.Sleep(10 * time.Minute)
 }
 
-func doUnknownServiceCall(sensor instana.TracerLogger, client *grpc.ClientConn) {
+func doUnknownServiceCall(collector instana.TracerLogger, client *grpc.ClientConn) {
 
-	sp := sensor.Tracer().
+	sp := collector.Tracer().
 		StartSpan("grpc-unknown-service-call").
 		SetTag(string(ext.SpanKind), "entry")
 
@@ -65,9 +67,9 @@ func doUnknownServiceCall(sensor instana.TracerLogger, client *grpc.ClientConn) 
 	}
 }
 
-func doUnaryCall(sensor instana.TracerLogger, client pb.GreeterClient) {
+func doUnaryCall(collector instana.TracerLogger, client pb.GreeterClient) {
 
-	sp := sensor.Tracer().
+	sp := collector.Tracer().
 		StartSpan("grpc-unary-client-call").
 		SetTag(string(ext.SpanKind), "entry")
 
@@ -86,9 +88,9 @@ func doUnaryCall(sensor instana.TracerLogger, client pb.GreeterClient) {
 	log.Printf("Unary Response: %s", resp.GetMessage())
 }
 
-func doStreamingCall(sensor instana.TracerLogger, client pb.GreeterClient) {
+func doStreamingCall(collector instana.TracerLogger, client pb.GreeterClient) {
 
-	sp := sensor.Tracer().
+	sp := collector.Tracer().
 		StartSpan("grpc-stream-client-call").
 		SetTag(string(ext.SpanKind), "entry")
 
