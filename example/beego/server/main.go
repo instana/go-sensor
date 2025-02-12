@@ -36,10 +36,13 @@ func (u *UserController) GetUser() {
 }
 
 func main() {
-	// create a sensor
-	sensor := instana.NewSensor("beego-server")
+	// create an Instana collector
+	collector := instana.InitCollector(&instana.Options{
+		Service: "beego-server",
+	})
+
 	// instrument the server with instabeego
-	instabeego.InstrumentWebServer(sensor)
+	instabeego.InstrumentWebServer(collector)
 
 	// Controller Style Router
 	beego.CtrlGet("/controller/user/:id", (*UserController).GetUser)
