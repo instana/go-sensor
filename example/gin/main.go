@@ -28,11 +28,13 @@ func main() {
 
 	engine := gin.Default()
 
-	// create a sensor
-	sensor := instana.NewSensor("gin-sensor")
+	// create an instana collector
+	collector := instana.InitCollector(&instana.Options{
+		Service: "gin-sensor",
+	})
 
 	// add middleware to the gin handlers
-	instagin.AddMiddleware(sensor, engine)
+	instagin.AddMiddleware(collector, engine)
 
 	engine.GET("/myendpoint", func(c *gin.Context) {
 		c.JSON(200, gin.H{
