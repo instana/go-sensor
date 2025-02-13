@@ -168,7 +168,7 @@ func simulateLockWait() {
 }
 
 func main() {
-	instana.InitSensor(&instana.Options{
+	instana.InitCollector(&instana.Options{
 		Service:           "autoprofile-demo",
 		LogLevel:          instana.Debug,
 		EnableAutoProfile: true})
