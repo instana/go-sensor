@@ -1,6 +1,6 @@
 module github.com/instana/go-sensor/instrumentation/instabeego
 
-go 1.22
+go 1.23
 
 require (
 	github.com/beego/beego/v2 v2.3.4
