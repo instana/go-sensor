@@ -1,6 +1,6 @@
 module github.com/instana/go-sensor/instrumentation/instacosmos
 
-go 1.22.0
+go 1.23
 
 require (
 	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.16.0

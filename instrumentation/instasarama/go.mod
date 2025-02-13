@@ -1,6 +1,6 @@
 module github.com/instana/go-sensor/instrumentation/instasarama
 
-go 1.22
+go 1.23
 
 require (
 	github.com/IBM/sarama v1.45.0

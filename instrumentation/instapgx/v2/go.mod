@@ -1,6 +1,6 @@
 module github.com/instana/go-sensor/instrumentation/instapgx/v2
 
-go 1.22
+go 1.23
 
 require (
 	github.com/instana/go-sensor v1.66.2

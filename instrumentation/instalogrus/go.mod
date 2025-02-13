@@ -1,6 +1,6 @@
 module github.com/instana/go-sensor/instrumentation/instalogrus
 
-go 1.22
+go 1.23
 
 require (
 	github.com/opentracing/opentracing-go v1.2.0
