@@ -19,7 +19,11 @@ import (
 
 func TestConsumerGroupHandler_ConsumeClaim(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	sensor := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{}, recorder))
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
 
 	messages := []*sarama.ConsumerMessage{
 		{
@@ -66,7 +70,7 @@ func TestConsumerGroupHandler_ConsumeClaim(t *testing.T) {
 	sess := &testConsumerGroupSession{}
 
 	h := &testConsumerGroupHandler{}
-	wrapped := instasarama.WrapConsumerGroupHandler(h, sensor)
+	wrapped := instasarama.WrapConsumerGroupHandler(h, c)
 
 	require.NoError(t, wrapped.ConsumeClaim(sess, claim))
 
@@ -172,10 +176,14 @@ func TestConsumerGroupHandler_ConsumeClaim(t *testing.T) {
 
 func TestConsumerGroupHandler_Setup(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	sensor := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{}, recorder))
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
 
 	h := &testConsumerGroupHandler{}
-	wrapped := instasarama.WrapConsumerGroupHandler(h, sensor)
+	wrapped := instasarama.WrapConsumerGroupHandler(h, c)
 
 	require.NoError(t, wrapped.Setup(&testConsumerGroupSession{}))
 	assert.True(t, h.SetupCalled)
@@ -185,12 +193,16 @@ func TestConsumerGroupHandler_Setup(t *testing.T) {
 
 func TestConsumerGroupHandler_Setup_Error(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	sensor := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{}, recorder))
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
 
 	h := &testConsumerGroupHandler{
 		Error: errors.New("something went wrong"),
 	}
-	wrapped := instasarama.WrapConsumerGroupHandler(h, sensor)
+	wrapped := instasarama.WrapConsumerGroupHandler(h, c)
 
 	assert.Error(t, wrapped.Setup(&testConsumerGroupSession{}))
 
@@ -199,10 +211,14 @@ func TestConsumerGroupHandler_Setup_Error(t *testing.T) {
 
 func TestConsumerGroupHandler_Cleanup(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	sensor := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{}, recorder))
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
 
 	h := &testConsumerGroupHandler{}
-	wrapped := instasarama.WrapConsumerGroupHandler(h, sensor)
+	wrapped := instasarama.WrapConsumerGroupHandler(h, c)
 
 	require.NoError(t, wrapped.Cleanup(&testConsumerGroupSession{}))
 	assert.True(t, h.CleanupCalled)
@@ -212,12 +228,16 @@ func TestConsumerGroupHandler_Cleanup(t *testing.T) {
 
 func TestConsumerGroupHandler_Cleanup_Error(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	sensor := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{}, recorder))
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
 
 	h := &testConsumerGroupHandler{
 		Error: errors.New("something went wrong"),
 	}
-	wrapped := instasarama.WrapConsumerGroupHandler(h, sensor)
+	wrapped := instasarama.WrapConsumerGroupHandler(h, c)
 
 	assert.Error(t, wrapped.Cleanup(&testConsumerGroupSession{}))
 

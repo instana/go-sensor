@@ -51,7 +51,7 @@ spec:
     - apiVersion: tekton.dev/v1
       kind: PipelineRun
       metadata:
-        name: $(tt.params.git-branch-normalized)-go22-$(tt.params.git-commit-short-sha)
+        name: $(tt.params.git-branch-normalized)-go24-$(tt.params.git-commit-short-sha)
       spec:
         params:
         - name: revision
@@ -59,7 +59,7 @@ spec:
         - name: git-commit-sha
           value: $(tt.params.git-commit-sha)
         - name: go-version
-          value: "1.22"
+          value: "1.24"
         - name: excludeDirs
           value: ""
         pipelineRef:

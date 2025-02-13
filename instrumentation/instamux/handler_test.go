@@ -42,10 +42,13 @@ func TestPropagation(t *testing.T) {
 	spanIDHeader := "0000000000004567"
 
 	recorder := instana.NewTestRecorder()
-	tracer := instana.NewTracerWithEverything(nil, recorder)
-	sensor := instana.NewSensorWithTracer(tracer)
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
 
-	r := instamux.NewRouter(sensor)
+	r := instamux.NewRouter(c)
 	r.HandleFunc("/foo/{id}", func(w http.ResponseWriter, r *http.Request) {
 		parent, ok := instana.SpanFromContext(r.Context())
 		assert.True(t, ok)

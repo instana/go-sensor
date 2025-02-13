@@ -18,7 +18,7 @@ func TestCollection_DS_List(t *testing.T) {
 	setAllowRootExitSpanEnv()
 	defer unsetAllowRootExitSpanEnv()
 
-	defer instana.ShutdownSensor()
+	defer instana.ShutdownCollector()
 
 	recorder, _, cluster, a := prepare(t)
 	defer cluster.Close(&gocb.ClusterCloseOptions{})

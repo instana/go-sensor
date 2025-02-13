@@ -21,17 +21,18 @@ import (
 
 func TestStartDynamoDBSpan(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	sensor := instana.NewSensorWithTracer(
-		instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder),
-	)
-	defer instana.ShutdownSensor()
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
 
-	parentSp := sensor.Tracer().StartSpan("testing")
+	parentSp := c.Tracer().StartSpan("testing")
 
 	req := newDynamoDBRequest()
 	req.SetContext(instana.ContextWithSpan(req.Context(), parentSp))
 
-	instaawssdk.StartDynamoDBSpan(req, sensor)
+	instaawssdk.StartDynamoDBSpan(req, c)
 
 	sp, ok := instana.SpanFromContext(req.Context())
 	require.True(t, ok)
@@ -64,18 +65,19 @@ func TestStartDynamoDBSpan(t *testing.T) {
 
 func TestStartDynamoDBSpan_NonInstrumentedMethod(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	sensor := instana.NewSensorWithTracer(
-		instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder),
-	)
-	defer instana.ShutdownSensor()
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
 
-	parentSp := sensor.Tracer().StartSpan("testing")
+	parentSp := c.Tracer().StartSpan("testing")
 
 	svc := dynamodb.New(unit.Session)
 	req, _ := svc.DescribeLimitsRequest(&dynamodb.DescribeLimitsInput{})
 	req.SetContext(instana.ContextWithSpan(req.Context(), parentSp))
 
-	instaawssdk.StartDynamoDBSpan(req, sensor)
+	instaawssdk.StartDynamoDBSpan(req, c)
 
 	sp, ok := instana.SpanFromContext(req.Context())
 	require.True(t, ok)
@@ -90,13 +92,14 @@ func TestStartDynamoDBSpan_NonInstrumentedMethod(t *testing.T) {
 
 func TestStartDynamoDBSpan_NoActiveSpan(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	sensor := instana.NewSensorWithTracer(
-		instana.NewTracerWithEverything(instana.DefaultOptions(), recorder),
-	)
-	defer instana.ShutdownSensor()
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
 
 	req := newDynamoDBRequest()
-	instaawssdk.StartDynamoDBSpan(req, sensor)
+	instaawssdk.StartDynamoDBSpan(req, c)
 
 	_, ok := instana.SpanFromContext(req.Context())
 	require.True(t, ok)
@@ -104,12 +107,13 @@ func TestStartDynamoDBSpan_NoActiveSpan(t *testing.T) {
 
 func TestFinalizeDynamoDB_NoError(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	sensor := instana.NewSensorWithTracer(
-		instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder),
-	)
-	defer instana.ShutdownSensor()
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
 
-	sp := sensor.Tracer().StartSpan("dynamodb", opentracing.Tags{
+	sp := c.Tracer().StartSpan("dynamodb", opentracing.Tags{
 		"dynamodb.op":    "get",
 		"dynamodb.table": "test-table",
 	})
@@ -135,12 +139,13 @@ func TestFinalizeDynamoDB_NoError(t *testing.T) {
 
 func TestFinalizeDynamoDBSpan_WithError(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	sensor := instana.NewSensorWithTracer(
-		instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder),
-	)
-	defer instana.ShutdownSensor()
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
 
-	sp := sensor.Tracer().StartSpan("dynamodb", opentracing.Tags{
+	sp := c.Tracer().StartSpan("dynamodb", opentracing.Tags{
 		"dynamodb.op":     "get",
 		"dynamodb.table":  "test-table",
 		"dynamodb.region": "mock-region",

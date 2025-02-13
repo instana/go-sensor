@@ -43,13 +43,14 @@ type product struct {
 
 func TestInsertRecord(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{
+	c := instana.InitCollector(&instana.Options{
 		Service:     "go-sensor-test",
 		AgentClient: alwaysReadyClient{},
-	}, recorder))
-	defer instana.ShutdownSensor()
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
 
-	pSpan := s.Tracer().StartSpan("parent-span")
+	pSpan := c.Tracer().StartSpan("parent-span")
 	ctx := context.Background()
 	if pSpan != nil {
 		ctx = instana.ContextWithSpan(ctx, pSpan)
@@ -65,7 +66,7 @@ func TestInsertRecord(t *testing.T) {
 		}
 
 		db.Statement.Context = ctx
-		instagorm.Instrument(db, s, dsn)
+		instagorm.Instrument(db, c, dsn)
 
 		if err = db.AutoMigrate(&product{}); err != nil {
 			panic("failed to migrate the schema")
@@ -102,13 +103,14 @@ func TestInsertRecord(t *testing.T) {
 
 func TestUpdateRecord(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{
+	c := instana.InitCollector(&instana.Options{
 		Service:     "go-sensor-test",
 		AgentClient: alwaysReadyClient{},
-	}, recorder))
-	defer instana.ShutdownSensor()
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
 
-	pSpan := s.Tracer().StartSpan("parent-span")
+	pSpan := c.Tracer().StartSpan("parent-span")
 	ctx := context.Background()
 	if pSpan != nil {
 		ctx = instana.ContextWithSpan(ctx, pSpan)
@@ -124,7 +126,7 @@ func TestUpdateRecord(t *testing.T) {
 		}
 
 		db.Statement.Context = ctx
-		instagorm.Instrument(db, s, dsn)
+		instagorm.Instrument(db, c, dsn)
 
 		if err = db.AutoMigrate(&product{}); err != nil {
 			panic("failed to migrate the schema")
@@ -166,13 +168,14 @@ func TestUpdateRecord(t *testing.T) {
 
 func TestSelectRecord(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{
+	c := instana.InitCollector(&instana.Options{
 		Service:     "go-sensor-test",
 		AgentClient: alwaysReadyClient{},
-	}, recorder))
-	defer instana.ShutdownSensor()
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
 
-	pSpan := s.Tracer().StartSpan("parent-span")
+	pSpan := c.Tracer().StartSpan("parent-span")
 	ctx := context.Background()
 	if pSpan != nil {
 		ctx = instana.ContextWithSpan(ctx, pSpan)
@@ -188,7 +191,7 @@ func TestSelectRecord(t *testing.T) {
 		}
 
 		db.Statement.Context = ctx
-		instagorm.Instrument(db, s, dsn)
+		instagorm.Instrument(db, c, dsn)
 
 		if err = db.AutoMigrate(&product{}); err != nil {
 			panic("failed to migrate the schema")
@@ -228,13 +231,14 @@ func TestSelectRecord(t *testing.T) {
 
 func TestDeleteRecord(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{
+	c := instana.InitCollector(&instana.Options{
 		Service:     "go-sensor-test",
 		AgentClient: alwaysReadyClient{},
-	}, recorder))
-	defer instana.ShutdownSensor()
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
 
-	pSpan := s.Tracer().StartSpan("parent-span")
+	pSpan := c.Tracer().StartSpan("parent-span")
 	ctx := context.Background()
 	if pSpan != nil {
 		ctx = instana.ContextWithSpan(ctx, pSpan)
@@ -250,7 +254,7 @@ func TestDeleteRecord(t *testing.T) {
 		}
 
 		db.Statement.Context = ctx
-		instagorm.Instrument(db, s, dsn)
+		instagorm.Instrument(db, c, dsn)
 
 		if err = db.AutoMigrate(&product{}); err != nil {
 			panic("failed to migrate the schema")
@@ -288,13 +292,14 @@ func TestDeleteRecord(t *testing.T) {
 
 func TestRawSQL(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{
+	c := instana.InitCollector(&instana.Options{
 		Service:     "go-sensor-test",
 		AgentClient: alwaysReadyClient{},
-	}, recorder))
-	defer instana.ShutdownSensor()
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
 
-	pSpan := s.Tracer().StartSpan("parent-span")
+	pSpan := c.Tracer().StartSpan("parent-span")
 	ctx := context.Background()
 	if pSpan != nil {
 		ctx = instana.ContextWithSpan(ctx, pSpan)
@@ -310,7 +315,7 @@ func TestRawSQL(t *testing.T) {
 		}
 
 		db.Statement.Context = ctx
-		instagorm.Instrument(db, s, dsn)
+		instagorm.Instrument(db, c, dsn)
 
 		if err = db.AutoMigrate(&product{}); err != nil {
 			panic("failed to migrate the schema")
@@ -351,13 +356,14 @@ func TestRawSQL(t *testing.T) {
 
 func TestRow(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{
+	c := instana.InitCollector(&instana.Options{
 		Service:     "go-sensor-test",
 		AgentClient: alwaysReadyClient{},
-	}, recorder))
-	defer instana.ShutdownSensor()
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
 
-	pSpan := s.Tracer().StartSpan("parent-span")
+	pSpan := c.Tracer().StartSpan("parent-span")
 	ctx := context.Background()
 	if pSpan != nil {
 		ctx = instana.ContextWithSpan(ctx, pSpan)
@@ -373,7 +379,7 @@ func TestRow(t *testing.T) {
 		}
 
 		db.Statement.Context = ctx
-		instagorm.Instrument(db, s, dsn)
+		instagorm.Instrument(db, c, dsn)
 
 		if err = db.AutoMigrate(&product{}); err != nil {
 			panic("failed to migrate the schema")

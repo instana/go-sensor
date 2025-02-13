@@ -15,12 +15,14 @@ import (
 
 func TestPublishMessage(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	sensor := instana.NewSensorWithTracer(
-		instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder),
-	)
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
 
 	ctx := context.Background()
-	ps := sensor.StartSpan("aws-parent-span")
+	ps := c.StartSpan("aws-parent-span")
 	ctx = instana.ContextWithSpan(ctx, ps)
 
 	cfg, err := config.LoadDefaultConfig(ctx)
@@ -28,7 +30,7 @@ func TestPublishMessage(t *testing.T) {
 
 	cfg = applyTestingChanges(cfg)
 
-	instaawsv2.Instrument(sensor, &cfg)
+	instaawsv2.Instrument(c, &cfg)
 
 	snsClient := sns.NewFromConfig(cfg)
 
@@ -57,9 +59,11 @@ func TestPublishMessage(t *testing.T) {
 
 func TestSNSNoParentSpan(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	sensor := instana.NewSensorWithTracer(
-		instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder),
-	)
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
 
 	ctx := context.Background()
 
@@ -68,7 +72,7 @@ func TestSNSNoParentSpan(t *testing.T) {
 
 	cfg = applyTestingChanges(cfg)
 
-	instaawsv2.Instrument(sensor, &cfg)
+	instaawsv2.Instrument(c, &cfg)
 
 	snsClient := sns.NewFromConfig(cfg)
 
@@ -86,9 +90,11 @@ func TestSNSNoParentSpan(t *testing.T) {
 
 func TestSNSUnmonitoredFunction(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	sensor := instana.NewSensorWithTracer(
-		instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder),
-	)
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
 
 	ctx := context.Background()
 
@@ -97,7 +103,7 @@ func TestSNSUnmonitoredFunction(t *testing.T) {
 
 	cfg = applyTestingChanges(cfg)
 
-	instaawsv2.Instrument(sensor, &cfg)
+	instaawsv2.Instrument(c, &cfg)
 
 	snsClient := sns.NewFromConfig(cfg)
 

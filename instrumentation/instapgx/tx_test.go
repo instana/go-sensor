@@ -19,7 +19,7 @@ import (
 )
 
 func TestBeginCommit(t *testing.T) {
-	defer instana.ShutdownSensor()
+	defer instana.ShutdownCollector()
 	recorder, ctx, conn := prepare(t)
 
 	tx, err := conn.Begin(ctx)
@@ -29,7 +29,7 @@ func TestBeginCommit(t *testing.T) {
 }
 
 func TestBeginTxCommit(t *testing.T) {
-	defer instana.ShutdownSensor()
+	defer instana.ShutdownCollector()
 	recorder, ctx, conn := prepare(t)
 
 	tx, err := conn.BeginTx(ctx, pgx.TxOptions{IsoLevel: pgx.Serializable})
@@ -39,7 +39,7 @@ func TestBeginTxCommit(t *testing.T) {
 }
 
 func TestTxBeginFunc(t *testing.T) {
-	defer instana.ShutdownSensor()
+	defer instana.ShutdownCollector()
 	recorder, ctx, conn := prepare(t)
 
 	uniqString := randStringBytes(10)
@@ -83,7 +83,7 @@ func TestTxBeginFunc(t *testing.T) {
 }
 
 func TestRollback(t *testing.T) {
-	defer instana.ShutdownSensor()
+	defer instana.ShutdownCollector()
 	recorder, ctx, conn := prepare(t)
 
 	tx, err := conn.Begin(ctx)
@@ -97,7 +97,7 @@ func TestRollback(t *testing.T) {
 }
 
 func TestCommit(t *testing.T) {
-	defer instana.ShutdownSensor()
+	defer instana.ShutdownCollector()
 	recorder, ctx, conn := prepare(t)
 
 	tx, err := conn.Begin(ctx)
@@ -111,7 +111,7 @@ func TestCommit(t *testing.T) {
 }
 
 func TestBeginTxFunc(t *testing.T) {
-	defer instana.ShutdownSensor()
+	defer instana.ShutdownCollector()
 	recorder, ctx, conn := prepare(t)
 
 	uniqString := randStringBytes(10)

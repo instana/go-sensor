@@ -20,11 +20,13 @@ import (
 
 func TestHttpTrigger(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	sensor := instana.NewSensorWithTracer(
-		instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder))
-	defer instana.ShutdownSensor()
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
 
-	h := instaazurefunction.WrapFunctionHandler(sensor, func(writer http.ResponseWriter, request *http.Request) {
+	h := instaazurefunction.WrapFunctionHandler(c, func(writer http.ResponseWriter, request *http.Request) {
 		_, _ = fmt.Fprintln(writer, "Ok")
 	})
 
@@ -79,10 +81,13 @@ func TestMultiTriggers(t *testing.T) {
 	for name, testcase := range testcases {
 		t.Run(name, func(t *testing.T) {
 			recorder := instana.NewTestRecorder()
-			sensor := instana.NewSensorWithTracer(
-				instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder))
+			c := instana.InitCollector(&instana.Options{
+				AgentClient: alwaysReadyClient{},
+				Recorder:    recorder,
+			})
+			defer instana.ShutdownCollector()
 
-			h := instaazurefunction.WrapFunctionHandler(sensor, func(writer http.ResponseWriter, request *http.Request) {
+			h := instaazurefunction.WrapFunctionHandler(c, func(writer http.ResponseWriter, request *http.Request) {
 				_, _ = fmt.Fprintln(writer, "Ok")
 			})
 

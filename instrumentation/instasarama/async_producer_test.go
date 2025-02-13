@@ -23,9 +23,13 @@ import (
 func TestAsyncProducer_Input(t *testing.T) {
 
 	recorder := instana.NewTestRecorder()
-	sensor := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder))
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
 
-	parent := sensor.Tracer().StartSpan("test-span")
+	parent := c.Tracer().StartSpan("test-span")
 	msg := instasarama.ProducerMessageWithSpan(&sarama.ProducerMessage{Topic: "test-topic"}, parent)
 
 	ap := newTestAsyncProducer(nil)
@@ -34,7 +38,7 @@ func TestAsyncProducer_Input(t *testing.T) {
 	conf := sarama.NewConfig()
 	conf.Version = sarama.V0_11_0_0
 
-	wrapped := instasarama.WrapAsyncProducer(ap, conf, sensor)
+	wrapped := instasarama.WrapAsyncProducer(ap, conf, c)
 	wrapped.Input() <- msg
 
 	var published *sarama.ProducerMessage
@@ -87,9 +91,13 @@ channelSelect:
 func TestAsyncProducer_Input_No_Binary_Header_Test(t *testing.T) {
 
 	recorder := instana.NewTestRecorder()
-	sensor := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder))
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
 
-	parent := sensor.Tracer().StartSpan("test-span")
+	parent := c.Tracer().StartSpan("test-span")
 	msg := instasarama.ProducerMessageWithSpan(&sarama.ProducerMessage{Topic: "test-topic"}, parent)
 
 	ap := newTestAsyncProducer(nil)
@@ -98,7 +106,7 @@ func TestAsyncProducer_Input_No_Binary_Header_Test(t *testing.T) {
 	conf := sarama.NewConfig()
 	conf.Version = sarama.V0_11_0_0
 
-	wrapped := instasarama.WrapAsyncProducer(ap, conf, sensor)
+	wrapped := instasarama.WrapAsyncProducer(ap, conf, c)
 	wrapped.Input() <- msg
 
 	var published *sarama.ProducerMessage
@@ -147,9 +155,13 @@ channelSelect:
 
 func TestAsyncProducer_Input_WithAwaitResult_Success(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	sensor := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder))
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
 
-	parent := sensor.Tracer().StartSpan("test-span")
+	parent := c.Tracer().StartSpan("test-span")
 	msg := instasarama.ProducerMessageWithSpan(&sarama.ProducerMessage{Topic: "test-topic"}, parent)
 
 	ap := newTestAsyncProducer(nil)
@@ -160,7 +172,7 @@ func TestAsyncProducer_Input_WithAwaitResult_Success(t *testing.T) {
 	conf.Producer.Return.Successes = true
 	conf.Producer.Return.Errors = true
 
-	wrapped := instasarama.WrapAsyncProducer(ap, conf, sensor)
+	wrapped := instasarama.WrapAsyncProducer(ap, conf, c)
 	wrapped.Input() <- msg
 
 	var published *sarama.ProducerMessage
@@ -234,10 +246,13 @@ func TestAsyncProducer_Input_WithAwaitResult_Success(t *testing.T) {
 
 func TestAsyncProducer_Input_WithAwaitResult_Error(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	sensor := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder))
-	defer instana.ShutdownSensor()
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
 
-	parent := sensor.Tracer().StartSpan("test-span")
+	parent := c.Tracer().StartSpan("test-span")
 	msg := instasarama.ProducerMessageWithSpan(&sarama.ProducerMessage{Topic: "test-topic"}, parent)
 
 	ap := newTestAsyncProducer(nil)
@@ -248,7 +263,7 @@ func TestAsyncProducer_Input_WithAwaitResult_Error(t *testing.T) {
 	conf.Producer.Return.Successes = true
 	conf.Producer.Return.Errors = true
 
-	wrapped := instasarama.WrapAsyncProducer(ap, conf, sensor)
+	wrapped := instasarama.WrapAsyncProducer(ap, conf, c)
 	wrapped.Input() <- msg
 
 	var published *sarama.ProducerMessage
@@ -325,7 +340,11 @@ func TestAsyncProducer_Input_WithAwaitResult_Error(t *testing.T) {
 
 func TestAsyncProducer_Input_NoTraceContext(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	sensor := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder))
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
 
 	msg := &sarama.ProducerMessage{
 		Topic: "topic-1",
@@ -334,7 +353,7 @@ func TestAsyncProducer_Input_NoTraceContext(t *testing.T) {
 	ap := newTestAsyncProducer(nil)
 	defer ap.Teardown()
 
-	wrapped := instasarama.WrapAsyncProducer(ap, sarama.NewConfig(), sensor)
+	wrapped := instasarama.WrapAsyncProducer(ap, sarama.NewConfig(), c)
 	wrapped.Input() <- msg
 
 	select {
@@ -349,7 +368,11 @@ func TestAsyncProducer_Input_NoTraceContext(t *testing.T) {
 
 func TestAsyncProducer_Successes(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	sensor := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder))
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
 
 	msg := &sarama.ProducerMessage{
 		Topic: "topic-1",
@@ -360,7 +383,7 @@ func TestAsyncProducer_Successes(t *testing.T) {
 
 	ap.successes <- msg
 
-	wrapped := instasarama.WrapAsyncProducer(ap, sarama.NewConfig(), sensor)
+	wrapped := instasarama.WrapAsyncProducer(ap, sarama.NewConfig(), c)
 
 	select {
 	case received := <-wrapped.Successes():
@@ -372,7 +395,11 @@ func TestAsyncProducer_Successes(t *testing.T) {
 
 func TestAsyncProducer_Errors(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	sensor := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder))
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
 
 	msg := &sarama.ProducerError{
 		Err: errors.New("something went wrong"),
@@ -384,7 +411,7 @@ func TestAsyncProducer_Errors(t *testing.T) {
 
 	ap.errors <- msg
 
-	wrapped := instasarama.WrapAsyncProducer(ap, sarama.NewConfig(), sensor)
+	wrapped := instasarama.WrapAsyncProducer(ap, sarama.NewConfig(), c)
 
 	select {
 	case received := <-wrapped.Errors():

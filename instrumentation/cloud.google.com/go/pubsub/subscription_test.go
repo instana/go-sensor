@@ -22,8 +22,11 @@ func TestSubscription_Receive(t *testing.T) {
 	defer pstest.ResetMinAckDeadline()
 
 	recorder := instana.NewTestRecorder()
-	tracer := instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder)
-	defer instana.ShutdownSensor()
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
 
 	srv, conn, teardown, err := setupMockServer()
 	require.NoError(t, err)
@@ -50,7 +53,7 @@ func TestSubscription_Receive(t *testing.T) {
 	client, err := pubsub.NewClient(
 		context.Background(),
 		"test-project",
-		instana.NewSensorWithTracer(tracer),
+		c,
 		option.WithGRPCConn(conn),
 	)
 	require.NoError(t, err)
@@ -97,8 +100,11 @@ func TestSubscription_Receive_NoTrace(t *testing.T) {
 	defer pstest.ResetMinAckDeadline()
 
 	recorder := instana.NewTestRecorder()
-	tracer := instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder)
-	defer instana.ShutdownSensor()
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
 
 	srv, conn, teardown, err := setupMockServer()
 	require.NoError(t, err)
@@ -121,7 +127,7 @@ func TestSubscription_Receive_NoTrace(t *testing.T) {
 	client, err := pubsub.NewClient(
 		context.Background(),
 		"test-project",
-		instana.NewSensorWithTracer(tracer),
+		c,
 		option.WithGRPCConn(conn),
 	)
 	require.NoError(t, err)

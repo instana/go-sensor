@@ -27,14 +27,15 @@ import (
 
 func TestUnaryServerInterceptor(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	sensor := instana.NewSensorWithTracer(
-		instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder),
-	)
-	defer instana.ShutdownSensor()
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
 
 	addr, teardown, err := startTestServer(
 		&testServer{},
-		grpc.UnaryInterceptor(instagrpc.UnaryServerInterceptor(sensor)),
+		grpc.UnaryInterceptor(instagrpc.UnaryServerInterceptor(c)),
 	)
 	require.NoError(t, err)
 	defer teardown()
@@ -69,14 +70,15 @@ func TestUnaryServerInterceptor(t *testing.T) {
 
 func TestUnaryServerInterceptor_WithClientTraceID(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	sensor := instana.NewSensorWithTracer(
-		instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder),
-	)
-	defer instana.ShutdownSensor()
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
 
 	addr, teardown, err := startTestServer(
 		&testServer{},
-		grpc.UnaryInterceptor(instagrpc.UnaryServerInterceptor(sensor)),
+		grpc.UnaryInterceptor(instagrpc.UnaryServerInterceptor(c)),
 	)
 	require.NoError(t, err)
 	defer teardown()
@@ -109,14 +111,15 @@ func TestUnaryServerInterceptor_ErrorHandling(t *testing.T) {
 	serverErr := status.Error(codes.Internal, "something went wrong")
 
 	recorder := instana.NewTestRecorder()
-	sensor := instana.NewSensorWithTracer(
-		instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder),
-	)
-	defer instana.ShutdownSensor()
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
 
 	addr, teardown, err := startTestServer(
 		&testServer{Error: serverErr},
-		grpc.UnaryInterceptor(instagrpc.UnaryServerInterceptor(sensor)),
+		grpc.UnaryInterceptor(instagrpc.UnaryServerInterceptor(c)),
 	)
 	require.NoError(t, err)
 	defer teardown()
@@ -142,14 +145,15 @@ func TestUnaryServerInterceptor_ErrorHandling(t *testing.T) {
 
 func TestUnaryServerInterceptor_PanicHandling(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	sensor := instana.NewSensorWithTracer(
-		instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder),
-	)
-	defer instana.ShutdownSensor()
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
 
 	addr, teardown, err := startTestServer(
 		&panickingTestServer{},
-		suppressUnaryHandlerPanics(instagrpc.UnaryServerInterceptor(sensor)),
+		suppressUnaryHandlerPanics(instagrpc.UnaryServerInterceptor(c)),
 	)
 	require.NoError(t, err)
 	defer teardown()
@@ -175,14 +179,15 @@ func TestUnaryServerInterceptor_PanicHandling(t *testing.T) {
 
 func TestStreamServerInterceptor(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	sensor := instana.NewSensorWithTracer(
-		instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder),
-	)
-	defer instana.ShutdownSensor()
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
 
 	addr, teardown, err := startTestServer(
 		&testServer{},
-		grpc.StreamInterceptor(instagrpc.StreamServerInterceptor(sensor)),
+		grpc.StreamInterceptor(instagrpc.StreamServerInterceptor(c)),
 	)
 	require.NoError(t, err)
 	defer teardown()
@@ -227,14 +232,15 @@ func TestStreamServerInterceptor(t *testing.T) {
 
 func TestStreamServerInterceptor_WithClientTraceID(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	sensor := instana.NewSensorWithTracer(
-		instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder),
-	)
-	defer instana.ShutdownSensor()
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
 
 	addr, teardown, err := startTestServer(
 		&testServer{},
-		grpc.StreamInterceptor(instagrpc.StreamServerInterceptor(sensor)),
+		grpc.StreamInterceptor(instagrpc.StreamServerInterceptor(c)),
 	)
 	require.NoError(t, err)
 	defer teardown()
@@ -272,14 +278,15 @@ func TestStreamServerInterceptor_ErrorHandling(t *testing.T) {
 	serverErr := status.Error(codes.Internal, "something went wrong")
 
 	recorder := instana.NewTestRecorder()
-	sensor := instana.NewSensorWithTracer(
-		instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder),
-	)
-	defer instana.ShutdownSensor()
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
 
 	addr, teardown, err := startTestServer(
 		&testServer{Error: serverErr},
-		grpc.StreamInterceptor(instagrpc.StreamServerInterceptor(sensor)),
+		grpc.StreamInterceptor(instagrpc.StreamServerInterceptor(c)),
 	)
 	require.NoError(t, err)
 	defer teardown()
@@ -311,14 +318,15 @@ func TestStreamServerInterceptor_ErrorHandling(t *testing.T) {
 
 func TestStreamServerInterceptor_PanicHandling(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	sensor := instana.NewSensorWithTracer(
-		instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder),
-	)
-	defer instana.ShutdownSensor()
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
 
 	addr, teardown, err := startTestServer(
 		&panickingTestServer{},
-		suppressStreamHandlerPanics(instagrpc.StreamServerInterceptor(sensor)),
+		suppressStreamHandlerPanics(instagrpc.StreamServerInterceptor(c)),
 	)
 	require.NoError(t, err)
 	defer teardown()

@@ -13,7 +13,9 @@ import (
 )
 
 func Example() {
-	s := instana.NewSensor("go-sensor-gorm")
+	s := instana.InitCollector(&instana.Options{
+		Service: "go-sensor-gorm",
+	})
 
 	dsn := "<DSN information for database>"
 

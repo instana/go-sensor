@@ -14,7 +14,7 @@ import (
 )
 
 func TestCollectionManager(t *testing.T) {
-	defer instana.ShutdownSensor()
+	defer instana.ShutdownCollector()
 
 	recorder, ctx, cluster, a := prepareWithBucket(t, testBucketName)
 	defer cluster.Close(&gocb.ClusterCloseOptions{})

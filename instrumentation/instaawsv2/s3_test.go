@@ -16,11 +16,13 @@ import (
 
 func TestS3GetObjectNoError(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	sensor := instana.NewSensorWithTracer(
-		instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder),
-	)
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
 
-	ps := sensor.Tracer().StartSpan("aws-s3-parent-span")
+	ps := c.Tracer().StartSpan("aws-s3-parent-span")
 
 	ctx := instana.ContextWithSpan(context.TODO(), ps)
 
@@ -29,7 +31,7 @@ func TestS3GetObjectNoError(t *testing.T) {
 
 	cfg = applyTestingChanges(cfg)
 
-	instaawsv2.Instrument(sensor, &cfg)
+	instaawsv2.Instrument(c, &cfg)
 
 	s3Client := s3.NewFromConfig(cfg)
 	bucket := "s3-test-bucket"
@@ -195,11 +197,13 @@ func TestMonitoredS3Operations(t *testing.T) {
 	for name, testcase := range testcases {
 		t.Run(name, func(t *testing.T) {
 			recorder := instana.NewTestRecorder()
-			sensor := instana.NewSensorWithTracer(
-				instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder),
-			)
+			c := instana.InitCollector(&instana.Options{
+				AgentClient: alwaysReadyClient{},
+				Recorder:    recorder,
+			})
+			defer instana.ShutdownCollector()
 
-			ps := sensor.Tracer().StartSpan("aws-s3-parent-span")
+			ps := c.Tracer().StartSpan("aws-s3-parent-span")
 
 			ctx := instana.ContextWithSpan(context.TODO(), ps)
 
@@ -208,7 +212,7 @@ func TestMonitoredS3Operations(t *testing.T) {
 
 			cfg = applyTestingChanges(cfg)
 
-			instaawsv2.Instrument(sensor, &cfg)
+			instaawsv2.Instrument(c, &cfg)
 
 			s3Client := s3.NewFromConfig(cfg)
 
@@ -231,9 +235,11 @@ func TestMonitoredS3Operations(t *testing.T) {
 
 func TestErrorNoParentSpanS3(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	sensor := instana.NewSensorWithTracer(
-		instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder),
-	)
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
 
 	ctx := context.Background()
 
@@ -242,7 +248,7 @@ func TestErrorNoParentSpanS3(t *testing.T) {
 
 	cfg = applyTestingChanges(cfg)
 
-	instaawsv2.Instrument(sensor, &cfg)
+	instaawsv2.Instrument(c, &cfg)
 
 	s3Client := s3.NewFromConfig(cfg)
 	bucket := "s3-test-bucket"
@@ -260,9 +266,11 @@ func TestErrorNoParentSpanS3(t *testing.T) {
 
 func TestErrorUnmonitoredS3Method(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	sensor := instana.NewSensorWithTracer(
-		instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder),
-	)
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
 
 	ctx := context.TODO()
 
@@ -271,7 +279,7 @@ func TestErrorUnmonitoredS3Method(t *testing.T) {
 
 	cfg = applyTestingChanges(cfg)
 
-	instaawsv2.Instrument(sensor, &cfg)
+	instaawsv2.Instrument(c, &cfg)
 
 	s3Client := s3.NewFromConfig(cfg)
 

@@ -19,7 +19,12 @@ func Example_consumer() {
 	queueName := "my-queue"
 	url := "amqp://guest:guest@localhost:5672/"
 
-	sensor := instana.NewSensor("rabbitmq-client")
+	// Create the Instana collector
+	ic := instana.InitCollector(&instana.Options{
+		Service:     "rabbitmq-client",
+		AgentClient: alwaysReadyClient{},
+	})
+	defer instana.ShutdownCollector()
 
 	c, err := amqp.Dial(url)
 	failOnError(err, "Could not connect to the server")
@@ -38,7 +43,7 @@ func Example_consumer() {
 	err = ch.QueueBind(q.Name, "", exchangeName, false, nil)
 	failOnError(err, "Could not bind the queue to the exchange")
 
-	instaCh := instaamqp091.WrapChannel(sensor, ch, url)
+	instaCh := instaamqp091.WrapChannel(ic, ch, url)
 
 	// Use the Instana `Consume` method with the same arguments as the original `Consume` method.
 	msgs, err := instaCh.Consume(q.Name, "", true, false, false, false, nil)
