@@ -8,7 +8,7 @@ require (
 )
 
 require (
-	github.com/instana/go-sensor v1.66.2
+	github.com/instana/go-sensor v1.67.0
 	github.com/stretchr/testify v1.8.1
 )
 
