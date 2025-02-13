@@ -1,6 +1,6 @@
 module github.com/instana/go-sensor/instrumentation/instaredigo
 
-go 1.22
+go 1.23
 
 require (
 	github.com/gomodule/redigo v1.9.2
@@ -8,7 +8,7 @@ require (
 )
 
 require (
-	github.com/instana/go-sensor v1.66.2
+	github.com/instana/go-sensor v1.67.0
 	github.com/stretchr/testify v1.8.4
 )
 

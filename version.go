@@ -4,4 +4,4 @@
 package instana
 
 // Version is the version of Instana sensor
-const Version = "1.66.2"
+const Version = "1.67.0"
