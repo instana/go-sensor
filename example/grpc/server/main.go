@@ -1,7 +1,7 @@
 // (c) Copyright IBM Corp. 2024
 
-//go:build go1.22
-// +build go1.22
+//go:build go1.23
+// +build go1.23
 
 package main
 

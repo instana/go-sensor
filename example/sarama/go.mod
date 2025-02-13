@@ -1,10 +1,10 @@
 module example.com/instasarama
 
-go 1.22
+go 1.23
 
 require (
 	github.com/IBM/sarama v1.45.0
-	github.com/instana/go-sensor v1.66.2
+	github.com/instana/go-sensor v1.67.0
 	github.com/instana/go-sensor/instrumentation/instasarama v1.17.0
 	github.com/opentracing/opentracing-go v1.2.0
 )

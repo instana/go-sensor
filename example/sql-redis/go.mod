@@ -1,10 +1,10 @@
 module sql-go-redis.com
 
-go 1.22
+go 1.23
 
 require (
 	github.com/bonede/go-redis-driver v0.1.0
-	github.com/instana/go-sensor v1.59.0
+	github.com/instana/go-sensor v1.67.0
 )
 
 require (
