@@ -46,13 +46,16 @@ func TestDo(t *testing.T) {
 	for name, example := range examples {
 		t.Run(name, func(t *testing.T) {
 			recorder := instana.NewTestRecorder()
-			sensor := instana.NewSensorWithTracer(
-				instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder),
-			)
-			sp := sensor.Tracer().StartSpan("testing")
+			c := instana.InitCollector(&instana.Options{
+				AgentClient: alwaysReadyClient{},
+				Recorder:    recorder,
+			})
+			defer instana.ShutdownCollector()
+
+			sp := c.Tracer().StartSpan("testing")
 			defer sp.Finish()
 
-			conn := &instaRedigoConn{Conn: &MockConn{}, sensor: sensor, address: ":7001", prevSpan: nil}
+			conn := &instaRedigoConn{Conn: &MockConn{}, sensor: c, address: ":7001", prevSpan: nil}
 			defer conn.Close()
 			_, err := conn.Do(name, example.DoCommand...)
 			assert.Equal(t, err, nil)
@@ -101,13 +104,16 @@ func TestSend(t *testing.T) {
 	for name, example := range examples {
 		t.Run(name, func(t *testing.T) {
 			recorder := instana.NewTestRecorder()
-			sensor := instana.NewSensorWithTracer(
-				instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder),
-			)
-			sp := sensor.Tracer().StartSpan("testing")
+			c := instana.InitCollector(&instana.Options{
+				AgentClient: alwaysReadyClient{},
+				Recorder:    recorder,
+			})
+			defer instana.ShutdownCollector()
+
+			sp := c.Tracer().StartSpan("testing")
 			defer sp.Finish()
 
-			conn := &instaRedigoConn{Conn: &MockConn{}, sensor: sensor, address: ":7001", prevSpan: nil}
+			conn := &instaRedigoConn{Conn: &MockConn{}, sensor: c, address: ":7001", prevSpan: nil}
 			defer conn.Close()
 			err := conn.Send(name, example.DoCommand...)
 			assert.Equal(t, err, nil)
@@ -151,13 +157,15 @@ func TestSubCommands(t *testing.T) {
 	for testName, testCase := range testCases {
 		t.Run(testName, func(t *testing.T) {
 			recorder := instana.NewTestRecorder()
-			sensor := instana.NewSensorWithTracer(
-				instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder),
-			)
+			c := instana.InitCollector(&instana.Options{
+				AgentClient: alwaysReadyClient{},
+				Recorder:    recorder,
+			})
+			defer instana.ShutdownCollector()
 
-			sp := sensor.Tracer().StartSpan("testing")
+			sp := c.Tracer().StartSpan("testing")
 			defer sp.Finish()
-			conn := &instaRedigoConn{Conn: &MockConn{}, sensor: sensor, address: ":7001", prevSpan: nil}
+			conn := &instaRedigoConn{Conn: &MockConn{}, sensor: c, address: ":7001", prevSpan: nil}
 			defer conn.Close()
 
 			ctx := context.Background()
@@ -214,13 +222,15 @@ func TestDoContext(t *testing.T) {
 	for name, example := range examples {
 		t.Run(name, func(t *testing.T) {
 			recorder := instana.NewTestRecorder()
-			sensor := instana.NewSensorWithTracer(
-				instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder),
-			)
+			c := instana.InitCollector(&instana.Options{
+				AgentClient: alwaysReadyClient{},
+				Recorder:    recorder,
+			})
+			defer instana.ShutdownCollector()
 
-			sp := sensor.Tracer().StartSpan("testing")
+			sp := c.Tracer().StartSpan("testing")
 			defer sp.Finish()
-			conn := &instaRedigoConn{Conn: &MockConn{}, sensor: sensor, address: ":7001", prevSpan: nil}
+			conn := &instaRedigoConn{Conn: &MockConn{}, sensor: c, address: ":7001", prevSpan: nil}
 			defer conn.Close()
 
 			ctx := context.Background()
@@ -270,13 +280,15 @@ func TestDoTimeout(t *testing.T) {
 	for name, example := range examples {
 		t.Run(name, func(t *testing.T) {
 			recorder := instana.NewTestRecorder()
-			sensor := instana.NewSensorWithTracer(
-				instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder),
-			)
+			c := instana.InitCollector(&instana.Options{
+				AgentClient: alwaysReadyClient{},
+				Recorder:    recorder,
+			})
+			defer instana.ShutdownCollector()
 
-			sp := sensor.Tracer().StartSpan("testing")
+			sp := c.Tracer().StartSpan("testing")
 			defer sp.Finish()
-			conn := &instaRedigoConn{Conn: &MockConn{}, sensor: sensor, address: ":7001", prevSpan: nil}
+			conn := &instaRedigoConn{Conn: &MockConn{}, sensor: c, address: ":7001", prevSpan: nil}
 			defer conn.Close()
 			_, err := conn.DoWithTimeout(200*time.Millisecond, name, example.Command...)
 			assert.Equal(t, err, nil)
@@ -325,13 +337,15 @@ func TestPool(t *testing.T) {
 	for name, example := range examples {
 		t.Run(name, func(t *testing.T) {
 			recorder := instana.NewTestRecorder()
-			sensor := instana.NewSensorWithTracer(
-				instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder),
-			)
+			c := instana.InitCollector(&instana.Options{
+				AgentClient: alwaysReadyClient{},
+				Recorder:    recorder,
+			})
+			defer instana.ShutdownCollector()
 
-			sp := sensor.Tracer().StartSpan("testing")
+			sp := c.Tracer().StartSpan("testing")
 			defer sp.Finish()
-			pool := newPool(sensor)
+			pool := newPool(c)
 			conn := pool.Get()
 			defer conn.Close()
 			_, err := conn.Do(name, example.Command...)

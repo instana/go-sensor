@@ -65,7 +65,7 @@ func (alwaysReadyClient) SendProfiles(profiles []autoprofile.Profile) error { re
 func (alwaysReadyClient) Flush(context.Context) error                       { return nil }
 
 func TestUnwrapForAll(t *testing.T) {
-	defer instana.ShutdownSensor()
+	defer instana.ShutdownCollector()
 	_, _, cluster, a := prepare(t)
 
 	// Cluster
@@ -147,16 +147,18 @@ func prepare(t *testing.T) (*instana.Recorder, context.Context, instagocb.Cluste
 	}
 
 	recorder = rec
-	tracer := instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder)
-	sensor := instana.NewSensorWithTracer(tracer)
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+	})
 
-	pSpan := sensor.Tracer().StartSpan("parent-span")
+	pSpan := c.Tracer().StartSpan("parent-span")
 	ctx := context.Background()
 	if pSpan != nil {
 		ctx = instana.ContextWithSpan(ctx, pSpan)
 	}
 
-	conn, err := instagocb.Connect(sensor, connStr, gocb.ClusterOptions{
+	conn, err := instagocb.Connect(c, connStr, gocb.ClusterOptions{
 		Authenticator: gocb.PasswordAuthenticator{
 			Username: username,
 			Password: password,

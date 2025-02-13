@@ -16,9 +16,11 @@ import (
 // Added testcase for testing unsupported aws services
 func TestUnSupportedService(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	sensor := instana.NewSensorWithTracer(
-		instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder),
-	)
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
 
 	ctx := context.Background()
 
@@ -27,7 +29,7 @@ func TestUnSupportedService(t *testing.T) {
 
 	cfg = applyTestingChanges(cfg)
 
-	instaawsv2.Instrument(sensor, &cfg)
+	instaawsv2.Instrument(c, &cfg)
 
 	//RDS is currently unsupported
 	rdsClient := rds.NewFromConfig(cfg)

@@ -14,14 +14,18 @@ import (
 func ExampleTx_Prepare() {
 	databaseUrl := "postgres://postgres:mysecretpassword@localhost/postgres"
 
-	sensor := instana.NewSensor("pgx-example-prepare")
+	// Initialize Instana collector
+	c := instana.InitCollector(&instana.Options{
+		Service: "pgx-example-prepare",
+	})
+
 	conf, err := pgx.ParseConfig(databaseUrl)
 	if err != nil {
 		log.Fatalln(err.Error())
 	}
 
 	ctx := context.Background()
-	conn, err := instapgx.ConnectConfig(ctx, sensor, conf)
+	conn, err := instapgx.ConnectConfig(ctx, c, conf)
 	if err != nil {
 		log.Fatalln(err.Error())
 	}
@@ -41,14 +45,17 @@ func ExampleTx_Prepare() {
 func ExampleTx_Begin() {
 	databaseUrl := "postgres://postgres:mysecretpassword@localhost/postgres"
 
-	sensor := instana.NewSensor("pgx-example-begin")
+	// Initialize Instana collector
+	c := instana.InitCollector(&instana.Options{
+		Service: "pgx-example-begin",
+	})
 	conf, err := pgx.ParseConfig(databaseUrl)
 	if err != nil {
 		log.Fatalln(err.Error())
 	}
 
 	ctx := context.Background()
-	conn, err := instapgx.ConnectConfig(ctx, sensor, conf)
+	conn, err := instapgx.ConnectConfig(ctx, c, conf)
 	if err != nil {
 		log.Fatalln(err.Error())
 	}
@@ -74,14 +81,18 @@ func ExampleTx_Begin() {
 func ExampleTx_BeginFunc() {
 	databaseUrl := "postgres://postgres:mysecretpassword@localhost/postgres"
 
-	sensor := instana.NewSensor("pgx-example-begin-func")
+	// Initialize Instana collector
+	c := instana.InitCollector(&instana.Options{
+		Service: "pgx-example-begin-func",
+	})
+
 	conf, err := pgx.ParseConfig(databaseUrl)
 	if err != nil {
 		log.Fatalln(err.Error())
 	}
 
 	ctx := context.Background()
-	conn, err := instapgx.ConnectConfig(ctx, sensor, conf)
+	conn, err := instapgx.ConnectConfig(ctx, c, conf)
 	if err != nil {
 		log.Fatalln(err.Error())
 	}
@@ -115,14 +126,18 @@ func ExampleTx_BeginFunc() {
 func ExampleTx_Exec() {
 	databaseUrl := "postgres://postgres:mysecretpassword@localhost/postgres"
 
-	sensor := instana.NewSensor("pgx-example-exec")
+	// Initialize Instana collector
+	c := instana.InitCollector(&instana.Options{
+		Service: "pgx-example-exec",
+	})
+
 	conf, err := pgx.ParseConfig(databaseUrl)
 	if err != nil {
 		log.Fatalln(err.Error())
 	}
 
 	ctx := context.Background()
-	conn, err := instapgx.ConnectConfig(ctx, sensor, conf)
+	conn, err := instapgx.ConnectConfig(ctx, c, conf)
 	if err != nil {
 		log.Fatalln(err.Error())
 	}
@@ -142,14 +157,18 @@ func ExampleTx_Exec() {
 func ExampleTx_Query() {
 	databaseUrl := "postgres://postgres:mysecretpassword@localhost/postgres"
 
-	sensor := instana.NewSensor("pgx-example-query")
+	// Initialize Instana collector
+	c := instana.InitCollector(&instana.Options{
+		Service: "pgx-example-query",
+	})
+
 	conf, err := pgx.ParseConfig(databaseUrl)
 	if err != nil {
 		log.Fatalln(err.Error())
 	}
 
 	ctx := context.Background()
-	conn, err := instapgx.ConnectConfig(ctx, sensor, conf)
+	conn, err := instapgx.ConnectConfig(ctx, c, conf)
 	if err != nil {
 		log.Fatalln(err.Error())
 	}
@@ -172,14 +191,18 @@ func ExampleTx_Query() {
 func ExampleTx_QueryFunc() {
 	databaseUrl := "postgres://postgres:mysecretpassword@localhost/postgres"
 
-	sensor := instana.NewSensor("pgx-example-query-func")
+	// Initialize Instana collector
+	c := instana.InitCollector(&instana.Options{
+		Service: "pgx-example-query-func",
+	})
+
 	conf, err := pgx.ParseConfig(databaseUrl)
 	if err != nil {
 		log.Fatalln(err.Error())
 	}
 
 	ctx := context.Background()
-	conn, err := instapgx.ConnectConfig(ctx, sensor, conf)
+	conn, err := instapgx.ConnectConfig(ctx, c, conf)
 	if err != nil {
 		log.Fatalln(err.Error())
 	}
@@ -209,14 +232,18 @@ func ExampleTx_QueryFunc() {
 func ExampleTx_SendBatch() {
 	databaseUrl := "postgres://postgres:mysecretpassword@localhost/postgres"
 
-	sensor := instana.NewSensor("pgx-example-send-batch")
+	// Initialize Instana collector
+	c := instana.InitCollector(&instana.Options{
+		Service: "pgx-example-send-batch",
+	})
+
 	conf, err := pgx.ParseConfig(databaseUrl)
 	if err != nil {
 		log.Fatalln(err.Error())
 	}
 
 	ctx := context.Background()
-	conn, err := instapgx.ConnectConfig(ctx, sensor, conf)
+	conn, err := instapgx.ConnectConfig(ctx, c, conf)
 	if err != nil {
 		log.Fatalln(err.Error())
 	}

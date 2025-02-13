@@ -42,12 +42,13 @@ func TestPropagation(t *testing.T) {
 	spanIDHeader := "0000000000004567"
 
 	recorder := instana.NewTestRecorder()
-	tracer := instana.NewTracerWithEverything(nil, recorder)
-	defer instana.ShutdownSensor()
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
 
-	sensor := instana.NewSensorWithTracer(tracer)
-
-	engine := instaecho.New(sensor)
+	engine := instaecho.New(c)
 	engine.GET("/foo/:id", func(c echo.Context) error {
 
 		parent, ok := instana.SpanFromContext(c.Request().Context())
@@ -118,18 +119,18 @@ func TestPropagationWithError(t *testing.T) {
 	spanIDHeader := "0000000000004567"
 
 	recorder := instana.NewTestRecorder()
-	tracer := instana.NewTracerWithEverything(&instana.Options{
+	opts := &instana.Options{
 		Service: "test_service",
 		Tracer: instana.TracerOptions{
 			CollectableHTTPHeaders: []string{"x-custom-header-1", "x-custom-header-2"},
 		},
 		AgentClient: alwaysReadyClient{},
-	}, recorder)
-	defer instana.ShutdownSensor()
+		Recorder:    recorder,
+	}
+	c := instana.InitCollector(opts)
+	defer instana.ShutdownCollector()
 
-	sensor := instana.NewSensorWithTracer(tracer)
-
-	engine := instaecho.New(sensor)
+	engine := instaecho.New(c)
 	engine.GET("/foo", func(c echo.Context) error {
 		parent, ok := instana.SpanFromContext(c.Request().Context())
 		assert.True(t, ok)

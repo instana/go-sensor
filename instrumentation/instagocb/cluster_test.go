@@ -16,7 +16,7 @@ import (
 )
 
 func TestCluster(t *testing.T) {
-	defer instana.ShutdownSensor()
+	defer instana.ShutdownCollector()
 
 	recorder, ctx, cluster, a := prepare(t)
 	defer cluster.Close(&gocb.ClusterCloseOptions{})

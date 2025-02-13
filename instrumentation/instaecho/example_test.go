@@ -16,11 +16,13 @@ import (
 
 // This example shows how to instrument an HTTP server that uses github.com/labstack/echo with Instana
 func Example() {
-	sensor := instana.NewSensor("my-web-server")
+	c := instana.InitCollector(&instana.Options{
+		Service: "test_service",
+	})
 
 	// Use instaecho.New() to create a new instance of Echo. The returned instance is instrumented
 	// with Instana and will create an entry HTTP span for each incoming request.
-	engine := instaecho.New(sensor)
+	engine := instaecho.New(c)
 
 	// Use the instrumented instance as usual
 	engine.GET("/myendpoint", func(c echo.Context) error {

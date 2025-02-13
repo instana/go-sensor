@@ -76,18 +76,20 @@ func TestMain(m *testing.M) {
 
 func prepare(t *testing.T) (*instana.Recorder, context.Context, *instapgx.Conn) {
 	recorder := instana.NewTestRecorder()
-	tracer := instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder)
-	sensor := instana.NewSensorWithTracer(tracer)
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+	})
 
 	conf, err := pgx.ParseConfig(databaseUrl)
 	assert.NoError(t, err)
 
-	pSpan := sensor.Tracer().StartSpan("parent-span")
+	pSpan := c.Tracer().StartSpan("parent-span")
 	ctx := context.Background()
 	if pSpan != nil {
 		ctx = instana.ContextWithSpan(ctx, pSpan)
 	}
-	conn, err := instapgx.ConnectConfig(ctx, sensor, conf)
+	conn, err := instapgx.ConnectConfig(ctx, c, conf)
 
 	assert.NoError(t, err)
 	assert.IsType(t, &instapgx.Conn{}, conn)

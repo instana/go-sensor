@@ -19,7 +19,11 @@ import (
 
 func TestPartitionConsumer_Messages(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	sensor := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{}, recorder))
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
 
 	messages := []*sarama.ConsumerMessage{
 		{
@@ -50,7 +54,7 @@ func TestPartitionConsumer_Messages(t *testing.T) {
 	}
 	close(pc.messages)
 
-	wrapped := instasarama.WrapPartitionConsumer(pc, sensor)
+	wrapped := instasarama.WrapPartitionConsumer(pc, c)
 
 	var collected []*sarama.ConsumerMessage
 	timeout := time.After(1 * time.Second)
@@ -129,11 +133,15 @@ CONSUMER_LOOP:
 
 func TestPartitionConsumer_AsyncClose(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	sensor := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{}, recorder))
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
 
 	pc := &testPartitionConsumer{}
 
-	wrapped := instasarama.WrapPartitionConsumer(pc, sensor)
+	wrapped := instasarama.WrapPartitionConsumer(pc, c)
 	wrapped.AsyncClose()
 
 	assert.True(t, pc.Closed)
@@ -142,11 +150,15 @@ func TestPartitionConsumer_AsyncClose(t *testing.T) {
 
 func TestPartitionConsumer_Close(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	sensor := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{}, recorder))
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
 
 	pc := &testPartitionConsumer{}
 
-	wrapped := instasarama.WrapPartitionConsumer(pc, sensor)
+	wrapped := instasarama.WrapPartitionConsumer(pc, c)
 	require.NoError(t, wrapped.Close())
 
 	assert.True(t, pc.Closed)
@@ -155,25 +167,33 @@ func TestPartitionConsumer_Close(t *testing.T) {
 
 func TestPartitionConsumer_Close_Error(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	sensor := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{}, recorder))
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
 
 	pc := &testPartitionConsumer{
 		Error: errors.New("something went wrong"),
 	}
 
-	wrapped := instasarama.WrapPartitionConsumer(pc, sensor)
+	wrapped := instasarama.WrapPartitionConsumer(pc, c)
 	assert.Error(t, wrapped.Close())
 }
 
 func TestPartitionConsumer_HighWaterMarkOffset(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	sensor := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{}, recorder))
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
 
 	pc := &testPartitionConsumer{
 		Offset: 42,
 	}
 
-	wrapped := instasarama.WrapPartitionConsumer(pc, sensor)
+	wrapped := instasarama.WrapPartitionConsumer(pc, c)
 	assert.Equal(t, pc.Offset, wrapped.HighWaterMarkOffset())
 }
 

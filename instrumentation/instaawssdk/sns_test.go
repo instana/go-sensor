@@ -21,17 +21,18 @@ import (
 
 func TestStartSNSSpan_WithActiveSpan(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	sensor := instana.NewSensorWithTracer(
-		instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder),
-	)
-	defer instana.ShutdownSensor()
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
 
-	parentSp := sensor.Tracer().StartSpan("testing")
+	parentSp := c.Tracer().StartSpan("testing")
 
 	req := newSNSRequest()
 	req.SetContext(instana.ContextWithSpan(req.Context(), parentSp))
 
-	instaawssdk.StartSNSSpan(req, sensor)
+	instaawssdk.StartSNSSpan(req, c)
 
 	sp, ok := instana.SpanFromContext(req.Context())
 	require.True(t, ok)
@@ -65,12 +66,13 @@ func TestStartSNSSpan_WithActiveSpan(t *testing.T) {
 
 func TestStartSNSSpan_NonInstrumentedMethod(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	sensor := instana.NewSensorWithTracer(
-		instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder),
-	)
-	defer instana.ShutdownSensor()
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
 
-	parentSp := sensor.Tracer().StartSpan("testing")
+	parentSp := c.Tracer().StartSpan("testing")
 
 	svc := sns.New(unit.Session)
 	req, _ := svc.CheckIfPhoneNumberIsOptedOutRequest(&sns.CheckIfPhoneNumberIsOptedOutInput{
@@ -78,7 +80,7 @@ func TestStartSNSSpan_NonInstrumentedMethod(t *testing.T) {
 	})
 	req.SetContext(instana.ContextWithSpan(req.Context(), parentSp))
 
-	instaawssdk.StartSNSSpan(req, sensor)
+	instaawssdk.StartSNSSpan(req, c)
 
 	sp, ok := instana.SpanFromContext(req.Context())
 	assert.True(t, ok)
@@ -92,14 +94,15 @@ func TestStartSNSSpan_NonInstrumentedMethod(t *testing.T) {
 
 func TestStartSNSSpan_TraceContextPropagation_Single(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	sensor := instana.NewSensorWithTracer(
-		instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder),
-	)
-	defer instana.ShutdownSensor()
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
 
 	svc := sns.New(unit.Session)
 
-	parentSp := sensor.Tracer().StartSpan("testing")
+	parentSp := c.Tracer().StartSpan("testing")
 
 	req, _ := svc.PublishRequest(&sns.PublishInput{
 		Message:     aws.String("message-1"),
@@ -107,7 +110,7 @@ func TestStartSNSSpan_TraceContextPropagation_Single(t *testing.T) {
 	})
 	req.SetContext(instana.ContextWithSpan(req.Context(), parentSp))
 
-	instaawssdk.StartSNSSpan(req, sensor)
+	instaawssdk.StartSNSSpan(req, c)
 
 	sp, ok := instana.SpanFromContext(req.Context())
 	require.True(t, ok)
@@ -139,13 +142,14 @@ func TestStartSNSSpan_TraceContextPropagation_Single(t *testing.T) {
 
 func TestStartSNSSpan_NoActiveSpan(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	sensor := instana.NewSensorWithTracer(
-		instana.NewTracerWithEverything(instana.DefaultOptions(), recorder),
-	)
-	defer instana.ShutdownSensor()
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
 
 	req := newSNSRequest()
-	instaawssdk.StartSNSSpan(req, sensor)
+	instaawssdk.StartSNSSpan(req, c)
 
 	_, ok := instana.SpanFromContext(req.Context())
 	require.True(t, ok)
@@ -153,12 +157,13 @@ func TestStartSNSSpan_NoActiveSpan(t *testing.T) {
 
 func TestFinalizeSNS_NoError(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	sensor := instana.NewSensorWithTracer(
-		instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder),
-	)
-	defer instana.ShutdownSensor()
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
 
-	sp := sensor.Tracer().StartSpan("sns", opentracing.Tags{
+	sp := c.Tracer().StartSpan("sns", opentracing.Tags{
 		"sns.topic":   "test-topic-arn",
 		"sns.target":  "test-target-arn",
 		"sns.phone":   "test-phone-no",
@@ -188,12 +193,13 @@ func TestFinalizeSNS_NoError(t *testing.T) {
 
 func TestFinalizeSNSSpan_WithError(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	sensor := instana.NewSensorWithTracer(
-		instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder),
-	)
-	defer instana.ShutdownSensor()
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
 
-	sp := sensor.Tracer().StartSpan("sns", opentracing.Tags{
+	sp := c.Tracer().StartSpan("sns", opentracing.Tags{
 		"sns.topic":   "test-topic-arn",
 		"sns.target":  "test-target-arn",
 		"sns.phone":   "test-phone-no",

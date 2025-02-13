@@ -21,16 +21,20 @@ import (
 func TestSyncProducer_SendMessage(t *testing.T) {
 
 	recorder := instana.NewTestRecorder()
-	sensor := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{}, recorder))
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
 
-	parent := sensor.Tracer().StartSpan("test-span")
+	parent := c.Tracer().StartSpan("test-span")
 
 	config := sarama.NewConfig()
 	config.Version = sarama.V0_11_0_0
 	config.Producer.Return.Successes = true
 
 	p := &testSyncProducer{}
-	wrapped := instasarama.WrapSyncProducer(p, config, sensor)
+	wrapped := instasarama.WrapSyncProducer(p, config, c)
 
 	_, _, err := wrapped.SendMessage(
 		instasarama.ProducerMessageWithSpan(&sarama.ProducerMessage{Topic: "test-topic"}, parent),
@@ -78,14 +82,18 @@ func TestSyncProducer_SendMessage(t *testing.T) {
 
 func TestSyncProducer_SendMessage_NoTraceContext(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	sensor := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{}, recorder))
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
 
 	config := sarama.NewConfig()
 	config.Version = sarama.V0_11_0_0
 	config.Producer.Return.Successes = true
 
 	p := &testSyncProducer{}
-	wrapped := instasarama.WrapSyncProducer(p, config, sensor)
+	wrapped := instasarama.WrapSyncProducer(p, config, c)
 
 	_, _, err := wrapped.SendMessage(&sarama.ProducerMessage{
 		Topic: "test-topic",
@@ -101,7 +109,11 @@ func TestSyncProducer_SendMessage_NoTraceContext(t *testing.T) {
 
 func TestSyncProducer_SendMessage_Error(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	sensor := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{}, recorder))
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
 
 	config := sarama.NewConfig()
 	config.Version = sarama.V0_11_0_0
@@ -110,9 +122,9 @@ func TestSyncProducer_SendMessage_Error(t *testing.T) {
 	p := &testSyncProducer{
 		Error: errors.New("something went wrong"),
 	}
-	wrapped := instasarama.WrapSyncProducer(p, config, sensor)
+	wrapped := instasarama.WrapSyncProducer(p, config, c)
 
-	parent := sensor.Tracer().StartSpan("test-span")
+	parent := c.Tracer().StartSpan("test-span")
 	_, _, err := wrapped.SendMessage(
 		instasarama.ProducerMessageWithSpan(&sarama.ProducerMessage{Topic: "test-topic"}, parent),
 	)
@@ -136,18 +148,21 @@ func TestSyncProducer_SendMessage_Error(t *testing.T) {
 }
 
 func TestSyncProducer_SendMessages_SameTraceContext(t *testing.T) {
-
 	recorder := instana.NewTestRecorder()
-	sensor := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{}, recorder))
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
 
 	config := sarama.NewConfig()
 	config.Version = sarama.V0_11_0_0
 	config.Producer.Return.Successes = true
 
 	p := &testSyncProducer{}
-	wrapped := instasarama.WrapSyncProducer(p, config, sensor)
+	wrapped := instasarama.WrapSyncProducer(p, config, c)
 
-	parent := sensor.Tracer().StartSpan("test-span")
+	parent := c.Tracer().StartSpan("test-span")
 	require.NoError(t, wrapped.SendMessages([]*sarama.ProducerMessage{
 		instasarama.ProducerMessageWithSpan(&sarama.ProducerMessage{Topic: "test-topic-1"}, parent),
 		instasarama.ProducerMessageWithSpan(&sarama.ProducerMessage{Topic: "test-topic-2"}, parent),
@@ -201,12 +216,16 @@ func TestSyncProducer_SendMessages_SameTraceContext(t *testing.T) {
 
 func TestSyncProducer_SendMessages_DifferentTraceContext(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	sensor := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{}, recorder))
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
 
-	parentOne := sensor.Tracer().StartSpan("test-span")
+	parentOne := c.Tracer().StartSpan("test-span")
 	defer parentOne.Finish()
 
-	parentTwo := sensor.Tracer().StartSpan("test-span")
+	parentTwo := c.Tracer().StartSpan("test-span")
 	defer parentTwo.Finish()
 
 	examples := map[string][]*sarama.ProducerMessage{
@@ -227,7 +246,7 @@ func TestSyncProducer_SendMessages_DifferentTraceContext(t *testing.T) {
 			config.Producer.Return.Successes = true
 
 			p := &testSyncProducer{}
-			wrapped := instasarama.WrapSyncProducer(p, config, sensor)
+			wrapped := instasarama.WrapSyncProducer(p, config, c)
 
 			require.NoError(t, wrapped.SendMessages(messages))
 
@@ -239,14 +258,18 @@ func TestSyncProducer_SendMessages_DifferentTraceContext(t *testing.T) {
 
 func TestSyncProducer_SendMessages_NoTraceContext(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	sensor := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{}, recorder))
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
 
 	config := sarama.NewConfig()
 	config.Version = sarama.V0_11_0_0
 	config.Producer.Return.Successes = true
 
 	p := &testSyncProducer{}
-	wrapped := instasarama.WrapSyncProducer(p, config, sensor)
+	wrapped := instasarama.WrapSyncProducer(p, config, c)
 
 	require.NoError(t, wrapped.SendMessages([]*sarama.ProducerMessage{
 		{Topic: "test-topic-1"},
@@ -263,7 +286,11 @@ func TestSyncProducer_SendMessages_NoTraceContext(t *testing.T) {
 
 func TestSyncProducer_SendMessages_Error(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	sensor := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{}, recorder))
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
 
 	config := sarama.NewConfig()
 	config.Version = sarama.V0_11_0_0
@@ -272,9 +299,9 @@ func TestSyncProducer_SendMessages_Error(t *testing.T) {
 	p := &testSyncProducer{
 		Error: errors.New("something went wrong"),
 	}
-	wrapped := instasarama.WrapSyncProducer(p, config, sensor)
+	wrapped := instasarama.WrapSyncProducer(p, config, c)
 
-	parent := sensor.Tracer().StartSpan("test-span")
+	parent := c.Tracer().StartSpan("test-span")
 	assert.Error(t, wrapped.SendMessages([]*sarama.ProducerMessage{
 		instasarama.ProducerMessageWithSpan(&sarama.ProducerMessage{Topic: "test-topic-1"}, parent),
 		instasarama.ProducerMessageWithSpan(&sarama.ProducerMessage{Topic: "test-topic-2"}, parent),
@@ -304,14 +331,18 @@ func TestSyncProducer_SendMessages_Error(t *testing.T) {
 
 func TestSyncProducer_Close(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	sensor := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{}, recorder))
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
 
 	config := sarama.NewConfig()
 	config.Version = sarama.V0_11_0_0
 	config.Producer.Return.Successes = true
 
 	p := &testSyncProducer{}
-	wrapped := instasarama.WrapSyncProducer(p, config, sensor)
+	wrapped := instasarama.WrapSyncProducer(p, config, c)
 	wrapped.Close()
 
 	assert.True(t, p.Closed)

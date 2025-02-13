@@ -125,7 +125,7 @@ func setup(collector instana.TracerLogger) {
 	}
 
 	dbClient, err := client.NewDatabase(databaseID)
-	failOnErrorAndTearDown(collector, err)
+	failOnErrorAndTearDown(err)
 
 	// create a container in test database
 	properties := azcosmos.ContainerProperties{
@@ -139,33 +139,39 @@ func setup(collector instana.TracerLogger) {
 
 	resp, err := dbClient.CreateContainer(context.TODO(), properties,
 		&azcosmos.CreateContainerOptions{ThroughputProperties: &throughput})
-	failOnErrorAndTearDown(collector, err)
+	failOnErrorAndTearDown(err)
 
 	if resp.RawResponse.StatusCode != http.StatusCreated {
 		err = fmt.Errorf("Failed to create container. Got response status %d",
 			resp.RawResponse.StatusCode)
-		failOnErrorAndTearDown(collector, err)
+		failOnErrorAndTearDown(err)
 	}
 
 	containerClient, err := client.NewContainer(databaseID, container)
-	failOnErrorAndTearDown(collector, err)
+	failOnErrorAndTearDown(err)
 
 	err = prepareTestData(containerClient)
-	failOnErrorAndTearDown(collector, err)
+	failOnErrorAndTearDown(err)
 }
 
-func gracefulShutdown(collector instana.TracerLogger, code int) {
+func gracefulShutdown(code int) {
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
 
 	// cleaning up all the test data
-	shutdown(collector)
+	shutdown()
 
 	os.Exit(code)
 }
 
-func shutdown(collector instana.TracerLogger) {
+func shutdown() {
+	collector := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    instana.NewTestRecorder(),
+	})
+	defer instana.ShutdownCollector()
+
 	client, err := getInstaClient(collector)
 	if err != nil {
 		log.Fatalf("failed to create cosmos client : %s \n", err.Error())
@@ -190,42 +196,46 @@ func shutdown(collector instana.TracerLogger) {
 
 func TestMain(m *testing.M) {
 
-	// creating a sensor with instana recorder
+	// creating a collector with instana recorder
 	recorder := getInstaRecorder()
-	tracer := instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder)
-	sensor := instana.NewSensorWithTracer(tracer)
-
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+	})
 	// handles panic errors
 	// this will only work for the panic errors before m.Run()
 	// check this issue for more details: https://github.com/golang/go/issues/37206
 	defer func() {
 		if err := recover(); err != nil {
 			fmt.Printf("panic occurred: %v \n", err)
-			shutdown(sensor)
+			shutdown()
 			panic(err)
 		}
 	}()
 
 	// handles interrupt from user
-	go gracefulShutdown(sensor, exitNotOk)
+	go gracefulShutdown(exitNotOk)
 
 	// create a database and a container in azure test account
-	setup(sensor)
+	setup(c)
 
 	// flush all the created spans while test data creation
 	recorder.Flush(context.TODO())
+
+	// remove collector used for setup
+	instana.ShutdownCollector()
 
 	// run the tests
 	code := m.Run()
 
 	// cleaning up all the test data
-	shutdown(sensor)
+	shutdown()
 
 	os.Exit(code)
 }
 
 func TestInstaContainerClient_CreateItem(t *testing.T) {
-
+	defer instana.ShutdownCollector()
 	ctx, recorder, cc, a := prepareContainerClient(t)
 
 	id := uuid.New().String()
@@ -265,7 +275,7 @@ func TestInstaContainerClient_CreateItem(t *testing.T) {
 }
 
 func TestInstaContainerClient_CreateItem_WithError(t *testing.T) {
-
+	defer instana.ShutdownCollector()
 	ctx, recorder, cc, a := prepareContainerClient(t)
 
 	id := uuid.New().String()
@@ -315,7 +325,7 @@ func TestInstaContainerClient_CreateItem_WithError(t *testing.T) {
 }
 
 func TestInstaContainerClient_DeleteItem(t *testing.T) {
-
+	defer instana.ShutdownCollector()
 	ctx, recorder, cc, a := prepareContainerClient(t)
 
 	spanID := fmt.Sprintf("span-%s", ID4)
@@ -342,7 +352,7 @@ func TestInstaContainerClient_DeleteItem(t *testing.T) {
 }
 
 func TestInstaContainerClient_NewQueryItemsPager(t *testing.T) {
-
+	defer instana.ShutdownCollector()
 	os.Setenv("INSTANA_ALLOW_ROOT_EXIT_SPAN", "1")
 	defer os.Unsetenv("INSTANA_ALLOW_ROOT_EXIT_SPAN")
 
@@ -373,7 +383,7 @@ func TestInstaContainerClient_NewQueryItemsPager(t *testing.T) {
 }
 
 func TestInstaContainerClient_PatchItem(t *testing.T) {
-
+	defer instana.ShutdownCollector()
 	ctx, recorder, cc, a := prepareContainerClient(t)
 
 	spanID := fmt.Sprintf("span-%s", ID3)
@@ -406,7 +416,7 @@ func TestInstaContainerClient_PatchItem(t *testing.T) {
 }
 
 func TestInstaContainerClient_ExecuteTransactionalBatch(t *testing.T) {
-
+	defer instana.ShutdownCollector()
 	ctx, recorder, cc, a := prepareContainerClient(t)
 
 	spanID := fmt.Sprintf("span-%s", ID6)
@@ -449,7 +459,7 @@ func TestInstaContainerClient_ExecuteTransactionalBatch(t *testing.T) {
 }
 
 func TestInstaContainerClient_Read(t *testing.T) {
-
+	defer instana.ShutdownCollector()
 	ctx, recorder, cc, a := prepareContainerClient(t)
 
 	resp, err := cc.Read(ctx, &azcosmos.ReadContainerOptions{})
@@ -474,7 +484,7 @@ func TestInstaContainerClient_Read(t *testing.T) {
 }
 
 func TestInstaContainerClient_ReadItem(t *testing.T) {
-
+	defer instana.ShutdownCollector()
 	ctx, recorder, cc, a := prepareContainerClient(t)
 	spanID := fmt.Sprintf("span-%s", ID1)
 	pk := cc.NewPartitionKeyString(spanID)
@@ -501,7 +511,7 @@ func TestInstaContainerClient_ReadItem(t *testing.T) {
 }
 
 func TestInstaContainerClient_ReadThroughput(t *testing.T) {
-
+	defer instana.ShutdownCollector()
 	ctx, recorder, cc, a := prepareContainerClient(t)
 
 	resp, err := cc.ReadThroughput(ctx, &azcosmos.ThroughputOptions{})
@@ -526,7 +536,7 @@ func TestInstaContainerClient_ReadThroughput(t *testing.T) {
 }
 
 func TestInstaContainerClient_Replace(t *testing.T) {
-
+	defer instana.ShutdownCollector()
 	ctx, recorder, cc, a := prepareContainerClient(t)
 
 	containerResponse, err := cc.Read(context.Background(), nil)
@@ -563,7 +573,7 @@ func TestInstaContainerClient_Replace(t *testing.T) {
 }
 
 func TestInstaContainerClient_ReplaceItem(t *testing.T) {
-
+	defer instana.ShutdownCollector()
 	ctx, recorder, cc, a := prepareContainerClient(t)
 
 	spanID := fmt.Sprintf("span-%s", ID2)
@@ -601,7 +611,7 @@ func TestInstaContainerClient_ReplaceItem(t *testing.T) {
 }
 
 func TestInstaContainerClient_ReplaceThroughput(t *testing.T) {
-
+	defer instana.ShutdownCollector()
 	ctx, recorder, cc, a := prepareContainerClient(t)
 
 	throughputResponse, err := cc.ReadThroughput(context.Background(), nil)
@@ -635,7 +645,7 @@ func TestInstaContainerClient_ReplaceThroughput(t *testing.T) {
 }
 
 func TestInstaContainerClient_UpsertItem(t *testing.T) {
-
+	defer instana.ShutdownCollector()
 	ctx, recorder, cc, a := prepareContainerClient(t)
 
 	spanID := fmt.Sprintf("span-%s", ID5)
@@ -681,10 +691,10 @@ func validateAzureCreds() {
 	}
 }
 
-func failOnErrorAndTearDown(collector instana.TracerLogger, err error) {
+func failOnErrorAndTearDown(err error) {
 	if err != nil {
 		fmt.Printf("instacosmos integration test failed : %s \n", err.Error())
-		shutdown(collector)
+		shutdown()
 
 		os.Exit(exitNotOk)
 	}
@@ -693,16 +703,18 @@ func failOnErrorAndTearDown(collector instana.TracerLogger, err error) {
 func prepare(t *testing.T) (context.Context, *instana.Recorder, instacosmos.Client, *assert.Assertions) {
 	a := assert.New(t)
 	rec = getInstaRecorder()
-	tracer := instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, rec)
-	sensor := instana.NewSensorWithTracer(tracer)
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    rec,
+	})
 
-	pSpan := sensor.Tracer().StartSpan("parent-span")
+	pSpan := c.Tracer().StartSpan("parent-span")
 	ctx := context.Background()
 	if pSpan != nil {
 		ctx = instana.ContextWithSpan(ctx, pSpan)
 	}
 
-	client, err := getInstaClient(sensor)
+	client, err := getInstaClient(c)
 	a.NoError(err)
 
 	return ctx, rec, client, a

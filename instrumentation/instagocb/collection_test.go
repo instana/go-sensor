@@ -25,7 +25,7 @@ func unsetAllowRootExitSpanEnv() {
 
 func TestCollection_CRUD(t *testing.T) {
 	testDocumentValue := getTestDocumentValue()
-	defer instana.ShutdownSensor()
+	defer instana.ShutdownCollector()
 
 	recorder, ctx, cluster, a := prepare(t)
 	defer cluster.Close(&gocb.ClusterCloseOptions{})

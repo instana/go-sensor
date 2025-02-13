@@ -81,23 +81,30 @@ func TestClient(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			wg.Add(1)
+			wg.Add(2)
 
 			url := "amqp://user:password@some_host:9999"
 			chMock := newAmqpChannelMock()
 			chMock.publishError = tc.publishError
 			chMock.consumeError = tc.consumeError
 			recorder := instana.NewTestRecorder()
-			sensor := instana.NewSensorWithTracer(
-				instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder),
-			)
+			c := instana.InitCollector(&instana.Options{
+				Service:     "rabbitmq-client",
+				AgentClient: alwaysReadyClient{},
+				Recorder:    recorder,
+			})
 
-			instaCh := instaamqp.WrapChannel(sensor, chMock, url)
+			defer instana.ShutdownCollector()
+
+			instaCh := instaamqp.WrapChannel(c, chMock, url)
 
 			// Start waiting for messages to consume
 			go func(s string) {
-				defer instana.ShutdownSensor()
 				ch, _ := instaCh.Consume("queue", "consumer", true, false, false, false, nil)
+
+				if tc.publishError {
+					wg.Done()
+				}
 
 				for range ch {
 					// Give it some time to assure that all spans are added
@@ -128,9 +135,9 @@ func TestClient(t *testing.T) {
 
 			// Publish the message
 
-			entrySpan := sensor.Tracer().StartSpan("testing")
+			entrySpan := c.Tracer().StartSpan("testing")
 			ext.SpanKind.Set(entrySpan, ext.SpanKindRPCServerEnum)
-			defer entrySpan.Finish()
+			entrySpan.Finish()
 
 			msg := amqp.Publishing{
 				Body: []byte("Test message"),
@@ -147,7 +154,6 @@ func TestClient(t *testing.T) {
 
 				if err != nil {
 					spans := recorder.GetQueuedSpans()
-
 					require.Len(t, spans, 3, "Expects SDK entry span, failed exit publish span and log error span")
 
 					spanMap := getSpanMap(spans)
@@ -161,13 +167,13 @@ func TestClient(t *testing.T) {
 					if publisherData, ok := publishSp.Data.(instana.RabbitMQSpanData); ok {
 						checkPublisher(t, publisherData, tc.publishError)
 					}
-
-					wg.Done()
 				}
+				wg.Done()
 			}(entrySpan)
+
+			wg.Wait()
 		})
 	}
-	wg.Wait()
 }
 
 func checkCorrelation(t *testing.T, entrySp1, exitSp1, entrySp2 instana.Span) {

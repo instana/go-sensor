@@ -24,16 +24,18 @@ import (
 
 func TestRouter_Handle_StartTrace(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	tracer := instana.NewTracerWithEverything(&instana.Options{
+	opts := &instana.Options{
 		Tracer: instana.TracerOptions{
 			Secrets:                secrets.NewEqualsMatcher("secret"),
 			CollectableHTTPHeaders: []string{"X-Custom-1"},
 		},
 		AgentClient: alwaysReadyClient{},
-	}, recorder)
-	sensor := instana.NewSensorWithTracer(tracer)
+		Recorder:    recorder,
+	}
+	c := instana.InitCollector(opts)
+	defer instana.ShutdownCollector()
 
-	r := instahttprouter.Wrap(httprouter.New(), sensor)
+	r := instahttprouter.Wrap(httprouter.New(), c)
 	r.Handle(http.MethodGet, "/user/:id", func(w http.ResponseWriter, req *http.Request, params httprouter.Params) {
 		assert.Equal(t, httprouter.Params{
 			httprouter.Param{Key: "id", Value: "id1"},
@@ -85,9 +87,13 @@ func TestRouter_Handle_StartTrace(t *testing.T) {
 
 func TestRouter_TracePropagation(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	sensor := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder))
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
 
-	r := instahttprouter.Wrap(httprouter.New(), sensor)
+	r := instahttprouter.Wrap(httprouter.New(), c)
 	r.Handle(http.MethodGet, "/user/:id", func(w http.ResponseWriter, req *http.Request, params httprouter.Params) {
 		if sp, ok := instana.SpanFromContext(req.Context()); ok {
 			defer sp.Tracer().StartSpan("handler", opentracing.ChildOf(sp.Context())).Finish()
@@ -99,7 +105,7 @@ func TestRouter_TracePropagation(t *testing.T) {
 	req := httptest.NewRequest(http.MethodGet, "/user/id1?q=test&secret=password", nil)
 
 	parentSpan := instana.NewRootSpanContext()
-	sensor.Tracer().Inject(parentSpan, opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(req.Header))
+	c.Tracer().Inject(parentSpan, opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(req.Header))
 
 	resp := httptest.NewRecorder()
 	r.ServeHTTP(resp, req)
@@ -124,9 +130,13 @@ func TestRouter_TracePropagation(t *testing.T) {
 
 func TestRouter_Handle_ErrorHandling(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	sensor := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder))
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
 
-	r := instahttprouter.Wrap(httprouter.New(), sensor)
+	r := instahttprouter.Wrap(httprouter.New(), c)
 	r.Handle(http.MethodGet, "/user/:id", func(w http.ResponseWriter, req *http.Request, params httprouter.Params) {
 		http.Error(w, "something went wrong", http.StatusInternalServerError)
 	})
@@ -179,9 +189,13 @@ func TestRouter_Handle_ErrorHandling(t *testing.T) {
 
 func TestRouter_Handle_PanicHandling(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	sensor := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder))
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
 
-	r := instahttprouter.Wrap(httprouter.New(), sensor)
+	r := instahttprouter.Wrap(httprouter.New(), c)
 	r.Handle(http.MethodGet, "/user/:id", func(w http.ResponseWriter, req *http.Request, params httprouter.Params) {
 		panic("something went wrong")
 	})
@@ -234,9 +248,13 @@ func TestRouter_Handle_PanicHandling(t *testing.T) {
 
 func TestRouter_Helpers(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	sensor := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder))
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
 
-	r := instahttprouter.Wrap(httprouter.New(), sensor)
+	r := instahttprouter.Wrap(httprouter.New(), c)
 
 	examples := map[string]func(httprouter.Handle) string{
 		"GET": func(h httprouter.Handle) string {

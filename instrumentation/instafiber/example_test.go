@@ -15,13 +15,16 @@ import (
 
 func Example() {
 
-	// Create a sensor for instana instrumentation
-	sensor := instana.NewSensor("my-service")
+	// Create a collector for instana instrumentation
+	c := instana.InitCollector(&instana.Options{
+		Service: "my-service",
+	})
+	defer instana.ShutdownCollector()
 
 	app := fiber.New()
 
 	// Use the instafiber.TraceHandler for instrumenting the handler
-	app.Get("/greet", instafiber.TraceHandler(sensor, "greet", "/greet", hello))
+	app.Get("/greet", instafiber.TraceHandler(c, "greet", "/greet", hello))
 
 	// Start server
 	log.Fatal(app.Listen(":3000"))
