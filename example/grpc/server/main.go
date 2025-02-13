@@ -1,7 +1,7 @@
 // (c) Copyright IBM Corp. 2024
 
-//go:build go1.22
-// +build go1.22
+//go:build go1.23
+// +build go1.23
 
 package main
 
@@ -47,7 +47,9 @@ func (s *Server) SayHelloStream(req *pb.HelloRequest, stream pb.Greeter_SayHello
 
 func main() {
 
-	sensor := instana.NewSensor("grpc-server")
+	collector := instana.InitCollector(&instana.Options{
+		Service: "grpc-server",
+	})
 
 	lis, err := net.Listen("tcp", ":50051")
 	if err != nil {
@@ -64,8 +66,8 @@ func main() {
 
 	grpcServer := grpc.NewServer(
 		grpc.UnknownServiceHandler(unknownHandler),
-		grpc.UnaryInterceptor(instagrpc.UnaryServerInterceptor(sensor)),
-		grpc.StreamInterceptor(instagrpc.StreamServerInterceptor(sensor)),
+		grpc.UnaryInterceptor(instagrpc.UnaryServerInterceptor(collector)),
+		grpc.StreamInterceptor(instagrpc.StreamServerInterceptor(collector)),
 	)
 
 	pb.RegisterGreeterServer(grpcServer, &Server{})

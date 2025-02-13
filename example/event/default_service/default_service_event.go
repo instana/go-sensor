@@ -14,7 +14,7 @@ const (
 )
 
 func main() {
-	instana.InitSensor(&instana.Options{
+	instana.InitCollector(&instana.Options{
 		Service:  service,
 		LogLevel: instana.Debug})
 

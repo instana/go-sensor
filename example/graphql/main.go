@@ -68,7 +68,9 @@ var (
 )
 
 func init() {
-	sensor = instana.NewSensor("go-graphql-test")
+	sensor = instana.InitCollector(&instana.Options{
+		Service: "go-graphql-test",
+	})
 }
 
 type payload struct {
