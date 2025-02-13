@@ -21,8 +21,8 @@ Usage
 The `instafasthttp.TraceHandler` returns an instrumented `fasthttp.RequestHandler`, which can be used to add instrumentation to calls in a fasthttp server. Please refer to the details below for more information.
 
 ```go
-// Create a sensor for instana instrumentation
-sensor = instana.InitCollector(&instana.Options{
+// Create a collector  for instana instrumentation
+c = instana.InitCollector(&instana.Options{
 	Service:  "fasthttp-example",
 	LogLevel: instana.Debug,
 })
@@ -33,7 +33,7 @@ func fastHTTPHandler(ctx *fasthttp.RequestCtx) {
 	switch string(ctx.Path()) {
 	case "/greet":
         // Use the instafasthttp.TraceHandler for instrumenting the greet handler
-		instafasthttp.TraceHandler(sensor, "greet", "/greet", func(ctx *fasthttp.RequestCtx) {
+		instafasthttp.TraceHandler(c, "greet", "/greet", func(ctx *fasthttp.RequestCtx) {
 			ctx.SetStatusCode(fasthttp.StatusOK)
 			fmt.Fprintf(ctx, "Hello brother!\n")
 
@@ -72,8 +72,8 @@ func greetEndpointHandler(ctx *fasthttp.RequestCtx) {
 The `instafasthttp.RoundTripper` provides an implementation of the `fasthttp.RoundTripper` interface. It can be used to instrument client calls with the help of `instafasthttp.HostClient`. Refer to the details below for more information.
 
 ```go
-// Create a sensor for instana instrumentation
-sensor = instana.InitCollector(&instana.Options{
+// Create a collector for instana instrumentation
+c = instana.InitCollector(&instana.Options{
 	Service:  "fasthttp-example",
 	LogLevel: instana.Debug,
 })
@@ -83,12 +83,12 @@ func fastHTTPHandler(ctx *fasthttp.RequestCtx) {
 	fmt.Fprintf(ctx, "Hi there! RequestURI is %q\n", ctx.RequestURI())
 	switch string(ctx.Path()) {
 	case "/round-trip":
-		instafasthttp.TraceHandler(sensor, "round-trip", "/round-trip", func(ctx *fasthttp.RequestCtx) {
+		instafasthttp.TraceHandler(c, "round-trip", "/round-trip", func(ctx *fasthttp.RequestCtx) {
 			// user context
 			uCtx := instafasthttp.UserContext(ctx)
 
 			hc := &fasthttp.HostClient{
-				Transport: instafasthttp.RoundTripper(uCtx, sensor, nil),
+				Transport: instafasthttp.RoundTripper(uCtx, c, nil),
 				Addr:      "localhost:7070",
 			}
 
@@ -148,7 +148,7 @@ The `client.Do` and related methods can be traced using Instana. However, the us
 	}
 
 	// create instana instrumented client
-	ic := instafasthttp.GetInstrumentedClient(sensor, client)
+	ic := instafasthttp.GetInstrumentedClient(collector, client)
 ```
 - Use the instrumented client(ic) for all requests instead of the original client.
 - Tracing is supported for the following methods, where an additional `context.Context` parameter is required as the first argument. Ensure the context is set properly for span correlation:
