@@ -1,10 +1,10 @@
 module github.com/instana/go-sensor/instrumentation/instaawssdk
 
-go 1.22
+go 1.23
 
 require (
 	github.com/aws/aws-sdk-go v1.55.6
-	github.com/instana/go-sensor v1.66.2
+	github.com/instana/go-sensor v1.67.0
 	github.com/opentracing/opentracing-go v1.2.0
 	github.com/stretchr/testify v1.8.1
 )
