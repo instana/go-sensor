@@ -15,7 +15,7 @@ import (
 
 func TestTransactions(t *testing.T) {
 	testDocumentValue := getTestDocumentValue()
-	defer instana.ShutdownSensor()
+	defer instana.ShutdownCollector()
 	recorder, ctx, cluster, a := prepare(t)
 
 	scope := cluster.Bucket(cbTestBucket).Scope(cbTestScope)

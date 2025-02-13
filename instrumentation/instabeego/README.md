@@ -20,14 +20,14 @@ Usage
 ## Web server instrumentation
 
 ```go
-// create a sensor
-t := instana.InitCollector(&instana.Options{
+// create an Instana collector
+c := instana.InitCollector(&instana.Options{
     Service:           "beego-server",
     EnableAutoProfile: true,
 })
 
 // instrument the web server
-instabeego.InstrumentWebServer(t)
+instabeego.InstrumentWebServer(c)
 
 // define API 
 beego.Get("/foo", func(ctx *beecontext.Context) {/* ... */})
@@ -41,8 +41,8 @@ beego.Run()
 ## HTTP client instrumentation
 
 ```go
-// create a sensor
-t := instana.InitCollector(&instana.Options{
+// create an Instana collector 
+c := instana.InitCollector(&instana.Options{
     Service:           "my-http-client",
     EnableAutoProfile: true,
 })
@@ -54,7 +54,7 @@ ctx := instana.ContextWithSpan(context.Background(), /* parent span */)
 req := httplib.NewBeegoRequestWithCtx(ctx, "https://www.instana.com", http.MethodGet)
 
 // instrument the client request
-instabeego.InstrumentRequest(sensor, req)
+instabeego.InstrumentRequest(c, req)
 
 // execute the client request and get the response
 _, err := req.Response()

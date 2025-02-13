@@ -16,13 +16,13 @@ func TestExpiringMap(t *testing.T) {
 	var wg sync.WaitGroup
 
 	recorder := instana.NewTestRecorder()
-	sensor := instana.NewSensorWithTracer(
-		instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder),
-	)
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
 
-	defer instana.ShutdownSensor()
-
-	tracer := sensor.Tracer()
+	tracer := c.Tracer()
 
 	m := instagraphql.ExpiringMap{}
 

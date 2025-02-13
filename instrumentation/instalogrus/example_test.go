@@ -15,14 +15,17 @@ import (
 // with Instana. The instrumented logger instance will then send any ERROR and WARN log messages
 // to Instana, associating them with the current operation span.
 func Example_globalLogger() {
-	sensor := instana.NewSensor("my-service")
-	ctx := context.Background()
+	c := instana.InitCollector(&instana.Options{
+		Service: "my-service",
+	})
+	defer instana.ShutdownCollector()
 
+	ctx := context.Background()
 	// Add instalogrus hook to instrument the logger instance
-	logrus.AddHook(instalogrus.NewHook(sensor))
+	logrus.AddHook(instalogrus.NewHook(c))
 
 	// Start and inject a span into context. Normally our instrumentation code does it for you.
-	sp := sensor.Tracer().StartSpan("entry")
+	sp := c.Tracer().StartSpan("entry")
 	defer sp.Finish()
 
 	ctx = instana.ContextWithSpan(ctx, sp)
@@ -40,18 +43,21 @@ func Example_globalLogger() {
 // with Instana. The instrumented logger instance will then send any ERROR and WARN log messages
 // to Instana, associating them with the current operation span.
 func Example_loggerInstance() {
-	sensor := instana.NewSensor("my-service")
-	ctx := context.Background()
+	c := instana.InitCollector(&instana.Options{
+		Service: "my-service",
+	})
+	defer instana.ShutdownCollector()
 
+	ctx := context.Background()
 	log := logrus.New()
 	// Configure logger
 	// ...
 
 	// Add instalogrus hook to instrument the logger instance
-	log.AddHook(instalogrus.NewHook(sensor))
+	log.AddHook(instalogrus.NewHook(c))
 
 	// Start and inject a span into context. Normally our instrumentation code does it for you.
-	sp := sensor.Tracer().StartSpan("entry")
+	sp := c.Tracer().StartSpan("entry")
 	defer sp.Finish()
 
 	ctx = instana.ContextWithSpan(ctx, sp)

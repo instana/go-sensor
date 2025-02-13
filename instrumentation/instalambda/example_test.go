@@ -15,8 +15,11 @@ import (
 
 // This example demonstrates how to instrument a handler function with Instana
 func Example() {
-	// Initialize a new sensor
-	sensor := instana.NewSensor("my-go-lambda")
+	// Initialize a new collector
+	c := instana.InitCollector(&instana.Options{
+		Service: "my-go-lambda",
+	})
+	defer instana.ShutdownCollector()
 
 	// Create a new instrumented lambda.Handler from your handle function
 	h := instalambda.NewHandler(func(ctx context.Context) (string, error) {
@@ -30,7 +33,7 @@ func Example() {
 		}
 
 		return "Hello, ƛ!", nil
-	}, sensor)
+	}, c)
 
 	// Pass the instrumented handler to lambda.StartHandler()
 	lambda.StartHandler(h)
@@ -38,8 +41,11 @@ func Example() {
 
 // This example demonstrates how to instrument a handler function invoked with an API Gateway event
 func Example_apiGateway() {
-	// Initialize a new sensor
-	sensor := instana.NewSensor("my-go-lambda")
+	// Initialize a new collector
+	c := instana.InitCollector(&instana.Options{
+		Service: "my-go-lambda",
+	})
+	defer instana.ShutdownCollector()
 
 	// Create a new instrumented lambda.Handler from your handle function
 	h := instalambda.NewHandler(func(event *events.APIGatewayV2HTTPRequest) (events.APIGatewayV2HTTPResponse, error) {
@@ -47,7 +53,7 @@ func Example_apiGateway() {
 			StatusCode: http.StatusOK,
 			Body:       "Hello, ƛ!",
 		}, nil
-	}, sensor)
+	}, c)
 
 	// Pass the instrumented handler to lambda.StartHandler()
 	lambda.StartHandler(h)
@@ -56,13 +62,16 @@ func Example_apiGateway() {
 // To instrument a handler function, create a new lambda.Handler using instalambda.NewHandler() and pass it to
 // lambda.StartHandler()
 func ExampleNewHandler() {
-	// Initialize a new sensor
-	sensor := instana.NewSensor("my-go-lambda")
+	// Initialize a new collector
+	c := instana.InitCollector(&instana.Options{
+		Service: "my-go-lambda",
+	})
+	defer instana.ShutdownCollector()
 
 	// Create a new instrumented lambda.Handler from your handle function
 	h := instalambda.NewHandler(func() (string, error) {
 		return "Hello, ƛ!", nil
-	}, sensor)
+	}, c)
 
 	// Pass the instrumented handler to lambda.StartHandler()
 	lambda.StartHandler(h)
@@ -71,15 +80,18 @@ func ExampleNewHandler() {
 // To instrument a lambda.Handler, instrument it using instalambda.WrapHandler before passing to
 // lambda.StartHandler()
 func ExampleWrapHandler() {
-	// Initialize a new sensor
-	sensor := instana.NewSensor("my-go-lambda")
+	// Initialize a new collector
+	c := instana.InitCollector(&instana.Options{
+		Service: "my-go-lambda",
+	})
+	defer instana.ShutdownCollector()
 
 	h := Handler{
 		// ...
 	}
 
 	// Instrument your handler before passing it to lambda.StartHandler()
-	lambda.StartHandler(instalambda.WrapHandler(h, sensor))
+	lambda.StartHandler(instalambda.WrapHandler(h, c))
 }
 
 // Handler is an example AWS Lambda handler

@@ -30,15 +30,17 @@ Usage
 -----
 
 ```go
-// Create a sensor
-sensor := instana.NewSensor("pgx-sensort")
+// Create a collector
+collector := instana.InitCollector(&instana.Options{
+	Service: "pgx-app",
+})
 
 // Parse config
 conf, err := pgx.ParseConfig("postgres://postgres:mysecretpassword@localhost/postgres")
 ...
 
 // Instrument connection 
-conn, err := instapgx.ConnectConfig(context.Background(), sensor, conf)
+conn, err := instapgx.ConnectConfig(context.Background(), collector, conf)
 ```
 
 For a `SendBatch` method, to have more information about statements in the span, please enable detailed mode.

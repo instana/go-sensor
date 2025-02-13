@@ -63,28 +63,19 @@ func initBeeApp(t *testing.T) {
 	sleep(serverDepTime)
 }
 
-func initCollector() {
-	instana.InitCollector(&instana.Options{
+func TestPropagation(t *testing.T) {
+	recorder := instana.NewTestRecorder()
+	c := instana.InitCollector(&instana.Options{
 		Service: "beego-test",
 		Tracer: instana.TracerOptions{
 			CollectableHTTPHeaders: []string{"x-custom-header-1", "x-custom-header-2"},
 		},
 		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
 	})
-}
+	defer instana.ShutdownCollector()
 
-func TestPropagation(t *testing.T) {
-	initCollector()
-	recorder := instana.NewTestRecorder()
-	tracer := instana.NewTracerWithEverything(&instana.Options{
-		Service:     "beego-test",
-		AgentClient: alwaysReadyClient{},
-	}, recorder)
-	defer instana.ShutdownSensor()
-	sensor := instana.NewSensorWithTracer(tracer)
-
-	instabeego.InstrumentWebServer(sensor)
-
+	instabeego.InstrumentWebServer(c)
 	defer shutdownBeeApp()
 
 	initBeeApp(t)

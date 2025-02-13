@@ -25,17 +25,18 @@ import (
 func TestStartInvokeLambdaSpan_WithActiveSpan(t *testing.T) {
 	const funcName = "test-function"
 	recorder := instana.NewTestRecorder()
-	sensor := instana.NewSensorWithTracer(
-		instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder),
-	)
-	defer instana.ShutdownSensor()
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
 
-	parentSp := sensor.Tracer().StartSpan("testing")
+	parentSp := c.Tracer().StartSpan("testing")
 
 	req := newInvokeRequest(funcName)
 	req.SetContext(instana.ContextWithSpan(req.Context(), parentSp))
 
-	instaawssdk.StartInvokeLambdaSpan(req, sensor)
+	instaawssdk.StartInvokeLambdaSpan(req, c)
 
 	sp, ok := instana.SpanFromContext(req.Context())
 	require.True(t, ok)
@@ -84,13 +85,14 @@ func TestStartInvokeLambdaSpan_NoActiveSpan(t *testing.T) {
 	const funcName = "test-function"
 
 	recorder := instana.NewTestRecorder()
-	sensor := instana.NewSensorWithTracer(
-		instana.NewTracerWithEverything(instana.DefaultOptions(), recorder),
-	)
-	defer instana.ShutdownSensor()
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
 
 	req := newInvokeRequest(funcName)
-	instaawssdk.StartInvokeLambdaSpan(req, sensor)
+	instaawssdk.StartInvokeLambdaSpan(req, c)
 
 	_, ok := instana.SpanFromContext(req.Context())
 	require.True(t, ok)
@@ -100,12 +102,13 @@ func TestFinalizeInvoke_NoError(t *testing.T) {
 	const funcName = "test-function"
 
 	recorder := instana.NewTestRecorder()
-	sensor := instana.NewSensorWithTracer(
-		instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder),
-	)
-	defer instana.ShutdownSensor()
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
 
-	sp := sensor.Tracer().StartSpan("aws.lambda.invoke", opentracing.Tags{
+	sp := c.Tracer().StartSpan("aws.lambda.invoke", opentracing.Tags{
 		"function": funcName,
 		"type":     lambda.InvocationTypeRequestResponse,
 	})
@@ -138,12 +141,13 @@ func TestFinalizeInvokeLambdaSpan_WithError(t *testing.T) {
 	const funcName = "test-function"
 
 	recorder := instana.NewTestRecorder()
-	sensor := instana.NewSensorWithTracer(
-		instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder),
-	)
-	defer instana.ShutdownSensor()
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
 
-	sp := sensor.Tracer().StartSpan("aws.lambda.invoke", opentracing.Tags{
+	sp := c.Tracer().StartSpan("aws.lambda.invoke", opentracing.Tags{
 		"function": funcName,
 		"type":     lambda.InvocationTypeRequestResponse,
 	})

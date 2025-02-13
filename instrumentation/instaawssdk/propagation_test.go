@@ -17,13 +17,11 @@ import (
 )
 
 func TestSpanContextFromSQSMessage(t *testing.T) {
-	sensor := instana.NewSensorWithTracer(
-		instana.NewTracerWithEverything(
-			instana.DefaultOptions(),
-			instana.NewTestRecorder(),
-		),
-	)
-	defer instana.ShutdownSensor()
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    instana.NewTestRecorder(),
+	})
+	defer instana.ShutdownCollector()
 
 	examples := map[string]*sqs.Message{
 		"standard keys": {
@@ -50,7 +48,7 @@ func TestSpanContextFromSQSMessage(t *testing.T) {
 
 	for name, msg := range examples {
 		t.Run(name, func(t *testing.T) {
-			spCtx, ok := instaawssdk.SpanContextFromSQSMessage(msg, sensor)
+			spCtx, ok := instaawssdk.SpanContextFromSQSMessage(msg, c)
 			require.True(t, ok)
 			assert.Equal(t, instana.SpanContext{
 				TraceIDHi: 0x01,
@@ -62,7 +60,7 @@ func TestSpanContextFromSQSMessage(t *testing.T) {
 	}
 
 	t.Run("no context", func(t *testing.T) {
-		_, ok := instaawssdk.SpanContextFromSQSMessage(&sqs.Message{}, sensor)
+		_, ok := instaawssdk.SpanContextFromSQSMessage(&sqs.Message{}, c)
 		assert.False(t, ok)
 	})
 }

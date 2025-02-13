@@ -21,17 +21,18 @@ import (
 
 func TestStartS3Span_WithActiveSpan(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	sensor := instana.NewSensorWithTracer(
-		instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder),
-	)
-	defer instana.ShutdownSensor()
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
 
-	parentSp := sensor.Tracer().StartSpan("testing")
+	parentSp := c.Tracer().StartSpan("testing")
 
 	req := newS3Request()
 	req.SetContext(instana.ContextWithSpan(req.Context(), parentSp))
 
-	instaawssdk.StartS3Span(req, sensor)
+	instaawssdk.StartS3Span(req, c)
 
 	sp, ok := instana.SpanFromContext(req.Context())
 	require.True(t, ok)
@@ -65,13 +66,14 @@ func TestStartS3Span_WithActiveSpan(t *testing.T) {
 
 func TestStartS3Span_NoActiveSpan(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	sensor := instana.NewSensorWithTracer(
-		instana.NewTracerWithEverything(instana.DefaultOptions(), recorder),
-	)
-	defer instana.ShutdownSensor()
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
 
 	req := newS3Request()
-	instaawssdk.StartS3Span(req, sensor)
+	instaawssdk.StartS3Span(req, c)
 
 	_, ok := instana.SpanFromContext(req.Context())
 	require.True(t, ok)
@@ -79,12 +81,13 @@ func TestStartS3Span_NoActiveSpan(t *testing.T) {
 
 func TestFinalizeS3_NoError(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	sensor := instana.NewSensorWithTracer(
-		instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder),
-	)
-	defer instana.ShutdownSensor()
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
 
-	sp := sensor.Tracer().StartSpan("s3", opentracing.Tags{
+	sp := c.Tracer().StartSpan("s3", opentracing.Tags{
 		"s3.region": "us-east-1",
 		"s3.op":     "PutObject",
 		"s3.bucket": "test-bucket",
@@ -114,12 +117,13 @@ func TestFinalizeS3_NoError(t *testing.T) {
 
 func TestFinalizeS3Span_WithError(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	sensor := instana.NewSensorWithTracer(
-		instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder),
-	)
-	defer instana.ShutdownSensor()
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
 
-	sp := sensor.Tracer().StartSpan("s3", opentracing.Tags{
+	sp := c.Tracer().StartSpan("s3", opentracing.Tags{
 		"s3.region": "us-east-1",
 		"s3.op":     "PutObject",
 		"s3.bucket": "test-bucket",

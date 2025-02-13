@@ -18,14 +18,16 @@ Usage
 -----
 
 ```go
-// Create a sensor
-sensor := instana.NewSensor("my-web-server")
+// Create a collector
+collector := instana.InitCollector(&instana.Options{
+	Service: "my-web-server",
+})
 
 // Create router
 r := mux.NewRouter()
 
 // Instrument your router by adding a middleware
-instamux.AddMiddleware(sensor, r)
+instamux.AddMiddleware(collector, r)
 
 // Define handlers
 r.HandleFunc("/foo", func(writer http.ResponseWriter, request *http.Request) {})

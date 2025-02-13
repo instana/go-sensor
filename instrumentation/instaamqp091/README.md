@@ -38,8 +38,10 @@ func Example_publisher() {
 	exchangeName := "my-exchange"
 	url := "amqp://guest:guest@localhost:5672/"
 
-	// Create the Instana sensor
-	sensor := instana.NewSensor("rabbitmq-client")
+	// Create the Instana collector
+	collector := instana.InitCollector(&instana.Options{
+		Service: "rabbitmq-client",
+	})
 
 	c, err := amqp.Dial(url)
 	failOnError(err, "Could not connect to the server")
@@ -55,11 +57,11 @@ func Example_publisher() {
 	// There must be an entry span per publish call.
 	// In most common cases, creating an entry span manually is not needed, as the entry span is originated from an
 	// incoming HTTP client call.
-	entrySpan := sensor.Tracer().StartSpan("my-publishing-method")
+	entrySpan := collector.Tracer().StartSpan("my-publishing-method")
 	ext.SpanKind.Set(entrySpan, ext.SpanKindRPCServerEnum)
 
 	// We wrap the original amqp.Channel.Publish and amqp.Channel.Consume methods into an Instana object.
-	instaCh := instaamqp091.WrapChannel(sensor, ch, url)
+	instaCh := instaamqp091.WrapChannel(collector, ch, url)
 
 	// Use the Instana `Publish` method with the same arguments as the original `Publish` method, with the additional
 	// `entrySpan` argument. That's it!
@@ -88,7 +90,9 @@ func Example_consumer() {
 	queueName := "my-queue"
 	url := "amqp://guest:guest@localhost:5672/"
 
-	sensor := instana.NewSensor("rabbitmq-client")
+	collector := instana.InitCollector(&instana.Options{
+		Service: "rabbitmq-client",
+	})
 
 	c, err := amqp.Dial(url)
 	failOnError(err, "Could not connect to the server")
@@ -107,7 +111,7 @@ func Example_consumer() {
 	err = ch.QueueBind(q.Name, "", exchangeName, false, nil)
 	failOnError(err, "Could not bind the queue to the exchange")
 
-	instaCh := instaamqp091.WrapChannel(sensor, ch, url)
+	instaCh := instaamqp091.WrapChannel(collector, ch, url)
 
 	// Use the Instana `Consume` method with the same arguments as the original `Consume` method.
 	msgs, err := instaCh.Consume(q.Name, "", true, false, false, false, nil)

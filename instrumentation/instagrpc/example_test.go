@@ -47,7 +47,10 @@ func (s TestServiceServer) UnaryCall(ctx context.Context, req *grpctest.SimpleRe
 // the server address
 func setupServer() (net.Addr, error) {
 	// Initialize server sensor to instrument request handlers
-	sensor := instana.NewSensor("grpc-server")
+	c := instana.InitCollector(&instana.Options{
+		Service: "grpc-server",
+	})
+	defer instana.ShutdownCollector()
 
 	ln, err := net.Listen("tcp", ":0")
 	if err != nil {
@@ -58,8 +61,8 @@ func setupServer() (net.Addr, error) {
 	// instagrpc.StreamServerInterceptor(sensor) to the list of server options when
 	// initializing the server
 	srv := grpc.NewServer(
-		grpc.UnaryInterceptor(instagrpc.UnaryServerInterceptor(sensor)),
-		grpc.StreamInterceptor(instagrpc.StreamServerInterceptor(sensor)),
+		grpc.UnaryInterceptor(instagrpc.UnaryServerInterceptor(c)),
+		grpc.StreamInterceptor(instagrpc.StreamServerInterceptor(c)),
 	)
 
 	grpctest.RegisterTestServiceServer(srv, &TestServiceServer{})
@@ -79,7 +82,10 @@ func Example() {
 	}
 
 	// Initialize client tracer
-	sensor := instana.NewSensor("grpc-client")
+	c := instana.InitCollector(&instana.Options{
+		Service: "grpc-client",
+	})
+	defer instana.ShutdownCollector()
 
 	// To instrument client calls add instagrpc.UnaryClientInterceptor(sensor) and
 	// instagrpc.StringClientInterceptor(sensor) to the DialOption list while dialing
@@ -87,24 +93,24 @@ func Example() {
 	conn, err := grpc.Dial(
 		serverAddr.String(),
 		grpc.WithInsecure(),
-		grpc.WithUnaryInterceptor(instagrpc.UnaryClientInterceptor(sensor)),
-		grpc.WithStreamInterceptor(instagrpc.StreamClientInterceptor(sensor)),
+		grpc.WithUnaryInterceptor(instagrpc.UnaryClientInterceptor(c)),
+		grpc.WithStreamInterceptor(instagrpc.StreamClientInterceptor(c)),
 	)
 	if err != nil {
 		log.Fatalf("failed to dial server on %s: %s", serverAddr.String(), err)
 	}
 	defer conn.Close()
 
-	c := grpctest.NewTestServiceClient(conn)
+	tsc := grpctest.NewTestServiceClient(conn)
 
 	// The call should always start with an entry span (https://www.instana.com/docs/tracing/custom-best-practices/#start-new-traces-with-entry-spans)
 	// Normally this would be your HTTP/GRPC/message queue request span, but here we need to
 	// create it explicitly.
-	sp := sensor.Tracer().StartSpan("client-call")
+	sp := c.Tracer().StartSpan("client-call")
 	sp.SetTag(string(ext.SpanKind), "entry")
 
 	// Create a context that holds the parent entry span and pass it to the GRPC call
-	resp, err := c.UnaryCall(
+	resp, err := tsc.UnaryCall(
 		instana.ContextWithSpan(context.Background(), sp),
 		&grpctest.SimpleRequest{
 			Payload: &grpctest.Payload{

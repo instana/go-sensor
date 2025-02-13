@@ -36,15 +36,17 @@ func (Handler) Invoke(ctx context.Context, payload []byte) ([]byte, error) {
 }
 
 func main() {
-	// Initialize a new sensor
-	sensor := instana.NewSensor("my-go-lambda")
+	// Initialize a new collector
+	collector := instana.InitCollector(&instana.Options{
+		Service: "go-lambda",
+	})
 
 	h := &Handler{
 		// ...
 	}
 
 	// Instrument your handler before passing it to lambda.StartHandler()
-	lambda.StartHandler(instalambda.WrapHandler(h, sensor))
+	lambda.StartHandler(instalambda.WrapHandler(h, collector))
 }
 ```
 
@@ -59,13 +61,15 @@ func handle() {
 }
 
 func main() {
-	// Initialize a new sensor
-	sensor := instana.NewSensor("my-go-lambda")
+	// Initialize a new collector
+	collector := instana.InitCollector(&instana.Options{
+		Service: "graphql-app",
+	})
 
 	// Create a new instrumented lambda.Handler from your handle function
 	h := instalambda.NewHandler(func() (string, error) {
 
-	}, sensor)
+	}, collector)
 
 	// Pass the instrumented handler to lambda.StartHandler()
 	lambda.StartHandler(h)
@@ -89,7 +93,7 @@ func MyHandler(ctx context.Context) error {
 	// using an instrumented http.Client
 	req, err := http.NewRequest("GET", url, nil)
     client := &http.Client{
-	    Transport: instana.RoundTripper(sensor, nil),
+	    Transport: instana.RoundTripper(collector, nil),
 	}
 
 	client.Do(req.WithContext(ctx))

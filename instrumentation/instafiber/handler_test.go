@@ -26,13 +26,14 @@ import (
 
 func BenchmarkTracingHandlerFunc(b *testing.B) {
 	recorder := instana.NewTestRecorder()
-	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{
+	c := instana.InitCollector(&instana.Options{
 		Service:     "go-sensor-test",
 		AgentClient: alwaysReadyClient{},
-	}, recorder))
-	defer instana.ShutdownSensor()
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
 
-	h := instafiber.TraceHandler(s, "action", "/{action}", func(c *fiber.Ctx) error {
+	h := instafiber.TraceHandler(c, "action", "/{action}", func(c *fiber.Ctx) error {
 		return c.SendString("Ok")
 	})
 
@@ -49,19 +50,19 @@ func BenchmarkTracingHandlerFunc(b *testing.B) {
 }
 
 func TestTracingHandlerFunc_Write(t *testing.T) {
+	recorder := instana.NewTestRecorder()
 	opts := &instana.Options{
 		Service: "go-sensor-test",
 		Tracer: instana.TracerOptions{
 			CollectableHTTPHeaders: []string{"x-custom-header-1", "x-custom-header-2"},
 		},
 		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
 	}
+	c := instana.InitCollector(opts)
+	defer instana.ShutdownCollector()
 
-	recorder := instana.NewTestRecorder()
-	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(opts, recorder))
-	defer instana.ShutdownSensor()
-
-	h := instafiber.TraceHandler(s, "action", "/{action}", func(c *fiber.Ctx) error {
+	h := instafiber.TraceHandler(c, "action", "/{action}", func(c *fiber.Ctx) error {
 		c.Set("X-Response", "true")
 		c.Set("X-Custom-Header-2", "response")
 		return c.SendString("Ok\n")
@@ -177,14 +178,14 @@ func TestTracingHandlerFunc_InstanaFieldLPriorityOverTraceParentHeader(t *testin
 	}
 
 	recorder := instana.NewTestRecorder()
-	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{
+	c := instana.InitCollector(&instana.Options{
 		Service:     "go-sensor-test",
 		AgentClient: alwaysReadyClient{},
-	}, recorder))
-	defer instana.ShutdownSensor()
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
 
-	h := instafiber.TraceHandler(s, "action", "/test", func(c *fiber.Ctx) error { return nil })
-
+	h := instafiber.TraceHandler(c, "action", "/test", func(c *fiber.Ctx) error { return nil })
 	app := fiber.New()
 	app.Get("/test", h)
 
@@ -202,10 +203,13 @@ func TestTracingHandlerFunc_InstanaFieldLPriorityOverTraceParentHeader(t *testin
 
 func TestTracingHandlerFunc_WriteHeaders(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder))
-	defer instana.ShutdownSensor()
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
 
-	h := instafiber.TraceHandler(s, "test", "/test", func(c *fiber.Ctx) error {
+	h := instafiber.TraceHandler(c, "test", "/test", func(c *fiber.Ctx) error {
 		return c.SendStatus(http.StatusNotFound)
 	})
 
@@ -262,10 +266,13 @@ func TestTracingHandlerFunc_WriteHeaders(t *testing.T) {
 
 func TestTracingHandlerFunc_W3CTraceContext(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder))
-	defer instana.ShutdownSensor()
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
 
-	h := instafiber.TraceHandler(s, "test", "/test", func(c *fiber.Ctx) error {
+	h := instafiber.TraceHandler(c, "test", "/test", func(c *fiber.Ctx) error {
 		return c.SendString("Ok")
 	})
 
@@ -331,13 +338,14 @@ func TestTracingHandlerFunc_W3CTraceContext(t *testing.T) {
 
 func TestTracingHandlerFunc_SecretsFiltering(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{
+	c := instana.InitCollector(&instana.Options{
 		Service:     "go-sensor-test",
 		AgentClient: alwaysReadyClient{},
-	}, recorder))
-	defer instana.ShutdownSensor()
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
 
-	h := instafiber.TraceHandler(s, "action", "/{action}", func(c *fiber.Ctx) error {
+	h := instafiber.TraceHandler(c, "action", "/{action}", func(c *fiber.Ctx) error {
 		return c.SendString("Ok\n")
 	})
 
@@ -385,11 +393,14 @@ func TestTracingHandlerFunc_SecretsFiltering(t *testing.T) {
 func TestTracingHandlerFunc_Error(t *testing.T) {
 	// Create a sensor for tracing
 	recorder := instana.NewTestRecorder()
-	s := instana.InitCollector(&instana.Options{AgentClient: alwaysReadyClient{}, Recorder: recorder})
-	defer instana.ShutdownSensor()
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
 
 	// Wrap the request handler with instrumentation code
-	h := instafiber.TraceHandler(s, "test", "/test", func(c *fiber.Ctx) error {
+	h := instafiber.TraceHandler(c, "test", "/test", func(c *fiber.Ctx) error {
 		c.Status(http.StatusInternalServerError)
 		return fiber.NewError(http.StatusInternalServerError, "something went wrong")
 	})
@@ -449,10 +460,13 @@ func TestTracingHandlerFunc_Error(t *testing.T) {
 
 func TestTracingHandlerFunc_SyntheticCall(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder))
-	defer instana.ShutdownSensor()
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
 
-	h := instafiber.TraceHandler(s, "test-handler", "/", func(c *fiber.Ctx) error {
+	h := instafiber.TraceHandler(c, "test-handler", "/", func(c *fiber.Ctx) error {
 		return c.SendString("Ok")
 	})
 
@@ -474,10 +488,13 @@ func TestTracingHandlerFunc_SyntheticCall(t *testing.T) {
 
 func TestTracingHandlerFunc_EUMCall(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder))
-	defer instana.ShutdownSensor()
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
 
-	h := instafiber.TraceHandler(s, "test-handler", "/", func(c *fiber.Ctx) error {
+	h := instafiber.TraceHandler(c, "test-handler", "/", func(c *fiber.Ctx) error {
 		return c.SendString("Ok")
 	})
 
@@ -500,27 +517,30 @@ func TestTracingHandlerFunc_EUMCall(t *testing.T) {
 
 func TestTracingHandlerFunc_PanicHandling(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder))
-	defer instana.ShutdownSensor()
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
 
-	h := instafiber.TraceHandler(s, "test", "/test", func(c *fiber.Ctx) error {
+	h := instafiber.TraceHandler(c, "test", "/test", func(c *fiber.Ctx) error {
 		panic("something went wrong")
 	})
 
-	c := &fasthttp.RequestCtx{}
+	rc := &fasthttp.RequestCtx{}
 
-	c.Request.Header.SetMethod(fiber.MethodGet)
-	c.Request.Header.Set(instana.FieldL, "1,correlationType=web;correlationId=eum correlation id")
-	c.URI().SetPath("/test")
-	c.URI().SetQueryString("q=term")
-	c.URI().SetHost("example.com")
+	rc.Request.Header.SetMethod(fiber.MethodGet)
+	rc.Request.Header.Set(instana.FieldL, "1,correlationType=web;correlationId=eum correlation id")
+	rc.URI().SetPath("/test")
+	rc.URI().SetQueryString("q=term")
+	rc.URI().SetHost("example.com")
 
 	app := fiber.New()
 	app.Get("/test", h)
 
 	assert.Panics(t, func() {
 		handler := app.Handler()
-		handler(c)
+		handler(rc)
 	})
 
 	spans := recorder.GetQueuedSpans()

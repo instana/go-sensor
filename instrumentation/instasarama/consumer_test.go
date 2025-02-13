@@ -20,10 +20,14 @@ import (
 func TestConsumer_ConsumePartition(t *testing.T) {
 
 	recorder := instana.NewTestRecorder()
-	sensor := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{}, recorder))
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
 
 	messages := make(chan *sarama.ConsumerMessage, 1)
-	c := &testConsumer{
+	tc := &testConsumer{
 		consumers: map[string]*testPartitionConsumer{
 			"topic-1": {
 				messages: messages,
@@ -46,7 +50,7 @@ func TestConsumer_ConsumePartition(t *testing.T) {
 		},
 	}
 
-	wrapped := instasarama.WrapConsumer(c, sensor)
+	wrapped := instasarama.WrapConsumer(tc, c)
 	pc, err := wrapped.ConsumePartition("topic-1", 1, 2)
 	require.NoError(t, err)
 
@@ -68,52 +72,64 @@ selectChannel:
 
 func TestConsumer_ConsumePartition_Error(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	sensor := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{}, recorder))
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
 
-	c := &testConsumer{
+	tc := &testConsumer{
 		Error: errors.New("something went wrong"),
 		consumers: map[string]*testPartitionConsumer{
 			"topic-1": {},
 		},
 	}
 
-	wrapped := instasarama.WrapConsumer(c, sensor)
+	wrapped := instasarama.WrapConsumer(tc, c)
 	_, err := wrapped.ConsumePartition("topic-1", 1, 2)
 	assert.Error(t, err)
 }
 
 func TestConsumer_Topics(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	sensor := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{}, recorder))
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
 
-	c := &testConsumer{
+	tc := &testConsumer{
 		topics: []string{"topic-1", "topic-2"},
 	}
 
-	wrapped := instasarama.WrapConsumer(c, sensor)
+	wrapped := instasarama.WrapConsumer(tc, c)
 
 	topics, err := wrapped.Topics()
 	require.NoError(t, err)
 
-	assert.Equal(t, c.topics, topics)
+	assert.Equal(t, tc.topics, topics)
 }
 
 func TestConsumer_Topics_Error(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	sensor := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{}, recorder))
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
 
-	c := &testConsumer{
+	tc := &testConsumer{
 		Error:  errors.New("something went wrong"),
 		topics: []string{"topic-1", "topic-2"},
 	}
 
-	wrapped := instasarama.WrapConsumer(c, sensor)
+	wrapped := instasarama.WrapConsumer(tc, c)
 	_, err := wrapped.Topics()
 	assert.Error(t, err)
 }
 
 func TestConsumer_Partitions(t *testing.T) {
-	c := &testConsumer{
+	tc := &testConsumer{
 		partitions: map[string][]int32{
 			"topic-1": {1, 2, 3},
 		},
@@ -121,9 +137,13 @@ func TestConsumer_Partitions(t *testing.T) {
 
 	t.Run("existing", func(t *testing.T) {
 		recorder := instana.NewTestRecorder()
-		sensor := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{}, recorder))
+		c := instana.InitCollector(&instana.Options{
+			AgentClient: alwaysReadyClient{},
+			Recorder:    recorder,
+		})
+		defer instana.ShutdownCollector()
 
-		wrapped := instasarama.WrapConsumer(c, sensor)
+		wrapped := instasarama.WrapConsumer(tc, c)
 		partitions, err := wrapped.Partitions("topic-1")
 		require.NoError(t, err)
 
@@ -134,9 +154,13 @@ func TestConsumer_Partitions(t *testing.T) {
 
 	t.Run("non-existing", func(t *testing.T) {
 		recorder := instana.NewTestRecorder()
-		sensor := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{}, recorder))
+		c := instana.InitCollector(&instana.Options{
+			AgentClient: alwaysReadyClient{},
+			Recorder:    recorder,
+		})
+		defer instana.ShutdownCollector()
 
-		wrapped := instasarama.WrapConsumer(c, sensor)
+		wrapped := instasarama.WrapConsumer(tc, c)
 		partitions, err := wrapped.Partitions("topic-2")
 		require.NoError(t, err)
 
@@ -148,25 +172,33 @@ func TestConsumer_Partitions(t *testing.T) {
 
 func TestConsumer_Partitions_Error(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	sensor := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{}, recorder))
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
 
-	c := &testConsumer{
+	tc := &testConsumer{
 		Error: errors.New("something went wrong"),
 		partitions: map[string][]int32{
 			"topic-1": {1, 2, 3},
 		},
 	}
 
-	wrapped := instasarama.WrapConsumer(c, sensor)
+	wrapped := instasarama.WrapConsumer(tc, c)
 	_, err := wrapped.Partitions("topic-1")
 	assert.Error(t, err)
 }
 
 func TestConsumer_HighWaterMarks(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	sensor := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{}, recorder))
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
 
-	c := &testConsumer{
+	tc := &testConsumer{
 		offsets: map[string]map[int32]int64{
 			"topic-1": {
 				1: 42,
@@ -174,34 +206,42 @@ func TestConsumer_HighWaterMarks(t *testing.T) {
 		},
 	}
 
-	wrapped := instasarama.WrapConsumer(c, sensor)
-	assert.Equal(t, c.offsets, wrapped.HighWaterMarks())
+	wrapped := instasarama.WrapConsumer(tc, c)
+	assert.Equal(t, tc.offsets, wrapped.HighWaterMarks())
 
 	assert.Empty(t, recorder.GetQueuedSpans())
 }
 
 func TestConsumer_Close(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	sensor := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{}, recorder))
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
 
-	c := &testConsumer{}
+	tc := &testConsumer{}
 
-	wrapped := instasarama.WrapConsumer(c, sensor)
+	wrapped := instasarama.WrapConsumer(tc, c)
 	require.NoError(t, wrapped.Close())
 
-	assert.True(t, c.Closed)
+	assert.True(t, tc.Closed)
 	assert.Empty(t, recorder.GetQueuedSpans())
 }
 
 func TestConsumer_Close_Error(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	sensor := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{}, recorder))
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
 
-	c := &testConsumer{
+	tc := &testConsumer{
 		Error: errors.New("something went wrong"),
 	}
 
-	wrapped := instasarama.WrapConsumer(c, sensor)
+	wrapped := instasarama.WrapConsumer(tc, c)
 	assert.Error(t, wrapped.Close())
 }
 

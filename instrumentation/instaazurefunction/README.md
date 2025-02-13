@@ -28,11 +28,13 @@ func handlerFn(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-// Initialize a new sensor.
-sensor := instana.NewSensor("my-azf-sensor")
+// Initialize a new collector.
+collector := instana.InitCollector(&instana.Options{
+	Service: "my-azf-collector",
+})
 
 // Instrument your handler before passing it to the http router.
-http.HandleFunc("/api/azf-test", instaazurefunction.WrapFunctionHandler(sensor, handlerFn))
+http.HandleFunc("/api/azf-test", instaazurefunction.WrapFunctionHandler(collector, handlerFn))
 }
 ```
 
