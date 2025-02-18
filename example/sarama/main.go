@@ -1,13 +1,12 @@
 // (c) Copyright IBM Corp. 2023
 
-//go:build go1.17
-// +build go1.17
-
 package main
 
 import "time"
 
 func main() {
+
+	createTopic()
 	ch := make(chan bool)
 	go consume(ch)
 	produce()
@@ -17,5 +16,5 @@ func main() {
 
 	// Give the Go tracer some time to send data to the agent.
 	// This step is not needed in normal cases, as the application will most likely keep running/
-	time.Sleep(time.Second * 3)
+	time.Sleep(time.Second * 30)
 }

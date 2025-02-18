@@ -1,7 +1,4 @@
-// (c) Copyright IBM Corp. 2023
-
-//go:build go1.17
-// +build go1.17
+// (c) Copyright IBM Corp. 2025
 
 package main
 
@@ -23,12 +20,17 @@ func consume(ch chan bool) {
 	brokers := []string{"localhost:9092"}
 
 	conf := sarama.NewConfig()
-	conf.Version = sarama.V0_11_0_0
 
 	// create a new instrumented instance of sarama.Consumer
 	consumer, _ := instasarama.NewConsumer(brokers, conf, collector)
 
-	c, _ := consumer.ConsumePartition("test-topic-1", 0, sarama.OffsetNewest)
+	//get all topic from cluster
+	topics, err1 := consumer.Topics()
+
+	fmt.Println(topics, err1)
+
+	c, err := consumer.ConsumePartition("test-topic-1", 0, sarama.OffsetNewest)
+	fmt.Println(err)
 	defer c.Close()
 
 	for msg := range c.Messages() {

@@ -23,6 +23,6 @@ services:
           # Run setup commands
           sleep 30 && \
           curl -v -X POST http://couchbase:8091/pools/default -d memoryQuota=2024 -d indexMemoryQuota=512 && \
-          curl -v http://couchbase:8091/node/controller/setupServices -d services=kv%2Ceventing%2Cindex%2Cn1ql%2Ccbas%2Cfts && \
+          curl -v -i http://couchbase:8091/node/controller/setupServices -d 'services=kv%2Cn1ql%2Cindex%2Ceventing' && \
           curl -v http://couchbase:8091/settings/web -d port=8091 -d username=Administrator -d password=password && \
           curl -i -u Administrator:password -X POST http://couchbase:8091/settings/indexes -d 'storageMode=memory_optimized'
