@@ -1,8 +1,27 @@
-version: '3'
+version: '3.8'
 
 services:
-  couchbase-server-sandbox:
-    image: couchbase/server-sandbox:7.1.1
+  couchbase:
+    image: public.ecr.aws/docker/library/couchbase:7.6.5
+    hostname: couchbase
     ports:
-      - 8091-8094:8091-8094
-      - 11210:11210
+      - '8091-8096:8091-8096'
+      - '11210:11210'
+    
+  couchbase-setup:
+    image: public.ecr.aws/docker/library/alpine:3.21.2
+    depends_on:
+      - couchbase
+    restart: "no"
+    entrypoint:
+      - "sh"
+      - "-ecx"
+      - |
+          # Install curl 
+          apk fix && apk --no-cache --update add curl && rm -rf /var/cache/apk/* \
+          # Run setup commands
+          sleep 30 && \
+          curl -v -X POST http://couchbase:8091/pools/default -d memoryQuota=2024 -d indexMemoryQuota=512 && \
+          curl -v -i http://couchbase:8091/node/controller/setupServices -d 'services=kv%2Cn1ql%2Cindex%2Ceventing' && \
+          curl -v http://couchbase:8091/settings/web -d port=8091 -d username=Administrator -d password=password && \
+          curl -i -u Administrator:password -X POST http://couchbase:8091/settings/indexes -d 'storageMode=memory_optimized'

@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"strings"
 	"time"
 
 	"github.com/couchbase/gocb/v2"
@@ -18,13 +19,91 @@ import (
 
 var (
 	collector instana.TracerLogger
+
+	// Update this to your cluster details
+	connectionString string = "localhost"
+	bucketName       string = "travel-sample"
+	username         string = "Administrator"
+	password         string = "password"
+	scopeName        string = "tenant_agent_00"
+	collectionName   string = "users"
 )
 
+var cluster instagocb.Cluster
+
 func init() {
+	ctx := context.Background()
 	collector = instana.InitCollector(&instana.Options{
 		Service:           "sample-app-couchbase",
 		EnableAutoProfile: true,
 	})
+
+	// init data in couchbase
+	dsn := "couchbase://localhost"
+	var err error
+	cluster, err = instagocb.Connect(collector, dsn, gocb.ClusterOptions{
+		Authenticator: gocb.PasswordAuthenticator{
+			Username: username,
+			Password: password,
+		},
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	bucketMgr := cluster.Buckets()
+
+	bs := gocb.BucketSettings{
+		Name:                 bucketName,
+		FlushEnabled:         true,
+		ReplicaIndexDisabled: true,
+		RAMQuotaMB:           150,
+		NumReplicas:          0,
+		BucketType:           gocb.CouchbaseBucketType,
+	}
+
+	// create bucket
+	err = bucketMgr.CreateBucket(gocb.CreateBucketSettings{
+		BucketSettings:         bs,
+		ConflictResolutionType: gocb.ConflictResolutionTypeSequenceNumber,
+	}, &gocb.CreateBucketOptions{
+		Context:    ctx,
+		ParentSpan: instagocb.GetParentSpanFromContext(ctx),
+	})
+
+	if err != nil {
+		if !strings.Contains(err.Error(), "Bucket with given name already exists") {
+			fmt.Println("Error creating bucket:", err)
+			log.Fatal(err)
+		} else {
+			fmt.Println("Bucket already exists")
+			return
+		}
+	} else {
+		fmt.Println("Bucket created successfully")
+	}
+
+	bucket := cluster.Bucket(bucketName)
+
+	err = bucket.WaitUntilReady(15*time.Second, nil)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// create scope and collection
+	collections := bucket.Collections()
+	err = collections.CreateScope(scopeName, &gocb.CreateScopeOptions{})
+	if err != nil {
+		log.Fatal(err)
+	}
+	err = collections.CreateCollection(gocb.CollectionSpec{
+		Name:      collectionName,
+		ScopeName: scopeName,
+	}, &gocb.CreateCollectionOptions{})
+	if err != nil {
+		log.Fatal(err)
+	}
+
 }
 
 func main() {
@@ -44,6 +123,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	err := couchbaseTest(r.Context(), needError)
 
 	if err != nil {
+		fmt.Println(err)
 		sendErrResp(w)
 		return
 	}
@@ -63,32 +143,15 @@ func sendOkResp(w http.ResponseWriter) {
 
 func couchbaseTest(ctx context.Context, needError bool) error {
 
-	// Update this to your cluster details
-	connectionString := "localhost"
-	bucketName := "travel-sample"
-	username := "Administrator"
-	password := "password"
-
-	dsn := "couchbase://" + connectionString
-
-	cluster, err := instagocb.Connect(collector, dsn, gocb.ClusterOptions{
-		Authenticator: gocb.PasswordAuthenticator{
-			Username: username,
-			Password: password,
-		},
-	})
-	if err != nil {
-		return err
-	}
-
 	bucket := cluster.Bucket(bucketName)
 
-	err = bucket.WaitUntilReady(5*time.Second, nil)
+	err := bucket.WaitUntilReady(5*time.Second, nil)
 	if err != nil {
 		return err
 	}
 
-	col := bucket.Scope("tenant_agent_00").Collection("users")
+	scope := bucket.Scope("tenant_agent_00")
+	col := scope.Collection("users")
 
 	type User struct {
 		Name      string   `json:"name"`
@@ -129,17 +192,18 @@ func couchbaseTest(ctx context.Context, needError bool) error {
 	fmt.Printf("User: %v\n", inUser)
 
 	// Perform a SQL++ Query
-	inventoryScope := bucket.Scope("inventory")
 	var queryStr string
 
 	if needError {
-		// airline1 is not there, this will produce an error
-		queryStr = "SELECT * FROM `airline1` WHERE id=10"
+		// invalid_collection is not there, this will produce an error
+		queryStr = "SELECT count(*) FROM `" + bucketName + "`." + scopeName + "." + "invalid_collection" + ";"
 	} else {
-		queryStr = "SELECT * FROM `airline` WHERE id=10"
+		queryStr = "SELECT count(*) FROM `" + bucketName + "`." + scopeName + "." + collectionName + ";"
 	}
-	queryResult, err := inventoryScope.Query(queryStr,
-		&gocb.QueryOptions{Adhoc: true, ParentSpan: instagocb.GetParentSpanFromContext(ctx)},
+	queryResult, err := scope.Query(queryStr,
+		&gocb.QueryOptions{
+			ParentSpan: instagocb.GetParentSpanFromContext(ctx),
+		},
 	)
 	if err != nil {
 		return err
@@ -160,7 +224,6 @@ func couchbaseTest(ctx context.Context, needError bool) error {
 	}
 
 	// Test transactions
-	collection := inventoryScope.Collection("airport")
 
 	// Starting transactions
 	transactions := cluster.Transactions()
@@ -170,35 +233,32 @@ func couchbaseTest(ctx context.Context, needError bool) error {
 		tacNew := cluster.WrapTransactionAttemptContext(tac, instagocb.GetParentSpanFromContext(ctx))
 
 		// Unwrapped collection is required to pass it to transaction operations
-		collectionUnwrapped := collection.Unwrap()
-
-		// Inserting a doc:
-		_, err := tacNew.Insert(collectionUnwrapped, "doc-a", map[string]interface{}{})
-		if err != nil {
-			return err
-		}
+		collectionUnwrapped := col.Unwrap()
 
 		// Getting documents:
-		docA, err := tacNew.Get(collectionUnwrapped, "doc-a")
+		docA, err := tacNew.Get(collectionUnwrapped, "u:jade")
 		// Use err != nil && !errors.Is(err, gocb.ErrDocumentNotFound) if the document may or may not exist
 		if err != nil {
 			return err
 		}
 
 		// Replacing a doc:
-		var content map[string]interface{}
+		content := User{
+			Name:      "Jade New",
+			Email:     "jadeNew@test-email.com",
+			Interests: []string{"Swimming"},
+		}
 		err = docA.Content(&content)
 		if err != nil {
 			return err
 		}
-		content["transactions"] = "are awesome"
 		_, err = tacNew.Replace(collectionUnwrapped, docA, content)
 		if err != nil {
 			return err
 		}
 
 		// Removing a doc:
-		docA1, err := tacNew.Get(collectionUnwrapped, "doc-a")
+		docA1, err := tacNew.Get(collectionUnwrapped, "u:jade")
 		if err != nil {
 			return err
 		}
@@ -208,39 +268,22 @@ func couchbaseTest(ctx context.Context, needError bool) error {
 		}
 
 		// Performing a SELECT N1QL query against a scope:
-		qr, err := tacNew.Query("SELECT * FROM hotel WHERE country = $1", &gocb.TransactionQueryOptions{
-			PositionalParameters: []interface{}{"United Kingdom"},
-
+		queryResult, err := tacNew.Query("SELECT count(*) FROM `"+bucketName+"`."+scopeName+"."+collectionName+";", &gocb.TransactionQueryOptions{
 			// Unwrapped scope is required here
-			Scope: inventoryScope.Unwrap(),
+			Scope: scope.Unwrap(),
 		})
 		if err != nil {
 			return err
 		}
 
-		type hotel struct {
-			Name string `json:"name"`
-		}
-
-		var hotels []hotel
-		for qr.Next() {
-			var h hotel
-			err = qr.Row(&h)
+		// Print each found Row
+		for queryResult.Next() {
+			var result interface{}
+			err := queryResult.Row(&result)
 			if err != nil {
 				return err
 			}
-
-			hotels = append(hotels, h)
-		}
-
-		// Performing an UPDATE N1QL query on multiple documents, in the `inventory` scope:
-		_, err = tacNew.Query("UPDATE route SET airlineid = $1 WHERE airline = $2", &gocb.TransactionQueryOptions{
-			PositionalParameters: []interface{}{"airline_137", "AF"},
-			// Unwrapped scope is required here
-			Scope: inventoryScope.Unwrap(),
-		})
-		if err != nil {
-			return err
+			fmt.Println("Query result : ", result)
 		}
 
 		// There is no commit call, by not returning an error the transaction will automatically commit

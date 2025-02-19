@@ -1,7 +1,4 @@
-// (c) Copyright IBM Corp. 2023
-
-//go:build go1.17
-// +build go1.17
+// (c) Copyright IBM Corp. 2025
 
 package main
 
@@ -29,7 +26,6 @@ func produce() {
 
 	// create a new instrumented instance of sarama.SyncProducer
 	producer, _ := instasarama.NewSyncProducer(brokers, config, collector)
-
 	// start a new entry span
 	sp := collector.Tracer().StartSpan("my-producing-method")
 	ext.SpanKind.Set(sp, "entry")

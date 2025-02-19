@@ -3,7 +3,7 @@ version: '3'
 services:
 
   postgres:
-    image: postgres:14
+    image: public.ecr.aws/docker/library/postgres:14
     ports:
       - 5432:5432
     environment:
@@ -14,42 +14,45 @@ services:
       - ./example/gorm-postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
 
   rabbitmq:
-    image: rabbitmq:3.7.8-alpine
+    image: public.ecr.aws/docker/library/rabbitmq:3.13.7-alpine
     ports:
       - 5671:5671
       - 5672:5672
 
   couchbase:
-    image: couchbase/server:7.1.4
+    image: public.ecr.aws/docker/library/couchbase:7.6.5
     hostname: couchbase
     ports:
       - '8091-8096:8091-8096'
       - '11210:11210'
     
   couchbase-setup:
-    image: amd64/centos:7
-    platform: linux/amd64
+    image: public.ecr.aws/docker/library/alpine:3.21.2
     depends_on:
       - couchbase
     restart: "no"
     entrypoint:
-      - "bash"
+      - "sh"
       - "-ecx"
       - |
+          # Install curl 
+          apk fix && apk --no-cache --update add curl && rm -rf /var/cache/apk/* \
+          # Run setup commands
           sleep 30 && \
-          curl -v -X POST http://couchbase:8091/pools/default -d memoryQuota=2048 -d indexMemoryQuota=1024 && \
-          curl -v http://couchbase:8091/node/controller/setupServices -d services=kv%2Ceventing%2Cindex%2Cn1ql%2Ccbas%2Cfts && \
+          curl -v -X POST http://couchbase:8091/pools/default -d memoryQuota=2024 -d indexMemoryQuota=512 && \
+          curl -v -i http://couchbase:8091/node/controller/setupServices -d 'services=kv%2Cn1ql%2Cindex%2Ceventing' && \
           curl -v http://couchbase:8091/settings/web -d port=8091 -d username=Administrator -d password=password && \
           curl -i -u Administrator:password -X POST http://couchbase:8091/settings/indexes -d 'storageMode=memory_optimized'
 
+
   redis:
-    image: redis
+    image: public.ecr.aws/docker/library/redis:7.4.2
     ports:
       - 6379:6379
     command: ["redis-server", "--requirepass", "redispw"]
 
   mysql:
-    image: mysql:8.0.1
+    image: public.ecr.aws/docker/library/mysql:8.0.41
     platform: linux/amd64
     ports:
       - 3306:3306
