@@ -17,14 +17,16 @@ $ go get github.com/instana/go-sensor/instrumentation/instapgx/v2
 Usage
 ---
 ```go
-// Create a sensor
-sensor := instana.NewSensor("pgx-v5-service")
+// Create an Instana collector
+c := instana.InitCollector(&instana.Options{
+    Service: "pgx-v5-service",
+})
 
 // Parse Config
 cfg, err := pgx.ParseConfig("postgres://username:password@localhost/database")
 
 // Assign the tracer interface with Instana tracer
-cfg.Tracer = instapgx.InstanaTracer(cfg, sensor)
+cfg.Tracer = instapgx.InstanaTracer(cfg, c)
 
 // Create the connection using the cfg with Instana tracer
 conn, err := pgx.ConnectConfig(ctx, cfg)

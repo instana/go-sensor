@@ -25,10 +25,13 @@ const DB_URL = "postgres://postgres:mysecretpassword@localhost:5432/postgres?ssl
 
 func TestQueryAPI(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	tracer := instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder)
-	sensor := instana.NewSensorWithTracer(tracer)
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
 
-	parentSpan := sensor.StartSpan("test-service")
+	parentSpan := c.StartSpan("test-service")
 	defer parentSpan.Finish()
 
 	cfg, err := pgx.ParseConfig(DB_URL)
@@ -36,7 +39,7 @@ func TestQueryAPI(t *testing.T) {
 		t.Error("unable to create pgx cfg")
 	}
 
-	cfg.Tracer = InstanaTracer(cfg, sensor)
+	cfg.Tracer = InstanaTracer(cfg, c)
 	ctx := instana.ContextWithSpan(context.Background(), parentSpan)
 	conn, err := pgx.ConnectConfig(ctx, cfg)
 	if err != nil {
@@ -60,10 +63,13 @@ func TestQueryAPI(t *testing.T) {
 
 func TestExecAPI(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	tracer := instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder)
-	sensor := instana.NewSensorWithTracer(tracer)
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
 
-	parentSpan := sensor.StartSpan("test-service")
+	parentSpan := c.StartSpan("test-service")
 	defer parentSpan.Finish()
 
 	cfg, err := pgx.ParseConfig(DB_URL)
@@ -71,7 +77,7 @@ func TestExecAPI(t *testing.T) {
 		t.Error("unable to create pgx cfg")
 	}
 
-	cfg.Tracer = InstanaTracer(cfg, sensor)
+	cfg.Tracer = InstanaTracer(cfg, c)
 
 	ctx := instana.ContextWithSpan(context.Background(), parentSpan)
 	conn, err := pgx.ConnectConfig(ctx, cfg)
@@ -97,10 +103,13 @@ func TestExecAPI(t *testing.T) {
 
 func TestQueryRowAPI(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	tracer := instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder)
-	sensor := instana.NewSensorWithTracer(tracer)
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
 
-	parentSpan := sensor.StartSpan("test-service")
+	parentSpan := c.StartSpan("test-service")
 	defer parentSpan.Finish()
 
 	cfg, err := pgx.ParseConfig(DB_URL)
@@ -108,7 +117,7 @@ func TestQueryRowAPI(t *testing.T) {
 		t.Error("unable to create pgx cfg")
 	}
 
-	cfg.Tracer = InstanaTracer(cfg, sensor)
+	cfg.Tracer = InstanaTracer(cfg, c)
 
 	ctx := instana.ContextWithSpan(context.Background(), parentSpan)
 	conn, err := pgx.ConnectConfig(ctx, cfg)
@@ -135,10 +144,13 @@ func TestQueryRowAPI(t *testing.T) {
 
 func TestBeginAPI(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	tracer := instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder)
-	sensor := instana.NewSensorWithTracer(tracer)
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
 
-	parentSpan := sensor.StartSpan("test-service")
+	parentSpan := c.StartSpan("test-service")
 	defer parentSpan.Finish()
 
 	cfg, err := pgx.ParseConfig(DB_URL)
@@ -146,7 +158,7 @@ func TestBeginAPI(t *testing.T) {
 		t.Error("unable to create pgx cfg")
 	}
 
-	cfg.Tracer = InstanaTracer(cfg, sensor)
+	cfg.Tracer = InstanaTracer(cfg, c)
 
 	ctx := instana.ContextWithSpan(context.Background(), parentSpan)
 	conn, err := pgx.ConnectConfig(ctx, cfg)
@@ -195,10 +207,13 @@ func TestBeginAPI(t *testing.T) {
 
 func TestBeginTransactionAPI(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	tracer := instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder)
-	sensor := instana.NewSensorWithTracer(tracer)
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
 
-	parentSpan := sensor.StartSpan("test-service")
+	parentSpan := c.StartSpan("test-service")
 	defer parentSpan.Finish()
 
 	cfg, err := pgx.ParseConfig(DB_URL)
@@ -206,7 +221,7 @@ func TestBeginTransactionAPI(t *testing.T) {
 		t.Error("unable to create pgx cfg")
 	}
 
-	cfg.Tracer = InstanaTracer(cfg, sensor)
+	cfg.Tracer = InstanaTracer(cfg, c)
 
 	ctx := instana.ContextWithSpan(context.Background(), parentSpan)
 	conn, err := pgx.ConnectConfig(ctx, cfg)
@@ -258,10 +273,13 @@ func TestBeginTransactionAPI(t *testing.T) {
 
 func TestCopyFromAPI(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	tracer := instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder)
-	sensor := instana.NewSensorWithTracer(tracer)
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
 
-	parentSpan := sensor.StartSpan("test-service")
+	parentSpan := c.StartSpan("test-service")
 	defer parentSpan.Finish()
 
 	cfg, err := pgx.ParseConfig(DB_URL)
@@ -269,7 +287,7 @@ func TestCopyFromAPI(t *testing.T) {
 		t.Error("unable to create pgx cfg")
 	}
 
-	cfg.Tracer = InstanaTracer(cfg, sensor)
+	cfg.Tracer = InstanaTracer(cfg, c)
 
 	ctx := instana.ContextWithSpan(context.Background(), parentSpan)
 	conn, err := pgx.ConnectConfig(ctx, cfg)
@@ -302,10 +320,13 @@ func TestCopyFromAPI(t *testing.T) {
 
 func TestBatchAPI(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	tracer := instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder)
-	sensor := instana.NewSensorWithTracer(tracer)
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
 
-	parentSpan := sensor.StartSpan("test-service")
+	parentSpan := c.StartSpan("test-service")
 	defer parentSpan.Finish()
 
 	cfg, err := pgx.ParseConfig(DB_URL)
@@ -313,7 +334,7 @@ func TestBatchAPI(t *testing.T) {
 		t.Error("unable to create pgx cfg")
 	}
 
-	cfg.Tracer = InstanaTracer(cfg, sensor)
+	cfg.Tracer = InstanaTracer(cfg, c)
 
 	ctx := instana.ContextWithSpan(context.Background(), parentSpan)
 	conn, err := pgx.ConnectConfig(ctx, cfg)
@@ -350,12 +371,15 @@ func TestBatchAPI(t *testing.T) {
 
 func TestInvalidConfig(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	tracer := instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder)
-	sensor := instana.NewSensorWithTracer(tracer)
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
 
 	var cfg *pgx.ConnConfig
 
-	instanaTracer := InstanaTracer(cfg, sensor)
+	instanaTracer := InstanaTracer(cfg, c)
 	assert.Nil(t, instanaTracer)
 }
 
