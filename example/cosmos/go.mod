@@ -4,9 +4,9 @@ go 1.23
 
 require (
 	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.16.0
-	github.com/Azure/azure-sdk-for-go/sdk/data/azcosmos v1.2.0
+	github.com/Azure/azure-sdk-for-go/sdk/data/azcosmos v1.3.0
 	github.com/google/uuid v1.6.0
-	github.com/instana/go-sensor v1.67.0
+	github.com/instana/go-sensor v1.67.1
 	github.com/instana/go-sensor/instrumentation/instacosmos v1.0.0
 )
 
