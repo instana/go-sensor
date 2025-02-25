@@ -17,7 +17,11 @@ import (
 // This example demonstrates how to instrument a Kafka consumer group using instasarama
 // and extract the trace context to ensure continuation. Error handling is omitted for brevity.
 func Example_consumerGroup() {
-	sensor := instana.NewSensor("my-service")
+	c := instana.InitCollector(&instana.Options{
+		Service: "my-service",
+	})
+	defer instana.ShutdownCollector()
+
 	brokers := []string{"localhost:9092"}
 	topics := []string{"records", "more-records"}
 
@@ -28,7 +32,7 @@ func Example_consumerGroup() {
 	defer client.Close()
 
 	ctx := context.Background()
-	consumer := instasarama.WrapConsumerGroupHandler(&Consumer{sensor: sensor}, sensor)
+	consumer := instasarama.WrapConsumerGroupHandler(&Consumer{sensor: c}, c)
 
 	// start consuming
 	for {

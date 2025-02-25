@@ -18,8 +18,11 @@ func Example() {
 
 	// Important note: Instaredis v2 needs go-redis major version v9 and is not backward compatible with older versions of go-redis.
 
-	// Initialize Instana sensor
-	sensor := instana.NewSensor("redis-client")
+	// Initialize Instana collector
+	c := instana.InitCollector(&instana.Options{
+		Service: "redis-client",
+	})
+	defer instana.ShutdownCollector()
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -33,7 +36,7 @@ func Example() {
 	// When creating an instance of Redis to communicate with a cluster, instaredis.WrapClusterClient() should be used
 	// instead. These cases apply when a client is being created via redis.NewClusterClient() or
 	// redis.NewFailoverClusterClient()
-	instaredis.WrapClient(rdb, sensor)
+	instaredis.WrapClient(rdb, c)
 
 	// Use the API normally.
 	rdb.Do(ctx, "incr", "counter")

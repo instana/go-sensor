@@ -19,8 +19,11 @@ import (
 
 func TestTopic_Publish(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	tracer := instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder)
-	defer instana.ShutdownSensor()
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
 
 	srv, conn, teardown, err := setupMockServer()
 	require.NoError(t, err)
@@ -34,12 +37,12 @@ func TestTopic_Publish(t *testing.T) {
 	client, err := pubsub.NewClient(
 		context.Background(),
 		"test-project",
-		instana.NewSensorWithTracer(tracer),
+		c,
 		option.WithGRPCConn(conn),
 	)
 	require.NoError(t, err)
 
-	parent := tracer.StartSpan("testing")
+	parent := c.StartSpan("testing")
 
 	ctx := instana.ContextWithSpan(context.Background(), parent)
 	res := client.Topic("test-topic").Publish(ctx, &pubsub.Message{
@@ -104,10 +107,13 @@ func TestTopic_Publish(t *testing.T) {
 
 func TestTopic_Publish_NoTrace(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	tracer := instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder)
-	defer instana.ShutdownSensor()
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
 
-	pSpan := tracer.StartSpan("parent-span")
+	pSpan := c.StartSpan("parent-span")
 	ctx := context.Background()
 	if pSpan != nil {
 		ctx = instana.ContextWithSpan(ctx, pSpan)
@@ -124,7 +130,7 @@ func TestTopic_Publish_NoTrace(t *testing.T) {
 	client, err := pubsub.NewClient(
 		ctx,
 		"test-project",
-		instana.NewSensorWithTracer(tracer),
+		c,
 		option.WithGRPCConn(conn),
 	)
 	require.NoError(t, err)

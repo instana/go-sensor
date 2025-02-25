@@ -1,6 +1,6 @@
 module github.com/instana/go-sensor/instrumentation/instagraphql
 
-go 1.22
+go 1.23
 
 require (
 	github.com/graphql-go/graphql v0.8.1
@@ -9,7 +9,7 @@ require (
 
 require (
 	github.com/graphql-go/handler v0.2.3
-	github.com/instana/go-sensor v1.66.2
+	github.com/instana/go-sensor v1.67.1
 	github.com/opentracing/opentracing-go v1.2.0
 )
 

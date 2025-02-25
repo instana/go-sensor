@@ -15,9 +15,12 @@ import (
 func ExampleTracingHandlerFunc() {
 	// Here we initialize a new instance of instana.Sensor, however it is STRONGLY recommended
 	// to use a single instance throughout your application
-	sensor := instana.NewSensor("my-http-server")
+	c := instana.InitCollector(&instana.Options{
+		Service: "my-http-server",
+	})
+	defer instana.ShutdownCollector()
 
-	http.HandleFunc("/", instana.TracingNamedHandlerFunc(sensor, "root", "/", func(w http.ResponseWriter, req *http.Request) {
+	http.HandleFunc("/", instana.TracingNamedHandlerFunc(c, "root", "/", func(w http.ResponseWriter, req *http.Request) {
 		// handler code
 	}))
 }
@@ -26,8 +29,12 @@ func ExampleTracingHandlerFunc() {
 func ExampleRoundTripper() {
 	// Here we initialize a new instance of instana.Sensor, however it is STRONGLY recommended
 	// to use a single instance throughout your application
-	sensor := instana.NewSensor("my-http-client")
-	span := sensor.Tracer().StartSpan("entry")
+	c := instana.InitCollector(&instana.Options{
+		Service: "my-http-server",
+	})
+	defer instana.ShutdownCollector()
+
+	span := c.Tracer().StartSpan("entry")
 
 	// Make sure to finish the span so it can be properly recorded in the backend
 	defer span.Finish()
@@ -35,7 +42,7 @@ func ExampleRoundTripper() {
 	// http.DefaultTransport is used as a default RoundTripper, however you can provide
 	// your own implementation
 	client := &http.Client{
-		Transport: instana.RoundTripper(sensor, nil),
+		Transport: instana.RoundTripper(c, nil),
 	}
 
 	// Inject parent span into the request context
@@ -50,17 +57,20 @@ func ExampleRoundTripper() {
 func ExampleSQLOpen() {
 	// Here we initialize a new instance of instana.Sensor, however it is STRONGLY recommended
 	// to use a single instance throughout your application
-	sensor := instana.NewSensor("my-http-client")
+	c := instana.InitCollector(&instana.Options{
+		Service: "my-http-server",
+	})
+	defer instana.ShutdownCollector()
 
 	// Instrument the driver. Normally this would be a type provided by the driver library, e.g.
 	// pq.Driver{} or mysql.Driver{}, but here we use a test mock to avoid bringing external dependencies
-	instana.InstrumentSQLDriver(sensor, "your_db_driver", sqlDriver{})
+	instana.InstrumentSQLDriver(c, "your_db_driver", sqlDriver{})
 
 	// Replace sql.Open() with instana.SQLOpen()
 	db, _ := instana.SQLOpen("your_db_driver", "driver connection string")
 
 	// Inject parent span into the context
-	span := sensor.Tracer().StartSpan("entry")
+	span := c.Tracer().StartSpan("entry")
 	ctx := instana.ContextWithSpan(context.Background(), span)
 
 	// Query the database, passing the context containing the active span

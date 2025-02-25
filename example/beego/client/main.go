@@ -17,21 +17,23 @@ import (
 )
 
 func main() {
-	sensor := instana.NewSensor("beego-client")
+	// create an instana collector
+	collector := instana.InitCollector(&instana.Options{
+		Service: "beego-client",
+	})
 
 	// Every call should start with an entry span (https://docs.instana.io/quick_start/custom_tracing/#always-start-new-traces-with-entry-spans)
 	// Normally this would be your HTTP/GRPC/message queue request span, but here we need to create it explicitly, since an HTTP client call is
 	// an exit span. And all exit spans must have a parent entry span.
-	sp := sensor.Tracer().StartSpan("client-call")
+	sp := collector.Tracer().StartSpan("client-call")
 	sp.SetTag(string(ext.SpanKind), "entry")
-
 	defer sp.Finish()
 
 	// Inject the parent span into request context
 	ctx := instana.ContextWithSpan(context.Background(), sp)
 
 	req := httplib.NewBeegoRequestWithCtx(ctx, "https://www.instana.com", http.MethodGet)
-	instabeego.InstrumentRequest(sensor, req)
+	instabeego.InstrumentRequest(collector, req)
 
 	resp, err := req.Response()
 	if err != nil {

@@ -6,8 +6,8 @@
 ### Run the application
 ```sh
 cd /path/to/go-sensor/examples/couchbase
-# setup couchbase/server-sandbox container 
-docker-compose up
+# setup couchbase/server
+podman-compose -f docker-compose.yaml up #Or you can use docker compose
 go mod tidy
 go run .
 ```
@@ -20,3 +20,6 @@ curl http://localhost:9990/couchbase-test
 # Test error
 curl http://localhost:9990/couchbase-test?error=true
 ```
+
+### Output
+![Output](image.png)

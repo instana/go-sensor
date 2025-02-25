@@ -1,14 +1,12 @@
 module github.com/instana/go-sensor/instrumentation/cloud.google.com/go
 
-go 1.22.7
-
-toolchain go1.23.5
+go 1.23
 
 require (
 	cloud.google.com/go/iam v1.3.1
 	cloud.google.com/go/pubsub v1.47.0
 	cloud.google.com/go/storage v1.50.0
-	github.com/instana/go-sensor v1.66.2
+	github.com/instana/go-sensor v1.67.1
 	github.com/opentracing/opentracing-go v1.2.0
 	github.com/stretchr/testify v1.10.0
 	google.golang.org/api v0.218.0

@@ -20,14 +20,17 @@ const localhostMongo = "mongodb://localhost:27017"
 // The following example demonstrates how to instrument a MongoDB client with instana using
 // github.com/instana/go-sensor/instrumentation/instamongo wrapper module.
 func Example() {
-	// Initialize Instana sensor
-	sensor := instana.NewSensor("mongo-client")
+	// Initialize Instana collector
+	c := instana.InitCollector(&instana.Options{
+		Service: "mongo-client",
+	})
+	defer instana.ShutdownCollector()
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
 	// Use instamongo.Connect() to establish connection to MongoDB and instrument the client
-	client, err := instamongo.Connect(ctx, sensor, options.Client().ApplyURI(localhostMongo))
+	client, err := instamongo.Connect(ctx, c, options.Client().ApplyURI(localhostMongo))
 	if err != nil {
 		log.Fatalf("failed to connect to %s: %s", localhostMongo, err)
 	}

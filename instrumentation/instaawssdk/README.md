@@ -24,8 +24,8 @@ $ go get github.com/instana/go-sensor/instrumentation/instaawssdk
 Usage
 -----
 
-This instrumentation requires an [`instana.Sensor`][Sensor] to initialize spans and handle the trace context propagation.
-You can create a new instance of Instana tracer using [`instana.NewSensor()`][NewSensor].
+This instrumentation requires an [`instana.Collector`][Collector] to initialize spans and handle the trace context propagation.
+You can create a new instance of Instana Collector using [`instana.InitCollector()`][InitCollector].
 
 To trace requests made to the AWS API instrument the `aws/session.Session` using [`instaawssdk.InstrumentSession()`][InstrumentSession]
 before creating the service client:
@@ -33,10 +33,12 @@ before creating the service client:
 ```go
 sess := session.Must(session.NewSession(&aws.Config{}))
 
-// Initialize Instana sensor
-sensor := instana.NewSensor("my-aws-app")
+// Initialize Instana collector
+collector := instana.InitCollector(&instana.Options{
+  Service: "my-aws-app",
+})
 // Instrument aws/session.Session
-instaawssdk.InstrumentSession(sess, sensor)
+instaawssdk.InstrumentSession(sess, collector)
 
 // Create a service client using instrumented session
 dynamoDBClient := dynamodb.New(sess)
@@ -66,8 +68,8 @@ An SQS client that uses instrumented `session.Session` automatically creates ent
 
 ```go
 func handleMessage(ctx context.Context, msg *sqs.Message) {
-	if parent, ok := instaawssdk.SpanContextFromSQSMessage(msg, sensor); ok {
-		sp := sensor.Tracer().StartSpan("handleMessage", opentracing.ChildOf(parent))
+	if parent, ok := instaawssdk.SpanContextFromSQSMessage(msg, collector); ok {
+		sp := collector.Tracer().StartSpan("handleMessage", opentracing.ChildOf(parent))
 		defer sp.Finish()
 
 		ctx = instana.ContextWithSpan(ctx, sp)
@@ -83,9 +85,11 @@ If a session is instrumented, it will propagate tracing context automatically us
 
 Example:
 ```go
-sensor := instana.NewSensor("my-new-sensor")
+collector := instana.InitCollector(&instana.Options{
+  Service: "my-lambda-service",
+})
 sess, _ := session.NewSession()
-instaawssdk.InstrumentSession(sess, sensor)
+instaawssdk.InstrumentSession(sess, collector)
 svc := sdk.New(sess)
 input := &sdk.InvokeInput{
     FunctionName: "my-lambda-function-name",
@@ -114,6 +118,8 @@ Known limitations:
 [godoc]: https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instaawssdk
 [Sensor]: https://pkg.go.dev/github.com/instana/go-sensor?tab=doc#Sensor
 [NewSensor]: https://pkg.go.dev/github.com/instana/go-sensor?tab=doc#NewSensor
+[Collector]: https://pkg.go.dev/github.com/instana/go-sensor#Collector
+[InitCollector]: https://pkg.go.dev/github.com/instana/go-sensor#InitCollector
 [InstrumentSession]: https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instaawssdk?tab=doc#InstrumentSession
 [SpanContextFromSQSMessage]: https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instaawssdk?tab=doc#SpanContextFromSQSMessage
 

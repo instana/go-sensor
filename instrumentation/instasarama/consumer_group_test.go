@@ -18,7 +18,11 @@ import (
 func TestNewConsumerGroup_Consume(t *testing.T) {
 
 	recorder := instana.NewTestRecorder()
-	sensor := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{}, recorder))
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
 
 	config := NewTestConfig()
 	config.ClientID = t.Name()
@@ -30,7 +34,7 @@ func TestNewConsumerGroup_Consume(t *testing.T) {
 	broker0 := initMockBroker(t)
 	defer broker0.Close()
 
-	group, err := instasarama.NewConsumerGroup([]string{broker0.Addr()}, "my-group", config, sensor)
+	group, err := instasarama.NewConsumerGroup([]string{broker0.Addr()}, "my-group", config, c)
 	defer func() { _ = group.Close() }()
 	assert.NoError(t, err)
 
@@ -42,7 +46,11 @@ func TestNewConsumerGroup_Consume(t *testing.T) {
 func TestNewConsumerGroupFromClient_Consume(t *testing.T) {
 
 	recorder := instana.NewTestRecorder()
-	sensor := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{}, recorder))
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
 
 	config := NewTestConfig()
 	config.ClientID = t.Name()
@@ -57,7 +65,7 @@ func TestNewConsumerGroupFromClient_Consume(t *testing.T) {
 	client, err := sarama.NewClient([]string{broker0.Addr()}, config)
 	assert.NoError(t, err)
 
-	group, err := instasarama.NewConsumerGroupFromClient("my-group", client, sensor)
+	group, err := instasarama.NewConsumerGroupFromClient("my-group", client, c)
 	defer func() { _ = group.Close() }()
 	assert.NoError(t, err)
 

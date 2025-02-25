@@ -24,11 +24,13 @@ func TestClient_Do(t *testing.T) {
 			CollectableHTTPHeaders: []string{"x-custom-header-1", "x-custom-header-2"},
 		},
 		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
 	}
-	tracer := instana.NewTracerWithEverything(opts, recorder)
-	s := instana.NewSensorWithTracer(tracer)
 
-	parentSpan := tracer.StartSpan("parent")
+	collector := instana.InitCollector(opts)
+	defer instana.ShutdownCollector()
+
+	parentSpan := collector.StartSpan("parent")
 	ctx := instana.ContextWithSpan(context.Background(), parentSpan)
 
 	var fieldTFrmHeader, fieldSFrmHeader string
@@ -55,7 +57,7 @@ func TestClient_Do(t *testing.T) {
 	c := &fasthttp.Client{
 		Dial: func(addr string) (net.Conn, error) { return ln.Dial() },
 	}
-	ic := instafasthttp.GetInstrumentedClient(s, c)
+	ic := instafasthttp.GetInstrumentedClient(collector, c)
 
 	r := &fasthttp.Request{}
 	r.Header.SetMethod(fasthttp.MethodGet)
@@ -110,9 +112,13 @@ func TestClient_Do(t *testing.T) {
 func TestClient_Do_Error(t *testing.T) {
 
 	recorder := instana.NewTestRecorder()
-	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder))
+	collector := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
 
-	parentSpan := s.Tracer().StartSpan("parent")
+	parentSpan := collector.Tracer().StartSpan("parent")
 	ctx := instana.ContextWithSpan(context.Background(), parentSpan)
 
 	server := &fasthttp.Server{
@@ -134,7 +140,7 @@ func TestClient_Do_Error(t *testing.T) {
 	c := &fasthttp.Client{
 		Dial: func(addr string) (net.Conn, error) { return ln.Dial() },
 	}
-	ic := instafasthttp.GetInstrumentedClient(s, c)
+	ic := instafasthttp.GetInstrumentedClient(collector, c)
 
 	r := &fasthttp.Request{}
 	r.Header.SetMethod(fasthttp.MethodGet)
@@ -193,11 +199,12 @@ func TestClient_DoTimeout(t *testing.T) {
 			CollectableHTTPHeaders: []string{"x-custom-header-1", "x-custom-header-2"},
 		},
 		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
 	}
-	tracer := instana.NewTracerWithEverything(opts, recorder)
-	s := instana.NewSensorWithTracer(tracer)
+	collector := instana.InitCollector(opts)
+	defer instana.ShutdownCollector()
 
-	parentSpan := tracer.StartSpan("parent")
+	parentSpan := collector.StartSpan("parent")
 	ctx := instana.ContextWithSpan(context.Background(), parentSpan)
 
 	var fieldTFrmHeader, fieldSFrmHeader string
@@ -224,7 +231,7 @@ func TestClient_DoTimeout(t *testing.T) {
 	c := &fasthttp.Client{
 		Dial: func(addr string) (net.Conn, error) { return ln.Dial() },
 	}
-	ic := instafasthttp.GetInstrumentedClient(s, c)
+	ic := instafasthttp.GetInstrumentedClient(collector, c)
 
 	r := &fasthttp.Request{}
 	r.Header.SetMethod(fasthttp.MethodGet)
@@ -277,11 +284,14 @@ func TestClient_DoTimeout(t *testing.T) {
 }
 
 func TestClient_DoTimeout_Error(t *testing.T) {
-
 	recorder := instana.NewTestRecorder()
-	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder))
+	collector := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
 
-	parentSpan := s.Tracer().StartSpan("parent")
+	parentSpan := collector.Tracer().StartSpan("parent")
 	ctx := instana.ContextWithSpan(context.Background(), parentSpan)
 
 	server := &fasthttp.Server{
@@ -303,7 +313,7 @@ func TestClient_DoTimeout_Error(t *testing.T) {
 	c := &fasthttp.Client{
 		Dial: func(addr string) (net.Conn, error) { return ln.Dial() },
 	}
-	ic := instafasthttp.GetInstrumentedClient(s, c)
+	ic := instafasthttp.GetInstrumentedClient(collector, c)
 
 	r := &fasthttp.Request{}
 	r.Header.SetMethod(fasthttp.MethodGet)
@@ -362,11 +372,13 @@ func TestClient_DoDeadline(t *testing.T) {
 			CollectableHTTPHeaders: []string{"x-custom-header-1", "x-custom-header-2"},
 		},
 		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
 	}
-	tracer := instana.NewTracerWithEverything(opts, recorder)
-	s := instana.NewSensorWithTracer(tracer)
 
-	parentSpan := tracer.StartSpan("parent")
+	collector := instana.InitCollector(opts)
+	defer instana.ShutdownCollector()
+
+	parentSpan := collector.StartSpan("parent")
 	ctx := instana.ContextWithSpan(context.Background(), parentSpan)
 
 	var fieldTFrmHeader, fieldSFrmHeader string
@@ -393,7 +405,7 @@ func TestClient_DoDeadline(t *testing.T) {
 	c := &fasthttp.Client{
 		Dial: func(addr string) (net.Conn, error) { return ln.Dial() },
 	}
-	ic := instafasthttp.GetInstrumentedClient(s, c)
+	ic := instafasthttp.GetInstrumentedClient(collector, c)
 
 	r := &fasthttp.Request{}
 	r.Header.SetMethod(fasthttp.MethodGet)
@@ -448,9 +460,13 @@ func TestClient_DoDeadline(t *testing.T) {
 func TestClient_DoDeadline_Error(t *testing.T) {
 
 	recorder := instana.NewTestRecorder()
-	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder))
+	collector := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
 
-	parentSpan := s.Tracer().StartSpan("parent")
+	parentSpan := collector.Tracer().StartSpan("parent")
 	ctx := instana.ContextWithSpan(context.Background(), parentSpan)
 
 	server := &fasthttp.Server{
@@ -472,7 +488,7 @@ func TestClient_DoDeadline_Error(t *testing.T) {
 	c := &fasthttp.Client{
 		Dial: func(addr string) (net.Conn, error) { return ln.Dial() },
 	}
-	ic := instafasthttp.GetInstrumentedClient(s, c)
+	ic := instafasthttp.GetInstrumentedClient(collector, c)
 
 	r := &fasthttp.Request{}
 	r.Header.SetMethod(fasthttp.MethodGet)
@@ -531,11 +547,13 @@ func TestClient_DoRedirects(t *testing.T) {
 			CollectableHTTPHeaders: []string{"x-custom-header-1", "x-custom-header-2"},
 		},
 		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
 	}
-	tracer := instana.NewTracerWithEverything(opts, recorder)
-	s := instana.NewSensorWithTracer(tracer)
 
-	parentSpan := tracer.StartSpan("parent")
+	collector := instana.InitCollector(opts)
+	defer instana.ShutdownCollector()
+
+	parentSpan := collector.StartSpan("parent")
 	ctx := instana.ContextWithSpan(context.Background(), parentSpan)
 
 	var fieldTFrmHeader, fieldSFrmHeader string
@@ -562,7 +580,7 @@ func TestClient_DoRedirects(t *testing.T) {
 	c := &fasthttp.Client{
 		Dial: func(addr string) (net.Conn, error) { return ln.Dial() },
 	}
-	ic := instafasthttp.GetInstrumentedClient(s, c)
+	ic := instafasthttp.GetInstrumentedClient(collector, c)
 
 	r := &fasthttp.Request{}
 	r.Header.SetMethod(fasthttp.MethodGet)
@@ -617,9 +635,13 @@ func TestClient_DoRedirects(t *testing.T) {
 func TestClient_DoRedirects_Error(t *testing.T) {
 
 	recorder := instana.NewTestRecorder()
-	s := instana.NewSensorWithTracer(instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder))
+	collector := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
 
-	parentSpan := s.Tracer().StartSpan("parent")
+	parentSpan := collector.Tracer().StartSpan("parent")
 	ctx := instana.ContextWithSpan(context.Background(), parentSpan)
 
 	server := &fasthttp.Server{
@@ -641,7 +663,7 @@ func TestClient_DoRedirects_Error(t *testing.T) {
 	c := &fasthttp.Client{
 		Dial: func(addr string) (net.Conn, error) { return ln.Dial() },
 	}
-	ic := instafasthttp.GetInstrumentedClient(s, c)
+	ic := instafasthttp.GetInstrumentedClient(collector, c)
 
 	r := &fasthttp.Request{}
 	r.Header.SetMethod(fasthttp.MethodGet)
@@ -700,15 +722,17 @@ func Test_Client_Unwrap(t *testing.T) {
 			CollectableHTTPHeaders: []string{"x-custom-header-1", "x-custom-header-2"},
 		},
 		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
 	}
-	tracer := instana.NewTracerWithEverything(opts, recorder)
-	s := instana.NewSensorWithTracer(tracer)
+
+	collector := instana.InitCollector(opts)
+	defer instana.ShutdownCollector()
 
 	ln := fasthttputil.NewInmemoryListener()
 	c := &fasthttp.Client{
 		Dial: func(addr string) (net.Conn, error) { return ln.Dial() },
 	}
-	ic := instafasthttp.GetInstrumentedClient(s, c)
+	ic := instafasthttp.GetInstrumentedClient(collector, c)
 
 	org := ic.Unwrap()
 

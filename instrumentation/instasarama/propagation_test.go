@@ -20,9 +20,13 @@ import (
 func TestProducerMessageWithSpan(t *testing.T) {
 
 	recorder := instana.NewTestRecorder()
-	tracer := instana.NewTracerWithEverything(&instana.Options{}, recorder)
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
 
-	sp := tracer.StartSpan("test-span")
+	sp := c.StartSpan("test-span")
 	pm := instasarama.ProducerMessageWithSpan(&sarama.ProducerMessage{
 		Topic: "test-topic",
 		Key:   sarama.StringEncoder("key1"),
@@ -58,9 +62,13 @@ func TestProducerMessageWithSpan(t *testing.T) {
 func TestProducerMessageWithSpanFromContext(t *testing.T) {
 
 	recorder := instana.NewTestRecorder()
-	tracer := instana.NewTracerWithEverything(&instana.Options{}, recorder)
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
 
-	sp := tracer.StartSpan("test-span")
+	sp := c.StartSpan("test-span")
 	ctx := instana.ContextWithSpan(context.Background(), sp)
 
 	pm := instasarama.ProducerMessageWithSpanFromContext(ctx, &sarama.ProducerMessage{
@@ -370,9 +378,11 @@ func TestProducerMessageCarrier_ForeachKey_Error(t *testing.T) {
 
 func TestSpanContextFromConsumerMessage(t *testing.T) {
 
-	sensor := instana.NewSensorWithTracer(
-		instana.NewTracerWithEverything(&instana.Options{}, instana.NewTestRecorder()),
-	)
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    instana.NewTestRecorder(),
+	})
+	defer instana.ShutdownCollector()
 
 	var headers []*sarama.RecordHeader
 
@@ -386,7 +396,7 @@ func TestSpanContextFromConsumerMessage(t *testing.T) {
 		Headers: headers,
 	}
 
-	spanContext, ok := instasarama.SpanContextFromConsumerMessage(msg, sensor)
+	spanContext, ok := instasarama.SpanContextFromConsumerMessage(msg, c)
 	require.True(t, ok)
 	assert.Equal(t, instana.SpanContext{
 		TraceIDHi: 0x00000001,
@@ -433,13 +443,15 @@ func TestSpanContextFromConsumerMessage_NoContext(t *testing.T) {
 
 	for _, example := range examples {
 		t.Run(example.Name, func(t *testing.T) {
-			sensor := instana.NewSensorWithTracer(
-				instana.NewTracerWithEverything(&instana.Options{}, instana.NewTestRecorder()),
-			)
+			c := instana.InitCollector(&instana.Options{
+				AgentClient: alwaysReadyClient{},
+				Recorder:    instana.NewTestRecorder(),
+			})
+			defer instana.ShutdownCollector()
 
 			msg := &sarama.ConsumerMessage{Headers: example.Headers}
 
-			_, ok := instasarama.SpanContextFromConsumerMessage(msg, sensor)
+			_, ok := instasarama.SpanContextFromConsumerMessage(msg, c)
 			assert.False(t, ok)
 
 		})

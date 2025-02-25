@@ -16,8 +16,12 @@ func Example_publisher() {
 	exchangeName := "my-exchange"
 	url := "amqp://guest:guest@localhost:5672/"
 
-	// Create the Instana sensor
-	sensor := instana.NewSensor("rabbitmq-client")
+	// Create the Instana collector
+	ic := instana.InitCollector(&instana.Options{
+		Service:     "rabbitmq-client",
+		AgentClient: alwaysReadyClient{},
+	})
+	defer instana.ShutdownCollector()
 
 	c, err := amqp.Dial(url)
 	failOnError(err, "Could not connect to the server")
@@ -33,10 +37,10 @@ func Example_publisher() {
 	// There must be a new entry span per publish call.
 	// In the most common cases, creating an entry span manually is not needed, as the entry span is originated from an
 	// incoming HTTP client call.
-	entrySpan := sensor.Tracer().StartSpan("my-publishing-method")
+	entrySpan := ic.Tracer().StartSpan("my-publishing-method")
 	ext.SpanKind.Set(entrySpan, ext.SpanKindRPCServerEnum)
 
-	instaCh := instaamqp091.WrapChannel(sensor, ch, url)
+	instaCh := instaamqp091.WrapChannel(ic, ch, url)
 
 	// Use the Instana `Publish` method with the same arguments as the original `Publish` method, with the additional
 	// entrySpan argument.

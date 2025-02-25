@@ -17,34 +17,39 @@ import (
 )
 
 func TestNew1(t *testing.T) {
-	defer instana.ShutdownSensor()
-	sess := instaawssdk.New(instana.NewSensor("test"), &aws.Config{Region: aws.String("region")}, &aws.Config{Endpoint: aws.String("somestring")})
+	defer instana.ShutdownCollector()
+	opts := &instana.Options{Service: "test"}
+	sess := instaawssdk.New(instana.InitCollector(opts), &aws.Config{Region: aws.String("region")}, &aws.Config{Endpoint: aws.String("somestring")})
 	assert.IsType(t, &session.Session{}, sess)
 }
 
 func TestNew2(t *testing.T) {
-	defer instana.ShutdownSensor()
-	sess := instaawssdk.New(instana.NewSensor("test"), []*aws.Config{{Region: aws.String("region")}, &aws.Config{Endpoint: aws.String("somestring")}}...)
+	defer instana.ShutdownCollector()
+	opts := &instana.Options{Service: "test"}
+	sess := instaawssdk.New(instana.InitCollector(opts), []*aws.Config{{Region: aws.String("region")}, &aws.Config{Endpoint: aws.String("somestring")}}...)
 	assert.IsType(t, &session.Session{}, sess)
 }
 
 func TestNewSession1(t *testing.T) {
-	defer instana.ShutdownSensor()
-	sess, err := instaawssdk.NewSession(instana.NewSensor("test"), &aws.Config{Region: aws.String("region")}, &aws.Config{Endpoint: aws.String("somestring")})
+	defer instana.ShutdownCollector()
+	opts := &instana.Options{Service: "test"}
+	sess, err := instaawssdk.NewSession(instana.InitCollector(opts), &aws.Config{Region: aws.String("region")}, &aws.Config{Endpoint: aws.String("somestring")})
 	assert.IsType(t, &session.Session{}, sess)
 	assert.NoError(t, err)
 }
 
 func TestNewSession2(t *testing.T) {
-	defer instana.ShutdownSensor()
-	sess, err := instaawssdk.NewSession(instana.NewSensor("test"), []*aws.Config{{Region: aws.String("region")}, &aws.Config{Endpoint: aws.String("somestring")}}...)
+	defer instana.ShutdownCollector()
+	opts := &instana.Options{Service: "test"}
+	sess, err := instaawssdk.NewSession(instana.InitCollector(opts), []*aws.Config{{Region: aws.String("region")}, &aws.Config{Endpoint: aws.String("somestring")}}...)
 	assert.IsType(t, &session.Session{}, sess)
 	assert.NoError(t, err)
 }
 
 func TestNewSessionWithOptions(t *testing.T) {
-	defer instana.ShutdownSensor()
-	sess, err := instaawssdk.NewSessionWithOptions(instana.NewSensor("test"), session.Options{})
+	defer instana.ShutdownCollector()
+	opts := &instana.Options{Service: "test"}
+	sess, err := instaawssdk.NewSessionWithOptions(instana.InitCollector(opts), session.Options{})
 	assert.IsType(t, &session.Session{}, sess)
 	assert.NoError(t, err)
 }

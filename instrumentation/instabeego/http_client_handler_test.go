@@ -21,14 +21,14 @@ import (
 func TestInstrumentRequest(t *testing.T) {
 
 	recorder := instana.NewTestRecorder()
-	tracer := instana.NewTracerWithEverything(&instana.Options{
+	c := instana.InitCollector(&instana.Options{
 		Service:     "beego-test",
 		AgentClient: alwaysReadyClient{},
-	}, recorder)
-	defer instana.ShutdownSensor()
-	sensor := instana.NewSensorWithTracer(tracer)
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
 
-	sp := sensor.StartSpan("client-call")
+	sp := c.StartSpan("client-call")
 	sp.SetTag(string(ext.SpanKind), "entry")
 
 	defer sp.Finish()
@@ -36,7 +36,7 @@ func TestInstrumentRequest(t *testing.T) {
 	ctx := instana.ContextWithSpan(context.Background(), sp)
 
 	req := httplib.NewBeegoRequestWithCtx(ctx, "https://www.instana.com", http.MethodGet)
-	instabeego.InstrumentRequest(sensor, req)
+	instabeego.InstrumentRequest(c, req)
 
 	response, err := req.Response()
 	require.NoError(t, err)

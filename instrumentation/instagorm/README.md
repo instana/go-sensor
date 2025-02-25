@@ -19,8 +19,10 @@ Usage
 -----
 
 ```go
-// create a sensor
-sensor := instana.NewSensor("gorm-sensor")
+// create a collector
+collector := instana.InitCollector(&instana.Options{
+    Service: "gorm-app",
+})
 
 dsn := "<relevant DSN information for the database>"
 
@@ -28,7 +30,7 @@ dsn := "<relevant DSN information for the database>"
 db, err := gorm.Open(sqlite.Open(dsn), &gorm.Config{})
 
 // instrument the GORM database handle
-instagorm.Instrument(db, sensor, dsn)
+instagorm.Instrument(db, collector, dsn)
 
 ...
 ```

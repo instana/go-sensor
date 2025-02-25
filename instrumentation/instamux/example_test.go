@@ -17,12 +17,15 @@ import (
 
 // This example shows how to instrument an HTTP server that uses github.com/gorilla/mux with Instana
 func Example() {
-	sensor := instana.NewSensor("my-web-server")
-	r := mux.NewRouter()
+	// Initialize Instana collector
+	c := instana.InitCollector(&instana.Options{
+		Service: "my-web-server",
+	})
 
+	r := mux.NewRouter()
 	// Add an instrumentation middleware to the router. This middleware will be applied to all handlers
 	// registered with this instance.
-	instamux.AddMiddleware(sensor, r)
+	instamux.AddMiddleware(c, r)
 
 	// Use mux.Router to register request handlers as usual
 	r.HandleFunc("/foo", func(w http.ResponseWriter, req *http.Request) {

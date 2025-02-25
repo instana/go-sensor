@@ -141,17 +141,18 @@ func TestStartSQSSpan(t *testing.T) {
 	for name, example := range examples {
 		t.Run(name, func(t *testing.T) {
 			recorder := instana.NewTestRecorder()
-			sensor := instana.NewSensorWithTracer(
-				instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder),
-			)
-			defer instana.ShutdownSensor()
+			c := instana.InitCollector(&instana.Options{
+				AgentClient: alwaysReadyClient{},
+				Recorder:    recorder,
+			})
+			defer instana.ShutdownCollector()
 
-			parentSp := sensor.Tracer().StartSpan("testing")
+			parentSp := c.Tracer().StartSpan("testing")
 
 			req := example.Request()
 			req.SetContext(instana.ContextWithSpan(req.Context(), parentSp))
 
-			instaawssdk.StartSQSSpan(req, sensor)
+			instaawssdk.StartSQSSpan(req, c)
 
 			sp, ok := instana.SpanFromContext(req.Context())
 			require.True(t, ok)
@@ -183,12 +184,13 @@ func TestStartSQSSpan(t *testing.T) {
 
 func TestStartSQSSpan_NonInstrumentedMethod(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	sensor := instana.NewSensorWithTracer(
-		instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder),
-	)
-	defer instana.ShutdownSensor()
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
 
-	parentSp := sensor.Tracer().StartSpan("testing")
+	parentSp := c.Tracer().StartSpan("testing")
 
 	svc := sqs.New(unit.Session)
 	req, _ := svc.RemovePermissionRequest(&sqs.RemovePermissionInput{
@@ -196,7 +198,7 @@ func TestStartSQSSpan_NonInstrumentedMethod(t *testing.T) {
 	})
 	req.SetContext(instana.ContextWithSpan(req.Context(), parentSp))
 
-	instaawssdk.StartSQSSpan(req, sensor)
+	instaawssdk.StartSQSSpan(req, c)
 
 	sp, ok := instana.SpanFromContext(req.Context())
 	assert.True(t, ok)
@@ -210,14 +212,15 @@ func TestStartSQSSpan_NonInstrumentedMethod(t *testing.T) {
 
 func TestStartSQSSpan_TraceContextPropagation_Single(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	sensor := instana.NewSensorWithTracer(
-		instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder),
-	)
-	defer instana.ShutdownSensor()
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
 
 	svc := sqs.New(unit.Session)
 
-	parentSp := sensor.Tracer().StartSpan("testing")
+	parentSp := c.Tracer().StartSpan("testing")
 
 	req, _ := svc.SendMessageRequest(&sqs.SendMessageInput{
 		MessageBody:    aws.String("message-1"),
@@ -226,7 +229,7 @@ func TestStartSQSSpan_TraceContextPropagation_Single(t *testing.T) {
 	})
 	req.SetContext(instana.ContextWithSpan(req.Context(), parentSp))
 
-	instaawssdk.StartSQSSpan(req, sensor)
+	instaawssdk.StartSQSSpan(req, c)
 
 	sp, ok := instana.SpanFromContext(req.Context())
 	require.True(t, ok)
@@ -258,14 +261,15 @@ func TestStartSQSSpan_TraceContextPropagation_Single(t *testing.T) {
 
 func TestStartSQSSpan_TraceContextPropagation_Batch(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	sensor := instana.NewSensorWithTracer(
-		instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder),
-	)
-	defer instana.ShutdownSensor()
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
 
 	svc := sqs.New(unit.Session)
 
-	parentSp := sensor.Tracer().StartSpan("testing")
+	parentSp := c.Tracer().StartSpan("testing")
 
 	req, _ := svc.SendMessageBatchRequest(&sqs.SendMessageBatchInput{
 		Entries: []*sqs.SendMessageBatchRequestEntry{
@@ -276,7 +280,7 @@ func TestStartSQSSpan_TraceContextPropagation_Batch(t *testing.T) {
 	})
 	req.SetContext(instana.ContextWithSpan(req.Context(), parentSp))
 
-	instaawssdk.StartSQSSpan(req, sensor)
+	instaawssdk.StartSQSSpan(req, c)
 
 	sp, ok := instana.SpanFromContext(req.Context())
 	require.True(t, ok)
@@ -310,9 +314,11 @@ func TestStartSQSSpan_TraceContextPropagation_Batch(t *testing.T) {
 
 func TestStartSQSSpan_TraceContextPropagation_Single_NoActiveSpan(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	tracer := instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder)
-	sensor := instana.NewSensorWithTracer(tracer)
-	defer instana.ShutdownSensor()
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
 
 	svc := sqs.New(unit.Session)
 
@@ -322,7 +328,7 @@ func TestStartSQSSpan_TraceContextPropagation_Single_NoActiveSpan(t *testing.T) 
 		QueueUrl:       aws.String("test-queue"),
 	})
 
-	pSpan := tracer.StartSpan("parent-span")
+	pSpan := c.StartSpan("parent-span")
 	ctx := context.Background()
 	if pSpan != nil {
 		ctx = instana.ContextWithSpan(ctx, pSpan)
@@ -330,7 +336,7 @@ func TestStartSQSSpan_TraceContextPropagation_Single_NoActiveSpan(t *testing.T) 
 
 	req.SetContext(ctx)
 
-	instaawssdk.StartSQSSpan(req, sensor)
+	instaawssdk.StartSQSSpan(req, c)
 
 	sp, ok := instana.SpanFromContext(req.Context())
 	require.True(t, ok)
@@ -358,9 +364,11 @@ func TestStartSQSSpan_TraceContextPropagation_Single_NoActiveSpan(t *testing.T) 
 
 func TestStartSQSSpan_TraceContextPropagation_Batch_NoActiveSpan(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	tracer := instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder)
-	sensor := instana.NewSensorWithTracer(tracer)
-	defer instana.ShutdownSensor()
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
 
 	svc := sqs.New(unit.Session)
 
@@ -372,7 +380,7 @@ func TestStartSQSSpan_TraceContextPropagation_Batch_NoActiveSpan(t *testing.T) {
 		QueueUrl: aws.String("test-queue"),
 	})
 
-	pSpan := tracer.StartSpan("parent-span")
+	pSpan := c.StartSpan("parent-span")
 	ctx := context.Background()
 	if pSpan != nil {
 		ctx = instana.ContextWithSpan(ctx, pSpan)
@@ -380,7 +388,7 @@ func TestStartSQSSpan_TraceContextPropagation_Batch_NoActiveSpan(t *testing.T) {
 
 	req.SetContext(ctx)
 
-	instaawssdk.StartSQSSpan(req, sensor)
+	instaawssdk.StartSQSSpan(req, c)
 
 	sp, ok := instana.SpanFromContext(req.Context())
 	require.True(t, ok)
@@ -471,10 +479,13 @@ func TestFinalizeSQSSpan(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 
 			recorder := instana.NewTestRecorder()
-			tracer := instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder)
-			defer instana.ShutdownSensor()
+			c := instana.InitCollector(&instana.Options{
+				AgentClient: alwaysReadyClient{},
+				Recorder:    recorder,
+			})
+			defer instana.ShutdownCollector()
 
-			sp := tracer.StartSpan("sqs")
+			sp := c.StartSpan("sqs")
 
 			req := example.Request()
 			req.SetContext(instana.ContextWithSpan(req.Context(), sp))
@@ -496,10 +507,13 @@ func TestFinalizeSQSSpan(t *testing.T) {
 
 func TestFinalizeSQSSpan_WithError(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	tracer := instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder)
-	defer instana.ShutdownSensor()
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
 
-	sp := tracer.StartSpan("sqs")
+	sp := c.StartSpan("sqs")
 
 	svc := sqs.New(unit.Session)
 
@@ -564,12 +578,13 @@ func TestTraceSQSMessage_WithTraceContext(t *testing.T) {
 	for name, msg := range examples {
 		t.Run(name, func(t *testing.T) {
 			recorder := instana.NewTestRecorder()
-			sensor := instana.NewSensorWithTracer(
-				instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder),
-			)
-			defer instana.ShutdownSensor()
+			c := instana.InitCollector(&instana.Options{
+				AgentClient: alwaysReadyClient{},
+				Recorder:    recorder,
+			})
+			defer instana.ShutdownCollector()
 
-			sp := instaawssdk.TraceSQSMessage(msg, sensor)
+			sp := instaawssdk.TraceSQSMessage(msg, c)
 			require.Equal(t, 0, recorder.QueuedSpansCount())
 
 			sp.Finish()
@@ -600,16 +615,17 @@ func TestTraceSQSMessage_WithTraceContext(t *testing.T) {
 
 func TestTraceSQSMessage_NoTraceContext(t *testing.T) {
 	recorder := instana.NewTestRecorder()
-	sensor := instana.NewSensorWithTracer(
-		instana.NewTracerWithEverything(&instana.Options{AgentClient: alwaysReadyClient{}}, recorder),
-	)
-	defer instana.ShutdownSensor()
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
 
 	msg := &sqs.Message{
 		Body: aws.String("message body"),
 	}
 
-	sp := instaawssdk.TraceSQSMessage(msg, sensor)
+	sp := instaawssdk.TraceSQSMessage(msg, c)
 	require.Equal(t, 0, recorder.QueuedSpansCount())
 
 	sp.Finish()
