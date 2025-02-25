@@ -95,7 +95,7 @@ func initDatabase(db string, table string, tr instana.TracerLogger) (*pgx.Conn, 
 	}
 
 	// Here we are assigning the Instana tracer for pgx/v5 to the Tracer interface
-	cfg.Tracer = instapgx.InstanaTracer(cfg, tr.LegacySensor())
+	cfg.Tracer = instapgx.InstanaTracer(cfg, tr)
 
 	conn, err := pgx.ConnectConfig(context.Background(), cfg)
 	if err != nil {

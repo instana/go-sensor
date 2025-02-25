@@ -16,10 +16,13 @@ func Example_basicUsage() {
 	urlExample := "postgres://postgres:mysecretpassword@localhost:5432/postgres"
 	cfg, err := pgx.ParseConfig(urlExample)
 
-	// Initialising Instana Sensor
-	sensor := instana.NewSensor("pgx-v5-service")
+	// Initialising Instana Collector
+	c := instana.InitCollector(&instana.Options{
+		Service: "pgx-v5-service",
+	})
+
 	// Assigning the Instana tracer to the cfg.Tracer interface
-	cfg.Tracer = instapgx.InstanaTracer(cfg, sensor)
+	cfg.Tracer = instapgx.InstanaTracer(cfg, c)
 
 	// Use the cfg in the normal way to create a connection and use it
 	ctx := context.Background()
