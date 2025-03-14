@@ -51,5 +51,5 @@ spec:
                 - /bin/bash
                 - -c
                 - |
-                    TO_DELETE="$(kubectl get pipelinerun -o jsonpath='{range .items[?(@.status.completionTime)]}{.status.completionTime}{" "}{.metadata.name}{"\n"}{end}' | sort | head -n -${NUM_TO_KEEP} | awk '{ print $2}')"
-                    test -n "$TO_DELETE" && kubectl delete pipelinerun ${TO_DELETE} || true
+                    TO_DELETE="$(kubectl get pipelinerun -o jsonpath='{range .items[?(@.status.completionTime)]}{.status.completionTime}{" "}{.metadata.name}{"\n"}{end}' | sort | head -n -${NUM_TO_KEEP} | awk '{ print $2}' | tr '\n' ' ')"
+                    test -n "$TO_DELETE" && eval kubectl delete pipelinerun $TO_DELETE || true
