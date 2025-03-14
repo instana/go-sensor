@@ -1,6 +1,7 @@
 module github.com/instana/go-sensor/instrumentation/cloud.google.com/go
 
-go 1.23
+go 1.23.0
+
 require (
 	cloud.google.com/go/iam v1.3.1
 	cloud.google.com/go/pubsub v1.47.0
