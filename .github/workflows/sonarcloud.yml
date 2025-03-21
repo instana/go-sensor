@@ -54,7 +54,7 @@ jobs:
             done
 
             echo "integration tests - instrumentation packages"
-            INTEGRATIONS_TESTS=("instagocb" "instapgx" "instacosmos" "instapgx/v2")
+            INTEGRATIONS_TESTS=("instapgx" "instapgx/v2" "instagocb" "instacosmos")
             for str in ${INTEGRATIONS_TESTS[@]}; do
               dir=./instrumentation/$str
               echo "Generating test coverage for $dir"
