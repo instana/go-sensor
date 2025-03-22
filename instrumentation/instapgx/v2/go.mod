@@ -4,7 +4,7 @@ go 1.23
 
 require (
 	github.com/instana/go-sensor v1.67.1
-	github.com/jackc/pgx/v5 v5.7.2
+	github.com/jackc/pgx/v5 v5.7.3
 	github.com/opentracing/opentracing-go v1.2.0
 )
 
