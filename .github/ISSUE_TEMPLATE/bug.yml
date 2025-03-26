@@ -14,7 +14,7 @@ body:
       description: What was the issue that caused you to file this bug?
     validations:
       required: true
-  - type: textarea
+  - type: input
     id: stan-customer-name
     attributes:
       label: Instana Customer Name:
