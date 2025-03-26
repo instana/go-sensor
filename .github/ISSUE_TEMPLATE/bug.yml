@@ -17,7 +17,7 @@ body:
   - type: input
     id: stan-customer-name
     attributes:
-      label: Instana Customer Name:
+      label: Instana Customer Name
       description: Please provide the name of the IBM Instana customer who is raising this issue.
     validations:
       required: false
