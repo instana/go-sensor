@@ -14,6 +14,13 @@ body:
       description: What was the issue that caused you to file this bug?
     validations:
       required: true
+  - type: input
+    id: stan-customer-name
+    attributes:
+      label: Instana Customer Name:
+      description: Please provide the name of the IBM Instana customer who is raising this issue.
+    validations:
+      required: false
   - type: textarea
     id: mcve
     attributes:
