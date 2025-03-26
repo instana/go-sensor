@@ -15,6 +15,13 @@ body:
     validations:
       required: true
   - type: textarea
+    id: stan-customer-name
+    attributes:
+      label: Instana Customer Name:
+      description: Please provide the name of the IBM Instana customer who is raising this issue.
+    validations:
+      required: false
+  - type: textarea
     id: mcve
     attributes:
       label: Minimal, Complete, Verifiable, Example
