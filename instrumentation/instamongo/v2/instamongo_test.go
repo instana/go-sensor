@@ -497,25 +497,6 @@ func ExampleConnect() {
 	// ...
 }
 
-// To instrument a mongo.Client created with mongo.NewClient() replace mongo.NewClient() with instamongo.NewClient()
-// and pass an instana.Sensor instance to use
-// func ExampleNewClient() {
-// 	// Initialize Instana collector
-// 	c := instana.InitCollector(&instana.Options{
-// 		Service: "mongo-client",
-// 	})
-// 	defer instana.ShutdownCollector()
-
-// 	// Replace mongo.Connect() with instamongo.Connect and pass the sensor instance
-// 	client, err := instamongo.NewClient(c, options.Client().ApplyURI("mongodb://localhost:27017"))
-// 	if err != nil {
-// 		log.Fatal(err)
-// 	}
-
-// 	// Use instrumented client as usual
-// 	client.Connect(context.Background())
-// }
-
 type monitorMock struct {
 	mu     sync.RWMutex
 	events []interface{}

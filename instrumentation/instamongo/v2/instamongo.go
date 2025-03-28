@@ -25,23 +25,13 @@ func init() {
 	unmarshalReg.RegisterTypeMapEntry(bson.TypeEmbeddedDocument, reflect.TypeOf(bson.M{}))
 }
 
-// var unmarshalReg = bson.NewRegistry().RegisterTypeMapEntry(bsontype.EmbeddedDocument, reflect.TypeOf(bson.M{}))
-
 // Connect creates and instruments a new mongo.Client
 //
-// This is a wrapper method for mongo.Connect(), see https://pkg.go.dev/go.mongodb.org/mongo-driver/mongo#Connect for details on
+// This is a wrapper method for mongo.Connect(), see https://pkg.go.dev/go.mongodb.org/mongo-driver/v2/mongo#Connect for details on
 // the original method.
 func Connect(sensor instana.TracerLogger, opts ...*options.ClientOptions) (*mongo.Client, error) {
 	return mongo.Connect(addInstrumentedCommandMonitor(opts, sensor)...)
 }
-
-// NewClient returns a new instrumented mongo.Client instance
-//
-// This is a wrapper method for mongo.NewClient(), see https://pkg.go.dev/go.mongodb.org/mongo-driver/mongo#NewClient for details on
-// the original method.
-// func NewClient(sensor instana.TracerLogger, opts ...*options.ClientOptions) (*mongo.Client, error) {
-// 	return mongo.NewClient(addInstrumentedCommandMonitor(opts, sensor)...)
-// }
 
 func addInstrumentedCommandMonitor(opts []*options.ClientOptions, sensor instana.TracerLogger) []*options.ClientOptions {
 	// search for the last client options containing a CommandMonitor and wrap it to preserve
