@@ -19,7 +19,77 @@ import (
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/event"
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
+	"go.mongodb.org/mongo-driver/v2/x/mongo/driver/drivertest"
 )
+
+func TestConnect(t *testing.T) {
+
+	var getMongoOptions = func() *options.ClientOptions {
+		md := drivertest.NewMockDeployment()
+		opts := options.Client()
+		opts.Deployment = md
+
+		res1 := bson.D{{"ok", 1}}
+		res2 := bson.D{{"ok", 2}}
+		md.AddResponses(res1, res2)
+
+		return opts
+	}
+
+	var optionsWithCommandMonitor = func(collector instana.TracerLogger, options *options.ClientOptions) {
+		mon := &monitorMock{}
+		options.Monitor = &event.CommandMonitor{
+			Started:   mon.Started,
+			Succeeded: mon.Succeeded,
+			Failed:    mon.Failed,
+		}
+	}
+
+	testCases := []struct {
+		desc                  string
+		options               *options.ClientOptions
+		provideCommandMonitor bool
+	}{
+		{
+			desc:                  "with out explicitly providing the command monitor",
+			options:               getMongoOptions(),
+			provideCommandMonitor: false,
+		},
+		{
+			desc:                  "with explicitly providing the command monitor",
+			options:               getMongoOptions(),
+			provideCommandMonitor: true,
+		},
+	}
+	for _, tC := range testCases {
+		t.Run(tC.desc, func(t *testing.T) {
+
+			recorder := instana.NewTestRecorder()
+			c := instana.InitCollector(&instana.Options{
+				AgentClient: alwaysReadyClient{},
+				Recorder:    recorder,
+			})
+			defer instana.ShutdownCollector()
+
+			if tC.provideCommandMonitor {
+				optionsWithCommandMonitor(c, tC.options)
+			}
+
+			client, err := instamongo.Connect(c, tC.options)
+			assert.NoError(t, err)
+
+			sp := c.Tracer().StartSpan("testing")
+			ctx := instana.ContextWithSpan(context.Background(), sp)
+			sp.Finish()
+
+			_, err = client.ListDatabases(ctx, bson.D{})
+			assert.NoError(t, err)
+
+			spans := recorder.GetQueuedSpans()
+			require.Len(t, spans, 2)
+		})
+	}
+}
 
 func TestWrapCommandMonitor_Succeeded(t *testing.T) {
 	examples := map[string]struct {
