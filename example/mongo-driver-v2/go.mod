@@ -1,6 +1,6 @@
 module github.com/instana/go-sensor/example/mongo-driver-v2
 
-go 1.23.6
+go 1.23
 
 require (
 	github.com/instana/go-sensor v1.67.1
