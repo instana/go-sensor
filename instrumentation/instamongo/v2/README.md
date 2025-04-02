@@ -1,9 +1,9 @@
 Instana instrumentation for MongoDB driver
 ==========================================
 
-This module contains instrumentation code for MongoDB clients written with [`go.mongodb.org/mongo-driver`](https://go.mongodb.org/mongo-driver).
+This module contains instrumentation code for MongoDB clients written with [`go.mongodb.org/mongo-driver/v2`](https://pkg.go.dev/go.mongodb.org/mongo-driver/v2).
 
-[![GoDoc](https://pkg.go.dev/badge/github.com/instana/go-sensor/instrumentation/instamongo)][godoc]
+[![GoDoc](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instamongo/v2)][godoc]
 
 Installation
 ------------
@@ -32,8 +32,7 @@ See the [`instamongo` package documentation][godoc] for detailed examples.
 
 
 
-[godoc]: https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instamongo
-[instamongo.Connect]: https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instamongo#Connect
-[instamongo.NewClient]: https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instamongo#NewClient
+[godoc]: https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instamongo/v2
+[instamongo.Connect]: https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instamongo/v2#Connect
 [Collector]: https://pkg.go.dev/github.com/instana/go-sensor#Collector
 

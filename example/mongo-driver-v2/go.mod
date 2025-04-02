@@ -4,7 +4,7 @@ go 1.23
 
 require (
 	github.com/instana/go-sensor v1.67.1
-	github.com/instana/go-sensor/instrumentation/instamongo/v2 v2.0.0-20250327100523-49226fc47b5e
+	github.com/instana/go-sensor/instrumentation/instamongo/v2 v2.0.0-20250402093642-3b85296dc152
 	go.mongodb.org/mongo-driver/v2 v2.1.0
 )
 
@@ -25,5 +25,5 @@ require (
 
 replace (
 	github.com/instana/go-sensor v1.67.1 => ../..
-	github.com/instana/go-sensor/instrumentation/instamongo/v2 v2.0.0-20250327100523-49226fc47b5e => ../../instrumentation/instamongo/v2
+	github.com/instana/go-sensor/instrumentation/instamongo/v2 v2.0.0-20250402093642-3b85296dc152 => ../../instrumentation/instamongo/v2
 )
