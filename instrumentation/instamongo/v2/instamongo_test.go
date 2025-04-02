@@ -25,6 +25,10 @@ import (
 func TestConnect(t *testing.T) {
 
 	var getMongoOptions = func() *options.ClientOptions {
+		// used this to mock the deployment as it is required by the mongo.Connect method
+		// referred from the original test cases in the mongo-go-driver
+		// here it is: https://github.com/mongodb/mongo-go-driver/blob/5afecc5d27e39384dd89ccacde921025cb74d7f1/x/mongo/driver/drivertest/opmsg_deployment_test.go#L20
+		// Also this reddit thread: https://www.reddit.com/r/golang/comments/1fvb9d7/comment/lqbw29o/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button
 		md := drivertest.NewMockDeployment()
 		opts := options.Client()
 		opts.Deployment = md
