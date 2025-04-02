@@ -1,6 +1,6 @@
 module cosmos.example
 
-go 1.23
+go 1.23.0
 
 require (
 	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.16.0
@@ -15,8 +15,8 @@ require (
 	github.com/Azure/azure-sdk-for-go/sdk/internal v1.10.0 // indirect
 	github.com/looplab/fsm v1.0.1 // indirect
 	github.com/opentracing/opentracing-go v1.2.0 // indirect
-	golang.org/x/net v0.33.0 // indirect
-	golang.org/x/text v0.21.0 // indirect
+	golang.org/x/net v0.36.0 // indirect
+	golang.org/x/text v0.22.0 // indirect
 )
 
 replace (
