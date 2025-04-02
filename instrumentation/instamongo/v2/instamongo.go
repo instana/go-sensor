@@ -128,11 +128,10 @@ func (m *wrappedCommandMonitor) Failed(ctx context.Context, evt *event.CommandFa
 	if !ok {
 		return
 	}
+	defer sp.Finish()
 
 	sp.SetTag("mongo.error", evt.Failure.Error())
 	sp.LogFields(otlog.Object("error", evt.Failure.Error()))
-
-	sp.Finish()
 }
 
 func (m *wrappedCommandMonitor) extractSpanTags(evt *event.CommandStartedEvent) opentracing.Tags {
@@ -147,29 +146,20 @@ func (m *wrappedCommandMonitor) extractSpanTags(evt *event.CommandStartedEvent) 
 		"mongo.command":   evt.CommandName,
 	}
 
-	if doc := evt.Command.Lookup("query"); doc.Validate() == nil {
-		if data, err := bsonToJSON(doc); err != nil {
-			m.sensor.Logger().Warn("failed to marshal mongodb ", evt.CommandName, " query to json: ", err)
-		} else {
-			tags["mongo.query"] = string(data)
+	validateAndSetTags := func(doc bson.RawValue, tagKey, tagStr string) {
+		if err := doc.Validate(); err != nil {
+			if data, err := bsonToJSON(doc); err != nil {
+				m.sensor.Logger().Warn("failed to marshal mongodb ", evt.CommandName, " ", tagStr, " to json: ", err)
+			} else {
+				key := "mongo." + tagKey
+				tags[key] = string(data)
+			}
 		}
 	}
 
-	if doc := evt.Command.Lookup("filter"); doc.Validate() == nil {
-		if data, err := bsonToJSON(evt.Command.Lookup("filter")); err != nil {
-			m.sensor.Logger().Warn("failed to marshal mongodb ", evt.CommandName, " filter to json: ", err)
-		} else {
-			tags["mongo.filter"] = string(data)
-		}
-	}
-
-	if doc, ok := extractCommandDocument(evt.CommandName, evt.Command); ok {
-		if data, err := bsonToJSON(doc); err != nil {
-			m.sensor.Logger().Warn("failed to marshal mongodb ", evt.CommandName, " document to json: ", err)
-		} else {
-			tags["mongo.json"] = string(data)
-		}
-	}
+	validateAndSetTags(evt.Command.Lookup("query"), "query", "query")
+	validateAndSetTags(evt.Command.Lookup("filter"), "filter", "filter")
+	validateAndSetTags(extractCommandDocument(evt.CommandName, evt.Command), "json", "document")
 
 	return tags
 }
@@ -192,7 +182,7 @@ func extractAddress(connID string) string {
 	return connID
 }
 
-func extractCommandDocument(cmdName string, cmdBody bson.Raw) (bson.RawValue, bool) {
+func extractCommandDocument(cmdName string, cmdBody bson.Raw) bson.RawValue {
 	var v bson.RawValue
 
 	switch cmdName {
@@ -207,30 +197,23 @@ func extractCommandDocument(cmdName string, cmdBody bson.Raw) (bson.RawValue, bo
 	case "mapReduce":
 		doc := make(map[string]string, 2)
 
-		if mapV := cmdBody.Lookup("map"); mapV.Validate() == nil {
-			if s, ok := stringOrJavaScriptOK(mapV); ok {
-				doc["map"] = s
+		findAndApplyAttr := func(key string) {
+			if val := cmdBody.Lookup(key); val.Validate() == nil {
+				if s, ok := stringOrJavaScriptOK(val); ok {
+					doc[key] = s
+				}
 			}
 		}
 
-		if reduceV := cmdBody.Lookup("reduce"); reduceV.Validate() == nil {
-			if s, ok := stringOrJavaScriptOK(reduceV); ok {
-				doc["reduce"] = s
-			}
-		}
+		findAndApplyAttr("map")
+		findAndApplyAttr("reduce")
 
-		typ, data, err := bson.MarshalValue(doc)
-		if err != nil {
-			return bson.RawValue{}, false
-		}
-
-		v = bson.RawValue{
-			Type:  typ,
-			Value: data,
+		if typ, data, err := bson.MarshalValue(doc); err == nil {
+			v = bson.RawValue{Type: typ, Value: data}
 		}
 	}
 
-	return v, v.Validate() == nil
+	return v
 }
 
 func bsonToJSON(data bson.RawValue) ([]byte, error) {
