@@ -147,7 +147,7 @@ func (m *wrappedCommandMonitor) extractSpanTags(evt *event.CommandStartedEvent) 
 	}
 
 	validateAndSetTags := func(doc bson.RawValue, tagKey, tagStr string) {
-		if err := doc.Validate(); err != nil {
+		if err := doc.Validate(); err == nil {
 			if data, err := bsonToJSON(doc); err != nil {
 				m.sensor.Logger().Warn("failed to marshal mongodb ", evt.CommandName, " ", tagStr, " to json: ", err)
 			} else {
