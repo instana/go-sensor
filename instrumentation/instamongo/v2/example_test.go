@@ -37,7 +37,7 @@ func Example() {
 	// Use instrumented client as usual
 	dbs, err := client.ListDatabases(ctx, bson.D{})
 	if err != nil {
-		log.Fatalf("failed to list databases: %s", err)
+		log.Fatalf("failed to list databases: %s", err.Error())
 	}
 
 	fmt.Println("found", len(dbs.Databases), "database(s)")
