@@ -18,11 +18,11 @@ import (
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
 
-var unmarshalReg *bson.Registry
+var registry *bson.Registry
 
 func init() {
-	unmarshalReg = bson.NewRegistry()
-	unmarshalReg.RegisterTypeMapEntry(bson.TypeEmbeddedDocument, reflect.TypeOf(bson.M{}))
+	registry = bson.NewRegistry()
+	registry.RegisterTypeMapEntry(bson.TypeEmbeddedDocument, reflect.TypeOf(bson.M{}))
 }
 
 // Connect creates and instruments a new mongo.Client
@@ -30,14 +30,14 @@ func init() {
 // This is a wrapper method for mongo.Connect(), see https://pkg.go.dev/go.mongodb.org/mongo-driver/v2/mongo#Connect for details on
 // the original method.
 func Connect(sensor instana.TracerLogger, opts ...*options.ClientOptions) (*mongo.Client, error) {
-	return mongo.Connect(addInstrumentedCommandMonitor(opts, sensor)...)
+	return mongo.Connect(setInstrumentedCommandMonitorOpts(sensor, opts)...)
 }
 
-func addInstrumentedCommandMonitor(opts []*options.ClientOptions, sensor instana.TracerLogger) []*options.ClientOptions {
+func setInstrumentedCommandMonitorOpts(sensor instana.TracerLogger, opts []*options.ClientOptions) []*options.ClientOptions {
 	// search for the last client options containing a CommandMonitor and wrap it to preserve
 	for i := len(opts) - 1; i >= 0; i-- {
 		if opts[i] != nil && opts[i].Monitor != nil {
-			opts[i].Monitor = WrapCommandMonitor(opts[i].Monitor, sensor)
+			opts[i].Monitor = InstamongoCommandMonitor(sensor, opts[i].Monitor)
 
 			return opts
 		}
@@ -45,39 +45,39 @@ func addInstrumentedCommandMonitor(opts []*options.ClientOptions, sensor instana
 
 	// if there is no CommandMonitor specified, add one
 	return append(opts, &options.ClientOptions{
-		Monitor: NewCommandMonitor(sensor),
+		Monitor: NewInstamongoCommandMonitor(sensor),
 	})
 }
 
-type wrappedCommandMonitor struct {
-	mon    *event.CommandMonitor
+type instamongoCommandMonitor struct {
 	sensor instana.TracerLogger
+	mon    *event.CommandMonitor
 	spans  *spanRegistry
 }
 
 // NewCommandMonitor creates a new event.CommandMonitor that instruments a mongo.Client with Instana.
-func NewCommandMonitor(sensor instana.TracerLogger) *event.CommandMonitor {
-	return WrapCommandMonitor(nil, sensor)
+func NewInstamongoCommandMonitor(sensor instana.TracerLogger) *event.CommandMonitor {
+	return InstamongoCommandMonitor(sensor, nil)
 }
 
 // WrapCommandMonitor wraps an existing event.CommandMonitor to instrument a mongo.Client with Instana
-func WrapCommandMonitor(mon *event.CommandMonitor, sensor instana.TracerLogger) *event.CommandMonitor {
-	wrapper := &wrappedCommandMonitor{
+func InstamongoCommandMonitor(sensor instana.TracerLogger, mon *event.CommandMonitor) *event.CommandMonitor {
+	icm := &instamongoCommandMonitor{
 		mon:    mon,
 		sensor: sensor,
 		spans:  newSpanRegistry(),
 	}
 
 	return &event.CommandMonitor{
-		Started:   wrapper.Started,
-		Succeeded: wrapper.Succeeded,
-		Failed:    wrapper.Failed,
+		Started:   icm.Started,
+		Succeeded: icm.Succeeded,
+		Failed:    icm.Failed,
 	}
 }
 
 // Started traces command start initiating a new span. This span is finalized whenever either
 // Succeeded() or Failed() method is called with an event containing the same RequestID.
-func (m *wrappedCommandMonitor) Started(ctx context.Context, evt *event.CommandStartedEvent) {
+func (m *instamongoCommandMonitor) Started(ctx context.Context, evt *event.CommandStartedEvent) {
 	if m.mon != nil && m.mon.Started != nil {
 		defer m.mon.Started(ctx, evt)
 	}
@@ -87,11 +87,16 @@ func (m *wrappedCommandMonitor) Started(ctx context.Context, evt *event.CommandS
 		ns += "." + collection
 	}
 
+	spanTags, err := extractSpanTags(evt)
+	if err != nil {
+		m.sensor.Logger().Warn("failed to extract span tags: ", err.Error())
+	}
+
 	// an exit span will be created without a parent span
 	// and forwarded if user chose to opt in
 	opts := []opentracing.StartSpanOption{
 		ext.SpanKindRPCClient,
-		m.extractSpanTags(evt),
+		spanTags,
 	}
 
 	parent, ok := instana.SpanFromContext(ctx)
@@ -105,7 +110,7 @@ func (m *wrappedCommandMonitor) Started(ctx context.Context, evt *event.CommandS
 }
 
 // Succeeded finalizes the command span started by Started()
-func (m *wrappedCommandMonitor) Succeeded(ctx context.Context, evt *event.CommandSucceededEvent) {
+func (m *instamongoCommandMonitor) Succeeded(ctx context.Context, evt *event.CommandSucceededEvent) {
 	if m.mon != nil && m.mon.Succeeded != nil {
 		m.mon.Succeeded(ctx, evt)
 	}
@@ -119,7 +124,7 @@ func (m *wrappedCommandMonitor) Succeeded(ctx context.Context, evt *event.Comman
 }
 
 // Failed finalizes the command span started by Started() and logs the failure reason
-func (m *wrappedCommandMonitor) Failed(ctx context.Context, evt *event.CommandFailedEvent) {
+func (m *instamongoCommandMonitor) Failed(ctx context.Context, evt *event.CommandFailedEvent) {
 	if m.mon != nil && m.mon.Failed != nil {
 		defer m.mon.Failed(ctx, evt)
 	}
@@ -134,13 +139,13 @@ func (m *wrappedCommandMonitor) Failed(ctx context.Context, evt *event.CommandFa
 	sp.LogFields(otlog.Object("error", evt.Failure.Error()))
 }
 
-func (m *wrappedCommandMonitor) extractSpanTags(evt *event.CommandStartedEvent) opentracing.Tags {
+func extractSpanTags(evt *event.CommandStartedEvent) (tags opentracing.Tags, extractErr error) {
 	ns := evt.DatabaseName
 	if collection, ok := evt.Command.Lookup(evt.CommandName).StringValueOK(); ok {
 		ns += "." + collection
 	}
 
-	tags := opentracing.Tags{
+	tags = opentracing.Tags{
 		"mongo.service":   extractAddress(evt.ConnectionID),
 		"mongo.namespace": ns,
 		"mongo.command":   evt.CommandName,
@@ -149,13 +154,13 @@ func (m *wrappedCommandMonitor) extractSpanTags(evt *event.CommandStartedEvent) 
 	validateAndSetTags := func(doc bson.RawValue, tagKey, tagStr string) {
 		var err error
 		if err = doc.Validate(); err != nil {
-			m.sensor.Logger().Warn("failed to validate bson. Error details: %s", err.Error())
+			extractErr = fmt.Errorf("failed to validate bson. Error details: %s", err.Error())
 			return
 		}
 
 		var data []byte
 		if data, err = bsonToJSON(doc); err != nil {
-			m.sensor.Logger().Warn("failed to marshal mongodb ", evt.CommandName, " ", tagStr, " to json: ", err)
+			extractErr = fmt.Errorf("failed to marshal mongodb %s %s to json: %s", evt.CommandName, tagStr, err.Error())
 			return
 		}
 
@@ -167,7 +172,7 @@ func (m *wrappedCommandMonitor) extractSpanTags(evt *event.CommandStartedEvent) 
 	validateAndSetTags(evt.Command.Lookup("filter"), "filter", "filter")
 	validateAndSetTags(extractCommandDocument(evt.CommandName, evt.Command), "json", "document")
 
-	return tags
+	return tags, extractErr
 }
 
 // extractAddress extracts the MongoDB server address (either host:port or a path to UNIX socket) from connection ID by
@@ -225,7 +230,7 @@ func extractCommandDocument(cmdName string, cmdBody bson.Raw) bson.RawValue {
 func bsonToJSON(data bson.RawValue) ([]byte, error) {
 	var v interface{}
 
-	if err := data.UnmarshalWithRegistry(unmarshalReg, &v); err != nil {
+	if err := data.UnmarshalWithRegistry(registry, &v); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal bson value: %s", err)
 	}
 

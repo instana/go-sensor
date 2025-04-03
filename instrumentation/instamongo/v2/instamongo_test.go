@@ -28,7 +28,6 @@ func TestConnect(t *testing.T) {
 		// used this to mock the deployment as it is required by the mongo.Connect method
 		// referred from the original test cases in the mongo-go-driver
 		// here it is: https://github.com/mongodb/mongo-go-driver/blob/5afecc5d27e39384dd89ccacde921025cb74d7f1/x/mongo/driver/drivertest/opmsg_deployment_test.go#L20
-		// Also this reddit thread: https://www.reddit.com/r/golang/comments/1fvb9d7/comment/lqbw29o/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button
 		md := drivertest.NewMockDeployment()
 		opts := options.Client()
 		opts.Deployment = md
@@ -265,7 +264,7 @@ func TestWrapCommandMonitor_Succeeded(t *testing.T) {
 			defer instana.ShutdownCollector()
 
 			mon := &monitorMock{}
-			m := instamongo.WrapCommandMonitor(mon.Monitor(), c)
+			m := instamongo.InstamongoCommandMonitor(c, mon.Monitor())
 
 			sp := c.Tracer().StartSpan("testing")
 			ctx := instana.ContextWithSpan(context.Background(), sp)
@@ -345,7 +344,7 @@ func TestWrapCommandMonitor_Succeeded_NotStarted(t *testing.T) {
 	defer instana.ShutdownCollector()
 
 	mon := &monitorMock{}
-	m := instamongo.WrapCommandMonitor(mon.Monitor(), c)
+	m := instamongo.InstamongoCommandMonitor(c, mon.Monitor())
 
 	success := &event.CommandSucceededEvent{
 		CommandFinishedEvent: event.CommandFinishedEvent{
@@ -375,7 +374,7 @@ func TestWrapCommandMonitor_Succeeded_NotTraced(t *testing.T) {
 	defer instana.ShutdownCollector()
 
 	mon := &monitorMock{}
-	m := instamongo.WrapCommandMonitor(mon.Monitor(), c)
+	m := instamongo.InstamongoCommandMonitor(c, mon.Monitor())
 
 	started := &event.CommandStartedEvent{
 		Command: marshalBSON(t, bson.M{
@@ -415,7 +414,7 @@ func TestWrapCommandMonitor_Failed(t *testing.T) {
 	defer instana.ShutdownCollector()
 
 	mon := &monitorMock{}
-	m := instamongo.WrapCommandMonitor(mon.Monitor(), c)
+	m := instamongo.InstamongoCommandMonitor(c, mon.Monitor())
 
 	sp := c.Tracer().StartSpan("testing")
 	ctx := instana.ContextWithSpan(context.Background(), sp)
@@ -494,7 +493,7 @@ func TestWrapCommandMonitor_Failed_NotStarted(t *testing.T) {
 	defer instana.ShutdownCollector()
 
 	mon := &monitorMock{}
-	m := instamongo.WrapCommandMonitor(mon.Monitor(), c)
+	m := instamongo.InstamongoCommandMonitor(c, mon.Monitor())
 
 	failed := &event.CommandFailedEvent{
 		CommandFinishedEvent: event.CommandFinishedEvent{
@@ -522,7 +521,7 @@ func TestWrapCommandMonitor_Failed_NotTraced(t *testing.T) {
 	defer instana.ShutdownCollector()
 
 	mon := &monitorMock{}
-	m := instamongo.WrapCommandMonitor(mon.Monitor(), c)
+	m := instamongo.InstamongoCommandMonitor(c, mon.Monitor())
 
 	started := &event.CommandStartedEvent{
 		Command: marshalBSON(t, bson.M{
