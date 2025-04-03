@@ -31,7 +31,7 @@ func Example() {
 	// Use instamongo.Connect() to establish connection to MongoDB and instrument the client
 	client, err := instamongo.Connect(c, options.Client().ApplyURI(localhostMongo))
 	if err != nil {
-		log.Fatalf("failed to connect to %s: %s", localhostMongo, err)
+		log.Fatalf("failed to connect to %s: %s", localhostMongo, err.Error())
 	}
 
 	// Use instrumented client as usual
