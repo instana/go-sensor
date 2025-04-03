@@ -17,7 +17,7 @@ $ go get github.com/instana/go-sensor/instrumentation/instamongo/v2
 Usage
 -----
 
-`instamongo` offers function wrappers for [`mongo.Connect()`][instamongo.Connect] that initialize and instrument an instance of `mongo.Client` by adding a command monitor to its configuration. This monitor then use provided [`instana.Collector`][Collector] to trace MongoDB queries made with this client instance:
+`instamongo` offers function wrappers for [`mongo.Connect()`][instamongo.Connect] that initialize and instrument an instance of `mongo.Client` by adding a command monitor for instrumentation to its existing configuration. This monitor then use the provided [`instana.Collector`][Collector] to trace the MongoDB queries made with this client instance.
 
 ```go
 client, err := instamongo.Connect(
