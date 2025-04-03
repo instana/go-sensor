@@ -52,7 +52,7 @@ func setInstrumentedCommandMonitorOpts(sensor instana.TracerLogger, opts []*opti
 type instamongoCommandMonitor struct {
 	sensor instana.TracerLogger
 	mon    *event.CommandMonitor
-	spans  *spanRegistry
+	spans  *spanCache
 }
 
 // NewCommandMonitor creates a new event.CommandMonitor that instruments a mongo.Client with Instana.
@@ -65,7 +65,7 @@ func InstamongoCommandMonitor(sensor instana.TracerLogger, mon *event.CommandMon
 	icm := &instamongoCommandMonitor{
 		mon:    mon,
 		sensor: sensor,
-		spans:  newSpanRegistry(),
+		spans:  newSpanCache(),
 	}
 
 	return &event.CommandMonitor{
@@ -106,7 +106,7 @@ func (m *instamongoCommandMonitor) Started(ctx context.Context, evt *event.Comma
 
 	sp := m.sensor.Tracer().StartSpan("mongo", opts...)
 
-	m.spans.Add(evt.RequestID, sp)
+	m.spans.Set(evt.RequestID, sp)
 }
 
 // Succeeded finalizes the command span started by Started()
