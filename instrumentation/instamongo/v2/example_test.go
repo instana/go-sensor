@@ -17,7 +17,7 @@ import (
 const localhostMongo = "mongodb://localhost:27017"
 
 // The following example demonstrates how to instrument a MongoDB client with instana using
-// github.com/instana/go-sensor/instrumentation/instamongo wrapper module.
+// github.com/instana/go-sensor/instrumentation/instamongo/v2 wrapper module.
 func Example() {
 	// Initialize Instana collector
 	c := instana.InitCollector(&instana.Options{
