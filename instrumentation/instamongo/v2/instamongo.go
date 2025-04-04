@@ -29,15 +29,15 @@ func init() {
 //
 // This is a wrapper method for mongo.Connect(), see https://pkg.go.dev/go.mongodb.org/mongo-driver/v2/mongo#Connect for details on
 // the original method.
-func Connect(sensor instana.TracerLogger, opts ...*options.ClientOptions) (*mongo.Client, error) {
-	return mongo.Connect(setInstrumentedCommandMonitorOpts(sensor, opts)...)
+func Connect(collector instana.TracerLogger, opts ...*options.ClientOptions) (*mongo.Client, error) {
+	return mongo.Connect(setInstrumentedCommandMonitorOpts(collector, opts)...)
 }
 
-func setInstrumentedCommandMonitorOpts(sensor instana.TracerLogger, opts []*options.ClientOptions) []*options.ClientOptions {
+func setInstrumentedCommandMonitorOpts(collector instana.TracerLogger, opts []*options.ClientOptions) []*options.ClientOptions {
 	// search for the last client options containing a CommandMonitor and wrap it to preserve
 	for i := len(opts) - 1; i >= 0; i-- {
 		if opts[i] != nil && opts[i].Monitor != nil {
-			opts[i].Monitor = InstamongoCommandMonitor(sensor, opts[i].Monitor)
+			opts[i].Monitor = InstamongoCommandMonitor(collector, opts[i].Monitor)
 
 			return opts
 		}
@@ -45,27 +45,27 @@ func setInstrumentedCommandMonitorOpts(sensor instana.TracerLogger, opts []*opti
 
 	// if there is no CommandMonitor specified, add one
 	return append(opts, &options.ClientOptions{
-		Monitor: NewInstamongoCommandMonitor(sensor),
+		Monitor: NewInstamongoCommandMonitor(collector),
 	})
 }
 
 type instamongoCommandMonitor struct {
-	sensor instana.TracerLogger
-	mon    *event.CommandMonitor
-	spans  *spanCache
+	collector instana.TracerLogger
+	monitor   *event.CommandMonitor
+	spans     *spanCache
 }
 
 // NewCommandMonitor creates a new event.CommandMonitor that instruments a mongo.Client with Instana.
-func NewInstamongoCommandMonitor(sensor instana.TracerLogger) *event.CommandMonitor {
-	return InstamongoCommandMonitor(sensor, nil)
+func NewInstamongoCommandMonitor(collector instana.TracerLogger) *event.CommandMonitor {
+	return InstamongoCommandMonitor(collector, nil)
 }
 
 // WrapCommandMonitor wraps an existing event.CommandMonitor to instrument a mongo.Client with Instana
-func InstamongoCommandMonitor(sensor instana.TracerLogger, mon *event.CommandMonitor) *event.CommandMonitor {
+func InstamongoCommandMonitor(collector instana.TracerLogger, monitor *event.CommandMonitor) *event.CommandMonitor {
 	icm := &instamongoCommandMonitor{
-		mon:    mon,
-		sensor: sensor,
-		spans:  newSpanCache(),
+		monitor:   monitor,
+		collector: collector,
+		spans:     newSpanCache(),
 	}
 
 	return &event.CommandMonitor{
@@ -78,8 +78,8 @@ func InstamongoCommandMonitor(sensor instana.TracerLogger, mon *event.CommandMon
 // Started traces command start initiating a new span. This span is finalized whenever either
 // Succeeded() or Failed() method is called with an event containing the same RequestID.
 func (m *instamongoCommandMonitor) Started(ctx context.Context, evt *event.CommandStartedEvent) {
-	if m.mon != nil && m.mon.Started != nil {
-		defer m.mon.Started(ctx, evt)
+	if m.monitor != nil && m.monitor.Started != nil {
+		defer m.monitor.Started(ctx, evt)
 	}
 
 	ns := evt.DatabaseName
@@ -89,7 +89,7 @@ func (m *instamongoCommandMonitor) Started(ctx context.Context, evt *event.Comma
 
 	spanTags, err := extractSpanTags(evt)
 	if err != nil {
-		m.sensor.Logger().Warn("failed to extract span tags: ", err.Error())
+		m.collector.Logger().Warn("failed to extract span tags: ", err.Error())
 	}
 
 	// an exit span will be created without a parent span
@@ -104,15 +104,15 @@ func (m *instamongoCommandMonitor) Started(ctx context.Context, evt *event.Comma
 		opts = append(opts, opentracing.ChildOf(parent.Context()))
 	}
 
-	sp := m.sensor.Tracer().StartSpan("mongo", opts...)
+	sp := m.collector.Tracer().StartSpan("mongo", opts...)
 
 	m.spans.Set(evt.RequestID, sp)
 }
 
 // Succeeded finalizes the command span started by Started()
 func (m *instamongoCommandMonitor) Succeeded(ctx context.Context, evt *event.CommandSucceededEvent) {
-	if m.mon != nil && m.mon.Succeeded != nil {
-		m.mon.Succeeded(ctx, evt)
+	if m.monitor != nil && m.monitor.Succeeded != nil {
+		m.monitor.Succeeded(ctx, evt)
 	}
 
 	sp, ok := m.spans.Remove(evt.RequestID)
@@ -125,8 +125,8 @@ func (m *instamongoCommandMonitor) Succeeded(ctx context.Context, evt *event.Com
 
 // Failed finalizes the command span started by Started() and logs the failure reason
 func (m *instamongoCommandMonitor) Failed(ctx context.Context, evt *event.CommandFailedEvent) {
-	if m.mon != nil && m.mon.Failed != nil {
-		defer m.mon.Failed(ctx, evt)
+	if m.monitor != nil && m.monitor.Failed != nil {
+		defer m.monitor.Failed(ctx, evt)
 	}
 
 	sp, ok := m.spans.Remove(evt.RequestID)

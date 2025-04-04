@@ -30,6 +30,8 @@ func TestConnect(t *testing.T) {
 		// here it is: https://github.com/mongodb/mongo-go-driver/blob/5afecc5d27e39384dd89ccacde921025cb74d7f1/x/mongo/driver/drivertest/opmsg_deployment_test.go#L20
 		md := drivertest.NewMockDeployment()
 		opts := options.Client()
+
+		// TODO: replace this in future, since opts.Deployment is currently deprecated.
 		opts.Deployment = md
 
 		res1 := bson.D{{"ok", 1}}
