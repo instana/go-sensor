@@ -5,7 +5,7 @@
 ### Start MongoDB using Docker Compose:
 
 ```sh
-podman-compose up -d
+docker compose up -d
 ```
 
 ### Run your Go application:
