@@ -1,0 +1,14 @@
+version: '3'
+
+services:
+  mongodb:
+    image: public.ecr.aws/docker/library/mongo:8.0
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_DATABASE: exampledb
+    volumes:
+      - mongodb_data:/data/db
+    
+volumes:
+  mongodb_data:

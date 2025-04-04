@@ -172,7 +172,7 @@ func main() {
 
 	// Initialize Instana collector
 	c := instana.InitCollector(&instana.Options{
-		Service: "mongo-client-angith",
+		Service: "mongo-client",
 	})
 	defer instana.ShutdownCollector()
 
