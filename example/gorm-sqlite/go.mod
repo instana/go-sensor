@@ -4,7 +4,7 @@ go 1.23
 
 require (
 	github.com/instana/go-sensor v1.67.1
-	github.com/instana/go-sensor/instrumentation/instagorm v1.3.0
+	github.com/instana/go-sensor/instrumentation/instagorm v1.19.0
 	gorm.io/driver/sqlite v1.5.4
 	gorm.io/gorm v1.25.12
 )
@@ -20,6 +20,6 @@ require (
 )
 
 replace (
-	github.com/instana/go-sensor v1.57.0 => ../../
-	github.com/instana/go-sensor/instrumentation/instagorm v1.3.0 => ../../instrumentation/instagorm
+	github.com/instana/go-sensor v1.67.1 => ../../
+	github.com/instana/go-sensor/instrumentation/instagorm v1.19.0 => ../../instrumentation/instagorm
 )

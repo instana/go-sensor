@@ -4,7 +4,7 @@ go 1.23.0
 
 require (
 	github.com/instana/go-sensor v1.67.1
-	github.com/instana/go-sensor/instrumentation/instagrpc v1.11.0
+	github.com/instana/go-sensor/instrumentation/instagrpc v1.37.2
 	github.com/opentracing/opentracing-go v1.2.0
 	google.golang.org/grpc v1.71.1
 	google.golang.org/protobuf v1.36.4
@@ -20,6 +20,6 @@ require (
 )
 
 replace (
-	github.com/instana/go-sensor v1.58.0 => ../../../go-sensor
-	github.com/instana/go-sensor/instrumentation/instagrpc v1.11.0 => ../../instrumentation/instagrpc
+	github.com/instana/go-sensor v1.67.1 => ../../../go-sensor
+	github.com/instana/go-sensor/instrumentation/instagrpc v1.37.2 => ../../instrumentation/instagrpc
 )

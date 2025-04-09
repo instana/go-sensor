@@ -4,8 +4,8 @@ go 1.23.0
 
 require (
 	github.com/instana/go-sensor v1.67.1
-	github.com/instana/go-sensor/instrumentation/instafasthttp v0.2.0
-	github.com/instana/go-sensor/instrumentation/instagorm v1.15.0
+	github.com/instana/go-sensor/instrumentation/instafasthttp v0.8.0
+	github.com/instana/go-sensor/instrumentation/instagorm v1.19.0
 	github.com/valyala/fasthttp v1.60.0
 	gorm.io/driver/postgres v1.5.11
 	gorm.io/gorm v1.25.12
