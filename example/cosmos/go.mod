@@ -7,7 +7,7 @@ require (
 	github.com/Azure/azure-sdk-for-go/sdk/data/azcosmos v1.3.0
 	github.com/google/uuid v1.6.0
 	github.com/instana/go-sensor v1.67.1
-	github.com/instana/go-sensor/instrumentation/instacosmos v1.0.0
+	github.com/instana/go-sensor/instrumentation/instacosmos v1.12.2
 )
 
 require (
@@ -21,5 +21,5 @@ require (
 
 replace (
 	github.com/instana/go-sensor => ../../
-	github.com/instana/go-sensor/instrumentation/instacosmos v1.0.0 => ../../instrumentation/instacosmos
+	github.com/instana/go-sensor/instrumentation/instacosmos v1.12.2 => ../../instrumentation/instacosmos
 )

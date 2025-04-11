@@ -6,7 +6,7 @@ require github.com/couchbase/gocb/v2 v2.9.4
 
 require (
 	github.com/instana/go-sensor v1.67.1
-	github.com/instana/go-sensor/instrumentation/instagocb v1.15.0
+	github.com/instana/go-sensor/instrumentation/instagocb v1.15.2
 )
 
 require (
