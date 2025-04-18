@@ -5,11 +5,11 @@ go 1.23.0
 toolchain go1.24.1
 
 require (
-	github.com/couchbase/gocb/v2 v2.9.4
-	github.com/couchbase/gocbcore/v10 v10.5.4
+	github.com/couchbase/gocb/v2 v2.10.0
+	github.com/couchbase/gocbcore/v10 v10.7.0
 	github.com/instana/go-sensor v1.67.1
 	github.com/opentracing/opentracing-go v1.2.0
-	github.com/stretchr/testify v1.9.0
+	github.com/stretchr/testify v1.10.0
 )
 
 require (
@@ -21,6 +21,7 @@ require (
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/google/uuid v1.6.0 // indirect
+	github.com/gorilla/websocket v1.5.3 // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0 // indirect
 	github.com/looplab/fsm v1.0.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
