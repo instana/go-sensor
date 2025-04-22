@@ -2,8 +2,6 @@ module github.com/instana/go-sensor/example/grpc
 
 go 1.23.0
 
-toolchain go1.24.1
-
 require (
 	github.com/instana/go-sensor v1.67.1
 	github.com/instana/go-sensor/instrumentation/instagrpc v1.37.2
