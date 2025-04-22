@@ -9,7 +9,7 @@ require (
 
 require (
 	github.com/google/uuid v1.6.0 // indirect
-	github.com/looplab/fsm v1.0.1 // indirect
+	github.com/looplab/fsm v1.0.2 // indirect
 	github.com/opentracing/opentracing-go v1.2.0 // indirect
 )
 
