@@ -54,7 +54,7 @@ type Options struct {
 // DefaultOptions returns the default set of options to configure Instana sensor.
 // The service name is set to the name of current executable, the MaxBufferedSpans
 // and ForceTransmissionStartingAt are set to instana.DefaultMaxBufferedSpans and
-// instana.DefaultForceSpanSendAt correspondigly. The AgentHost and AgentPort are
+// instana.DefaultForceSpanSendAt correspondingly. The AgentHost and AgentPort are
 // taken from the env INSTANA_AGENT_HOST and INSTANA_AGENT_PORT if set, and default
 // to localhost and 42699 otherwise.
 func DefaultOptions() *Options {
@@ -98,7 +98,12 @@ func (opts *Options) setDefaults() {
 	}
 
 	if secretsMatcher == nil {
+		// If secretMatcher is nil, it means no in-code secret matcher has been configured,
+		// and the INSTANA_SECRETS environment variable also doesn't have a valid matcher.
+		// So, we will set a default secret matcher here and mark overrideAgent as true,
+		// so that it can be overridden later if a matcher is received from the agent.
 		secretsMatcher = DefaultSecretsMatcher()
+		opts.Tracer.agentOverrideSecrets = true
 	}
 
 	opts.Tracer.Secrets = secretsMatcher

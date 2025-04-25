@@ -121,6 +121,7 @@ func Test_agentApplyHostSettings(t *testing.T) {
 			host: "",
 			from: &fromS{},
 		},
+		logger: defaultLogger,
 	}
 
 	response := agentResponse{

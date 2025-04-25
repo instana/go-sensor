@@ -13,6 +13,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/instana/go-sensor/secrets"
 	f "github.com/looplab/fsm"
 	"github.com/stretchr/testify/assert"
 )
@@ -344,4 +345,95 @@ func Test_fsmS_agentConnectionReestablished(t *testing.T) {
 
 	assert.True(t, <-res)
 	assert.Equal(t, os.Getenv("INSTANA_AGENT_HOST"), r.agentComm.host, "Configured host to be updated with env var value")
+}
+
+func Test_fsmS_applyHostAgentSettings_agent_override(t *testing.T) {
+
+	opts := DefaultOptions()
+	opts.Tracer.agentOverrideSecrets = true
+	opts.Tracer.Secrets = secrets.NewContainsMatcher("test")
+
+	sensor = &sensorS{
+		options: opts,
+	}
+	defer func() {
+		sensor = nil
+	}()
+
+	r := &fsmS{
+		agentComm:   newAgentCommunicator("123", "456", &fromS{}, defaultLogger),
+		fsm:         f.NewFSM("", []f.EventDesc{}, map[string]f.Callback{}),
+		retriesLeft: maximumRetries,
+		expDelayFunc: func(retryNumber int) time.Duration {
+			return 0
+		},
+		logger: defaultLogger,
+	}
+
+	resp := agentResponse{
+		Pid:    1234,
+		HostID: "45664w32",
+		Secrets: struct {
+			Matcher string   "json:\"matcher\""
+			List    []string "json:\"list\""
+		}{
+			Matcher: "contains-ignore-case",
+			List:    []string{"key123", "pass123", "secret123"},
+		},
+		ExtraHTTPHeaders: []string{"abc", "def"},
+	}
+
+	r.applyHostAgentSettings(resp)
+
+	assert.Equal(t, false, sensor.options.Tracer.Secrets.Match("test"))
+	assert.Equal(t, true, sensor.options.Tracer.Secrets.Match("key123"))
+
+	assert.Equal(t, []string{"abc", "def"}, sensor.options.Tracer.CollectableHTTPHeaders)
+
+}
+
+func Test_fsmS_applyHostAgentSettings_agent_NotOverride(t *testing.T) {
+
+	opts := DefaultOptions()
+	opts.Tracer.agentOverrideSecrets = false
+	opts.Tracer.Secrets = secrets.NewContainsMatcher("test")
+	opts.Tracer.CollectableHTTPHeaders = []string{"testHeader"}
+
+	sensor = &sensorS{
+		options: opts,
+	}
+	defer func() {
+		sensor = nil
+	}()
+
+	r := &fsmS{
+		agentComm:   newAgentCommunicator("123", "456", &fromS{}, defaultLogger),
+		fsm:         f.NewFSM("", []f.EventDesc{}, map[string]f.Callback{}),
+		retriesLeft: maximumRetries,
+		expDelayFunc: func(retryNumber int) time.Duration {
+			return 0
+		},
+		logger: defaultLogger,
+	}
+
+	resp := agentResponse{
+		Pid:    1234,
+		HostID: "45664w32",
+		Secrets: struct {
+			Matcher string   "json:\"matcher\""
+			List    []string "json:\"list\""
+		}{
+			Matcher: "contains-ignore-case",
+			List:    []string{"key123", "pass123", "secret123"},
+		},
+		ExtraHTTPHeaders: []string{"abc", "def"},
+	}
+
+	r.applyHostAgentSettings(resp)
+
+	assert.Equal(t, true, sensor.options.Tracer.Secrets.Match("test"))
+	assert.Equal(t, false, sensor.options.Tracer.Secrets.Match("key123"))
+
+	assert.Equal(t, []string{"testHeader"}, sensor.options.Tracer.CollectableHTTPHeaders)
+
 }
