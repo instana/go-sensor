@@ -200,7 +200,10 @@ func (r *fsmS) handleRetries(e *f.Event, cb func(_ context.Context, e *f.Event),
 func (r *fsmS) applyHostAgentSettings(resp agentResponse) {
 	r.agentComm.from = newHostAgentFromS(int(resp.Pid), resp.HostID)
 
-	if resp.Secrets.Matcher != "" {
+	r.logger.Debug("agentOverrideSecrets flag value:", sensor.options.Tracer.agentOverrideSecrets)
+	r.logger.Debug("agent response received for secret config:", resp.Secrets.Matcher, resp.Secrets.List)
+
+	if isSecretsOverrideEnabled(sensor.options.Tracer) && isAgentSecretConfigValid(&resp) {
 		m, err := NamedMatcher(resp.Secrets.Matcher, resp.Secrets.List)
 		if err != nil {
 			r.logger.Warn("failed to apply secrets matcher configuration: ", err)
@@ -209,9 +212,13 @@ func (r *fsmS) applyHostAgentSettings(resp agentResponse) {
 		}
 	}
 
+	r.logger.Debug("secret Matcher used: ", sensor.options.Tracer.Secrets)
+
 	if len(sensor.options.Tracer.CollectableHTTPHeaders) == 0 {
 		sensor.options.Tracer.CollectableHTTPHeaders = resp.getExtraHTTPHeaders()
 	}
+
+	r.logger.Debug("CollectableHTTPHeaders used: ", sensor.options.Tracer.CollectableHTTPHeaders)
 }
 
 func (r *fsmS) announceSensor(_ context.Context, e *f.Event) {
@@ -327,4 +334,12 @@ func (r *fsmS) cpuSetFileContent(pid int) string {
 
 func expDelay(retryNumber int) time.Duration {
 	return time.Duration(math.Pow(2, float64(retryNumber-1))) * exponentialRetryPeriodBase
+}
+
+func isSecretsOverrideEnabled(opts TracerOptions) bool {
+	return opts.agentOverrideSecrets
+}
+
+func isAgentSecretConfigValid(resp *agentResponse) bool {
+	return resp.Secrets.Matcher != "" && len(resp.Secrets.List) != 0
 }
