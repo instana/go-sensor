@@ -204,14 +204,14 @@ func (r *fsmS) checkAndApplyHostAgentMatcher(resp agentResponse) error {
 	}
 
 	if !isAgentSecretConfigValid(&resp) {
+
 		return fmt.Errorf("invalid host agent secret matcher config: secrets-matcher: %s secrets-list: %s",
 			resp.Secrets.Matcher, resp.Secrets.List)
 	}
 
 	m, err := NamedMatcher(resp.Secrets.Matcher, resp.Secrets.List)
 	if err != nil {
-		err = fmt.Errorf("failed to apply secrets matcher configuration: ")
-		return err
+		return fmt.Errorf("failed to apply secrets matcher configuration: %s", err)
 	}
 
 	sensor.options.Tracer.Secrets = m

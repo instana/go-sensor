@@ -4,6 +4,7 @@ package instana
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -17,6 +18,17 @@ import (
 	f "github.com/looplab/fsm"
 	"github.com/stretchr/testify/assert"
 )
+
+type testLogger struct {
+	errMsg string
+}
+
+func (tl *testLogger) Debug(v ...interface{}) {}
+func (tl *testLogger) Info(v ...interface{})  {}
+func (tl *testLogger) Warn(v ...interface{})  {}
+func (tl *testLogger) Error(v ...interface{}) {
+	tl.errMsg = fmt.Sprint(v...)
+}
 
 func getTestServer(fn func(w http.ResponseWriter, r *http.Request)) *httptest.Server {
 	handler := http.NewServeMux()
@@ -433,6 +445,100 @@ func Test_fsmS_applyHostAgentSettings_agent_NotOverride(t *testing.T) {
 
 	assert.Equal(t, true, sensor.options.Tracer.Secrets.Match("test"))
 	assert.Equal(t, false, sensor.options.Tracer.Secrets.Match("key123"))
+
+	assert.Equal(t, []string{"testHeader"}, sensor.options.Tracer.CollectableHTTPHeaders)
+
+}
+
+func Test_fsmS_applyHostAgentSettings_agent_secrets_empty_Error(t *testing.T) {
+
+	opts := DefaultOptions()
+	opts.Tracer.tracerDefaultSecrets = true
+	opts.Tracer.CollectableHTTPHeaders = []string{"testHeader"}
+
+	sensor = &sensorS{
+		options: opts,
+	}
+	defer func() {
+		sensor = nil
+	}()
+
+	tLogger := &testLogger{}
+	r := &fsmS{
+		agentComm:   newAgentCommunicator("123", "456", &fromS{}, defaultLogger),
+		fsm:         f.NewFSM("", []f.EventDesc{}, map[string]f.Callback{}),
+		retriesLeft: maximumRetries,
+		expDelayFunc: func(retryNumber int) time.Duration {
+			return 0
+		},
+		logger: tLogger,
+	}
+
+	resp := agentResponse{
+		Pid:    1234,
+		HostID: "45664w32",
+		Secrets: struct {
+			Matcher string   "json:\"matcher\""
+			List    []string "json:\"list\""
+		}{
+			Matcher: "",
+			List:    []string{},
+		},
+		ExtraHTTPHeaders: []string{"abc", "def"},
+	}
+
+	r.applyHostAgentSettings(resp)
+
+	assert.Equal(t, false, sensor.options.Tracer.Secrets.Match("test"))
+	assert.Equal(t, true, sensor.options.Tracer.Secrets.Match("key123"))
+	assert.Equal(t, "invalid host agent secret matcher config: secrets-matcher:  secrets-list: []", tLogger.errMsg)
+
+	assert.Equal(t, []string{"testHeader"}, sensor.options.Tracer.CollectableHTTPHeaders)
+
+}
+
+func Test_fsmS_applyHostAgentSettings_agent_secrets_not_valid_Error(t *testing.T) {
+
+	opts := DefaultOptions()
+	opts.Tracer.tracerDefaultSecrets = true
+	opts.Tracer.CollectableHTTPHeaders = []string{"testHeader"}
+
+	sensor = &sensorS{
+		options: opts,
+	}
+	defer func() {
+		sensor = nil
+	}()
+
+	tLogger := &testLogger{}
+	r := &fsmS{
+		agentComm:   newAgentCommunicator("123", "456", &fromS{}, defaultLogger),
+		fsm:         f.NewFSM("", []f.EventDesc{}, map[string]f.Callback{}),
+		retriesLeft: maximumRetries,
+		expDelayFunc: func(retryNumber int) time.Duration {
+			return 0
+		},
+		logger: tLogger,
+	}
+
+	resp := agentResponse{
+		Pid:    1234,
+		HostID: "45664w32",
+		Secrets: struct {
+			Matcher string   "json:\"matcher\""
+			List    []string "json:\"list\""
+		}{
+			Matcher: "test_error_matcher",
+			List:    []string{"test"},
+		},
+		ExtraHTTPHeaders: []string{"abc", "def"},
+	}
+
+	r.applyHostAgentSettings(resp)
+
+	assert.Equal(t, false, sensor.options.Tracer.Secrets.Match("test"))
+	assert.Equal(t, true, sensor.options.Tracer.Secrets.Match("key123"))
+	assert.Equal(t, "failed to apply secrets matcher configuration: unknown secrets matcher type \"test_error_matcher\"", tLogger.errMsg)
 
 	assert.Equal(t, []string{"testHeader"}, sensor.options.Tracer.CollectableHTTPHeaders)
 
