@@ -204,7 +204,6 @@ func (r *fsmS) checkAndApplyHostAgentSecrets(resp agentResponse) error {
 	}
 
 	if !isAgentSecretConfigValid(&resp) {
-
 		return fmt.Errorf("invalid host agent secret matcher config: secrets-matcher: %s secrets-list: %s",
 			resp.Secrets.Matcher, resp.Secrets.List)
 	}
