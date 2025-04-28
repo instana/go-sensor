@@ -197,21 +197,39 @@ func (r *fsmS) handleRetries(e *f.Event, cb func(_ context.Context, e *f.Event),
 	r.scheduleRetryWithExponentialDelay(e, cb, retryNumber)
 }
 
+func (r *fsmS) checkAndApplyHostAgentSecrets(resp agentResponse) error {
+	if !isTracerDefaultSecretsSet(sensor.options.Tracer) {
+		r.logger.Info("identified custom defined secrets matcher. Ignoring host agent default secrets configuration.")
+		return nil
+	}
+
+	if !isAgentSecretConfigValid(&resp) {
+		return fmt.Errorf("invalid host agent secret matcher config: secrets-matcher: %s secrets-list: %s",
+			resp.Secrets.Matcher, resp.Secrets.List)
+	}
+
+	m, err := NamedMatcher(resp.Secrets.Matcher, resp.Secrets.List)
+	if err != nil {
+		return fmt.Errorf("failed to apply secrets matcher configuration: %s", err)
+	}
+
+	sensor.options.Tracer.Secrets = m
+
+	return nil
+}
+
 func (r *fsmS) applyHostAgentSettings(resp agentResponse) {
 	r.agentComm.from = newHostAgentFromS(int(resp.Pid), resp.HostID)
 
-	if resp.Secrets.Matcher != "" {
-		m, err := NamedMatcher(resp.Secrets.Matcher, resp.Secrets.List)
-		if err != nil {
-			r.logger.Warn("failed to apply secrets matcher configuration: ", err)
-		} else {
-			sensor.options.Tracer.Secrets = m
-		}
+	if err := r.checkAndApplyHostAgentSecrets(resp); err != nil {
+		r.logger.Error(err.Error())
 	}
+	r.logger.Debug("secret Matcher used: ", sensor.options.Tracer.Secrets)
 
 	if len(sensor.options.Tracer.CollectableHTTPHeaders) == 0 {
 		sensor.options.Tracer.CollectableHTTPHeaders = resp.getExtraHTTPHeaders()
 	}
+	r.logger.Debug("CollectableHTTPHeaders used: ", sensor.options.Tracer.CollectableHTTPHeaders)
 }
 
 func (r *fsmS) announceSensor(_ context.Context, e *f.Event) {
@@ -327,4 +345,12 @@ func (r *fsmS) cpuSetFileContent(pid int) string {
 
 func expDelay(retryNumber int) time.Duration {
 	return time.Duration(math.Pow(2, float64(retryNumber-1))) * exponentialRetryPeriodBase
+}
+
+func isTracerDefaultSecretsSet(opts TracerOptions) bool {
+	return opts.tracerDefaultSecrets
+}
+
+func isAgentSecretConfigValid(resp *agentResponse) bool {
+	return resp.Secrets.Matcher != "" && len(resp.Secrets.List) != 0
 }
