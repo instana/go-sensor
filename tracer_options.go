@@ -23,10 +23,11 @@ type TracerOptions struct {
 	CollectableHTTPHeaders []string
 
 	// agentOverrideSecrets flag is used to override the secret matcher configuration received from the agent.
-	// If the INSTANA_SECRETS environment variable is set, it will take the highest priority.
-	// If not, then the "Secrets" configured in the code will be given preference.
-	// If neither of these is available, the configuration from the agent will be used.
+	// This flag will be set during the init collector process, and the following logic will apply:
 	//
+	// - If the INSTANA_SECRETS environment variable is set, it will be given the highest priority.
+	// - If not, the "Secrets" configured within the code will be preferred.
+	// - If neither of the above is available, the configuration received from the agent will be used.
 	agentOverrideSecrets bool
 }
 
