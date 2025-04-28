@@ -20,12 +20,15 @@ import (
 )
 
 type testLogger struct {
-	errMsg string
+	infoMsg string
+	errMsg  string
 }
 
 func (tl *testLogger) Debug(v ...interface{}) {}
-func (tl *testLogger) Info(v ...interface{})  {}
-func (tl *testLogger) Warn(v ...interface{})  {}
+func (tl *testLogger) Info(v ...interface{}) {
+	tl.infoMsg = fmt.Sprint(v...)
+}
+func (tl *testLogger) Warn(v ...interface{}) {}
 func (tl *testLogger) Error(v ...interface{}) {
 	tl.errMsg = fmt.Sprint(v...)
 }
@@ -359,7 +362,7 @@ func Test_fsmS_agentConnectionReestablished(t *testing.T) {
 	assert.Equal(t, os.Getenv("INSTANA_AGENT_HOST"), r.agentComm.host, "Configured host to be updated with env var value")
 }
 
-func Test_fsmS_applyHostAgentSettings_agent_override(t *testing.T) {
+func Test_fsmS_applyHostAgentSettings_agent_Override(t *testing.T) {
 
 	opts := DefaultOptions()
 	opts.Tracer.tracerDefaultSecrets = true
@@ -418,6 +421,7 @@ func Test_fsmS_applyHostAgentSettings_agent_NotOverride(t *testing.T) {
 		sensor = nil
 	}()
 
+	tLogger := &testLogger{}
 	r := &fsmS{
 		agentComm:   newAgentCommunicator("123", "456", &fromS{}, defaultLogger),
 		fsm:         f.NewFSM("", []f.EventDesc{}, map[string]f.Callback{}),
@@ -425,7 +429,7 @@ func Test_fsmS_applyHostAgentSettings_agent_NotOverride(t *testing.T) {
 		expDelayFunc: func(retryNumber int) time.Duration {
 			return 0
 		},
-		logger: defaultLogger,
+		logger: tLogger,
 	}
 
 	resp := agentResponse{
@@ -445,6 +449,7 @@ func Test_fsmS_applyHostAgentSettings_agent_NotOverride(t *testing.T) {
 
 	assert.Equal(t, true, sensor.options.Tracer.Secrets.Match("test"))
 	assert.Equal(t, false, sensor.options.Tracer.Secrets.Match("key123"))
+	assert.Equal(t, "identified custom defined secrets matcher. Ignoring host agent default secrets configuration.", tLogger.infoMsg)
 
 	assert.Equal(t, []string{"testHeader"}, sensor.options.Tracer.CollectableHTTPHeaders)
 
