@@ -197,7 +197,7 @@ func (r *fsmS) handleRetries(e *f.Event, cb func(_ context.Context, e *f.Event),
 	r.scheduleRetryWithExponentialDelay(e, cb, retryNumber)
 }
 
-func (r *fsmS) checkAndApplyHostAgentMatcher(resp agentResponse) error {
+func (r *fsmS) checkAndApplyHostAgentSecrets(resp agentResponse) error {
 	if !isTracerDefaultSecretsSet(sensor.options.Tracer) {
 		r.logger.Info("identified custom defined secrets matcher. Ignoring host agent default secrets configuration.")
 		return nil
@@ -222,7 +222,7 @@ func (r *fsmS) checkAndApplyHostAgentMatcher(resp agentResponse) error {
 func (r *fsmS) applyHostAgentSettings(resp agentResponse) {
 	r.agentComm.from = newHostAgentFromS(int(resp.Pid), resp.HostID)
 
-	if err := r.checkAndApplyHostAgentMatcher(resp); err != nil {
+	if err := r.checkAndApplyHostAgentSecrets(resp); err != nil {
 		r.logger.Error(err.Error())
 	}
 	r.logger.Debug("secret Matcher used: ", sensor.options.Tracer.Secrets)
