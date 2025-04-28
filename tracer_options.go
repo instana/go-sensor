@@ -22,13 +22,13 @@ type TracerOptions struct {
 	// See https://www.instana.com/docs/setup_and_manage/host_agent/configuration/#capture-custom-http-headers for details
 	CollectableHTTPHeaders []string
 
-	// agentOverrideSecrets flag is used to override the secret matcher configuration received from the agent.
+	// tracerDefaultSecrets flag is used to override the secret matcher configuration received from the agent.
 	// This flag will be set during the init collector process, and the following logic will apply:
 	//
 	// - If the INSTANA_SECRETS environment variable is set, it will be given the highest priority.
 	// - If not, the "Secrets" configured within the code will be preferred.
 	// - If neither of the above is available, the configuration received from the agent will be used.
-	agentOverrideSecrets bool
+	tracerDefaultSecrets bool
 }
 
 // DefaultTracerOptions returns the default set of options to configure a tracer

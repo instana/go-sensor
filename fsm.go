@@ -197,27 +197,39 @@ func (r *fsmS) handleRetries(e *f.Event, cb func(_ context.Context, e *f.Event),
 	r.scheduleRetryWithExponentialDelay(e, cb, retryNumber)
 }
 
+func (r *fsmS) checkAndApplyHostAgentMatcher(resp agentResponse) error {
+	if !isTracerDefaultSecretsSet(sensor.options.Tracer) {
+		r.logger.Info("identified custom defined secrets matcher. Ignoring host agent default secrets configuration.")
+		return nil
+	}
+
+	if !isAgentSecretConfigValid(&resp) {
+		return fmt.Errorf("invalid host agent secret matcher config: secrets-matcher: %s secrets-list: %s",
+			resp.Secrets.Matcher, resp.Secrets.List)
+	}
+
+	m, err := NamedMatcher(resp.Secrets.Matcher, resp.Secrets.List)
+	if err != nil {
+		err = fmt.Errorf("failed to apply secrets matcher configuration: ")
+		return err
+	}
+
+	sensor.options.Tracer.Secrets = m
+
+	return nil
+}
+
 func (r *fsmS) applyHostAgentSettings(resp agentResponse) {
 	r.agentComm.from = newHostAgentFromS(int(resp.Pid), resp.HostID)
 
-	r.logger.Debug("agentOverrideSecrets flag value:", sensor.options.Tracer.agentOverrideSecrets)
-	r.logger.Debug("agent response received for secret config:", resp.Secrets.Matcher, resp.Secrets.List)
-
-	if isSecretsOverrideEnabled(sensor.options.Tracer) && isAgentSecretConfigValid(&resp) {
-		m, err := NamedMatcher(resp.Secrets.Matcher, resp.Secrets.List)
-		if err != nil {
-			r.logger.Warn("failed to apply secrets matcher configuration: ", err)
-		} else {
-			sensor.options.Tracer.Secrets = m
-		}
+	if err := r.checkAndApplyHostAgentMatcher(resp); err != nil {
+		r.logger.Error(err.Error())
 	}
-
 	r.logger.Debug("secret Matcher used: ", sensor.options.Tracer.Secrets)
 
 	if len(sensor.options.Tracer.CollectableHTTPHeaders) == 0 {
 		sensor.options.Tracer.CollectableHTTPHeaders = resp.getExtraHTTPHeaders()
 	}
-
 	r.logger.Debug("CollectableHTTPHeaders used: ", sensor.options.Tracer.CollectableHTTPHeaders)
 }
 
@@ -336,8 +348,8 @@ func expDelay(retryNumber int) time.Duration {
 	return time.Duration(math.Pow(2, float64(retryNumber-1))) * exponentialRetryPeriodBase
 }
 
-func isSecretsOverrideEnabled(opts TracerOptions) bool {
-	return opts.agentOverrideSecrets
+func isTracerDefaultSecretsSet(opts TracerOptions) bool {
+	return opts.tracerDefaultSecrets
 }
 
 func isAgentSecretConfigValid(resp *agentResponse) bool {

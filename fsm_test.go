@@ -350,7 +350,7 @@ func Test_fsmS_agentConnectionReestablished(t *testing.T) {
 func Test_fsmS_applyHostAgentSettings_agent_override(t *testing.T) {
 
 	opts := DefaultOptions()
-	opts.Tracer.agentOverrideSecrets = true
+	opts.Tracer.tracerDefaultSecrets = true
 	opts.Tracer.Secrets = secrets.NewContainsMatcher("test")
 
 	sensor = &sensorS{
@@ -395,7 +395,7 @@ func Test_fsmS_applyHostAgentSettings_agent_override(t *testing.T) {
 func Test_fsmS_applyHostAgentSettings_agent_NotOverride(t *testing.T) {
 
 	opts := DefaultOptions()
-	opts.Tracer.agentOverrideSecrets = false
+	opts.Tracer.tracerDefaultSecrets = false
 	opts.Tracer.Secrets = secrets.NewContainsMatcher("test")
 	opts.Tracer.CollectableHTTPHeaders = []string{"testHeader"}
 
