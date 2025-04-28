@@ -100,7 +100,7 @@ func (opts *Options) setDefaults() {
 	if secretsMatcher == nil {
 		// If secretMatcher is nil, it means no in-code secret matcher has been configured,
 		// and the INSTANA_SECRETS environment variable also doesn't have a valid matcher.
-		// So, we will set a default secret matcher here and mark overrideAgent as true,
+		// So, we will set a default secret matcher here and mark tracerDefaultSecrets as true,
 		// so that it can be overridden later if a matcher is received from the agent.
 		secretsMatcher = DefaultSecretsMatcher()
 		opts.Tracer.tracerDefaultSecrets = true
