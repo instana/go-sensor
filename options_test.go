@@ -54,7 +54,7 @@ func TestTracerOptionsPrecedence_InCodeConfigPresent(t *testing.T) {
 
 	assert.Equal(t, true, testOpts.Tracer.Secrets.Match("testing_matcher"))
 	assert.Equal(t, false, testOpts.Tracer.Secrets.Match("foo"))
-	assert.Equal(t, false, testOpts.Tracer.agentOverrideSecrets)
+	assert.Equal(t, false, testOpts.Tracer.tracerDefaultSecrets)
 
 	assert.Equal(t, []string{"test", "test1"}, testOpts.Tracer.CollectableHTTPHeaders)
 
@@ -82,7 +82,7 @@ func TestTracerOptionsPrecedence_InCodeConfigAbsent(t *testing.T) {
 
 	assert.Equal(t, false, testOpts.Tracer.Secrets.Match("testing_matcher"))
 	assert.Equal(t, true, testOpts.Tracer.Secrets.Match("secret1"))
-	assert.Equal(t, false, testOpts.Tracer.agentOverrideSecrets)
+	assert.Equal(t, false, testOpts.Tracer.tracerDefaultSecrets)
 
 	assert.Equal(t, []string{"abc", "def"}, testOpts.Tracer.CollectableHTTPHeaders)
 
@@ -110,7 +110,7 @@ func TestTracerOptionsPrecedence_InCodeConfigAndEnvAbsent(t *testing.T) {
 
 	assert.Equal(t, false, testOpts.Tracer.Secrets.Match("testing_matcher"))
 	assert.Equal(t, true, testOpts.Tracer.Secrets.Match("secret"))
-	assert.Equal(t, true, testOpts.Tracer.agentOverrideSecrets)
+	assert.Equal(t, true, testOpts.Tracer.tracerDefaultSecrets)
 
 	assert.Equal(t, 0, len(testOpts.Tracer.CollectableHTTPHeaders))
 

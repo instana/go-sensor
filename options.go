@@ -103,7 +103,7 @@ func (opts *Options) setDefaults() {
 		// So, we will set a default secret matcher here and mark overrideAgent as true,
 		// so that it can be overridden later if a matcher is received from the agent.
 		secretsMatcher = DefaultSecretsMatcher()
-		opts.Tracer.agentOverrideSecrets = true
+		opts.Tracer.tracerDefaultSecrets = true
 	}
 
 	opts.Tracer.Secrets = secretsMatcher
