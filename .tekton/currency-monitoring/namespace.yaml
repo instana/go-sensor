@@ -1,0 +1,7 @@
+# (c) Copyright IBM Corp. 2024
+
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: currency-monitoring-pipelines

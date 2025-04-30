@@ -1,0 +1,12 @@
+---
+apiVersion: tekton.dev/v1
+kind: TaskRun
+metadata:
+  generateName: run-package-updates-check-task-run-
+  namespace: currency-monitoring-pipelines
+spec:
+  taskRef:
+    name: go-tracer-clone-task
+  workspaces:
+    - name: script-workspace
+      emptyDir: { }

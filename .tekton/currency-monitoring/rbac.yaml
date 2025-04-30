@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: currency-monitoring-service-account
+  namespace: currency-monitoring-pipelines
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: tekton-pipelinerun-trigger
+  namespace: currency-monitoring-pipelines
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: tekton-pipelines-controller-cluster-access  # Tekton's built-in ClusterRole
+subjects:
+  - kind: ServiceAccount
+    name: currency-monitoring-service-account
+    namespace: currency-monitoring-pipelines
