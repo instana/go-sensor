@@ -1,0 +1,39 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: run-package-updates-check-cron
+  namespace: currency-monitoring-pipelines
+spec:
+  schedule: "*/2 * * * *"  # Every 2 minutes
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          serviceAccountName: currency-monitoring-service-account
+          restartPolicy: Never
+          containers:
+            - name: trigger-pipelinerun
+              image: bitnami/kubectl:latest
+              command:
+                - /bin/sh
+                - -c
+                - |
+                  kubectl create -f - <<EOF
+                  apiVersion: tekton.dev/v1
+                  kind: PipelineRun
+                  metadata:
+                    generateName: run-package-updates-check-pipelinerun-
+                    namespace: currency-monitoring-pipelines
+                  spec:
+                    pipelineRef:
+                      name: run-package-updates-check-pipeline
+                    workspaces:
+                      - name: currency-shared-workspace
+                        volumeClaimTemplate:
+                          spec:
+                            accessModes:
+                              - ReadWriteMany
+                            resources:
+                              requests:
+                                storage: 1Gi
+                  EOF
