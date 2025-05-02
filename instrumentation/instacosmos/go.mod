@@ -5,7 +5,7 @@ go 1.23.0
 require (
 	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.18.0
 	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.9.0
-	github.com/Azure/azure-sdk-for-go/sdk/data/azcosmos v1.3.0
+	github.com/Azure/azure-sdk-for-go/sdk/data/azcosmos v1.4.0
 	github.com/google/uuid v1.6.0
 	github.com/instana/go-sensor v1.67.3
 	github.com/opentracing/opentracing-go v1.2.0
