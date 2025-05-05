@@ -5,7 +5,7 @@ go 1.23.0
 require github.com/couchbase/gocb/v2 v2.10.0
 
 require (
-	github.com/instana/go-sensor v1.67.1
+	github.com/instana/go-sensor v1.67.3
 	github.com/instana/go-sensor/instrumentation/instagocb v1.15.2
 )
 

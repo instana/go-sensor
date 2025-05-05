@@ -3,7 +3,7 @@ module github.com/instana/go-sensor/example/mongo-driver-v2
 go 1.23.0
 
 require (
-	github.com/instana/go-sensor v1.67.1
+	github.com/instana/go-sensor v1.67.3
 	github.com/instana/go-sensor/instrumentation/instamongo/v2 v2.0.0
 	go.mongodb.org/mongo-driver/v2 v2.2.0
 )
