@@ -28,4 +28,4 @@
 | 26 | Other | [aws-sdk-go](https://pkg.go.dev/github.com/aws/aws-sdk-go-v2) | [instaawsv2](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instaawsv2) | v1.21.0 | v1.36.3 |
 | 27 | Databases | [azcosmos](https://pkg.go.dev/github.com/Azure/azure-sdk-for-go/sdk/data/azcosmos) | [instacosmos](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instacosmos) | v0.3.6 | v1.4.0 |
 | 28 | Databases | [pgx/v5](https://pkg.go.dev/github.com/jackc/pgx/v5) | [instapgx/v2](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instapgx/v2) | v5.6.0 | v5.7.4 |
-| 29 | HTTP | [fasthttp](https://pkg.go.dev/github.com/valyala/fasthttp) | [instafasthttp](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instafasthttp) | v1.58.0 | v1.61.0 |
+| 29 | HTTP | [fasthttp](https://pkg.go.dev/github.com/valyala/fasthttp) | [instafasthttp](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instafasthttp) | v1.58.0 | v1.62.0 |
