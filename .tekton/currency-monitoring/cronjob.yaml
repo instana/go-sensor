@@ -4,7 +4,7 @@ metadata:
   name: run-package-updates-check-cron
   namespace: currency-monitoring-pipelines
 spec:
-  schedule: "*/2 * * * *"  # Every 2 minutes
+  schedule: "0 16 * * 1-5"  # Every week day at 4pm
   jobTemplate:
     spec:
       template:
