@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# (c) Copyright IBM Corp. 2024
+# (c) Copyright IBM Corp. 2025
 
 # ==== Configuration ====
 MY_REPO="instana/go-sensor"
