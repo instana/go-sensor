@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# (c) Copyright IBM Corp. 2024
+
 # ==== Configuration ====
 MY_REPO="instana/go-sensor"
 #LOCAL_REPO_PATH="/path/to/your/local/repo"
