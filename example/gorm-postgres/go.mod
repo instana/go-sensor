@@ -6,7 +6,7 @@ require (
 	github.com/instana/go-sensor v1.67.3
 	github.com/instana/go-sensor/instrumentation/instagorm v1.19.0
 	gorm.io/driver/postgres v1.5.11
-	gorm.io/gorm v1.26.0
+	gorm.io/gorm v1.26.1
 )
 
 require (
