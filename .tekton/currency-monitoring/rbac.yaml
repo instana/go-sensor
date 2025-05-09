@@ -1,3 +1,6 @@
+# (c) Copyright IBM Corp. 2024
+
+---
 apiVersion: v1
 kind: ServiceAccount
 metadata:
