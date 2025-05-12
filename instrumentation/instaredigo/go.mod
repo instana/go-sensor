@@ -1,6 +1,6 @@
 module github.com/instana/go-sensor/instrumentation/instaredigo
 
-go 1.23
+go 1.23.0
 
 require (
 	github.com/gomodule/redigo v1.9.2
