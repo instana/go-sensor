@@ -97,32 +97,31 @@ create_pr_for_untracked_release() {
     local repo=$1
     local version=$2
     local instrumentation=$3
-    local repo_name=$(dirname "$repo")
-    local branch_name
+    local repo_name=""
+    repo_name=$(dirname "$repo")
+    local branch_name=""
     branch_name="$(date +%Y%m%d)-$repo_name-$version"
 
     [ "$INFO" = "true" ] && echo "[INFO] Preparing PR for $repo version $version..."
-
-    #cd "$LOCAL_REPO_PATH" || { echo "[ERROR] Repo path not found!"; return 1; }
-
-    # Create a branch and commit the changes
-    git config user.name "tracer-team-go"
-    git config user.email "github-actions@github.com"
-
-    git remote set-url origin "https://${GITHUB_USERNAME}:${GH_TOKEN}@github.com/instana/go-sensor.git"
-
-    git checkout main
-    git pull origin main
-    git checkout -b "$branch_name"
-
-    echo "Tracking release $version of $repo" > "release-tracker-${branch_name}.md"
-    git add .
-    git commit -m "feat(currency): adding support for v$version of $repo"
 
     if [ "$DRY_RUN" = true ]; then
         echo "[DRY RUN] Would push branch $branch_name and create PR."
         echo "[DRY RUN] Would send Slack message for $repo version $version"
     else
+        #cd "$LOCAL_REPO_PATH" || { echo "[ERROR] Repo path not found!"; return 1; }
+        # Create a branch and commit the changes
+        git config user.name "tracer-team-go"
+        git config user.email "github-actions@github.com"
+
+        git remote set-url origin "https://${GITHUB_USERNAME}:${GH_TOKEN}@github.com/instana/go-sensor.git"
+
+        git checkout main
+        git pull origin main
+        git checkout -b "$branch_name"
+
+        echo "Tracking release $version of $repo" > "release-tracker-${branch_name}.md"
+        git add .
+        git commit -m "feat(currency): adding support for v$version of $repo"
         git push origin "$branch_name"
         CURRENT_TIME_UNIX=$(date '+%s')
         pr_url=$(gh pr create --title "feat(currency): updated instrumentation of $instrumentation for new version v$version. Id: $CURRENT_TIME_UNIX" \
