@@ -97,4 +97,13 @@ func TestDefaultSecretsMatcher(t *testing.T) {
 	assert.True(t, m.Match("123pass123"))
 	assert.True(t, m.Match("123secret123"))
 
+	// test default matcher - no match
+	assert.False(t, m.Match("ke"))
+	assert.False(t, m.Match("pas"))
+	assert.False(t, m.Match("secre"))
+
+	assert.False(t, m.Match("ke123y"))
+	assert.False(t, m.Match("pas123s"))
+	assert.False(t, m.Match("sec123ret"))
+
 }
