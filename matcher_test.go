@@ -72,3 +72,52 @@ func TestNamedMatcher_Unsupported(t *testing.T) {
 	_, err := instana.NamedMatcher("custom", []string{"foo", "bar"})
 	assert.Error(t, err)
 }
+
+func TestDefaultSecretsMatcher(t *testing.T) {
+	m := instana.DefaultSecretsMatcher()
+
+	// Test default matcher - match
+	assert.True(t, m.Match("key"))
+	assert.True(t, m.Match("pass"))
+	assert.True(t, m.Match("secret"))
+
+	assert.True(t, m.Match("KEY"))
+	assert.True(t, m.Match("PASS"))
+	assert.True(t, m.Match("SECRET"))
+
+	assert.True(t, m.Match("key123"))
+	assert.True(t, m.Match("pass123"))
+	assert.True(t, m.Match("secret123"))
+
+	assert.True(t, m.Match("123key"))
+	assert.True(t, m.Match("123pass"))
+	assert.True(t, m.Match("123secret"))
+
+	assert.True(t, m.Match("123key123"))
+	assert.True(t, m.Match("123pass123"))
+	assert.True(t, m.Match("123secret123"))
+
+	// Test default matcher - no match
+	assert.False(t, m.Match("ke"))
+	assert.False(t, m.Match("pas"))
+	assert.False(t, m.Match("secre"))
+
+	assert.False(t, m.Match("ke123y"))
+	assert.False(t, m.Match("pas123s"))
+	assert.False(t, m.Match("sec123ret"))
+
+	// Test to ensure previous default matchers still work
+	//
+	// These test cases are added to confirm compatibility
+	// with the change where the default matcher now uses "pass" instead of "password"
+	//
+	// This change is non-breaking for existing users who are already using 'password'
+	// in their code, since the default secret matcher uses a 'contains-ignore-case' rule.
+	// So, any string that matches 'password' will still get matched by 'pass'.
+	assert.True(t, m.Match("password"))
+	assert.True(t, m.Match("PASSWORD"))
+	assert.True(t, m.Match("123password123"))
+	assert.True(t, m.Match("pass123word"))
+	assert.False(t, m.Match("pas123sword"))
+
+}
