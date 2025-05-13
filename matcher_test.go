@@ -72,3 +72,29 @@ func TestNamedMatcher_Unsupported(t *testing.T) {
 	_, err := instana.NamedMatcher("custom", []string{"foo", "bar"})
 	assert.Error(t, err)
 }
+
+func TestDefaultSecretsMatcher(t *testing.T) {
+	m := instana.DefaultSecretsMatcher()
+
+	// test default matcher - match
+	assert.True(t, m.Match("key"))
+	assert.True(t, m.Match("pass"))
+	assert.True(t, m.Match("secret"))
+
+	assert.True(t, m.Match("KEY"))
+	assert.True(t, m.Match("PASS"))
+	assert.True(t, m.Match("SECRET"))
+
+	assert.True(t, m.Match("key123"))
+	assert.True(t, m.Match("pass123"))
+	assert.True(t, m.Match("secret123"))
+
+	assert.True(t, m.Match("123key"))
+	assert.True(t, m.Match("123pass"))
+	assert.True(t, m.Match("123secret"))
+
+	assert.True(t, m.Match("123key123"))
+	assert.True(t, m.Match("123pass123"))
+	assert.True(t, m.Match("123secret123"))
+
+}
