@@ -5,11 +5,11 @@
 # ==== Configuration ====
 MY_REPO="instana/go-sensor"
 #LOCAL_REPO_PATH="/path/to/your/local/repo"
-REPOS=( "rabbitmq/amqp091-go" "aws/aws-sdk-go" "aws/aws-sdk-go-v2" "beego/beego" "Azure/azure-sdk-for-go" \
+REPOS=( "rabbitmq/amqp091-go" "beego/beego" \
         "labstack/echo" "valyala/fasthttp" "gofiber/fiber" "gin-gonic/gin" "couchbase/gocb" "go-gorm/gorm" \
         "graphql-go/graphql" "grpc/grpc-go" "julienschmidt/httprouter" "aws/aws-lambda-go" "sirupsen/logrus" \
         "mongodb/mongo-go-driver" "gorilla/mux" "jackc/pgx" "gomodule/redigo" "go-redis/redis" "IBM/sarama")
-INSTRUMENTATIONS=("instaamqp091" "instaawssdk" "instaawsv2" "instabeego" "instaazurefunction" \
+INSTRUMENTATIONS=("instaamqp091" "instabeego" \
                   "instaecho" "instafasthttp" "instafiber" "instagin" "instagocb" "instagorm" \
                   "instagraphql" "instagrpc" "instahttprouter" "instalambda" "instalogrus" \
                   "instamongo" "instamux" "instapgx" "instaredigo" "instaredis" "instasarama")
