@@ -106,6 +106,14 @@ func TestDefaultSecretsMatcher(t *testing.T) {
 	assert.False(t, m.Match("pas123s"))
 	assert.False(t, m.Match("sec123ret"))
 
+	// Test to ensure previous default matchers still work
+	//
+	// These test cases are added to confirm compatibility
+	// with the change where the default matcher now uses "pass" instead of "password"
+	//
+	// This change is non-breaking for existing users who are already using 'password'
+	// in their code, since the default secret matcher uses a 'contains-ignore-case' rule.
+	// So, any string that matches 'password' will still get matched by 'pass'.
 	assert.True(t, m.Match("password"))
 	assert.True(t, m.Match("PASSWORD"))
 	assert.True(t, m.Match("123password123"))
