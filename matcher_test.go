@@ -76,7 +76,7 @@ func TestNamedMatcher_Unsupported(t *testing.T) {
 func TestDefaultSecretsMatcher(t *testing.T) {
 	m := instana.DefaultSecretsMatcher()
 
-	// test default matcher - match
+	// Test default matcher - match
 	assert.True(t, m.Match("key"))
 	assert.True(t, m.Match("pass"))
 	assert.True(t, m.Match("secret"))
@@ -97,7 +97,7 @@ func TestDefaultSecretsMatcher(t *testing.T) {
 	assert.True(t, m.Match("123pass123"))
 	assert.True(t, m.Match("123secret123"))
 
-	// test default matcher - no match
+	// Test default matcher - no match
 	assert.False(t, m.Match("ke"))
 	assert.False(t, m.Match("pas"))
 	assert.False(t, m.Match("secre"))
@@ -105,5 +105,11 @@ func TestDefaultSecretsMatcher(t *testing.T) {
 	assert.False(t, m.Match("ke123y"))
 	assert.False(t, m.Match("pas123s"))
 	assert.False(t, m.Match("sec123ret"))
+
+	assert.True(t, m.Match("password"))
+	assert.True(t, m.Match("PASSWORD"))
+	assert.True(t, m.Match("123password123"))
+	assert.True(t, m.Match("pass123word"))
+	assert.False(t, m.Match("pas123sword"))
 
 }
