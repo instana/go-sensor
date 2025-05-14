@@ -11,8 +11,8 @@ github.com/go-redis/redis/v8 v8.11.5 h1:AcZZR7igkdvfVmQTPnu9WE37LRrO/YrBH5zWyjDC
 github.com/go-redis/redis/v8 v8.11.5/go.mod h1:gREzHqY1hg6oD9ngVRbLStwAWKhA0FEgq8Jd4h5lpwo=
 github.com/google/uuid v1.6.0 h1:NIvaJDMOsjHA8n1jAhLSgzrAzy1Hgr+hNrb57e+94F0=
 github.com/google/uuid v1.6.0/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
-github.com/instana/go-sensor v1.67.3 h1:zJbhZeucfma3WGlKSmrDsVTM2BQXiKZHo5g7m7/rGA0=
-github.com/instana/go-sensor v1.67.3/go.mod h1:+3PDOpCpshz6kIycn81ixjsVKBgzpcXQBEOCv8zqVfw=
+github.com/instana/go-sensor v1.67.4 h1:kBu8fmDesne9BMCswj2W6ZvbLcOP5cpohdXmr+9Jack=
+github.com/instana/go-sensor v1.67.4/go.mod h1:+3PDOpCpshz6kIycn81ixjsVKBgzpcXQBEOCv8zqVfw=
 github.com/looplab/fsm v1.0.2 h1:f0kdMzr4CRpXtaKKRUxwLYJ7PirTdwrtNumeLN+mDx8=
 github.com/looplab/fsm v1.0.2/go.mod h1:PmD3fFvQEIsjMEfvZdrCDZ6y8VwKTwWNjlpEr6IKPO4=
 github.com/nxadm/tail v1.4.8 h1:nPr65rt6Y5JFSKQO7qToXr7pePgD6Gwiw05lkbyAQTE=
