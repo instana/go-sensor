@@ -34,7 +34,7 @@ func CreateMultiSecretsMatcher() instana.Matcher {
 
 func main() {
 	col := instana.InitCollector(&instana.Options{
-		Service:           "Nithin HTTP Secret Matcher Example",
+		Service:           "http-secret-matcher",
 		EnableAutoProfile: true,
 		Tracer: instana.TracerOptions{
 			Secrets: CreateMultiSecretsMatcher(),
