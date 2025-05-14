@@ -68,4 +68,4 @@ spec:
         #apk fix && apk --no-cache --update add git && rm -rf /var/cache/apk/*
         apt-get update && apt-get install -y git
         echo "Cloning repo!"
-        git clone --depth 1 -b main https://github.com/instana/go-sensor
+        git clone --depth 1 --branch main https://github.com/instana/go-sensor
