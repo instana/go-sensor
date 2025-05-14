@@ -23,6 +23,6 @@ go build -o server .
 
 ## Expected Result
 The request includes two query parameters: `keys` and `password`.
-    - The keys parameter will not be masked because the matcher is looking for the exact string "key".
-    - The password parameter will be masked because it contains the substring "pass", which matches the configured matcher.
+- The keys parameter will not be masked because the matcher is looking for the exact string "key".
+- The password parameter will be masked because it contains the substring "pass", which matches the configured matcher.
 You can verify this behaviour on the Instana dashboard.
