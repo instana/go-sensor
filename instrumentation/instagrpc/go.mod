@@ -6,7 +6,7 @@ require (
 	github.com/instana/go-sensor v1.67.4
 	github.com/opentracing/opentracing-go v1.2.0
 	github.com/stretchr/testify v1.10.0
-	google.golang.org/grpc v1.72.0
+	google.golang.org/grpc v1.72.1
 )
 
 require (
