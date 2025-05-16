@@ -14,7 +14,7 @@ INSTRUMENTATIONS=("instaamqp091" "instabeego" \
                   "instagraphql" "instagrpc" "instahttprouter" "instalambda" "instalogrus" \
                   "instamongo" "instamux" "instapgx" "instaredigo" "instaredis" "instasarama")
 NUM_PRS=100
-DRY_RUN=true  # Set to false to actually create PRs
+DRY_RUN=false  # Set to false to actually create PRs
 INFO=true
 DEBUG=true
 
