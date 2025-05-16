@@ -1,4 +1,4 @@
-module basic_usage
+module http_secret_matcher
 
 go 1.23.0
 

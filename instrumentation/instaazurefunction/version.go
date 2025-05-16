@@ -3,4 +3,4 @@
 package instaazurefunction
 
 // Version is the instrumentation module semantic version
-const Version = "0.24.0"
+const Version = "0.25.0"

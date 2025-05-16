@@ -3,4 +3,4 @@
 package instaawsv2
 
 // Version is the instrumentation module semantic version
-const Version = "0.30.0"
+const Version = "0.31.0"
