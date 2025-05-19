@@ -16,7 +16,7 @@ spec:
           restartPolicy: Never
           containers:
             - name: trigger-pipelinerun
-              image: bitnami/kubectl:latest
+              image: public.ecr.aws/bitnami/kubectl:latest
               command:
                 - /bin/sh
                 - -c
