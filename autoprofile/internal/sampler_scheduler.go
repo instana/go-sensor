@@ -75,13 +75,14 @@ func (ss *SamplerScheduler) Start() {
 		ss.samplerTimer = NewTimer(0, time.Duration(ss.config.SamplingInterval)*time.Second, func() {
 			upperLimit := big.NewInt(ss.config.SamplingInterval - ss.config.MaxSpanDuration)
 			upperLimit.Abs(upperLimit)
-			var val *big.Int
+			var randomValue *big.Int
 			var err error
-			if val, err = rand.Int(rand.Reader, upperLimit); err != nil {
-				logger.Error(ss.config.LogPrefix, "error generating random number: ", err)
+			if randomValue, err = rand.Int(rand.Reader, upperLimit); err != nil {
+				logger.Error(ss.config.LogPrefix, "aborting sample scheduler. "+
+					"Error while generating random number: ", err.Error())
 				return
 			}
-			dur := val.Int64()
+			dur := randomValue.Int64()
 
 			time.Sleep(time.Duration(dur) * time.Second)
 			ss.startProfiling()
