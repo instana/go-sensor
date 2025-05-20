@@ -28,7 +28,6 @@ get_versions_from_rss() {
 
   repo=$1
   url="https://github.com/$repo/releases.atom"
-  #echo "URL: $url"
   data=$(curl -s "https://github.com/$repo/releases.atom")
   echo "$data" | awk -v cutoff="$CUTOFF_DATE" '
 
