@@ -107,7 +107,6 @@ create_pr_for_untracked_release() {
         echo "[DRY RUN] Would push branch $branch_name and create PR."
         echo "[DRY RUN] Would send Slack message for $repo version $version"
     else
-        #cd "$LOCAL_REPO_PATH" || { echo "[ERROR] Repo path not found!"; return 1; }
         # Create a branch and commit the changes
         git config user.name "tracer-team-go"
         git config user.email "github-actions@github.com"
