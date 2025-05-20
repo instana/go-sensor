@@ -57,13 +57,10 @@ func TestInsertRecord(t *testing.T) {
 	}
 
 	t.Run("Exec", func(t *testing.T) {
-		dsn, tearDownFn := setupEnv(t)
+		var err error
 
-		db, err := gorm.Open(sqlite.Open(dsn), &gorm.Config{})
-		if err != nil {
-			panic("failed to connect database")
-		}
-		defer tearDownFn(t, db)
+		db, dsn, tearDownFn := setupDB(t)
+		defer tearDownFn(t)
 
 		db.Statement.Context = ctx
 		instagorm.Instrument(db, c, dsn)
@@ -117,13 +114,10 @@ func TestUpdateRecord(t *testing.T) {
 	}
 
 	t.Run("Exec", func(t *testing.T) {
-		dsn, tearDownFn := setupEnv(t)
+		var err error
 
-		db, err := gorm.Open(sqlite.Open(dsn), &gorm.Config{})
-		if err != nil {
-			panic("failed to connect database")
-		}
-		defer tearDownFn(t, db)
+		db, dsn, tearDownFn := setupDB(t)
+		defer tearDownFn(t)
 
 		db.Statement.Context = ctx
 		instagorm.Instrument(db, c, dsn)
@@ -182,13 +176,10 @@ func TestSelectRecord(t *testing.T) {
 	}
 
 	t.Run("Exec", func(t *testing.T) {
-		dsn, tearDownFn := setupEnv(t)
+		var err error
 
-		db, err := gorm.Open(sqlite.Open(dsn), &gorm.Config{})
-		if err != nil {
-			panic("failed to connect database")
-		}
-		defer tearDownFn(t, db)
+		db, dsn, tearDownFn := setupDB(t)
+		defer tearDownFn(t)
 
 		db.Statement.Context = ctx
 		instagorm.Instrument(db, c, dsn)
@@ -245,13 +236,10 @@ func TestDeleteRecord(t *testing.T) {
 	}
 
 	t.Run("Exec", func(t *testing.T) {
-		dsn, tearDownFn := setupEnv(t)
+		var err error
 
-		db, err := gorm.Open(sqlite.Open(dsn), &gorm.Config{})
-		if err != nil {
-			panic("failed to connect database")
-		}
-		defer tearDownFn(t, db)
+		db, dsn, tearDownFn := setupDB(t)
+		defer tearDownFn(t)
 
 		db.Statement.Context = ctx
 		instagorm.Instrument(db, c, dsn)
@@ -306,13 +294,10 @@ func TestRawSQL(t *testing.T) {
 	}
 
 	t.Run("Exec", func(t *testing.T) {
-		dsn, tearDownFn := setupEnv(t)
+		var err error
 
-		db, err := gorm.Open(sqlite.Open(dsn), &gorm.Config{})
-		if err != nil {
-			panic("failed to connect database")
-		}
-		defer tearDownFn(t, db)
+		db, dsn, tearDownFn := setupDB(t)
+		defer tearDownFn(t)
 
 		db.Statement.Context = ctx
 		instagorm.Instrument(db, c, dsn)
@@ -370,13 +355,10 @@ func TestRow(t *testing.T) {
 	}
 
 	t.Run("Exec", func(t *testing.T) {
-		dsn, tearDownFn := setupEnv(t)
+		var err error
 
-		db, err := gorm.Open(sqlite.Open(dsn), &gorm.Config{})
-		if err != nil {
-			panic("failed to connect database")
-		}
-		defer tearDownFn(t, db)
+		db, dsn, tearDownFn := setupDB(t)
+		defer tearDownFn(t)
 
 		db.Statement.Context = ctx
 		instagorm.Instrument(db, c, dsn)
@@ -418,18 +400,23 @@ func TestRow(t *testing.T) {
 	})
 }
 
-func setupEnv(t *testing.T) (string, func(*testing.T, *gorm.DB)) {
-	dbFile := filepath.Join(os.TempDir(), "gormtest_"+strconv.Itoa(rand.Int())+".db")
+func setupDB(t *testing.T) (*gorm.DB, string, func(*testing.T)) {
+	dsn := filepath.Join(os.TempDir(), "gormtest_"+strconv.Itoa(rand.Int())+".db")
 
-	return dbFile, func(t *testing.T, db *gorm.DB) {
+	gormDB, err := gorm.Open(sqlite.Open(dsn), &gorm.Config{})
+	if err != nil {
+		t.Fatal("failed to connect database :", err.Error())
+	}
+
+	return gormDB, dsn, func(t *testing.T) {
 		// close db
-		if db, err := db.DB(); err == nil {
+		if db, err := gormDB.DB(); err == nil {
 			db.Close()
 		}
 
-		err := os.Remove(dbFile)
+		err := os.Remove(dsn)
 		if err != nil {
-			t.Fatal("unable to delete the database file: ", db, ": ", err.Error())
+			t.Fatal("unable to delete the database file: ", dsn, ": ", err.Error())
 
 			return
 		}
