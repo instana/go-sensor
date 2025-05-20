@@ -1,0 +1,71 @@
+# (c) Copyright IBM Corp. 2025
+
+---
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: run-package-updates-check-task
+  namespace: currency-monitoring-pipelines
+spec:
+  workspaces:
+    - name: currency-shared-workspace
+  steps:
+    - name: run-script
+      image: public.ecr.aws/ubuntu/ubuntu:24.04_stable
+      workingDir: /workspace/currency-shared-workspace/go-sensor/scripts
+      env:
+        - name: GH_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: "github-token"
+              key: "token"
+        - name: SLACK_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: "slack-token"
+              key: "token"
+        - name: SLACK_CHANNEL_ID
+          valueFrom:
+            secretKeyRef:
+              name: "slack-channel-id"
+              key: "channelId"
+        - name: GITHUB_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: "github-username"
+              key: "username"
+      script: |
+        #!/bin/bash
+        echo "Installing curl, sed, jq, gh, git"
+        #apk fix && apk --no-cache --update add git curl sed jq && rm -rf /var/cache/apk/*
+        apt-get update && apt-get install -y git curl sed jq gh
+        echo "Hello"
+        chmod +x ./currency-watcher.sh
+        ./currency-watcher.sh
+
+---
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: go-tracer-clone-task
+  namespace: currency-monitoring-pipelines
+spec:
+  workspaces:
+    - name: currency-shared-workspace
+  steps:
+    - name: clone
+      image: public.ecr.aws/ubuntu/ubuntu:24.04_stable
+      workingDir: /workspace/currency-shared-workspace/
+      env:
+        - name: GH_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: "github-token"
+              key: "token"
+      script: |
+        #!/bin/sh
+        echo "Installing git"
+        #apk fix && apk --no-cache --update add git && rm -rf /var/cache/apk/*
+        apt-get update && apt-get install -y git
+        echo "Cloning repo!"
+        git clone --depth 1 --branch main https://github.com/instana/go-sensor
