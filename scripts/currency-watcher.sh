@@ -4,7 +4,6 @@
 
 # ==== Configuration ====
 MY_REPO="instana/go-sensor"
-#LOCAL_REPO_PATH="/path/to/your/local/repo"
 REPOS=( "rabbitmq/amqp091-go" "beego/beego" \
         "labstack/echo" "valyala/fasthttp" "gofiber/fiber" "gin-gonic/gin" "couchbase/gocb" "go-gorm/gorm" \
         "graphql-go/graphql" "grpc/grpc-go" "julienschmidt/httprouter" "aws/aws-lambda-go" "sirupsen/logrus" \
@@ -24,10 +23,8 @@ get_versions_from_rss() {
   months=1
   # Compute cutoff date in YYYY-MM-DD format
   CUTOFF_DATE=$(date -v-"$months"m +%Y-%m-%d 2>/dev/null || date --date="-$months months" +%Y-%m-%d)
-  #echo "Cut off date: ${CUTOFF_DATE}"
 
   repo=$1
-  url="https://github.com/$repo/releases.atom"
   data=$(curl -s "https://github.com/$repo/releases.atom")
   echo "$data" | awk -v cutoff="$CUTOFF_DATE" '
 
@@ -148,16 +145,14 @@ for i in "${!REPOS[@]}"; do
       continue
     else
       [ "$INFO" = "true" ] && echo "[INFO] Found some recent versions."
-      #[ "$DEBUG" = "true" ] && echo "[DEBUG] Found versions: $versions"
     fi
 
 
     while IFS= read -r version; do
         version_clean=$(echo "$version" | grep -oE '[vV]?[0-9]+\.[0-9]+\.[0-9]+' | grep -vE '^[12][0-9]{3}\.[01]?[0-9]\.[0-9]{2}$' | sed 's/^v//' | head -n1)
-        #echo "[INFO] cleaned version: $version_clean"
 
         [[ -z "$version_clean" ]] && continue
-        #[ "$DEBUG" = "true" ] && echo "[DEBUG] instrumentation: ${instrumentation}"
+        [ "$DEBUG" = "true" ] && echo "[DEBUG] instrumentation: ${instrumentation}"
         pattern_matcher="^feat\(currency\): updated instrumentation of ${instrumentation}[a-zA-Z0-9_\/-]* for new version v${version_clean}\. Id: [a-zA-Z0-9_-]+$"
         pattern="$pattern_matcher"
 
