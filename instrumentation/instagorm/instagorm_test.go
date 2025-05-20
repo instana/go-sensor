@@ -424,7 +424,7 @@ func setupEnv(t *testing.T) (string, func(*testing.T)) {
 	return db, func(*testing.T) {
 		err := os.Remove(db)
 		if err != nil {
-			t.Fatal("unable to delete the database file: ", db)
+			t.Fatal("unable to delete the database file: ", db, ": ", err.Error())
 
 			return
 		}
