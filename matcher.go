@@ -67,8 +67,8 @@ func NamedMatcher(name string, list []string) (Matcher, error) {
 }
 
 // DefaultSecretsMatcher returns the default secrets matcher, that matches strings containing
-// "key", "password" and "secret" ignoring the case
+// "key", "pass" and "secret" ignoring the case
 func DefaultSecretsMatcher() Matcher {
-	m, _ := NamedMatcher(ContainsIgnoreCaseMatcher, []string{"key", "password", "secret"})
+	m, _ := NamedMatcher(ContainsIgnoreCaseMatcher, []string{"key", "pass", "secret"})
 	return m
 }
