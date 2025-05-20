@@ -64,6 +64,10 @@ func TestInsertRecord(t *testing.T) {
 		if err != nil {
 			panic("failed to connect database")
 		}
+		defer func() {
+			d, _ := db.DB()
+			d.Close()
+		}()
 
 		db.Statement.Context = ctx
 		instagorm.Instrument(db, c, dsn)
@@ -124,6 +128,10 @@ func TestUpdateRecord(t *testing.T) {
 		if err != nil {
 			panic("failed to connect database")
 		}
+		defer func() {
+			d, _ := db.DB()
+			d.Close()
+		}()
 
 		db.Statement.Context = ctx
 		instagorm.Instrument(db, c, dsn)
@@ -189,6 +197,10 @@ func TestSelectRecord(t *testing.T) {
 		if err != nil {
 			panic("failed to connect database")
 		}
+		defer func() {
+			d, _ := db.DB()
+			d.Close()
+		}()
 
 		db.Statement.Context = ctx
 		instagorm.Instrument(db, c, dsn)
@@ -252,6 +264,10 @@ func TestDeleteRecord(t *testing.T) {
 		if err != nil {
 			panic("failed to connect database")
 		}
+		defer func() {
+			d, _ := db.DB()
+			d.Close()
+		}()
 
 		db.Statement.Context = ctx
 		instagorm.Instrument(db, c, dsn)
@@ -313,6 +329,10 @@ func TestRawSQL(t *testing.T) {
 		if err != nil {
 			panic("failed to connect database")
 		}
+		defer func() {
+			d, _ := db.DB()
+			d.Close()
+		}()
 
 		db.Statement.Context = ctx
 		instagorm.Instrument(db, c, dsn)
@@ -377,6 +397,10 @@ func TestRow(t *testing.T) {
 		if err != nil {
 			panic("failed to connect database")
 		}
+		defer func() {
+			d, _ := db.DB()
+			d.Close()
+		}()
 
 		db.Statement.Context = ctx
 		instagorm.Instrument(db, c, dsn)
