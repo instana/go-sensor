@@ -1,0 +1,26 @@
+# (c) Copyright IBM Corp. 2025
+
+---
+apiVersion: tekton.dev/v1
+kind: Pipeline
+metadata:
+  name: run-package-updates-check-pipeline
+  namespace: currency-monitoring-pipelines
+spec:
+  workspaces:
+    - name: currency-shared-workspace
+  tasks:
+    - name: go-tracer-clone-task
+      taskRef:
+        name: go-tracer-clone-task
+      workspaces:
+        - name: currency-shared-workspace
+          workspace: currency-shared-workspace
+    - name: execute-script
+      runAfter:
+        - go-tracer-clone-task
+      taskRef:
+        name: run-package-updates-check-task
+      workspaces:
+        - name: currency-shared-workspace
+          workspace: currency-shared-workspace

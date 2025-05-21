@@ -1,0 +1,22 @@
+# (c) Copyright IBM Corp. 2025
+
+---
+apiVersion: tekton.dev/v1
+kind: PipelineRun
+metadata:
+  generateName: run-package-updates-check-pipelinerun-
+  namespace: currency-monitoring-pipelines
+spec:
+  pipelineRef:
+    name: run-package-updates-check-pipeline
+  workspaces:
+    - name: currency-shared-workspace
+      volumeClaimTemplate:
+        spec:
+          accessModes:
+            - ReadWriteMany
+          resources:
+            requests:
+              storage: 1Gi
+
+
