@@ -14,7 +14,6 @@ import (
 	"compress/gzip"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"regexp"
 	"strings"
 	"time"
@@ -121,7 +120,7 @@ type Function struct {
 // may be a gzip-compressed encoded protobuf or one of many legacy
 // profile formats which may be unsupported in the future.
 func Parse(r io.Reader) (*Profile, error) {
-	orig, err := ioutil.ReadAll(r)
+	orig, err := io.ReadAll(r)
 	if err != nil {
 		return nil, err
 	}
@@ -132,7 +131,7 @@ func Parse(r io.Reader) (*Profile, error) {
 		if err != nil {
 			return nil, fmt.Errorf("decompressing profile: %v", err)
 		}
-		data, err := ioutil.ReadAll(gz)
+		data, err := io.ReadAll(gz)
 		if err != nil {
 			return nil, fmt.Errorf("decompressing profile: %v", err)
 		}

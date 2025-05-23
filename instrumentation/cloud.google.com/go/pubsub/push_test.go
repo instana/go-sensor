@@ -6,9 +6,10 @@ package pubsub_test
 import (
 	"bytes"
 	"context"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"strings"
 	"testing"
 
@@ -30,7 +31,7 @@ func TestTracingHandler(t *testing.T) {
 	})
 	defer instana.ShutdownCollector()
 
-	payload, err := ioutil.ReadFile("testdata/message.json")
+	payload, err := os.ReadFile("testdata/message.json")
 	require.NoError(t, err)
 
 	var (
@@ -44,7 +45,7 @@ func TestTracingHandler(t *testing.T) {
 		reqSpan, ok = instana.SpanFromContext(req.Context())
 		require.True(t, ok)
 
-		body, err := ioutil.ReadAll(req.Body)
+		body, err := io.ReadAll(req.Body)
 		require.NoError(t, err)
 
 		assert.JSONEq(t, string(payload), string(body))
@@ -95,7 +96,7 @@ func TestTracingHandlerFunc_TracePropagation(t *testing.T) {
 	})
 	defer instana.ShutdownCollector()
 
-	payload, err := ioutil.ReadFile("testdata/message_with_context.json")
+	payload, err := os.ReadFile("testdata/message_with_context.json")
 	require.NoError(t, err)
 
 	var numCalls int
@@ -105,7 +106,7 @@ func TestTracingHandlerFunc_TracePropagation(t *testing.T) {
 		_, ok := instana.SpanFromContext(req.Context())
 		assert.True(t, ok)
 
-		body, err := ioutil.ReadAll(req.Body)
+		body, err := io.ReadAll(req.Body)
 		require.NoError(t, err)
 
 		assert.JSONEq(t, string(payload), string(body))
@@ -161,7 +162,7 @@ func TestTracingHandlerFunc_NotPubSub(t *testing.T) {
 		_, ok := instana.SpanFromContext(req.Context())
 		assert.True(t, ok)
 
-		body, err := ioutil.ReadAll(req.Body)
+		body, err := io.ReadAll(req.Body)
 		require.NoError(t, err)
 
 		assert.Equal(t, "request payload", string(body))

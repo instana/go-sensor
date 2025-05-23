@@ -7,7 +7,6 @@ import (
 	"context"
 	"encoding/json"
 	"io"
-	"io/ioutil"
 	"net/http"
 )
 
@@ -59,7 +58,7 @@ func (a *agentCommunicator) checkForSuccessResponse() bool {
 	}
 
 	defer func() {
-		io.CopyN(ioutil.Discard, resp.Body, 256<<10)
+		io.CopyN(io.Discard, resp.Body, 256<<10)
 		resp.Body.Close()
 	}()
 
@@ -96,7 +95,7 @@ func (a *agentCommunicator) agentResponse(d *discoveryS) *agentResponse {
 	}
 
 	defer func() {
-		io.CopyN(ioutil.Discard, res.Body, 256<<10)
+		io.CopyN(io.Discard, res.Body, 256<<10)
 		res.Body.Close()
 	}()
 
@@ -107,7 +106,7 @@ func (a *agentCommunicator) agentResponse(d *discoveryS) *agentResponse {
 		return nil
 	}
 
-	respBytes, err := ioutil.ReadAll(res.Body)
+	respBytes, err := io.ReadAll(res.Body)
 
 	if err != nil {
 		a.l.Debug("Error reading res.Body while attempting to get response data from the agent: ", err.Error())
@@ -142,7 +141,7 @@ func (a *agentCommunicator) pingAgent() bool {
 	}
 
 	defer func() {
-		io.CopyN(ioutil.Discard, resp.Body, 256<<10)
+		io.CopyN(io.Discard, resp.Body, 256<<10)
 		resp.Body.Close()
 	}()
 
@@ -202,7 +201,7 @@ func (a *agentCommunicator) sendDataToAgent(suffix string, data interface{}) err
 			a.l.Debug("Sending data to agent: response code: ", resp.StatusCode, "-", resp.Status, "; ", url)
 		}
 
-		io.CopyN(ioutil.Discard, resp.Body, 256<<10)
+		io.CopyN(io.Discard, resp.Body, 256<<10)
 		resp.Body.Close()
 	}
 

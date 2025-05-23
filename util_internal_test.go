@@ -5,7 +5,6 @@ package instana
 
 import (
 	"errors"
-	"io/ioutil"
 	"os"
 	"testing"
 
@@ -162,7 +161,7 @@ eth0	00000000	010011AC	0003	0	0	0	00000000	0	0	0
 
 	for _, test := range tests {
 		func() {
-			tmpFile, err := ioutil.TempFile("", "getdefaultgateway")
+			tmpFile, err := os.CreateTemp("", "getdefaultgateway")
 			if err != nil {
 				t.Fatal(err)
 			}

@@ -7,7 +7,7 @@ package instaazurefunction
 import (
 	"bytes"
 	"context"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"sync"
 	"time"
@@ -146,10 +146,10 @@ func flushAgent(sensor instana.TracerLogger, retryPeriod time.Duration, maxRetri
 
 // copyRequestBody clones the request body and returns it
 func copyRequestBody(req *http.Request) ([]byte, error) {
-	body, err := ioutil.ReadAll(req.Body)
+	body, err := io.ReadAll(req.Body)
 
 	//request body will be empty if we do not assign it back
-	req.Body = ioutil.NopCloser(bytes.NewBuffer(body))
+	req.Body = io.NopCloser(bytes.NewBuffer(body))
 
 	return body, err
 }

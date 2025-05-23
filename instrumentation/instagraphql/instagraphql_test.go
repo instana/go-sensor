@@ -8,7 +8,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"net/http/httptest"
@@ -250,7 +249,7 @@ func TestGraphQLWithCustomHTTP(t *testing.T) {
 	for title, sample := range samples {
 		t.Run(title, func(t *testing.T) {
 			srv := httptest.NewServer(instana.TracingHandlerFunc(c, "/graphql", http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-				b, err := ioutil.ReadAll(req.Body)
+				b, err := io.ReadAll(req.Body)
 
 				if err != nil {
 					w.WriteHeader(http.StatusInternalServerError)
@@ -259,7 +258,7 @@ func TestGraphQLWithCustomHTTP(t *testing.T) {
 				}
 
 				defer req.Body.Close()
-				io.CopyN(ioutil.Discard, req.Body, 1<<62)
+				io.CopyN(io.Discard, req.Body, 1<<62)
 
 				var p struct {
 					Query         string `json:"query"`

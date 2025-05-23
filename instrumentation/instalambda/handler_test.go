@@ -6,8 +6,8 @@ package instalambda_test
 import (
 	"context"
 	"errors"
-	"io/ioutil"
 	"net/http"
+	"os"
 	"testing"
 	"time"
 
@@ -45,7 +45,7 @@ func TestNewHandler_APIGatewayEvent(t *testing.T) {
 			c := instana.InitCollector(getOptions(recorder))
 			defer instana.ShutdownCollector()
 
-			payload, err := ioutil.ReadFile(fileName)
+			payload, err := os.ReadFile(fileName)
 			require.NoError(t, err)
 
 			h := instalambda.NewHandler(func(ctx context.Context, evt *events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
@@ -119,7 +119,7 @@ func TestNewHandler_APIGatewayV2Event_WithW3Context(t *testing.T) {
 			c := instana.InitCollector(getOptions(recorder))
 			defer instana.ShutdownCollector()
 
-			payload, err := ioutil.ReadFile(fileName)
+			payload, err := os.ReadFile(fileName)
 			require.NoError(t, err)
 
 			h := instalambda.NewHandler(func(ctx context.Context, evt *events.APIGatewayV2HTTPRequest) (events.APIGatewayV2HTTPResponse, error) {
@@ -193,7 +193,7 @@ func TestNewHandler_ALBEvent(t *testing.T) {
 			c := instana.InitCollector(getOptions(recorder))
 			defer instana.ShutdownCollector()
 
-			payload, err := ioutil.ReadFile(fileName)
+			payload, err := os.ReadFile(fileName)
 			require.NoError(t, err)
 
 			h := instalambda.NewHandler(func(ctx context.Context, evt *events.ALBTargetGroupRequest) (events.ALBTargetGroupResponse, error) {
@@ -259,7 +259,7 @@ func TestNewHandler_CloudWatchEvent(t *testing.T) {
 	c := instana.InitCollector(getOptions(recorder))
 	defer instana.ShutdownCollector()
 
-	payload, err := ioutil.ReadFile("testdata/cw_event.json")
+	payload, err := os.ReadFile("testdata/cw_event.json")
 	require.NoError(t, err)
 
 	h := instalambda.NewHandler(func(ctx context.Context, evt *events.CloudWatchEvent) error {
@@ -310,7 +310,7 @@ func TestNewHandler_CloudWatchLogsEvent(t *testing.T) {
 	c := instana.InitCollector(getOptions(recorder))
 	defer instana.ShutdownCollector()
 
-	payload, err := ioutil.ReadFile("testdata/cw_logs_event.json")
+	payload, err := os.ReadFile("testdata/cw_logs_event.json")
 	require.NoError(t, err)
 
 	h := instalambda.NewHandler(func(ctx context.Context, evt *events.CloudwatchLogsEvent) error {
@@ -365,7 +365,7 @@ func TestNewHandler_CloudWatchLogsEvent_DecodeError(t *testing.T) {
 	c := instana.InitCollector(getOptions(recorder))
 	defer instana.ShutdownCollector()
 
-	payload, err := ioutil.ReadFile("testdata/cw_logs_broken_event.json")
+	payload, err := os.ReadFile("testdata/cw_logs_broken_event.json")
 	require.NoError(t, err)
 
 	h := instalambda.NewHandler(func(ctx context.Context, evt *events.CloudwatchLogsEvent) error {
@@ -415,7 +415,7 @@ func TestNewHandler_S3Event(t *testing.T) {
 	c := instana.InitCollector(getOptions(recorder))
 	defer instana.ShutdownCollector()
 
-	payload, err := ioutil.ReadFile("testdata/s3_event.json")
+	payload, err := os.ReadFile("testdata/s3_event.json")
 	require.NoError(t, err)
 
 	h := instalambda.NewHandler(func(ctx context.Context, evt *events.S3Event) error {
@@ -469,7 +469,7 @@ func TestNewHandler_SQSEvent(t *testing.T) {
 	c := instana.InitCollector(getOptions(recorder))
 	defer instana.ShutdownCollector()
 
-	payload, err := ioutil.ReadFile("testdata/sqs_event.json")
+	payload, err := os.ReadFile("testdata/sqs_event.json")
 	require.NoError(t, err)
 
 	h := instalambda.NewHandler(func(ctx context.Context, evt *events.SQSEvent) error {
@@ -528,7 +528,7 @@ func TestNewHandler_PreferInstanaHeadersToW3ContextHeaders(t *testing.T) {
 			c := instana.InitCollector(getOptions(recorder))
 			defer instana.ShutdownCollector()
 
-			payload, err := ioutil.ReadFile(fileName)
+			payload, err := os.ReadFile(fileName)
 			require.NoError(t, err)
 
 			h := instalambda.NewHandler(func(ctx context.Context, evt *events.APIGatewayV2HTTPRequest) {

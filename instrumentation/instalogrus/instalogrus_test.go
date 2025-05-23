@@ -5,7 +5,7 @@ package instalogrus_test
 
 import (
 	"context"
-	"io/ioutil"
+	"io"
 	"testing"
 	"time"
 
@@ -39,7 +39,7 @@ func TestNewHook_SendLogSpans(t *testing.T) {
 
 	logger := logrus.New()
 	logger.Level = logrus.DebugLevel
-	logger.Out = ioutil.Discard
+	logger.Out = io.Discard
 	logger.Formatter = &logrus.JSONFormatter{
 		DisableTimestamp: true, // for easier comparison later
 	}
@@ -109,7 +109,7 @@ func TestNewHook_IgnoreLowLevels(t *testing.T) {
 
 	logger := logrus.New()
 	logger.Level = logrus.DebugLevel
-	logger.Out = ioutil.Discard
+	logger.Out = io.Discard
 
 	logger.AddHook(instalogrus.NewHook(c))
 
@@ -146,7 +146,7 @@ func TestNewHook_NoContext(t *testing.T) {
 
 	logger := logrus.New()
 	logger.Level = logrus.DebugLevel
-	logger.Out = ioutil.Discard
+	logger.Out = io.Discard
 
 	logger.AddHook(instalogrus.NewHook(c))
 

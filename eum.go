@@ -5,7 +5,7 @@ package instana
 
 import (
 	"bytes"
-	"io/ioutil"
+	"os"
 	"sort"
 	"strings"
 )
@@ -23,7 +23,7 @@ func EumSnippet(apiKey string, traceID string, meta map[string]string) string {
 		return ""
 	}
 
-	b, err := ioutil.ReadFile(eumTemplate)
+	b, err := os.ReadFile(eumTemplate)
 	if err != nil {
 		return ""
 	}
