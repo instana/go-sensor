@@ -9,7 +9,6 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"math/rand"
 	"os"
 	"strconv"
@@ -124,7 +123,7 @@ func Header2ID(header string) (int64, error) {
 func getProcCommandLine() (string, []string, bool) {
 	var cmdlinePath string = "/proc/" + strconv.Itoa(os.Getpid()) + "/cmdline"
 
-	cmdline, err := ioutil.ReadFile(cmdlinePath)
+	cmdline, err := os.ReadFile(cmdlinePath)
 	if err != nil {
 		return "", nil, false
 	}

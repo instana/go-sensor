@@ -9,7 +9,6 @@ package process
 import (
 	"bufio"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path"
 	"strings"
@@ -216,7 +215,19 @@ func (rdr statsReader) Limits() (ResourceLimits, error) {
 }
 
 func (rdr statsReader) currentOpenFiles() (int, error) {
-	fds, err := ioutil.ReadDir(rdr.ProcPath + "/self/fd/")
+
+	// This comment is added after replacing deprecated ioutil functions.
+	// ioutil.ReadDir and os.ReadDir differ slightly in syntax and return values,
+	// but in this logic, we are only concerned about the length of the returned slice,
+	// not its contents.
+	//
+	// As per the Go source code,
+	// both ioutil.ReadDir and os.ReadDir return the same number of items,
+	// so it's safe to replace ioutil.ReadDir with os.ReadDir here.
+	//
+	// Ref: https://cs.opensource.google/go/go/+/refs/tags/go1.24.3:src/io/ioutil/ioutil.go;l=62
+	fds, err := os.ReadDir(rdr.ProcPath + "/self/fd/")
+
 	if err != nil {
 		return 0, fmt.Errorf("failed to list %s: %s", rdr.ProcPath+"/fd/", err)
 	}

@@ -6,7 +6,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strings"
 	"testing"
@@ -66,7 +66,7 @@ func Test_agentS_SendSpans(t *testing.T) {
 				client: &httpClientMock{
 					resp: &http.Response{
 						StatusCode: 200,
-						Body:       ioutil.NopCloser(bytes.NewReader([]byte("{}"))),
+						Body:       io.NopCloser(bytes.NewReader([]byte("{}"))),
 					},
 				},
 			}

@@ -8,7 +8,7 @@ package instagin_test
 
 import (
 	"context"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -31,7 +31,7 @@ import (
 
 func TestMain(m *testing.M) {
 	gin.SetMode(gin.TestMode)
-	gin.DefaultWriter = ioutil.Discard
+	gin.DefaultWriter = io.Discard
 
 	os.Exit(m.Run())
 }

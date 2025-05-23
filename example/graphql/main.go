@@ -7,7 +7,6 @@ import (
 	"flag"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"net/http"
 
@@ -88,7 +87,7 @@ func handleGraphQLQuery(schema graphql.Schema) http.HandlerFunc {
 		}
 
 		if req.Method == http.MethodPost {
-			b, err := ioutil.ReadAll(req.Body)
+			b, err := io.ReadAll(req.Body)
 
 			if err != nil {
 				w.WriteHeader(http.StatusInternalServerError)
@@ -97,7 +96,7 @@ func handleGraphQLQuery(schema graphql.Schema) http.HandlerFunc {
 			}
 
 			defer req.Body.Close()
-			io.CopyN(ioutil.Discard, req.Body, 1<<62)
+			io.CopyN(io.Discard, req.Body, 1<<62)
 
 			var p payload
 

@@ -5,9 +5,9 @@ package gcloud_test
 
 import (
 	"context"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
 
 	"github.com/instana/go-sensor/gcloud"
@@ -19,7 +19,7 @@ func TestComputeMetadataProvider_ComputeMetadata(t *testing.T) {
 	baseURL, mux, teardown := setupTS()
 	defer teardown()
 
-	data, err := ioutil.ReadFile("testdata/computeMetadata.json")
+	data, err := os.ReadFile("testdata/computeMetadata.json")
 	require.NoError(t, err)
 
 	mux.HandleFunc("/computeMetadata/v1", func(w http.ResponseWriter, req *http.Request) {

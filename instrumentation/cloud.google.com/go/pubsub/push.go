@@ -7,7 +7,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strings"
 
@@ -31,14 +31,14 @@ func TracingHandlerFunc(sensor instana.TracerLogger, pathTemplate string, handle
 			return
 		}
 
-		data, err := ioutil.ReadAll(req.Body)
+		data, err := io.ReadAll(req.Body)
 		if err != nil {
 			sensor.Logger().Error("failed to read google cloud pub/sub request body:", err)
 			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			return
 		}
 
-		req.Body = ioutil.NopCloser(bytes.NewReader(data))
+		req.Body = io.NopCloser(bytes.NewReader(data))
 
 		sp, err := startConsumePushSpan(data, sensor)
 		if err != nil {

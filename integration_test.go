@@ -9,7 +9,7 @@ package instana_test
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"net"
 	"net/http"
@@ -55,7 +55,7 @@ func setupServerlessAgent() (*serverlessAgent, error) {
 }
 
 func (srv *serverlessAgent) HandleBundle(w http.ResponseWriter, req *http.Request) {
-	body, err := ioutil.ReadAll(req.Body)
+	body, err := io.ReadAll(req.Body)
 	if err != nil {
 		log.Printf("ERROR: failed to read serverless agent spans request body: %s", err)
 		body = nil

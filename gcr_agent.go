@@ -9,7 +9,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"strconv"
@@ -265,7 +264,7 @@ func (a *gcrAgent) sendRequest(req *http.Request) error {
 	defer resp.Body.Close()
 
 	if resp.StatusCode >= http.StatusBadRequest {
-		respBody, err := ioutil.ReadAll(resp.Body)
+		respBody, err := io.ReadAll(resp.Body)
 		if err != nil {
 			a.logger.Debug("failed to read serverless agent response: ", err)
 			return nil
@@ -275,7 +274,7 @@ func (a *gcrAgent) sendRequest(req *http.Request) error {
 		return nil
 	}
 
-	io.CopyN(ioutil.Discard, resp.Body, 1<<20)
+	io.CopyN(io.Discard, resp.Body, 1<<20)
 
 	return nil
 }
