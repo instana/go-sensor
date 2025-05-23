@@ -46,7 +46,7 @@ spec:
               image: ghcr.io/ctron/kubectl:latest
               env:
                 - name: NUM_TO_KEEP
-                  value: "50"
+                  value: "30"
               command:
                 - /bin/bash
                 - -c
