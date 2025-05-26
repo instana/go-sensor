@@ -4,7 +4,7 @@ go 1.23
 
 require (
 	github.com/bonede/go-redis-driver v0.1.0
-	github.com/instana/go-sensor v1.67.4
+	github.com/instana/go-sensor v1.67.5
 	github.com/instana/go-sensor/instrumentation/instaredis/v2 v2.24.0
 	github.com/redis/go-redis/v9 v9.8.0
 )
