@@ -3,7 +3,7 @@ module github.com/instana/go-sensor/instrumentation/instalambda
 go 1.23
 
 require (
-	github.com/aws/aws-lambda-go v1.48.0
+	github.com/aws/aws-lambda-go v1.49.0
 	github.com/instana/go-sensor v1.67.5
 	github.com/opentracing/opentracing-go v1.2.0
 	github.com/stretchr/testify v1.10.0
