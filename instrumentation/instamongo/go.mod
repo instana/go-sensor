@@ -6,7 +6,7 @@ require (
 	github.com/instana/go-sensor v1.67.5
 	github.com/opentracing/opentracing-go v1.2.0
 	github.com/stretchr/testify v1.10.0
-	go.mongodb.org/mongo-driver v1.17.3
+	go.mongodb.org/mongo-driver v1.17.4
 )
 
 require (
