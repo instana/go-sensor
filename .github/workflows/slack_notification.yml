@@ -15,7 +15,7 @@ jobs:
         if: "${{ success() && env.DRY_RUN != 'true' }}"
         uses: slackapi/slack-github-action@v2.1.0
         with:
-          webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
+          webhook: ${{ secrets.SLACK_WEBHOOK_URL_FOR_NEW_RELEASES }}
           webhook-type: incoming-webhook
           payload: |
             text: ":mega: *Go Tracer team* : Go package `${{ github.event.release.name }}` has been released"
