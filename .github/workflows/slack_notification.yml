@@ -13,37 +13,22 @@ jobs:
 
       - name: Send success message to slack release channel
         if: "${{ success() && env.DRY_RUN != 'true' }}"
-        uses: slackapi/slack-github-action@v1.24.0
+        uses: slackapi/slack-github-action@v2.1.0
         with:
-          channel-id: ${{ secrets.SLACK_RELEASE_CHANNEL_ID }}
+          webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
+          webhook-type: incoming-webhook
           payload: |
-            {
-              "text": ":mega: *Go Tracer team* : Go package ${{ github.event.release.name }} has been released",
-              "blocks": [
-                {
-                  "type": "section",
-                  "text": {
-                    "type": "mrkdwn",
-                    "text": ":mega: *Go Tracer team* : Go package ${{ github.event.release.name }} has been released. :tada:"
-                  }
-                },
-                {
-                  "type": "section",
-                  "text": {
-                    "type": "mrkdwn",
-                    "text": ${{ toJSON(github.event.release.body) }}
-                  }
-                },
-                {
-                  "type": "section",
-                  "text": {
-                    "type": "mrkdwn",
-                    "text": "Release link: <${{ github.event.release.html_url }}|${{ github.event.release.html_url }}>"
-                  }
-                }
-              ]
-            }
-        env:
-          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
-          SLACK_RELEASE_CHANNEL_ID: ${{ secrets.SLACK_RELEASE_CHANNEL_ID }}
-
+            text: ":mega: *Go Tracer team* : Go package `${{ github.event.release.name }}` has been released"
+            blocks:
+              - type: "section"
+                text: 
+                  type: "mrkdwn"
+                  text: ":mega: *Go Tracer team* : Go package `${{ github.event.release.name }}` has been released. :tada:"
+              - type: "section"
+                text:
+                  type: mrkdwn
+                  text: "${{ toJSON(github.event.release.body) }}"
+              - type: "section"
+                text:
+                  type: "mrkdwn"
+                  text": "Release link: <${{ github.event.release.html_url }}|${{ github.event.release.html_url }}>"
