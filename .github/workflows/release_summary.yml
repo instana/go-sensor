@@ -60,7 +60,6 @@ jobs:
 
           curl -H "Content-type: application/json" \
           --data '{"blocks":'"$MESSAGE"'}' \
-          -H "Authorization: Bearer $SLACK_BOT_TOKEN" \
           -X POST $SLACK_WEBHOOK_URL_FOR_CONSOLIDATED_RELEASES
         env:
           SLACK_WEBHOOK_URL_FOR_CONSOLIDATED_RELEASES: ${{secrets.SLACK_WEBHOOK_URL_FOR_CONSOLIDATED_RELEASES }}
