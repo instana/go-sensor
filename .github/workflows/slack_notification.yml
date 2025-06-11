@@ -8,6 +8,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+
       - name: Set env
         run: echo "RELEASE_VERSION=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
 
@@ -26,9 +27,9 @@ jobs:
                   text: ":mega: *Go Tracer team* : Go package `${{ github.event.release.name }}` has been released. :tada:"
               - type: "section"
                 text:
-                  type: mrkdwn
+                  type: "mrkdwn"
                   text: "${{ toJSON(github.event.release.body) }}"
               - type: "section"
                 text:
                   type: "mrkdwn"
-                  text": "Release link: <${{ github.event.release.html_url }}|${{ github.event.release.html_url }}>"
+                  text: "Release link: <${{ github.event.release.html_url }}|${{ github.event.release.html_url }}>"
