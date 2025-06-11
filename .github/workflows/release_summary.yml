@@ -59,12 +59,9 @@ jobs:
           if [[ $RELEASE_CONTENT == "" ]];then exit 0; fi
 
           curl -H "Content-type: application/json" \
-          --data '{"channel":"'"$SLACK_CHANNEL_ID"'","blocks":'"$MESSAGE"'}' \
-          -H "Authorization: Bearer $SLACK_BOT_TOKEN" \
-          -X POST https://slack.com/api/chat.postMessage
+          --data '{"blocks":'"$MESSAGE"'}' \
+          -X POST $SLACK_WEBHOOK_URL_FOR_CONSOLIDATED_RELEASES
         env:
-          SLACK_BOT_TOKEN: ${{secrets.SLACK_BOT_TOKEN }}
-          SLACK_CHANNEL_ID: ${{secrets.SLACK_TEST_CHANNEL_ID }}
+          SLACK_WEBHOOK_URL_FOR_CONSOLIDATED_RELEASES: ${{secrets.SLACK_WEBHOOK_URL_FOR_CONSOLIDATED_RELEASES }}
           MESSAGE: ${{ env.MESSAGE }}
           RELEASE_CONTENT: ${{ env.RELEASE_CONTENT }}
-
