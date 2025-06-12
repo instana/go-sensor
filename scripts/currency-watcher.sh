@@ -79,31 +79,20 @@ get_versions_from_rss() {
 notify_slack() {
     local repo=$1
     local version=$2
-    local pr_url=$3
-    local message="🚀 *New Release detected for $repo v$version*\nRepository: \`$repo\`\nVersion: \`$version\`\nPR Created: <$pr_url|View PR>"
-
-    curl -X POST https://slack.com/api/chat.postMessage \
-             -H "Authorization: Bearer $SLACK_TOKEN" \
-             -H "Content-type: application/json" \
-             --data "{\"channel\": \"$SLACK_CHANNEL_ID\",\"text\": \"$message\" }"
+    local message="🚀 *New Release detected for $repo v$version*\nRepository: \`$repo\`\nVersion: \`$version\`"
+    curl -X POST -H 'Content-type: application/json' --data "{\"text\":\"$message\"}" "$SLACK_HOOK"
 }
 
-# ==== Function: Create PR for untracked release ====
-create_pr_for_untracked_release() {
-    local repo=$1
-    local version=$2
-    local instrumentation=$3
-    local repo_name=""
-    repo_name=$(dirname "$repo")
-    local branch_name=""
-    branch_name="$(date +%Y%m%d)-$repo_name-$version"
+# ==== Function: Create a PR for untracked release ====
+create_pr() {
+        local repo=$1
+        local version=$2
+        local instrumentation=$3
+        local repo_name=""
+        repo_name=$(dirname "$repo")
+        local branch_name=""
+        branch_name="$(date +%Y%m%d)-$repo_name-$version"
 
-    [ "$INFO" = "true" ] && echo "[INFO] Preparing PR for $repo version $version..."
-
-    if [ "$DRY_RUN" = true ]; then
-        echo "[DRY RUN] Would push branch $branch_name and create PR."
-        echo "[DRY RUN] Would send Slack message for $repo version $version"
-    else
         # Create a branch and commit the changes
         git config user.name "tracer-team-go"
         git config user.email "github-actions@github.com"
@@ -125,9 +114,27 @@ create_pr_for_untracked_release() {
         [ "$INFO" = "true" ] && echo "[CREATED] $repo: version $version — PR URL: $pr_url"
         git checkout main
         git branch -D "$branch_name"
-        notify_slack "$repo" "$version" "$pr_url"
+}
+
+# ==== Function: Create PR and push notifications in Slack for untracked release ====
+create_pr_for_untracked_release() {
+    local repo=$1
+    local version=$2
+    local instrumentation=$3
+
+    [ "$INFO" = "true" ] && echo "[INFO] Preparing PR for $repo version $version..."
+
+    if [ "$DRY_RUN" = true ]; then
+        echo "[DRY RUN] Would push branch $branch_name and create PR."
+        echo "[DRY RUN] Would send Slack message for $repo version $version"
+    else
+        # Disabling this for the time being as it is not adding much value currently
+        #create_pr "$repo" "$version" "$instrumentation"
+        notify_slack "$repo" "$version"
     fi
 }
+
+
 
 # ==== Main Script ====
 [ "$INFO" = "true" ] && echo "[INFO] Checking repositories for untracked versions..."
