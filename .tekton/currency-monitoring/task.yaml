@@ -19,16 +19,11 @@ spec:
             secretKeyRef:
               name: "github-token"
               key: "token"
-        - name: SLACK_TOKEN
+        - name: SLACK_HOOK
           valueFrom:
             secretKeyRef:
-              name: "slack-token"
-              key: "token"
-        - name: SLACK_CHANNEL_ID
-          valueFrom:
-            secretKeyRef:
-              name: "slack-channel-id"
-              key: "channelId"
+              name: "slack-channel-hook"
+              key: "channelHook"
         - name: GITHUB_USERNAME
           valueFrom:
             secretKeyRef:

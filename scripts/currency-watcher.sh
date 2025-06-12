@@ -79,12 +79,8 @@ get_versions_from_rss() {
 notify_slack() {
     local repo=$1
     local version=$2
-    local message="🚀 *New Release detected for $repo v$version*\nRepository: \`$repo\`\nVersion: \`$version\`\nPR"
-
-    curl -X POST https://slack.com/api/chat.postMessage \
-             -H "Authorization: Bearer $SLACK_TOKEN" \
-             -H "Content-type: application/json" \
-             --data "{\"channel\": \"$SLACK_CHANNEL_ID\",\"text\": \"$message\" }"
+    local message="🚀 *New Release detected for $repo v$version*\nRepository: \`$repo\`\nVersion: \`$version\`"
+    curl -X POST -H 'Content-type: application/json' --data "{\"text\":\"$message\"}" "$SLACK_HOOK"
 }
 
 # ==== Function: Create a PR for untracked release ====
