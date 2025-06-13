@@ -72,7 +72,12 @@ get_versions_from_rss() {
   get_pr_titles() {
       pr_titles=$(curl -s -H "Authorization: token $GH_TOKEN" \
           "https://api.github.com/repos/$MY_REPO/pulls?state=all&sort=created&direction=desc&per_page=$NUM_PRS")
-      echo "$pr_titles" | tr -d '\000-\037' | jq -r '.[].title'
+
+       echo "PR titles"
+       echo "$pr_titles"
+       echo "PR titles after cleaning"
+       echo "$pr_titles" | tr -d '\000-\037'
+      #echo "$pr_titles" | tr -d '\000-\037' | jq -r '.[].title'
   }
 
 # ==== Function: Notify Slack ====
