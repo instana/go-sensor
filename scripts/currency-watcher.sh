@@ -135,43 +135,9 @@ create_pr_for_untracked_release() {
 }
 
 
-
 # ==== Main Script ====
 [ "$INFO" = "true" ] && echo "[INFO] Checking repositories for untracked versions..."
 PR_TITLES=$(get_pr_titles)
 
-for i in "${!REPOS[@]}"; do
-    repo="${REPOS[$i]}"
-    instrumentation="${INSTRUMENTATIONS[$i]}"
-    [ "$INFO" = "true" ] && echo "[INFO] ------------------------------------------------------------------------------"
-    [ "$INFO" = "true" ] && echo "[INFO] Processing: $repo for instrumentation: $instrumentation..."
-    versions=$(get_versions_from_rss "$repo")
-
-    if [ -z "$versions" ]; then
-      [ "$INFO" = "true" ] && echo "[INFO] Found no recent versions."
-      continue
-    else
-      [ "$INFO" = "true" ] && echo "[INFO] Found some recent versions."
-    fi
-
-
-    while IFS= read -r version; do
-        version_clean=$(echo "$version" | grep -oE '[vV]?[0-9]+\.[0-9]+\.[0-9]+' | grep -vE '^[12][0-9]{3}\.[01]?[0-9]\.[0-9]{2}$' | sed 's/^v//' | head -n1)
-
-        [[ -z "$version_clean" ]] && continue
-        [ "$DEBUG" = "true" ] && echo "[DEBUG] instrumentation: ${instrumentation}"
-        pattern_matcher="^feat\(currency\): updated instrumentation of ${instrumentation}[a-zA-Z0-9_\/-]* for new version v${version_clean}\. Id: [a-zA-Z0-9_-]+$"
-        pattern="$pattern_matcher"
-
-        if echo "$PR_TITLES" | grep -qE "$pattern"; then
-            pr=$(echo "$PR_TITLES" | grep -oE "$pattern")
-            [ "$INFO" = "true" ] && echo "[INFO] Matched pull request: [$pr]"
-            [ "$INFO" = "true" ] && echo "[INFO] The latest version has been instrumented. Aborting the check for lower versions"
-            break
-        else
-            [ "$INFO" = "true" ] && echo "[INFO] There is a need to create a PR for $version_clean"
-            create_pr_for_untracked_release "$repo" "$version_clean" "$instrumentation"
-            break
-        fi
-    done <<< "$versions"
-done
+echo "Last 100 PR titles:"
+echo "$PR_TITLES"
