@@ -3,7 +3,7 @@ module kafka-producer-consumer
 go 1.23.0
 
 require (
-	github.com/IBM/sarama v1.45.1
+	github.com/IBM/sarama v1.45.2
 	github.com/instana/go-sensor v1.67.5
 	github.com/instana/go-sensor/instrumentation/instasarama v1.37.0
 	github.com/opentracing/opentracing-go v1.2.0
