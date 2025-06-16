@@ -339,11 +339,11 @@ func cloneRequest(ctx context.Context, r *http.Request) *http.Request {
 
 	r2.URL = cloneURL(r.URL)
 	if r.Header != nil {
-		r2.Header = cloneHeader(r.Header)
+		r2.Header = r.Header.Clone()
 	}
 
 	if r.Trailer != nil {
-		r2.Trailer = cloneHeader(r.Trailer)
+		r2.Trailer = r.Trailer.Clone()
 	}
 
 	if s := r.TransferEncoding; s != nil {
@@ -367,7 +367,7 @@ func cloneURLValues(v url.Values) url.Values {
 	// http.Header and url.Values have the same representation, so temporarily
 	// treat it like http.Header, which does have a clone:
 
-	return url.Values(cloneHeader(http.Header(v)))
+	return url.Values(http.Header(v).Clone())
 }
 
 func cloneURL(u *url.URL) *url.URL {
@@ -392,7 +392,7 @@ func cloneMultipartForm(f *multipart.Form) *multipart.Form {
 	}
 
 	f2 := &multipart.Form{
-		Value: (map[string][]string)(cloneHeader(http.Header(f.Value))),
+		Value: (map[string][]string)(http.Header(f.Value).Clone()),
 	}
 
 	if f.File != nil {
@@ -420,34 +420,7 @@ func cloneMultipartFileHeader(fh *multipart.FileHeader) *multipart.FileHeader {
 	fh2 := new(multipart.FileHeader)
 	*fh2 = *fh
 
-	fh2.Header = textproto.MIMEHeader(cloneHeader(http.Header(fh.Header)))
+	fh2.Header = textproto.MIMEHeader(http.Header(fh.Header).Clone())
 
 	return fh2
-}
-
-// The following code is ported from $GOROOT/src/net/http/header.go with minor changes
-// for compatibility with Go versions prior to 1.13
-//
-// Copyright 2019 The Go Authors. All rights reserved.
-// Use of this source code is governed by a BSD-style
-// license that can be found in the LICENSE file.
-
-func cloneHeader(h http.Header) http.Header {
-	if h == nil {
-		return nil
-	}
-
-	// Find total number of values.
-	nv := 0
-	for _, vv := range h {
-		nv += len(vv)
-	}
-	sv := make([]string, nv) // shared backing array for headers' values
-	h2 := make(http.Header, len(h))
-	for k, vv := range h {
-		n := copy(sv, vv)
-		h2[k] = sv[:n:n]
-		sv = sv[n:]
-	}
-	return h2
 }
