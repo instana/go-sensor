@@ -28,7 +28,7 @@ jobs:
               - type: "section"
                 text:
                   type: "mrkdwn"
-                  text: "${{ toJSON(github.event.release.body) }}"
+                  text: ${{ toJSON(github.event.release.body) }}
               - type: "section"
                 text:
                   type: "mrkdwn"
