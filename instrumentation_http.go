@@ -92,7 +92,10 @@ func TracingNamedHandlerFunc(sensor TracerLogger, routeID, pathTemplate string, 
 		}()
 
 		wrapped := wrapResponseWriter(w)
-		tracer.Inject(span.Context(), ot.HTTPHeaders, ot.HTTPHeadersCarrier(wrapped.Header()))
+		err := tracer.Inject(span.Context(), ot.HTTPHeaders, ot.HTTPHeadersCarrier(wrapped.Header()))
+		if err != nil {
+			sensor.Logger().Warn("failed to inject the span context. Error details: ", err.Error())
+		}
 
 		handler(wrapped, req.WithContext(ContextWithSpan(ctx, span)))
 
