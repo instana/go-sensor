@@ -36,7 +36,11 @@ func NewRecorder() *Recorder {
 	go func() {
 		for range ticker.C {
 			if sensor.Agent().Ready() {
-				go r.Flush(context.Background())
+				go func() {
+					if err := r.Flush(context.Background()); err != nil {
+						sensor.logger.Error("failed to flush the spans:  ", err.Error())
+					}
+				}()
 			}
 		}
 	}()
