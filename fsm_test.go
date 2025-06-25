@@ -55,10 +55,9 @@ func Test_fsmS_testAgent(t *testing.T) {
 
 	defer server.Close()
 
-	surl := server.URL
-	u, err := url.Parse(surl)
-
-	assert.NoError(t, err)
+	serverURL := server.URL
+	u, err := url.Parse(serverURL)
+	assert.NoError(t, err, "failed to parse the URL")
 
 	res := make(chan bool, 1)
 
@@ -96,10 +95,9 @@ func Test_fsmS_testAgent_Error(t *testing.T) {
 
 	defer server.Close()
 
-	surl := server.URL
-	u, err := url.Parse(surl)
-
-	assert.NoError(t, err)
+	serverURL := server.URL
+	u, err := url.Parse(serverURL)
+	assert.NoError(t, err, "failed to parse the URL")
 
 	res := make(chan bool, 1)
 
@@ -138,7 +136,7 @@ func Test_fsmS_announceSensor(t *testing.T) {
 	server := getTestServer(func(w http.ResponseWriter, r *http.Request) {
 		if serverGaveErrorOnFirstCall {
 			pid := strconv.FormatInt(int64(os.Getpid()), 10)
-			io.WriteString(w, `{"pid":`+pid+`}`)
+			_, _ = io.WriteString(w, `{"pid":`+pid+`}`)
 		} else {
 			serverGaveErrorOnFirstCall = true
 			w.WriteHeader(http.StatusBadRequest)
@@ -146,10 +144,9 @@ func Test_fsmS_announceSensor(t *testing.T) {
 	})
 	defer server.Close()
 
-	surl := server.URL
-	u, err := url.Parse(surl)
-
-	assert.NoError(t, err)
+	serverURL := server.URL
+	u, err := url.Parse(serverURL)
+	assert.NoError(t, err, "failed  to parse the URL")
 
 	res := make(chan bool, 1)
 
@@ -183,10 +180,9 @@ func Test_fsmS_announceSensor_Error(t *testing.T) {
 	})
 	defer server.Close()
 
-	surl := server.URL
-	u, err := url.Parse(surl)
-
-	assert.NoError(t, err)
+	serverURL := server.URL
+	u, err := url.Parse(serverURL)
+	assert.NoError(t, err, "failed to parse the URL")
 
 	res := make(chan bool, 1)
 
@@ -229,10 +225,9 @@ func Test_fsmS_lookupAgentHost(t *testing.T) {
 	})
 	defer server.Close()
 
-	surl := server.URL
-	u, err := url.Parse(surl)
-
-	assert.NoError(t, err)
+	serverURL := server.URL
+	u, err := url.Parse(serverURL)
+	assert.NoError(t, err, "failed to parse the URL")
 
 	res := make(chan bool, 1)
 
@@ -290,7 +285,7 @@ func Test_fsmS_agentConnectionReestablished(t *testing.T) {
 
 		// announce phase (enter_unannounced)
 		if p == "/com.instana.plugin.golang.discovery" {
-			io.WriteString(w, agentResponseJSON)
+			_, _ = io.WriteString(w, agentResponseJSON)
 			return
 		}
 
@@ -298,12 +293,16 @@ func Test_fsmS_agentConnectionReestablished(t *testing.T) {
 	})
 	defer server.Close()
 
-	surl := server.URL
-	u, err := url.Parse(surl)
+	serverURL := server.URL
+	u, err := url.Parse(serverURL)
+	assert.NoError(t, err, "failed to parse the URL")
 
-	os.Setenv("INSTANA_AGENT_HOST", u.Hostname())
+	err = os.Setenv("INSTANA_AGENT_HOST", u.Hostname())
+	assert.NoError(t, err, "failed to set the env variable")
+
 	defer func() {
-		os.Unsetenv("INSTANA_AGENT_HOST")
+		err = os.Unsetenv("INSTANA_AGENT_HOST")
+		assert.NoError(t, err, "failed to set the env variable")
 	}()
 
 	assert.NoError(t, err)
@@ -350,7 +349,8 @@ func Test_fsmS_agentConnectionReestablished(t *testing.T) {
 		})
 	}()
 
-	r.fsm.Event(context.Background(), eInit)
+	err = r.fsm.Event(context.Background(), eInit)
+	assert.NoError(t, err, "failed to initiate the state transition")
 
 	assert.True(t, <-res)
 
