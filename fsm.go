@@ -182,7 +182,9 @@ func (r *fsmS) lookupSuccess(host string) {
 
 	r.agentComm.host = host
 	r.retriesLeft = maximumRetries
-	r.fsm.Event(context.Background(), eLookup)
+	if err := r.fsm.Event(context.Background(), eLookup); err != nil {
+		r.logger.Warn("failed to initiate the state transition: ", err.Error())
+	}
 }
 
 func (r *fsmS) handleRetries(e *f.Event, cb func(_ context.Context, e *f.Event), retryFailMsg, retryMsg string) {
