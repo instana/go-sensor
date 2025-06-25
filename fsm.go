@@ -325,7 +325,9 @@ func (r *fsmS) testAgent(_ context.Context, e *f.Event) {
 		}
 
 		r.retriesLeft = maximumRetries
-		r.fsm.Event(context.Background(), eTest)
+		if err := r.fsm.Event(context.Background(), eTest); err != nil {
+			r.logger.Warn("failed to initiate the state transition: ", err.Error())
+		}
 	}()
 }
 
