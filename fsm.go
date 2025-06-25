@@ -70,7 +70,9 @@ func newFSM(ahd *agentCommunicator, logger LeveledLogger) *fsmS {
 			"enter_announced":   ret.testAgent,
 			"ready":             ret.ready,
 		})
-	ret.fsm.Event(context.Background(), eInit)
+	if err := ret.fsm.Event(context.Background(), eInit); err != nil {
+		logger.Warn("failed to initiate the state transition: ", err.Error())
+	}
 
 	return ret
 }
