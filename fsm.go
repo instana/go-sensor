@@ -191,7 +191,9 @@ func (r *fsmS) handleRetries(e *f.Event, cb func(_ context.Context, e *f.Event),
 	r.retriesLeft--
 	if r.retriesLeft == 0 {
 		r.logger.Error(retryFailMsg)
-		r.fsm.Event(context.Background(), eInit)
+		if err := r.fsm.Event(context.Background(), eInit); err != nil {
+			r.logger.Warn("failed to initiate the state transition: ", err.Error())
+		}
 		return
 	}
 
