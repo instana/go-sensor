@@ -264,7 +264,9 @@ func (r *fsmS) announceSensor(_ context.Context, e *f.Event) {
 		r.applyHostAgentSettings(*resp)
 
 		r.retriesLeft = maximumRetries
-		r.fsm.Event(context.Background(), eAnnounce)
+		if err := r.fsm.Event(context.Background(), eAnnounce); err != nil {
+			r.logger.Warn("failed to initiate the state transition: ", err.Error())
+		}
 	}()
 }
 
