@@ -295,7 +295,11 @@ func (r *fsmS) getDiscoveryS() *discoveryS {
 	if _, err := os.Stat("/proc"); err == nil {
 		if addr, err := net.ResolveTCPAddr("tcp", r.agentComm.host+":42699"); err == nil {
 			if tcpConn, err := net.DialTCP("tcp", nil, addr); err == nil {
-				defer tcpConn.Close()
+				defer func(tcpConn *net.TCPConn) {
+					if err := tcpConn.Close(); err != nil {
+						r.logger.Error("failed to close the tcp connection: ", err.Error())
+					}
+				}(tcpConn)
 
 				file, err := tcpConn.File()
 
