@@ -80,7 +80,11 @@ func (r *Recorder) RecordSpan(span *spanS) {
 
 	if len(r.spans) >= sensor.options.ForceTransmissionStartingAt {
 		sensor.logger.Debug("forcing ", len(r.spans), "span(s) to the agent")
-		go r.Flush(context.Background())
+		go func() {
+			if err := r.Flush(context.Background()); err != nil {
+				sensor.logger.Error("failed to flush the spans: ", err.Error())
+			}
+		}()
 	}
 }
 
