@@ -334,7 +334,9 @@ func (r *fsmS) testAgent(_ context.Context, e *f.Event) {
 func (r *fsmS) reset() {
 	r.logger.Debug("State machine reset. Will restart agent connection cycle from the 'init' state")
 	r.retriesLeft = maximumRetries
-	r.fsm.Event(context.Background(), eInit)
+	if err := r.fsm.Event(context.Background(), eInit); err != nil {
+		r.logger.Warn("failed to initiate the state transition: ", err.Error())
+	}
 }
 
 func (r *fsmS) ready(_ context.Context, e *f.Event) {
