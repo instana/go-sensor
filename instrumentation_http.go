@@ -5,11 +5,8 @@ package instana
 
 import (
 	"bufio"
-	"context"
-	"mime/multipart"
 	"net"
 	"net/http"
-	"net/textproto"
 	"net/url"
 
 	ot "github.com/opentracing/opentracing-go"
@@ -206,7 +203,7 @@ func RoundTripper(sensor TracerLogger, original http.RoundTripper) http.RoundTri
 		defer span.Finish()
 
 		// clone the request since the RoundTrip should not modify the original one
-		req = cloneRequest(ContextWithSpan(ctx, span), req)
+		req = req.Clone(ContextWithSpan(ctx, span))
 		sensor.Tracer().Inject(span.Context(), ot.HTTPHeaders, ot.HTTPHeadersCarrier(req.Header))
 
 		var collectableHTTPHeaders []string
@@ -325,40 +322,6 @@ func collectHTTPParams(req *http.Request, matcher Matcher) url.Values {
 	return params
 }
 
-// The following code is ported from $GOROOT/src/net/http/clone.go with minor changes
-// for compatibility with Go versions prior to 1.13
-//
-// Copyright 2019 The Go Authors. All rights reserved.
-// Use of this source code is governed by a BSD-style
-// license that can be found in the LICENSE file.
-
-func cloneRequest(ctx context.Context, r *http.Request) *http.Request {
-	r2 := new(http.Request)
-	*r2 = *r
-	r2 = r2.WithContext(ctx)
-
-	r2.URL = cloneURL(r.URL)
-	if r.Header != nil {
-		r2.Header = cloneHeader(r.Header)
-	}
-
-	if r.Trailer != nil {
-		r2.Trailer = cloneHeader(r.Trailer)
-	}
-
-	if s := r.TransferEncoding; s != nil {
-		s2 := make([]string, len(s))
-		copy(s2, s)
-		r2.TransferEncoding = s
-	}
-
-	r2.Form = cloneURLValues(r.Form)
-	r2.PostForm = cloneURLValues(r.PostForm)
-	r2.MultipartForm = cloneMultipartForm(r.MultipartForm)
-
-	return r2
-}
-
 func cloneURLValues(v url.Values) url.Values {
 	if v == nil {
 		return nil
@@ -367,7 +330,7 @@ func cloneURLValues(v url.Values) url.Values {
 	// http.Header and url.Values have the same representation, so temporarily
 	// treat it like http.Header, which does have a clone:
 
-	return url.Values(cloneHeader(http.Header(v)))
+	return url.Values(http.Header(v).Clone())
 }
 
 func cloneURL(u *url.URL) *url.URL {
@@ -384,70 +347,4 @@ func cloneURL(u *url.URL) *url.URL {
 	}
 
 	return u2
-}
-
-func cloneMultipartForm(f *multipart.Form) *multipart.Form {
-	if f == nil {
-		return nil
-	}
-
-	f2 := &multipart.Form{
-		Value: (map[string][]string)(cloneHeader(http.Header(f.Value))),
-	}
-
-	if f.File != nil {
-		m := make(map[string][]*multipart.FileHeader)
-		for k, vv := range f.File {
-			vv2 := make([]*multipart.FileHeader, len(vv))
-			for i, v := range vv {
-				vv2[i] = cloneMultipartFileHeader(v)
-			}
-			m[k] = vv2
-
-		}
-
-		f2.File = m
-	}
-
-	return f2
-}
-
-func cloneMultipartFileHeader(fh *multipart.FileHeader) *multipart.FileHeader {
-	if fh == nil {
-		return nil
-	}
-
-	fh2 := new(multipart.FileHeader)
-	*fh2 = *fh
-
-	fh2.Header = textproto.MIMEHeader(cloneHeader(http.Header(fh.Header)))
-
-	return fh2
-}
-
-// The following code is ported from $GOROOT/src/net/http/header.go with minor changes
-// for compatibility with Go versions prior to 1.13
-//
-// Copyright 2019 The Go Authors. All rights reserved.
-// Use of this source code is governed by a BSD-style
-// license that can be found in the LICENSE file.
-
-func cloneHeader(h http.Header) http.Header {
-	if h == nil {
-		return nil
-	}
-
-	// Find total number of values.
-	nv := 0
-	for _, vv := range h {
-		nv += len(vv)
-	}
-	sv := make([]string, nv) // shared backing array for headers' values
-	h2 := make(http.Header, len(h))
-	for k, vv := range h {
-		n := copy(sv, vv)
-		h2[k] = sv[:n:n]
-		sv = sv[n:]
-	}
-	return h2
 }
