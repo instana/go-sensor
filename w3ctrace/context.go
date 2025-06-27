@@ -63,6 +63,10 @@ func Extract(headers http.Header) (Context, error) {
 		case strings.EqualFold(k, TraceStateHeader):
 			tr.RawState = v[0]
 		}
+		// early exit if both found
+		if tr.RawParent != "" && tr.RawState != "" {
+			break
+		}
 	}
 
 	if tr.RawParent == "" {
