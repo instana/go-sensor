@@ -5,7 +5,6 @@ package w3ctrace_test
 
 import (
 	"net/http"
-	"net/textproto"
 	"testing"
 
 	"github.com/instana/go-sensor/w3ctrace"
@@ -42,8 +41,8 @@ func TestExtract(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			headers := http.Header{}
 			// set raw headers to preserve header name case
-			headers[textproto.CanonicalMIMEHeaderKey(example.ParentHeader)] = []string{exampleTraceParent}
-			headers[textproto.CanonicalMIMEHeaderKey(example.StateHeader)] = []string{exampleTraceState}
+			headers[example.ParentHeader] = []string{exampleTraceParent}
+			headers[example.StateHeader] = []string{exampleTraceState}
 
 			tr, err := w3ctrace.Extract(headers)
 			require.NoError(t, err)

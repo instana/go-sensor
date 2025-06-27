@@ -52,8 +52,22 @@ func (c Context) IsZero() bool {
 func Extract(headers http.Header) (Context, error) {
 	var tr Context
 
-	tr.RawParent = headers.Get(TraceParentHeader)
-	tr.RawState = headers.Get(TraceStateHeader)
+	for k, v := range headers {
+		if len(v) == 0 {
+			continue
+		}
+
+		switch {
+		case strings.EqualFold(k, TraceParentHeader):
+			tr.RawParent = v[0]
+		case strings.EqualFold(k, TraceStateHeader):
+			tr.RawState = v[0]
+		}
+		// early exit if both found
+		if tr.RawParent != "" && tr.RawState != "" {
+			break
+		}
+	}
 
 	if tr.RawParent == "" {
 		return tr, ErrContextNotFound
