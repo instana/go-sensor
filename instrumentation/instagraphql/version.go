@@ -3,4 +3,4 @@
 package instagraphql
 
 // Version is the instrumentation module semantic version
-const Version = "1.25.0"
+const Version = "1.26.0"
