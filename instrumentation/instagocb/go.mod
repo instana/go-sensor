@@ -5,7 +5,7 @@ go 1.23.0
 require (
 	github.com/couchbase/gocb/v2 v2.10.0
 	github.com/couchbase/gocbcore/v10 v10.7.0
-	github.com/instana/go-sensor v1.67.5
+	github.com/instana/go-sensor v1.67.7
 	github.com/opentracing/opentracing-go v1.2.0
 	github.com/stretchr/testify v1.10.0
 )
