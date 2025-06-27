@@ -3,8 +3,8 @@ github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/google/uuid v1.6.0 h1:NIvaJDMOsjHA8n1jAhLSgzrAzy1Hgr+hNrb57e+94F0=
 github.com/google/uuid v1.6.0/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
-github.com/instana/go-sensor v1.67.5 h1:Fx59ZA6BZmPHMsTdm8Kj3heqWIaqTB9TXUIpe9/2Tgg=
-github.com/instana/go-sensor v1.67.5/go.mod h1:+3PDOpCpshz6kIycn81ixjsVKBgzpcXQBEOCv8zqVfw=
+github.com/instana/go-sensor v1.67.6 h1:OfzJTdkOr0tTXIsixEuGnVHN9e3bSPdYUmnYUA+Md04=
+github.com/instana/go-sensor v1.67.6/go.mod h1:+3PDOpCpshz6kIycn81ixjsVKBgzpcXQBEOCv8zqVfw=
 github.com/julienschmidt/httprouter v1.3.0 h1:U0609e9tgbseu3rBINet9P48AI/D3oJs4dN7jwJOQ1U=
 github.com/julienschmidt/httprouter v1.3.0/go.mod h1:JR6WtHb+2LUe8TCKY3cZOxFyyO8IZAc4RVcycCCAKdM=
 github.com/looplab/fsm v1.0.2 h1:f0kdMzr4CRpXtaKKRUxwLYJ7PirTdwrtNumeLN+mDx8=
