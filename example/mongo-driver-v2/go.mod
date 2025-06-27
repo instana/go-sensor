@@ -3,9 +3,9 @@ module github.com/instana/go-sensor/example/mongo-driver-v2
 go 1.23.0
 
 require (
-	github.com/instana/go-sensor v1.67.4
-	github.com/instana/go-sensor/instrumentation/instamongo/v2 v2.4.0
-	go.mongodb.org/mongo-driver/v2 v2.2.1
+	github.com/instana/go-sensor v1.67.7
+	github.com/instana/go-sensor/instrumentation/instamongo/v2 v2.7.0
+	go.mongodb.org/mongo-driver/v2 v2.2.2
 )
 
 require (
@@ -18,9 +18,9 @@ require (
 	github.com/xdg-go/scram v1.1.2 // indirect
 	github.com/xdg-go/stringprep v1.0.4 // indirect
 	github.com/youmark/pkcs8 v0.0.0-20240726163527-a2c0da244d78 // indirect
-	golang.org/x/crypto v0.38.0 // indirect
-	golang.org/x/sync v0.14.0 // indirect
-	golang.org/x/text v0.25.0 // indirect
+	golang.org/x/crypto v0.39.0 // indirect
+	golang.org/x/sync v0.15.0 // indirect
+	golang.org/x/text v0.26.0 // indirect
 )
 
 replace (

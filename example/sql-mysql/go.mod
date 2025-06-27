@@ -3,8 +3,8 @@ module sql-mysql.com
 go 1.23
 
 require (
-	github.com/go-sql-driver/mysql v1.9.2
-	github.com/instana/go-sensor v1.67.4
+	github.com/go-sql-driver/mysql v1.9.3
+	github.com/instana/go-sensor v1.67.7
 )
 
 require (
