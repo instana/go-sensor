@@ -548,3 +548,72 @@ func Test_fsmS_applyHostAgentSettings_agent_secrets_not_valid_Error(t *testing.T
 	assert.Equal(t, []string{"testHeader"}, sensor.options.Tracer.CollectableHTTPHeaders)
 
 }
+
+func Test_exponentialDelay(t *testing.T) {
+	testcases := map[string]struct {
+		Input            int
+		ExpectedOutputMs time.Duration
+	}{
+		"retry1": {
+			Input:            1,
+			ExpectedOutputMs: 10000,
+		},
+		"retry2": {
+			Input:            2,
+			ExpectedOutputMs: 20000,
+		},
+		"retry3": {
+			Input:            3,
+			ExpectedOutputMs: 40000,
+		},
+	}
+
+	for name, testcase := range testcases {
+		t.Run(name, func(t *testing.T) {
+			output := expDelay(testcase.Input)
+			assert.Equal(t, output, testcase.ExpectedOutputMs*time.Millisecond, "The actual delay varies from the expected delay")
+		})
+	}
+
+}
+
+func Test_fsmS_cpusetFileContent(t *testing.T) {
+	r := &fsmS{
+		agentComm:   newAgentCommunicator("123", "456", &fromS{}, defaultLogger),
+		fsm:         f.NewFSM("", []f.EventDesc{}, map[string]f.Callback{}),
+		retriesLeft: maximumRetries,
+		expDelayFunc: func(retryNumber int) time.Duration {
+			return 0
+		},
+		logger: defaultLogger,
+	}
+
+	data := r.cpusetFileContent(3)
+	assert.Equal(t, data, "")
+}
+
+func Test_fsmS_lookupDefaultGateway(t *testing.T) {
+	server := getTestServer(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusBadRequest)
+	})
+
+	rawURL := server.URL
+
+	serverURL, err := url.Parse(rawURL)
+	assert.NoError(t, err, "failed to parse the URL")
+
+	agc := newAgentCommunicator(serverURL.Host, serverURL.Port(), &fromS{}, defaultLogger)
+
+	newFSM(agc, defaultLogger)
+
+	//r := &fsmS{
+	//	agentComm:   newAgentCommunicator(serverURL.Host, serverURL.Port(), &fromS{}, defaultLogger),
+	//	fsm:         f.NewFSM(eInit, []f.EventDesc{}, map[string]f.Callback{}),
+	//	retriesLeft: maximumRetries,
+	//	expDelayFunc: func(retryNumber int) time.Duration {
+	//		return 0
+	//	},
+	//	logger: defaultLogger,
+	//}
+
+}

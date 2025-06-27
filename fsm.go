@@ -92,22 +92,23 @@ func (r *fsmS) lookupAgentHost(_ context.Context, e *f.Event) {
 	go r.checkHost(e)
 }
 
-// checkHost verifies and set the agent host address
-func (r *fsmS) checkHost(e *f.Event) {
-
-	// Look for a successful ping from the configured host
-	host := r.agentComm.host
+func (r *fsmS) checkCurrentHost() bool {
+	currentHost := r.agentComm.host
 	r.logger.Debug("checking host ", r.agentComm.host)
 
 	found := r.agentComm.checkForSuccessResponse()
 
 	if found {
-		r.lookupSuccess(host)
-		r.logger.Debug("Agent host found: '", host, "' when attempting to read the string 'Instana Agent' from the response header.")
-		return
+		r.lookupSuccess(currentHost)
+		r.logger.Debug("Agent host found: '", currentHost, "' when attempting to read the string 'Instana Agent' from the response header.")
+		return true
 	}
 
-	// Check whether agent host is configured in env variable and look for a successful ping from the configured host
+	r.logger.Debug("Failed to lookup with the configured current host")
+	return false
+}
+
+func (r *fsmS) checkWithHostFromEnvironmentVariable() bool {
 	r.logger.Debug("Attempting to retrieve host from the INSTANA_AGENT_HOST environment variable")
 	hostFromEnv, ok := os.LookupEnv("INSTANA_AGENT_HOST")
 
@@ -117,62 +118,83 @@ func (r *fsmS) checkHost(e *f.Event) {
 		r.logger.Debug("Attempting to reach the agent with host found from the INSTANA_AGENT_HOST environment variable: ", hostFromEnv)
 		originalHost := r.agentComm.host
 		r.agentComm.host = hostFromEnv
-		found = r.agentComm.checkForSuccessResponse()
+		found := r.agentComm.checkForSuccessResponse()
 
 		if found {
 			r.logger.Debug("Lookup successful with host from the INSTANA_AGENT_HOST environment variable: ", hostFromEnv)
 			r.lookupSuccess(hostFromEnv)
-			return
+			return true
 		}
 
 		r.logger.Debug("Lookup failed with host from the INSTANA_AGENT_HOST environment variable: ", hostFromEnv, ". Updating host back to the original: ", originalHost)
-
 		r.agentComm.host = originalHost
 	}
 
-	// Look for a successful ping for the configured default gateway
-	routeFilename := "/proc/net/route"
-	r.logger.Debug("Lookup failed for expected host: ", r.agentComm.host, ". Will attempt to read host from ", routeFilename)
-	if _, fileNotFoundErr := os.Stat(routeFilename); fileNotFoundErr == nil {
-		gateway, err := getDefaultGateway(routeFilename)
-		r.logger.Debug("Identified the gateway: ", gateway)
-		if err != nil {
-			// This will be always the "failed to open /proc/net/route: no such file or directory" error.
-			// As this info is not relevant to the customer, we can remove it from the message.
-			r.logger.Error("Couldn't open the ", routeFilename, " file in order to retrieve the default gateway. Scheduling retry.")
-			r.scheduleRetry(e, r.lookupAgentHost)
+	return false
+}
 
-			return
-		}
-
-		if gateway == "" {
-			r.logger.Error("Couldn't parse the default gateway address from ", routeFilename, ". Scheduling retry.")
-			r.scheduleRetry(e, r.lookupAgentHost)
-
-			return
-		}
-
-		originalHost := r.agentComm.host
-		r.agentComm.host = gateway
-		found := r.agentComm.checkForSuccessResponse()
-
-		if found {
-			r.logger.Debug("Lookup successful with host from ", routeFilename, ": ", gateway)
-			r.lookupSuccess(gateway)
-			return
-		}
-
-		r.logger.Debug("Lookup failed with host from ", routeFilename, ": ", gateway, ". Updating host back to the original: ", originalHost)
-
-		r.agentComm.host = originalHost
-
-		r.logger.Error("Cannot connect to the agent through default gateway. Scheduling retry.")
-		r.scheduleRetry(e, r.lookupAgentHost)
-	} else {
+func (r *fsmS) checkWithDefaultGateway(e *f.Event, routeFileName string) bool {
+	r.logger.Debug("Lookup failed for expected host: ", r.agentComm.host, ". Will attempt to read host from ", routeFileName)
+	if _, fileNotFoundErr := os.Stat(routeFileName); fileNotFoundErr != nil {
 		r.logger.Error("Cannot connect to the agent. Scheduling retry.")
-		r.logger.Debug("Connecting through the default gateway has not been attempted because ", routeFilename, " does not exist.")
+		r.logger.Debug("Connecting through the default gateway has not been attempted because ", routeFileName, " does not exist.")
 		r.scheduleRetry(e, r.lookupAgentHost)
+		return false
 	}
+
+	gateway, err := getDefaultGateway(routeFileName)
+	r.logger.Debug("Identified the gateway: ", gateway)
+	if err != nil {
+		// This will be always the "failed to open /proc/net/route: no such file or directory" error.
+		// As this info is not relevant to the customer, we can remove it from the message.
+		r.logger.Error("Couldn't open the ", routeFileName, " file in order to retrieve the default gateway. Scheduling retry.")
+		r.scheduleRetry(e, r.lookupAgentHost)
+
+		return false
+	}
+
+	if gateway == "" {
+		r.logger.Error("Couldn't parse the default gateway address from ", routeFileName, ". Scheduling retry.")
+		r.scheduleRetry(e, r.lookupAgentHost)
+
+		return false
+	}
+
+	originalHost := r.agentComm.host
+	r.agentComm.host = gateway
+	found := r.agentComm.checkForSuccessResponse()
+
+	if found {
+		r.logger.Debug("Lookup successful with host from ", routeFileName, ": ", gateway)
+		r.lookupSuccess(gateway)
+		return true
+	}
+
+	r.logger.Debug("Lookup failed with host from ", routeFileName, ": ", gateway, ". Updating host back to the original: ", originalHost)
+	r.agentComm.host = originalHost
+
+	r.logger.Error("Failed to connect to the agent. Scheduling retry.")
+	r.scheduleRetry(e, r.lookupAgentHost)
+
+	return false
+}
+
+// checkHost verifies and set the agent host address
+func (r *fsmS) checkHost(e *f.Event) {
+
+	// Look for a successful ping from the configured host
+	if r.checkCurrentHost() {
+		return
+	}
+
+	// If unsuccessful, check whether agent host is configured in env variable and look for a successful ping from the configured host
+	if r.checkWithHostFromEnvironmentVariable() {
+		return
+	}
+
+	// If unsuccessful, look for a successful ping for the configured default gateway
+	routeFileName := "/proc/net/route"
+	r.checkWithDefaultGateway(e, routeFileName)
 }
 
 func (r *fsmS) lookupSuccess(host string) {
@@ -264,15 +286,15 @@ func (r *fsmS) announceSensor(_ context.Context, e *f.Event) {
 
 func (r *fsmS) getDiscoveryS() *discoveryS {
 	pid := os.Getpid()
-	cpuSetFileContent := ""
+	cpusetFileContent := ""
 
 	if runtime.GOOS == "linux" {
-		cpuSetFileContent = r.cpuSetFileContent(pid)
+		cpusetFileContent = r.cpusetFileContent(pid)
 	}
 
 	d := &discoveryS{
 		PID:               pid,
-		CPUSetFileContent: cpuSetFileContent,
+		CPUSetFileContent: cpusetFileContent,
 		Name:              os.Args[0],
 		Args:              os.Args[1:],
 	}
@@ -284,24 +306,38 @@ func (r *fsmS) getDiscoveryS() *discoveryS {
 		r.logger.Debug("no /proc, using OS reported cmdline")
 	}
 
-	if _, err := os.Stat("/proc"); err == nil {
-		if addr, err := net.ResolveTCPAddr("tcp", r.agentComm.host+":42699"); err == nil {
-			if tcpConn, err := net.DialTCP("tcp", nil, addr); err == nil {
-				defer tcpConn.Close()
+	var err error
+	if _, err = os.Stat("/proc"); err != nil {
+		return d
+	}
 
-				file, err := tcpConn.File()
+	var addr *net.TCPAddr
+	if addr, err = net.ResolveTCPAddr("tcp", r.agentComm.host+":42699"); err != nil {
+		return d
+	}
 
-				if err != nil {
-					r.logger.Error(err)
-				} else {
-					d.Fd = fmt.Sprintf("%v", file.Fd())
+	var tcpConn *net.TCPConn
+	if tcpConn, err = net.DialTCP("tcp", nil, addr); err != nil {
+		return d
+	}
 
-					link := fmt.Sprintf("/proc/%d/fd/%d", os.Getpid(), file.Fd())
-					if _, err := os.Stat(link); err == nil {
-						d.Inode, _ = os.Readlink(link)
-					}
-				}
-			}
+	defer func(tcpConn *net.TCPConn) {
+		if err := tcpConn.Close(); err != nil {
+			r.logger.Error("failed to close the tcp connection: ", err.Error())
+		}
+	}(tcpConn)
+
+	var file *os.File
+	file, err = tcpConn.File()
+
+	if err != nil {
+		r.logger.Error(err)
+	} else {
+		d.Fd = fmt.Sprintf("%v", file.Fd())
+
+		link := fmt.Sprintf("/proc/%d/fd/%d", os.Getpid(), file.Fd())
+		if _, err := os.Stat(link); err == nil {
+			d.Inode, _ = os.Readlink(link)
 		}
 	}
 
@@ -331,7 +367,7 @@ func (r *fsmS) ready(_ context.Context, e *f.Event) {
 	go delayed.flush()
 }
 
-func (r *fsmS) cpuSetFileContent(pid int) string {
+func (r *fsmS) cpusetFileContent(pid int) string {
 	path := filepath.Join("proc", strconv.Itoa(pid), "cpuset")
 	data, err := os.ReadFile(path)
 	if err != nil {
