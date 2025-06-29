@@ -9,7 +9,7 @@ import (
 	"runtime/pprof"
 	"time"
 
-	"github.com/instana/go-sensor/autoprofile/internal/pprof/profile"
+	"github.com/google/pprof/profile"
 )
 
 // CPUSampler collects information about CPU usage
