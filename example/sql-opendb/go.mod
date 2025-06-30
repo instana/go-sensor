@@ -3,7 +3,7 @@ module sqlopendb
 go 1.23
 
 require (
-	github.com/instana/go-sensor v1.67.4
+	github.com/instana/go-sensor v1.67.7
 	github.com/mattn/go-sqlite3 v1.14.28
 )
 
