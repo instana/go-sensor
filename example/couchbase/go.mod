@@ -5,8 +5,8 @@ go 1.23.0
 require github.com/couchbase/gocb/v2 v2.10.0
 
 require (
-	github.com/instana/go-sensor v1.67.7
-	github.com/instana/go-sensor/instrumentation/instagocb v1.22.0
+	github.com/instana/go-sensor v1.68.0
+	github.com/instana/go-sensor/instrumentation/instagocb v1.23.0
 )
 
 require (
@@ -17,6 +17,7 @@ require (
 	github.com/go-logr/logr v1.4.3 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/golang/snappy v1.0.0 // indirect
+	github.com/google/pprof v0.0.0-20250630185457-6e76a2b096b5 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/gorilla/websocket v1.5.3 // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0 // indirect

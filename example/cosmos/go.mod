@@ -6,8 +6,8 @@ require (
 	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.18.1
 	github.com/Azure/azure-sdk-for-go/sdk/data/azcosmos v1.4.0
 	github.com/google/uuid v1.6.0
-	github.com/instana/go-sensor v1.67.7
-	github.com/instana/go-sensor/instrumentation/instacosmos v1.19.0
+	github.com/instana/go-sensor v1.68.0
+	github.com/instana/go-sensor/instrumentation/instacosmos v1.20.0
 )
 
 require (
