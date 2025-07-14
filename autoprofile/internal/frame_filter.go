@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/instana/go-sensor/autoprofile/internal/pprof/profile"
+	"github.com/google/pprof/profile"
 )
 
 var (
