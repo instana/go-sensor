@@ -1,16 +1,17 @@
 module github.com/instana/go-sensor/instrumentation/instaawssdk
 
-go 1.23
+go 1.23.0
 
 require (
 	github.com/aws/aws-sdk-go v1.55.7
-	github.com/instana/go-sensor v1.67.7
+	github.com/instana/go-sensor v1.68.0
 	github.com/opentracing/opentracing-go v1.2.0
 	github.com/stretchr/testify v1.10.0
 )
 
 require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/google/pprof v0.0.0-20250630185457-6e76a2b096b5 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/kr/pretty v0.1.0 // indirect
