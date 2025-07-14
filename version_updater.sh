@@ -154,6 +154,7 @@ COMMIT_MSG="feat(currency): updated go.mod, go.sum files, README.md for $INSTRUM
   fi
 
   go get "$TARGET_PKG_URL"
+  go mod edit -toolchain=none
   go mod tidy
   go test ./... || echo "Continuing the operation even if the test fails. This needs manual intervention"
 
