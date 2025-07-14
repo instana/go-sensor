@@ -10,7 +10,7 @@ import (
 	"runtime"
 	"runtime/pprof"
 
-	"github.com/instana/go-sensor/autoprofile/internal/pprof/profile"
+	"github.com/google/pprof/profile"
 )
 
 type blockValues struct {
@@ -90,9 +90,10 @@ func (bs *BlockSampler) updateBlockProfile(p *profile.Profile) error {
 	contentionIndex := -1
 	delayIndex := -1
 	for i, s := range p.SampleType {
-		if s.Type == "contentions" {
+		switch s.Type {
+		case "contentions":
 			contentionIndex = i
-		} else if s.Type == "delay" {
+		case "delay":
 			delayIndex = i
 		}
 	}

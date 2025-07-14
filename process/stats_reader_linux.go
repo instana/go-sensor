@@ -9,6 +9,7 @@ package process
 import (
 	"bufio"
 	"fmt"
+	"math"
 	"os"
 	"path"
 	"strings"
@@ -124,8 +125,8 @@ func (rdr statsReader) currentTick() (int, error) {
 	sc.Split(bufio.ScanLines)
 
 	var (
-		ticks, cpuCount                                    int
-		user, nice, sys, idle, iowait, irq, softIRQ, steal int
+		ticks, cpuCount                                    int64
+		user, nice, sys, idle, iowait, irq, softIRQ, steal int64
 		skipStr                                            string
 	)
 
@@ -164,11 +165,21 @@ func (rdr statsReader) currentTick() (int, error) {
 		return 0, fmt.Errorf("failed to read %s: %s", fd.Name(), err)
 	}
 
-	if cpuCount < 2 {
-		return ticks, nil
+	// find average
+	if cpuCount >= 2 {
+		ticks /= int64(cpuCount)
 	}
 
-	return ticks / cpuCount, nil
+	// for 32 bit machines
+	const (
+		maxInt = int64(math.MaxInt)
+		minInt = int64(math.MinInt)
+	)
+	if ticks < minInt || ticks > maxInt {
+		return 0, fmt.Errorf("currentTick: overflow (%d does not fit in int)", ticks)
+	}
+
+	return int(ticks), nil
 }
 
 // Limits returns resource limits configured for current process
