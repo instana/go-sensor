@@ -2,8 +2,6 @@ module github.com/instana/go-sensor/instrumentation/instagraphql
 
 go 1.23.0
 
-toolchain go1.24.4
-
 require (
 	github.com/graphql-go/graphql v0.8.1
 	github.com/stretchr/testify v1.10.0

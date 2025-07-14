@@ -2,8 +2,6 @@ module github.com/instana/go-sensor/instrumentation/instamux
 
 go 1.23.0
 
-toolchain go1.24.4
-
 require (
 	github.com/gorilla/mux v1.8.1
 	github.com/instana/go-sensor v1.68.0

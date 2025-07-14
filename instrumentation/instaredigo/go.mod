@@ -2,8 +2,6 @@ module github.com/instana/go-sensor/instrumentation/instaredigo
 
 go 1.23.0
 
-toolchain go1.24.4
-
 require (
 	github.com/gomodule/redigo v1.9.2
 	github.com/opentracing/opentracing-go v1.2.0
