@@ -108,6 +108,10 @@ func (opts *Options) setDefaults() {
 
 	opts.Tracer.Secrets = secretsMatcher
 
+	if opts.Tracer.MaxLogsPerSpan == 0 {
+		opts.Tracer.MaxLogsPerSpan = MaxLogsPerSpan
+	}
+
 	if collectableHeaders, ok := os.LookupEnv("INSTANA_EXTRA_HTTP_HEADERS"); ok {
 		opts.Tracer.CollectableHTTPHeaders = parseInstanaExtraHTTPHeaders(collectableHeaders)
 	}

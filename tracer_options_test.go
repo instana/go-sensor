@@ -12,7 +12,7 @@ import (
 
 func TestDefaultTracerOptions(t *testing.T) {
 	assert.Equal(t, instana.TracerOptions{
-		MaxLogsPerSpan: 2,
+		MaxLogsPerSpan: instana.MaxLogsPerSpan,
 		Secrets:        instana.DefaultSecretsMatcher(),
 	}, instana.DefaultTracerOptions())
 }
