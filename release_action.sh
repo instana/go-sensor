@@ -68,10 +68,11 @@ echo "lib path: $LIB_PATH"
 
 # Expected to find something like: instrumentation/instaredis/v1.5.0
 # This option will be used if the instrumentation has no v2 subfolder
+OPTIONAL_GREP_STR="v[0-9]+\.[0-9]+\.[0-9]+$"
+TAG_TO_SEARCH="v[0-1].[0-9]*.[0-9]*"
+
 if [ "$IS_CORE" = "false" ]; then
-  TAG_TO_SEARCH="$LIB_PATH/v[0-1].*"
-else
-  TAG_TO_SEARCH="v[0-1].*"
+  TAG_TO_SEARCH="$LIB_PATH/$TAG_TO_SEARCH"
 fi
 
 # Only relevant for instrumentations
@@ -89,14 +90,14 @@ if [ "$IS_CORE" = "false" ]; then
     echo "New major version: $NEW_MAJOR_VERSION"
 
     # Expected to be tag name with major version higher than 1. eg: instrumentation/instaredis/v2.1.0
-    TAG_TO_SEARCH="$LIB_PATH.*"
+    TAG_TO_SEARCH="$LIB_PATH.[0-9]*.[0-9]*"
   fi
 fi
 
 echo "Tag to search: $TAG_TO_SEARCH"
 
 # git fetch --unshallow --tags
-FOUND_VERSION_IN_TAG=$(git tag -l "$TAG_TO_SEARCH" | sort -V | tail -n1 | sed "s/.*v//")
+FOUND_VERSION_IN_TAG=$(git tag -l "$TAG_TO_SEARCH" | grep -E "$OPTIONAL_GREP_STR" | sort -V | tail -n1 | sed "s/.*v//")
 
 echo "Version found in tags: $FOUND_VERSION_IN_TAG"
 
@@ -120,8 +121,10 @@ echo "New version to release is: $NEW_VERSION"
 # Updates the minor version in version.go
 sed -i -E "s/[0-9]+\.[0-9]+\.[0-9]+/${NEW_VERSION}/" version.go | tail -1
 
-git config user.name "IBM/Instana/Team Go"
-git config user.email "github-actions@github.com"
+# git config user.name "IBM/Instana/Team Go"
+# git config user.email "github-actions@github.com"
+
+git remote set-url --push origin https://$GIT_COMMITTER_NAME:$GITHUB_TOKEN@github.com/nithinputhenveettil/go-sensor
 
 git add version.go
 git commit -m "Updated version.go to $NEW_VERSION"

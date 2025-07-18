@@ -2,9 +2,6 @@ name: Go Tracer Release
 
 on:
   workflow_dispatch:
-    secrets:
-      GITHUB_TOKEN:
-        description: 'Github Token'
     inputs:
       packageName:
         description: 'Example: instagorm, instaredis/v2. Use "." to release the core module'
@@ -35,7 +32,7 @@ jobs:
       name: Checkout repo
       with:
         fetch-depth: 0
-        ssh-key: ${{secrets.PRIVATE_KEY_GO_TRACER_RELEASE}}
+        ref: main
     - name: Release tracer or package
       id: releaser
       run: ./release_action.sh
@@ -45,9 +42,13 @@ jobs:
         LIB_VERSION_TYPE: ${{ inputs.versionType }}
         RELEASE_AS_DRAFT: ${{ inputs.asDraft }}
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GIT_AUTHOR_NAME: ${{ github.actor }}
+        GIT_AUTHOR_EMAIL: ${{ github.actor }}@users.noreply.github.com
+        GIT_COMMITTER_NAME: ${{ github.actor }}
+        GIT_COMMITTER_EMAIL: ${{ github.actor }}@users.noreply.github.com
 
     - name: Update pkg.go.dev
-      if: "${{ success() && !inputs.asDraft }}"
+      if: "${{ success() && !success() && !inputs.asDraft }}"
       run: |
         #!/bin/bash
 
@@ -64,7 +65,7 @@ jobs:
         rm -rf dummy
 
     - name: "Update all instrumentations: create branch"
-      if: "${{ inputs.packageName == '.' }}"
+      if: "${{ success() && !success() && inputs.packageName == '.' }}"
       id: create-branch
       run: |
         CORE_TAG=$(git tag -l "v1.*" | sort -V | tail -n1)
@@ -94,14 +95,14 @@ jobs:
         git commit -m "Updating instrumentations to core module $CORE_TAG"
 
     - name: "Update all instrumentations: push branch upstream"
-      if: "${{ success() && inputs.packageName == '.' }}"
+      if: "${{ success() && !success() && inputs.packageName == '.' }}"
       uses: ad-m/github-push-action@master
       with:
         github_token: ${{ github.token }}
         branch: update-instrumentations-core/${{ steps.create-branch.outputs.CORE_TAG }}
 
     - name: "Update all instrumentations: create pull request"
-      if: "${{ success() && inputs.packageName == '.' }}"
+      if: "${{ success() && !success() && inputs.packageName == '.' }}"
       run: |
         CORE_TAG=${{ steps.create-branch.outputs.CORE_TAG }}
         git checkout update-instrumentations-core/"$CORE_TAG"
@@ -110,7 +111,7 @@ jobs:
         GH_TOKEN: ${{ github.token }}
 
     - name: Post on Slack
-      if: "${{ success() && !inputs.asDraft }}"
+      if: "${{ success() && !success() && !inputs.asDraft }}"
       uses: slackapi/slack-github-action@v1.24.0
       with:
         channel-id: ${{ secrets.SLACK_RELEASE_CHANNEL_ID }}
