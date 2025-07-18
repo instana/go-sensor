@@ -89,7 +89,7 @@ jobs:
 
         # Updates all instrumentations to use the @latest version of the core module
         for lib in $LIB_LIST
-          do cd "$lib" && go mod edit -droprequire github.com/nithinputhenveettil/go-sensor && go get github.com/nithinputhenveettil/go-sensor@$CORE_TAG && go mod edit -toolchain=none && go mod tidy && cd -;
+          do cd "$lib" && echo "Updating: $lib" && go mod edit -droprequire github.com/nithinputhenveettil/go-sensor && go get github.com/nithinputhenveettil/go-sensor@$CORE_TAG && go mod edit -toolchain=none && go mod tidy && cd -;
         done
 
         git add .
