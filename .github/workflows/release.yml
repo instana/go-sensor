@@ -53,9 +53,9 @@ jobs:
         #!/bin/bash
 
         if [ ${{ steps.releaser.outputs.RELEASE_PACKAGE }} = "go-sensor" ]; then
-          GO_PKG="github.com/nithinputhenveettil/go-sensor@${{ steps.releaser.outputs.RELEASE_VERSION }}"
+          GO_PKG="github.com/instana/go-sensor@${{ steps.releaser.outputs.RELEASE_VERSION }}"
         else
-          GO_PKG="github.com/nithinputhenveettil/go-sensor/instrumentation/${{ steps.releaser.outputs.RELEASE_PACKAGE }}@${{ steps.releaser.outputs.RELEASE_VERSION }}"
+          GO_PKG="github.com/instana/go-sensor/instrumentation/${{ steps.releaser.outputs.RELEASE_PACKAGE }}@${{ steps.releaser.outputs.RELEASE_VERSION }}"
         fi
 
         mkdir dummy && cd dummy
@@ -89,7 +89,7 @@ jobs:
 
         # Updates all instrumentations to use the @latest version of the core module
         for lib in $LIB_LIST
-          do cd "$lib" && echo "Updating: $lib" && go mod edit -droprequire github.com/nithinputhenveettil/go-sensor && go get github.com/nithinputhenveettil/go-sensor@$CORE_TAG && go mod edit -toolchain=none && go mod tidy && cd -;
+          do cd "$lib" && echo "Updating: $lib" && go mod edit -droprequire github.com/instana/go-sensor && go get github.com/instana/go-sensor@$CORE_TAG && go mod edit -toolchain=none && go mod tidy && cd -;
         done
 
         git add .
