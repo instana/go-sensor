@@ -4,42 +4,63 @@
 package internal
 
 import (
-	"crypto/sha1"
+	crand "crypto/rand"
+	"crypto/sha256"
 	"encoding/hex"
-	"math/rand"
-	"strconv"
-	"sync"
+	"fmt"
+	"math/big"
 	"sync/atomic"
 	"time"
 )
 
 var (
-	randSource = rand.New(rand.NewSource(time.Now().UnixNano()))
-	randLock   sync.Mutex
-	nextID     int64
+	nextID int64
 )
 
 // GenerateUUID generates a new UUID string
 func GenerateUUID() string {
 	n := atomic.AddInt64(&nextID, 1)
 
-	uuid := strconv.FormatInt(time.Now().Unix(), 10) +
-		strconv.FormatInt(random(1000000000), 10) +
-		strconv.FormatInt(n, 10)
+	uuid := fmt.Sprintf("%019d%09d%010d",
+		time.Now().UnixNano(),
+		secureRandom(1_000_000_000),
+		n,
+	)
 
-	return sha1String(uuid)
+	return sha256String(uuid)
 }
 
-func random(max int64) int64 {
-	randLock.Lock()
-	defer randLock.Unlock()
-
-	return randSource.Int63n(max)
+func secureRandom(max int64) int64 {
+	nBig, err := crand.Int(crand.Reader, big.NewInt(max))
+	if err != nil {
+		panic(err)
+	}
+	return nBig.Int64()
 }
 
-func sha1String(s string) string {
-	sha1 := sha1.New()
-	sha1.Write([]byte(s))
+func sha256String(s string) string {
+	sh256 := sha256.New()
+	sh256.Write([]byte(s))
 
-	return hex.EncodeToString(sha1.Sum(nil))
+	return hex.EncodeToString(sh256.Sum(nil))
+}
+
+func GenerateUUIDv4() string {
+	b := make([]byte, 16) // 128-bit UUID
+	_, err := crand.Read(b)
+	if err != nil {
+		panic(err)
+	}
+
+	// Set version (4) and variant bits
+	b[6] = (b[6] & 0x0f) | 0x40 // Version 4 (bits 12–15 of byte 6)
+	b[8] = (b[8] & 0x3f) | 0x80 // Variant bits 10xx (bits 6–7 of byte 8)
+
+	return fmt.Sprintf("%08x-%04x-%04x-%04x-%012x",
+		b[0:4],
+		b[4:6],
+		b[6:8],
+		b[8:10],
+		b[10:16],
+	)
 }
