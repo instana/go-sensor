@@ -48,14 +48,14 @@ jobs:
         GIT_COMMITTER_EMAIL: ${{ github.actor }}@users.noreply.github.com
 
     - name: Update pkg.go.dev
-      if: "${{ success() && !success() && !inputs.asDraft }}"
+      if: "${{ success() && !inputs.asDraft }}"
       run: |
         #!/bin/bash
 
         if [ ${{ steps.releaser.outputs.RELEASE_PACKAGE }} = "go-sensor" ]; then
-          GO_PKG="github.com/instana/go-sensor@${{ steps.releaser.outputs.RELEASE_VERSION }}"
+          GO_PKG="github.com/nithinputhenveettil/go-sensor@${{ steps.releaser.outputs.RELEASE_VERSION }}"
         else
-          GO_PKG="github.com/instana/go-sensor/instrumentation/${{ steps.releaser.outputs.RELEASE_PACKAGE }}@${{ steps.releaser.outputs.RELEASE_VERSION }}"
+          GO_PKG="github.com/nithinputhenveettil/go-sensor/instrumentation/${{ steps.releaser.outputs.RELEASE_PACKAGE }}@${{ steps.releaser.outputs.RELEASE_VERSION }}"
         fi
 
         mkdir dummy && cd dummy
@@ -65,48 +65,49 @@ jobs:
         rm -rf dummy
 
     - name: "Update all instrumentations: create branch"
-      if: "${{ success() && !success() && inputs.packageName == '.' }}"
+      if: "${{ inputs.packageName == '.' }}"
       id: create-branch
       run: |
-        CORE_TAG=$(git tag -l "v1.*" | sort -V | tail -n1)
+        #!/bin/bash
+
+        CORE_TAG=$(git tag -l "v1.*" | grep -E "v[0-9]+\.[0-9]+\.[0-9]+$" | sort -V | tail -n1)
 
         echo "CORE_TAG=$CORE_TAG" >> $GITHUB_OUTPUT
         echo "New core version is $CORE_TAG"
-
-        #!/bin/bash
 
         DEPRECATED_PKGS=".*instaamqp$"
 
         # List of instrumentation folders
         LIB_LIST=$(find ./instrumentation -name go.mod -exec dirname {} \; | grep -E -v "$DEPRECATED_PKGS")
 
-        git config user.name "IBM/Instana/Team Go"
-        git config user.email "github-actions@github.com"
+        # git config user.name "IBM/Instana/Team Go"
+        # git config user.email "github-actions@github.com"
+        git remote set-url --push origin https://$GIT_COMMITTER_NAME:$GITHUB_TOKEN@github.com/nithinputhenveettil/go-sensor
         git checkout update-instrumentations-core/"$CORE_TAG" || git checkout -b update-instrumentations-core/"$CORE_TAG"
 
         git pull origin "update-instrumentations-core/$CORE_TAG" || echo "Brand new branch. No need to pull from origin."
 
         # Updates all instrumentations to use the @latest version of the core module
         for lib in $LIB_LIST
-          do cd "$lib" && go mod edit -droprequire github.com/instana/go-sensor && go get github.com/instana/go-sensor@$CORE_TAG && go mod edit -toolchain=none && go mod tidy && cd -;
+          do cd "$lib" && go mod edit -droprequire github.com/nithinputhenveettil/go-sensor && go get github.com/nithinputhenveettil/go-sensor@$CORE_TAG && go mod edit -toolchain=none && go mod tidy && cd -;
         done
 
         git add .
-        git commit -m "Updating instrumentations to core module $CORE_TAG"
+        git commit -m "Updating instrumentations to core module $CORE_TAG - public release"
 
     - name: "Update all instrumentations: push branch upstream"
-      if: "${{ success() && !success() && inputs.packageName == '.' }}"
+      if: "${{ success() && inputs.packageName == '.' }}"
       uses: ad-m/github-push-action@master
       with:
         github_token: ${{ github.token }}
         branch: update-instrumentations-core/${{ steps.create-branch.outputs.CORE_TAG }}
 
     - name: "Update all instrumentations: create pull request"
-      if: "${{ success() && !success() && inputs.packageName == '.' }}"
+      if: "${{ success() && inputs.packageName == '.' }}"
       run: |
         CORE_TAG=${{ steps.create-branch.outputs.CORE_TAG }}
         git checkout update-instrumentations-core/"$CORE_TAG"
-        gh pr create --title "Updating instrumentations to core module $CORE_TAG" --body "This PR updates all instrumented packages to use the latest core module $CORE_TAG." --head $(git branch --show-current)
+        gh pr create --title "Updating instrumentations to core module $CORE_TAG - public release" --body "This PR updates all instrumented packages to use the latest core module $CORE_TAG." --head $(git branch --show-current)
       env:
         GH_TOKEN: ${{ github.token }}
 
