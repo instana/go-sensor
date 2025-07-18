@@ -95,6 +95,13 @@ jobs:
         git add .
         git commit -m "Updating instrumentations to core module $CORE_TAG - public release"
 
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GIT_AUTHOR_NAME: ${{ github.actor }}
+        GIT_AUTHOR_EMAIL: ${{ github.actor }}@users.noreply.github.com
+        GIT_COMMITTER_NAME: ${{ github.actor }}
+        GIT_COMMITTER_EMAIL: ${{ github.actor }}@users.noreply.github.com
+
     - name: "Update all instrumentations: push branch upstream"
       if: "${{ success() && inputs.packageName == '.' }}"
       uses: ad-m/github-push-action@master
