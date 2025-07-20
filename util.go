@@ -44,8 +44,8 @@ func secureRandomID(r io.Reader) int64 {
 	if sr, err = crand.Int(r, big.NewInt(math.MaxInt64)); err != nil {
 		// fallback ID if crypto/rand fails to generate random ID
 		now := time.Now().UnixNano()
-		seed := fmt.Sprintf("%d%d%d", now, os.Getpid(), now)
-		hash := sha256.Sum256([]byte(seed))
+		data := fmt.Sprintf("%d%d", now, os.Getpid())
+		hash := sha256.Sum256([]byte(data))
 
 		// Convert first 8 bytes of hash to int64
 		raw := binary.BigEndian.Uint64(hash[:8])

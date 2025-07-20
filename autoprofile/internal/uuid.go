@@ -29,8 +29,8 @@ func SecureUUID(r io.Reader) string {
 	if _, err := io.ReadFull(r, uuidBytes); err != nil {
 		//fallback mechanism if crypto/rand fails to generate random data
 		now := time.Now().UnixNano()
-		fallbackSeed := fmt.Sprintf("%d%d%d", now, os.Getpid(), now)
-		hash := sha256.Sum256([]byte(fallbackSeed))
+		data := fmt.Sprintf("%d%d", now, os.Getpid())
+		hash := sha256.Sum256([]byte(data))
 		copy(uuidBytes, hash[:byteLength])
 	}
 
