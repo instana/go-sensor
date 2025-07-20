@@ -8,59 +8,27 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
-	"math/big"
-	"sync/atomic"
+	"io"
+	"os"
 	"time"
 )
 
-var (
-	nextID int64
-)
+// GenerateUUID generates a UUID of length 40 characters
+func GenerateUUID(r io.Reader) string {
+	const byteLength = 20
+	uuidBytes := make([]byte, 20)
 
-// GenerateUUID generates a new UUID string
-func GenerateUUID() string {
-	n := atomic.AddInt64(&nextID, 1)
-
-	uuid := fmt.Sprintf("%019d%09d%010d",
-		time.Now().UnixNano(),
-		secureRandom(1_000_000_000),
-		n,
-	)
-
-	return sha256String(uuid)
-}
-
-func secureRandom(max int64) int64 {
-	nBig, err := crand.Int(crand.Reader, big.NewInt(max))
-	if err != nil {
-		panic(err)
-	}
-	return nBig.Int64()
-}
-
-func sha256String(s string) string {
-	sh256 := sha256.New()
-	sh256.Write([]byte(s))
-
-	return hex.EncodeToString(sh256.Sum(nil))
-}
-
-func GenerateUUIDv4() string {
-	b := make([]byte, 16) // 128-bit UUID
-	_, err := crand.Read(b)
-	if err != nil {
-		panic(err)
+	if r == nil {
+		r = crand.Reader
 	}
 
-	// Set version (4) and variant bits
-	b[6] = (b[6] & 0x0f) | 0x40 // Version 4 (bits 12–15 of byte 6)
-	b[8] = (b[8] & 0x3f) | 0x80 // Variant bits 10xx (bits 6–7 of byte 8)
+	if _, err := io.ReadFull(r, uuidBytes); err != nil {
+		//fallback mechanism if crypto/rand fails to generate random data
+		now := time.Now().UnixNano()
+		fallbackSeed := fmt.Sprintf("%d%d%d", now, os.Getpid(), now)
+		hash := sha256.Sum256([]byte(fallbackSeed))
+		copy(uuidBytes, hash[:byteLength])
+	}
 
-	return fmt.Sprintf("%08x-%04x-%04x-%04x-%012x",
-		b[0:4],
-		b[4:6],
-		b[6:8],
-		b[8:10],
-		b[10:16],
-	)
+	return hex.EncodeToString(uuidBytes)
 }
