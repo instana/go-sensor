@@ -7,9 +7,12 @@ import (
 	"bufio"
 	"bytes"
 	crand "crypto/rand"
+	"crypto/sha256"
 	"encoding/binary"
 	"errors"
 	"fmt"
+	"io"
+	"math"
 	"math/big"
 	"os"
 	"strconv"
@@ -26,12 +29,29 @@ const (
 
 // randomID generates a random ID using crypto/rand package.
 func randomID() int64 {
+	return secureRandomID(crand.Reader)
+}
+
+func secureRandomID(r io.Reader) int64 {
 	var sr *big.Int
 	var err error
+	var id int64
 
-	id := time.Now().UnixNano()
-	if sr, err = crand.Int(crand.Reader, big.NewInt(id)); err != nil {
-		return id // fallback ID if crypto/rand fails to generate random ID
+	if r == nil {
+		r = crand.Reader
+	}
+
+	if sr, err = crand.Int(r, big.NewInt(math.MaxInt64)); err != nil {
+		// fallback ID if crypto/rand fails to generate random ID
+		now := time.Now().UnixNano()
+		seed := fmt.Sprintf("%d-%d-%d", now, os.Getpid(), now)
+		hash := sha256.Sum256([]byte(seed))
+
+		// Convert first 8 bytes of hash to int64
+		raw := binary.BigEndian.Uint64(hash[:8])
+		id = int64(raw & (1<<63 - 1))
+
+		return id
 	}
 
 	id = sr.Int64()

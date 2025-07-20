@@ -14,7 +14,11 @@ import (
 )
 
 // GenerateUUID generates a UUID of length 40 characters
-func GenerateUUID(r io.Reader) string {
+func GenerateUUID() string {
+	return SecureUUID(crand.Reader)
+}
+
+func SecureUUID(r io.Reader) string {
 	const byteLength = 20
 	uuidBytes := make([]byte, 20)
 

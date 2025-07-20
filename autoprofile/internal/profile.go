@@ -90,7 +90,7 @@ type Profile struct {
 // NewProfile inititalizes a new profile
 func NewProfile(category string, typ string, unit string, roots []*CallSite, duration int64, timespan int64) *Profile {
 	return &Profile{
-		ID:        GenerateUUID(nil), //passing nil so that the default crypto reader will be used
+		ID:        GenerateUUID(),
 		Runtime:   RuntimeGolang,
 		Category:  category,
 		Type:      typ,
