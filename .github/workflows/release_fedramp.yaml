@@ -124,7 +124,7 @@ jobs:
         GH_TOKEN: ${{ github.token }}
 
     - name: Post on Slack
-      if: "${{ success() && !success() && !inputs.asDraft }}"
+      if: "${{ success() && !inputs.asDraft }}"
       uses: slackapi/slack-github-action@v1.24.0
       with:
         channel-id: ${{ secrets.SLACK_RELEASE_CHANNEL_ID }}
