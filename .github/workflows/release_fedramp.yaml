@@ -99,7 +99,7 @@ jobs:
 
         git add .
         git commit -m "Updating instrumentations to core module $CORE_TAG"
-        touch 1.txt
+
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         GIT_AUTHOR_NAME: ${{ github.actor }}
