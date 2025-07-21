@@ -10,7 +10,12 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"sync/atomic"
 	"time"
+)
+
+var (
+	nextID atomic.Int64
 )
 
 // GenerateUUID generates a UUID of length 40 characters
@@ -29,8 +34,11 @@ func SecureUUID(r io.Reader) string {
 	if _, err := io.ReadFull(r, uuidBytes); err != nil {
 		//fallback mechanism if crypto/rand fails to generate random data
 		now := time.Now().UnixNano()
-		data := fmt.Sprintf("%d%d", now, os.Getpid())
+		next := nextID.Add(1)
+
+		data := fmt.Sprintf("%d%d%d", now, os.Getpid(), next)
 		hash := sha256.Sum256([]byte(data))
+
 		copy(uuidBytes, hash[:byteLength])
 	}
 

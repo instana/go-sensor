@@ -17,6 +17,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"sync/atomic"
 	"time"
 
 	ot "github.com/opentracing/opentracing-go"
@@ -25,6 +26,10 @@ import (
 
 const (
 	allowRootExitSpanEnv = "INSTANA_ALLOW_ROOT_EXIT_SPAN"
+)
+
+var (
+	nextID atomic.Int64
 )
 
 // randomID generates a random ID using crypto/rand package.
@@ -44,7 +49,10 @@ func secureRandomID(r io.Reader) int64 {
 	if sr, err = crand.Int(r, big.NewInt(math.MaxInt64)); err != nil {
 		// fallback ID if crypto/rand fails to generate random ID
 		now := time.Now().UnixNano()
-		data := fmt.Sprintf("%d%d", now, os.Getpid())
+
+		next := nextID.Add(1)
+		data := fmt.Sprintf("%d%d%d", now, os.Getpid(), next)
+
 		hash := sha256.Sum256([]byte(data))
 
 		// Convert first 8 bytes of hash to int64
