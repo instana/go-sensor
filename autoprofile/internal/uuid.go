@@ -25,7 +25,7 @@ func GenerateUUID() string {
 
 func SecureUUID(r io.Reader) string {
 	const byteLength = 20
-	uuidBytes := make([]byte, 20)
+	uuidBytes := make([]byte, byteLength)
 
 	if r == nil {
 		r = crand.Reader
