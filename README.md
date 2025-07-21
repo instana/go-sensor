@@ -210,6 +210,7 @@ Another interesting feature is the usage of additional packages located under [i
 
 <!-- Links section -->
 
+
 [godoc]: https://pkg.go.dev/github.com/instana/go-sensor/?tab=doc#pkg-examples
 [pkg.go.dev]: https://pkg.go.dev/github.com/instana/go-sensor
 [docs.autoprofile]: https://www.ibm.com/docs/en/obi/current?topic=technologies-monitoring-go#instana-autoprofile%E2%84%A2
