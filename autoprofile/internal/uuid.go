@@ -4,42 +4,43 @@
 package internal
 
 import (
-	"crypto/sha1"
+	crand "crypto/rand"
+	"crypto/sha256"
 	"encoding/hex"
-	"math/rand"
-	"strconv"
-	"sync"
+	"fmt"
+	"io"
+	"os"
 	"sync/atomic"
 	"time"
 )
 
 var (
-	randSource = rand.New(rand.NewSource(time.Now().UnixNano()))
-	randLock   sync.Mutex
-	nextID     int64
+	nextID atomic.Int64
 )
 
-// GenerateUUID generates a new UUID string
+// GenerateUUID generates a UUID of length 40 characters
 func GenerateUUID() string {
-	n := atomic.AddInt64(&nextID, 1)
-
-	uuid := strconv.FormatInt(time.Now().Unix(), 10) +
-		strconv.FormatInt(random(1000000000), 10) +
-		strconv.FormatInt(n, 10)
-
-	return sha1String(uuid)
+	return SecureUUID(crand.Reader)
 }
 
-func random(max int64) int64 {
-	randLock.Lock()
-	defer randLock.Unlock()
+func SecureUUID(r io.Reader) string {
+	const byteLength = 20
+	uuidBytes := make([]byte, byteLength)
 
-	return randSource.Int63n(max)
-}
+	if r == nil {
+		r = crand.Reader
+	}
 
-func sha1String(s string) string {
-	sha1 := sha1.New()
-	sha1.Write([]byte(s))
+	if _, err := io.ReadFull(r, uuidBytes); err != nil {
+		//fallback mechanism if crypto/rand fails to generate random data
+		now := time.Now().UnixNano()
+		next := nextID.Add(1)
 
-	return hex.EncodeToString(sha1.Sum(nil))
+		data := fmt.Sprintf("%d%d%d", now, os.Getpid(), next)
+		hash := sha256.Sum256([]byte(data))
+
+		copy(uuidBytes, hash[:byteLength])
+	}
+
+	return hex.EncodeToString(uuidBytes)
 }

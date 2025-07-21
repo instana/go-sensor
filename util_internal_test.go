@@ -277,3 +277,52 @@ func Test_allowRootExitSpan(t *testing.T) {
 		})
 	}
 }
+
+func TestSecureRandomID(t *testing.T) {
+	prevID := secureRandomID(nil)
+
+	for range 100_000 {
+		id := secureRandomID(nil)
+
+		assert.NotEqual(t, id, prevID)
+		assert.LessOrEqual(t, id, MaxInt64)
+		assert.GreaterOrEqual(t, id, int64(0))
+
+		prevID = id
+	}
+}
+
+func TestSecureRandomID_FallBackMethod(t *testing.T) {
+	var ir InvalidReader
+
+	prevID := secureRandomID(ir)
+
+	for range 100_000 {
+		id := secureRandomID(ir)
+
+		assert.NotEqual(t, id, prevID)
+		assert.LessOrEqual(t, id, MaxInt64)
+		assert.GreaterOrEqual(t, id, int64(0))
+
+		prevID = id
+	}
+}
+
+func BenchmarkSecureRandomID(b *testing.B) {
+	for range b.N {
+		_ = secureRandomID(nil)
+	}
+}
+
+func BenchmarkSecureRandomID_FallbackMethod(b *testing.B) {
+	var ir InvalidReader
+	for range b.N {
+		_ = secureRandomID(ir)
+	}
+}
+
+type InvalidReader struct{}
+
+func (ir InvalidReader) Read(_ []byte) (n int, err error) {
+	return 0, errors.New("failed to generate random values")
+}

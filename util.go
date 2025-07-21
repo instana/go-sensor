@@ -6,14 +6,18 @@ package instana
 import (
 	"bufio"
 	"bytes"
+	crand "crypto/rand"
+	"crypto/sha256"
 	"encoding/binary"
 	"errors"
 	"fmt"
-	"math/rand"
+	"io"
+	"math"
+	"math/big"
 	"os"
 	"strconv"
 	"strings"
-	"sync"
+	"sync/atomic"
 	"time"
 
 	ot "github.com/opentracing/opentracing-go"
@@ -25,14 +29,42 @@ const (
 )
 
 var (
-	seededIDGen  = rand.New(rand.NewSource(time.Now().UnixNano()))
-	seededIDLock sync.Mutex
+	nextID atomic.Int64
 )
 
+// randomID generates a random ID using crypto/rand package.
 func randomID() int64 {
-	seededIDLock.Lock()
-	defer seededIDLock.Unlock()
-	return int64(seededIDGen.Int63())
+	return secureRandomID(crand.Reader)
+}
+
+func secureRandomID(r io.Reader) int64 {
+	var sr *big.Int
+	var err error
+	var id int64
+
+	if r == nil {
+		r = crand.Reader
+	}
+
+	if sr, err = crand.Int(r, big.NewInt(math.MaxInt64)); err != nil {
+		// fallback ID if crypto/rand fails to generate random ID
+		now := time.Now().UnixNano()
+
+		next := nextID.Add(1)
+		data := fmt.Sprintf("%d%d%d", now, os.Getpid(), next)
+
+		hash := sha256.Sum256([]byte(data))
+
+		// Convert first 8 bytes of hash to int64
+		raw := binary.BigEndian.Uint64(hash[:8])
+		id = int64(raw & (1<<63 - 1))
+
+		return id
+	}
+
+	id = sr.Int64()
+
+	return id
 }
 
 // FormatID converts an Instana ID to a value that can be used in
