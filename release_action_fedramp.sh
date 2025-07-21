@@ -68,8 +68,9 @@ echo "lib path: $LIB_PATH"
 
 # Expected to find something like: instrumentation/instaredis/v1.5.0
 # This option will be used if the instrumentation has no v2 subfolder
-OPTIONAL_GREP_STR="v[0-9]+\.[0-9]+\.[0-9]+$"
-TAG_TO_SEARCH="v[0-1].[0-9]*.[0-9]*"
+OPTIONAL_GREP_STR=""
+TAG_TO_SEARCH="v[0-1].[0-9]*.[0-9]*-fedramp"
+
 
 if [ "$IS_CORE" = "false" ]; then
   TAG_TO_SEARCH="$LIB_PATH/$TAG_TO_SEARCH"
@@ -90,7 +91,7 @@ if [ "$IS_CORE" = "false" ]; then
     echo "New major version: $NEW_MAJOR_VERSION"
 
     # Expected to be tag name with major version higher than 1. eg: instrumentation/instaredis/v2.1.0
-    TAG_TO_SEARCH="$LIB_PATH.[0-9]*.[0-9]*"
+    TAG_TO_SEARCH="$LIB_PATH.[0-9]*.[0-9]*-fedramp"
   fi
 fi
 
@@ -108,7 +109,13 @@ if [ -z "$FOUND_VERSION_IN_TAG" ]; then
   echo "Version updated to: $FOUND_VERSION_IN_TAG, and new major version is $NEW_MAJOR_VERSION"
 fi
 
-if [ "$LIB_VERSION_TYPE" = "major" ]; then
+if [ "$IS_FIRST_RELEASE" = "true" ]; then
+  NEW_VERSION=$(grep -oE '"[0-9]+\.[0-9]+\.[0-9]+"' version.go | sed 's/"//g')
+  if [ "$NEW_VERSION" = "" ]; then
+    echo "Cannot release with first release = true"
+    exit 1
+  fi
+elif [ "$LIB_VERSION_TYPE" = "major" ]; then
   build_major
 elif [ "$LIB_VERSION_TYPE" = "minor" ]; then
   build_minor
@@ -116,10 +123,16 @@ else
   build_patch
 fi
 
+
+NEW_VERSION="$NEW_VERSION-fedramp"
+
 echo "New version to release is: $NEW_VERSION"
 
 # Updates the minor version in version.go
-sed -i -E "s/[0-9]+\.[0-9]+\.[0-9]+/${NEW_VERSION}/" version.go | tail -1
+sed -i -E "s/[0-9]+\.[0-9]+\.[0-9]+(-fedramp)?/${NEW_VERSION}/" version.go | tail -1
+
+# git config user.name "IBM/Instana/Team Go"
+# git config user.email "github-actions@github.com"
 
 git remote set-url --push origin https://$GIT_COMMITTER_NAME:$GITHUB_TOKEN@github.com/instana/go-sensor
 

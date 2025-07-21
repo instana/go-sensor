@@ -1,4 +1,4 @@
-name: Go Tracer Release - Public
+name: Go Tracer Release - fedramp release
 
 on:
   workflow_dispatch:
@@ -23,6 +23,12 @@ on:
         default: true
         type: boolean
 
+      firstRelease:
+        description: 'Is this a first release?'
+        required: true
+        default: false
+        type: boolean
+
 jobs:
   do_release:
     name: Release
@@ -32,15 +38,16 @@ jobs:
       name: Checkout repo
       with:
         fetch-depth: 0
-        ref: main
+        ref: fedramp-main
     - name: Release tracer or package
       id: releaser
-      run: ./release_action.sh
+      run: ./release_action_fedramp.sh
       shell: bash {0}
       env:
         INSTANA_PACKAGE_NAME: ${{ inputs.packageName }}
         LIB_VERSION_TYPE: ${{ inputs.versionType }}
         RELEASE_AS_DRAFT: ${{ inputs.asDraft }}
+        IS_FIRST_RELEASE: ${{ inputs.firstRelease }}
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         GIT_AUTHOR_NAME: ${{ github.actor }}
         GIT_AUTHOR_EMAIL: ${{ github.actor }}@users.noreply.github.com
@@ -70,7 +77,7 @@ jobs:
       run: |
         #!/bin/bash
 
-        CORE_TAG=$(git tag -l "v1.*" | grep -E "v[0-9]+\.[0-9]+\.[0-9]+$" | sort -V | tail -n1)
+        CORE_TAG=$(git tag -l "v1.*[0-9]*.[0-9]*-fedramp" | sort -V | tail -n1)
 
         echo "CORE_TAG=$CORE_TAG" >> $GITHUB_OUTPUT
         echo "New core version is $CORE_TAG"
@@ -81,9 +88,9 @@ jobs:
         LIB_LIST=$(find ./instrumentation -name go.mod -exec dirname {} \; | grep -E -v "$DEPRECATED_PKGS")
 
         git remote set-url --push origin https://$GIT_COMMITTER_NAME:$GITHUB_TOKEN@github.com/instana/go-sensor
-        git checkout update-instrumentations-core/"$CORE_TAG" || git checkout -b update-instrumentations-core/"$CORE_TAG"
+        git checkout fedramp-update-instrumentations-core/"$CORE_TAG" || git checkout -b fedramp-update-instrumentations-core/"$CORE_TAG"
 
-        git pull origin "update-instrumentations-core/$CORE_TAG" || echo "Brand new branch. No need to pull from origin."
+        git pull origin "fedramp-update-instrumentations-core/$CORE_TAG" || echo "Brand new branch. No need to pull from origin."
 
         # Updates all instrumentations to use the @latest version of the core module
         for lib in $LIB_LIST
@@ -98,21 +105,21 @@ jobs:
         GIT_AUTHOR_NAME: ${{ github.actor }}
         GIT_AUTHOR_EMAIL: ${{ github.actor }}@users.noreply.github.com
         GIT_COMMITTER_NAME: ${{ github.actor }}
-        GIT_COMMITTER_EMAIL: ${{ github.actor }}@users.noreply.github.com
+        GIT_COMMITTER_EMAIL: ${{ github.actor }}@users.noreply.github.com  
 
     - name: "Update all instrumentations: push branch upstream"
       if: "${{ success() && inputs.packageName == '.' }}"
       uses: ad-m/github-push-action@master
       with:
         github_token: ${{ github.token }}
-        branch: update-instrumentations-core/${{ steps.create-branch.outputs.CORE_TAG }}
+        branch: fedramp-update-instrumentations-core/${{ steps.create-branch.outputs.CORE_TAG }}
 
     - name: "Update all instrumentations: create pull request"
       if: "${{ success() && inputs.packageName == '.' }}"
       run: |
         CORE_TAG=${{ steps.create-branch.outputs.CORE_TAG }}
-        git checkout update-instrumentations-core/"$CORE_TAG"
-        gh pr create --title "[public-release] Updating instrumentations to core module $CORE_TAG" --body "This PR updates all instrumented packages to use the latest core module $CORE_TAG." --head $(git branch --show-current)
+        git checkout fedramp-update-instrumentations-core/"$CORE_TAG"
+        gh pr create --base fedramp-main --title "[fedramp-release] Updating instrumentations to core module $CORE_TAG" --body "This PR updates all instrumented packages to use the latest core module $CORE_TAG." --head $(git branch --show-current)
       env:
         GH_TOKEN: ${{ github.token }}
 

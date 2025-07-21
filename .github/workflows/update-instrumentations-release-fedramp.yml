@@ -1,12 +1,12 @@
 # This workflow releases all instrumented packages updated to point to the latest core module.
 # It should run in the main branch after the PR created by the `Go Tracer Release` workflow is merged to main.
 
-name: Release all updated instrumentations - Public
+name: Release all updated instrumentations - FedRAMP release
 
 on:
   pull_request:
     branches:
-    - main
+    - fedramp-main
     types:
       - closed
 
@@ -14,30 +14,40 @@ jobs:
   release_instrumentations:
     name: Release all instrumentations
     runs-on: ubuntu-latest
-    if: github.event.pull_request.merged == true && startsWith(github.event.pull_request.head.ref, 'update-instrumentations-core')
+    if: github.event.pull_request.merged == true && startsWith(github.event.pull_request.head.ref, 'fedramp-update-instrumentations-core')
     steps:
     - uses: actions/checkout@v3
       name: Checkout repo
       with:
         fetch-depth: 0
-        ssh-key: ${{secrets.PRIVATE_KEY_GO_TRACER_RELEASE}}
+        ref: fedramp-main
     - name: Release all packages
       id: release-packages
       run: |
-        CORE_TAG=$(git tag -l "v1.*" | grep -E "v[0-9]+\.[0-9]+\.[0-9]+$" | sort -V | tail -n1)
+        # Variable to check if fedramp-first-release label exists in PR
+        fedramp-first-release="false"
+        if [[ "${{ contains(github.event.pull_request.labels.*.name, 'fedramp-first-release') }}" == "true" ]]; then
+          IS_FIRST_RELEASE="true"
+        else
+          IS_FIRST_RELEASE="false"
+        fi
+        
+        echo "fedramp-first-release label exists: $IS_FIRST_RELEASE"
+        
+        CORE_TAG=$(git tag -l "v1.*[0-9]*.[0-9]*-fedramp" | sort -V | tail -n1)
 
         EXCLUDED_DIRS="\/.*\/example"
         DEPRECATED_PKGS=".*instaamqp$"
-
+        
         LIB_LIST=$(find ./instrumentation -name go.mod -exec dirname {} \; | grep -E -v "$EXCLUDED_DIRS" | grep -E -v "$DEPRECATED_PKGS")
 
         TAGS=""
         for lib in $LIB_LIST
           do LIB_PATH="$(echo "$lib" | sed 's/\.\///')"
 
-          # Expected to find something like: instrumentation/instaredis/v1.5.0
+          # Expected to find something like: instrumentation/instaredis/v1.5.0-fedramp
           # This option will be used if the instrumentation has no v2 subfolder
-          TAG_TO_SEARCH="$LIB_PATH/v[0-1].[0-9]*.[0-9]*"
+          TAG_TO_SEARCH="$LIB_PATH/v[0-1].[0-9]*.[0-9]*-fedramp"
 
           # Expected to identify packages with subfolders. eg: instrumentation/instaredis/v2
           NEW_VERSION_FOLDER=$(echo "$lib" | grep -E "/v[2-9].*")
@@ -49,19 +59,34 @@ jobs:
 
             # Expected to be tag name with major version higher than 1. eg: instrumentation/instaredis/v2.1.0
             PATH_WITHOUT_V=$(echo "$LIB_PATH" | sed "s/\/v[0-9]*//")
-            TAG_TO_SEARCH="$PATH_WITHOUT_V/v$NEW_MAJOR_VERSION.[0-9]*.[0-9]*"
+            TAG_TO_SEARCH="$PATH_WITHOUT_V/v$NEW_MAJOR_VERSION.[0-9]*.[0-9]*-fedramp"
           fi
 
-          VERSION=$(git tag -l "$TAG_TO_SEARCH" | grep -E "v[0-9]+\.[0-9]+\.[0-9]+$" | sort -V | tail -n1 | sed "s/.*v//")
+          echo "TAG_TO_SEARCH: $TAG_TO_SEARCH"
+
+          VERSION=$(git tag -l "$TAG_TO_SEARCH" | sort -V | tail -n1 | sed "s/.*v//")
 
           if [ -z "$VERSION" ]; then
             VERSION="0.0.0"
           fi
+          echo "VERSION: $VERSION"
 
-          MINOR_VERSION=$(echo "$VERSION" | sed -En 's/[0-9]+\.([0-9]+)\.[0-9]+.*/\1/p')
-          MAJOR_VERSION=$(echo "$VERSION" | sed -En 's/([0-9]+)\.[0-9]+\.[0-9]+.*/\1/p')
-          MINOR_VERSION=$((MINOR_VERSION+1))
-          NEW_VERSION="$MAJOR_VERSION.$MINOR_VERSION.0"
+          if [ "$IS_FIRST_RELEASE" = "true" ]; then
+            NEW_VERSION=$(grep -oE '"[0-9]+\.[0-9]+\.[0-9]+"' "$lib"/version.go | sed 's/"//g')
+            if [ "$NEW_VERSION" = "" ]; then
+              echo "Cannot release with first release = true"
+              exit 1
+            fi
+          else
+            MINOR_VERSION=$(echo "$VERSION" | sed -En 's/[0-9]+\.([0-9]+)\.[0-9]+.*/\1/p')
+            MAJOR_VERSION=$(echo "$VERSION" | sed -En 's/([0-9]+)\.[0-9]+\.[0-9]+.*/\1/p')
+            MINOR_VERSION=$((MINOR_VERSION+1))
+            NEW_VERSION="$MAJOR_VERSION.$MINOR_VERSION.0"
+          fi
+
+          # add -fedramp in the end
+          NEW_VERSION="$NEW_VERSION-fedramp"
+          echo "New version to release is: $NEW_VERSION"
 
           # Updates the minor version in version.go
           sed -i -E "s/[0-9]+\.[0-9]+\.[0-9]+/${NEW_VERSION}/" "$lib"/version.go | tail -1
@@ -73,7 +98,7 @@ jobs:
 
         echo "TAGS=$TAGS" >> "$GITHUB_OUTPUT"
 
-        # Commit all version.go files to the main branch
+        # Commit all version.go files to the fedramp-main branch
         git remote set-url --push origin https://$GIT_COMMITTER_NAME:$GITHUB_TOKEN@github.com/instana/go-sensor
         git add ./instrumentation/**/version.go
         git add ./instrumentation/**/**/version.go
