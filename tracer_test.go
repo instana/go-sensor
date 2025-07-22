@@ -4,10 +4,12 @@
 package instana_test
 
 import (
+	"fmt"
 	"testing"
 
 	instana "github.com/instana/go-sensor"
 	ot "github.com/opentracing/opentracing-go"
+	otlog "github.com/opentracing/opentracing-go/log"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -88,4 +90,101 @@ func TestTracer_NonInstanaSpan(t *testing.T) {
 	assert.NotPanics(t, func() {
 		tracer.StartSpanWithOptions("my_operation", opts)
 	})
+}
+
+func TestTracerLogSpans(t *testing.T) {
+	type args struct {
+		fields        []otlog.Field
+		TracerOptions instana.TracerOptions
+	}
+
+	testCases := []struct {
+		desc              string
+		args              args
+		ExpectedSpanCount int
+	}{
+		{
+			desc: "log span count equals default MaxLogsPerSpan limit",
+			args: args{
+				fields: []otlog.Field{
+					otlog.Error(fmt.Errorf("error1")),
+					otlog.Error(fmt.Errorf("error2")),
+				},
+				TracerOptions: instana.DefaultTracerOptions(),
+			},
+			ExpectedSpanCount: 3, // span + 2 log spans
+		},
+		{
+			desc: "log span count is greater than default MaxLogsPerSpan limit",
+			args: args{
+				fields: []otlog.Field{
+					otlog.Error(fmt.Errorf("error1")),
+					otlog.Error(fmt.Errorf("error2")),
+					otlog.Error(fmt.Errorf("error2")),
+				},
+				TracerOptions: instana.DefaultTracerOptions(),
+			},
+			ExpectedSpanCount: 3, // span + 2 log spans
+		},
+		{
+			desc: "log span count is 2, MaxLogsPerSpan is 1",
+			args: args{
+				fields: []otlog.Field{
+					otlog.Error(fmt.Errorf("error1")),
+					otlog.Error(fmt.Errorf("error2")),
+				},
+				TracerOptions: instana.TracerOptions{
+					MaxLogsPerSpan: 1,
+				},
+			},
+			ExpectedSpanCount: 2, // span + 1 log span
+		},
+		{
+			desc: "log span count is 2, MaxLogsPerSpan is set to 0",
+			args: args{
+				fields: []otlog.Field{
+					otlog.Error(fmt.Errorf("error1")),
+					otlog.Error(fmt.Errorf("error2")),
+				},
+				TracerOptions: instana.TracerOptions{
+					MaxLogsPerSpan: 0,
+				},
+			},
+			ExpectedSpanCount: 3, // span + 2 log span (as default MaxLogsPerSpan value will be set here)
+		},
+		{
+			desc: "appended logs of level greater than warn",
+			args: args{
+				fields: []otlog.Field{
+					otlog.Object("debug", "log1"),
+					otlog.Object("debug", "log2"),
+				},
+				TracerOptions: instana.DefaultTracerOptions(),
+			},
+			ExpectedSpanCount: 1, // span + no spans created for debug logs
+		},
+	}
+	for _, tC := range testCases {
+		t.Run(tC.desc, func(t *testing.T) {
+
+			opts := instana.Options{
+				LogLevel:    instana.Debug,
+				AgentClient: alwaysReadyClient{},
+				Tracer:      tC.args.TracerOptions,
+			}
+
+			recorder := instana.NewTestRecorder()
+			tracer := instana.NewTracerWithEverything(&opts, recorder)
+			defer instana.ShutdownSensor()
+
+			sp := tracer.StartSpan("test")
+			for _, field := range tC.args.fields {
+				sp.LogFields(field)
+			}
+			sp.Finish()
+
+			spans := recorder.GetQueuedSpans()
+			assert.Equal(t, tC.ExpectedSpanCount, len(spans))
+		})
+	}
 }

@@ -107,7 +107,7 @@ func (r *spanS) sendSpanToAgent() bool {
 
 func (r *spanS) appendLog(lr ot.LogRecord) {
 	maxLogs := r.tracer.Options().MaxLogsPerSpan
-	if maxLogs == 0 || len(r.Logs) < maxLogs {
+	if len(r.Logs) < maxLogs {
 		r.Logs = append(r.Logs, lr)
 	}
 }

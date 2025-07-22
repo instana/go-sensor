@@ -12,7 +12,7 @@ import (
 
 const (
 	// MaxLogsPerSpan The maximum number of logs allowed on a span.
-	MaxLogsPerSpan = 100
+	MaxLogsPerSpan = 2
 )
 
 var _ Tracer = (*tracerS)(nil)
