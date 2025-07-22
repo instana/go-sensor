@@ -6,7 +6,7 @@ require (
 	github.com/instana/go-sensor v1.68.0
 	github.com/instana/go-sensor/instrumentation/instafasthttp v0.18.0
 	github.com/instana/go-sensor/instrumentation/instagorm v1.29.0
-	github.com/valyala/fasthttp v1.63.0
+	github.com/valyala/fasthttp v1.64.0
 	gorm.io/driver/postgres v1.6.0
 	gorm.io/gorm v1.30.0
 )
