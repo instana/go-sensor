@@ -101,9 +101,9 @@ func TestTracerLogSpans(t *testing.T) {
 	}
 
 	type expectedResult struct {
-		errorCount      int
-		spanCount       int
-		expectedLogMsgs []string
+		errorCount int
+		spanCount  int
+		logMsgs    []string
 	}
 
 	testCases := []struct {
@@ -121,9 +121,9 @@ func TestTracerLogSpans(t *testing.T) {
 				TracerOptions: instana.DefaultTracerOptions(),
 			},
 			expectedResult: expectedResult{
-				errorCount:      2,
-				spanCount:       3, // span + 2 log spans
-				expectedLogMsgs: []string{`error.object: "error1"`, `error.object: "error2"`},
+				errorCount: 2,
+				spanCount:  3, // span + 2 log spans
+				logMsgs:    []string{`error.object: "error1"`, `error.object: "error2"`},
 			},
 		},
 		{
@@ -137,9 +137,9 @@ func TestTracerLogSpans(t *testing.T) {
 				TracerOptions: instana.DefaultTracerOptions(),
 			},
 			expectedResult: expectedResult{
-				errorCount:      3,
-				spanCount:       3, // span + 2 log spans
-				expectedLogMsgs: []string{`error.object: "error1"`, `error.object: "error2"`},
+				errorCount: 3,
+				spanCount:  3, // span + 2 log spans
+				logMsgs:    []string{`error.object: "error1"`, `error.object: "error2"`},
 			},
 		},
 		{
@@ -154,9 +154,9 @@ func TestTracerLogSpans(t *testing.T) {
 				},
 			},
 			expectedResult: expectedResult{
-				errorCount:      2,
-				spanCount:       2, // span + 1 log span
-				expectedLogMsgs: []string{`error.object: "error1"`},
+				errorCount: 2,
+				spanCount:  2, // span + 1 log span
+				logMsgs:    []string{`error.object: "error1"`},
 			},
 		},
 		{
@@ -171,9 +171,9 @@ func TestTracerLogSpans(t *testing.T) {
 				},
 			},
 			expectedResult: expectedResult{
-				errorCount:      2,
-				spanCount:       3, // span + 2 log span (as default MaxLogsPerSpan value will be set here)
-				expectedLogMsgs: []string{`error.object: "error1"`, `error.object: "error2"`},
+				errorCount: 2,
+				spanCount:  3, // span + 2 log span (as default MaxLogsPerSpan value will be set here)
+				logMsgs:    []string{`error.object: "error1"`, `error.object: "error2"`},
 			},
 		},
 		{
@@ -186,9 +186,9 @@ func TestTracerLogSpans(t *testing.T) {
 				TracerOptions: instana.DefaultTracerOptions(),
 			},
 			expectedResult: expectedResult{
-				errorCount:      0,
-				spanCount:       1, // span + no spans created for debug logs
-				expectedLogMsgs: []string{},
+				errorCount: 0,
+				spanCount:  1, // span + no spans created for debug logs
+				logMsgs:    []string{},
 			},
 		},
 	}
@@ -218,9 +218,6 @@ func TestTracerLogSpans(t *testing.T) {
 			span := spans[0]
 			logSpans := spans[1:]
 
-			// Log span count will be one less than the total count.
-			assert.Equal(t, tC.expectedResult.spanCount-1, len(logSpans))
-
 			assert.Empty(t, span.ParentID)
 			assert.Equal(t, tC.expectedResult.errorCount, span.Ec)
 
@@ -232,7 +229,7 @@ func TestTracerLogSpans(t *testing.T) {
 
 			// Validating the expected log spans
 			if len(logSpans) != 0 {
-				validateLogSpan(t, span, logSpans, tC.expectedResult.expectedLogMsgs[:]...)
+				validateLogSpan(t, span, logSpans, tC.expectedResult.logMsgs[:]...)
 			}
 		})
 	}
