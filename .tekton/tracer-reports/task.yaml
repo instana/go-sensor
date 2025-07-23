@@ -105,16 +105,11 @@ spec:
       env:
         - name: STATE
           value: $(params.STATE)
-        - name: SLACK_TOKEN
+        - name: SLACK_WEBHOOK_URL
           valueFrom:
             secretKeyRef:
-              name: "slack-token"
-              key: "token"
-        - name: SLACK_CHANNEL_ID
-          valueFrom:
-            secretKeyRef:
-              name: "slack-channel-id"
-              key: "id"
+              name: "slack-webhook-url"
+              key: "slackUrl"
       workingDir: /workspace/go-sensor/
       script: |
         #!/bin/sh
@@ -130,4 +125,4 @@ spec:
           fi
         fi
 
-        curl -d "text=$message" -d "channel=$SLACK_CHANNEL_ID" -H "Authorization: Bearer $SLACK_TOKEN" -X POST https://slack.com/api/chat.postMessage
+        curl -H "Content-type: application/json" -d "text=$message" -X POST $SLACK_WEBHOOK_URL
