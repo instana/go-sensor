@@ -16,7 +16,7 @@ spec:
     type: string
   workspaces:
     - name: go-tracer-ci-pipeline-pvc
-    - name: cache-pvc
+    # - name: cache-pvc
   tasks:
 
     - name: github-set-check-status-to-pending
@@ -100,8 +100,8 @@ spec:
       workspaces:
         - name: task-pvc
           workspace: go-tracer-ci-pipeline-pvc
-        - name: cache-pvc
-          workspace: cache-pvc
+        # - name: cache-pvc
+        #   workspace: cache-pvc
 
     - name: integration-test-common
       runAfter:
@@ -116,8 +116,8 @@ spec:
       workspaces:
         - name: task-pvc
           workspace: go-tracer-ci-pipeline-pvc
-        - name: cache-pvc
-          workspace: cache-pvc
+        # - name: cache-pvc
+        #   workspace: cache-pvc
 
     - name: integration-test-couchbase
       runAfter:
@@ -132,8 +132,8 @@ spec:
       workspaces:
         - name: task-pvc
           workspace: go-tracer-ci-pipeline-pvc
-        - name: cache-pvc
-          workspace: cache-pvc
+        # - name: cache-pvc
+        #   workspace: cache-pvc
 
     # - name: cache-update
     #   runAfter:
