@@ -9,7 +9,7 @@ type TracerOptions struct {
 	DropAllLogs bool
 	// MaxLogsPerSpan defines the maximum number of log records that can be attached to a span.
 	// If a span contains more logs than this limit, the excess logs will be dropped.
-	// If set to `0` default value will be used.
+	// If set to `0`, default value will be used.
 	MaxLogsPerSpan int
 	// Secrets is a secrets matcher used to filter out sensitive data from HTTP requests, database
 	// connection strings, etc. By default tracer does not filter any values. Package `secrets`
