@@ -139,7 +139,7 @@ func Test_Collector_Logger(t *testing.T) {
 	assert.Equal(t, 2, l.counter["error"])
 }
 
-func Test_Collector_MaxLogsPerSpan(t *testing.T) {
+func TestInitCollector_MaxLogsPerSpan(t *testing.T) {
 	type args struct {
 		opts *instana.Options
 	}
