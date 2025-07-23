@@ -101,8 +101,9 @@ func TestTracerLogSpans(t *testing.T) {
 	}
 
 	type expectedResult struct {
-		errorCount int
-		spanCount  int
+		errorCount      int
+		spanCount       int
+		expectedLogMsgs []string
 	}
 
 	testCases := []struct {
@@ -120,8 +121,9 @@ func TestTracerLogSpans(t *testing.T) {
 				TracerOptions: instana.DefaultTracerOptions(),
 			},
 			expectedResult: expectedResult{
-				errorCount: 2,
-				spanCount:  3, // span + 2 log spans
+				errorCount:      2,
+				spanCount:       3, // span + 2 log spans
+				expectedLogMsgs: []string{`error.object: "error1"`, `error.object: "error2"`},
 			},
 		},
 		{
@@ -130,13 +132,14 @@ func TestTracerLogSpans(t *testing.T) {
 				fields: []otlog.Field{
 					otlog.Error(fmt.Errorf("error1")),
 					otlog.Error(fmt.Errorf("error2")),
-					otlog.Error(fmt.Errorf("error2")),
+					otlog.Error(fmt.Errorf("error3")),
 				},
 				TracerOptions: instana.DefaultTracerOptions(),
 			},
 			expectedResult: expectedResult{
-				errorCount: 3,
-				spanCount:  3, // span + 2 log spans
+				errorCount:      3,
+				spanCount:       3, // span + 2 log spans
+				expectedLogMsgs: []string{`error.object: "error1"`, `error.object: "error2"`},
 			},
 		},
 		{
@@ -151,8 +154,9 @@ func TestTracerLogSpans(t *testing.T) {
 				},
 			},
 			expectedResult: expectedResult{
-				errorCount: 2,
-				spanCount:  2, // span + 1 log span
+				errorCount:      2,
+				spanCount:       2, // span + 1 log span
+				expectedLogMsgs: []string{`error.object: "error1"`},
 			},
 		},
 		{
@@ -167,8 +171,9 @@ func TestTracerLogSpans(t *testing.T) {
 				},
 			},
 			expectedResult: expectedResult{
-				errorCount: 2,
-				spanCount:  3, // span + 2 log span (as default MaxLogsPerSpan value will be set here)
+				errorCount:      2,
+				spanCount:       3, // span + 2 log span (as default MaxLogsPerSpan value will be set here)
+				expectedLogMsgs: []string{`error.object: "error1"`, `error.object: "error2"`},
 			},
 		},
 		{
@@ -181,8 +186,9 @@ func TestTracerLogSpans(t *testing.T) {
 				TracerOptions: instana.DefaultTracerOptions(),
 			},
 			expectedResult: expectedResult{
-				errorCount: 0,
-				spanCount:  1, // span + no spans created for debug logs
+				errorCount:      0,
+				spanCount:       1, // span + no spans created for debug logs
+				expectedLogMsgs: []string{},
 			},
 		},
 	}
@@ -210,6 +216,11 @@ func TestTracerLogSpans(t *testing.T) {
 			assert.Equal(t, tC.expectedResult.spanCount, len(spans))
 
 			span := spans[0]
+			logSpans := spans[1:]
+
+			// Log span count will be one less than the total count.
+			assert.Equal(t, tC.expectedResult.spanCount-1, len(logSpans))
+
 			assert.Empty(t, span.ParentID)
 			assert.Equal(t, tC.expectedResult.errorCount, span.Ec)
 
@@ -219,22 +230,23 @@ func TestTracerLogSpans(t *testing.T) {
 			assert.Equal(t, "test", data.Tags.Name)
 			assert.Equal(t, "entry", data.Tags.Type)
 
-			validateLogSpan := func(span, logSpan instana.Span, logSpanMessage string) {
-				assert.Equal(t, span.TraceID, logSpan.TraceID)
-				assert.Equal(t, span.SpanID, logSpan.ParentID)
-				assert.Equal(t, "log.go", logSpan.Name)
-
-				require.IsType(t, instana.LogSpanData{}, logSpan.Data)
-				data := logSpan.Data.(instana.LogSpanData)
-
-				assert.Equal(t, logSpanMessage, data.Tags.Message)
-			}
-
-			for i := 1; i < tC.expectedResult.spanCount; i++ {
-				logSpan := spans[i]
-				expectedLog := fmt.Sprintf(`error.object: "error%d"`, i)
-				validateLogSpan(span, logSpan, expectedLog)
+			// Validating the expected log spans
+			if len(logSpans) != 0 {
+				validateLogSpan(t, span, logSpans, tC.expectedResult.expectedLogMsgs[:]...)
 			}
 		})
+	}
+}
+
+func validateLogSpan(t *testing.T, span instana.Span, logSpans []instana.Span, logSpanMessage ...string) {
+	for i, logSpan := range logSpans {
+		assert.Equal(t, span.TraceID, logSpan.TraceID)
+		assert.Equal(t, span.SpanID, logSpan.ParentID)
+		assert.Equal(t, "log.go", logSpan.Name)
+
+		require.IsType(t, instana.LogSpanData{}, logSpan.Data)
+		data := logSpan.Data.(instana.LogSpanData)
+
+		assert.Equal(t, logSpanMessage[i], data.Tags.Message)
 	}
 }
