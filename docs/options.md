@@ -78,6 +78,8 @@ If it is nil the default implementation will be used.
 #### Recorder
 **Type:** [SpanRecorder](https://pkg.go.dev/github.com/instana/go-sensor#SpanRecorder)
 
+Recorder records and manages spans. When this option is not set, instana.NewRecorder() will be used.
+
 #### MaxLogsPerSpan
 
 **Type:** ``int``
