@@ -13,6 +13,7 @@ func main() {
 	col := instana.InitCollector(&instana.Options{
 		Service:           "Basic Usage",
 		EnableAutoProfile: true,
+		Tracer:            instana.DefaultTracerOptions(),
 	})
 
 	http.HandleFunc("/endpoint", instana.TracingHandlerFunc(col, "/endpoint", func(w http.ResponseWriter, r *http.Request) {

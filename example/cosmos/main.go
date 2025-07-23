@@ -61,6 +61,7 @@ func init() {
 	validateAzureCreds()
 	collector = instana.InitCollector(&instana.Options{
 		Service: "sample-app-cosmos",
+		Tracer:  instana.DefaultTracerOptions(),
 	})
 }
 

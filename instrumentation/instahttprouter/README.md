@@ -22,6 +22,7 @@ Usage
 // Create a collector
 collector := instana.InitCollector(&instana.Options{
   Service: "my-web-app",
+  Tracer:  instana.DefaultTracerOptions(),
 })
 
 // Create router and wrap it with Instana

@@ -52,6 +52,7 @@ func init() {
   ...
   col = instana.InitCollector(&instana.Options{
     Service: "My app",
+    Tracer:  instana.DefaultTracerOptions(),
   })
 }
 ```
@@ -100,6 +101,7 @@ Unlike metrics, profiling needs to be enabled with the `EnableAutoProfile` optio
 col = instana.InitCollector(&instana.Options{
   Service: "My app",
   EnableAutoProfile: true,
+  Tracer:  instana.DefaultTracerOptions(),
 })
 ```
 
@@ -129,6 +131,7 @@ The code snippet below shows how to create logs and send them to the agent:
 ```go
 col := instana.InitCollector(&instana.Options{
   Service: "My Go App",
+  Tracer:  instana.DefaultTracerOptions(),
 })
 
 col.StartSpan("log.go", []ot.StartSpanOption{
@@ -166,6 +169,7 @@ func main() {
   col := instana.InitCollector(&instana.Options{
     Service:           "Basic Usage",
     EnableAutoProfile: true,
+    Tracer:  instana.DefaultTracerOptions(),
   })
 
   http.HandleFunc("/endpoint", instana.TracingHandlerFunc(col, "/endpoint", func(w http.ResponseWriter, r *http.Request) {

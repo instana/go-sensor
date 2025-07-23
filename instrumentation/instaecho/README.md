@@ -21,6 +21,7 @@ Usage
 // create an instana collector
 collector := instana.InitCollector(&instana.Options{
     Service: "echo-app",
+    Tracer:  instana.DefaultTracerOptions(),
 })
 
 // init instrumented Echo

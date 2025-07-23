@@ -39,6 +39,7 @@ func main() {
 	// create an Instana collector
 	collector := instana.InitCollector(&instana.Options{
 		Service: "beego-server",
+		Tracer:  instana.DefaultTracerOptions(),
 	})
 
 	// instrument the server with instabeego

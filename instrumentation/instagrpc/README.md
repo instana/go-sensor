@@ -38,6 +38,7 @@ request and inject it into the handler:
 // initialize a new collector instance
 collector := instana.InitCollector(&instana.Options{
 	Service: "grpc-app",
+	Tracer:  instana.DefaultTracerOptions(),
 })
 
 // instrument the server

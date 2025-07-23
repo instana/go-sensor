@@ -173,6 +173,7 @@ func main() {
 	// Initialize Instana collector
 	c := instana.InitCollector(&instana.Options{
 		Service: "mongo-client",
+		Tracer:  instana.DefaultTracerOptions(),
 	})
 	defer instana.ShutdownCollector()
 

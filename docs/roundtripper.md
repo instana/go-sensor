@@ -24,6 +24,7 @@ The first thing we need is to add the collector to the project:
 ```go
 col := instana.InitCollector(&instana.Options{
   Service: "my-http-client",
+  Tracer:  instana.DefaultTracerOptions(),
 })
 ```
 
@@ -95,6 +96,7 @@ import (
 func main() {
   col := instana.InitCollector(&instana.Options{
     Service: "my-http-client",
+    Tracer:  instana.DefaultTracerOptions(),
   })
 
   client := &http.Client{

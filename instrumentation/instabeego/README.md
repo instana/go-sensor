@@ -24,6 +24,7 @@ Usage
 c := instana.InitCollector(&instana.Options{
     Service:           "beego-server",
     EnableAutoProfile: true,
+    Tracer:  instana.DefaultTracerOptions(),
 })
 
 // instrument the web server
@@ -45,6 +46,7 @@ beego.Run()
 c := instana.InitCollector(&instana.Options{
     Service:           "my-http-client",
     EnableAutoProfile: true,
+    Tracer:  instana.DefaultTracerOptions(),
 })
 
 // get the parent span and inject into the request context

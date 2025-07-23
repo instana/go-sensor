@@ -36,6 +36,7 @@ func main() {
 
 	s := instana.InitCollector(&instana.Options{
 		Service: "gorm-postgres",
+		Tracer:  instana.DefaultTracerOptions(),
 	})
 
 	<-agentReady()

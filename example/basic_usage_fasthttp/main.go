@@ -36,6 +36,7 @@ func init() {
 	sensor = instana.InitCollector(&instana.Options{
 		Service:  "fasthttp-example",
 		LogLevel: instana.Debug,
+		Tracer:   instana.DefaultTracerOptions(),
 	})
 }
 

@@ -14,6 +14,7 @@ var s instana.TracerLogger
 func init() {
 	s = instana.InitCollector(&instana.Options{
 		Service: "mysql-service",
+		Tracer:  instana.DefaultTracerOptions(),
 	})
 }
 

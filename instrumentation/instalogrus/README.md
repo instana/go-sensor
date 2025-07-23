@@ -24,6 +24,7 @@ and sends to Instana.
 // Create a collector
 collector := instana.InitCollector(&instana.Options{
 	Service: "my-web-server",
+	Tracer:  instana.DefaultTracerOptions(),
 })
 
 // Register the instalogrus hook
