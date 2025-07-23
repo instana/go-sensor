@@ -7,9 +7,9 @@ package instana
 type TracerOptions struct {
 	// DropAllLogs turns log events on all spans into no-ops
 	DropAllLogs bool
-	// MaxLogsPerSpan limits the number of log records in a span (if set to a non-zero
-	// value). If a span has more logs than this value, logs are dropped as
-	// necessary
+	// MaxLogsPerSpan defines the maximum number of log records that can be attached to a span.
+	// If a span contains more logs than this limit, the excess logs will be dropped.
+	// If set to `0` default value will be used.
 	MaxLogsPerSpan int
 	// Secrets is a secrets matcher used to filter out sensitive data from HTTP requests, database
 	// connection strings, etc. By default tracer does not filter any values. Package `secrets`
