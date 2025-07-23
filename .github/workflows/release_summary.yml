@@ -34,18 +34,36 @@ jobs:
               version=$(echo "$input" | sed -n 's/.*name:\([^,]*\),.*/\1/p')
             else
               name=$(echo "$input" | sed -n 's/^name:instrumentation\/\(.*\)\/v\([^,]*\),.*$/\1/p')
-              version=$(echo "$input" | sed -n 's/^name:instrumentation\/.*\/v\([^,]*\),.*$/\1/p')
+              version=$(echo "$input" | sed -n 's/^name:instrumentation\/.*\/\(v[^,]*\),.*$/\1/p')
             fi
             
             local url=$(echo "$input" | sed -n 's/^.*url:\([^,]*\)$/\1/p')
-
-            echo "- $name - <$url|$version>\n"
+            
+            # Only releases like:
+            # v1.68.0-fedramp
+            # v1.68.0
+            # etc. will be considered as valid
+            #
+            # Releases like:
+            # v1.68.0-beta
+            # v1.68.0-alpha.1
+            # and similar ones will be skipped.
+            echo "$version" | grep -Eq '^v[0-9]+\.[0-9]+\.[0-9]+(-fedramp)?$'
+            if [ $? -eq 0 ]; then
+              echo "- $name - <$url|$version>\n"
+            else
+              echo ""
+            fi
           }
 
           final_msg=""
           while IFS= read -r line; do
               transformed_line=$(transform_message "$line")
-              final_msg="$final_msg$transformed_line\n"
+              if [[ $transformed_line == "" ]]; then
+                echo "Skipped line: $line"
+              else
+                final_msg="$final_msg$transformed_line\n"
+              fi
           done <<< "$data"
           
           MESSAGE='[{"type":"section","text":{"type":"mrkdwn","text":":mega: *GoTracer Team* has released the following packages on *'"$today"'*"}},{"type":"section","text":{"type":"mrkdwn","text":"'"$final_msg"'"}}]'
