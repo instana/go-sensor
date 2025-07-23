@@ -209,59 +209,42 @@ func TestTracerLogSpans(t *testing.T) {
 			spans := recorder.GetQueuedSpans()
 			assert.Equal(t, tC.expectedResult.spanCount, len(spans))
 
-			validateLogSpan := func(span, logSpan instana.Span, logSpanMessage string) {
-				assert.Equal(t, span.TraceID, logSpan.TraceID)
-				assert.Equal(t, span.SpanID, logSpan.ParentID)
-				assert.Equal(t, "log.go", logSpan.Name)
+			span := spans[0]
+			logSpans := spans[1:]
 
-				require.IsType(t, instana.LogSpanData{}, logSpan.Data)
-				data := logSpan.Data.(instana.LogSpanData)
+			// Log span count will be one less than the total count.
+			assert.Equal(t, tC.expectedResult.spanCount-1, len(logSpans))
 
-				assert.Equal(t, logSpanMessage, data.Tags.Message)
-			}
+			assert.Empty(t, span.ParentID)
+			assert.Equal(t, tC.expectedResult.errorCount, span.Ec)
 
-			if tC.expectedResult.spanCount == 3 {
-				span, logSpan1, logSpan2 := spans[0], spans[1], spans[2]
-				assert.Empty(t, span.ParentID)
-				assert.Equal(t, tC.expectedResult.errorCount, span.Ec)
+			require.IsType(t, instana.SDKSpanData{}, span.Data)
+			data := span.Data.(instana.SDKSpanData)
 
-				require.IsType(t, instana.SDKSpanData{}, span.Data)
-				data := span.Data.(instana.SDKSpanData)
+			assert.Equal(t, "test", data.Tags.Name)
+			assert.Equal(t, "entry", data.Tags.Type)
 
-				assert.Equal(t, "test", data.Tags.Name)
-				assert.Equal(t, "entry", data.Tags.Type)
-
-				validateLogSpan(span, logSpan1, `error.object: "error1"`)
-				validateLogSpan(span, logSpan2, `error.object: "error2"`)
-
-			}
-
-			if tC.expectedResult.spanCount == 2 {
-				span, logSpan1 := spans[0], spans[1]
-				assert.Empty(t, span.ParentID)
-				assert.Equal(t, tC.expectedResult.errorCount, span.Ec)
-
-				require.IsType(t, instana.SDKSpanData{}, span.Data)
-				data := span.Data.(instana.SDKSpanData)
-
-				assert.Equal(t, "test", data.Tags.Name)
-				assert.Equal(t, "entry", data.Tags.Type)
-
-				validateLogSpan(span, logSpan1, `error.object: "error1"`)
-			}
-
-			if tC.expectedResult.spanCount == 1 {
-				span := spans[0]
-				assert.Empty(t, span.ParentID)
-				assert.Equal(t, tC.expectedResult.errorCount, span.Ec)
-
-				require.IsType(t, instana.SDKSpanData{}, span.Data)
-				data := span.Data.(instana.SDKSpanData)
-
-				assert.Equal(t, "test", data.Tags.Name)
-				assert.Equal(t, "entry", data.Tags.Type)
+			// Validating the expected log spans
+			expectedLogMsgs := []string{`error.object: "error1"`, `error.object: "error2"`}
+			if len(logSpans) != 0 {
+				validateLogSpan(t, span, logSpans, expectedLogMsgs[0:len(logSpans)]...)
 			}
 
 		})
+	}
+}
+
+func validateLogSpan(t *testing.T, span instana.Span, logSpans []instana.Span, logSpanMessage ...string) {
+	for i, logSpan := range logSpans {
+
+		assert.Equal(t, span.TraceID, logSpan.TraceID)
+		assert.Equal(t, span.SpanID, logSpan.ParentID)
+		assert.Equal(t, "log.go", logSpan.Name)
+
+		require.IsType(t, instana.LogSpanData{}, logSpan.Data)
+		data := logSpan.Data.(instana.LogSpanData)
+
+		fmt.Println(data.Tags.Message)
+		assert.Equal(t, logSpanMessage[i], data.Tags.Message)
 	}
 }
