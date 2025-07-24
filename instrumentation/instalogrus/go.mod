@@ -7,7 +7,10 @@ require (
 	github.com/sirupsen/logrus v1.9.3
 )
 
-require github.com/stretchr/testify v1.10.0
+require (
+	github.com/instana/go-sensor v1.69.0
+	github.com/stretchr/testify v1.10.0
+)
 
 require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
