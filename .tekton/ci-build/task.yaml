@@ -101,8 +101,8 @@ spec:
   workspaces:
     - name: task-pvc
       mountPath: /workspace
-    - name: cache-pvc
-      mountPath: /cache
+    # - name: cache-pvc
+    #   mountPath: /cache
 
   steps:
     - name: unit-test
@@ -213,8 +213,8 @@ spec:
   workspaces:
     - name: task-pvc
       mountPath: /workspace
-    - name: cache-pvc
-      mountPath: /cache
+    # - name: cache-pvc
+    #   mountPath: /cache
   steps:
     - name: integration-test-common
       image: public.ecr.aws/docker/library/golang:$(params.imageTag)
@@ -270,7 +270,9 @@ spec:
         #!/bin/sh
         # Installing curl
         apk fix && apk --no-cache --update add curl && rm -rf /var/cache/apk/*
+        echo "Waiting for 30 seconds!" && \
         sleep 30 && \
+        echo "Configuring couchbase." && \
         curl -v -X POST http://127.0.0.1:8091/pools/default -d memoryQuota=2024 -d indexMemoryQuota=512 && \
         curl -v http://127.0.0.1:8091/node/controller/setupServices -d services=kv%2Ceventing%2Cindex%2Cn1ql%2Ccbas%2Cfts && \
         curl -v http://127.0.0.1:8091/settings/web -d port=8091 -d username=Administrator -d password=password && \
@@ -283,8 +285,8 @@ spec:
   workspaces:
     - name: task-pvc
       mountPath: /workspace
-    - name: cache-pvc
-      mountPath: /cache
+    # - name: cache-pvc
+    #   mountPath: /cache
   steps:
     - name: integration-test-couchbase
       image: public.ecr.aws/docker/library/golang:$(params.imageTag)
