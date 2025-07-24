@@ -12,7 +12,6 @@ import (
 	instana "github.com/instana/go-sensor"
 	ot "github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
-
 	"github.com/stretchr/testify/assert"
 )
 
@@ -138,6 +137,64 @@ func Test_Collector_Logger(t *testing.T) {
 	assert.Equal(t, 1, l.counter["info"])
 	assert.Equal(t, 1, l.counter["warn"])
 	assert.Equal(t, 2, l.counter["error"])
+}
+
+func TestInitCollector_MaxLogsPerSpan(t *testing.T) {
+	type args struct {
+		opts *instana.Options
+	}
+	tests := []struct {
+		name string
+		args args
+		want int
+	}{
+		{
+			name: "tracer options is empty",
+			args: args{
+				opts: &instana.Options{},
+			},
+			want: instana.MaxLogsPerSpan,
+		},
+		{
+			name: "default tracer options",
+			args: args{
+				opts: &instana.Options{
+					Tracer: instana.DefaultTracerOptions(),
+				},
+			},
+			want: instana.MaxLogsPerSpan,
+		},
+		{
+			name: "tracer options are set by user",
+			args: args{
+				opts: &instana.Options{
+					Tracer: instana.TracerOptions{
+						MaxLogsPerSpan: 1000,
+					},
+				},
+			},
+			want: 1000,
+		},
+		{
+			name: "tracer options are set but not MaxLogsPerSpan",
+			args: args{
+				opts: &instana.Options{
+					Tracer: instana.TracerOptions{
+						Secrets: instana.DefaultSecretsMatcher(),
+					},
+				},
+			},
+			want: instana.MaxLogsPerSpan,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			defer instana.ShutdownCollector()
+			if got := instana.InitCollector(tt.args.opts); got.Options().MaxLogsPerSpan != tt.want {
+				t.Errorf("MaxLogsPerSpan = %v, want %v", got.Options().MaxLogsPerSpan, tt.want)
+			}
+		})
+	}
 }
 
 var _ instana.LeveledLogger = (*mylogger)(nil)
