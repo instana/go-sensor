@@ -22,6 +22,7 @@ Usage
 // create a collector
 collector := instana.InitCollector(&instana.Options{
     Service: "gorm-app",
+    Tracer:  instana.DefaultTracerOptions(),
 })
 
 dsn := "<relevant DSN information for the database>"

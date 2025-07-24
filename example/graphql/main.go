@@ -69,6 +69,7 @@ var (
 func init() {
 	sensor = instana.InitCollector(&instana.Options{
 		Service: "go-graphql-test",
+		Tracer:  instana.DefaultTracerOptions(),
 	})
 }
 

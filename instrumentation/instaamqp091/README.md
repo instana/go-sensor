@@ -41,6 +41,7 @@ func Example_publisher() {
 	// Create the Instana collector
 	collector := instana.InitCollector(&instana.Options{
 		Service: "rabbitmq-client",
+		Tracer:  instana.DefaultTracerOptions(),
 	})
 
 	c, err := amqp.Dial(url)
@@ -92,6 +93,7 @@ func Example_consumer() {
 
 	collector := instana.InitCollector(&instana.Options{
 		Service: "rabbitmq-client",
+		Tracer:  instana.DefaultTracerOptions(),
 	})
 
 	c, err := amqp.Dial(url)

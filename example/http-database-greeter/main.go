@@ -62,6 +62,7 @@ func main() {
 	// tracer into all instrumented methods.
 	sensor := instana.InitCollector(&instana.Options{
 		Service: "greeter-server",
+		Tracer:  instana.DefaultTracerOptions(),
 	})
 
 	<-agentReady()

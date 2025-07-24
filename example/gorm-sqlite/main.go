@@ -34,6 +34,7 @@ func agentReady() chan bool {
 func main() {
 	s := instana.InitCollector(&instana.Options{
 		Service: "gorm-sqlite",
+		Tracer:  instana.DefaultTracerOptions(),
 	})
 
 	<-agentReady()

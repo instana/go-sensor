@@ -22,6 +22,7 @@ Usage
 // Create a collector for instana instrumentation
 collector := instana.InitCollector(&instana.Options{
   Service: "fiber-app",
+  Tracer:  instana.DefaultTracerOptions(),
 })
 
 app := fiber.New()

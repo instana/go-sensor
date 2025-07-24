@@ -28,6 +28,7 @@ func main() {
 	// Create a instana collector
 	collector := instana.InitCollector(&instana.Options{
 		Service: "my-web-server",
+		Tracer:  instana.DefaultTracerOptions(),
 	})
 
 	// Create router and wrap it with Instana

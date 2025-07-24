@@ -19,6 +19,7 @@ func main() {
 	// Initialize Instana Sensor
 	collector := instana.InitCollector(&instana.Options{
 		Service: "my-service",
+		Tracer:  instana.DefaultTracerOptions(),
 	})
 
 	// Instrument the HTTP handler using Instana

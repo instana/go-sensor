@@ -25,6 +25,7 @@ The `instafasthttp.TraceHandler` returns an instrumented `fasthttp.RequestHandle
 c = instana.InitCollector(&instana.Options{
 	Service:  "fasthttp-example",
 	LogLevel: instana.Debug,
+	Tracer:  instana.DefaultTracerOptions(),
 })
 
 // request handler
@@ -76,6 +77,7 @@ The `instafasthttp.RoundTripper` provides an implementation of the `fasthttp.Rou
 c = instana.InitCollector(&instana.Options{
 	Service:  "fasthttp-example",
 	LogLevel: instana.Debug,
+	Tracer:  instana.DefaultTracerOptions(),
 })
 
 // request handler

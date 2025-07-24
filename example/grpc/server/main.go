@@ -49,6 +49,7 @@ func main() {
 
 	collector := instana.InitCollector(&instana.Options{
 		Service: "grpc-server",
+		Tracer:  instana.DefaultTracerOptions(),
 	})
 
 	lis, err := net.Listen("tcp", ":50051")
