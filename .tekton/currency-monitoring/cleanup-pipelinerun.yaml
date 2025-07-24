@@ -37,7 +37,7 @@ metadata:
   name: tekton-pipelinerun-cleanup
   namespace: currency-monitoring-pipelines
 spec:
-  schedule: "0 4 * * *"
+  schedule: "0 7 * * 1-5"
   concurrencyPolicy: Forbid
   jobTemplate:
     spec:
