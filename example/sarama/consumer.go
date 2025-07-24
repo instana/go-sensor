@@ -16,6 +16,7 @@ import (
 func consume(ch chan bool) {
 	collector := instana.InitCollector(&instana.Options{
 		Service: "my-service",
+		Tracer:  instana.DefaultTracerOptions(),
 	})
 	brokers := []string{"localhost:9092"}
 

@@ -31,6 +31,7 @@ func main() {
 // Initialize a new collector.
 collector := instana.InitCollector(&instana.Options{
 	Service: "my-azf-collector",
+	Tracer:  instana.DefaultTracerOptions(),
 })
 
 // Instrument your handler before passing it to the http router.

@@ -30,6 +30,7 @@ engine := gin.Default()
 // create a collector
 collector := instana.InitCollector(&instana.Options{
     Service: "rabbitmq-client",
+    Tracer:  instana.DefaultTracerOptions(),
 })
 
 // add middleware to the gin handlers

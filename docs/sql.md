@@ -17,6 +17,7 @@ Will be changed to this:
 ```go
 c = instana.InitCollector(&instana.Options{
   Service: "Database Call App",
+  Tracer:  instana.DefaultTracerOptions(),
 })
 
 db, err := instana.SQLInstrumentAndOpen(c, driverName, connString)
@@ -41,6 +42,7 @@ import (
 func main() {
   s := instana.InitCollector(&instana.Options{
     Service: "MySQL app",
+    Tracer:  instana.DefaultTracerOptions(),
   })
 
   db, err := instana.SQLInstrumentAndOpen(s, "mysql", "go:gopw@tcp(localhost:3306)/godb")

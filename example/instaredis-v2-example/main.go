@@ -60,6 +60,7 @@ func nameFromRedis(ctx context.Context, s instana.TracerLogger) string {
 func main() {
 	s := instana.InitCollector(&instana.Options{
 		Service: "go-redis-example",
+		Tracer:  instana.DefaultTracerOptions(),
 	})
 
 	<-agentReady()

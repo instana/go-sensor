@@ -41,6 +41,7 @@ func main() {
 	// collector into all instrumented methods.
 	collector := instana.InitCollector(&instana.Options{
 		Service: "doubler",
+		Tracer:  instana.DefaultTracerOptions(),
 	})
 
 	// First we set up and instrument producers and consumers. Instana uses the headers feature

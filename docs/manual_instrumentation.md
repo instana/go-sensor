@@ -39,6 +39,7 @@ import (
 func main() {
   col := instana.InitCollector(&instana.Options{
     Service: "My Service",
+    Tracer:  instana.DefaultTracerOptions(),
   })
 
   ps := col.StartSpan("my-entry-span", []ot.StartSpanOption{
@@ -75,6 +76,7 @@ import (
 func main() {
   col := instana.InitCollector(&instana.Options{
     Service: "My Service",
+    Tracer:  instana.DefaultTracerOptions(),
   })
 
   ps := col.StartSpan("my-parent-entry-span", []ot.StartSpanOption{

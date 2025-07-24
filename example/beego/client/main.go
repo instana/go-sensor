@@ -20,6 +20,7 @@ func main() {
 	// create an instana collector
 	collector := instana.InitCollector(&instana.Options{
 		Service: "beego-client",
+		Tracer:  instana.DefaultTracerOptions(),
 	})
 
 	// Every call should start with an entry span (https://docs.instana.io/quick_start/custom_tracing/#always-start-new-traces-with-entry-spans)
