@@ -4,7 +4,7 @@ go 1.23.0
 
 require (
 	github.com/gorilla/mux v1.8.1
-	github.com/instana/go-sensor v1.68.0
+	github.com/instana/go-sensor v1.69.1
 	github.com/instana/go-sensor/instrumentation/instapgx/v2 v2.17.0
 	github.com/jackc/pgx/v5 v5.7.5
 )
