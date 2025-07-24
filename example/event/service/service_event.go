@@ -16,7 +16,9 @@ const (
 func main() {
 	instana.InitCollector(&instana.Options{
 		Service:  service,
-		LogLevel: instana.Debug})
+		LogLevel: instana.Debug,
+		Tracer:   instana.DefaultTracerOptions(),
+	})
 
 	go forever()
 	select {}

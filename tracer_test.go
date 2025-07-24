@@ -4,11 +4,15 @@
 package instana_test
 
 import (
+	"fmt"
 	"testing"
 
 	instana "github.com/instana/go-sensor"
 	ot "github.com/opentracing/opentracing-go"
+	"github.com/opentracing/opentracing-go/ext"
+	otlog "github.com/opentracing/opentracing-go/log"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestTracerAPI(t *testing.T) {
@@ -88,4 +92,158 @@ func TestTracer_NonInstanaSpan(t *testing.T) {
 	assert.NotPanics(t, func() {
 		tracer.StartSpanWithOptions("my_operation", opts)
 	})
+}
+
+func TestTracerLogSpans(t *testing.T) {
+	type args struct {
+		fields        []otlog.Field
+		TracerOptions instana.TracerOptions
+	}
+
+	type expectedResult struct {
+		errorCount int
+		spanCount  int
+		logMsgs    []string
+	}
+
+	testCases := []struct {
+		desc           string
+		args           args
+		expectedResult expectedResult
+	}{
+		{
+			desc: "log span count equals default MaxLogsPerSpan limit",
+			args: args{
+				fields: []otlog.Field{
+					otlog.Error(fmt.Errorf("error1")),
+					otlog.Error(fmt.Errorf("error2")),
+				},
+				TracerOptions: instana.DefaultTracerOptions(),
+			},
+			expectedResult: expectedResult{
+				errorCount: 2,
+				spanCount:  3, // span + 2 log spans
+				logMsgs:    []string{`error.object: "error1"`, `error.object: "error2"`},
+			},
+		},
+		{
+			desc: "log span count is greater than default MaxLogsPerSpan limit",
+			args: args{
+				fields: []otlog.Field{
+					otlog.Error(fmt.Errorf("error1")),
+					otlog.Error(fmt.Errorf("error2")),
+					otlog.Error(fmt.Errorf("error3")),
+				},
+				TracerOptions: instana.DefaultTracerOptions(),
+			},
+			expectedResult: expectedResult{
+				errorCount: 3,
+				spanCount:  3, // span + 2 log spans
+				logMsgs:    []string{`error.object: "error1"`, `error.object: "error2"`},
+			},
+		},
+		{
+			desc: "log span count is 2, MaxLogsPerSpan is 1",
+			args: args{
+				fields: []otlog.Field{
+					otlog.Error(fmt.Errorf("error1")),
+					otlog.Error(fmt.Errorf("error2")),
+				},
+				TracerOptions: instana.TracerOptions{
+					MaxLogsPerSpan: 1,
+				},
+			},
+			expectedResult: expectedResult{
+				errorCount: 2,
+				spanCount:  2, // span + 1 log span
+				logMsgs:    []string{`error.object: "error1"`},
+			},
+		},
+		{
+			desc: "log span count is 2, MaxLogsPerSpan is set to 0",
+			args: args{
+				fields: []otlog.Field{
+					otlog.Error(fmt.Errorf("error1")),
+					otlog.Error(fmt.Errorf("error2")),
+				},
+				TracerOptions: instana.TracerOptions{
+					MaxLogsPerSpan: 0,
+				},
+			},
+			expectedResult: expectedResult{
+				errorCount: 2,
+				spanCount:  3, // span + 2 log span (as default MaxLogsPerSpan value will be set here)
+				logMsgs:    []string{`error.object: "error1"`, `error.object: "error2"`},
+			},
+		},
+		{
+			desc: "appended logs of level greater than warn",
+			args: args{
+				fields: []otlog.Field{
+					otlog.Object("debug", "log1"),
+					otlog.Object("debug", "log2"),
+				},
+				TracerOptions: instana.DefaultTracerOptions(),
+			},
+			expectedResult: expectedResult{
+				errorCount: 0,
+				spanCount:  1, // span + no spans created for debug logs
+				logMsgs:    []string{},
+			},
+		},
+	}
+	for _, tC := range testCases {
+		t.Run(tC.desc, func(t *testing.T) {
+
+			opts := instana.Options{
+				LogLevel:    instana.Debug,
+				AgentClient: alwaysReadyClient{},
+				Tracer:      tC.args.TracerOptions,
+			}
+
+			recorder := instana.NewTestRecorder()
+			tracer := instana.NewTracerWithEverything(&opts, recorder)
+			defer instana.ShutdownSensor()
+
+			sp := tracer.StartSpan("test")
+			sp.SetTag(string(ext.SpanKind), "entry")
+			for _, field := range tC.args.fields {
+				sp.LogFields(field)
+			}
+			sp.Finish()
+
+			spans := recorder.GetQueuedSpans()
+			assert.Equal(t, tC.expectedResult.spanCount, len(spans))
+
+			span := spans[0]
+			logSpans := spans[1:]
+
+			assert.Empty(t, span.ParentID)
+			assert.Equal(t, tC.expectedResult.errorCount, span.Ec)
+
+			require.IsType(t, instana.SDKSpanData{}, span.Data)
+			data := span.Data.(instana.SDKSpanData)
+
+			assert.Equal(t, "test", data.Tags.Name)
+			assert.Equal(t, "entry", data.Tags.Type)
+
+			// Validating the expected log spans
+			if len(logSpans) != 0 {
+				validateLogSpan(t, span, logSpans, tC.expectedResult.logMsgs[:]...)
+			}
+		})
+	}
+}
+
+func validateLogSpan(t *testing.T, span instana.Span, logSpans []instana.Span, logSpanMessage ...string) {
+	for i, logSpan := range logSpans {
+		assert.Equal(t, span.TraceID, logSpan.TraceID)
+		assert.Equal(t, span.SpanID, logSpan.ParentID)
+		assert.Equal(t, "log.go", logSpan.Name)
+
+		require.IsType(t, instana.LogSpanData{}, logSpan.Data)
+		data := logSpan.Data.(instana.LogSpanData)
+
+		assert.Equal(t, logSpanMessage[i], data.Tags.Message)
+	}
 }

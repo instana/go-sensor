@@ -33,6 +33,7 @@ A complete working example can be found [here](../../example/graphql).
 // create an instance of the Instana collector
 collector := instana.InitCollector(&instana.Options{
   Service: "graphql-app",
+  Tracer:  instana.DefaultTracerOptions(),
 })
 
 // setup GraphQL normally
@@ -61,6 +62,7 @@ fmt.Println("do something with the result", r)
 // create an instance of the Instana collector
 collector := instana.InitCollector(&instana.Options{
   Service: "graphql-app",
+  Tracer:  instana.DefaultTracerOptions(),
 })
 
 ...
@@ -87,6 +89,7 @@ The `instagraphql.ResultCallbackFn` depends on the [handler.ResultCallbackFn](ht
 // create an instance of the Instana collector
 collector := instana.InitCollector(&instana.Options{
   Service: "graphql-app",
+  Tracer:  instana.DefaultTracerOptions(),
 })
 
 h := handler.New(&handler.Config{

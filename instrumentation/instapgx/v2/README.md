@@ -20,6 +20,7 @@ Usage
 // Create an Instana collector
 c := instana.InitCollector(&instana.Options{
     Service: "pgx-v5-service",
+    Tracer:  instana.DefaultTracerOptions(),
 })
 
 // Parse Config

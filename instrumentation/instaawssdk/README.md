@@ -36,6 +36,7 @@ sess := session.Must(session.NewSession(&aws.Config{}))
 // Initialize Instana collector
 collector := instana.InitCollector(&instana.Options{
   Service: "my-aws-app",
+  Tracer:  instana.DefaultTracerOptions(),
 })
 // Instrument aws/session.Session
 instaawssdk.InstrumentSession(sess, collector)
@@ -87,6 +88,7 @@ Example:
 ```go
 collector := instana.InitCollector(&instana.Options{
   Service: "my-lambda-service",
+  Tracer:  instana.DefaultTracerOptions(),
 })
 sess, _ := session.NewSession()
 instaawssdk.InstrumentSession(sess, collector)

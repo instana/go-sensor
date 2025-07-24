@@ -171,7 +171,9 @@ func main() {
 	instana.InitCollector(&instana.Options{
 		Service:           "autoprofile-demo",
 		LogLevel:          instana.Debug,
-		EnableAutoProfile: true})
+		EnableAutoProfile: true,
+		Tracer:            instana.DefaultTracerOptions(),
+	})
 
 	go simulateCPUUsage()
 	go simulateMemoryLeak()

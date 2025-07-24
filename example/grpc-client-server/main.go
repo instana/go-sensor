@@ -40,6 +40,7 @@ func main() {
 	// initialize instana collector to instrument request handlers
 	collector := instana.InitCollector(&instana.Options{
 		Service: "grpc-client-server",
+		Tracer:  instana.DefaultTracerOptions(),
 	})
 
 	// to instrument server calls add instagrpc.UnaryServerInterceptor(sensor) and

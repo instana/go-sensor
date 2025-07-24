@@ -31,6 +31,7 @@ func main() {
 	// create an instana collector
 	collector := instana.InitCollector(&instana.Options{
 		Service: "gin-sensor",
+		Tracer:  instana.DefaultTracerOptions(),
 	})
 
 	// add middleware to the gin handlers

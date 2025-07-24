@@ -22,6 +22,7 @@ func main() {
 
 	collector := instana.InitCollector(&instana.Options{
 		Service: "grpc-client",
+		Tracer:  instana.DefaultTracerOptions(),
 	})
 
 	// Connect to the server.

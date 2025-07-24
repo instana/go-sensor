@@ -65,6 +65,7 @@ Sample Usage
     collector = instana.InitCollector(&instana.Options{
 		Service:           "sample-app-couchbase",
 		EnableAutoProfile: true,
+		Tracer:  instana.DefaultTracerOptions(),
 	}) 
 
     // connect to database

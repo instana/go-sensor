@@ -36,6 +36,7 @@ func init() {
 	collector = instana.InitCollector(&instana.Options{
 		Service:           "sample-app-couchbase",
 		EnableAutoProfile: true,
+		Tracer:            instana.DefaultTracerOptions(),
 	})
 
 	// init data in couchbase

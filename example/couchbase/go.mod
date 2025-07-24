@@ -2,15 +2,15 @@ module couchbase.example
 
 go 1.23.0
 
-require github.com/couchbase/gocb/v2 v2.10.0
+require github.com/couchbase/gocb/v2 v2.10.1
 
 require (
-	github.com/instana/go-sensor v1.68.0
+	github.com/instana/go-sensor v1.69.1
 	github.com/instana/go-sensor/instrumentation/instagocb v1.23.0
 )
 
 require (
-	github.com/couchbase/gocbcore/v10 v10.7.0 // indirect
+	github.com/couchbase/gocbcore/v10 v10.7.1 // indirect
 	github.com/couchbase/gocbcoreps v0.1.3 // indirect
 	github.com/couchbase/goprotostellar v1.0.2 // indirect
 	github.com/couchbaselabs/gocbconnstr/v2 v2.0.0-20240607131231-fb385523de28 // indirect

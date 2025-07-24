@@ -45,6 +45,7 @@ Sample Usage
     var collector instana.TracerLogger
 	collector = instana.InitCollector(&instana.Options{
 		Service: "cosmos-example",
+		Tracer:  instana.DefaultTracerOptions(),
 	})
 
     // creates an KeyCredential containing the account's primary or secondary key.

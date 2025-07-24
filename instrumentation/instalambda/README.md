@@ -39,6 +39,7 @@ func main() {
 	// Initialize a new collector
 	collector := instana.InitCollector(&instana.Options{
 		Service: "go-lambda",
+		Tracer:  instana.DefaultTracerOptions(),
 	})
 
 	h := &Handler{
@@ -64,6 +65,7 @@ func main() {
 	// Initialize a new collector
 	collector := instana.InitCollector(&instana.Options{
 		Service: "graphql-app",
+		Tracer:  instana.DefaultTracerOptions(),
 	})
 
 	// Create a new instrumented lambda.Handler from your handle function

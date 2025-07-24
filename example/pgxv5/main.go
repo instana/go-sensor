@@ -35,6 +35,7 @@ func main() {
 	// Initialising Instana instrumentation collector
 	col := instana.InitCollector(&instana.Options{
 		Service: "testwebapp",
+		Tracer:  instana.DefaultTracerOptions(),
 	})
 
 	// Setting up an instrumented database connection

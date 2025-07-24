@@ -33,6 +33,7 @@ Usage
 // Create a collector
 collector := instana.InitCollector(&instana.Options{
 	Service: "pgx-app",
+	Tracer:  instana.DefaultTracerOptions(),
 })
 
 // Parse config
