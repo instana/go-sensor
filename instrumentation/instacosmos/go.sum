@@ -27,8 +27,8 @@ github.com/google/pprof v0.0.0-20250630185457-6e76a2b096b5 h1:xhMrHhTJ6zxu3gA4en
 github.com/google/pprof v0.0.0-20250630185457-6e76a2b096b5/go.mod h1:5hDyRhoBCxViHszMt12TnOpEI4VVi+U8Gm9iphldiMA=
 github.com/google/uuid v1.6.0 h1:NIvaJDMOsjHA8n1jAhLSgzrAzy1Hgr+hNrb57e+94F0=
 github.com/google/uuid v1.6.0/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
-github.com/instana/go-sensor v1.68.0 h1:UbCuGBNtuqbezHfyr/Skd8lhCbAGfZJKvTxO7O3+o5I=
-github.com/instana/go-sensor v1.68.0/go.mod h1:LbzcA4kgiHJYF4ZWeIcKjVzVVdSvPZVUGNzXyfxFSGg=
+github.com/instana/go-sensor v1.69.1 h1:GfNjei/Pa2RW8/SMETg4wLcI7gbLk5M4DKaQq7r3+cI=
+github.com/instana/go-sensor v1.69.1/go.mod h1:LbzcA4kgiHJYF4ZWeIcKjVzVVdSvPZVUGNzXyfxFSGg=
 github.com/keybase/go-keychain v0.0.1 h1:way+bWYa6lDppZoZcgMbYsvC7GxljxrskdNInRtuthU=
 github.com/keybase/go-keychain v0.0.1/go.mod h1:PdEILRW3i9D8JcdM+FmY6RwkHGnhHxXwkPPMeUgOK1k=
 github.com/kr/pretty v0.3.1 h1:flRD4NNwYAUpkphVc1HcthR4KEIFJ65n8Mw5qdRn3LE=
