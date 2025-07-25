@@ -125,4 +125,8 @@ spec:
           fi
         fi
 
-        curl -H "Content-type: application/json" -d "text=$message" -X POST $SLACK_WEBHOOK_URL
+        # Properly format the JSON payload
+        json_payload=$(printf '{"text": "%s"}' "$message")
+        
+        # Send the properly formatted JSON payload to Slack
+        curl -H "Content-type: application/json" -d "$json_payload" -X POST $SLACK_WEBHOOK_URL
