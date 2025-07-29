@@ -30,15 +30,16 @@ type Recorder struct {
 
 // NewRecorder initializes a new span recorder
 func NewRecorder() *Recorder {
+	s := getSensorR()
 	r := &Recorder{}
 
 	ticker := time.NewTicker(1 * time.Second)
 	go func() {
 		for range ticker.C {
-			if sensor.Agent().Ready() {
+			if s.Agent().Ready() {
 				go func() {
 					if err := r.Flush(context.Background()); err != nil {
-						sensor.logger.Error("failed to flush the spans:  ", err.Error())
+						s.logger.Error("failed to flush the spans:  ", err.Error())
 					}
 				}()
 			}
