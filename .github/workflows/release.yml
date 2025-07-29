@@ -32,6 +32,7 @@ jobs:
       name: Checkout repo
       with:
         fetch-depth: 0
+        ssh-key: ${{secrets.PRIVATE_KEY_GO_TRACER_RELEASE}}
         ref: main
     - name: Release tracer or package
       id: releaser
@@ -80,7 +81,6 @@ jobs:
         # List of instrumentation folders
         LIB_LIST=$(find ./instrumentation -name go.mod -exec dirname {} \; | grep -E -v "$DEPRECATED_PKGS")
 
-        git remote set-url --push origin https://$GIT_COMMITTER_NAME:$GITHUB_TOKEN@github.com/instana/go-sensor
         git checkout update-instrumentations-core/"$CORE_TAG" || git checkout -b update-instrumentations-core/"$CORE_TAG"
 
         git pull origin "update-instrumentations-core/$CORE_TAG" || echo "Brand new branch. No need to pull from origin."
