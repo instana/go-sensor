@@ -36,6 +36,7 @@ func newMeter(logger LeveledLogger) *meterS {
 }
 
 func (m *meterS) Run(collectInterval time.Duration) {
+	s := getSensorR()
 	ticker := time.NewTicker(collectInterval)
 	defer ticker.Stop()
 	for {
@@ -43,9 +44,9 @@ func (m *meterS) Run(collectInterval time.Duration) {
 		case <-m.done:
 			return
 		case <-ticker.C:
-			if sensor.Agent().Ready() {
+			if s.Agent().Ready() {
 				go func() {
-					_ = sensor.Agent().SendMetrics(m.collectMetrics())
+					_ = s.Agent().SendMetrics(m.collectMetrics())
 				}()
 			}
 		}
