@@ -83,7 +83,8 @@ type sensorS struct {
 
 var (
 	sensor           *sensorS
-	muSensor         sync.Mutex
+	muSensor         sync.RWMutex
+	onceSensor       = sync.Once{}
 	binaryName       = filepath.Base(os.Args[0])
 	processStartedAt = time.Now()
 	c                TracerLogger
@@ -204,6 +205,9 @@ func (r *sensorS) serviceOrBinaryName() string {
 //
 // Deprecated: Use [StartMetrics] instead.
 func InitSensor(options *Options) {
+	muSensor.Lock()
+	defer muSensor.Unlock()
+
 	if sensor != nil {
 		return
 	}
@@ -212,9 +216,9 @@ func InitSensor(options *Options) {
 		options = DefaultOptions()
 	}
 
-	muSensor.Lock()
-	sensor = newSensor(options)
-	muSensor.Unlock()
+	onceSensor.Do(func() {
+		sensor = newSensor(options)
+	})
 
 	// configure auto-profiling
 	autoprofile.SetLogger(sensor.logger)
@@ -283,6 +287,7 @@ func ShutdownSensor() {
 	defer muSensor.Unlock()
 	if sensor != nil {
 		sensor = nil
+		onceSensor = sync.Once{}
 	}
 }
 
@@ -330,4 +335,10 @@ func newServerlessAgent(serviceName, agentEndpoint, agentKey string,
 	default:
 		return newGenericServerlessAgent(agentEndpoint, agentKey, client, logger)
 	}
+}
+
+func getSensorR() *sensorS {
+	muSensor.RLock()
+	defer muSensor.RUnlock()
+	return sensor
 }
