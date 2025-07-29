@@ -52,7 +52,9 @@ func newProcessPluginPayload(snapshot serverlessSnapshot, prevStats, currentStat
 			continue
 		}
 
-		if sensor.options.Tracer.Secrets.Match(k) {
+		s := getSensorR()
+
+		if s.options.Tracer.Secrets.Match(k) {
 			env[k] = "<redacted>"
 		}
 	}

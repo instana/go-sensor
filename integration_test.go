@@ -14,6 +14,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"sync"
 )
 
 type serverlessAgentPluginPayload struct {
@@ -27,6 +28,8 @@ type serverlessAgentRequest struct {
 }
 
 type serverlessAgent struct {
+	mu sync.Mutex
+
 	Bundles []serverlessAgentRequest
 
 	ln           net.Listener
@@ -55,6 +58,8 @@ func setupServerlessAgent() (*serverlessAgent, error) {
 }
 
 func (srv *serverlessAgent) HandleBundle(w http.ResponseWriter, req *http.Request) {
+	srv.mu.Lock()
+	defer srv.mu.Unlock()
 	body, err := io.ReadAll(req.Body)
 	if err != nil {
 		log.Printf("ERROR: failed to read serverless agent spans request body: %s", err)
@@ -83,10 +88,14 @@ func (srv *serverlessAgent) HandleBundle(w http.ResponseWriter, req *http.Reques
 }
 
 func (srv *serverlessAgent) Reset() {
+	srv.mu.Lock()
+	defer srv.mu.Unlock()
 	srv.Bundles = nil
 }
 
 func (srv *serverlessAgent) Teardown() {
+	srv.mu.Lock()
+	defer srv.mu.Unlock()
 	srv.restoreEnvFn()
 	srv.ln.Close()
 }

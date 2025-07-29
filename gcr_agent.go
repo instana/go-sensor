@@ -84,7 +84,7 @@ type gcrAgent struct {
 	snapshot         gcrSnapshot
 	lastProcessStats processStats
 
-	mu        sync.Mutex
+	mu        sync.RWMutex
 	spanQueue []Span
 
 	runtimeSnapshot *SnapshotCollector
@@ -138,7 +138,9 @@ func newGCRAgent(
 			for i := 0; i < maximumRetries; i++ {
 				snapshot, ok := agent.collectSnapshot(context.Background())
 				if ok {
+					agent.mu.Lock()
 					agent.snapshot = snapshot
+					agent.mu.Unlock()
 					break
 				}
 
@@ -152,12 +154,22 @@ func newGCRAgent(
 	return agent
 }
 
-func (a *gcrAgent) Ready() bool { return a.snapshot.Service.EntityID != "" }
+func (a *gcrAgent) Ready() bool {
+	a.mu.RLock()
+	defer a.mu.RUnlock()
+	return a.snapshot.Service.EntityID != ""
+}
 
 func (a *gcrAgent) SendMetrics(data acceptor.Metrics) (err error) {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+
 	processStats := a.processStats.Collect()
+
 	defer func() {
 		if err == nil {
+			a.mu.Lock()
+			defer a.mu.Unlock()
 			// only update the last sent stats if they were transmitted successfully
 			// since they are updated on the backend incrementally using received
 			// deltas
@@ -182,13 +194,11 @@ func (a *gcrAgent) SendMetrics(data acceptor.Metrics) (err error) {
 		},
 	}
 
-	a.mu.Lock()
 	if len(a.spanQueue) > 0 {
 		payload.Spans = make([]Span, len(a.spanQueue))
 		copy(payload.Spans, a.spanQueue)
 		a.spanQueue = a.spanQueue[:0]
 	}
-	a.mu.Unlock()
 
 	buf := bytes.NewBuffer(nil)
 	if err := json.NewEncoder(buf).Encode(payload); err != nil {

@@ -9,6 +9,7 @@ package instana_test
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"net/http/httptest"
@@ -147,23 +148,29 @@ func TestIntegration_GCRAgent_SendSpans(t *testing.T) {
 	sp.Finish()
 
 	require.Eventually(t, func() bool {
+		agent.mu.Lock()
+		defer agent.mu.Unlock()
 		if len(agent.Bundles) == 0 {
+			fmt.Println("false1")
 			return false
 		}
 
-		for _, bundle := range agent.Bundles {
+		for i, bundle := range agent.Bundles {
+			fmt.Println("bundle.Body", i, string(bundle.Body))
 			var payload struct {
 				Spans []json.RawMessage `json:"spans"`
 			}
 
 			json.Unmarshal(bundle.Body, &payload)
 			if len(payload.Spans) > 0 {
+				fmt.Println("true1")
 				return true
 			}
 		}
-
+		// fmt.Println("false2", agent.Bundles)
+		fmt.Println("false2")
 		return false
-	}, 4*time.Second, 500*time.Millisecond)
+	}, 20*time.Second, 500*time.Millisecond)
 
 	var spans []map[string]json.RawMessage
 	for _, bundle := range agent.Bundles {

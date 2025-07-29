@@ -79,7 +79,8 @@ func (r *spanS) FinishWithOptions(opts ot.FinishOptions) {
 
 	r.Duration = duration
 	if r.sendSpanToAgent() {
-		if sensor.Agent().Ready() {
+		s := getSensorR()
+		if s.Agent().Ready() {
 			r.tracer.recorder.RecordSpan(r)
 		} else {
 			delayed.append(r)
