@@ -4,4 +4,4 @@
 package instago
 
 // Version is the instrumentation module semantic version
-const Version = "1.71.0"
+const Version = "1.72.0"
