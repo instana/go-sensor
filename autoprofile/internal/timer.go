@@ -20,17 +20,68 @@ type Timer struct {
 	ticker     *time.Ticker
 }
 
+type Timer2 struct {
+	stopChan chan bool
+	stopOnce sync.Once
+}
+
+func NewTimer2(delay, interval time.Duration, job func()) *Timer2 {
+	t := &Timer2{
+		stopChan: make(chan bool),
+	}
+
+	go func() {
+		select {
+		case <-time.After(delay):
+			job()
+		case <-t.stopChan:
+			return
+		}
+
+		if interval == 0 {
+			return
+		}
+
+		ticker := time.NewTicker(interval)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ticker.C:
+				job()
+			case <-t.stopChan:
+				return
+			}
+		}
+	}()
+
+	return t
+}
+
+func (t *Timer2) Stop() {
+	t.stopOnce.Do(func() {
+		close(t.stopChan)
+	})
+}
+
+func recoverAndLog() {
+	if err := recover(); err != nil {
+		logger.Error("recovered from panic in agent:", err)
+	}
+}
+
 // NewTimer initializes a new Timer
 func NewTimer(delay, interval time.Duration, job func()) *Timer {
 	t := &Timer{
 		done: make(chan bool),
 	}
 
+	defer recoverAndLog()
+
 	t.delayTimer = time.AfterFunc(delay, func() {
 		defer recoverAndLog()
 
 		if interval > 0 {
-			t.runTicker(interval, job)
+			go t.runTicker(interval, job)
 		}
 
 		if delay > 0 {
@@ -42,36 +93,37 @@ func NewTimer(delay, interval time.Duration, job func()) *Timer {
 }
 
 func (t *Timer) runTicker(interval time.Duration, job func()) {
-	t.mu.Lock()
-	defer t.mu.Unlock()
+	func() {
+		t.mu.Lock()
+		defer t.mu.Unlock()
 
-	if t.stopped {
-		return
-	}
-
-	t.ticker = time.NewTicker(interval)
-	go func() {
-		defer recoverAndLog()
-
-		for {
-			select {
-			case <-t.ticker.C:
-				job()
-			case <-t.done:
-				return
-			}
+		if t.stopped {
+			return
 		}
+
+		t.ticker = time.NewTicker(interval)
 	}()
+
+	defer recoverAndLog()
+
+	for {
+		select {
+		case <-t.ticker.C:
+			job()
+		case <-t.done:
+			return
+		}
+	}
 }
 
 // Stop stops the job execution
 func (t *Timer) Stop() {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+
 	if t.stopped {
 		return
 	}
-
-	t.mu.Lock()
-	defer t.mu.Unlock()
 
 	t.stopped = true
 	t.delayTimer.Stop()
@@ -80,11 +132,5 @@ func (t *Timer) Stop() {
 
 	if t.ticker != nil {
 		t.ticker.Stop()
-	}
-}
-
-func recoverAndLog() {
-	if err := recover(); err != nil {
-		logger.Error("recovered from panic in agent:", err)
 	}
 }
