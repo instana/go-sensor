@@ -20,7 +20,7 @@
 | 18 | Messaging | [amqp091-go](https://pkg.go.dev/github.com/rabbitmq/amqp091-go) | [instaamqp091](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instaamqp091) | v1.5.0 | v1.10.0 |
 | 19 | GraphQL | [graphql](https://pkg.go.dev/github.com/graphql-go/graphql) | [instagraphql](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instagraphql) | v0.8.0 | v0.8.1 |
 | 20 | Other | [storage](https://pkg.go.dev/cloud.google.com/go/storage) | [storage](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/cloud.google.com/go/storage) | v1.7.0 | v1.56.0 |
-| 21 | Other | [aws-sdk-go](https://pkg.go.dev/github.com/aws/aws-sdk-go) | [instaawssdk](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instaawssdk) | v1.8.0 | v1.55.7 |
+| 21 | Other | [aws-sdk-go](https://pkg.go.dev/github.com/aws/aws-sdk-go) | [instaawssdk](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instaawssdk) | v1.8.0 | v1.55.8 |
 | 22 | Other | [aws-lambda-go](https://pkg.go.dev/github.com/aws/aws-lambda-go) | [instalambda](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instalambda) | v1.20.0 | v1.49.0 |
 | 23 | Other | [logrus](https://pkg.go.dev/github.com/sirupsen/logrus) | [instalogrus](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instalogrus) | v1.5.0 | v1.9.3 |
 | 24 | Databases | [go-redis v2](https://pkg.go.dev/github.com/redis/go-redis/v9) | [instaredis/v2](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instaredis/v2) | v8.11.4 | v9.11.0 |
