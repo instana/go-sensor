@@ -5,7 +5,7 @@ go 1.23.0
 require (
 	github.com/instana/go-sensor v1.69.1
 	github.com/opentracing/opentracing-go v1.2.0
-	github.com/redis/go-redis/v9 v9.11.0
+	github.com/redis/go-redis/v9 v9.12.0
 	github.com/stretchr/testify v1.10.0
 )
 
