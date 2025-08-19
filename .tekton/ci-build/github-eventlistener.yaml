@@ -21,7 +21,7 @@ spec:
         # After variable resolution, this has to be maximum 63 character long,
         # lower case, RFC 1123 subdomain name. The regex used for validation is
         # '[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*'
-        name: $(tt.params.git-branch-normalized)-go23-$(tt.params.git-commit-short-sha)
+        name: $(tt.params.git-branch-normalized)-go25-$(tt.params.git-commit-short-sha)
       spec:
         params:
         - name: revision
@@ -29,7 +29,7 @@ spec:
         - name: git-commit-sha
           value: $(tt.params.git-commit-sha)
         - name: go-version
-          value: "1.23"
+          value: "1.25"
         - name: excludeDirs
           value: ""
         pipelineRef:
