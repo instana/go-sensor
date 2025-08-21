@@ -143,7 +143,7 @@ func InstrumentSQLDriver(sensor TracerLogger, name string, driver driver.Driver)
 }
 
 // SQLOpen is a convenience wrapper for `sql.Open()` to use the instrumented version
-// of a driver previosly registered using `instana.InstrumentSQLDriver()`
+// of a driver previously registered using `instana.InstrumentSQLDriver()`
 func SQLOpen(driverName, dataSourceName string) (*sql.DB, error) {
 
 	if !strings.HasSuffix(driverName, "_with_instana") {
