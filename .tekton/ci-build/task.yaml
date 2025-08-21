@@ -7,6 +7,8 @@ metadata:
   name: go-tracer-clone-task
 spec:
   params:
+    - name: head-url
+      type: string
     - name: revision
       type: string
     - name: SHA
@@ -23,7 +25,15 @@ spec:
         echo "Installing git"
         apk fix && apk --no-cache --update add git && rm -rf /var/cache/apk/*
         echo "Cloning repo!"
-        git clone --depth 1 -b $(params.revision) https://github.com/instana/go-sensor && cd /workspace/go-sensor && git checkout $(params.SHA) && git status
+        cd /workspace/go-sensor
+        if [ -n "$(params.head-url)" ]; then
+          git clone --depth 1 -b $(params.revision) $(params.head-url)
+        else
+          git clone --depth 1 -b $(params.revision) https://github.com/instana/go-sensor
+        fi
+        cd /workspace/go-sensor
+        git checkout $(params.SHA)
+        git status
 
 # Disabling cache tasks.
 # TODO : Revisit cache implementation with fixing memory problems.

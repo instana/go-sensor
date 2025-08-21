@@ -6,6 +6,8 @@ metadata:
   name: go-tracer-ci-pipeline
 spec:
   params:
+  - name: head-url
+    type: string
   - name: revision
     type: string
   - name: git-commit-sha
@@ -35,6 +37,8 @@ spec:
 
     - name: clone
       params:
+      - name: head-url
+        value: $(params.head-url)
       - name: revision
         value: $(params.revision)
       - name: SHA

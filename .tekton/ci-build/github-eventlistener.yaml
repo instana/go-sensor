@@ -14,6 +14,8 @@ spec:
       name: git-commit-sha
     - description: The short 7 digit sha of the git commit
       name: git-commit-short-sha
+    - description: The HTML URL of the Git repository for the head of the PR. This is required if the PR originates from a fork.
+      name: git-head-url
   resourcetemplates:
     - apiVersion: tekton.dev/v1
       kind: PipelineRun
@@ -24,6 +26,8 @@ spec:
         name: $(tt.params.git-branch-normalized)-go25-$(tt.params.git-commit-short-sha)
       spec:
         params:
+        - name: head-url
+          value: $(tt.params.git-head-url)
         - name: revision
           value: $(tt.params.git-branch)
         - name: git-commit-sha
@@ -54,6 +58,8 @@ spec:
         name: $(tt.params.git-branch-normalized)-go24-$(tt.params.git-commit-short-sha)
       spec:
         params:
+        - name: head-url
+          value: $(tt.params.git-head-url)
         - name: revision
           value: $(tt.params.git-branch)
         - name: git-commit-sha
@@ -92,6 +98,8 @@ spec:
       value: $(body.pull_request.head.sha)
     - name: git-commit-short-sha
       value: $(extensions.truncated_sha)
+    - name: git-head-url
+      value: $(body.pull_request.head.repo.html_url)
 
 ---
 apiVersion: triggers.tekton.dev/v1beta1
@@ -108,6 +116,8 @@ spec:
       value: $(body.head_commit.id)
     - name: git-commit-short-sha
       value: $(extensions.truncated_sha)
+    - name: git-head-url
+      value: "" # We don’t need the head URL here, since for pushes the head URL will always be the same as the Instana Go Tracer URL.
 ---
 apiVersion: triggers.tekton.dev/v1beta1
 kind: EventListener
