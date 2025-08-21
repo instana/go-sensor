@@ -25,7 +25,10 @@ spec:
         echo "Installing git"
         apk fix && apk --no-cache --update add git && rm -rf /var/cache/apk/*
         echo "Cloning repo!"
-        cd /workspace/go-sensor
+
+        # For PRs, the branch may come from a fork, so we need to fetch and checkout the correct fork.
+        # For CI builds triggered by pushes to main, the source is always the Instana Go Tracer repo,
+        # so we can checkout directly from it.
         if [ -n "$(params.head-url)" ]; then
           git clone --depth 1 -b $(params.revision) $(params.head-url)
         else
