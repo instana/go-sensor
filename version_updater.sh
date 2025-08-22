@@ -9,7 +9,7 @@
 # Function to extract the package url, current version and local path from the markdown line
 extract_info_from_markdown_line() {
   local markdown_line=$1
-  # Extract target-package-url, current version and local path from the markdown line usin awk
+  # Extract target-package-url, current version and local path from the markdown line using awk
   TARGET_PKG_URL=$(echo "$markdown_line" | awk -F '[(|)]' '{print $5}' | awk -F'https://pkg.go.dev/' '{print $2}')
   INSTANA_PKG_URL=$(echo "$markdown_line" | awk -F '[(|)]' '{print $8}')
   TARGET_PACKAGE_NAME=$(echo "$markdown_line" | awk -F '[][]' '{print $2}' | tr -d '[:space:]' | tr -d '()')
@@ -142,7 +142,7 @@ COMMIT_MSG="feat(currency): updated go.mod, go.sum files, README.md for $INSTRUM
 
   # For some packages, eg : https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/cloud.google.com/go/storage
   # The go.mod file will be in the previous directory
-  # Need this check here to proceed to the correct directry containing go.mod
+  # Need this check here to proceed to the correct directory containing go.mod
   LOCAL_PATH_2=$(go list -m | awk -F 'github.com/instana/go-sensor/' '{print $2}')
 
   if [ "$LOCAL_PATH" = "$LOCAL_PATH_2" ]; then
@@ -174,7 +174,7 @@ COMMIT_MSG="feat(currency): updated go.mod, go.sum files, README.md for $INSTRUM
   gh pr create --title "$PR_TITLE. Id: $CURRENT_TIME_UNIX" \
     --body "This PR adds changes for the newer version $LATEST_VERSION for the instrumented package" --head $(git branch --show-current) --label "tekton_ci"
 
-  # Back to working directry
+  # Back to working directory
   cd $TRACER_PATH
 
 done <"$LIBRARY_INFO_MD_PATH_COPY"
