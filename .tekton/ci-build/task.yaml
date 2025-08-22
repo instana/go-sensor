@@ -7,6 +7,8 @@ metadata:
   name: go-tracer-clone-task
 spec:
   params:
+    - name: head-url
+      type: string
     - name: revision
       type: string
     - name: SHA
@@ -23,7 +25,18 @@ spec:
         echo "Installing git"
         apk fix && apk --no-cache --update add git && rm -rf /var/cache/apk/*
         echo "Cloning repo!"
-        git clone --depth 1 -b $(params.revision) https://github.com/instana/go-sensor && cd /workspace/go-sensor && git checkout $(params.SHA) && git status
+
+        # For PRs, the branch may come from a fork, so we need to fetch and checkout the correct fork.
+        # For CI builds triggered by pushes to main, the source is always the Instana Go Tracer repo,
+        # so we can checkout directly from it.
+        if [ -n "$(params.head-url)" ]; then
+          git clone --depth 1 -b $(params.revision) $(params.head-url)
+        else
+          git clone --depth 1 -b $(params.revision) https://github.com/instana/go-sensor
+        fi
+        cd /workspace/go-sensor
+        git checkout $(params.SHA)
+        git status
 
 # Disabling cache tasks.
 # TODO : Revisit cache implementation with fixing memory problems.
