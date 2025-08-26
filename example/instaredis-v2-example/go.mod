@@ -4,9 +4,9 @@ go 1.23.0
 
 require (
 	github.com/bonede/go-redis-driver v0.1.0
-	github.com/instana/go-sensor v1.69.1
+	github.com/instana/go-sensor v1.70.0
 	github.com/instana/go-sensor/instrumentation/instaredis/v2 v2.31.0
-	github.com/redis/go-redis/v9 v9.12.0
+	github.com/redis/go-redis/v9 v9.12.1
 )
 
 require (
