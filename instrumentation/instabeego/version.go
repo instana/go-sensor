@@ -7,4 +7,4 @@
 package instabeego
 
 // Version is the instrumentation module semantic version
-const Version = "0.26.0"
+const Version = "0.27.0"

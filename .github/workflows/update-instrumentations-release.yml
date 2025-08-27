@@ -20,10 +20,13 @@ jobs:
       name: Checkout repo
       with:
         fetch-depth: 0
-        ssh-key: ${{secrets.PRIVATE_KEY_GO_TRACER_RELEASE}}
+        ssh-key: ${{secrets.PRIVATE_KEY_GO_TRACER_RELEASE_LATEST}}
+        ref: main
     - name: Release all packages
       id: release-packages
       run: |
+        set -euo pipefail
+        
         CORE_TAG=$(git tag -l "v1.*" | grep -E "v[0-9]+\.[0-9]+\.[0-9]+$" | sort -V | tail -n1)
 
         EXCLUDED_DIRS="\/.*\/example"
@@ -115,3 +118,4 @@ jobs:
 
         cd ..
         rm -rf dummy
+
