@@ -109,7 +109,7 @@ jobs:
 
     - name: "Update all instrumentations: push branch upstream"
       if: "${{ success() && inputs.packageName == '.' }}"
-      uses: ad-m/github-push-action@master
+      uses: ad-m/github-push-action@77c5b412c50b723d2a4fbc6d71fb5723bcd439aa # master branch
       with:
         github_token: ${{ github.token }}
         branch: fedramp-update-instrumentations-core/${{ steps.create-branch.outputs.CORE_TAG }}
@@ -125,7 +125,7 @@ jobs:
 
     - name: Post on Slack
       if: "${{ success() && !inputs.asDraft }}"
-      uses: slackapi/slack-github-action@v1.24.0
+      uses: slackapi/slack-github-action@e28cf165c92ffef168d23c5c9000cffc8a25e117 #v1.24.0
       with:
         channel-id: ${{ secrets.SLACK_RELEASE_CHANNEL_ID }}
         payload: |
