@@ -1,8 +1,8 @@
 module couchbase.example
 
-go 1.23.0
+go 1.23.12
 
-require github.com/couchbase/gocb/v2 v2.10.1
+require github.com/couchbase/gocb/v2 v2.11.0
 
 require (
 	github.com/instana/go-sensor v1.70.0
@@ -10,7 +10,7 @@ require (
 )
 
 require (
-	github.com/couchbase/gocbcore/v10 v10.7.1 // indirect
+	github.com/couchbase/gocbcore/v10 v10.8.0 // indirect
 	github.com/couchbase/gocbcoreps v0.1.3 // indirect
 	github.com/couchbase/goprotostellar v1.0.2 // indirect
 	github.com/couchbaselabs/gocbconnstr/v2 v2.0.0-20240607131231-fb385523de28 // indirect
@@ -30,12 +30,12 @@ require (
 	go.opentelemetry.io/otel/trace v1.37.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.27.0 // indirect
-	golang.org/x/net v0.42.0 // indirect
-	golang.org/x/sys v0.34.0 // indirect
-	golang.org/x/text v0.27.0 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20250707201910-8d1bb00bc6a7 // indirect
-	google.golang.org/grpc v1.73.0 // indirect
-	google.golang.org/protobuf v1.36.6 // indirect
+	golang.org/x/net v0.43.0 // indirect
+	golang.org/x/sys v0.35.0 // indirect
+	golang.org/x/text v0.28.0 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20250811230008-5f3141c8851a // indirect
+	google.golang.org/grpc v1.74.2 // indirect
+	google.golang.org/protobuf v1.36.7 // indirect
 )
 
 replace github.com/instana/go-sensor/instrumentation/instagocb => ../../instrumentation/instagocb
