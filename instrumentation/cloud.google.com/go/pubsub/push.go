@@ -113,7 +113,7 @@ func parseFullyQualifiedSubscriptionName(fqsn string) (projectID string, subscri
 
 func parsePathResourceID(path, resource string) (id, rest string, ok bool) {
 	if !strings.HasPrefix(path, resource+"/") {
-		fmt.Println("no ", resource, " prefix in ", path)
+		fmt.Println("no ", resource, " prefix in ", strings.ReplaceAll(strings.ReplaceAll(path, "\n", "_"), "\r", "_"))
 		return "", "", false
 	}
 
