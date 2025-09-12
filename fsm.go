@@ -234,7 +234,40 @@ func (r *fsmS) applyHostAgentSettings(resp agentResponse) {
 	if len(sensor.options.Tracer.CollectableHTTPHeaders) == 0 {
 		sensor.options.Tracer.CollectableHTTPHeaders = resp.getExtraHTTPHeaders()
 	}
+
+	r.applyDisableTracingConfig(resp)
+
 	r.logger.Debug("CollectableHTTPHeaders used: ", sensor.options.Tracer.CollectableHTTPHeaders)
+}
+
+func (r *fsmS) applyDisableTracingConfig(resp agentResponse) {
+	// Check if we have any configuration from the agent
+	if len(resp.Tracing.Disable) == 0 {
+		r.logger.Debug("No tracing disable configuration received from agent")
+		return
+	}
+
+	// Check if INSTANA_TRACING_DISABLE environment variable or in-code configuration is set
+	// If it is, it takes precedence over agent configuration
+	isConfigSet := len(sensor.options.Tracer.Disable) != 0
+	if isConfigSet {
+		r.logger.Info("Disable Tracing configuration is set either through in-code or INSTANA_TRACING_DISABLE environment variable," +
+			" ignoring agent disable configuration")
+		return
+	}
+
+	r.logger.Debug("Applying tracing disable configuration from agent")
+
+	// Apply the configuration from the agent
+	sensor.options.Tracer.Disable = make(map[string]bool)
+	for _, item := range resp.Tracing.Disable {
+		for k, v := range item {
+			if v {
+				r.logger.Debug("Disabling tracing for: ", k)
+				sensor.options.Tracer.Disable[k] = v
+			}
+		}
+	}
 }
 
 func (r *fsmS) announceSensor(_ context.Context, e *f.Event) {

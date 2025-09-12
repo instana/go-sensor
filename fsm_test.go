@@ -548,3 +548,98 @@ func Test_fsmS_applyHostAgentSettings_agent_secrets_not_valid_Error(t *testing.T
 	assert.Equal(t, []string{"testHeader"}, sensor.options.Tracer.CollectableHTTPHeaders)
 
 }
+
+func TestApplyDisableTracingConfig(t *testing.T) {
+	tests := []struct {
+		name            string
+		envVarSet       bool
+		initialDisable  map[string]bool
+		agentConfig     []map[string]bool
+		expectedDisable map[string]bool
+	}{
+		{
+			name:            "Empty agent config",
+			agentConfig:     []map[string]bool{},
+			initialDisable:  map[string]bool{},
+			expectedDisable: map[string]bool{},
+		},
+		{
+			name: "in-code config exists",
+			agentConfig: []map[string]bool{
+				{"rpc": true},
+				{"databases": true},
+			},
+			initialDisable: map[string]bool{
+				"http": true,
+			},
+			expectedDisable: map[string]bool{"http": true},
+		},
+		{
+			name: "apply agent config",
+			agentConfig: []map[string]bool{
+				{"rpc": true},
+				{"databases": true},
+				{"http": false},
+			},
+			initialDisable:  map[string]bool{},
+			expectedDisable: map[string]bool{"rpc": true, "databases": true},
+		},
+		{
+			name:            "env variable set",
+			envVarSet:       true,
+			agentConfig:     []map[string]bool{},
+			initialDisable:  map[string]bool{},
+			expectedDisable: map[string]bool{"http": true, "logging": true},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+
+			// Set or unset the env var
+			if tt.envVarSet {
+				envVarValue := "http,logging"
+				os.Setenv("INSTANA_TRACING_DISABLE", envVarValue)
+				defer os.Unsetenv("INSTANA_TRACING_DISABLE")
+			}
+
+			// Initialize options with initial disable settings
+			InitCollector(&Options{
+				Tracer: TracerOptions{
+					Disable: tt.initialDisable,
+				},
+			})
+			defer ShutdownCollector()
+
+			// Create mock agent response
+			resp := agentResponse{}
+			resp.Tracing.Disable = tt.agentConfig
+
+			// Create a logger that captures log messages for testing
+			testLogger := &testLogger{}
+
+			// Create FSM and apply config
+			fsm := &fsmS{
+				logger: testLogger,
+			}
+			fsm.applyDisableTracingConfig(resp)
+
+			// Check if the maps have the same size
+			assert.Equal(t, len(tt.expectedDisable), len(sensor.options.Tracer.Disable),
+				"Expected map size %d, got %d", len(tt.expectedDisable), len(sensor.options.Tracer.Disable))
+
+			// Check if all expected keys are present with correct values
+			for k, v := range tt.expectedDisable {
+				actualValue, exists := sensor.options.Tracer.Disable[k]
+				assert.True(t, exists, "Expected key %s not found in result", k)
+				assert.Equal(t, v, actualValue, "Expected %s to be %v, got %v", k, v, actualValue)
+			}
+
+			// Check if there are no unexpected keys
+			for k := range sensor.options.Tracer.Disable {
+				_, exists := tt.expectedDisable[k]
+				assert.True(t, exists, "Unexpected key in result: %s", k)
+			}
+		})
+	}
+}

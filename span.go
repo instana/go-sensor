@@ -89,6 +89,11 @@ func (r *spanS) FinishWithOptions(opts ot.FinishOptions) {
 }
 
 func (r *spanS) sendSpanToAgent() bool {
+	// Check if the span's category is disabled
+	if !r.getSpanCategory().Enabled() {
+		return false
+	}
+
 	//if suppress tag is present, span shouldn't be forwarded
 	if r.context.Suppressed {
 		return false
@@ -215,8 +220,10 @@ func (r *spanS) Tracer() ot.Tracer {
 // sendOpenTracingLogRecords converts OpenTracing log records that contain errors
 // to Instana log spans and sends them to the agent
 func (r *spanS) sendOpenTracingLogRecords() {
-	for _, lr := range r.Logs {
-		r.sendOpenTracingLogRecord(lr)
+	if logging.Enabled() {
+		for _, lr := range r.Logs {
+			r.sendOpenTracingLogRecord(lr)
+		}
 	}
 }
 

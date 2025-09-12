@@ -6,6 +6,7 @@ package instana_test
 import (
 	"errors"
 	"os"
+	"path/filepath"
 	"testing"
 	"time"
 
@@ -476,4 +477,219 @@ func Test_tracerS_SuppressTracing(t *testing.T) {
 			assert.Equal(t, tt.want, len(recorder.GetQueuedSpans()))
 		})
 	}
+}
+
+func TestDisableSpanCategory(t *testing.T) {
+	tests := []struct {
+		name             string
+		disabledCategory string
+		spanOperations   []string
+		expectedRecorded []bool
+	}{
+		{
+			name:             "Disable HTTP category",
+			disabledCategory: "http",
+			spanOperations:   []string{string(instana.HTTPServerSpanType), string(instana.RPCServerSpanType), string(instana.KafkaSpanType)},
+			expectedRecorded: []bool{false, true, true},
+		},
+		{
+			name:             "Disable RPC category",
+			disabledCategory: "rpc",
+			spanOperations:   []string{string(instana.HTTPServerSpanType), string(instana.RPCServerSpanType), string(instana.KafkaSpanType)},
+			expectedRecorded: []bool{true, false, true},
+		},
+		{
+			name:             "Disable messaging category",
+			disabledCategory: "messaging",
+			spanOperations:   []string{string(instana.HTTPServerSpanType), string(instana.RPCServerSpanType), string(instana.KafkaSpanType)},
+			expectedRecorded: []bool{true, true, false},
+		},
+		{
+			name:             "Disable databases category",
+			disabledCategory: "databases",
+			spanOperations:   []string{string(instana.MongoDBSpanType), string(instana.HTTPServerSpanType), string(instana.RedisSpanType)},
+			expectedRecorded: []bool{false, true, false},
+		},
+		{
+			name:             "Disable logging category",
+			disabledCategory: "logging",
+			spanOperations:   []string{string(instana.LogSpanType), string(instana.HTTPServerSpanType), string(instana.KafkaSpanType)},
+			expectedRecorded: []bool{false, true, true},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			recorder := instana.NewTestRecorder()
+
+			// Initialize tracer with the disabled category
+			opts := &instana.Options{
+				Tracer: instana.TracerOptions{
+					Disable: map[string]bool{
+						tt.disabledCategory: true,
+					},
+				},
+				Recorder:    recorder,
+				AgentClient: &alwaysReadyClient{},
+			}
+
+			c := instana.InitCollector(opts)
+			defer instana.ShutdownCollector()
+
+			// Create spans with different operations
+			for _, operation := range tt.spanOperations {
+				span := c.StartSpan(operation)
+				span.Finish()
+			}
+
+			// Verify that spans of the disabled category were not recorded
+			expectedRecordedCount := 0
+			for _, shouldRecord := range tt.expectedRecorded {
+				if shouldRecord {
+					expectedRecordedCount++
+				}
+			}
+
+			spans := recorder.GetQueuedSpans()
+
+			assert.Equal(t, expectedRecordedCount, len(spans),
+				"Expected number of recorded spans doesn't match")
+
+			// Create a map of recorded operations for easier lookup
+			recordedOps := make(map[string]bool)
+			for _, span := range spans {
+				recordedOps[span.Name] = true
+			}
+
+			// Verify each span was recorded or not as expected
+			for i, operation := range tt.spanOperations {
+				if tt.expectedRecorded[i] {
+					assert.True(t, recordedOps[operation],
+						"Expected operation %s to be recorded but it wasn't", operation)
+				} else {
+					assert.False(t, recordedOps[operation],
+						"Expected operation %s to be filtered out but it was recorded", operation)
+				}
+			}
+		})
+	}
+}
+
+// TestDisableSpanCategoryFromConfig tests that spans are properly filtered when categories
+// are disabled via configuration file
+func TestDisableSpanCategoryFromConfig(t *testing.T) {
+
+	// Create a temporary YAML file
+	tempDir := t.TempDir()
+	configPath := filepath.Join(tempDir, "config.yaml")
+
+	// Write test YAML content to disable HTTP and databases categories
+	yamlContent := `tracing:
+  disable:
+    - http
+    - databases
+`
+	err := os.WriteFile(configPath, []byte(yamlContent), 0644)
+	require.NoError(t, err, "Failed to create test config file")
+
+	// Set the environment variable
+	os.Setenv("INSTANA_CONFIG_PATH", configPath)
+	defer os.Unsetenv("INSTANA_CONFIG_PATH")
+
+	recorder := instana.NewTestRecorder()
+
+	opts := &instana.Options{
+		Recorder:    recorder,
+		AgentClient: alwaysReadyClient{},
+	}
+
+	c := instana.InitCollector(opts)
+	defer instana.ShutdownCollector()
+
+	// Create spans of different categories
+	operations := []string{
+		string(instana.HTTPServerSpanType),
+		string(instana.RPCServerSpanType),
+		string(instana.KafkaSpanType),
+		string(instana.MongoDBSpanType),
+		string(instana.LogSpanType),
+	}
+
+	// Expected recording status for each operation
+	expectedRecorded := []bool{false, true, true, false, true}
+
+	// Create spans
+	for _, operation := range operations {
+		span := c.StartSpan(operation)
+		span.Finish()
+	}
+
+	// Count how many spans we expect to be recorded
+	expectedRecordedCount := 0
+	for _, shouldRecord := range expectedRecorded {
+		if shouldRecord {
+			expectedRecordedCount++
+		}
+	}
+
+	spans := recorder.GetQueuedSpans()
+
+	// Verify that spans of the disabled categories were not recorded
+	assert.Equal(t, expectedRecordedCount, len(spans),
+		"Expected number of recorded spans doesn't match")
+
+	// Create a map of recorded operations for easier lookup
+	recordedOps := make(map[string]bool)
+	for _, span := range spans {
+		recordedOps[span.Name] = true
+	}
+
+	// Verify each span was recorded or not as expected
+	for i, operation := range operations {
+		if expectedRecorded[i] {
+			assert.True(t, recordedOps[operation],
+				"Expected operation %s to be recorded but it wasn't", operation)
+		} else {
+			assert.False(t, recordedOps[operation],
+				"Expected operation %s to be filtered out but it was recorded", operation)
+		}
+	}
+}
+
+// // TestDisableAllCategoriesIntegration tests that all spans are filtered when all categories are disabled
+func TestDisableAllCategories(t *testing.T) {
+	recorder := instana.NewTestRecorder()
+
+	// Initialize tracer with all categories disabled
+	opts := &instana.Options{
+		Tracer:      instana.TracerOptions{},
+		Recorder:    recorder,
+		AgentClient: alwaysReadyClient{},
+	}
+	opts.Tracer.DisableAllCategories()
+
+	// Create a tracer with our mock recorder
+	tracer := instana.InitCollector(opts)
+	defer instana.ShutdownCollector()
+
+	// Create spans of different categories
+	operations := []string{
+		string(instana.HTTPServerSpanType),
+		string(instana.RPCServerSpanType),
+		string(instana.KafkaSpanType),
+		string(instana.MongoDBSpanType),
+		string(instana.LogSpanType),
+		"sdk.database",
+	}
+
+	// Create spans
+	for _, operation := range operations {
+		span := tracer.StartSpan(operation)
+		span.Finish()
+	}
+
+	spans := recorder.GetQueuedSpans()
+
+	// Verify that no spans were recorded
+	assert.Empty(t, spans, "Expected no spans to be recorded when all categories are disabled")
 }
