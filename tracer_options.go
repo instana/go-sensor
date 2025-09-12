@@ -22,6 +22,13 @@ type TracerOptions struct {
 	// See https://www.instana.com/docs/setup_and_manage/host_agent/configuration/#capture-custom-http-headers for details
 	CollectableHTTPHeaders []string
 
+	// Disable allows the exclusion of specific traces or calls from tracing based on the category (technology)
+	// or type (frameworks, libraries, instrumentations) supported by the traces.
+	// The main benefit of disabling is reducing the overall amount of data being collected and processed.
+
+	// See https://github.ibm.com/instana/technical-documentation/blob/master/tracing/specification/README.md#span-disabling for details
+	Disable map[string]bool
+
 	// tracerDefaultSecrets flag is used to identify whether tracerOptions.Secrets
 	// contains the default secret matcher configured by the Instana SDK.
 	//

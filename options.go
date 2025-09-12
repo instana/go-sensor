@@ -4,8 +4,12 @@
 package instana
 
 import (
+	"fmt"
 	"os"
 	"strconv"
+	"strings"
+
+	"github.com/stretchr/testify/assert/yaml"
 )
 
 // Options allows the user to configure the to-be-initialized sensor
@@ -116,5 +120,95 @@ func (opts *Options) setDefaults() {
 		opts.Tracer.CollectableHTTPHeaders = parseInstanaExtraHTTPHeaders(collectableHeaders)
 	}
 
+	// Check if INSTANA_CONFIG_PATH environment variable is set
+	if configPath, ok := os.LookupEnv("INSTANA_CONFIG_PATH"); ok {
+		if err := parseConfigFile(configPath, &opts.Tracer); err != nil {
+			defaultLogger.Warn("invalid INSTANA_CONFIG_PATH= env variable value: ", err, ", ignoring")
+		}
+		// else check if INSTANA_TRACING_DISABLE environment variable is set
+	} else if tracingDisable, ok := os.LookupEnv("INSTANA_TRACING_DISABLE"); ok {
+		parseInstanaTracingDisable(tracingDisable, &opts.Tracer)
+	}
+
 	opts.disableW3CTraceCorrelation = os.Getenv("INSTANA_DISABLE_W3C_TRACE_CORRELATION") != ""
+}
+
+// parseInstanaTracingDisable processes the INSTANA_TRACING_DISABLE environment variable value
+// and updates the TracerOptions.Disable map accordingly.
+//
+// When the value is a boolean (true/false), the whole tracing feature is disabled/enabled.
+// When a list of category or type names is specified, only those will be disabled.
+//
+// Examples:
+// INSTANA_TRACING_DISABLE=True - disables all tracing
+// INSTANA_TRACING_DISABLE="logging" - disables logging category
+func parseInstanaTracingDisable(value string, opts *TracerOptions) {
+	// Initialize the Disable map if it doesn't exist
+	if opts.Disable == nil {
+		opts.Disable = make(map[string]bool)
+	}
+
+	// Trim spaces from the value
+	value = strings.TrimSpace(value)
+
+	// if it's a boolean value, disable all categories
+	if isBooleanTrue(value) {
+		opts.DisableAllCategories()
+		return
+	}
+
+	// if it's not a boolean value, process as a comma-separated list and disable each category.
+	items := strings.Split(value, ",")
+	for _, item := range items {
+		item = strings.TrimSpace(item)
+		if item != "" {
+			opts.Disable[item] = true
+		}
+	}
+}
+
+// isBooleanTrue checks if a string represents a boolean true value
+func isBooleanTrue(value string) bool {
+	value = strings.ToLower(value)
+	return value == "true"
+}
+
+// parseConfigFile reads and parses the YAML configuration file at the given path
+// and updates the TracerOptions accordingly.
+//
+// The YAML file must follow this format:
+// tracing:
+//   disable:
+//     - logging: true
+
+func parseConfigFile(path string, opts *TracerOptions) error {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return fmt.Errorf("failed to read config file: %w", err)
+	}
+
+	type Config struct {
+		Tracing struct {
+			Disable []string `yaml:"disable"`
+		} `yaml:"tracing"`
+	}
+
+	var config Config
+	if err := yaml.Unmarshal(data, &config); err != nil {
+		return fmt.Errorf("failed to parse YAML: %w", err)
+	}
+
+	if opts.Disable == nil {
+		opts.Disable = make(map[string]bool)
+	}
+
+	// Add the categories configured in the YAML file to the Disable map
+	for _, category := range config.Tracing.Disable {
+		category = strings.TrimSpace(category)
+		if category != "" {
+			opts.Disable[category] = true
+		}
+	}
+
+	return nil
 }
