@@ -550,7 +550,7 @@ func TestDisableSpanCategoryFromConfig(t *testing.T) {
 
 	yamlContent := `tracing:
   disable:
-    - logging
+    - logging: true
 `
 	err := os.WriteFile(configPath, []byte(yamlContent), 0644)
 	require.NoError(t, err, "Failed to create test config file")

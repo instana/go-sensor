@@ -111,7 +111,7 @@ func TestConfigFileHandling(t *testing.T) {
 			name: "Basic config file parsing",
 			yamlContent: `tracing:
   disable:
-    - logging
+    - logging: true
 `,
 			useEnvVar:        false,
 			expectedError:    false,
@@ -121,7 +121,7 @@ func TestConfigFileHandling(t *testing.T) {
 			name: "Config file parsing with environment variable",
 			yamlContent: `tracing:
   disable:
-    - logging
+    - logging: true
 `,
 			useEnvVar:        true,
 			expectedError:    false,
@@ -131,7 +131,7 @@ func TestConfigFileHandling(t *testing.T) {
 			name: "Invalid YAML handling",
 			yamlContent: `tracing:
   disable:
-    - logging
+    - logging: true
   - invalid indentation
 `,
 			useEnvVar:        false,
