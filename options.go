@@ -189,7 +189,7 @@ func parseConfigFile(path string, opts *TracerOptions) error {
 
 	type Config struct {
 		Tracing struct {
-			Disable []string `yaml:"disable"`
+			Disable []map[string]bool `yaml:"disable"`
 		} `yaml:"tracing"`
 	}
 
@@ -203,11 +203,13 @@ func parseConfigFile(path string, opts *TracerOptions) error {
 	}
 
 	// Add the categories configured in the YAML file to the Disable map
-	for _, category := range config.Tracing.Disable {
-		category = strings.TrimSpace(category)
-		if category != "" {
-			opts.Disable[category] = true
+	for _, disableMap := range config.Tracing.Disable {
+		for category, enabled := range disableMap {
+			if enabled {
+				opts.Disable[category] = true
+			}
 		}
+
 	}
 
 	return nil
