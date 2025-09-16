@@ -220,11 +220,12 @@ func TestInstanaTracingDisableEnvVar(t *testing.T) {
 
 func TestConfigFileHandling(t *testing.T) {
 	tests := []struct {
-		name             string
-		yamlContent      string
-		useEnvVar        bool
-		expectedError    bool
-		expectedDisabled []string
+		name              string
+		yamlContent       string
+		useEnvVar         bool
+		invalidConfigPath bool
+		expectedError     bool
+		expectedDisabled  []string
 	}{
 		{
 			name: "Basic config file parsing",
@@ -257,6 +258,17 @@ func TestConfigFileHandling(t *testing.T) {
 			expectedError:    true,
 			expectedDisabled: []string{},
 		},
+		{
+			name: "Invalid config file path",
+			yamlContent: `tracing:
+  disable:
+    - logging: true
+`,
+			useEnvVar:         true,
+			invalidConfigPath: true,
+			expectedError:     true,
+			expectedDisabled:  []string{},
+		},
 	}
 
 	for _, tt := range tests {
@@ -271,7 +283,11 @@ func TestConfigFileHandling(t *testing.T) {
 			}
 
 			if tt.useEnvVar {
-				t.Setenv("INSTANA_CONFIG_PATH", configPath)
+				if tt.invalidConfigPath {
+					t.Setenv("INSTANA_CONFIG_PATH", "/invalid/path")
+				} else {
+					t.Setenv("INSTANA_CONFIG_PATH", configPath)
+				}
 
 				opts := &Options{
 					Tracer: TracerOptions{},

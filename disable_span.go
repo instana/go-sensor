@@ -35,5 +35,9 @@ func (r *spanS) getSpanCategory() spanCategory {
 }
 
 func (c spanCategory) Enabled() bool {
+	// unrecognized categories are always enabled
+	if c == unknown {
+		return true
+	}
 	return !sensor.options.Tracer.Disable[c.String()]
 }
