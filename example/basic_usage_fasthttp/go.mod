@@ -1,12 +1,12 @@
 module basic_usage
 
-go 1.23.0
+go 1.24.0
 
 require (
 	github.com/instana/go-sensor v1.70.0
 	github.com/instana/go-sensor/instrumentation/instafasthttp v0.18.0
 	github.com/instana/go-sensor/instrumentation/instagorm v1.29.0
-	github.com/valyala/fasthttp v1.65.0
+	github.com/valyala/fasthttp v1.66.0
 	gorm.io/driver/postgres v1.6.0
 	gorm.io/gorm v1.30.0
 )
@@ -25,9 +25,9 @@ require (
 	github.com/looplab/fsm v1.0.3 // indirect
 	github.com/opentracing/opentracing-go v1.2.0 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
-	golang.org/x/crypto v0.41.0 // indirect
-	golang.org/x/sync v0.16.0 // indirect
-	golang.org/x/text v0.28.0 // indirect
+	golang.org/x/crypto v0.42.0 // indirect
+	golang.org/x/sync v0.17.0 // indirect
+	golang.org/x/text v0.29.0 // indirect
 )
 
 replace github.com/instana/go-sensor => ../../
