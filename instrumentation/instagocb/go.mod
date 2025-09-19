@@ -3,17 +3,17 @@ module github.com/instana/go-sensor/instrumentation/instagocb
 go 1.23.12
 
 require (
-	github.com/couchbase/gocb/v2 v2.11.0
-	github.com/couchbase/gocbcore/v10 v10.8.0
+	github.com/couchbase/gocb/v2 v2.11.1
+	github.com/couchbase/gocbcore/v10 v10.8.1
 	github.com/instana/go-sensor v1.70.0
 	github.com/opentracing/opentracing-go v1.2.0
 	github.com/stretchr/testify v1.10.0
 )
 
 require (
-	github.com/couchbase/gocbcoreps v0.1.3 // indirect
+	github.com/couchbase/gocbcoreps v0.1.4 // indirect
 	github.com/couchbase/goprotostellar v1.0.2 // indirect
-	github.com/couchbaselabs/gocbconnstr/v2 v2.0.0-20240607131231-fb385523de28 // indirect
+	github.com/couchbaselabs/gocbconnstr/v2 v2.0.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/go-logr/logr v1.4.3 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
