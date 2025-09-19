@@ -66,7 +66,13 @@ IncludeProfilerFrames is whether to include profiler calls into the profile or n
 
 **Type:** [TracerOptions](https://pkg.go.dev/github.com/instana/go-sensor#TracerOptions)
 
-Tracer contains tracer-specific configuration used by all tracers
+Tracer contains tracer-specific configuration used by all tracers. Key options include:
+
+- **Disable**: A map of span categories to disable. Currently, only the "logging" category is supported. See [Disabling Log Spans](disabling_spans.md) for details.
+- **DropAllLogs**: Turns log events on all spans into no-ops when set to true.
+- **MaxLogsPerSpan**: Maximum number of log records that can be attached to a span.
+- **Secrets**: A secrets matcher used to filter out sensitive data from HTTP requests, database connection strings, etc.
+- **CollectableHTTPHeaders**: A list of HTTP headers to be collected from requests.
 
 #### AgentClient
 
@@ -97,3 +103,4 @@ Go Tracer only captures log spans with severity `warn` or higher.
 [Tracing SQL Driver Databases](sql.md) |
 [Tracing Other Go Packages](other_packages.md) |
 [Instrumenting Code Manually](manual_instrumentation.md)
+
