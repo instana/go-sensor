@@ -2,7 +2,7 @@
 | ------------- | ---------- | --------------- | --------------- | ----------------------------------------- | ----------------------------------------- |
 | 1 | HTTP | net/http | | | |
 | 2 | HTTP | [echo](https://pkg.go.dev/github.com/labstack/echo/v4) | [instaecho](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instaecho) | v4.6.0 | v4.13.4 |
-| 3 | HTTP | [gin](https://pkg.go.dev/github.com/gin-gonic/gin) | [instagin](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instagin) | v1.7.2 | v1.10.1 |
+| 3 | HTTP | [gin](https://pkg.go.dev/github.com/gin-gonic/gin) | [instagin](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instagin) | v1.7.2 | v1.11.0 |
 | 4 | HTTP | [mux](https://pkg.go.dev/github.com/gorilla/mux) | [instamux](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instamux) | v1.8.0 | v1.8.1 |
 | 5 | HTTP | [httprouter](https://pkg.go.dev/github.com/julienschmidt/httprouter) | [instahttprouter](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instahttprouter) | v1.3.0 | v1.3.0 |
 | 6 | HTTP | [fiber](https://pkg.go.dev/github.com/gofiber/fiber/v2) | [instafiber](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instafiber) | v2.48.0 | v2.52.9 |
