@@ -27,7 +27,7 @@ type TracerOptions struct {
 	// The main benefit of disabling is reducing the overall amount of data being collected and processed.
 
 	// See https://github.ibm.com/instana/technical-documentation/blob/master/tracing/specification/README.md#span-disabling for details
-	Disable map[string]bool
+	DisableSpans map[string]bool
 
 	// tracerDefaultSecrets flag is used to identify whether tracerOptions.Secrets
 	// contains the default secret matcher configured by the Instana SDK.
@@ -48,5 +48,11 @@ func DefaultTracerOptions() TracerOptions {
 	return TracerOptions{
 		MaxLogsPerSpan: MaxLogsPerSpan,
 		Secrets:        DefaultSecretsMatcher(),
+	}
+}
+
+func (opts *TracerOptions) DisableAllCategories() {
+	opts.DisableSpans = map[string]bool{
+		logging.string(): true,
 	}
 }

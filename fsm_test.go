@@ -601,7 +601,7 @@ func TestApplyDisableTracingConfig(t *testing.T) {
 
 			InitCollector(&Options{
 				Tracer: TracerOptions{
-					Disable: tt.initialDisable,
+					DisableSpans: tt.initialDisable,
 				},
 			})
 			defer ShutdownCollector()
@@ -617,18 +617,18 @@ func TestApplyDisableTracingConfig(t *testing.T) {
 			fsm.applyDisableTracingConfig(resp)
 
 			// Check if the maps have the same size
-			assert.Equal(t, len(tt.expectedDisable), len(sensor.options.Tracer.Disable),
-				"Expected map size %d, got %d", len(tt.expectedDisable), len(sensor.options.Tracer.Disable))
+			assert.Equal(t, len(tt.expectedDisable), len(sensor.options.Tracer.DisableSpans),
+				"Expected map size %d, got %d", len(tt.expectedDisable), len(sensor.options.Tracer.DisableSpans))
 
 			// Check if all expected keys are present with correct values
 			for k, v := range tt.expectedDisable {
-				actualValue, exists := sensor.options.Tracer.Disable[k]
+				actualValue, exists := sensor.options.Tracer.DisableSpans[k]
 				assert.True(t, exists, "Expected key %s not found in result", k)
 				assert.Equal(t, v, actualValue, "Expected %s to be %v, got %v", k, v, actualValue)
 			}
 
 			// Check if there are no unexpected keys
-			for k := range sensor.options.Tracer.Disable {
+			for k := range sensor.options.Tracer.DisableSpans {
 				_, exists := tt.expectedDisable[k]
 				assert.True(t, exists, "Unexpected key in result: %s", k)
 			}

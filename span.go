@@ -19,6 +19,13 @@ const minSpanLogLevel = logger.WarnLevel
 
 var _ ot.Span = (*spanS)(nil)
 
+type spanCategory string
+
+const (
+	logging spanCategory = "logging"
+	unknown spanCategory = "unknown"
+)
+
 type spanS struct {
 	Service     string
 	Operation   string
@@ -90,7 +97,7 @@ func (r *spanS) FinishWithOptions(opts ot.FinishOptions) {
 
 func (r *spanS) sendSpanToAgent() bool {
 	// Span shouldn't be forwarded if the span category is configured as disabled
-	if !r.getSpanCategory().Enabled() {
+	if !r.getSpanCategory().enabled() {
 		return false
 	}
 
@@ -220,7 +227,7 @@ func (r *spanS) Tracer() ot.Tracer {
 // sendOpenTracingLogRecords converts OpenTracing log records that contain errors
 // to Instana log spans and sends them to the agent
 func (r *spanS) sendOpenTracingLogRecords() {
-	if logging.Enabled() {
+	if logging.enabled() {
 		for _, lr := range r.Logs {
 			r.sendOpenTracingLogRecord(lr)
 		}
@@ -281,4 +288,26 @@ func openTracingLogFieldLevel(lf otlog.Field) logger.Level {
 	default:
 		return logger.DebugLevel
 	}
+}
+
+func (c spanCategory) string() string {
+	return string(c)
+}
+
+func (r *spanS) getSpanCategory() spanCategory {
+	// return span category if it is a registered span type
+	switch RegisteredSpanType(r.Operation) {
+	case LogSpanType:
+		return logging
+	default:
+		return unknown
+	}
+}
+
+func (c spanCategory) enabled() bool {
+	// unrecognized categories are always enabled
+	if c == unknown {
+		return true
+	}
+	return !sensor.options.Tracer.DisableSpans[c.string()]
 }

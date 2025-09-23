@@ -158,19 +158,19 @@ func TestParseInstanaTracingDisable(t *testing.T) {
 			parseInstanaTracingDisable(tt.value, &opts)
 
 			// Check if the maps have the same size
-			if len(opts.Disable) != len(tt.expected) {
-				t.Errorf("Expected map size %d, got %d", len(tt.expected), len(opts.Disable))
+			if len(opts.DisableSpans) != len(tt.expected) {
+				t.Errorf("Expected map size %d, got %d", len(tt.expected), len(opts.DisableSpans))
 			}
 
 			// Check if all expected keys are present with correct values
 			for k, v := range tt.expected {
-				if opts.Disable[k] != v {
-					t.Errorf("Expected %s to be %v, got %v", k, v, opts.Disable[k])
+				if opts.DisableSpans[k] != v {
+					t.Errorf("Expected %s to be %v, got %v", k, v, opts.DisableSpans[k])
 				}
 			}
 
 			// Check if there are no unexpected keys
-			for k := range opts.Disable {
+			for k := range opts.DisableSpans {
 				if _, exists := tt.expected[k]; !exists {
 					t.Errorf("Unexpected key in result: %s", k)
 				}
@@ -191,7 +191,7 @@ func TestInstanaTracingDisableEnvVar(t *testing.T) {
 			expected: map[string]bool{},
 		},
 		{
-			name:     "Disable all",
+			name:     "DisableSpans all",
 			envValue: "True",
 			expected: map[string]bool{
 				"logging": true,
@@ -210,8 +210,8 @@ func TestInstanaTracingDisableEnvVar(t *testing.T) {
 
 			// Check if the maps have the expected values
 			for k, v := range tt.expected {
-				if opts.Tracer.Disable[k] != v {
-					t.Errorf("Expected %s to be %v, got %v", k, v, opts.Tracer.Disable[k])
+				if opts.Tracer.DisableSpans[k] != v {
+					t.Errorf("Expected %s to be %v, got %v", k, v, opts.Tracer.DisableSpans[k])
 				}
 			}
 		})
@@ -294,10 +294,10 @@ func TestConfigFileHandling(t *testing.T) {
 				}
 				opts.setDefaults()
 
-				verifyDisabledCategories(t, opts.Tracer.Disable, tt.expectedDisabled)
+				verifyDisabledCategories(t, opts.Tracer.DisableSpans, tt.expectedDisabled)
 			} else {
 				opts := &TracerOptions{
-					Disable: make(map[string]bool),
+					DisableSpans: make(map[string]bool),
 				}
 
 				err = parseConfigFile(configPath, opts)
@@ -312,7 +312,7 @@ func TestConfigFileHandling(t *testing.T) {
 
 				// Only verify disabled categories if no error was expected
 				if !tt.expectedError {
-					verifyDisabledCategories(t, opts.Disable, tt.expectedDisabled)
+					verifyDisabledCategories(t, opts.DisableSpans, tt.expectedDisabled)
 				}
 			}
 		})

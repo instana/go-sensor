@@ -249,7 +249,7 @@ func (r *fsmS) applyDisableTracingConfig(resp agentResponse) {
 
 	// Check if INSTANA_TRACING_DISABLE environment variable or in-code configuration is set
 	// If it is, it takes precedence over agent configuration
-	isConfigSet := len(sensor.options.Tracer.Disable) != 0
+	isConfigSet := len(sensor.options.Tracer.DisableSpans) != 0
 	if isConfigSet {
 		r.logger.Info("Disable Tracing configuration is set either through in-code or INSTANA_TRACING_DISABLE environment variable," +
 			" ignoring agent disable configuration")
@@ -259,12 +259,12 @@ func (r *fsmS) applyDisableTracingConfig(resp agentResponse) {
 	r.logger.Debug("Applying tracing disable configuration from agent")
 
 	// Apply the configuration from the agent
-	sensor.options.Tracer.Disable = make(map[string]bool)
+	sensor.options.Tracer.DisableSpans = make(map[string]bool)
 	for _, item := range resp.Tracing.Disable {
 		for k, v := range item {
 			if v {
 				r.logger.Debug("Disabling tracing for: ", k)
-				sensor.options.Tracer.Disable[k] = v
+				sensor.options.Tracer.DisableSpans[k] = v
 			}
 		}
 	}

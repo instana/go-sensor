@@ -12,7 +12,7 @@ Currently, only the following span category can be disabled:
 
 ## Configuration Methods
 
-There are three ways to disable log spans:
+There are four ways to disable log spans:
 
 ### 1. Using Code
 
@@ -22,7 +22,7 @@ You can disable log spans when initializing the tracer:
 col := instana.InitCollector(&instana.Options{
     Service: "My Service",
     Tracer: instana.TracerOptions{
-        Disable: map[string]bool{
+        DisableSpans: map[string]bool{
             "logging": true, // Disable log spans
         },
     },
@@ -56,28 +56,27 @@ tracing:
 export INSTANA_CONFIG_PATH=/path/to/config.yaml
 ```
 
+### 4. Using Instana Agent Configuration
+
+You can configure the Instana agent to disable log spans for all applications monitored by this agent:
+
+1. Locate your Instana agent configuration file.
+2. Add the following configuration to the agent's configuration file:
+```yaml
+com.instana.tracing:
+  disable:
+    - logging
+```
+3. Restart the Instana agent:
+
 ## Priority Order
 
 When multiple configuration methods are used, they are applied in the following order of precedence:
 
-1. Configuration file (`INSTANA_CONFIG_PATH`)
-2. Environment variable (`INSTANA_TRACING_DISABLE`)
-3. Code-level configuration
-
-## Example
-
-### Disable Log Spans
-
-```go
-col := instana.InitCollector(&instana.Options{
-    Service: "My Service",
-    Tracer: instana.TracerOptions{
-        Disable: map[string]bool{
-            "logging": true,
-        },
-    },
-})
-```
+1. Code-level configuration
+2. Configuration file (`INSTANA_CONFIG_PATH`)
+3. Environment variable (`INSTANA_TRACING_DISABLE`)
+4. Agent configuration 
 
 ## Use Cases
 

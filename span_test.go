@@ -501,7 +501,7 @@ func TestDisableSpanCategory(t *testing.T) {
 
 			opts := &instana.Options{
 				Tracer: instana.TracerOptions{
-					Disable: map[string]bool{
+					DisableSpans: map[string]bool{
 						tt.disabledCategory: true,
 					},
 				},

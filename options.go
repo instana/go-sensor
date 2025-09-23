@@ -144,8 +144,8 @@ func (opts *Options) setDefaults() {
 // INSTANA_TRACING_DISABLE="logging" - disables logging category
 func parseInstanaTracingDisable(value string, opts *TracerOptions) {
 	// Initialize the Disable map if it doesn't exist
-	if opts.Disable == nil {
-		opts.Disable = make(map[string]bool)
+	if opts.DisableSpans == nil {
+		opts.DisableSpans = make(map[string]bool)
 	}
 
 	// Trim spaces from the value
@@ -162,7 +162,7 @@ func parseInstanaTracingDisable(value string, opts *TracerOptions) {
 	for _, item := range items {
 		item = strings.TrimSpace(item)
 		if item != "" {
-			opts.Disable[item] = true
+			opts.DisableSpans[item] = true
 		}
 	}
 }
@@ -198,15 +198,15 @@ func parseConfigFile(path string, opts *TracerOptions) error {
 		return fmt.Errorf("failed to parse YAML: %w", err)
 	}
 
-	if opts.Disable == nil {
-		opts.Disable = make(map[string]bool)
+	if opts.DisableSpans == nil {
+		opts.DisableSpans = make(map[string]bool)
 	}
 
 	// Add the categories configured in the YAML file to the Disable map
 	for _, disableMap := range config.Tracing.Disable {
 		for category, enabled := range disableMap {
 			if enabled {
-				opts.Disable[category] = true
+				opts.DisableSpans[category] = true
 			}
 		}
 

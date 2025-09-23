@@ -43,7 +43,7 @@ func init() {
     c = instana.InitCollector(&instana.Options{
         Service: "logrus-example",
         Tracer: instana.TracerOptions{
-            Disable: map[string]bool{
+            DisableSpans: map[string]bool{
                 "logging": true,
             },
         },
