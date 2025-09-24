@@ -6,6 +6,7 @@ package instana
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -182,7 +183,14 @@ func isBooleanTrue(value string) bool {
 //     - logging: true
 
 func parseConfigFile(path string, opts *TracerOptions) error {
-	data, err := os.ReadFile(path)
+	// Validate the file path and security considerations
+	absPath, err := validateFile(path)
+	if err != nil {
+		return err
+	}
+
+	// Read the file with proper error handling
+	data, err := os.ReadFile(absPath)
 	if err != nil {
 		return fmt.Errorf("failed to read config file: %w", err)
 	}
@@ -213,4 +221,49 @@ func parseConfigFile(path string, opts *TracerOptions) error {
 	}
 
 	return nil
+}
+
+// validateFile ensures the given config file path is safe and usable.
+// Security considerations:
+// - Resolves symlinks to prevent symlink attacks
+// - Ensures the path exists and is a regular file
+// - Enforces a reasonable file size limit to avoid DoS
+// - Warns if file permissions are too permissive (world-readable)
+func validateFile(path string) (absPath string, err error) {
+	// Resolve symlinks to avoid symlink attacks
+	realPath, err := filepath.EvalSymlinks(path)
+	if err != nil {
+		return absPath, fmt.Errorf("failed to resolve config file path: %w", err)
+	}
+
+	// Get absolute normalized path
+	absPath, err = filepath.Abs(realPath)
+	if err != nil {
+		return absPath, fmt.Errorf("failed to get absolute path: %w", err)
+	}
+
+	// Check if the path exists and is a regular file
+	fileInfo, err := os.Stat(absPath)
+	if err != nil {
+		return absPath, fmt.Errorf("failed to access config file: %w", err)
+	}
+
+	// Ensure it's a regular file, not a directory or special file
+	if !fileInfo.Mode().IsRegular() {
+		return absPath, fmt.Errorf("config path is not a regular file: %s", absPath)
+	}
+
+	// Enforce a maximum file size (1MB is plenty for config files)
+	const maxFileSize = 1 * 1024 * 1024 // 1MB
+	if fileInfo.Size() > maxFileSize {
+		return absPath, fmt.Errorf("config file too large: %d bytes (max allowed: %d bytes)",
+			fileInfo.Size(), maxFileSize)
+	}
+
+	// Warn if the file is world-readable (optional hardening)
+	if fileInfo.Mode().Perm()&0004 != 0 {
+		defaultLogger.Warn("config file is world-readable, consider restricting permissions: ", absPath)
+	}
+
+	return absPath, nil
 }

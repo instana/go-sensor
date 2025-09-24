@@ -143,7 +143,7 @@ go run main.go
 
 When multiple configuration methods are used, they are applied in the following order of precedence:
 
-1. Code-level configuration
-2. Configuration file (`INSTANA_CONFIG_PATH`)
-3. Environment variable (`INSTANA_TRACING_DISABLE`)
+1. Configuration file (`INSTANA_CONFIG_PATH`)
+2. Environment variable (`INSTANA_TRACING_DISABLE`)
+3. Code-level configuration
 4. Agent configuration 

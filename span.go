@@ -228,12 +228,11 @@ func (r *spanS) Tracer() ot.Tracer {
 // to Instana log spans and sends them to the agent
 func (r *spanS) sendOpenTracingLogRecords() {
 	if logging.disabled() {
-	    return
+		return
 	}
-	
+
 	for _, lr := range r.Logs {
 		r.sendOpenTracingLogRecord(lr)
-	}
 	}
 }
 
