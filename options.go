@@ -140,7 +140,7 @@ func (opts *Options) setDefaults() {
 // When a list of category or type names is specified, only those will be disabled.
 //
 // Examples:
-// INSTANA_TRACING_DISABLE=True - disables all tracing
+// INSTANA_TRACING_DISABLE=true - disables all tracing
 // INSTANA_TRACING_DISABLE="logging" - disables logging category
 func parseInstanaTracingDisable(value string, opts *TracerOptions) {
 	// Initialize the Disable map if it doesn't exist
