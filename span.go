@@ -227,10 +227,13 @@ func (r *spanS) Tracer() ot.Tracer {
 // sendOpenTracingLogRecords converts OpenTracing log records that contain errors
 // to Instana log spans and sends them to the agent
 func (r *spanS) sendOpenTracingLogRecords() {
-	if !logging.disabled() {
-		for _, lr := range r.Logs {
-			r.sendOpenTracingLogRecord(lr)
-		}
+	if logging.disabled() {
+	    return
+	}
+	
+	for _, lr := range r.Logs {
+		r.sendOpenTracingLogRecord(lr)
+	}
 	}
 }
 
