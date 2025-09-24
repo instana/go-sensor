@@ -97,7 +97,7 @@ func (r *spanS) FinishWithOptions(opts ot.FinishOptions) {
 
 func (r *spanS) sendSpanToAgent() bool {
 	// Span shouldn't be forwarded if the span category is configured as disabled
-	if !r.getSpanCategory().enabled() {
+	if r.getSpanCategory().disabled() {
 		return false
 	}
 
@@ -227,7 +227,7 @@ func (r *spanS) Tracer() ot.Tracer {
 // sendOpenTracingLogRecords converts OpenTracing log records that contain errors
 // to Instana log spans and sends them to the agent
 func (r *spanS) sendOpenTracingLogRecords() {
-	if logging.enabled() {
+	if !logging.disabled() {
 		for _, lr := range r.Logs {
 			r.sendOpenTracingLogRecord(lr)
 		}
@@ -304,10 +304,16 @@ func (r *spanS) getSpanCategory() spanCategory {
 	}
 }
 
-func (c spanCategory) enabled() bool {
+func (c spanCategory) disabled() bool {
 	// unrecognized categories are always enabled
 	if c == unknown {
-		return true
+		return false
 	}
-	return !sensor.options.Tracer.DisableSpans[c.string()]
+
+	// Check if sensor or options are nil
+	if sensor == nil || sensor.options.Tracer.DisableSpans == nil {
+		return false
+	}
+
+	return sensor.options.Tracer.DisableSpans[c.string()]
 }

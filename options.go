@@ -9,7 +9,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/stretchr/testify/assert/yaml"
+	"gopkg.in/yaml.v3"
 )
 
 // Options allows the user to configure the to-be-initialized sensor
