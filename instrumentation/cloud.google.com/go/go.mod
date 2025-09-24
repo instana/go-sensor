@@ -5,13 +5,13 @@ go 1.24.0
 require (
 	cloud.google.com/go/iam v1.5.2
 	cloud.google.com/go/pubsub v1.50.1
-	cloud.google.com/go/storage v1.56.2
+	cloud.google.com/go/storage v1.57.0
 	github.com/instana/go-sensor v1.70.0
 	github.com/opentracing/opentracing-go v1.2.0
 	github.com/stretchr/testify v1.10.0
 	google.golang.org/api v0.247.0
 	google.golang.org/genproto v0.0.0-20250707201910-8d1bb00bc6a7
-	google.golang.org/grpc v1.74.2
+	google.golang.org/grpc v1.74.3
 )
 
 require (
