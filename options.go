@@ -153,7 +153,7 @@ func parseInstanaTracingDisable(value string, opts *TracerOptions) {
 	value = strings.TrimSpace(value)
 
 	// if it's a boolean value, disable all categories
-	if isBooleanTrue(value) {
+	if strings.EqualFold(value, "true") {
 		opts.DisableAllCategories()
 		return
 	}
