@@ -71,7 +71,7 @@ com.instana.tracing:
 
 ## Priority Order
 
-When multiple configuration methods are used, they are applied in the following order of precedence:
+When multiple configuration methods are used, they are applied in the following decreasing order of precedence:
 
 1. Configuration file (`INSTANA_CONFIG_PATH`)
 2. Environment variable (`INSTANA_TRACING_DISABLE`)
