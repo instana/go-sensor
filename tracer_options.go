@@ -26,7 +26,6 @@ type TracerOptions struct {
 	// or type (frameworks, libraries, instrumentations) supported by the traces.
 	// The main benefit of disabling is reducing the overall amount of data being collected and processed.
 
-	// See https://github.ibm.com/instana/technical-documentation/blob/master/tracing/specification/README.md#span-disabling for details
 	DisableSpans map[string]bool
 
 	// tracerDefaultSecrets flag is used to identify whether tracerOptions.Secrets
