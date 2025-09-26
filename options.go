@@ -168,11 +168,6 @@ func parseInstanaTracingDisable(value string, opts *TracerOptions) {
 	}
 }
 
-// isBooleanTrue checks if a string represents a boolean true value
-func isBooleanTrue(value string) bool {
-	value = strings.ToLower(value)
-	return value == "true"
-}
 
 // parseConfigFile reads and parses the YAML configuration file at the given path
 // and updates the TracerOptions accordingly.
