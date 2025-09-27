@@ -168,7 +168,6 @@ func parseInstanaTracingDisable(value string, opts *TracerOptions) {
 	}
 }
 
-
 // parseConfigFile reads and parses the YAML configuration file at the given path
 // and updates the TracerOptions accordingly.
 //
@@ -181,7 +180,7 @@ func parseConfigFile(path string, opts *TracerOptions) error {
 	// Validate the file path and security considerations
 	absPath, err := validateFile(path)
 	if err != nil {
-		return err
+		return fmt.Errorf("config file validation failed for %s: %w", path, err)
 	}
 
 	// Read the file with proper error handling

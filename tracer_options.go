@@ -25,7 +25,6 @@ type TracerOptions struct {
 	// Disable allows the exclusion of specific traces or calls from tracing based on the category (technology)
 	// or type (frameworks, libraries, instrumentations) supported by the traces.
 	// The main benefit of disabling is reducing the overall amount of data being collected and processed.
-
 	DisableSpans map[string]bool
 
 	// tracerDefaultSecrets flag is used to identify whether tracerOptions.Secrets
