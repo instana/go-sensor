@@ -1,6 +1,6 @@
-# Disabling Log Spans
+# Disabling Spans
 
-The Instana Go Tracer allows you to disable log spans to reduce the amount of data being collected and processed. This can be useful in high-volume environments or when you want to focus on specific types of traces.
+The Instana Go Tracer allows you to disable spans to reduce the amount of data being collected and processed. This can be useful in high-volume environments or when you want to focus on specific types of traces.
 
 ## Supported Span Categories
 
@@ -12,11 +12,11 @@ Currently, only the following span category can be disabled:
 
 ## Configuration Methods
 
-There are four ways to disable log spans:
+There are four ways to disable spans:
 
 ### 1. Using Code
 
-You can disable log spans when initializing the tracer:
+You can disable spans when initializing the tracer:
 
 ```go
 col := instana.InitCollector(&instana.Options{
@@ -31,7 +31,7 @@ col := instana.InitCollector(&instana.Options{
 
 ### 2. Using Environment Variables
 
-You can disable log spans using the `INSTANA_TRACING_DISABLE` environment variable:
+You can disable spans using the `INSTANA_TRACING_DISABLE` environment variable:
 
 ```bash
 # Disable log spans
@@ -60,7 +60,7 @@ export INSTANA_CONFIG_PATH=/path/to/config.yaml
 
 ### 4. Using Instana Agent Configuration
 
-You can configure the Instana agent to disable log spans for all applications monitored by this agent:
+You can configure the Instana agent to disable spans for all applications monitored by this agent:
 
 1. Locate your Instana agent configuration file.
 2. Add the following configuration to the agent's configuration file:
@@ -69,7 +69,7 @@ com.instana.tracing:
   disable:
     - logging
 ```
-3. Restart the Instana agent:
+1. Restart the Instana agent:
 
 ## Priority Order
 
