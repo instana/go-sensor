@@ -51,7 +51,8 @@ type agentResponse struct {
 	} `json:"secrets"`
 	ExtraHTTPHeaders []string `json:"extraHeaders"`
 	Tracing          struct {
-		ExtraHTTPHeaders []string `json:"extra-http-headers"`
+		ExtraHTTPHeaders []string          `json:"extra-http-headers"`
+		Disable          []map[string]bool `json:"disable"`
 	} `json:"tracing"`
 }
 

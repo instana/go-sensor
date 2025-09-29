@@ -210,6 +210,7 @@ Another interesting feature is the usage of additional packages located under [i
 1. [Tracing an application running on Azure Container Apps](docs/azure_container_apps.md)
 1. [Tracing Other Go Packages](docs/other_packages.md)
 1. [Instrumenting Code Manually](docs/manual_instrumentation.md)
+1. [Disabling Spans by Category](docs/disabling_spans.md)
 1. [Generic Serverless Agent](/docs/generic_serverless_agent.md)
 
 <!-- Links section -->
