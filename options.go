@@ -4,13 +4,8 @@
 package instana
 
 import (
-	"fmt"
 	"os"
-	"path/filepath"
 	"strconv"
-	"strings"
-
-	"gopkg.in/yaml.v3"
 )
 
 // Options allows the user to configure the to-be-initialized sensor
@@ -122,142 +117,14 @@ func (opts *Options) setDefaults() {
 	}
 
 	// Check if INSTANA_CONFIG_PATH environment variable is set
-	if configPath, ok := os.LookupEnv("INSTANA_CONFIG_PATH"); ok {
+	if configPath, ok := lookupValidatedEnv("INSTANA_CONFIG_PATH"); ok {
 		if err := parseConfigFile(configPath, &opts.Tracer); err != nil {
 			defaultLogger.Warn("invalid INSTANA_CONFIG_PATH= env variable value: ", err, ", ignoring")
 		}
 		// else check if INSTANA_TRACING_DISABLE environment variable is set
-	} else if tracingDisable, ok := os.LookupEnv("INSTANA_TRACING_DISABLE"); ok {
+	} else if tracingDisable, ok := lookupValidatedEnv("INSTANA_TRACING_DISABLE"); ok {
 		parseInstanaTracingDisable(tracingDisable, &opts.Tracer)
 	}
 
 	opts.disableW3CTraceCorrelation = os.Getenv("INSTANA_DISABLE_W3C_TRACE_CORRELATION") != ""
-}
-
-// parseInstanaTracingDisable processes the INSTANA_TRACING_DISABLE environment variable value
-// and updates the TracerOptions.Disable map accordingly.
-//
-// When the value is a boolean (true/false), the whole tracing feature is disabled/enabled.
-// When a list of category or type names is specified, only those will be disabled.
-//
-// Examples:
-// INSTANA_TRACING_DISABLE=true - disables all tracing
-// INSTANA_TRACING_DISABLE="logging" - disables logging category
-func parseInstanaTracingDisable(value string, opts *TracerOptions) {
-	// Initialize the Disable map if it doesn't exist
-	if opts.DisableSpans == nil {
-		opts.DisableSpans = make(map[string]bool)
-	}
-
-	// Trim spaces from the value
-	value = strings.TrimSpace(value)
-
-	// if it's a boolean value, disable all categories
-	if strings.EqualFold(value, "true") {
-		opts.DisableAllCategories()
-		return
-	}
-
-	// if it's not a boolean value, process as a comma-separated list and disable each category.
-	items := strings.Split(value, ",")
-	for _, item := range items {
-		item = strings.TrimSpace(item)
-		if item != "" {
-			opts.DisableSpans[item] = true
-		}
-	}
-}
-
-// parseConfigFile reads and parses the YAML configuration file at the given path
-// and updates the TracerOptions accordingly.
-//
-// The YAML file must follow this format:
-// tracing:
-//   disable:
-//     - logging: true
-
-func parseConfigFile(path string, opts *TracerOptions) error {
-	// Validate the file path and security considerations
-	absPath, err := validateFile(path)
-	if err != nil {
-		return fmt.Errorf("config file validation failed for %s: %w", path, err)
-	}
-
-	// Read the file with proper error handling
-	data, err := os.ReadFile(absPath)
-	if err != nil {
-		return fmt.Errorf("failed to read config file: %w", err)
-	}
-
-	type Config struct {
-		Tracing struct {
-			Disable []map[string]bool `yaml:"disable"`
-		} `yaml:"tracing"`
-	}
-
-	var config Config
-	if err := yaml.Unmarshal(data, &config); err != nil {
-		return fmt.Errorf("failed to parse YAML: %w", err)
-	}
-
-	if opts.DisableSpans == nil {
-		opts.DisableSpans = make(map[string]bool)
-	}
-
-	// Add the categories configured in the YAML file to the Disable map
-	for _, disableMap := range config.Tracing.Disable {
-		for category, enabled := range disableMap {
-			if enabled {
-				opts.DisableSpans[category] = true
-			}
-		}
-
-	}
-
-	return nil
-}
-
-// validateFile ensures the given config file path is safe and usable.
-// Security considerations:
-// - Resolves symlinks to prevent symlink attacks
-// - Ensures the path exists and is a regular file
-// - Enforces a reasonable file size limit to avoid DoS
-// - Warns if file permissions are too permissive (world-readable)
-func validateFile(path string) (absPath string, err error) {
-	// Resolve symlinks to avoid symlink attacks
-	realPath, err := filepath.EvalSymlinks(path)
-	if err != nil {
-		return absPath, fmt.Errorf("failed to resolve config file path: %w", err)
-	}
-
-	// Get absolute normalized path
-	absPath, err = filepath.Abs(realPath)
-	if err != nil {
-		return absPath, fmt.Errorf("failed to get absolute path: %w", err)
-	}
-
-	// Check if the path exists and is a regular file
-	fileInfo, err := os.Stat(absPath)
-	if err != nil {
-		return absPath, fmt.Errorf("failed to access config file: %w", err)
-	}
-
-	// Ensure it's a regular file, not a directory or special file
-	if !fileInfo.Mode().IsRegular() {
-		return absPath, fmt.Errorf("config path is not a regular file: %s", absPath)
-	}
-
-	// Enforce a maximum file size (1MB is plenty for config files)
-	const maxFileSize = 1 * 1024 * 1024 // 1MB
-	if fileInfo.Size() > maxFileSize {
-		return absPath, fmt.Errorf("config file too large: %d bytes (max allowed: %d bytes)",
-			fileInfo.Size(), maxFileSize)
-	}
-
-	// Warn if the file is world-readable (optional hardening)
-	if fileInfo.Mode().Perm()&0004 != 0 {
-		defaultLogger.Warn("config file is world-readable, consider restricting permissions: ", absPath)
-	}
-
-	return absPath, nil
 }

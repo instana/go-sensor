@@ -479,8 +479,8 @@ func Test_tracerS_SuppressTracing(t *testing.T) {
 	}
 }
 
-// TestDisableSpanCategoryFromConfig tests that log spans are properly filtered when disabled via in-code configuration
-func TestDisableSpanCategory(t *testing.T) {
+// TestDisableSpanCategory tests that log spans are properly filtered when disabled via in-code configuration
+func TestDisableSpanCategory_UsingInCodeConfiguration(t *testing.T) {
 	tests := []struct {
 		name             string
 		disabledCategory string
@@ -543,7 +543,7 @@ func TestDisableSpanCategory(t *testing.T) {
 }
 
 // TestDisableSpanCategoryFromConfig tests that log spans are properly filtered when disabled via configuration file
-func TestDisableSpanCategoryFromConfig(t *testing.T) {
+func TestDisableSpanCategory_UsingConfigFile(t *testing.T) {
 
 	tempDir := t.TempDir()
 	configPath := filepath.Join(tempDir, "config.yaml")
@@ -605,8 +605,8 @@ func TestDisableSpanCategoryFromConfig(t *testing.T) {
 	}
 }
 
-// TestDisableAllCategories tests that log spans are filtered when logging category is disabled via environment variable
-func TestDisableAllCategories(t *testing.T) {
+// TestDisableSpanCategory_UsingEnvironmentVariable tests that log spans are filtered when logging category is disabled via environment variable
+func TestDisableSpanCategory_UsingEnvironmentVariable(t *testing.T) {
 	t.Setenv("INSTANA_TRACING_DISABLE", "logging")
 
 	recorder := instana.NewTestRecorder()
