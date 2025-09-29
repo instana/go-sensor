@@ -4,11 +4,13 @@ The Instana Go Tracer allows you to disable spans to reduce the amount of data b
 
 ## Supported Span Categories
 
-Currently, only the following span category can be disabled:
+The following span categories can be disabled:
 
 | Category  | Description | Affected Instrumentations |
 | --------- | ----------- | ------------------------- |
 | `logging` | Log spans   | `logrus`                  |
+
+> **Note:** Currently, Instana Go Tracer only supports disabling log spans.
 
 ## Configuration Methods
 
@@ -36,9 +38,6 @@ You can disable spans using the `INSTANA_TRACING_DISABLE` environment variable:
 ```bash
 # Disable log spans
 export INSTANA_TRACING_DISABLE="logging"
-
-# Disable all tracing
-export INSTANA_TRACING_DISABLE=true
 ```
 
 ### 3. Using Configuration File
@@ -82,4 +81,4 @@ When multiple configuration methods are used, they are applied in the following 
 
 ## Use Cases
 
-- Users can control the log ingestion with the newly added configuration - fair usage policy data optimization.
+- As part of the fair usage policy data optimization, users can control the log ingestion with the newly added configuration.

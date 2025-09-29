@@ -138,15 +138,15 @@ func TestParseInstanaTracingDisable(t *testing.T) {
 			expected: map[string]bool{},
 		},
 		{
-			name:  "Boolean true",
-			value: "True",
+			name:  "With extra spaces",
+			value: "   logging  ",
 			expected: map[string]bool{
 				"logging": true,
 			},
 		},
 		{
-			name:  "With extra spaces",
-			value: "   logging  ",
+			name:  "Valid value",
+			value: "logging",
 			expected: map[string]bool{
 				"logging": true,
 			},
@@ -193,8 +193,8 @@ func TestInstanaTracingDisableEnvVar(t *testing.T) {
 			expected: map[string]bool{},
 		},
 		{
-			name:     "DisableSpans all",
-			envValue: "True",
+			name:     "Disable logging",
+			envValue: "logging",
 			expected: map[string]bool{
 				"logging": true,
 			},

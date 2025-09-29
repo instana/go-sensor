@@ -118,11 +118,9 @@ func parseInstanaTimeout(s string) (time.Duration, error) {
 // parseInstanaTracingDisable processes the INSTANA_TRACING_DISABLE environment variable value
 // and updates the TracerOptions.Disable map accordingly.
 //
-// When the value is a boolean (true/false), the whole tracing feature is disabled/enabled.
-// When a list of category or type names is specified, only those will be disabled.
+// When a list of category or type names is specified, those will be disabled.
 //
-// Examples:
-// INSTANA_TRACING_DISABLE=true - disables all tracing
+// Example:
 // INSTANA_TRACING_DISABLE="logging" - disables logging category
 func parseInstanaTracingDisable(value string, opts *TracerOptions) {
 	// Initialize the Disable map if it doesn't exist
@@ -132,12 +130,6 @@ func parseInstanaTracingDisable(value string, opts *TracerOptions) {
 
 	// Trim spaces from the value
 	value = strings.TrimSpace(value)
-
-	// if it's a boolean value, disable all categories
-	if strings.EqualFold(value, "true") {
-		opts.DisableAllCategories()
-		return
-	}
 
 	// if it's not a boolean value, process as a comma-separated list and disable each category.
 	items := strings.Split(value, ",")

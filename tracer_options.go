@@ -48,9 +48,3 @@ func DefaultTracerOptions() TracerOptions {
 		Secrets:        DefaultSecretsMatcher(),
 	}
 }
-
-func (opts *TracerOptions) DisableAllCategories() {
-	opts.DisableSpans = map[string]bool{
-		logging.string(): true,
-	}
-}
