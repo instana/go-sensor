@@ -4,17 +4,18 @@
 name: Release all updated instrumentations - Public
 
 on:
-  pull_request:
-    branches:
-    - main
-    types:
-      - closed
+  workflow_dispatch:
+  #pull_request:
+  #  branches:
+  #  - main
+  #  types:
+  #    - closed
 
 jobs:
   release_instrumentations:
     name: Release all instrumentations
     runs-on: ubuntu-latest
-    if: github.event.pull_request.merged == true && startsWith(github.event.pull_request.head.ref, 'update-instrumentations-core')
+    #if: github.event.pull_request.merged == true && startsWith(github.event.pull_request.head.ref, 'update-instrumentations-core')
     steps:
     - uses: actions/checkout@v3
       name: Checkout repo
