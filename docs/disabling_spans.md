@@ -55,7 +55,7 @@ tracing:
 export INSTANA_CONFIG_PATH=/path/to/config.yaml
 ```
 
-**Note:** The tracer enforces a maximum config file size of 1 MB. Any file exceeding this limit will be rejected during validation. This safeguard is in place to prevent accidental or malicious use of excessively large files, since configuration data is expected to remain lightweight.
+> **Note:** The tracer enforces a maximum config file size of 1 MB. Any file exceeding this limit will be rejected during validation. This safeguard is in place to prevent accidental or malicious use of excessively large files, since configuration data is expected to remain lightweight.
 
 ### 4. Using Instana Agent Configuration
 
