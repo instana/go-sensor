@@ -82,7 +82,4 @@ When multiple configuration methods are used, they are applied in the following 
 
 ## Use Cases
 
-- **Performance Optimization**: In high-throughput applications, disabling log spans can reduce the overhead of tracing.
-- **Cost Management**: Reduce the volume of trace data sent to Instana to manage costs.
-- **Focus on Specific Areas**: Disable log spans to focus on the parts of your application that need attention.
-- **Testing**: Temporarily disable log spans during testing or development.
+- Users can control the log ingestion with the newly added configuration - fair usage policy data optimization.
