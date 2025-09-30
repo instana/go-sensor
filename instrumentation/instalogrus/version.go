@@ -4,4 +4,4 @@
 package instalogrus
 
 // Version is the instrumentation module semantic version
-const Version = "1.36.0"
+const Version = "1.36.0-fedramp"

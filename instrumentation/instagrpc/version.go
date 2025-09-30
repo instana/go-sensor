@@ -4,4 +4,4 @@
 package instagrpc
 
 // Version is the instrumentation module semantic version
-const Version = "1.52.0"
+const Version = "1.52.0-fedramp"
