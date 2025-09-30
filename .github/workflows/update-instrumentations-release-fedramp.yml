@@ -20,6 +20,7 @@ jobs:
       name: Checkout repo
       with:
         fetch-depth: 0
+        ssh-key: ${{secrets.PRIVATE_KEY_GO_TRACER_RELEASE_LATEST}}
         ref: fedramp-main
     - name: Release all packages
       id: release-packages
