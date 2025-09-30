@@ -12,7 +12,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/stretchr/testify/assert/yaml"
+	"gopkg.in/yaml.v3"
 )
 
 // MaxEnvValueSize is the maximum size of the value of an environment variable.
