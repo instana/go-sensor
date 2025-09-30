@@ -32,8 +32,8 @@ github.com/google/pprof v0.0.0-20250630185457-6e76a2b096b5 h1:xhMrHhTJ6zxu3gA4en
 github.com/google/pprof v0.0.0-20250630185457-6e76a2b096b5/go.mod h1:5hDyRhoBCxViHszMt12TnOpEI4VVi+U8Gm9iphldiMA=
 github.com/google/uuid v1.6.0 h1:NIvaJDMOsjHA8n1jAhLSgzrAzy1Hgr+hNrb57e+94F0=
 github.com/google/uuid v1.6.0/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
-github.com/instana/go-sensor v1.71.1 h1:EqRQS/gi7C2FeYseRlgUB+u1qvD9aLGJCJ0PBXrtshM=
-github.com/instana/go-sensor v1.71.1/go.mod h1:wWLB5TQn5zd+XxZPLkaScMzRr74ymtptaDTPhrueDyM=
+github.com/instana/go-sensor v1.71.1-fedramp h1:l+AAYe77bQiIQss62SEHx4ygd/ccU/OoK7qXp7SgpT8=
+github.com/instana/go-sensor v1.71.1-fedramp/go.mod h1:wWLB5TQn5zd+XxZPLkaScMzRr74ymtptaDTPhrueDyM=
 github.com/json-iterator/go v1.1.12 h1:PV8peI4a0ysnczrg+LtxykD8LfKY9ML6u2jnxaEnrnM=
 github.com/json-iterator/go v1.1.12/go.mod h1:e30LSqwooZae/UwlEbR2852Gd8hjQvJoHmT4TnhNGBo=
 github.com/klauspost/cpuid/v2 v2.3.0 h1:S4CRMLnYUhGeDFDqkGriYKdfoFlDnMtqTiI/sFzhA9Y=
