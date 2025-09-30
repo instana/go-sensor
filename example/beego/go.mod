@@ -4,7 +4,7 @@ go 1.23.0
 
 require (
 	github.com/beego/beego/v2 v2.3.8
-	github.com/instana/go-sensor v1.70.0
+	github.com/instana/go-sensor v1.71.0
 	github.com/instana/go-sensor/instrumentation/instabeego v0.25.0
 	github.com/opentracing/opentracing-go v1.2.0
 )
@@ -23,6 +23,7 @@ require (
 	github.com/prometheus/common v0.65.0 // indirect
 	github.com/prometheus/procfs v0.17.0 // indirect
 	github.com/shiena/ansicolor v0.0.0-20230509054315-a9deabde6e02 // indirect
+	github.com/stretchr/testify v1.10.0 // indirect
 	golang.org/x/crypto v0.40.0 // indirect
 	golang.org/x/net v0.42.0 // indirect
 	golang.org/x/sys v0.34.0 // indirect
