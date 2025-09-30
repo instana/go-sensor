@@ -9,8 +9,8 @@ github.com/graphql-go/graphql v0.8.1 h1:p7/Ou/WpmulocJeEx7wjQy611rtXGQaAcXGqanuM
 github.com/graphql-go/graphql v0.8.1/go.mod h1:nKiHzRM0qopJEwCITUuIsxk9PlVlwIiiI8pnJEhordQ=
 github.com/graphql-go/handler v0.2.4 h1:gz9q11TUHPNUpqzV8LMa+rkqM5NUuH/nkE3oF2LS3rI=
 github.com/graphql-go/handler v0.2.4/go.mod h1:gsQlb4gDvURR0bgN8vWQEh+s5vJALM2lYL3n3cf6OxQ=
-github.com/instana/go-sensor v1.71.0 h1:ytQAfvSvTAD6lo9L3cjQ4Oi0Gszepk3WocXcFLByEV0=
-github.com/instana/go-sensor v1.71.0/go.mod h1:wWLB5TQn5zd+XxZPLkaScMzRr74ymtptaDTPhrueDyM=
+github.com/instana/go-sensor v1.71.1 h1:EqRQS/gi7C2FeYseRlgUB+u1qvD9aLGJCJ0PBXrtshM=
+github.com/instana/go-sensor v1.71.1/go.mod h1:wWLB5TQn5zd+XxZPLkaScMzRr74ymtptaDTPhrueDyM=
 github.com/looplab/fsm v1.0.3 h1:qtxBsa2onOs0qFOtkqwf5zE0uP0+Te+wlIvXctPKpcw=
 github.com/looplab/fsm v1.0.3/go.mod h1:PmD3fFvQEIsjMEfvZdrCDZ6y8VwKTwWNjlpEr6IKPO4=
 github.com/opentracing/opentracing-go v1.2.0 h1:uEJPy/1a5RIPAJ0Ov+OIO8OxWu77jEv+1B0VhjKrZUs=
