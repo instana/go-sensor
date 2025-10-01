@@ -5,10 +5,10 @@ github.com/google/pprof v0.0.0-20250630185457-6e76a2b096b5 h1:xhMrHhTJ6zxu3gA4en
 github.com/google/pprof v0.0.0-20250630185457-6e76a2b096b5/go.mod h1:5hDyRhoBCxViHszMt12TnOpEI4VVi+U8Gm9iphldiMA=
 github.com/google/uuid v1.6.0 h1:NIvaJDMOsjHA8n1jAhLSgzrAzy1Hgr+hNrb57e+94F0=
 github.com/google/uuid v1.6.0/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
-github.com/instana/go-sensor/instrumentation/instagorm v1.32.0 h1:fjkWMVv7gAZQfQ5bq5jUNvOEGQmVw8EIExS+fYn0u0c=
-github.com/instana/go-sensor/instrumentation/instagorm v1.32.0/go.mod h1:b5wq180zXUeoybZx0jm8MQEvpdIuVTng3tUfQXvAAHk=
-github.com/instana/go-sensor/instrumentation/instalogrus v1.34.0 h1:0Q51nXZWeILrNKVcoUSP4IykuSW+DAQmsbRs2T/ad/M=
-github.com/instana/go-sensor/instrumentation/instalogrus v1.34.0/go.mod h1:inMNLws8h6E+kHQzelvNmPr6AClopwi9mTqXJs1TOA8=
+github.com/instana/go-sensor/instrumentation/instagorm v1.35.0-fedramp h1:mL3mdtXy0ZXAWXbC9tjQiB0YZQCSv/S0Orr4h55qN+A=
+github.com/instana/go-sensor/instrumentation/instagorm v1.35.0-fedramp/go.mod h1:zLpodMfO8LE+cAp04GA4tjeGViKWfWwoc0O7Rz0oLNw=
+github.com/instana/go-sensor/instrumentation/instalogrus v1.36.0-fedramp h1:wRTxDrp3F+5DzNAChCZDcOwGu5+MhpGtV0GKs9aqrng=
+github.com/instana/go-sensor/instrumentation/instalogrus v1.36.0-fedramp/go.mod h1:a93FT1xIU9q+oeAZdoCzVrfbZyScNq+3khdPula6eL0=
 github.com/jinzhu/inflection v1.0.0 h1:K317FqzuhWc8YvSVlFMCCUb36O/S9MCKRDI7QkRKD/E=
 github.com/jinzhu/inflection v1.0.0/go.mod h1:h+uFLlag+Qp1Va5pdKtLDYj+kHp5pxUVkryuEj+Srlc=
 github.com/jinzhu/now v1.1.5 h1:/o9tlHleP7gOFmsnYNz3RGnqzefHA47wQpKrrdTIwXQ=
