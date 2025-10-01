@@ -4,7 +4,7 @@ go 1.23.0
 
 require (
 	github.com/bonede/go-redis-driver v0.1.0
-	github.com/instana/go-sensor v1.68.0
+	github.com/instana/go-sensor v1.71.1-fedramp
 )
 
 require (
@@ -15,6 +15,7 @@ require (
 	github.com/looplab/fsm v1.0.3 // indirect
 	github.com/opentracing/opentracing-go v1.2.0 // indirect
 	github.com/redis/go-redis/v9 v9.11.0 // indirect
+	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
 replace github.com/instana/go-sensor => ../../

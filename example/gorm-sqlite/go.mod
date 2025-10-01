@@ -3,10 +3,10 @@ module github.com/instana/go-sensor/gorm-sqlite
 go 1.23.0
 
 require (
-	github.com/instana/go-sensor v1.68.0
-	github.com/instana/go-sensor/instrumentation/instagorm v1.29.0
+	github.com/instana/go-sensor v1.71.1-fedramp
+	github.com/instana/go-sensor/instrumentation/instagorm v1.35.0-fedramp
 	gorm.io/driver/sqlite v1.6.0
-	gorm.io/gorm v1.30.0
+	gorm.io/gorm v1.31.0
 )
 
 require (
@@ -18,6 +18,7 @@ require (
 	github.com/mattn/go-sqlite3 v1.14.28 // indirect
 	github.com/opentracing/opentracing-go v1.2.0 // indirect
 	golang.org/x/text v0.27.0 // indirect
+	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
 replace (

@@ -5,9 +5,9 @@ go 1.23.0
 replace github.com/instana/go-sensor => ../../../go-sensor
 
 require (
-	github.com/instana/go-sensor v1.70.0
-	github.com/instana/go-sensor/instrumentation/instagorm v1.32.0
-	github.com/instana/go-sensor/instrumentation/instalogrus v1.34.0
+	github.com/instana/go-sensor v1.71.1-fedramp
+	github.com/instana/go-sensor/instrumentation/instagorm v1.35.0-fedramp
+	github.com/instana/go-sensor/instrumentation/instalogrus v1.36.0-fedramp
 	github.com/sirupsen/logrus v1.9.3
 	gorm.io/driver/sqlite v1.6.0
 	gorm.io/gorm v1.31.0
@@ -21,7 +21,6 @@ require (
 	github.com/looplab/fsm v1.0.3 // indirect
 	github.com/mattn/go-sqlite3 v1.14.28 // indirect
 	github.com/opentracing/opentracing-go v1.2.0 // indirect
-	github.com/stretchr/testify v1.10.0 // indirect
 	golang.org/x/sys v0.34.0 // indirect
 	golang.org/x/text v0.27.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
