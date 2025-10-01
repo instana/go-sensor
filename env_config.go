@@ -6,10 +6,17 @@ package instana
 import (
 	"errors"
 	"fmt"
+	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
+
+	"gopkg.in/yaml.v3"
 )
+
+// MaxEnvValueSize is the maximum size of the value of an environment variable.
+const MaxEnvValueSize = 32 * 1024
 
 // parseInstanaTags parses the tags string passed via INSTANA_TAGS.
 // The tag string is a comma-separated list of keys optionally followed by an '=' character and a string value:
@@ -106,4 +113,141 @@ func parseInstanaTimeout(s string) (time.Duration, error) {
 	}
 
 	return time.Duration(ms) * time.Millisecond, nil
+}
+
+// parseInstanaTracingDisable processes the INSTANA_TRACING_DISABLE environment variable value
+// and updates the TracerOptions.Disable map accordingly.
+//
+// When a list of category or type names is specified, those will be disabled.
+//
+// Example:
+// INSTANA_TRACING_DISABLE="logging" - disables logging category
+func parseInstanaTracingDisable(value string, opts *TracerOptions) {
+	// Initialize the Disable map if it doesn't exist
+	if opts.DisableSpans == nil {
+		opts.DisableSpans = make(map[string]bool)
+	}
+
+	// Trim spaces from the value
+	value = strings.TrimSpace(value)
+
+	// if it's not a boolean value, process as a comma-separated list and disable each category.
+	items := strings.Split(value, ",")
+	for _, item := range items {
+		item = strings.TrimSpace(item)
+		if item != "" {
+			opts.DisableSpans[item] = true
+		}
+	}
+}
+
+// parseConfigFile reads and parses the YAML configuration file at the given path
+// and updates the TracerOptions accordingly.
+//
+// The YAML file must follow this format:
+// tracing:
+//   disable:
+//     - logging: true
+
+func parseConfigFile(path string, opts *TracerOptions) error {
+	// Validate the file path and security considerations
+	absPath, err := validateFile(path)
+	if err != nil {
+		return fmt.Errorf("config file validation failed for %s: %w", path, err)
+	}
+
+	// Read the file with proper error handling
+	data, err := os.ReadFile(absPath)
+	if err != nil {
+		return fmt.Errorf("failed to read config file: %w", err)
+	}
+
+	type Config struct {
+		Tracing struct {
+			Disable []map[string]bool `yaml:"disable"`
+		} `yaml:"tracing"`
+	}
+
+	var config Config
+	if err := yaml.Unmarshal(data, &config); err != nil {
+		return fmt.Errorf("failed to parse YAML: %w", err)
+	}
+
+	if opts.DisableSpans == nil {
+		opts.DisableSpans = make(map[string]bool)
+	}
+
+	// Add the categories configured in the YAML file to the Disable map
+	for _, disableMap := range config.Tracing.Disable {
+		for category, enabled := range disableMap {
+			if enabled {
+				opts.DisableSpans[category] = true
+			}
+		}
+
+	}
+
+	return nil
+}
+
+// validateFile ensures the given config file path is safe and usable.
+// Security considerations:
+// - Resolves symlinks to prevent symlink attacks
+// - Ensures the path exists and is a regular file
+// - Enforces a reasonable file size limit to avoid DoS
+// - Warns if file permissions are too permissive (world-readable)
+func validateFile(path string) (absPath string, err error) {
+	// Resolve symlinks to avoid symlink attacks
+	realPath, err := filepath.EvalSymlinks(path)
+	if err != nil {
+		return absPath, fmt.Errorf("failed to resolve config file path: %w", err)
+	}
+
+	// Get absolute normalized path
+	absPath, err = filepath.Abs(realPath)
+	if err != nil {
+		return absPath, fmt.Errorf("failed to get absolute path: %w", err)
+	}
+
+	// Check if the path exists and is a regular file
+	fileInfo, err := os.Stat(absPath)
+	if err != nil {
+		return absPath, fmt.Errorf("failed to access config file: %w", err)
+	}
+
+	// Ensure it's a regular file, not a directory or special file
+	if !fileInfo.Mode().IsRegular() {
+		return absPath, fmt.Errorf("config path is not a regular file: %s", absPath)
+	}
+
+	// Enforce a maximum file size
+	const maxFileSize = 1 * 1024 * 1024 // 1MB
+	if fileInfo.Size() > maxFileSize {
+		return absPath, fmt.Errorf("config file too large: %d bytes (max allowed: %d bytes)",
+			fileInfo.Size(), maxFileSize)
+	}
+
+	// Warn if the file is world-readable (optional hardening)
+	if fileInfo.Mode().Perm()&0004 != 0 {
+		defaultLogger.Warn("config file is world-readable, consider restricting permissions: ", absPath)
+	}
+
+	return absPath, nil
+}
+
+// LookupValidatedEnv retrieves the value of the environment variable named by key.
+// It validates if env value exceeds the configured MaxEnvValueSize limit.
+// On success, it returns the variable's value.
+func lookupValidatedEnv(key string) (string, bool) {
+	envVal, ok := os.LookupEnv(key)
+	if !ok {
+		return "", false
+	}
+
+	if len(envVal) > MaxEnvValueSize {
+		defaultLogger.Error(fmt.Errorf("value of %q exceeds safe limit (%d bytes)", key, MaxEnvValueSize))
+		return "", false
+	}
+
+	return envVal, true
 }

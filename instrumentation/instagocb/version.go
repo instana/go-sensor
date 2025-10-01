@@ -3,4 +3,4 @@
 package instagocb
 
 // Version is the instrumentation module semantic version
-const Version = "1.26.1"
+const Version = "1.28.0"

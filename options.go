@@ -116,5 +116,15 @@ func (opts *Options) setDefaults() {
 		opts.Tracer.CollectableHTTPHeaders = parseInstanaExtraHTTPHeaders(collectableHeaders)
 	}
 
+	// Check if INSTANA_CONFIG_PATH environment variable is set
+	if configPath, ok := lookupValidatedEnv("INSTANA_CONFIG_PATH"); ok {
+		if err := parseConfigFile(configPath, &opts.Tracer); err != nil {
+			defaultLogger.Warn("invalid INSTANA_CONFIG_PATH= env variable value: ", err, ", ignoring")
+		}
+		// else check if INSTANA_TRACING_DISABLE environment variable is set
+	} else if tracingDisable, ok := lookupValidatedEnv("INSTANA_TRACING_DISABLE"); ok {
+		parseInstanaTracingDisable(tracingDisable, &opts.Tracer)
+	}
+
 	opts.disableW3CTraceCorrelation = os.Getenv("INSTANA_DISABLE_W3C_TRACE_CORRELATION") != ""
 }

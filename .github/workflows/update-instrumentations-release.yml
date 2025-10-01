@@ -5,10 +5,10 @@ name: Release all updated instrumentations - Public
 
 on:
   pull_request:
-    branches:
-    - main
-    types:
-      - closed
+   branches:
+   - main
+   types:
+     - closed
 
 jobs:
   release_instrumentations:
@@ -25,7 +25,6 @@ jobs:
     - name: Release all packages
       id: release-packages
       run: |
-        set -euo pipefail
         
         CORE_TAG=$(git tag -l "v1.*" | grep -E "v[0-9]+\.[0-9]+\.[0-9]+$" | sort -V | tail -n1)
 
