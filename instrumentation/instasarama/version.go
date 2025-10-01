@@ -6,4 +6,4 @@
 package instasarama
 
 // Version is the instrumentation module semantic version
-const Version = "1.44.1"
+const Version = "1.46.0"

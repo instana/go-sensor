@@ -4,18 +4,17 @@
 name: Release all updated instrumentations - Public
 
 on:
-  workflow_dispatch:
-  #pull_request:
-  #  branches:
-  #  - main
-  #  types:
-  #    - closed
+  pull_request:
+   branches:
+   - main
+   types:
+     - closed
 
 jobs:
   release_instrumentations:
     name: Release all instrumentations
     runs-on: ubuntu-latest
-    #if: github.event.pull_request.merged == true && startsWith(github.event.pull_request.head.ref, 'update-instrumentations-core')
+    if: github.event.pull_request.merged == true && startsWith(github.event.pull_request.head.ref, 'update-instrumentations-core')
     steps:
     - uses: actions/checkout@v3
       name: Checkout repo
@@ -26,8 +25,6 @@ jobs:
     - name: Release all packages
       id: release-packages
       run: |
-        // TODO : investigate and fix
-        #set -euo pipefail
         
         CORE_TAG=$(git tag -l "v1.*" | grep -E "v[0-9]+\.[0-9]+\.[0-9]+$" | sort -V | tail -n1)
 
