@@ -5,7 +5,7 @@ go 1.23.12
 require github.com/couchbase/gocb/v2 v2.11.1
 
 require (
-	github.com/instana/go-sensor v1.71.0
+	github.com/instana/go-sensor v1.71.1
 	github.com/instana/go-sensor/instrumentation/instagocb v1.23.0
 )
 
@@ -23,7 +23,6 @@ require (
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0 // indirect
 	github.com/looplab/fsm v1.0.3 // indirect
 	github.com/opentracing/opentracing-go v1.2.0 // indirect
-	github.com/stretchr/testify v1.10.0 // indirect
 	go.opentelemetry.io/auto/sdk v1.1.0 // indirect
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.62.0 // indirect
 	go.opentelemetry.io/otel v1.37.0 // indirect
