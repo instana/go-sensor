@@ -256,6 +256,9 @@ func StartMetrics(options *Options) {
 
 // Ready returns whether the Instana collector is ready to collect and send data to the agent
 func Ready() bool {
+	muSensor.Lock()
+	defer muSensor.Unlock()
+
 	if sensor == nil {
 		return false
 	}
@@ -267,6 +270,9 @@ func Ready() bool {
 // graceful service shutdown and not recommended for intermittent use. Once Flush() is called, it's not guaranteed
 // that collector remains in operational state.
 func Flush(ctx context.Context) error {
+	muSensor.Lock()
+	defer muSensor.Unlock()
+
 	if sensor == nil {
 		return nil
 	}
