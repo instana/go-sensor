@@ -86,7 +86,12 @@ func (r *spanS) FinishWithOptions(opts ot.FinishOptions) {
 
 	r.Duration = duration
 	if r.sendSpanToAgent() {
-		if sensor.Agent().Ready() {
+		// Get agent ready status under proper synchronization
+		muSensor.Lock()
+		agentReady := sensor != nil && sensor.Agent().Ready()
+		muSensor.Unlock()
+
+		if agentReady {
 			r.tracer.recorder.RecordSpan(r)
 		} else {
 			delayed.append(r)

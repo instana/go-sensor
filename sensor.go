@@ -233,13 +233,23 @@ func InitSensor(options *Options) {
 	})
 
 	autoprofile.SetSendProfilesFunc(func(profiles []autoprofile.Profile) error {
-		if !sensor.Agent().Ready() {
+		// Get agent ready status under proper synchronization
+		muSensor.Lock()
+		agentReady := sensor != nil && sensor.Agent().Ready()
+		muSensor.Unlock()
+
+		if !agentReady {
 			return errors.New("sender not ready")
 		}
 
 		sensor.logger.Debug("sending profiles to agent")
 
-		return sensor.Agent().SendProfiles(profiles)
+		// Use the same lock for sending profiles
+		muSensor.Lock()
+		err := sensor.Agent().SendProfiles(profiles)
+		muSensor.Unlock()
+
+		return err
 	})
 
 	if _, ok := os.LookupEnv("INSTANA_AUTO_PROFILE"); ok || options.EnableAutoProfile {

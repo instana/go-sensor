@@ -72,7 +72,7 @@ func (r *Recorder) RecordSpan(span *spanS) {
 		return
 	}
 
-	agentReady := sensor.Agent().Ready()
+	agentReady := sensor != nil && sensor.Agent().Ready()
 	maxBufferedSpans := sensor.options.MaxBufferedSpans
 	forceTransmissionAt := sensor.options.ForceTransmissionStartingAt
 	logger := sensor.logger
