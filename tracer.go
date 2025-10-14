@@ -135,5 +135,12 @@ func (r *tracerS) Flush(ctx context.Context) error {
 		return err
 	}
 
+	muSensor.Lock()
+	defer muSensor.Unlock()
+
+	if sensor == nil {
+		return nil
+	}
+
 	return sensor.Agent().Flush(ctx)
 }
