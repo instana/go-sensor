@@ -357,7 +357,11 @@ func (r *fsmS) testAgent(_ context.Context, e *f.Event) {
 	r.logger.Debug("testing communication with the agent")
 	go func() {
 		if !r.agentComm.pingAgent() {
-			r.handleRetries(e, r.testAgent, "testAgent: Couldn't announce the sensor after reaching the maximum amount of attempts.", "Agent is not yet ready. Scheduling retry.")
+			r.handleRetries(
+				e,
+				r.testAgent,
+				"testAgent: Couldn't announce the sensor after reaching the maximum amount of attempts.",
+				"Agent is not yet ready. Scheduling retry.")
 			return
 		}
 
