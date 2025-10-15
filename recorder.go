@@ -147,18 +147,31 @@ func (r *Recorder) GetQueuedSpans() []Span {
 
 // Flush sends queued spans to the agent
 func (r *Recorder) Flush(ctx context.Context) error {
-	spansToSend := r.GetQueuedSpans()
-	if len(spansToSend) == 0 {
+	// For test mode, we don't want to actually send spans
+	if r.testMode {
 		return nil
 	}
 
+	// Check if agent is ready before getting and clearing spans
 	muSensor.Lock()
 	if sensor == nil {
 		muSensor.Unlock()
 		return nil
 	}
+
 	agent := sensor.Agent()
+	agentReady := agent.Ready()
 	muSensor.Unlock()
+
+	// If agent is not ready, don't flush spans
+	if !agentReady {
+		return nil
+	}
+
+	spansToSend := r.GetQueuedSpans()
+	if len(spansToSend) == 0 {
+		return nil
+	}
 
 	if err := agent.SendSpans(spansToSend); err != nil {
 		r.Lock()
