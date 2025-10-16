@@ -83,7 +83,7 @@ type sensorS struct {
 
 var (
 	sensor           *sensorS
-	muSensor         sync.Mutex
+	muSensor         sync.RWMutex
 	binaryName       = filepath.Base(os.Args[0])
 	processStartedAt = time.Now()
 	c                TracerLogger
@@ -284,6 +284,13 @@ func ShutdownSensor() {
 	if sensor != nil {
 		sensor = nil
 	}
+}
+
+func isAgentReady() bool {
+	muSensor.RLock()
+	defer muSensor.RUnlock()
+
+	return sensor.Agent().Ready()
 }
 
 // ShutdownCollector cleans up the collector and sensor reference.

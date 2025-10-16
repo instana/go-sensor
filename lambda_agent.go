@@ -28,7 +28,7 @@ type lambdaAgent struct {
 
 	snapshot serverlessSnapshot
 
-	mu        sync.Mutex
+	mu        sync.RWMutex
 	spanQueue []Span
 
 	client *http.Client
@@ -144,7 +144,11 @@ func (a *lambdaAgent) enqueueSpans(spans []Span) {
 }
 
 func (a *lambdaAgent) sendRequest(req *http.Request) error {
-	req.Header.Set("X-Instana-Host", a.snapshot.Host)
+	a.mu.RLock()
+	host := a.snapshot.Host
+	a.mu.RUnlock()
+
+	req.Header.Set("X-Instana-Host", host)
 	req.Header.Set("X-Instana-Key", a.Key)
 	req.Header.Set("X-Instana-Time", strconv.FormatInt(time.Now().UnixNano()/int64(time.Millisecond), 10))
 
@@ -172,7 +176,11 @@ func (a *lambdaAgent) sendRequest(req *http.Request) error {
 }
 
 func (a *lambdaAgent) collectSnapshot(spans []Span) serverlessSnapshot {
-	if a.snapshot.EntityID != "" {
+	a.mu.RLock()
+	entityID := a.snapshot.EntityID
+	a.mu.RUnlock()
+
+	if entityID != "" {
 		return a.snapshot
 	}
 
@@ -184,10 +192,12 @@ func (a *lambdaAgent) collectSnapshot(spans []Span) serverlessSnapshot {
 			continue
 		}
 
+		a.mu.Lock()
 		a.snapshot = serverlessSnapshot{
 			EntityID: sp.Snapshot.ARN,
 			Host:     sp.Snapshot.ARN,
 		}
+		a.mu.Unlock()
 		a.logger.Debug("collected snapshot")
 
 		break

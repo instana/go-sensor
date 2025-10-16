@@ -43,7 +43,7 @@ func (m *meterS) Run(collectInterval time.Duration) {
 		case <-m.done:
 			return
 		case <-ticker.C:
-			if sensor.Agent().Ready() {
+			if isAgentReady() {
 				go func() {
 					_ = sensor.Agent().SendMetrics(m.collectMetrics())
 				}()
