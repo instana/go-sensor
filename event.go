@@ -80,6 +80,10 @@ func sendEvent(event *EventData) {
 
 	// we do fire & forget here, because the whole pid dance isn't necessary to send events
 	go func() {
-		_ = sensor.Agent().SendEvent(event)
+		muSensor.Lock()
+		if sensor != nil {
+			_ = sensor.Agent().SendEvent(event)
+		}
+		muSensor.Unlock()
 	}()
 }

@@ -43,9 +43,19 @@ func (m *meterS) Run(collectInterval time.Duration) {
 		case <-m.done:
 			return
 		case <-ticker.C:
-			if sensor.Agent().Ready() {
+			// Get agent ready status under proper synchronization
+			muSensor.Lock()
+			agentReady := sensor != nil && sensor.Agent().Ready()
+			muSensor.Unlock()
+
+			if agentReady {
 				go func() {
-					_ = sensor.Agent().SendMetrics(m.collectMetrics())
+					metrics := m.collectMetrics()
+					muSensor.Lock()
+					if sensor != nil {
+						_ = sensor.Agent().SendMetrics(metrics)
+					}
+					muSensor.Unlock()
 				}()
 			}
 		}
