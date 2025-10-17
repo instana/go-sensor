@@ -157,6 +157,15 @@ func newSensor(options *Options) *sensorS {
 	return s
 }
 
+// safeSensor safely returns the global sensor instance for concurrent access.
+// It acquires a read lock and should only be used for read operations.
+// Since the sensor is immutable after initialization, this provides sufficient protection against data races.
+func safeSensor() *sensorS {
+	muSensor.RLock()
+	defer muSensor.RUnlock()
+	return sensor
+}
+
 func (r *sensorS) setLogger(l LeveledLogger) {
 	r.logger = l
 

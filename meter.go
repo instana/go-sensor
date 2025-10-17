@@ -45,7 +45,7 @@ func (m *meterS) Run(collectInterval time.Duration) {
 		case <-ticker.C:
 			if isAgentReady() {
 				go func() {
-					_ = sensor.Agent().SendMetrics(m.collectMetrics())
+					_ = safeSensor().Agent().SendMetrics(m.collectMetrics())
 				}()
 			}
 		}
