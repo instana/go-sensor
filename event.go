@@ -80,6 +80,6 @@ func sendEvent(event *EventData) {
 
 	// we do fire & forget here, because the whole pid dance isn't necessary to send events
 	go func() {
-		_ = sensor.Agent().SendEvent(event)
+		_ = safeSensor().Agent().SendEvent(event)
 	}()
 }

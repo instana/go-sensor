@@ -9,6 +9,7 @@ import (
 	"os"
 	"strings"
 	"sync"
+	"sync/atomic"
 )
 
 // Valid log levels to be used with (*logger.Logger).SetLevel()
@@ -58,7 +59,7 @@ type Logger struct {
 	p Printer
 
 	mu     sync.Mutex
-	lvl    Level
+	lvl    atomic.Uint32
 	prefix string
 }
 
@@ -124,10 +125,11 @@ func (l *Logger) SetLevel(level Level) {
 		level = DebugLevel
 	}
 
-	l.mu.Lock()
-	defer l.mu.Unlock()
+	l.lvl.Store(uint32(level))
+}
 
-	l.lvl = level
+func (l *Logger) GetLevel() Level {
+	return Level(l.lvl.Load())
 }
 
 // SetPrefix sets the label that will be used as a prefix for each log line
@@ -140,7 +142,7 @@ func (l *Logger) SetPrefix(prefix string) {
 
 // Debug appends a debug message to the log
 func (l *Logger) Debug(v ...interface{}) {
-	if l.lvl < DebugLevel {
+	if l.GetLevel() < DebugLevel {
 		return
 	}
 
@@ -149,7 +151,7 @@ func (l *Logger) Debug(v ...interface{}) {
 
 // Info appends an info message to the log
 func (l *Logger) Info(v ...interface{}) {
-	if l.lvl < InfoLevel {
+	if l.GetLevel() < InfoLevel {
 		return
 	}
 
@@ -158,7 +160,7 @@ func (l *Logger) Info(v ...interface{}) {
 
 // Warn appends a warning message to the log
 func (l *Logger) Warn(v ...interface{}) {
-	if l.lvl < WarnLevel {
+	if l.GetLevel() < WarnLevel {
 		return
 	}
 
@@ -167,7 +169,7 @@ func (l *Logger) Warn(v ...interface{}) {
 
 // Error appends an error message to the log
 func (l *Logger) Error(v ...interface{}) {
-	if l.lvl < ErrorLevel {
+	if l.GetLevel() < ErrorLevel {
 		return
 	}
 

@@ -83,7 +83,7 @@ type sensorS struct {
 
 var (
 	sensor           *sensorS
-	muSensor         sync.Mutex
+	muSensor         sync.RWMutex
 	binaryName       = filepath.Base(os.Args[0])
 	processStartedAt = time.Now()
 	c                TracerLogger
@@ -155,6 +155,15 @@ func newSensor(options *Options) *sensorS {
 	s.meter = newMeter(s.logger)
 
 	return s
+}
+
+// safeSensor safely returns the global sensor instance for concurrent access.
+// It acquires a read lock and should only be used for read operations.
+// Since the sensor is immutable after initialization, this provides sufficient protection against data races.
+func safeSensor() *sensorS {
+	muSensor.RLock()
+	defer muSensor.RUnlock()
+	return sensor
 }
 
 func (r *sensorS) setLogger(l LeveledLogger) {
@@ -284,6 +293,13 @@ func ShutdownSensor() {
 	if sensor != nil {
 		sensor = nil
 	}
+}
+
+func isAgentReady() bool {
+	muSensor.RLock()
+	defer muSensor.RUnlock()
+
+	return sensor.Agent().Ready()
 }
 
 // ShutdownCollector cleans up the collector and sensor reference.
