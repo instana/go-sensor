@@ -56,7 +56,7 @@ func TestPartiallyFlushDelayedSpans(t *testing.T) {
 
 	notReadyAfter := maxDelayedSpans / 10
 	sensor.agent = &eventuallyNotReadyClient{
-		notReadyAfter: uint64(notReadyAfter),
+		notReadyAfter: uint64(notReadyAfter * 2),
 	}
 
 	delayed.flush()

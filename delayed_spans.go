@@ -33,16 +33,29 @@ func (ds *delayedSpans) flush() {
 		case s := <-ds.spans:
 			t, ok := s.Tracer().(Tracer)
 			if !ok {
-				sensor.logger.Debug("span tracer has unexpected type")
+				muSensor.Lock()
+				if sensor != nil {
+					sensor.logger.Debug("span tracer has unexpected type")
+				}
+				muSensor.Unlock()
 				continue
 			}
 
 			if err := ds.processSpan(s, t.Options()); err != nil {
-				sensor.logger.Debug("error while processing spans:", err.Error())
+				muSensor.Lock()
+				if sensor != nil {
+					sensor.logger.Debug("error while processing spans:", err.Error())
+				}
+				muSensor.Unlock()
 				continue
 			}
 
-			if sensor.Agent().Ready() {
+			// Get agent ready status under proper synchronization
+			muSensor.Lock()
+			agentReady := sensor != nil && sensor.Agent().Ready()
+			muSensor.Unlock()
+
+			if agentReady {
 				s.tracer.recorder.RecordSpan(s)
 			} else {
 				ds.append(s)
