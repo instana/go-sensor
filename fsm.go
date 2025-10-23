@@ -12,6 +12,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"strconv"
+	"sync"
 	"time"
 
 	f "github.com/looplab/fsm"
@@ -36,6 +37,7 @@ type fsmS struct {
 	expDelayFunc               func(retryNumber int) time.Duration
 	lookupAgentHostRetryPeriod time.Duration
 	logger                     LeveledLogger
+	mu                         sync.Mutex
 }
 
 func newHostAgentFromS(pid int, hostID string) *fromS {
@@ -180,6 +182,9 @@ func (r *fsmS) checkHost(e *f.Event) {
 func (r *fsmS) lookupSuccess(host string) {
 	r.logger.Debug("agent lookup success ", host)
 
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
 	r.agentComm.host = host
 	r.retriesLeft = maximumRetries
 	if err := r.fsm.Event(context.Background(), eLookup); err != nil {
@@ -188,8 +193,12 @@ func (r *fsmS) lookupSuccess(host string) {
 }
 
 func (r *fsmS) handleRetries(e *f.Event, cb func(_ context.Context, e *f.Event), retryFailMsg, retryMsg string) {
+	r.mu.Lock()
 	r.retriesLeft--
-	if r.retriesLeft == 0 {
+	retriesLeft := r.retriesLeft
+	r.mu.Unlock()
+
+	if retriesLeft == 0 {
 		r.logger.Error(retryFailMsg)
 		if err := r.fsm.Event(context.Background(), eInit); err != nil {
 			r.logger.Warn("failed to initiate the state transition: ", err.Error())
@@ -198,7 +207,7 @@ func (r *fsmS) handleRetries(e *f.Event, cb func(_ context.Context, e *f.Event),
 	}
 
 	r.logger.Debug(retryMsg)
-	retryNumber := maximumRetries - r.retriesLeft + 1
+	retryNumber := maximumRetries - retriesLeft + 1
 	r.scheduleRetryWithExponentialDelay(e, cb, retryNumber)
 }
 
@@ -296,6 +305,9 @@ func (r *fsmS) announceSensor(_ context.Context, e *f.Event) {
 
 		r.applyHostAgentSettings(*resp)
 
+		r.mu.Lock()
+		defer r.mu.Unlock()
+
 		r.retriesLeft = maximumRetries
 		if err := r.fsm.Event(context.Background(), eAnnounce); err != nil {
 			r.logger.Warn("failed to initiate the state transition: ", err.Error())
@@ -356,7 +368,13 @@ func (r *fsmS) getDiscoveryS() *discoveryS {
 func (r *fsmS) testAgent(_ context.Context, e *f.Event) {
 	r.logger.Debug("testing communication with the agent")
 	go func() {
-		if !r.agentComm.pingAgent() {
+		// Ping agent without holding lock to avoid blocking
+		pingSuccess := r.agentComm.pingAgent()
+
+		r.mu.Lock()
+		defer r.mu.Unlock()
+
+		if !pingSuccess {
 			r.handleRetries(
 				e,
 				r.testAgent,
@@ -374,6 +392,10 @@ func (r *fsmS) testAgent(_ context.Context, e *f.Event) {
 
 func (r *fsmS) reset() {
 	r.logger.Debug("State machine reset. Will restart agent connection cycle from the 'init' state")
+
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
 	r.retriesLeft = maximumRetries
 	if err := r.fsm.Event(context.Background(), eInit); err != nil {
 		r.logger.Warn("failed to initiate the state transition: ", err.Error())
