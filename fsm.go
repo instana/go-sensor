@@ -371,9 +371,6 @@ func (r *fsmS) testAgent(_ context.Context, e *f.Event) {
 		// Ping agent without holding lock to avoid blocking
 		pingSuccess := r.agentComm.pingAgent()
 
-		r.mu.Lock()
-		defer r.mu.Unlock()
-
 		if !pingSuccess {
 			r.handleRetries(
 				e,
@@ -383,7 +380,10 @@ func (r *fsmS) testAgent(_ context.Context, e *f.Event) {
 			return
 		}
 
+		r.mu.Lock()
 		r.retriesLeft = maximumRetries
+		r.mu.Unlock()
+
 		if err := r.fsm.Event(context.Background(), eTest); err != nil {
 			r.logger.Warn("failed to initiate the state transition: ", err.Error())
 		}

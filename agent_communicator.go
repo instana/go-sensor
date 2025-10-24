@@ -30,8 +30,21 @@ type agentCommunicator struct {
 	l LeveledLogger
 }
 
+// newAgentCommunicatior creates a new instance of agentCommunicator
+func newAgentCommunicator(host, port string, from *fromS, logger LeveledLogger) *agentCommunicator {
+	return &agentCommunicator{
+		host: host,
+		port: port,
+		from: from,
+		client: &http.Client{
+			Timeout: announceTimeout,
+		},
+		l: logger,
+	}
+}
+
 // buildURL builds an Agent URL based on the sufix for the different Agent services.
-func (a *agentCommunicator) buildURL(sufix string) string {
+func (a agentCommunicator) buildURL(sufix string) string {
 	url := "http://" + a.host + ":" + a.port + sufix
 
 	if sufix[len(sufix)-1:] == "." && a.from.EntityID != "" {
@@ -42,7 +55,7 @@ func (a *agentCommunicator) buildURL(sufix string) string {
 }
 
 // checkForSuccessResponse checks for a successful GET operation with the agent host
-func (a *agentCommunicator) checkForSuccessResponse() bool {
+func (a agentCommunicator) checkForSuccessResponse() bool {
 	url := a.buildURL("/")
 
 	req, err := http.NewRequest(http.MethodGet, url, nil)
@@ -73,7 +86,7 @@ func (a *agentCommunicator) checkForSuccessResponse() bool {
 }
 
 // agentResponse attempts to retrieve the agent response containing its configuration
-func (a *agentCommunicator) agentResponse(d *discoveryS) *agentResponse {
+func (a agentCommunicator) agentResponse(d *discoveryS) *agentResponse {
 	jsonData, _ := json.Marshal(d)
 
 	var resp agentResponse
@@ -124,7 +137,7 @@ func (a *agentCommunicator) agentResponse(d *discoveryS) *agentResponse {
 }
 
 // pingAgent send a HEAD request to the agent and returns true if it receives a response from it
-func (a *agentCommunicator) pingAgent() bool {
+func (a agentCommunicator) pingAgent() bool {
 	u := a.buildURL(agentDataURL)
 	req, err := http.NewRequest(http.MethodHead, u, nil)
 
@@ -156,7 +169,7 @@ func (a *agentCommunicator) pingAgent() bool {
 }
 
 // sendDataToAgent makes a POST to the agent sending some data as payload. eg: spans, events or metrics
-func (a *agentCommunicator) sendDataToAgent(suffix string, data interface{}) error {
+func (a agentCommunicator) sendDataToAgent(suffix string, data interface{}) error {
 	url := a.buildURL(suffix)
 	ctx, cancel := context.WithTimeout(context.Background(), clientTimeout)
 	defer cancel()
@@ -210,16 +223,4 @@ func (a *agentCommunicator) sendDataToAgent(suffix string, data interface{}) err
 	}
 
 	return err
-}
-
-func newAgentCommunicator(host, port string, from *fromS, logger LeveledLogger) *agentCommunicator {
-	return &agentCommunicator{
-		host: host,
-		port: port,
-		from: from,
-		client: &http.Client{
-			Timeout: announceTimeout,
-		},
-		l: logger,
-	}
 }
