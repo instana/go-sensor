@@ -33,7 +33,6 @@ func NewRecorder() *Recorder {
 	r := &Recorder{}
 
 	// Create a reference to r that will be captured by the goroutine
-	recorder := r
 
 	go func() {
 		ticker := time.NewTicker(1 * time.Second)
