@@ -50,12 +50,7 @@ func (ds *delayedSpans) flush() {
 				continue
 			}
 
-			// Get agent ready status under proper synchronization
-			muSensor.Lock()
-			agentReady := sensor != nil && sensor.Agent().Ready()
-			muSensor.Unlock()
-
-			if agentReady {
+			if isAgentReady() {
 				s.tracer.recorder.RecordSpan(s)
 			} else {
 				ds.append(s)

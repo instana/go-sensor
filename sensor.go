@@ -233,12 +233,8 @@ func InitSensor(options *Options) {
 	})
 
 	autoprofile.SetSendProfilesFunc(func(profiles []autoprofile.Profile) error {
-		// Get agent ready status under proper synchronization
-		muSensor.Lock()
-		agentReady := sensor != nil && sensor.Agent().Ready()
-		muSensor.Unlock()
 
-		if !agentReady {
+		if !isAgentReady() {
 			return errors.New("sender not ready")
 		}
 
