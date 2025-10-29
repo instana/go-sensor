@@ -1,0 +1,59 @@
+version: '3'
+
+services:
+  mysql:
+    image: public.ecr.aws/docker/library/mysql:8.0.41
+    platform: linux/amd64
+    ports:
+      - 3306:3306
+    environment:
+      MYSQL_ROOT_PASSWORD: gopw
+      MYSQL_DATABASE: godb
+      MYSQL_USER: go
+      MYSQL_PASSWORD: gopw
+      MYSQL_ROOT_HOST: 0.0.0.0
+    networks:
+      - instana-network
+
+  go-sample-app:
+    build: .
+    ports:
+      - 8085:8085
+    depends_on:
+      mysql:
+        condition: service_healthy
+      instana-agent:
+        condition: service_healthy
+    volumes:
+      - /proc:/host/proc:ro
+    environment:
+      - INSTANA_DEBUG=true
+      - INSTANA_AGENT_HOST=instana-agent
+      - INSTANA_LOG_LEVEL=debug
+    networks:
+      - instana-network
+
+
+  instana-agent:
+    image: icr.io/instana/agent
+    ports:
+      - "42699:42699"
+      - "8443:443"
+    volumes:
+      - /var/run:/var/run
+      - /run:/run
+      - /dev:/dev:ro
+      - /sys:/sys:ro
+      - /var/log:/var/log:ro
+    environment:
+      - INSTANA_AGENT_ENDPOINT=****
+      - INSTANA_AGENT_ENDPOINT_PORT=443
+      - INSTANA_AGENT_KEY=****
+      - INSTANA_DOWNLOAD_KEY=****
+      - INSTANA_AGENT_ZONE=
+    networks:
+      - instana-network
+
+networks:
+  instana-network:
+    driver: bridge
