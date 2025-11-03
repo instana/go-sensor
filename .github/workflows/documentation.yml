@@ -14,4 +14,4 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Pull new module version
-      uses: andrewslotin/go-proxy-pull-action@v1.0.3
+      uses: andrewslotin/go-proxy-pull-action@0ef95ea50ab6c03f2f095a5102bbdecad8fd7602 #v1.3.0
