@@ -5,7 +5,7 @@ COPY go.mod go.sum ./
 RUN go mod download
 
 COPY . .
-RUN go build -o myapp .
+RUN CGO_ENABLED=0 GOOS=linux go build -o myapp .
 
 FROM public.ecr.aws/docker/library/alpine:3.21.2 AS runner
 WORKDIR /app
