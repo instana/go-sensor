@@ -59,11 +59,6 @@ docker compose up --build
 curl http://localhost:8085/gin-test
 ```
 
-**Expected Response:**
-```json
-{"message":" Current date is2025-11-04 - hello"}
-```
-
 ## Configuration
 
 ### MySQL Credentials

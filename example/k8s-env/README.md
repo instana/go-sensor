@@ -15,6 +15,29 @@ This example demonstrates running a Go application with MySQL database in Kubern
 - Docker or Podman
 - Go 1.24+ (optional, for local development)
 
+## Configuration
+
+### Instana Agent
+
+Before deploying, you need to get the Instana agent configuration from your Instana UI:
+
+1. Log in to your Instana account
+2. Navigate to: **Settings** → **Agents** → **Installing Instana Agents**
+3. Select **Kubernetes** as the platform
+4. Copy the generated YAML configuration
+5. Replace the content of [`instana-agent.yaml`](instana-agent.yaml) with the copied configuration
+
+> **Important**: The `instana-agent.yaml` file in this repository is just a placeholder. You must replace it with the actual configuration from your Instana UI before deploying.
+
+### MySQL Credentials
+
+Default credentials (defined in [`mysql.yaml`](mysql.yaml:8)):
+- **User**: `go`
+- **Password**: `gopw`
+- **Database**: `godb`
+
+To change, update the Secret and connection string in [`main.go`](main.go:34).
+
 ## Quick Start
 
 ### 1. Build the Application Image
@@ -63,7 +86,7 @@ minikube image ls | grep mysql-service-app
 # Deploy MySQL
 kubectl apply -f mysql.yaml
 
-# Deploy Instana Agent (update agent key in instana-agent.yaml first)
+# Deploy Instana Agent (ensure you've configured it as described above)
 kubectl apply -f instana-agent.yaml
 
 # Deploy Application
@@ -90,31 +113,7 @@ curl http://localhost:30085/gin-test
 exit
 ```
 
-**Expected Response:**
-```json
-{"message":" Current date is2025-10-31 - hello"}
-```
-
 > **Note**: Direct access via NodePort (`minikube ip`) or `minikube tunnel` may not work if minikube is running in an isolated network. Use port-forward or SSH into minikube instead.
-
-## Configuration
-
-### Instana Agent
-
-Update the agent key in [`instana-agent.yaml`](instana-agent.yaml:99):
-```yaml
-data:
-  key: <your-base64-encoded-agent-key>
-```
-
-### MySQL Credentials
-
-Default credentials (defined in [`mysql.yaml`](mysql.yaml:8)):
-- **User**: `go`
-- **Password**: `gopw`
-- **Database**: `godb`
-
-To change, update the Secret and connection string in [`main.go`](main.go:34).
 
 ## Monitoring
 
@@ -122,11 +121,6 @@ The application is instrumented with Instana. View metrics in your Instana dashb
 1. Log in to Instana
 2. Navigate to Applications → `mysql-service`
 3. View traces, metrics, and infrastructure data
-
-
-### Podman-Specific Issues
-
-**"podman-env only compatible with crio runtime"**: Your minikube uses Docker runtime. Use the tarball method instead of `minikube podman-env`.
 
 ## Cleanup
 
