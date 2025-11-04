@@ -563,7 +563,7 @@ func parseDB2ConnDetailsKV(connStr string) (DbConnDetails, bool) {
 	return details, true
 }
 
-var mySQLGoDriverRe = regexp.MustCompile(`^(.*):(.*)@((.*)\((.*):([0-9]+)\))?\/(.*)$`)
+var mySQLGoDriverRe = regexp.MustCompile(`^(.*):(.*)@((.*)\((.*?)(?::([0-9]+))?\))?\/(.*)$`)
 
 // parseMySQLGoSQLDriver parses the connection string from https://github.com/go-sql-driver/mysql
 // Format: user:password@protocol(host:port)/databasename
@@ -593,6 +593,13 @@ func parseMySQLGoSQLDriver(connStr string) (DbConnDetails, bool) {
 		host = "localhost"
 	}
 
+	schema := values[7]
+
+	// To remove params if any are present
+	if i := strings.Index(schema, "?"); i != -1 {
+		schema = schema[:i]
+	}
+
 	if port == "" {
 		port = "3306"
 	}
@@ -602,7 +609,7 @@ func parseMySQLGoSQLDriver(connStr string) (DbConnDetails, bool) {
 		User:         values[1],
 		Host:         host,
 		Port:         port,
-		Schema:       values[7],
+		Schema:       schema,
 		DatabaseName: "mysql",
 	}
 
