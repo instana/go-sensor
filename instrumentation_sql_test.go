@@ -653,6 +653,39 @@ func TestDSNParing(t *testing.T) {
 				DatabaseName: "mysql",
 			},
 		},
+		"MySQL DSN": {
+			DSN: "go:gopw@tcp(localhost:3306)/godb",
+			ExpectedConfig: instana.DbConnDetails{
+				RawString:    "go:gopw@tcp(localhost:3306)/godb",
+				Host:         "localhost",
+				Port:         "3306",
+				Schema:       "godb",
+				User:         "go",
+				DatabaseName: "mysql",
+			},
+		},
+		"MySQL DSN - without port": {
+			DSN: "go:gopw@tcp(localhost)/godb",
+			ExpectedConfig: instana.DbConnDetails{
+				RawString:    "go:gopw@tcp(localhost)/godb",
+				Host:         "localhost",
+				Port:         "3306",
+				Schema:       "godb",
+				User:         "go",
+				DatabaseName: "mysql",
+			},
+		},
+		"MySQL DSN - with params": {
+			DSN: "go:gopw@tcp(localhost:3306)/godb?parseTime=true",
+			ExpectedConfig: instana.DbConnDetails{
+				RawString:    "go:gopw@tcp(localhost:3306)/godb?parseTime=true",
+				Host:         "localhost",
+				Port:         "3306",
+				Schema:       "godb",
+				User:         "go",
+				DatabaseName: "mysql",
+			},
+		},
 		"Redis_full_conn_string": {
 			DSN: "user:p455w0rd@127.0.0.15:3679",
 			ExpectedConfig: instana.DbConnDetails{
