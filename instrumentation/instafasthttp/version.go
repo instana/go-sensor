@@ -3,4 +3,4 @@
 package instafasthttp
 
 // Version is the instrumentation module semantic version
-const Version = "0.27.0"
+const Version = "0.28.0"

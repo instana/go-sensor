@@ -3,4 +3,4 @@
 package instapgx
 
 // Version is the instrumentation module semantic version
-const Version = "2.21.0"
+const Version = "2.22.0"
