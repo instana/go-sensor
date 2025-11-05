@@ -33,6 +33,7 @@ spec:
         # Enable Instana monitoring
         instana.io/service-name: "mysql-service"
     spec:
+      automountServiceAccountToken: false
       containers:
       - name: mysql-service-app
         image: localhost/mysql-service-app:latest
