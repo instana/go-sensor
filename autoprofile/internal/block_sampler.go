@@ -158,7 +158,7 @@ func (bs *BlockSampler) getValueChange(key string, delay float64, contentions in
 func (bs *BlockSampler) collectProfile() (*profile.Profile, error) {
 	buf := bytes.NewBuffer(nil)
 
-	//This is part of the internal working of the profiling mechanism.
+	// This is part of the internal working of the profiling mechanism.
 	// Since this is an APM tool, profiling data is required even in production -
 	// to collect performance insights.
 	// SonarCloud was incorrectly flagging this as a debug feature,
