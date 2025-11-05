@@ -1,0 +1,34 @@
+services:
+  mysql:
+    image: public.ecr.aws/docker/library/mysql:8.0.41
+    platform: linux/amd64
+    ports:
+      - 3306:3306
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-proot"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    environment:
+      MYSQL_ROOT_PASSWORD: gopw
+      MYSQL_DATABASE: godb
+      MYSQL_USER: go
+      MYSQL_PASSWORD: gopw
+      MYSQL_ROOT_HOST: 0.0.0.0
+
+  go-sample-app:
+    build: .
+    ports:
+      - 8085:8085
+    depends_on:
+      mysql:
+        condition: service_healthy
+    volumes:
+      - /proc:/host/proc:ro
+    environment:
+      - INSTANA_DEBUG=true
+      - INSTANA_AGENT_HOST=host.docker.internal
+      - INSTANA_LOG_LEVEL=debug
+    extra_hosts:
+      - "host.docker.internal:host-gateway"

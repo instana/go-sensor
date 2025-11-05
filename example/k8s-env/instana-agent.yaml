@@ -1,0 +1,12 @@
+# Instana Agent Configuration
+
+# To deploy the Instana agent, copy and paste the YAML configuration from your Instana UI:
+
+# 1. Log in to your Instana account
+# 2. Navigate to: **Settings** → **Agents** → **Installing Instana Agents**
+# 3. Select **Kubernetes** as the platform
+# 4. Copy the generated YAML configuration
+# 5. Replace this file's content with the copied configuration
+# 6. Deploy using: `kubectl apply -f instana-agent.yaml`
+
+# For more information, visit: https://www.ibm.com/docs/en/instana-observability/current?topic=agents-installing-kubernetes

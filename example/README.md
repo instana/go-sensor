@@ -25,6 +25,8 @@ This folder contains examples of instrumenting the common use-cases with `github
 * [fasthttp-example](./basic_usage_fasthttp) - an example of instrumenting `fasthttp` using `go-sensor` SDK.
 * [mongo-driver-v2](./mongo-driver-v2) - an example of instrumenting `mongo-driver v2 library` using `go-sensor` SDK.
 * [http_secret_matcher](./http_secret_matcher) - an example showing how to set up secret matchers using the Instana Go tracer(`go-sensor`) SDK.
+* [docker-env](./docker-env) - an example showing how to set up secret matchers using the Instana Go tracer(`go-sensor`) SDK.
+* [k8s-env](./k8s-env) - Demonstrates running a Go application with MySQL database in Kubernetes, monitored by Instana Go tracer(`go-sensor`) SDK.
 
 For more up-to-date instrumentation code examples please consult the respective package documentation page:
 
