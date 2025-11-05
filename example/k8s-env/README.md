@@ -13,7 +13,7 @@ This example demonstrates running a Go application with MySQL database in Kubern
 - Kubernetes cluster (minikube, kind, or cloud provider)
 - kubectl CLI
 - Docker or Podman
-- Go 1.24+ (optional, for local development)
+- Go 1.23+ (optional, for local development)
 
 ## Configuration
 
