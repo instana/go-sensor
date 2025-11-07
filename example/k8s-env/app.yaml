@@ -1,0 +1,79 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-service-app
+  labels:
+    app: mysql-service-app
+spec:
+  ports:
+  - port: 8085
+    targetPort: 8085
+    protocol: TCP
+    name: http
+  selector:
+    app: mysql-service-app
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mysql-service-app
+  labels:
+    app: mysql-service-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mysql-service-app
+  template:
+    metadata:
+      labels:
+        app: mysql-service-app
+      annotations:
+        # Enable Instana monitoring
+        instana.io/service-name: "mysql-service"
+    spec:
+      automountServiceAccountToken: false
+      containers:
+      - name: mysql-service-app
+        image: localhost/mysql-service-app:latest
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 8085
+          name: http
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "200m"
+        env:
+        - name: INSTANA_SERVICE_NAME
+          value: "mysql-service"
+        - name: INSTANA_AGENT_HOST
+          valueFrom:
+            fieldRef:
+              fieldPath: status.hostIP
+        - name: INSTANA_AGENT_PORT
+          value: "42699"
+        - name: INSTANA_DEBUG
+          value: "true"
+---
+# Create a NodePort service to expose the application externally
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-service-app-external
+  labels:
+    app: mysql-service-app
+spec:
+  ports:
+  - port: 8085
+    targetPort: 8085
+    protocol: TCP
+    name: http
+    nodePort: 30085
+  selector:
+    app: mysql-service-app
+  type: NodePort
