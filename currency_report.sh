@@ -3,7 +3,7 @@
 # (c) Copyright IBM Corp. 2024
 
 debug_log() {
-    if [ "$DEBUG_LOG" = true ]; then
+    if [[ "$DEBUG_LOG" = true ]]; then
         echo "$@"
     fi
 }
@@ -34,7 +34,7 @@ extract_info_from_markdown_line() {
 # Function to query the latest released version of the package
 find_latest_version() {
   local pkg=$1
-  if [ -n "$pkg" ]; then
+  if [[ -n "$pkg" ]]; then
     # Query the latest version for the package
     local url="https://proxy.golang.org/${pkg}/@latest"
     local url1=$(echo "$url" | awk '{ print tolower($0) }')
@@ -69,7 +69,7 @@ find_immediate_next_version(){
     local curr_version="v${2}"
     debug_log "Current version: ", $curr_version
 
-    if [ -n "$pkg" ]; then
+    if [[ -n "$pkg" ]]; then
         local url="https://proxy.golang.org/${pkg}/@v/list"
         local url1=$(echo "$url" | awk '{ print tolower($0) }')
         debug_log $url1
@@ -96,7 +96,7 @@ find_immediate_next_version(){
             fi
         done
 
-        if [ "$found" = true ]; then
+        if [[ "$found" = true ]]; then
             # Query the full info of that package version to get the release darte
             local url="https://proxy.golang.org/${pkg}/@v/v${IMMEDIATE_NEXT_VERSION}.info"
             local url1=$(echo "$url" | awk '{ print tolower($0) }')
@@ -148,7 +148,7 @@ skip_execution=true
 first_line=true
 while IFS= read -r line; do
 
-    if [ "$first_line" = true ]; then
+    if [[ "$first_line" = true ]]; then
         first_line=false
         changed_line="#### Note: This page is auto-generated. Any change will be overwritten after the next sync. For more details on Go Tracer SDK, please visit our [Github](https://github.com/instana/go-sensor) page. Last updated on $(date +'%d.%m.%Y')."
         # Update the markdown report file
@@ -157,8 +157,8 @@ while IFS= read -r line; do
     fi
 
     # For skipping first few lines from the md file.
-    if [ "$skip_execution" = true ]; then
-        if [ "$line" = "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |" ]; then
+    if [[ "$skip_execution" = true ]]; then
+        if [[ "$line" = "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |" ]]; then
             skip_execution=false
         fi
         continue
@@ -167,7 +167,7 @@ while IFS= read -r line; do
     extract_info_from_markdown_line "$line"
 
 
-    if [ "$IS_STANDARD_LIBRARY" = "true" ] || [ "$IS_DEPRECATED" = "true" ]; then
+    if [[ "$IS_STANDARD_LIBRARY" = "true" ]] || [[ "$IS_DEPRECATED" = "true" ]]; then
         # skip execution
         continue
     fi
@@ -184,7 +184,7 @@ while IFS= read -r line; do
     changed_line=$(echo "$changed_line" | awk -v new_val="$(printf ' %s ' "$LATEST_VERSION")" 'BEGIN{OFS=FS="|"} {$6=new_val} 1')
     changed_line=$(echo "$changed_line" | awk -v new_val="$(printf ' %s ' "$LATEST_VERSION_DATE")" 'BEGIN{OFS=FS="|"} {$7=new_val} 1')
 
-    if [ "$LATEST_VERSION" != "$CURRENT_VERSION" ]; then
+    if [[ "$LATEST_VERSION" != "$CURRENT_VERSION" ]]; then
         find_immediate_next_version "$TARGET_PKG_URL" "$CURRENT_VERSION"
 
         debug_log "Latest version:" "$LATEST_VERSION"
@@ -202,7 +202,7 @@ while IFS= read -r line; do
         changed_line=$(echo "$changed_line" | awk -v new_val=" No " 'BEGIN{OFS=FS="|"} {$9=new_val} 1')
 
         # If the latest version and the immediate next version differ, indicating that support has been pending for a long time, add a note in the notes section to specify the immediate next version
-        if [ "$LATEST_VERSION" != "$IMMEDIATE_NEXT_VERSION" ]; then
+        if [[ "$LATEST_VERSION" != "$IMMEDIATE_NEXT_VERSION" ]]; then
             changed_line=$(echo "$changed_line" | awk -v new_val="$(printf ' Support is pending from v%s onwards. ' "$IMMEDIATE_NEXT_VERSION")" 'BEGIN{OFS=FS="|"} {$13=new_val} 1')
         else
             changed_line=$(echo "$changed_line" | awk -v new_val=" " 'BEGIN{OFS=FS="|"} {$13=new_val} 1')
