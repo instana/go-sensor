@@ -21,7 +21,7 @@ extract_info_from_markdown_line() {
 # Function to query the latest released version of the package
 find_latest_version() {
   local pkg=$1
-  if [ -n "$pkg" ]; then
+  if [[ -n "$pkg" ]]; then
     # Query the latest version for the package
     local url="https://proxy.golang.org/${pkg}/@latest"
     local url_lower=$(echo "$url" | awk '{ print tolower($0) }')
@@ -52,15 +52,15 @@ version_compare() {
   UPDATE_NEEDED="false"
 
   # We are checking the changes in minor versions for automation purpose
-  if [ "$major_version1" = "$major_version2" ]; then
-    if [ "$minor_version1" -gt "$minor_version2" ]; then
+  if [[ "$major_version1" = "$major_version2" ]]; then
+    if [[ "$minor_version1" -gt "$minor_version2" ]]; then
       UPDATE_NEEDED="true"
-    elif [ "$minor_version1" = "$minor_version2" ]; then
-      if [ "$patch_version1" -gt "$patch_version2" ]; then
+    elif [[ "$minor_version1" = "$minor_version2" ]]; then
+      if [[ "$patch_version1" -gt "$patch_version2" ]]; then
         UPDATE_NEEDED="true"
       fi
     fi
-  elif [ "$major_version1" -gt "$major_version2" ]; then
+  elif [[ "$major_version1" -gt "$major_version2" ]]; then
     echo "Major version update needed"
     UPDATE_NEEDED="true"
   fi
@@ -73,7 +73,7 @@ LIBRARY_INFO_MD_TMP=$(pwd)/supported_versions_temp.md
 LIBRARY_INFO_MD_PATH_COPY=$(pwd)/supported_versions_copy.md
 
 # Check if the file exists
-if [ ! -f "$LIBRARY_INFO_MD_PATH" ]; then
+if [[ ! -f "$LIBRARY_INFO_MD_PATH" ]]; then
   echo "Error: File '$LIBRARY_INFO_MD_PATH' not found."
   exit 1
 fi
@@ -86,7 +86,7 @@ first_line=true
 while IFS= read -r line; do
   # Skip the first line
   # As it only contains the markdown headers
-  if [ "$first_line" = true ]; then
+  if [[ "$first_line" = true ]]; then
     first_line=false
     continue
   fi
@@ -114,7 +114,7 @@ while IFS= read -r line; do
   echo "Local Path: $LOCAL_PATH"
   echo "Current version: $CURRENT_VERSION"
 
-  if [ -z "$TARGET_PKG_URL" ]; then
+  if [[ -z "$TARGET_PKG_URL" ]]; then
     continue
   fi
 
@@ -124,7 +124,7 @@ while IFS= read -r line; do
 
   version_compare "$LATEST_VERSION" "$CURRENT_VERSION"
 
-  if [ "$UPDATE_NEEDED" != true ]; then
+  if [[ "$UPDATE_NEEDED" != true ]]; then
     continue
   fi
 
@@ -145,7 +145,7 @@ COMMIT_MSG="feat(currency): updated go.mod, go.sum files, README.md for $INSTRUM
   # Need this check here to proceed to the correct directory containing go.mod
   LOCAL_PATH_2=$(go list -m | awk -F 'github.com/instana/go-sensor/' '{print $2}')
 
-  if [ "$LOCAL_PATH" = "$LOCAL_PATH_2" ]; then
+  if [[ "$LOCAL_PATH" = "$LOCAL_PATH_2" ]]; then
     echo "No need to change working directory!"
   else
     # change working folder to the correct path
