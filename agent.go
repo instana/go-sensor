@@ -144,6 +144,9 @@ func (agent *agentS) Ready() bool {
 
 // SendMetrics sends collected entity data to the host agent
 func (agent *agentS) SendMetrics(data acceptor.Metrics) error {
+	agent.mu.RLock()
+	defer agent.mu.RUnlock()
+
 	pid, err := strconv.Atoi(agent.agentComm.from.EntityID)
 	if err != nil && agent.agentComm.from.EntityID != "" {
 		agent.logger.Debug("agent got malformed PID %q", agent.agentComm.from.EntityID)
@@ -159,7 +162,11 @@ func (agent *agentS) SendMetrics(data acceptor.Metrics) error {
 		}
 
 		agent.logger.Error("failed to send metrics to the host agent: ", err)
+
+		// We need to release the read lock before calling reset() which acquires a write lock
+		agent.mu.RUnlock()
 		agent.reset()
+		agent.mu.RLock()
 
 		return err
 	}
@@ -186,6 +193,9 @@ func (agent *agentS) SendEvent(event *EventData) error {
 
 // SendSpans sends collected spans to the host agent
 func (agent *agentS) SendSpans(spans []Span) error {
+	agent.mu.RLock()
+	defer agent.mu.RUnlock()
+
 	for i := range spans {
 		spans[i].From = agent.agentComm.from
 	}
@@ -202,7 +212,11 @@ func (agent *agentS) SendSpans(spans []Span) error {
 			return nil
 		} else {
 			agent.logger.Error("failed to send spans to the host agent: ", err)
+
+			// We need to release the read lock before calling reset() which acquires a write lock
+			agent.mu.RUnlock()
 			agent.reset()
+			agent.mu.RLock()
 		}
 
 		return err
@@ -221,6 +235,9 @@ type hostAgentProfile struct {
 
 // SendProfiles sends profile data to the agent
 func (agent *agentS) SendProfiles(profiles []autoprofile.Profile) error {
+	agent.mu.RLock()
+	defer agent.mu.RUnlock()
+
 	agentProfiles := make([]hostAgentProfile, 0, len(profiles))
 	for _, p := range profiles {
 		agentProfiles = append(agentProfiles, hostAgentProfile{p, agent.agentComm.from.EntityID})
@@ -233,7 +250,11 @@ func (agent *agentS) SendProfiles(profiles []autoprofile.Profile) error {
 		}
 
 		agent.logger.Error("failed to send profile data to the host agent: ", err)
+
+		// We need to release the read lock before calling reset() which acquires a write lock
+		agent.mu.RUnlock()
 		agent.reset()
+		agent.mu.RLock()
 
 		return err
 	}

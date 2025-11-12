@@ -32,16 +32,20 @@ type Recorder struct {
 func NewRecorder() *Recorder {
 	r := &Recorder{}
 
-	ticker := time.NewTicker(1 * time.Second)
+	// Create a reference to r that will be captured by the goroutine
+
 	go func() {
+		ticker := time.NewTicker(1 * time.Second)
+		defer ticker.Stop() // Ensure ticker is stopped when goroutine exits
+
 		for range ticker.C {
 
 			if isAgentReady() {
-				go func() {
+				go func(*Recorder) {
 					if err := r.Flush(context.Background()); err != nil {
 						sensor.logger.Error("failed to flush the spans:  ", err.Error())
 					}
-				}()
+				}(r)
 			}
 		}
 	}()
@@ -60,32 +64,51 @@ func NewTestRecorder() *Recorder {
 // RecordSpan accepts spans to be recorded and added to the span queue
 // for eventual reporting to the host agent.
 func (r *Recorder) RecordSpan(span *spanS) {
+	// Get all sensor-related values under a single lock to minimize contention
+	muSensor.Lock()
+	if sensor == nil {
+		muSensor.Unlock()
+		return
+	}
+
+	agentReady := sensor != nil && sensor.Agent().Ready()
+	maxBufferedSpans := sensor.options.MaxBufferedSpans
+	forceTransmissionAt := sensor.options.ForceTransmissionStartingAt
+	logger := sensor.logger
+	muSensor.Unlock()
+
 	// If we're not announced and not in test mode then just
 	// return
-	if !r.testMode && !sensor.Agent().Ready() {
+	if !r.testMode && !agentReady {
 		return
 	}
 
 	r.Lock()
 	defer r.Unlock()
 
-	if len(r.spans) == sensor.options.MaxBufferedSpans {
+	if len(r.spans) == maxBufferedSpans {
 		r.spans = r.spans[1:]
 	}
 
 	r.spans = append(r.spans, newSpan(span))
 
-	if r.testMode || !sensor.Agent().Ready() {
+	if r.testMode || !agentReady {
 		return
 	}
 
-	if len(r.spans) >= sensor.options.ForceTransmissionStartingAt {
-		sensor.logger.Debug("forcing ", len(r.spans), "span(s) to the agent")
-		go func() {
-			if err := r.Flush(context.Background()); err != nil {
-				sensor.logger.Error("failed to flush the spans: ", err.Error())
+	if len(r.spans) >= forceTransmissionAt {
+		logger.Debug("forcing ", len(r.spans), "span(s) to the agent")
+		// Create a reference to r for this goroutine to avoid race conditions
+		rec := r
+		go func(recorder *Recorder) {
+			if err := recorder.Flush(context.Background()); err != nil {
+				muSensor.Lock()
+				if sensor != nil {
+					sensor.logger.Error("failed to flush the spans: ", err.Error())
+				}
+				muSensor.Unlock()
 			}
-		}()
+		}(rec)
 	}
 }
 
@@ -114,12 +137,33 @@ func (r *Recorder) GetQueuedSpans() []Span {
 
 // Flush sends queued spans to the agent
 func (r *Recorder) Flush(ctx context.Context) error {
+	// For test mode, we don't want to actually send spans
+	if r.testMode {
+		return nil
+	}
+
+	// Check if agent is ready before getting and clearing spans
+	muSensor.Lock()
+	if sensor == nil {
+		muSensor.Unlock()
+		return nil
+	}
+
+	agent := sensor.Agent()
+	agentReady := agent.Ready()
+	muSensor.Unlock()
+
+	// If agent is not ready, don't flush spans
+	if !agentReady {
+		return nil
+	}
+
 	spansToSend := r.GetQueuedSpans()
 	if len(spansToSend) == 0 {
 		return nil
 	}
 
-	if err := sensor.Agent().SendSpans(spansToSend); err != nil {
+	if err := agent.SendSpans(spansToSend); err != nil {
 		r.Lock()
 		defer r.Unlock()
 
