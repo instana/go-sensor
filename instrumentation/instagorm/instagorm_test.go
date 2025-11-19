@@ -400,6 +400,80 @@ func TestRow(t *testing.T) {
 	})
 }
 
+// TestInstrumentWithNilDB tests that Instrument handles nil DB gracefully
+func TestInstrumentWithNilDB(t *testing.T) {
+	recorder := instana.NewTestRecorder()
+	c := instana.InitCollector(&instana.Options{
+		Service:     "go-sensor-test",
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
+
+	// Should not panic when db is nil
+	instagorm.Instrument(nil, c, "test.db")
+
+	spans := recorder.GetQueuedSpans()
+	assert.Empty(t, spans)
+}
+
+// TestInstrumentWithNilSensor tests that Instrument handles nil sensor gracefully
+func TestInstrumentWithNilSensor(t *testing.T) {
+	db, dsn, tearDownFn := setupDB(t)
+	defer tearDownFn(t)
+
+	// Should not panic when sensor is nil
+	instagorm.Instrument(db, nil, dsn)
+
+	err := db.AutoMigrate(&product{})
+	require.NoError(t, err)
+}
+
+// TestInstrumentWithBothNil tests that Instrument handles both nil parameters gracefully
+func TestInstrumentWithBothNil(t *testing.T) {
+	// Should not panic when both are nil
+	instagorm.Instrument(nil, nil, "test.db")
+}
+
+// TestInstrumentWithEmptyDSN tests that Instrument handles empty DSN gracefully
+func TestInstrumentWithEmptyDSN(t *testing.T) {
+	recorder := instana.NewTestRecorder()
+	c := instana.InitCollector(&instana.Options{
+		Service:     "go-sensor-test",
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
+
+	db, _, tearDownFn := setupDB(t)
+	defer tearDownFn(t)
+
+	instagorm.Instrument(db, c, "")
+
+	err := db.AutoMigrate(&product{})
+	require.NoError(t, err)
+}
+
+// TestInstrumentWithNilLogger tests that Instrument handles sensor with nil Logger gracefully
+func TestInstrumentWithNilLogger(t *testing.T) {
+	db, dsn, tearDownFn := setupDB(t)
+	defer tearDownFn(t)
+
+	mockSensor := &mockTracerLoggerWithNilLogger{
+		Sensor: instana.NewSensor("test-service"),
+		logger: nil,
+	}
+
+	// Should not panic when sensor.Logger() returns nil
+	// The isValidParams function should set a logger
+	instagorm.Instrument(db, mockSensor, dsn)
+
+	assert.NotNil(t, mockSensor.logger, "Logger should have been set by Instrument")
+
+	err := db.AutoMigrate(&product{})
+	require.NoError(t, err)
+}
+
 func setupDB(t *testing.T) (*gorm.DB, string, func(*testing.T)) {
 	dsn := filepath.Join(os.TempDir(), "gormtest_"+strconv.Itoa(rand.Int())+".db")
 
@@ -431,3 +505,18 @@ func (alwaysReadyClient) SendEvent(event *instana.EventData) error          { re
 func (alwaysReadyClient) SendSpans(spans []instana.Span) error              { return nil }
 func (alwaysReadyClient) SendProfiles(profiles []autoprofile.Profile) error { return nil }
 func (alwaysReadyClient) Flush(context.Context) error                       { return nil }
+
+// mockTracerLoggerWithNilLogger embeds a Sensor and overrides Logger() to return nil initially
+type mockTracerLoggerWithNilLogger struct {
+	*instana.Sensor
+	logger instana.LeveledLogger
+}
+
+func (m *mockTracerLoggerWithNilLogger) Logger() instana.LeveledLogger {
+	return m.logger
+}
+
+func (m *mockTracerLoggerWithNilLogger) SetLogger(l instana.LeveledLogger) {
+	m.logger = l
+	m.Sensor.SetLogger(l)
+}
