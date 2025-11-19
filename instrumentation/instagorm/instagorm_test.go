@@ -400,6 +400,60 @@ func TestRow(t *testing.T) {
 	})
 }
 
+// TestInstrumentWithNilDB tests that Instrument handles nil DB gracefully
+func TestInstrumentWithNilDB(t *testing.T) {
+	recorder := instana.NewTestRecorder()
+	c := instana.InitCollector(&instana.Options{
+		Service:     "go-sensor-test",
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
+
+	// Should not panic when db is nil
+	instagorm.Instrument(nil, c, "test.db")
+
+	spans := recorder.GetQueuedSpans()
+	assert.Empty(t, spans)
+}
+
+// TestInstrumentWithNilSensor tests that Instrument handles nil sensor gracefully
+func TestInstrumentWithNilSensor(t *testing.T) {
+	db, dsn, tearDownFn := setupDB(t)
+	defer tearDownFn(t)
+
+	// Should not panic when sensor is nil
+	instagorm.Instrument(db, nil, dsn)
+
+	err := db.AutoMigrate(&product{})
+	require.NoError(t, err)
+}
+
+// TestInstrumentWithBothNil tests that Instrument handles both nil parameters gracefully
+func TestInstrumentWithBothNil(t *testing.T) {
+	// Should not panic when both are nil
+	instagorm.Instrument(nil, nil, "test.db")
+}
+
+// TestInstrumentWithEmptyDSN tests that Instrument handles empty DSN gracefully
+func TestInstrumentWithEmptyDSN(t *testing.T) {
+	recorder := instana.NewTestRecorder()
+	c := instana.InitCollector(&instana.Options{
+		Service:     "go-sensor-test",
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
+
+	db, _, tearDownFn := setupDB(t)
+	defer tearDownFn(t)
+
+	instagorm.Instrument(db, c, "")
+
+	err := db.AutoMigrate(&product{})
+	require.NoError(t, err)
+}
+
 func setupDB(t *testing.T) (*gorm.DB, string, func(*testing.T)) {
 	dsn := filepath.Join(os.TempDir(), "gormtest_"+strconv.Itoa(rand.Int())+".db")
 
