@@ -8,6 +8,7 @@ package instagorm
 
 import (
 	instana "github.com/instana/go-sensor"
+	"github.com/instana/go-sensor/logger"
 	"github.com/opentracing/opentracing-go/ext"
 	otlog "github.com/opentracing/opentracing-go/log"
 	"gorm.io/gorm"
@@ -21,6 +22,10 @@ type wrappedDB struct {
 
 // Instrument adds instrumentation for the specified gorm database instance.
 func Instrument(db *gorm.DB, s instana.TracerLogger, dsn string) {
+
+	if !isValidParams(db, s, dsn) {
+		return
+	}
 
 	wdB := wrappedDB{
 		connDetails: instana.ParseDBConnDetails(dsn),
@@ -42,12 +47,44 @@ func Instrument(db *gorm.DB, s instana.TracerLogger, dsn string) {
 
 }
 
+func isValidParams(db *gorm.DB, s instana.TracerLogger, dsn string) bool {
+
+	var ok bool = true
+
+	if s == nil {
+		ok = false
+
+		var logger instana.LeveledLogger = logger.New(nil)
+		logger.Error("instagorm: cannot instrument gorm.DB instance without tracer")
+		return ok
+	}
+
+	if s.Logger() == nil {
+		var logger instana.LeveledLogger = logger.New(nil)
+		s.SetLogger(logger)
+	}
+
+	if db == nil {
+		ok = false
+
+		if s.Logger() != nil {
+			s.Logger().Error("instagorm: cannot instrument nil gorm.DB instance")
+		}
+	}
+
+	if dsn == "" {
+		s.Logger().Warn("instagorm: received empty DSN while instrumenting gorm.DB instance")
+	}
+
+	return ok
+}
+
 func (wdB *wrappedDB) registerCreateCallbacks() {
 	wdB.logError(wdB.Callback().Create().Before("gorm:create").Register("instagorm:before_create",
 		preOpCb(wdB)))
 
 	wdB.logError(wdB.Callback().Create().After("gorm:create").Register("instagorm:after_create",
-		postOpCb()))
+		postOpCb(wdB)))
 }
 
 func (wdB *wrappedDB) registerUpdateCallbacks() {
@@ -55,7 +92,7 @@ func (wdB *wrappedDB) registerUpdateCallbacks() {
 		preOpCb(wdB)))
 
 	wdB.logError(wdB.Callback().Update().After("gorm:update").Register("instagorm:after_update",
-		postOpCb()))
+		postOpCb(wdB)))
 }
 
 func (wdB *wrappedDB) registerDeleteCallbacks() {
@@ -63,7 +100,7 @@ func (wdB *wrappedDB) registerDeleteCallbacks() {
 		preOpCb(wdB)))
 
 	wdB.logError(wdB.Callback().Delete().After("gorm:delete").Register("instagorm:after_delete",
-		postOpCb()))
+		postOpCb(wdB)))
 
 }
 
@@ -72,7 +109,7 @@ func (wdB *wrappedDB) registerQueryCallbacks() {
 		preOpCb(wdB)))
 
 	wdB.logError(wdB.Callback().Query().After("gorm:query").Register("instagorm:after_query",
-		postOpCb()))
+		postOpCb(wdB)))
 
 }
 
@@ -81,7 +118,7 @@ func (wdB *wrappedDB) registerRowCallbacks() {
 		preOpCb(wdB)))
 
 	wdB.logError(wdB.Callback().Row().After("gorm:row").Register("instagorm:after_row",
-		postOpCb()))
+		postOpCb(wdB)))
 }
 
 func (wdB *wrappedDB) registerRawCallbacks() {
@@ -89,11 +126,11 @@ func (wdB *wrappedDB) registerRawCallbacks() {
 		preOpCb(wdB)))
 
 	wdB.logError(wdB.Callback().Raw().After("gorm:raw").Register("instagorm:after_raw",
-		postOpCb()))
+		postOpCb(wdB)))
 }
 
 func (wdB *wrappedDB) logError(err error) {
-	if err != nil {
+	if err != nil && wdB.sensor != nil && wdB.sensor.Logger() != nil {
 		wdB.sensor.Logger().Error("unable to register callback, error: ", err.Error())
 	}
 }
@@ -101,10 +138,24 @@ func (wdB *wrappedDB) logError(err error) {
 func preOpCb(wdB *wrappedDB) func(db *gorm.DB) {
 
 	return func(db *gorm.DB) {
+		if db == nil || db.Statement == nil {
+			wdB.sensor.Logger().Error("instagorm: preOpCb received nil db or db.Statement")
+			return
+		}
 
 		ctx := db.Statement.Context
 
-		sp, dbKey := instana.StartSQLSpan(ctx, wdB.connDetails, db.Statement.SQL.String(), wdB.sensor)
+		var sqlStr string
+		if db.Statement.SQL.Len() > 0 {
+			sqlStr = db.Statement.SQL.String()
+		}
+
+		sp, dbKey := instana.StartSQLSpan(ctx, wdB.connDetails, sqlStr, wdB.sensor)
+
+		if sp == nil {
+			wdB.sensor.Logger().Error("instagorm: failed to start SQL span")
+			return
+		}
 
 		sp.SetBaggageItem("dbKey", dbKey)
 
@@ -113,11 +164,17 @@ func preOpCb(wdB *wrappedDB) func(db *gorm.DB) {
 	}
 }
 
-func postOpCb() func(db *gorm.DB) {
+func postOpCb(wdB *wrappedDB) func(db *gorm.DB) {
 
 	return func(db *gorm.DB) {
+		if db == nil || db.Statement == nil {
+			wdB.sensor.Logger().Error("instagorm: postOpCb received nil db or db.Statement")
+			return
+		}
+
 		sp, ok := instana.SpanFromContext(db.Statement.Context)
-		if !ok {
+		if !ok || sp == nil {
+			wdB.sensor.Logger().Error("instagorm: failed to retrieve span from context")
 			return
 		}
 
@@ -131,10 +188,14 @@ func postOpCb() func(db *gorm.DB) {
 		if dbKey == "db" {
 			stmtKey = string(ext.DBStatement)
 			errKey = "error"
-			sp.SetTag(string(ext.DBType), db.Dialector.Name())
+			if db.Dialector != nil {
+				sp.SetTag(string(ext.DBType), db.Dialector.Name())
+			}
 		}
 
-		sp.SetTag(stmtKey, db.Statement.SQL.String())
+		if db.Statement.SQL.Len() > 0 {
+			sp.SetTag(stmtKey, db.Statement.SQL.String())
+		}
 
 		if err := db.Statement.Error; err != nil {
 			sp.SetTag(errKey, err.Error())
