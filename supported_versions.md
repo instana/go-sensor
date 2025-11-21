@@ -5,7 +5,7 @@
 | 3 | HTTP | [gin](https://pkg.go.dev/github.com/gin-gonic/gin) | [instagin](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instagin) | v1.7.2 | v1.11.0 |
 | 4 | HTTP | [mux](https://pkg.go.dev/github.com/gorilla/mux) | [instamux](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instamux) | v1.8.0 | v1.8.1 |
 | 5 | HTTP | [httprouter](https://pkg.go.dev/github.com/julienschmidt/httprouter) | [instahttprouter](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instahttprouter) | v1.3.0 | v1.3.0 |
-| 6 | HTTP | [fiber](https://pkg.go.dev/github.com/gofiber/fiber/v2) | [instafiber](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instafiber) | v2.48.0 | v2.52.9 |
+| 6 | HTTP | [fiber](https://pkg.go.dev/github.com/gofiber/fiber/v2) | [instafiber](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instafiber) | v2.48.0 | v2.52.10 |
 | 7 | RPC | [grpc](https://pkg.go.dev/google.golang.org/grpc) | [instagrpc](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instagrpc) | v1.15.0 | v1.77.0 |
 | 8 | Databases | database/sql | | | |
 | 9 | Databases | [mongo-driver](https://pkg.go.dev/go.mongodb.org/mongo-driver) | [instamongo](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instamongo) | v1.7.2 | v1.17.6 |
@@ -23,7 +23,7 @@
 | 21 | Other | [aws-sdk-go](https://pkg.go.dev/github.com/aws/aws-sdk-go) | [instaawssdk](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instaawssdk) | v1.8.0 | v1.55.8 |
 | 22 | Other | [aws-lambda-go](https://pkg.go.dev/github.com/aws/aws-lambda-go) | [instalambda](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instalambda) | v1.20.0 | v1.50.0 |
 | 23 | Other | [logrus](https://pkg.go.dev/github.com/sirupsen/logrus) | [instalogrus](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instalogrus) | v1.5.0 | v1.9.3 |
-| 24 | Databases | [go-redis v2](https://pkg.go.dev/github.com/redis/go-redis/v9) | [instaredis/v2](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instaredis/v2) | v8.11.4 | v9.16.0 |
+| 24 | Databases | [go-redis v2](https://pkg.go.dev/github.com/redis/go-redis/v9) | [instaredis/v2](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instaredis/v2) | v8.11.4 | v9.17.0 |
 | 25 | HTTP | [beego](https://pkg.go.dev/github.com/beego/beego/v2) | [instabeego](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instabeego) | v2.1.3 | v2.3.8 |
 | 26 | Other | [aws-sdk-go](https://pkg.go.dev/github.com/aws/aws-sdk-go-v2) | [instaawsv2](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instaawsv2) | v1.21.0 | v1.40.0 |
 | 27 | Databases | [azcosmos](https://pkg.go.dev/github.com/Azure/azure-sdk-for-go/sdk/data/azcosmos) | [instacosmos](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instacosmos) | v0.3.6 | v1.4.1 |
