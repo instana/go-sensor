@@ -1,0 +1,98 @@
+services:
+  oracle-primary:
+    image: gvenzl/oracle-free:latest
+    container_name: hostdb1
+    hostname: hostdb1
+    ports:
+      - "1521:1521"
+    environment:
+      - ORACLE_PASSWORD=OraclePass123
+      - APP_USER=scott
+      - APP_USER_PASSWORD=tiger
+    volumes:
+      - oracle_primary_data:/opt/oracle/oradata
+    healthcheck:
+      test: ["CMD", "healthcheck.sh"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    networks:
+      app_network:
+        aliases:
+          - hostdb1
+
+  oracle-standby:
+    image: gvenzl/oracle-free:latest
+    container_name: hostdb2
+    hostname: hostdb2
+    ports:
+      - "1522:1521"
+    environment:
+      - ORACLE_PASSWORD=OraclePass123
+      - APP_USER=scott
+      - APP_USER_PASSWORD=tiger
+    volumes:
+      - oracle_standby_data:/opt/oracle/oradata
+    healthcheck:
+      test: ["CMD", "healthcheck.sh"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    networks:
+      app_network:
+        aliases:
+          - hostdb2
+
+  instana-agent:
+    image: icr.io/instana/agent:latest
+    container_name: instana_agent
+    pid: "host"
+    privileged: true
+    ports:
+      - "42699:42699"
+    environment:
+      - INSTANA_AGENT_KEY=${INSTANA_AGENT_KEY}
+      - INSTANA_DOWNLOAD_KEY=${INSTANA_DOWNLOAD_KEY}
+      - INSTANA_AGENT_ENDPOINT=${INSTANA_AGENT_ENDPOINT:-ingress-red-saas.instana.io}
+      - INSTANA_AGENT_ENDPOINT_PORT=443
+      - INSTANA_ZONE=oracle-test
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /dev:/dev
+      - /sys:/sys
+      - /var/log:/var/log
+    networks:
+      - app_network
+
+  go-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: go_oracle_app
+    ports:
+      - "8080:8080"
+    environment:
+      - ORACLE_CONNECTION_STRING=scott/tiger@(description=(CONNECT_TIMEOUT=40)(RETRY_COUNT=10)(TRANSPORT_CONNECT_TIMEOUT=3)(address_list=(address=(protocol=tcp)(host=hostdb1)(port=1521))(address=(protocol=tcp)(host=hostdb2)(port=1521))(failover=on)(load_balance=off))(connect_data=(service_name=FREEPDB1)))
+      - INSTANA_AGENT_HOST=instana-agent
+      - INSTANA_AGENT_PORT=42699
+      - INSTANA_LOG_LEVEL=info
+      - LD_LIBRARY_PATH=/opt/instantclient
+      - DYLD_LIBRARY_PATH=/opt/instantclient
+      - PATH=/opt/instantclient:${PATH}
+    depends_on:
+      oracle-primary:
+        condition: service_healthy
+      oracle-standby:
+        condition: service_healthy
+      instana-agent:
+        condition: service_started
+    networks:
+      - app_network
+
+volumes:
+  oracle_primary_data:
+  oracle_standby_data:
+
+networks:
+  app_network:
+    driver: bridge
