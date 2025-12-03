@@ -696,7 +696,7 @@ func parseOracleTNSSQLDriver(connStr string) (DbConnDetails, bool) {
 		DatabaseName: "oracle",
 	}
 
-	d.RawString = oracleTnsSqlKVPasswordRegex.ReplaceAllString(connStr, `${1}/***@`)
+	d.RawString = oracleTnsSqlKVPasswordRegex.ReplaceAllString(connStr, `${1}/<redacted>@`)
 
 	return d, true
 }
