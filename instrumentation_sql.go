@@ -371,6 +371,7 @@ func ParseDBConnDetails(connStr string) DbConnDetails {
 		parseMySQLConnDetailsKV,
 		parseRedisConnString,
 		parseDBConnDetailsURI,
+		parseOracleTNSSQLDriver,
 	}
 	for _, parseFn := range strategies {
 		if details, ok := parseFn(connStr); ok {
@@ -660,6 +661,44 @@ func parseRedisConnString(connStr string) (DbConnDetails, bool) {
 	}
 
 	return d, false
+}
+
+var (
+	myOracleTNSGoDriverRe       = regexp.MustCompile(`(?i)^([^/@]+)(?:/[^@]*)?@.*?host=([^)(]+).*?port=(\d+)`)
+	oracleTnsSqlKVPasswordRegex = regexp.MustCompile(`(?i)^([^/@]+)/[^@]*@`)
+)
+
+func parseOracleTNSSQLDriver(connStr string) (DbConnDetails, bool) {
+
+	matches := myOracleTNSGoDriverRe.FindAllStringSubmatch(connStr, -1)
+
+	if len(matches) == 0 {
+		return DbConnDetails{}, false
+	}
+
+	values := matches[0]
+
+	host := values[2]
+	port := values[3]
+
+	if host == "" {
+		host = "localhost"
+	}
+
+	if port == "" {
+		port = "1521"
+	}
+
+	d := DbConnDetails{
+		User:         values[1],
+		Host:         host,
+		Port:         port,
+		DatabaseName: "oracle",
+	}
+
+	d.RawString = oracleTnsSqlKVPasswordRegex.ReplaceAllString(connStr, `${1}/***@`)
+
+	return d, true
 }
 
 type dsnConnector struct {
