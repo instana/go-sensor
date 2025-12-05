@@ -1624,6 +1624,168 @@ func (pqResultMock) RowsAffected() (int64, error) { return 100, nil }
 
 type pqRowsMock struct{}
 
-func (pqRowsMock) Columns() []string              { return []string{"col1", "col2"} }
-func (pqRowsMock) Close() error                   { return nil }
+func (pqRowsMock) Columns() []string { return []string{"col1", "col2"} }
+func (pqRowsMock) Close() error      { return nil }
+
+func TestParseOracleTNSSQLDriver(t *testing.T) {
+	tests := []struct {
+		name     string
+		connStr  string
+		wantOk   bool
+		wantConn instana.DbConnDetails
+	}{
+		// Valid TNS format cases
+		{
+			name:    "TNS format with password",
+			connStr: `scott/tiger@(DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST=dbhost)(PORT=1521))(CONNECT_DATA=(SERVICE_NAME=orclpdb1)))`,
+			wantOk:  true,
+			wantConn: instana.DbConnDetails{
+				User:         "scott",
+				Host:         "dbhost",
+				Port:         "1521",
+				DatabaseName: "oracle",
+				RawString:    `scott/<redacted>@(DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST=dbhost)(PORT=1521))(CONNECT_DATA=(SERVICE_NAME=orclpdb1)))`,
+			},
+		},
+		{
+			name:    "TNS format with complex password",
+			connStr: `scott/tiger=!*123@(DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST=dbhost)(PORT=1521))(CONNECT_DATA=(SERVICE_NAME=orclpdb1)))`,
+			wantOk:  true,
+			wantConn: instana.DbConnDetails{
+				User:         "scott",
+				Host:         "dbhost",
+				Port:         "1521",
+				DatabaseName: "oracle",
+				RawString:    `scott/<redacted>@(DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST=dbhost)(PORT=1521))(CONNECT_DATA=(SERVICE_NAME=orclpdb1)))`,
+			},
+		},
+		// Valid key-value format cases
+		{
+			name:    "KV format quoted with service",
+			connStr: `user="scott" password="tiger" connectString="dbhost:1521/orclpdb1"`,
+			wantOk:  true,
+			wantConn: instana.DbConnDetails{
+				User:         "scott",
+				Host:         "dbhost",
+				Port:         "1521",
+				Schema:       "orclpdb1",
+				DatabaseName: "oracle",
+				RawString:    `user="scott" password="<redacted>" connectString="dbhost:1521/orclpdb1"`,
+			},
+		},
+		{
+			name:    "KV format unquoted",
+			connStr: `user=scott password=tiger connectString=dbhost:1521/orclpdb1`,
+			wantOk:  true,
+			wantConn: instana.DbConnDetails{
+				User:         "scott",
+				Host:         "dbhost",
+				Port:         "1521",
+				Schema:       "orclpdb1",
+				DatabaseName: "oracle",
+				RawString:    `user=scott password=<redacted> connectString=dbhost:1521/orclpdb1`,
+			},
+		},
+		{
+			name:    "KV format with SID",
+			connStr: `user="scott" password="tiger" connectString="dbhost:1521:ORCL"`,
+			wantOk:  true,
+			wantConn: instana.DbConnDetails{
+				User:         "scott",
+				Host:         "dbhost",
+				Port:         "1521",
+				Schema:       "ORCL",
+				DatabaseName: "oracle",
+				RawString:    `user="scott" password="<redacted>" connectString="dbhost:1521:ORCL"`,
+			},
+		},
+		{
+			name:    "KV format without port",
+			connStr: `user="scott" password="tiger" connectString="dbhost/orclpdb1"`,
+			wantOk:  true,
+			wantConn: instana.DbConnDetails{
+				User:         "scott",
+				Host:         "dbhost",
+				Port:         "1521",
+				Schema:       "orclpdb1",
+				DatabaseName: "oracle",
+				RawString:    `user="scott" password="<redacted>" connectString="dbhost/orclpdb1"`,
+			},
+		},
+		{
+			name:    "KV format host only",
+			connStr: `user="scott" password="tiger" connectString="dbhost"`,
+			wantOk:  true,
+			wantConn: instana.DbConnDetails{
+				User:         "scott",
+				Host:         "dbhost",
+				Port:         "1521",
+				DatabaseName: "oracle",
+				RawString:    `user="scott" password="<redacted>" connectString="dbhost"`,
+			},
+		},
+		{
+			name:    "KV format with only user",
+			connStr: `user="scott" connectString="dbhost:1521/orclpdb1"`,
+			wantOk:  true,
+			wantConn: instana.DbConnDetails{
+				User:         "scott",
+				Host:         "dbhost",
+				Port:         "1521",
+				Schema:       "orclpdb1",
+				DatabaseName: "oracle",
+				RawString:    `user="scott" connectString="dbhost:1521/orclpdb1"`,
+			},
+		},
+		// Invalid cases
+		{
+			name:    "Invalid - no equals sign",
+			connStr: `scott tiger dbhost`,
+			wantOk:  false,
+		},
+		{
+			name:    "Invalid - missing host in TNS",
+			connStr: `scott/tiger@(DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(PORT=1521)))`,
+			wantOk:  false,
+		},
+		{
+			name:    "Invalid - missing port in TNS",
+			connStr: `scott/tiger@(DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST=dbhost)))`,
+			wantOk:  false,
+		},
+		{
+			name:    "Invalid - KV without user or connectString",
+			connStr: `password="tiger"`,
+			wantOk:  false,
+		},
+		{
+			name:    "Invalid - empty string",
+			connStr: ``,
+			wantOk:  false,
+		},
+		{
+			name:    "Invalid - random text",
+			connStr: `this is not a valid connection string`,
+			wantOk:  false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := instana.ParseDBConnDetails(tt.connStr)
+
+			if tt.wantOk {
+				assert.Equal(t, tt.wantConn.User, got.User, "User mismatch")
+				assert.Equal(t, tt.wantConn.Host, got.Host, "Host mismatch")
+				assert.Equal(t, tt.wantConn.Port, got.Port, "Port mismatch")
+				assert.Equal(t, tt.wantConn.Schema, got.Schema, "Schema mismatch")
+				assert.Equal(t, tt.wantConn.DatabaseName, got.DatabaseName, "DatabaseName mismatch")
+				assert.Equal(t, tt.wantConn.RawString, got.RawString, "RawString mismatch")
+			} else {
+				// For invalid cases, should not be identified as Oracle
+				assert.NotEqual(t, "oracle", got.DatabaseName, "Should not be identified as Oracle")
+			}
+		})
+	}
+}
 func (pqRowsMock) Next(dest []driver.Value) error { return io.EOF }
