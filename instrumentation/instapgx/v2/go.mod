@@ -1,6 +1,6 @@
 module github.com/instana/go-sensor/instrumentation/instapgx/v2
 
-go 1.23.0
+go 1.24.0
 
 require (
 	github.com/instana/go-sensor v1.72.0
@@ -23,6 +23,6 @@ require (
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 // indirect
 	github.com/stretchr/testify v1.10.0
-	golang.org/x/crypto v0.40.0 // indirect
-	golang.org/x/text v0.27.0 // indirect
+	golang.org/x/crypto v0.45.0 // indirect
+	golang.org/x/text v0.31.0 // indirect
 )
