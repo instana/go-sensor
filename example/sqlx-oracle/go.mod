@@ -1,6 +1,7 @@
 module sqlx-go-oracle.com
 
 go 1.23.0
+
 require (
 	github.com/godror/godror v0.49.5
 	github.com/instana/go-sensor v1.71.2

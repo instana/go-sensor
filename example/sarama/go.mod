@@ -3,8 +3,8 @@ module example.com/instasarama
 go 1.24.0
 
 require (
-	github.com/IBM/sarama v1.46.2
-	github.com/instana/go-sensor v1.71.1
+	github.com/IBM/sarama v1.46.3
+	github.com/instana/go-sensor v1.72.0
 	github.com/instana/go-sensor/instrumentation/instasarama v1.41.0
 	github.com/opentracing/opentracing-go v1.2.0
 )
@@ -23,7 +23,7 @@ require (
 	github.com/jcmturner/gofork v1.7.6 // indirect
 	github.com/jcmturner/gokrb5/v8 v8.4.4 // indirect
 	github.com/jcmturner/rpc/v2 v2.0.3 // indirect
-	github.com/klauspost/compress v1.18.0 // indirect
+	github.com/klauspost/compress v1.18.1 // indirect
 	github.com/kr/text v0.2.0 // indirect
 	github.com/looplab/fsm v1.0.3 // indirect
 	github.com/pierrec/lz4/v4 v4.1.22 // indirect
