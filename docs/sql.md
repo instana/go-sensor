@@ -86,6 +86,34 @@ Instrumenting Db2 is the same as in the above example. You only need to pass the
 
 Ensure you use `go_ibm_db` as the driver name to correctly identify the IBM Db2 database.
 
+## Tracing Oracle Database
+
+> Please note that Instana currently classifies Oracle database spans as generic SQL spans. Go Tracer will recognize Oracle databases and mask the password within the connection string.
+
+The Go Tracer supports Oracle database instrumentation using the [godror](https://github.com/godror/godror) driver. Oracle connections are automatically detected and traced when using either traditional TNS format or godror's key-value format.
+
+### Supported Connection String Formats
+
+#### Traditional TNS Format
+```go
+connStr := "scott/tiger@(DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST=dbhost)(PORT=1521))(CONNECT_DATA=(SERVICE_NAME=orclpdb1)))"
+```
+
+#### godror Key-Value Format
+```go
+connStr := `user="scott" password="tiger" connectString="dbhost:1521/orclpdb1"`
+```
+
+### Password Masking
+
+Passwords in Oracle connection strings are automatically masked in traces:
+- TNS format: `scott/<redacted>@(DESCRIPTION=...)`
+- Key-value format: `user="scott" password="<redacted>" connectString="..."`
+
+### Complete Example
+
+See the [Oracle sqlx example](../example/sqlx-oracle) for a complete working application with Docker Compose setup.
+
 -----
 [README](../README.md) |
 [Tracer Options](options.md) |
