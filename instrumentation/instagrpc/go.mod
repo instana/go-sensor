@@ -3,7 +3,7 @@ module github.com/instana/go-sensor/instrumentation/instagrpc
 go 1.24.0
 
 require (
-	github.com/instana/go-sensor v1.71.2
+	github.com/instana/go-sensor v1.72.0
 	github.com/opentracing/opentracing-go v1.2.0
 	github.com/stretchr/testify v1.10.0
 	google.golang.org/grpc v1.77.0
