@@ -665,11 +665,18 @@ func parseRedisConnString(connStr string) (DbConnDetails, bool) {
 
 var (
 	myOracleTNSGoDriverRe       = regexp.MustCompile(`(?i)^([^/@]+)(?:/[^@]*)?@.*?host=([^)(]+).*?port=(\d+)`)
-	oracleTnsSqlKVPasswordRegex = regexp.MustCompile(`(?i)^([^/@]+)/[^@]*@`)
+	oracleTnsSqlKVPasswordRegex = regexp.MustCompile(`(?i)^([^/@]+)/[^@]*?@`)
 )
 
 func parseOracleTNSSQLDriver(connStr string) (DbConnDetails, bool) {
+	// Try to parse key-value format first (godror format)
+	// Format: user="scott" password="tiger" connectString="dbhost:1521/orclpdb1"
+	if details, ok := parseOracleKVConnString(connStr); ok {
+		return details, true
+	}
 
+	// Fall back to TNS format
+	// Format: scott/tiger@123@(description=...host=dbhost...port=1521...)
 	matches := myOracleTNSGoDriverRe.FindAllStringSubmatch(connStr, -1)
 
 	if len(matches) == 0 {
@@ -696,9 +703,143 @@ func parseOracleTNSSQLDriver(connStr string) (DbConnDetails, bool) {
 		DatabaseName: "oracle",
 	}
 
-	d.RawString = oracleTnsSqlKVPasswordRegex.ReplaceAllString(connStr, `${1}/***@`)
+	d.RawString = oracleTnsSqlKVPasswordRegex.ReplaceAllString(connStr, `${1}/<redacted>@`)
 
 	return d, true
+}
+
+var (
+	// Matches key="value" or key=value (case-insensitive on key)
+	oracleKVRegex = regexp.MustCompile(`(?i)(\w+)\s*=\s*("([^"]*)"|\S+)`)
+
+	// Match password=... (quoted or unquoted) and replace the whole value
+	// Example matches:
+	//   password="tiger"
+	//   password=tiger
+	oracleKVPasswordRegex = regexp.MustCompile(`(?i)\bpassword\s*=\s*("[^"]*"|\S+)`)
+)
+
+func parseOracleKVConnString(connStr string) (DbConnDetails, bool) {
+	if !strings.Contains(connStr, "=") {
+		return DbConnDetails{}, false
+	}
+
+	matches := oracleKVRegex.FindAllStringSubmatch(connStr, -1)
+	if len(matches) == 0 {
+		return DbConnDetails{}, false
+	}
+
+	user, connectString, hasRequired := extractOracleKVParams(matches)
+	if !hasRequired {
+		return DbConnDetails{}, false
+	}
+
+	details := DbConnDetails{
+		User:         user,
+		DatabaseName: "oracle",
+	}
+
+	parseOracleConnectString(connectString, &details)
+	setOracleDefaults(&details)
+	details.RawString = maskOracleKVPassword(connStr)
+
+	return details, true
+}
+
+// extractOracleKVParams extracts user and connectString from regex matches
+func extractOracleKVParams(matches [][]string) (user, connectString string, hasRequired bool) {
+	var hasUser, hasConnectString bool
+
+	for _, m := range matches {
+		key := strings.ToLower(m[1])
+		// If quoted (m[3]), use inner value; else use m[2] without quotes
+		value := m[3]
+		if value == "" {
+			value = strings.Trim(m[2], `"`)
+		}
+
+		switch key {
+		case "user":
+			user = value
+			hasUser = true
+		case "connectstring":
+			connectString = value
+			hasConnectString = true
+		}
+	}
+
+	return user, connectString, hasUser || hasConnectString
+}
+
+// parseOracleConnectString parses connectString into host, port, and schema
+// Supports formats: host:port/service, host:port:sid, host:port, host
+func parseOracleConnectString(connectString string, details *DbConnDetails) {
+	if connectString == "" {
+		return
+	}
+
+	if strings.Contains(connectString, "/") {
+		parseOracleServiceFormat(connectString, details)
+	} else if strings.Contains(connectString, ":") {
+		parseOracleSIDFormat(connectString, details)
+	} else {
+		details.Host = connectString
+		details.Port = "1521"
+	}
+}
+
+// parseOracleServiceFormat parses host:port/service format
+func parseOracleServiceFormat(connectString string, details *DbConnDetails) {
+	parts := strings.SplitN(connectString, "/", 2)
+	if len(parts) != 2 {
+		return
+	}
+
+	details.Schema = parts[1]
+	hostPort := parts[0]
+
+	if strings.Contains(hostPort, ":") {
+		hostPortParts := strings.SplitN(hostPort, ":", 2)
+		details.Host = hostPortParts[0]
+		details.Port = hostPortParts[1]
+	} else {
+		details.Host = hostPort
+		details.Port = "1521"
+	}
+}
+
+// parseOracleSIDFormat parses host:port or host:port:sid format
+func parseOracleSIDFormat(connectString string, details *DbConnDetails) {
+	parts := strings.Split(connectString, ":")
+	if len(parts) < 2 {
+		return
+	}
+
+	details.Host = parts[0]
+	details.Port = parts[1]
+	if len(parts) >= 3 {
+		details.Schema = parts[2]
+	}
+}
+
+// setOracleDefaults sets default values for host and port if not specified
+func setOracleDefaults(details *DbConnDetails) {
+	if details.Host == "" {
+		details.Host = "localhost"
+	}
+	if details.Port == "" {
+		details.Port = "1521"
+	}
+}
+
+// maskOracleKVPassword masks the password in Oracle key-value connection string
+func maskOracleKVPassword(connStr string) string {
+	return oracleKVPasswordRegex.ReplaceAllStringFunc(connStr, func(match string) string {
+		if strings.Contains(match, `"`) {
+			return `password="<redacted>"`
+		}
+		return `password=<redacted>`
+	})
 }
 
 type dsnConnector struct {
