@@ -58,16 +58,16 @@ func newLambdaAgent(
 		logger:   logger,
 	}
 
-	go func() {
+	go func(a *lambdaAgent) {
 		t := time.NewTicker(awsLambdaAgentFlushPeriod)
 		defer t.Stop()
 
 		for range t.C {
-			if err := agent.Flush(context.Background()); err != nil {
-				agent.logger.Error("failed to post collected data: ", err)
+			if err := a.Flush(context.Background()); err != nil {
+				a.logger.Error("failed to post collected data: ", err)
 			}
 		}
-	}()
+	}(agent)
 
 	return agent
 }
