@@ -144,7 +144,7 @@ type fargateAgent struct {
 	lastDockerStats  map[string]docker.ContainerStats
 	lastProcessStats processStats
 
-	mu        sync.Mutex
+	mu        sync.RWMutex
 	spanQueue []Span
 
 	runtimeSnapshot *SnapshotCollector
@@ -194,14 +194,16 @@ func newFargateAgent(
 		logger: logger,
 	}
 
-	go func() {
+	go func(a *fargateAgent) {
 		for {
 			// ECS task metadata publishes the full data (e.g. container.StartedAt)
 			// only after a while, so we need to keep trying to gather the full data
 			for i := 0; i < maximumRetries; i++ {
-				snapshot, ok := agent.collectSnapshot(context.Background())
+				snapshot, ok := a.collectSnapshot(context.Background())
 				if ok {
-					agent.snapshot = snapshot
+					a.mu.Lock()
+					a.snapshot = snapshot
+					a.mu.Unlock()
 					break
 				}
 
@@ -209,7 +211,7 @@ func newFargateAgent(
 			}
 			time.Sleep(snapshotCollectionInterval)
 		}
-	}()
+	}(agent)
 	go agent.dockerStats.Run(context.Background(), time.Second)
 	go agent.processStats.Run(context.Background(), time.Second)
 
@@ -226,10 +228,19 @@ func (a *fargateAgent) SendMetrics(data acceptor.Metrics) (err error) {
 			// only update the last sent stats if they were transmitted successfully
 			// since they are updated on the backend incrementally using received
 			// deltas
+			a.mu.Lock()
 			a.lastDockerStats = dockerStats
 			a.lastProcessStats = processStats
+			a.mu.Unlock()
 		}
 	}()
+
+	// Read snapshot and last stats with lock protection
+	a.mu.RLock()
+	snapshot := a.snapshot
+	lastDockerStats := a.lastDockerStats
+	lastProcessStats := a.lastProcessStats
+	a.mu.RUnlock()
 
 	payload := struct {
 		Metrics metricsPayload `json:"metrics,omitempty"`
@@ -237,8 +248,8 @@ func (a *fargateAgent) SendMetrics(data acceptor.Metrics) (err error) {
 	}{
 		Metrics: metricsPayload{
 			Plugins: []acceptor.PluginPayload{
-				newECSTaskPluginPayload(a.snapshot),
-				newProcessPluginPayload(a.snapshot.Service, a.lastProcessStats, processStats),
+				newECSTaskPluginPayload(snapshot),
+				newProcessPluginPayload(snapshot.Service, lastProcessStats, processStats),
 				acceptor.NewGoProcessPluginPayload(acceptor.GoProcessData{
 					PID:      a.PID,
 					Snapshot: a.runtimeSnapshot.Collect(),
@@ -248,14 +259,14 @@ func (a *fargateAgent) SendMetrics(data acceptor.Metrics) (err error) {
 		},
 	}
 
-	for _, container := range a.snapshot.Task.Containers {
-		instrumented := ecsEntityID(container) == a.snapshot.Service.EntityID
+	for _, container := range snapshot.Task.Containers {
+		instrumented := ecsEntityID(container) == snapshot.Service.EntityID
 		payload.Metrics.Plugins = append(
 			payload.Metrics.Plugins,
 			newECSContainerPluginPayload(container, instrumented),
 			newDockerContainerPluginPayload(
 				container,
-				a.lastDockerStats[container.DockerID],
+				lastDockerStats[container.DockerID],
 				dockerStats[container.DockerID],
 				instrumented,
 			),
@@ -288,7 +299,11 @@ func (a *fargateAgent) SendMetrics(data acceptor.Metrics) (err error) {
 func (a *fargateAgent) SendEvent(event *EventData) error { return nil }
 
 func (a *fargateAgent) SendSpans(spans []Span) error {
-	from := newServerlessAgentFromS(a.snapshot.Service.EntityID, "aws")
+	a.mu.RLock()
+	entityID := a.snapshot.Service.EntityID
+	a.mu.RUnlock()
+
+	from := newServerlessAgentFromS(entityID, "aws")
 	for i := range spans {
 		spans[i].From = from
 	}
@@ -332,8 +347,13 @@ func (a *fargateAgent) Flush(ctx context.Context) error {
 }
 
 func (a *fargateAgent) sendRequest(req *http.Request) error {
-	req.Header.Set("X-Instana-Host", a.snapshot.Service.EntityID)
-	req.Header.Set("X-Instana-Key", a.Key)
+	a.mu.RLock()
+	entityID := a.snapshot.Service.EntityID
+	key := a.Key
+	a.mu.RUnlock()
+
+	req.Header.Set("X-Instana-Host", entityID)
+	req.Header.Set("X-Instana-Key", key)
 	req.Header.Set("X-Instana-Time", strconv.FormatInt(time.Now().UnixNano()/int64(time.Millisecond), 10))
 
 	resp, err := a.client.Do(req)
@@ -395,6 +415,9 @@ func (a *fargateAgent) collectSnapshot(ctx context.Context) (fargateSnapshot, bo
 		a.logger.Error("snapshot collection failed (the metadata might not be ready yet)")
 		return fargateSnapshot{}, false
 	}
+
+	a.mu.RLock()
+	defer a.mu.RUnlock()
 
 	snapshot := newFargateSnapshot(a.PID, taskMD, containerMD)
 	snapshot.Service.Zone = a.Zone
