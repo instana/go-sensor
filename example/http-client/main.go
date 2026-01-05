@@ -4,14 +4,13 @@ import (
 	"context"
 	"flag"
 	"io"
+	"log"
 	"net/http"
 	"os"
 	"os/signal"
 
 	instana "github.com/instana/go-sensor"
-	"github.com/instana/go-sensor/instrumentation/instalogrus"
 	"github.com/opentracing/opentracing-go/ext"
-	log "github.com/sirupsen/logrus"
 )
 
 var server_url string
@@ -19,9 +18,8 @@ var collector instana.TracerLogger
 
 func init() {
 	collector = instana.InitCollector(&instana.Options{
-		Service:  "http-client",
-		Tracer:   instana.DefaultTracerOptions(),
-		LogLevel: instana.Info,
+		Service: "http-client",
+		Tracer:  instana.DefaultTracerOptions(),
 	})
 }
 
@@ -33,8 +31,6 @@ func main() {
 		flag.Usage()
 		os.Exit(2)
 	}
-
-	log.AddHook(instalogrus.NewHook(collector))
 
 	client := &http.Client{
 		Transport: instana.RoundTripper(collector, nil),
@@ -52,20 +48,20 @@ func main() {
 
 	resp, err := client.Do(req.WithContext(ctx))
 	if err != nil {
-		log.WithContext(ctx).Errorf("failed to request to %v: %v", server_url, err)
+		log.Fatalf("failed to request to %v: %v", server_url, err)
 	}
 
 	// Read the response body
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		log.WithContext(ctx).Errorf("Error reading response body: %v", err)
+		log.Fatalf("Error reading response body: %v", err)
 	}
 
 	span.Finish()
 
 	// Print the response status and body
-	log.Info("Response Status: " + resp.Status)
-	log.Info("Response Body: " + string(body))
+	log.Println("Response Status: " + resp.Status)
+	log.Println("Response Body: " + string(body))
 	resp.Body.Close()
 
 	// wait till user closes the program
