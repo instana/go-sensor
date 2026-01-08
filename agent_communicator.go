@@ -8,12 +8,14 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
+	"sync"
 )
 
 // agentCommunicator is a collection of data and actions to be executed against the agent.
 type agentCommunicator struct {
 	// host is the agent host. It can be updated via default gateway or a new client announcement.
-	host string
+	host   string
+	hostMu sync.RWMutex
 
 	// port id the agent port.
 	port string
@@ -21,7 +23,8 @@ type agentCommunicator struct {
 	// from is the agent information sent with each span in the "from" (span.f) section. it's format is as follows:
 	// {e: "entityId", h: "hostAgentId", hl: trueIfServerlessPlatform, cp: "The cloud provider for a hostless span"}
 	// Only span.f.e is mandatory.
-	from *fromS
+	from   *fromS
+	fromMu sync.RWMutex
 
 	// client is an HTTP client
 	client httpClient
@@ -32,10 +35,21 @@ type agentCommunicator struct {
 
 // buildURL builds an Agent URL based on the sufix for the different Agent services.
 func (a *agentCommunicator) buildURL(sufix string) string {
-	url := "http://" + a.host + ":" + a.port + sufix
+	a.hostMu.RLock()
+	host := a.host
+	a.hostMu.RUnlock()
 
-	if sufix[len(sufix)-1:] == "." && a.from.EntityID != "" {
-		url += a.from.EntityID
+	a.fromMu.RLock()
+	entityID := ""
+	if a.from != nil {
+		entityID = a.from.EntityID
+	}
+	a.fromMu.RUnlock()
+
+	url := "http://" + host + ":" + a.port + sufix
+
+	if sufix[len(sufix)-1:] == "." && entityID != "" {
+		url += entityID
 	}
 
 	return url
