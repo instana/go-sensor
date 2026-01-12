@@ -1,12 +1,12 @@
 | Serial Number | Technology | Target Package | Instana Package | Supported Lowest Version - Target Package | Supported Highest Version - Target Package |
 | ------------- | ---------- | --------------- | --------------- | ----------------------------------------- | ----------------------------------------- |
 | 1 | HTTP | net/http | | | |
-| 2 | HTTP | [echo](https://pkg.go.dev/github.com/labstack/echo/v4) | [instaecho](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instaecho) | v4.6.0 | v4.14.0 |
+| 2 | HTTP | [echo](https://pkg.go.dev/github.com/labstack/echo/v4) | [instaecho](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instaecho) | v4.6.0 | v4.15.0 |
 | 3 | HTTP | [gin](https://pkg.go.dev/github.com/gin-gonic/gin) | [instagin](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instagin) | v1.7.2 | v1.11.0 |
 | 4 | HTTP | [mux](https://pkg.go.dev/github.com/gorilla/mux) | [instamux](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instamux) | v1.8.0 | v1.8.1 |
 | 5 | HTTP | [httprouter](https://pkg.go.dev/github.com/julienschmidt/httprouter) | [instahttprouter](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instahttprouter) | v1.3.0 | v1.3.0 |
 | 6 | HTTP | [fiber](https://pkg.go.dev/github.com/gofiber/fiber/v2) | [instafiber](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instafiber) | v2.48.0 | v2.52.10 |
-| 7 | RPC | [grpc](https://pkg.go.dev/google.golang.org/grpc) | [instagrpc](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instagrpc) | v1.15.0 | v1.77.0 |
+| 7 | RPC | [grpc](https://pkg.go.dev/google.golang.org/grpc) | [instagrpc](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instagrpc) | v1.15.0 | v1.78.0 |
 | 8 | Databases | database/sql | | | |
 | 9 | Databases | [mongo-driver](https://pkg.go.dev/go.mongodb.org/mongo-driver) | [instamongo](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instamongo) | v1.7.2 | v1.17.6 |
 | 10 | Databases | [mongo-driver/v2](https://pkg.go.dev/go.mongodb.org/mongo-driver/v2) | [instamongo/v2](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instamongo/v2) | v2.1.0 | v2.4.1 |
@@ -29,3 +29,6 @@
 | 27 | Databases | [azcosmos](https://pkg.go.dev/github.com/Azure/azure-sdk-for-go/sdk/data/azcosmos) | [instacosmos](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instacosmos) | v0.3.6 | v1.4.2 |
 | 28 | Databases | [pgx/v5](https://pkg.go.dev/github.com/jackc/pgx/v5) | [instapgx/v2](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instapgx/v2) | v5.6.0 | v5.7.6 |
 | 29 | HTTP | [fasthttp](https://pkg.go.dev/github.com/valyala/fasthttp) | [instafasthttp](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instafasthttp) | v1.58.0 | v1.69.0 |
+| 28 | Databases | [pgx/v5](https://pkg.go.dev/github.com/jackc/pgx/v5) | [instapgx/v2](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instapgx/v2) | v5.6.0 | v5.8.0 |
+| 29 | HTTP | [fasthttp](https://pkg.go.dev/github.com/valyala/fasthttp) | [instafasthttp](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instafasthttp) | v1.58.0 | v1.69.0 |
+
