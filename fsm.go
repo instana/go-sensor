@@ -105,9 +105,9 @@ func (r *fsmS) lookupAgentHost(_ context.Context, e *f.Event) {
 func (r *fsmS) checkHost(e *f.Event) {
 
 	// Look for a successful ping from the configured host
-	r.agentComm.hostMu.RLock()
+	r.agentComm.mu.RLock()
 	host := r.agentComm.host
-	r.agentComm.hostMu.RUnlock()
+	r.agentComm.mu.RUnlock()
 	r.logger.Debug("checking host ", host)
 
 	found := r.agentComm.checkForSuccessResponse()
@@ -126,13 +126,10 @@ func (r *fsmS) checkHost(e *f.Event) {
 		r.logger.Debug("No INSTANA_AGENT_HOST environment variable present")
 	} else {
 		r.logger.Debug("Attempting to reach the agent with host found from the INSTANA_AGENT_HOST environment variable: ", hostFromEnv)
-		r.agentComm.hostMu.RLock()
+		r.agentComm.mu.Lock()
 		originalHost := r.agentComm.host
-		r.agentComm.hostMu.RUnlock()
-
-		r.agentComm.hostMu.Lock()
 		r.agentComm.host = hostFromEnv
-		r.agentComm.hostMu.Unlock()
+		r.agentComm.mu.Unlock()
 
 		found = r.agentComm.checkForSuccessResponse()
 
@@ -144,16 +141,16 @@ func (r *fsmS) checkHost(e *f.Event) {
 
 		r.logger.Debug("Lookup failed with host from the INSTANA_AGENT_HOST environment variable: ", hostFromEnv, ". Updating host back to the original: ", originalHost)
 
-		r.agentComm.hostMu.Lock()
+		r.agentComm.mu.Lock()
 		r.agentComm.host = originalHost
-		r.agentComm.hostMu.Unlock()
+		r.agentComm.mu.Unlock()
 	}
 
 	// Look for a successful ping for the configured default gateway
 	routeFilename := "/proc/net/route"
-	r.agentComm.hostMu.RLock()
+	r.agentComm.mu.RLock()
 	currentHost := r.agentComm.host
-	r.agentComm.hostMu.RUnlock()
+	r.agentComm.mu.RUnlock()
 	r.logger.Debug("Lookup failed for expected host: ", currentHost, ". Will attempt to read host from ", routeFilename)
 	if _, fileNotFoundErr := os.Stat(routeFilename); fileNotFoundErr == nil {
 		gateway, err := getDefaultGateway(routeFilename)
@@ -174,13 +171,10 @@ func (r *fsmS) checkHost(e *f.Event) {
 			return
 		}
 
-		r.agentComm.hostMu.RLock()
+		r.agentComm.mu.Lock()
 		originalHost := r.agentComm.host
-		r.agentComm.hostMu.RUnlock()
-
-		r.agentComm.hostMu.Lock()
 		r.agentComm.host = gateway
-		r.agentComm.hostMu.Unlock()
+		r.agentComm.mu.Unlock()
 
 		found := r.agentComm.checkForSuccessResponse()
 
@@ -192,9 +186,9 @@ func (r *fsmS) checkHost(e *f.Event) {
 
 		r.logger.Debug("Lookup failed with host from ", routeFilename, ": ", gateway, ". Updating host back to the original: ", originalHost)
 
-		r.agentComm.hostMu.Lock()
+		r.agentComm.mu.Lock()
 		r.agentComm.host = originalHost
-		r.agentComm.hostMu.Unlock()
+		r.agentComm.mu.Unlock()
 
 		r.logger.Error("Cannot connect to the agent through default gateway. Scheduling retry.")
 		r.scheduleRetry(e, r.lookupAgentHost)
@@ -208,9 +202,9 @@ func (r *fsmS) checkHost(e *f.Event) {
 func (r *fsmS) lookupSuccess(host string) {
 	r.logger.Debug("agent lookup success ", host)
 
-	r.agentComm.hostMu.Lock()
+	r.agentComm.mu.Lock()
 	r.agentComm.host = host
-	r.agentComm.hostMu.Unlock()
+	r.agentComm.mu.Unlock()
 	r.retriesLeftMu.Lock()
 	r.retriesLeft = maximumRetries
 	r.retriesLeftMu.Unlock()
@@ -260,9 +254,9 @@ func (r *fsmS) checkAndApplyHostAgentSecrets(resp agentResponse) error {
 }
 
 func (r *fsmS) applyHostAgentSettings(resp agentResponse) {
-	r.agentComm.fromMu.Lock()
+	r.agentComm.mu.Lock()
 	r.agentComm.from = newHostAgentFromS(int(resp.Pid), resp.HostID)
-	r.agentComm.fromMu.Unlock()
+	r.agentComm.mu.Unlock()
 
 	if err := r.checkAndApplyHostAgentSecrets(resp); err != nil {
 		r.logger.Error(err.Error())
@@ -366,9 +360,9 @@ func (r *fsmS) getDiscoveryS() *discoveryS {
 	}
 
 	if _, err := os.Stat("/proc"); err == nil {
-		r.agentComm.hostMu.RLock()
+		r.agentComm.mu.RLock()
 		host := r.agentComm.host
-		r.agentComm.hostMu.RUnlock()
+		r.agentComm.mu.RUnlock()
 
 		if addr, err := net.ResolveTCPAddr("tcp", host+":42699"); err == nil {
 			if tcpConn, err := net.DialTCP("tcp", nil, addr); err == nil {

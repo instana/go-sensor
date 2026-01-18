@@ -8,14 +8,14 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
+	"strings"
 	"sync"
 )
 
 // agentCommunicator is a collection of data and actions to be executed against the agent.
 type agentCommunicator struct {
 	// host is the agent host. It can be updated via default gateway or a new client announcement.
-	host   string
-	hostMu sync.RWMutex
+	host string
 
 	// port id the agent port.
 	port string
@@ -23,32 +23,33 @@ type agentCommunicator struct {
 	// from is the agent information sent with each span in the "from" (span.f) section. it's format is as follows:
 	// {e: "entityId", h: "hostAgentId", hl: trueIfServerlessPlatform, cp: "The cloud provider for a hostless span"}
 	// Only span.f.e is mandatory.
-	from   *fromS
-	fromMu sync.RWMutex
+	from *fromS
 
 	// client is an HTTP client
 	client httpClient
 
 	// l is the Instana logger
 	l LeveledLogger
+
+	// mu is the mutex for the agentCommunicator
+	mu sync.RWMutex
 }
 
 // buildURL builds an Agent URL based on the sufix for the different Agent services.
 func (a *agentCommunicator) buildURL(sufix string) string {
-	a.hostMu.RLock()
+	a.mu.RLock()
 	host := a.host
-	a.hostMu.RUnlock()
+	port := a.port
 
-	a.fromMu.RLock()
 	entityID := ""
 	if a.from != nil {
 		entityID = a.from.EntityID
 	}
-	a.fromMu.RUnlock()
+	a.mu.RUnlock()
 
-	url := "http://" + host + ":" + a.port + sufix
+	url := "http://" + host + ":" + port + sufix
 
-	if sufix[len(sufix)-1:] == "." && entityID != "" {
+	if strings.HasSuffix(sufix, ".") && entityID != "" {
 		url += entityID
 	}
 
