@@ -116,17 +116,30 @@ In terms of logging, the SDK provides two distinct logging features:
 
 #### Traditional Logging
 
-Many logs are provided by the SDK, usually prefixed with "INSTANA" and are useful to understand what the tracer is doing underneath. It can also be used for debugging and troubleshoot reasons.
-Customers can also provide logs by calling one of the following: [Collector.Info()](https://pkg.go.dev/github.com/instana/go-sensor#Collector.Info), [Collector.Warn()](https://pkg.go.dev/github.com/instana/go-sensor#Collector.Warn), [Collector.Error()](https://pkg.go.dev/github.com/instana/go-sensor#Collector.Error), [Collector.Debug()](https://pkg.go.dev/github.com/instana/go-sensor#Collector.Debug). You can setup the log level via options or the `INSTANA_LOG_LEVEL` environment variable.
+Traditional logs are **not available in the Instana dashboard**. These logs are written to the console output and are primarily used for debugging and troubleshooting purposes.
+
+The SDK provides many logs, usually prefixed with "INSTANA", which help you understand what the tracer is doing underneath. You can also generate your own logs by calling one of the following methods:
+- [Collector.Info()](https://pkg.go.dev/github.com/instana/go-sensor#Collector.Info)
+- [Collector.Warn()](https://pkg.go.dev/github.com/instana/go-sensor#Collector.Warn)
+- [Collector.Error()](https://pkg.go.dev/github.com/instana/go-sensor#Collector.Error)
+- [Collector.Debug()](https://pkg.go.dev/github.com/instana/go-sensor#Collector.Debug)
+
+You can control the log level via SDK options or the `INSTANA_LOG_LEVEL` environment variable.
+
+If you're using the **default logger**: Logs are written to the standard console output (stdout/stderr). If you're using a **custom logger**: Logs are written to the destination configured in your custom logger implementation.
+
+> [!NOTE]
+> If you need logs to appear in the Instana dashboard under Analytics/Logs, use **Instana Logs** (described below) instead of traditional logging.
 
 You can find detailed information in the [Instana documentation](https://www.ibm.com/docs/en/instana-observability/current?topic=technologies-monitoring-go#tracers-logs).
 
 #### Instana Logs
 
-Instana Logs are spans of the type `log.go` that are rendered in a special format in the dashboard.
-You can create logs and report them to the agent or attach them as children of an existing span.
+Instana Logs are spans of the type `log.go` that are rendered in a special format in the Instana dashboard under **Analytics/Logs**. You can create logs and report them to the agent or attach them as children of an existing span.
 
-The code snippet below shows how to create logs and send them to the agent:
+##### Manual Log Creation
+
+The code snippet below shows how to manually create logs and send them to the agent:
 
 ```go
 col := instana.InitCollector(&instana.Options{
@@ -143,6 +156,12 @@ col.StartSpan("log.go", []ot.StartSpanOption{
 ```
 
 This log can then be visualized in the dashboard under Analytics/Logs. You can add a filter by service name. In our example, the service name is "My Go App".
+
+##### Logrus Integration
+
+The Go sensor provides an **instrumentation library for [Logrus](https://github.com/sirupsen/logrus)**, a popular structured logging library. The `instalogrus` hook automatically collects warning and error logs from your Logrus logger, associates them with the current span, and sends them to Instana.
+
+For detailed information, see the [instalogrus documentation](./instrumentation/instalogrus/README.md).
 
 ### Opt-in Exit Spans
 
