@@ -84,7 +84,7 @@ type gcrAgent struct {
 	snapshot         gcrSnapshot
 	lastProcessStats processStats
 
-	mu        sync.Mutex
+	mu        sync.RWMutex
 	spanQueue []Span
 
 	runtimeSnapshot *SnapshotCollector
@@ -133,12 +133,14 @@ func newGCRAgent(
 		logger: logger,
 	}
 
-	go func() {
+	go func(a *gcrAgent) {
 		for {
 			for i := 0; i < maximumRetries; i++ {
-				snapshot, ok := agent.collectSnapshot(context.Background())
+				snapshot, ok := a.collectSnapshot(context.Background())
 				if ok {
-					agent.snapshot = snapshot
+					a.mu.Lock()
+					a.snapshot = snapshot
+					a.mu.Unlock()
 					break
 				}
 
@@ -146,7 +148,7 @@ func newGCRAgent(
 			}
 			time.Sleep(snapshotCollectionInterval)
 		}
-	}()
+	}(agent)
 	go agent.processStats.Run(context.Background(), time.Second)
 
 	return agent
@@ -208,7 +210,11 @@ func (a *gcrAgent) SendMetrics(data acceptor.Metrics) (err error) {
 func (a *gcrAgent) SendEvent(event *EventData) error { return nil }
 
 func (a *gcrAgent) SendSpans(spans []Span) error {
-	from := newServerlessAgentFromS(a.snapshot.Service.EntityID, "gcp")
+	a.mu.RLock()
+	entityID := a.snapshot.Service.EntityID
+	a.mu.RUnlock()
+
+	from := newServerlessAgentFromS(entityID, "gcp")
 	for i := range spans {
 		spans[i].From = from
 	}
@@ -286,6 +292,9 @@ func (a *gcrAgent) collectSnapshot(ctx context.Context) (gcrSnapshot, bool) {
 		return gcrSnapshot{}, false
 	}
 
+	a.mu.RLock()
+	defer a.mu.RUnlock()
+
 	snapshot := newGCRSnapshot(a.PID, gcrMetadata{
 		ComputeMetadata: md,
 		Service:         os.Getenv(kService),
@@ -294,6 +303,9 @@ func (a *gcrAgent) collectSnapshot(ctx context.Context) (gcrSnapshot, bool) {
 		Port:            os.Getenv("PORT"),
 	})
 	snapshot.Service.Zone = a.Zone
+	// Tags remains unchanged after initialization.
+	// An RLock alone is not enough if Tags ever becomes mutable.
+	// Update the locking strategy if this behavior changes.
 	snapshot.Service.Tags = a.Tags
 
 	a.logger.Debug("collected snapshot")
