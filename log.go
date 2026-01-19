@@ -35,6 +35,9 @@ func SetLogger(l LeveledLogger) {
 	defaultLogger = l
 
 	// if the sensor has already been initialized, we need to update its logger too
+	muSensor.RLock()
+	defer muSensor.RUnlock()
+
 	if sensor != nil {
 		sensor.setLogger(l)
 	}
