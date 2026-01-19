@@ -72,7 +72,6 @@ func (r *Recorder) RecordSpan(span *spanS) {
 	muSensor.RLock()
 	maxBuffered := sensor.options.MaxBufferedSpans
 	forceAt := sensor.options.ForceTransmissionStartingAt
-	agentReady := sensor.Agent().Ready()
 	muSensor.RUnlock()
 
 	if len(r.spans) == maxBuffered {
@@ -81,7 +80,7 @@ func (r *Recorder) RecordSpan(span *spanS) {
 
 	r.spans = append(r.spans, newSpan(span))
 
-	if r.testMode || !agentReady {
+	if r.testMode || !safeSensor().Agent().Ready() {
 		return
 	}
 
