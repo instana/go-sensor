@@ -138,7 +138,9 @@ func newGCRAgent(
 			for i := 0; i < maximumRetries; i++ {
 				snapshot, ok := a.collectSnapshot(context.Background())
 				if ok {
+					a.mu.Lock()
 					a.snapshot = snapshot
+					a.mu.Unlock()
 					break
 				}
 
