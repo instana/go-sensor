@@ -93,6 +93,10 @@ func (a *genericServerlessAgent) SendSpans(spans []Span) error {
 func (a *genericServerlessAgent) SendProfiles([]autoprofile.Profile) error { return nil }
 
 func (a *genericServerlessAgent) Flush(ctx context.Context) error {
+	if len(a.spanQueue) == 0 {
+		return nil
+	}
+
 	a.mu.RLock()
 	entityID := a.snapshot.EntityID
 	a.mu.RUnlock()
