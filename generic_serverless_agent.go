@@ -30,7 +30,7 @@ type genericServerlessAgent struct {
 
 	snapshot serverlessSnapshot
 
-	mu        sync.Mutex
+	mu        sync.RWMutex
 	spanQueue []Span
 
 	client *http.Client
@@ -65,16 +65,16 @@ func newGenericServerlessAgent(acceptorEndpoint, agentKey string, client *http.C
 		},
 	}
 
-	go func() {
+	go func(a *genericServerlessAgent) {
 		t := time.NewTicker(flushPeriodForGenericInSec * time.Second)
 		defer t.Stop()
 
 		for range t.C {
-			if err := agent.Flush(context.Background()); err != nil {
-				agent.logger.Error("failed to post collected data: ", err)
+			if err := a.Flush(context.Background()); err != nil {
+				a.logger.Error("failed to post collected data: ", err)
 			}
 		}
-	}()
+	}(agent)
 
 	return agent
 }
@@ -93,7 +93,15 @@ func (a *genericServerlessAgent) SendSpans(spans []Span) error {
 func (a *genericServerlessAgent) SendProfiles([]autoprofile.Profile) error { return nil }
 
 func (a *genericServerlessAgent) Flush(ctx context.Context) error {
-	from := newServerlessAgentFromS(a.snapshot.EntityID, "generic_serverless")
+	if len(a.spanQueue) == 0 {
+		return nil
+	}
+
+	a.mu.RLock()
+	entityID := a.snapshot.EntityID
+	a.mu.RUnlock()
+
+	from := newServerlessAgentFromS(entityID, "generic_serverless")
 
 	payload := struct {
 		Spans []Span `json:"spans,omitempty"`
