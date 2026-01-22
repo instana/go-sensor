@@ -32,7 +32,7 @@ The project maintains comprehensive test coverage to ensure reliability and prev
 
 ### Pull Request Process
 
-Contributions are submitted through GitHub pull requests against the `main` branch. Each PR should have a clear description of the changes and their purpose, reference any related issues, and ensure all tests pass. The Instana Go Tracer team reviews all submissions and may request changes or improvements. Once approved, maintainers will merge the contribution.
+Contributions are submitted through GitHub pull requests against the `main` branch. Each PR should have a clear description of the changes and their purpose, reference any related issues, and ensure all tests pass. We encourage contributors to follow [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) for commit messages to maintain a clear and consistent project history. The Instana Go Tracer team reviews all submissions and may request changes or improvements. Once approved, maintainers will merge the contribution.
 
 ## Project Structure
 
