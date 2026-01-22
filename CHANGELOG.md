@@ -3,6 +3,22 @@
 This document provides information related to the releases of the core SDK of
 go-sensor project.
 
+## [v1.72.0](https://github.com/instana/go-sensor/releases/tag/v1.72.0)
+
+* feat: add support oracle tns parser for DbConnDetails
+* feat: add key-value format support for Oracle connections with masking password
+* fix: resolve code quality issues reported by SonarQube in the shell scripts
+
+## [v1.71.2](https://github.com/instana/go-sensor/releases/tag/v1.71.2)
+
+* fix: race conditions in core module
+* chore: resolve security hotspots reported by Sonar in the GitHub Action pipelines
+* fix: handle MySQL DSN parsing correctly when port is optional
+
+## [v1.71.1](https://github.com/instana/go-sensor/releases/tag/v1.71.1)
+
+* ci: fix build error in release scripts
+
 ## [v1.71.0](https://github.com/instana/go-sensor/releases/tag/v1.71.0)
 
 * feat: add support for disabling log collection at the tracer level
