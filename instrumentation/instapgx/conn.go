@@ -15,16 +15,16 @@ import (
 var detailedBatchMode = false
 var detailedBatchModeMaxEntries = 10
 
-// EnableDetailedBatchMode allows reporting detailed information about sql statements when executing sql in batches.
-func EnableDetailedBatchMode() {
-	detailedBatchMode = true
-}
-
 // Conn wraps *pgx.Conn and adds tracing to it.
 type Conn struct {
 	*pgx.Conn
 	sensor instana.TracerLogger
 	config *pgx.ConnConfig
+}
+
+// EnableDetailedBatchMode allows reporting detailed information about sql statements when executing sql in batches.
+func EnableDetailedBatchMode() {
+	detailedBatchMode = true
 }
 
 // Prepare wraps (*pgx.Conn).Prepare method and adds tracing to it.
