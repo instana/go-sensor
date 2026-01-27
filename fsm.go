@@ -12,6 +12,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"strconv"
+	"sync"
 	"time"
 
 	f "github.com/looplab/fsm"
@@ -32,7 +33,9 @@ type fsmS struct {
 	agentComm                  *agentCommunicator
 	fsm                        *f.FSM
 	timer                      *time.Timer
+	timerMu                    sync.Mutex
 	retriesLeft                int
+	retriesLeftMu              sync.Mutex
 	expDelayFunc               func(retryNumber int) time.Duration
 	lookupAgentHostRetryPeriod time.Duration
 	logger                     LeveledLogger
@@ -77,12 +80,16 @@ func newFSM(ahd *agentCommunicator, logger LeveledLogger) *fsmS {
 	return ret
 }
 
-func (r *fsmS) scheduleRetry(e *f.Event, cb func(_ context.Context, e *f.Event)) {
+func (r *fsmS) scheduleRetry(event *f.Event, cb func(_ context.Context, e *f.Event)) {
+	r.timerMu.Lock()
 	r.timer = time.NewTimer(r.lookupAgentHostRetryPeriod)
-	go func() {
-		<-r.timer.C
+	timer := r.timer
+	r.timerMu.Unlock()
+
+	go func(e *f.Event, cb func(_ context.Context, e *f.Event)) {
+		<-timer.C
 		cb(context.Background(), e)
-	}()
+	}(event, cb)
 }
 
 func (r *fsmS) scheduleRetryWithExponentialDelay(e *f.Event, cb func(_ context.Context, e *f.Event), retryNumber int) {
@@ -98,8 +105,10 @@ func (r *fsmS) lookupAgentHost(_ context.Context, e *f.Event) {
 func (r *fsmS) checkHost(e *f.Event) {
 
 	// Look for a successful ping from the configured host
+	r.agentComm.mu.RLock()
 	host := r.agentComm.host
-	r.logger.Debug("checking host ", r.agentComm.host)
+	r.agentComm.mu.RUnlock()
+	r.logger.Debug("checking host ", host)
 
 	found := r.agentComm.checkForSuccessResponse()
 
@@ -117,8 +126,11 @@ func (r *fsmS) checkHost(e *f.Event) {
 		r.logger.Debug("No INSTANA_AGENT_HOST environment variable present")
 	} else {
 		r.logger.Debug("Attempting to reach the agent with host found from the INSTANA_AGENT_HOST environment variable: ", hostFromEnv)
+		r.agentComm.mu.Lock()
 		originalHost := r.agentComm.host
 		r.agentComm.host = hostFromEnv
+		r.agentComm.mu.Unlock()
+
 		found = r.agentComm.checkForSuccessResponse()
 
 		if found {
@@ -129,12 +141,17 @@ func (r *fsmS) checkHost(e *f.Event) {
 
 		r.logger.Debug("Lookup failed with host from the INSTANA_AGENT_HOST environment variable: ", hostFromEnv, ". Updating host back to the original: ", originalHost)
 
+		r.agentComm.mu.Lock()
 		r.agentComm.host = originalHost
+		r.agentComm.mu.Unlock()
 	}
 
 	// Look for a successful ping for the configured default gateway
 	routeFilename := "/proc/net/route"
-	r.logger.Debug("Lookup failed for expected host: ", r.agentComm.host, ". Will attempt to read host from ", routeFilename)
+	r.agentComm.mu.RLock()
+	currentHost := r.agentComm.host
+	r.agentComm.mu.RUnlock()
+	r.logger.Debug("Lookup failed for expected host: ", currentHost, ". Will attempt to read host from ", routeFilename)
 	if _, fileNotFoundErr := os.Stat(routeFilename); fileNotFoundErr == nil {
 		gateway, err := getDefaultGateway(routeFilename)
 		r.logger.Debug("Identified the gateway: ", gateway)
@@ -154,8 +171,11 @@ func (r *fsmS) checkHost(e *f.Event) {
 			return
 		}
 
+		r.agentComm.mu.Lock()
 		originalHost := r.agentComm.host
 		r.agentComm.host = gateway
+		r.agentComm.mu.Unlock()
+
 		found := r.agentComm.checkForSuccessResponse()
 
 		if found {
@@ -166,7 +186,9 @@ func (r *fsmS) checkHost(e *f.Event) {
 
 		r.logger.Debug("Lookup failed with host from ", routeFilename, ": ", gateway, ". Updating host back to the original: ", originalHost)
 
+		r.agentComm.mu.Lock()
 		r.agentComm.host = originalHost
+		r.agentComm.mu.Unlock()
 
 		r.logger.Error("Cannot connect to the agent through default gateway. Scheduling retry.")
 		r.scheduleRetry(e, r.lookupAgentHost)
@@ -180,16 +202,25 @@ func (r *fsmS) checkHost(e *f.Event) {
 func (r *fsmS) lookupSuccess(host string) {
 	r.logger.Debug("agent lookup success ", host)
 
+	r.agentComm.mu.Lock()
 	r.agentComm.host = host
+	r.agentComm.mu.Unlock()
+	r.retriesLeftMu.Lock()
 	r.retriesLeft = maximumRetries
+	r.retriesLeftMu.Unlock()
 	if err := r.fsm.Event(context.Background(), eLookup); err != nil {
 		r.logger.Warn("failed to initiate the state transition: ", err.Error())
 	}
 }
 
 func (r *fsmS) handleRetries(e *f.Event, cb func(_ context.Context, e *f.Event), retryFailMsg, retryMsg string) {
+	r.retriesLeftMu.Lock()
 	r.retriesLeft--
-	if r.retriesLeft == 0 {
+	retriesLeft := r.retriesLeft
+	retryNumber := maximumRetries - r.retriesLeft + 1
+	r.retriesLeftMu.Unlock()
+
+	if retriesLeft == 0 {
 		r.logger.Error(retryFailMsg)
 		if err := r.fsm.Event(context.Background(), eInit); err != nil {
 			r.logger.Warn("failed to initiate the state transition: ", err.Error())
@@ -198,7 +229,6 @@ func (r *fsmS) handleRetries(e *f.Event, cb func(_ context.Context, e *f.Event),
 	}
 
 	r.logger.Debug(retryMsg)
-	retryNumber := maximumRetries - r.retriesLeft + 1
 	r.scheduleRetryWithExponentialDelay(e, cb, retryNumber)
 }
 
@@ -224,7 +254,9 @@ func (r *fsmS) checkAndApplyHostAgentSecrets(resp agentResponse) error {
 }
 
 func (r *fsmS) applyHostAgentSettings(resp agentResponse) {
+	r.agentComm.mu.Lock()
 	r.agentComm.from = newHostAgentFromS(int(resp.Pid), resp.HostID)
+	r.agentComm.mu.Unlock()
 
 	if err := r.checkAndApplyHostAgentSecrets(resp); err != nil {
 		r.logger.Error(err.Error())
@@ -270,10 +302,10 @@ func (r *fsmS) applyDisableTracingConfig(resp agentResponse) {
 	}
 }
 
-func (r *fsmS) announceSensor(_ context.Context, e *f.Event) {
-	r.logger.Debug("announcing sensor to the agent")
+func (fsm *fsmS) announceSensor(_ context.Context, event *f.Event) {
+	fsm.logger.Debug("announcing sensor to the agent")
 
-	go func() {
+	go func(r *fsmS, e *f.Event) {
 		defer func() {
 			if err := recover(); err != nil {
 				r.logger.Debug("Announce recovered:", err)
@@ -296,11 +328,13 @@ func (r *fsmS) announceSensor(_ context.Context, e *f.Event) {
 
 		r.applyHostAgentSettings(*resp)
 
+		r.retriesLeftMu.Lock()
 		r.retriesLeft = maximumRetries
+		r.retriesLeftMu.Unlock()
 		if err := r.fsm.Event(context.Background(), eAnnounce); err != nil {
 			r.logger.Warn("failed to initiate the state transition: ", err.Error())
 		}
-	}()
+	}(fsm, event)
 }
 
 func (r *fsmS) getDiscoveryS() *discoveryS {
@@ -326,7 +360,11 @@ func (r *fsmS) getDiscoveryS() *discoveryS {
 	}
 
 	if _, err := os.Stat("/proc"); err == nil {
-		if addr, err := net.ResolveTCPAddr("tcp", r.agentComm.host+":42699"); err == nil {
+		r.agentComm.mu.RLock()
+		host := r.agentComm.host
+		r.agentComm.mu.RUnlock()
+
+		if addr, err := net.ResolveTCPAddr("tcp", host+":42699"); err == nil {
 			if tcpConn, err := net.DialTCP("tcp", nil, addr); err == nil {
 				defer func(tcpConn *net.TCPConn) {
 					if err := tcpConn.Close(); err != nil {
@@ -353,24 +391,28 @@ func (r *fsmS) getDiscoveryS() *discoveryS {
 	return d
 }
 
-func (r *fsmS) testAgent(_ context.Context, e *f.Event) {
-	r.logger.Debug("testing communication with the agent")
-	go func() {
+func (fsm *fsmS) testAgent(_ context.Context, e *f.Event) {
+	fsm.logger.Debug("testing communication with the agent")
+	go func(r *fsmS) {
 		if !r.agentComm.pingAgent() {
 			r.handleRetries(e, r.testAgent, "testAgent: Couldn't announce the sensor after reaching the maximum amount of attempts.", "Agent is not yet ready. Scheduling retry.")
 			return
 		}
 
+		r.retriesLeftMu.Lock()
 		r.retriesLeft = maximumRetries
+		r.retriesLeftMu.Unlock()
 		if err := r.fsm.Event(context.Background(), eTest); err != nil {
 			r.logger.Warn("failed to initiate the state transition: ", err.Error())
 		}
-	}()
+	}(fsm)
 }
 
 func (r *fsmS) reset() {
 	r.logger.Debug("State machine reset. Will restart agent connection cycle from the 'init' state")
+	r.retriesLeftMu.Lock()
 	r.retriesLeft = maximumRetries
+	r.retriesLeftMu.Unlock()
 	if err := r.fsm.Event(context.Background(), eInit); err != nil {
 		r.logger.Warn("failed to initiate the state transition: ", err.Error())
 	}

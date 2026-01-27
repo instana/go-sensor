@@ -8,6 +8,8 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
+	"strings"
+	"sync"
 )
 
 // agentCommunicator is a collection of data and actions to be executed against the agent.
@@ -28,14 +30,27 @@ type agentCommunicator struct {
 
 	// l is the Instana logger
 	l LeveledLogger
+
+	// mu is the mutex for the agentCommunicator
+	mu sync.RWMutex
 }
 
 // buildURL builds an Agent URL based on the sufix for the different Agent services.
 func (a *agentCommunicator) buildURL(sufix string) string {
-	url := "http://" + a.host + ":" + a.port + sufix
+	a.mu.RLock()
+	host := a.host
+	port := a.port
 
-	if sufix[len(sufix)-1:] == "." && a.from.EntityID != "" {
-		url += a.from.EntityID
+	entityID := ""
+	if a.from != nil {
+		entityID = a.from.EntityID
+	}
+	a.mu.RUnlock()
+
+	url := "http://" + host + ":" + port + sufix
+
+	if strings.HasSuffix(sufix, ".") && entityID != "" {
+		url += entityID
 	}
 
 	return url

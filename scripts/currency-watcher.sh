@@ -34,11 +34,16 @@ get_versions_from_rss() {
     count=0
   }
   {
-    title = ""; updated = ""
+    version = ""; updated = ""
     for (i = 1; i <= NF; i++) {
-      if ($i ~ /<title>/) {
-        gsub(/.*<title>|<\/title>.*/, "", $i)
-        title = $i
+      if ($i ~ /<link.*rel="alternate".*href=/) {
+        # Extract href attribute value
+        href = $i
+        gsub(/.*href="/, "", href)
+        gsub(/".*/, "", href)
+        # Extract version from href (e.g., v5.0.0 from https://github.com/$repo/releases/tag/v5.0.0)
+        split(href, parts, "/")
+        version = parts[length(parts)]
       } else if ($i ~ /<updated>/) {
         gsub(/.*<updated>|<\/updated>.*/, "", $i)
         updated_raw = $i
@@ -48,13 +53,11 @@ get_versions_from_rss() {
     }
 
     # Compare dates
-    if (title != "" && updated != "") {
+    if (version != "" && updated != "") {
       # If updated is older than cutoff, skip
       if (updated < cutoff) {
         next
       }
-      # Extract version from title (e.g., v1.9.2)
-      version = title
       # Convert updated to dd-mm-yyyy
       split(updated, d, "-")
       formatted_date = d[3] "-" d[2] "-" d[1]
@@ -117,7 +120,7 @@ create_pr() {
 }
 
 # ==== Function: Create PR and push notifications in Slack for untracked release ====
-create_pr_for_untracked_release() {
+trigger_action() {
     local repo=$1
     local version=$2
     local instrumentation=$3
@@ -157,7 +160,7 @@ for i in "${!REPOS[@]}"; do
 
     while IFS= read -r version; do
         version_clean=$(echo "$version" | grep -oE '[vV]?[0-9]+\.[0-9]+\.[0-9]+' | grep -vE '^[12][0-9]{3}\.[01]?[0-9]\.[0-9]{2}$' | sed 's/^v//' | head -n1)
-
+        echo "Version: $version_clean"
         [[ -z "$version_clean" ]] && continue
         [[ "$DEBUG" = "true" ]] && echo "[DEBUG] instrumentation: ${instrumentation}"
         pattern_matcher="^feat\(currency\): updated instrumentation of ${instrumentation}[a-zA-Z0-9_\/-]* for new version v${version_clean}\. Id: [a-zA-Z0-9_-]+$"
@@ -170,7 +173,7 @@ for i in "${!REPOS[@]}"; do
             break
         else
             [[ "$INFO" = "true" ]] && echo "[INFO] There is a need to create a PR for $version_clean"
-            create_pr_for_untracked_release "$repo" "$version_clean" "$instrumentation"
+            trigger_action "$repo" "$version_clean" "$instrumentation"
             break
         fi
     done <<< "$versions"
