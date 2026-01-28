@@ -1,4 +1,4 @@
-package instaechov2_test
+package main
 
 import "github.com/labstack/echo/v5"
 
