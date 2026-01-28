@@ -213,6 +213,9 @@ func (r *sensorS) serviceOrBinaryName() string {
 //
 // Deprecated: Use [StartMetrics] instead.
 func InitSensor(options *Options) {
+	muSensor.Lock()
+	defer muSensor.Unlock()
+
 	if sensor != nil {
 		return
 	}
@@ -221,9 +224,7 @@ func InitSensor(options *Options) {
 		options = DefaultOptions()
 	}
 
-	muSensor.Lock()
 	sensor = newSensor(options)
-	muSensor.Unlock()
 
 	// configure auto-profiling
 	autoprofile.SetLogger(sensor.logger)
@@ -265,22 +266,22 @@ func StartMetrics(options *Options) {
 
 // Ready returns whether the Instana collector is ready to collect and send data to the agent
 func Ready() bool {
-	if sensor == nil {
+	if safeSensor() == nil {
 		return false
 	}
 
-	return sensor.Agent().Ready()
+	return safeSensor().Agent().Ready()
 }
 
 // Flush forces Instana collector to send all buffered data to the agent. This method is intended to implement
 // graceful service shutdown and not recommended for intermittent use. Once Flush() is called, it's not guaranteed
 // that collector remains in operational state.
 func Flush(ctx context.Context) error {
-	if sensor == nil {
+	if safeSensor() == nil {
 		return nil
 	}
 
-	return sensor.Agent().Flush(ctx)
+	return safeSensor().Agent().Flush(ctx)
 }
 
 // ShutdownSensor cleans up the internal global sensor reference. The next time that instana.InitSensor is called,

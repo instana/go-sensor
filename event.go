@@ -38,9 +38,12 @@ const (
 // SendDefaultServiceEvent sends a default event which already contains the service and host
 func SendDefaultServiceEvent(title string, text string, sev severity, duration time.Duration) {
 	var service string
+
+	muSensor.RLock()
 	if sensor != nil {
 		service = sensor.serviceOrBinaryName()
 	}
+	muSensor.RUnlock()
 
 	// If the sensor is not yet initialized, there is no default service (as
 	// configured on the sensor) so we will send blank instead
@@ -71,7 +74,7 @@ func SendHostEvent(title string, text string, sev severity, duration time.Durati
 }
 
 func sendEvent(event *EventData) {
-	if sensor == nil {
+	if safeSensor() == nil {
 		// If the sensor hasn't initialized we do so here so that we properly
 		// discover where the host agent may be as it varies between a
 		// normal host, docker, kubernetes etc..
@@ -79,7 +82,7 @@ func sendEvent(event *EventData) {
 	}
 
 	// we do fire & forget here, because the whole pid dance isn't necessary to send events
-	go func() {
-		_ = safeSensor().Agent().SendEvent(event)
-	}()
+	go func(e *EventData) {
+		_ = safeSensor().Agent().SendEvent(e)
+	}(event)
 }
