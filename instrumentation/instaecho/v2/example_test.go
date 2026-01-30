@@ -3,8 +3,8 @@
 //
 // SPDX-License-Identifier: MIT
 
-//go:build go1.18
-// +build go1.18
+//go:build 1.25.0
+// +build 1.25.0
 
 package instaechov2_test
 

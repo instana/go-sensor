@@ -1,6 +1,6 @@
 module github.com/instana/go-sensor/instrumentation/instaecho/v2
 
-go 1.25.6
+go 1.25.0
 
 require (
 	github.com/instana/go-sensor v1.72.0
