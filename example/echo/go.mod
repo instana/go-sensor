@@ -17,6 +17,6 @@ require (
 )
 
 replace (
-	github.com/instana/go-sensor => ../../../../
-	github.com/instana/go-sensor/instrumentation/instaecho/v2 => ../
+	github.com/instana/go-sensor => ../../
+	github.com/instana/go-sensor/instrumentation/instaecho/v2 => ../../instrumentation/instaecho/v2
 )
