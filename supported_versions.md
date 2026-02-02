@@ -9,7 +9,7 @@
 | 7 | RPC | [grpc](https://pkg.go.dev/google.golang.org/grpc) | [instagrpc](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instagrpc) | v1.15.0 | v1.78.0 |
 | 8 | Databases | database/sql | | | |
 | 9 | Databases | [mongo-driver](https://pkg.go.dev/go.mongodb.org/mongo-driver) | [instamongo](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instamongo) | v1.7.2 | v1.17.8 |
-| 10 | Databases | [mongo-driver/v2](https://pkg.go.dev/go.mongodb.org/mongo-driver/v2) | [instamongo/v2](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instamongo/v2) | v2.1.0 | v2.4.2 |
+| 10 | Databases | [mongo-driver/v2](https://pkg.go.dev/go.mongodb.org/mongo-driver/v2) | [instamongo/v2](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instamongo/v2) | v2.1.0 | v2.5.0 |
 | 11 | Databases | [pgx](https://pkg.go.dev/github.com/jackc/pgx/v4) | [instapgx](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instapgx) | v4.14.1 | v4.18.3 |
 | 12 | Databases | [go-redis](https://pkg.go.dev/github.com/go-redis/redis/v8) | [instaredis](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instaredis) | v8.11.4 | v8.11.5 |
 | 13 | Databases | [redigo](https://pkg.go.dev/github.com/gomodule/redigo) | [instaredigo](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instaredigo) | v1.8.8 | v1.9.3 |
@@ -19,7 +19,7 @@
 | 17 | Messaging | [sarama](https://pkg.go.dev/github.com/IBM/sarama) | [instasarama](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instasarama) | v1.19.0 | v1.46.3 |
 | 18 | Messaging | [amqp091-go](https://pkg.go.dev/github.com/rabbitmq/amqp091-go) | [instaamqp091](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instaamqp091) | v1.5.0 | v1.10.0 |
 | 19 | GraphQL | [graphql](https://pkg.go.dev/github.com/graphql-go/graphql) | [instagraphql](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instagraphql) | v0.8.0 | v0.8.1 |
-| 20 | Other | [storage](https://pkg.go.dev/cloud.google.com/go/storage) | [storage](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/cloud.google.com/go/storage) | v1.7.0 | v1.59.1 |
+| 20 | Other | [storage](https://pkg.go.dev/cloud.google.com/go/storage) | [storage](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/cloud.google.com/go/storage) | v1.7.0 | v1.59.2 |
 | 21 | Other | [aws-sdk-go](https://pkg.go.dev/github.com/aws/aws-sdk-go) | [instaawssdk](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instaawssdk) | v1.8.0 | v1.55.8 |
 | 22 | Other | [aws-lambda-go](https://pkg.go.dev/github.com/aws/aws-lambda-go) | [instalambda](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instalambda) | v1.20.0 | v1.52.0 |
 | 23 | Other | [logrus](https://pkg.go.dev/github.com/sirupsen/logrus) | [instalogrus](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instalogrus) | v1.5.0 | v1.9.4 |
