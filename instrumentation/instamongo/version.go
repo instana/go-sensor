@@ -4,4 +4,4 @@
 package instamongo
 
 // Version is the instrumentation module semantic version
-const Version = "1.41.2"
+const Version = "1.41.3"
