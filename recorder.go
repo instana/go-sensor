@@ -80,15 +80,21 @@ func (r *Recorder) RecordSpan(span *spanS) {
 
 	r.spans = append(r.spans, newSpan(span))
 
-	if r.testMode || !safeSensor().Agent().Ready() {
+	s, ok := safeSensor()
+	if !ok {
+		defaultLogger.Error("recorder: sensor not initialized")
+		return
+	}
+
+	if r.testMode || !s.Agent().Ready() {
 		return
 	}
 
 	if len(r.spans) >= forceAt {
-		sensor.logger.Debug("forcing ", len(r.spans), "span(s) to the agent")
+		s.logger.Debug("forcing ", len(r.spans), "span(s) to the agent")
 		go func() {
 			if err := r.Flush(context.Background()); err != nil {
-				sensor.logger.Error("failed to flush the spans: ", err.Error())
+				s.logger.Error("failed to flush the spans: ", err.Error())
 			}
 		}()
 	}
@@ -124,7 +130,12 @@ func (r *Recorder) Flush(ctx context.Context) error {
 		return nil
 	}
 
-	if err := safeSensor().Agent().SendSpans(spansToSend); err != nil {
+	s, ok := safeSensor()
+	if !ok {
+		return fmt.Errorf("recorder: sensor not initialized")
+	}
+
+	if err := s.Agent().SendSpans(spansToSend); err != nil {
 		r.Lock()
 		defer r.Unlock()
 

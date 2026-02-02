@@ -6,6 +6,7 @@ package instana
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -160,10 +161,14 @@ func newSensor(options *Options) *sensorS {
 // safeSensor safely returns the global sensor instance for concurrent access.
 // It acquires a read lock and should only be used for read operations.
 // Since the sensor is immutable after initialization, this provides sufficient protection against data races.
-func safeSensor() *sensorS {
+func safeSensor() (*sensorS, bool) {
+	if sensor == nil {
+		return nil, false
+	}
+
 	muSensor.RLock()
 	defer muSensor.RUnlock()
-	return sensor
+	return sensor, true
 }
 
 func (r *sensorS) setLogger(l LeveledLogger) {
@@ -265,23 +270,29 @@ func StartMetrics(options *Options) {
 }
 
 // Ready returns whether the Instana collector is ready to collect and send data to the agent
-func Ready() bool {
-	if safeSensor() == nil {
-		return false
+func Ready() (ok bool) {
+	var s *sensorS
+	if s, ok = safeSensor(); !ok {
+		return
 	}
 
-	return safeSensor().Agent().Ready()
+	return s.Agent().Ready()
 }
 
 // Flush forces Instana collector to send all buffered data to the agent. This method is intended to implement
 // graceful service shutdown and not recommended for intermittent use. Once Flush() is called, it's not guaranteed
 // that collector remains in operational state.
 func Flush(ctx context.Context) error {
-	if safeSensor() == nil {
-		return nil
+	var (
+		s  *sensorS
+		ok bool
+	)
+
+	if s, ok = safeSensor(); !ok {
+		return fmt.Errorf("sensor instance is nil")
 	}
 
-	return safeSensor().Agent().Flush(ctx)
+	return s.Agent().Flush(ctx)
 }
 
 // ShutdownSensor cleans up the internal global sensor reference. The next time that instana.InitSensor is called,
