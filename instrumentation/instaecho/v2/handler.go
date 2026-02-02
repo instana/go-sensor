@@ -27,7 +27,7 @@ func New(col instana.TracerLogger) *echo.Echo {
 func Middleware(col instana.TracerLogger) echo.MiddlewareFunc {
 	return echo.MiddlewareFunc(func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(ctx *echo.Context) error {
-			// Get route info directly from context (O(1) operation)
+			// Get route info directly from context
 			ri := ctx.RouteInfo()
 			
 			// For unmatched routes (404), use request info as fallback

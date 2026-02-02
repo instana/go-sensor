@@ -31,7 +31,8 @@ e := instaechov2.New(collector)
 e.GET("/foo", func(c *echo.Context) error { /* ... */ })
 // ...
 ```
-[Full example][fullExample]
+
+See [runnable examples][fullExample] in the documentation, or check out the [standalone example application](example/).
 
 
 [godoc]: https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instaecho/v2
