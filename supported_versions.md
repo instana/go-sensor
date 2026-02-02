@@ -8,7 +8,7 @@
 | 6 | HTTP | [fiber](https://pkg.go.dev/github.com/gofiber/fiber/v2) | [instafiber](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instafiber) | v2.48.0 | v2.52.10 |
 | 7 | RPC | [grpc](https://pkg.go.dev/google.golang.org/grpc) | [instagrpc](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instagrpc) | v1.15.0 | v1.78.0 |
 | 8 | Databases | database/sql | | | |
-| 9 | Databases | [mongo-driver](https://pkg.go.dev/go.mongodb.org/mongo-driver) | [instamongo](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instamongo) | v1.7.2 | v1.17.7 |
+| 9 | Databases | [mongo-driver](https://pkg.go.dev/go.mongodb.org/mongo-driver) | [instamongo](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instamongo) | v1.7.2 | v1.17.8 |
 | 10 | Databases | [mongo-driver/v2](https://pkg.go.dev/go.mongodb.org/mongo-driver/v2) | [instamongo/v2](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instamongo/v2) | v2.1.0 | v2.5.0 |
 | 11 | Databases | [pgx](https://pkg.go.dev/github.com/jackc/pgx/v4) | [instapgx](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instapgx) | v4.14.1 | v4.18.3 |
 | 12 | Databases | [go-redis](https://pkg.go.dev/github.com/go-redis/redis/v8) | [instaredis](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instaredis) | v8.11.4 | v8.11.5 |
