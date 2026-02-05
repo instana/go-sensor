@@ -1,7 +1,7 @@
 Instana instrumentation for Echo v5 framework
 =============================================
 
-This module contains middleware to instrument HTTP services written with [`github.com/labstack/echo/v5`](https://github.com/labstack/echo).
+This module contains middleware to instrument HTTP services written with [`Echo v5`](https://github.com/labstack/echo).
 
 [![PkgGoDev](https://pkg.go.dev/badge/github.com/instana/go-sensor/instrumentation/instaecho/v2)][godoc]
 
@@ -32,8 +32,4 @@ e.GET("/foo", func(c *echo.Context) error { /* ... */ })
 // ...
 ```
 
-See [runnable examples][fullExample] in the documentation, or check out the [standalone example application](example/).
-
-
 [godoc]: https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instaecho/v2
-[fullExample]: https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instaecho/v2#example-package
