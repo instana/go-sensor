@@ -29,7 +29,7 @@ func Middleware(col instana.TracerLogger) echo.MiddlewareFunc {
 		return func(ctx *echo.Context) error {
 			// Get route info directly from context
 			ri := ctx.RouteInfo()
-			
+
 			// For unmatched routes (404), use request info as fallback
 			if ri.Method == "" && ri.Path == "" {
 				ri = echo.RouteInfo{

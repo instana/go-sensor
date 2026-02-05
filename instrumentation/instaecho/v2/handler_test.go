@@ -242,7 +242,6 @@ func assertHTTPSpanData(t *testing.T, span instana.Span, expected instana.HTTPSp
 	assert.Equal(t, expected, spanData.Tags)
 }
 
-
 type alwaysReadyClient struct{}
 
 func (alwaysReadyClient) Ready() bool                                       { return true }
