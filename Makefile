@@ -4,11 +4,37 @@ LINTER ?= $(shell go env GOPATH)/bin/golangci-lint
 # The list of Go build tags as they are specified in respective integration test files
 INTEGRATION_TESTS = fargate gcr lambda azure generic_serverless azureContainerApps
 
+define check_go_version                                                                                                                                                                              │
+    @MODULE_DIR=$1; \                                                                                                                                                                                │
+    if [ -f "$$MODULE_DIR/go.mod" ]; then \                                                                                                                                                          │
+        REQUIRED_VERSION=$$(grep "^go " "$$MODULE_DIR/go.mod" | awk '{print $$2}'); \                                                                                                                │
+        CURRENT_VERSION=$$(go version | awk '{print $$3}' | sed 's/go//'); \                                                                                                                         │
+        if [ -z "$$CURRENT_VERSION" ]; then \                                                                                                                                                        │
+            echo "Error: Unable to determine current Go version"; \                                                                                                                                  │
+            exit 1; \                                                                                                                                                                                │
+        fi; \                                                                                                                                                                                        │
+        if [ -n "$$REQUIRED_VERSION" ]; then \                                                                                                                                                       │
+            printf "$$REQUIRED_VERSION\n$$CURRENT_VERSION" | sort -V | head -n1 | grep -q "$$REQUIRED_VERSION" || { \                                                                                │
+                echo "Skipping $$MODULE_DIR: requires Go $$REQUIRED_VERSION, current is $$CURRENT_VERSION"; \                                                                                        │
+                exit 0; \                                                                                                                                                                            │
+            }; \                                                                                                                                                                                     │
+        fi; \                                                                                                                                                                                        │
+    fi                                                                                                                                                                                               │
+endef
+
 ifeq ($(RUN_LINTER),yes)
 test: $(LINTER)
 endif
 
 test: $(MODULES) legal
+
+# Modify the module target to include version check                                                                                                                                                  │
+$(MODULES):                                                                                                                                                                                          │
+    $(call check_go_version,$@)                                                                                                                                                                      │
+    cd $@ && go get -t ./... && go test $(GOFLAGS) ./...                                                                                                                                             │
+ifeq ($(RUN_LINTER),yes)                                                                                                                                                                             │
+    cd $@ && $(LINTER) run                                                                                                                                                                           │
+endif
 
 $(MODULES):
 	cd $@ && go get -t ./... && go test $(GOFLAGS) ./...
