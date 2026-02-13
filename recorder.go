@@ -30,23 +30,23 @@ type Recorder struct {
 
 // NewRecorder initializes a new span recorder
 func NewRecorder() *Recorder {
-	r := &Recorder{}
+	recorder := &Recorder{}
 
-	ticker := time.NewTicker(1 * time.Second)
-	go func() {
+	go func(rec *Recorder) {
+		ticker := time.NewTicker(1 * time.Second)
 		for range ticker.C {
 
 			if isAgentReady() {
-				go func() {
+				go func(r *Recorder) {
 					if err := r.Flush(context.Background()); err != nil {
 						sensor.logger.Error("failed to flush the spans:  ", err.Error())
 					}
-				}()
+				}(rec)
 			}
 		}
-	}()
+	}(recorder)
 
-	return r
+	return recorder
 }
 
 // NewTestRecorder initializes a new span recorder that keeps all collected
@@ -69,21 +69,32 @@ func (r *Recorder) RecordSpan(span *spanS) {
 	r.Lock()
 	defer r.Unlock()
 
-	if len(r.spans) == sensor.options.MaxBufferedSpans {
+	muSensor.RLock()
+	maxBuffered := sensor.options.MaxBufferedSpans
+	forceAt := sensor.options.ForceTransmissionStartingAt
+	muSensor.RUnlock()
+
+	if len(r.spans) == maxBuffered {
 		r.spans = r.spans[1:]
 	}
 
 	r.spans = append(r.spans, newSpan(span))
 
-	if r.testMode || !sensor.Agent().Ready() {
+	s, ok := safeSensor()
+	if !ok {
+		defaultLogger.Error("recorder: sensor not initialized")
 		return
 	}
 
-	if len(r.spans) >= sensor.options.ForceTransmissionStartingAt {
-		sensor.logger.Debug("forcing ", len(r.spans), "span(s) to the agent")
+	if r.testMode || !s.Agent().Ready() {
+		return
+	}
+
+	if len(r.spans) >= forceAt {
+		s.logger.Debug("forcing ", len(r.spans), "span(s) to the agent")
 		go func() {
 			if err := r.Flush(context.Background()); err != nil {
-				sensor.logger.Error("failed to flush the spans: ", err.Error())
+				s.logger.Error("failed to flush the spans: ", err.Error())
 			}
 		}()
 	}
@@ -119,7 +130,12 @@ func (r *Recorder) Flush(ctx context.Context) error {
 		return nil
 	}
 
-	if err := sensor.Agent().SendSpans(spansToSend); err != nil {
+	s, ok := safeSensor()
+	if !ok {
+		return fmt.Errorf("recorder: sensor not initialized")
+	}
+
+	if err := s.Agent().SendSpans(spansToSend); err != nil {
 		r.Lock()
 		defer r.Unlock()
 

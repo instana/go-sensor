@@ -169,6 +169,12 @@ func (agent *agentS) SendMetrics(data acceptor.Metrics) error {
 
 // SendEvent sends an event using Instana Events API
 func (agent *agentS) SendEvent(event *EventData) error {
+	if event == nil {
+		agent.logger.Warn("attempted to send nil event, ignoring")
+		return errors.New("error sending event: event cannot be nil")
+	}
+
+	eventTitle := event.Title
 	err := agent.agentComm.sendDataToAgent(agentEventURL, event)
 	if err != nil {
 		if err == payloadTooLargeErr {
@@ -176,7 +182,7 @@ func (agent *agentS) SendEvent(event *EventData) error {
 		}
 
 		// do not reset the agent as it might be not initialized at this state yet
-		agent.logger.Warn("failed to send event ", event.Title, " to the host agent: ", err)
+		agent.logger.Warn("failed to send event ", eventTitle, " to the host agent: ", err)
 
 		return err
 	}
