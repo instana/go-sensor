@@ -170,5 +170,3 @@ func setupInstanaEnv() func() {
 		}
 	}
 }
-
-
