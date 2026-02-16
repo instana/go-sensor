@@ -1,5 +1,4 @@
 // SPDX-FileCopyrightText: 2026 IBM Corp.
-// SPDX-FileCopyrightText: 2026 Instana Inc.
 //
 // SPDX-License-Identifier: MIT
 
