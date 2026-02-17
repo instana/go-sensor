@@ -45,9 +45,8 @@ func (m *meterS) Run(collectInterval time.Duration) {
 		case <-ticker.C:
 			if isAgentReady() {
 				go func() {
-					s, ok := safeSensor()
+					s, ok := getSensor()
 					if !ok {
-						defaultLogger.Error("meter: sensor not initialized")
 						return
 					}
 

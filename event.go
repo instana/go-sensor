@@ -74,7 +74,7 @@ func SendHostEvent(title string, text string, sev severity, duration time.Durati
 }
 
 func sendEvent(event *EventData) {
-	s, ok := safeSensor()
+	s, ok := getSensor()
 	if !ok {
 		// If the sensor hasn't initialized we do so here so that we properly
 		// discover where the host agent may be as it varies between a

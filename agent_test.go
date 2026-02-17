@@ -80,11 +80,15 @@ func Test_agentS_SendSpans(t *testing.T) {
 }
 
 type httpClientMock struct {
-	resp *http.Response
-	err  error
+	resp   *http.Response
+	err    error
+	doFunc func(req *http.Request) (*http.Response, error)
 }
 
 func (h httpClientMock) Do(req *http.Request) (*http.Response, error) {
+	if h.doFunc != nil {
+		return h.doFunc(req)
+	}
 	return h.resp, h.err
 }
 
@@ -333,12 +337,15 @@ func Test_agentS_SendEvent(t *testing.T) {
 
 func Test_agentS_SendEvent_ConcurrentCalls(t *testing.T) {
 	// Test that concurrent SendEvent calls work correctly
+	// Create a mock client that returns a new response body for each request
+	// to avoid data races when multiple goroutines read from the same body
 	mockClient := &httpClientMock{
-		resp: &http.Response{
-			StatusCode: 200,
-			Body:       io.NopCloser(bytes.NewReader([]byte("{}"))),
+		doFunc: func(req *http.Request) (*http.Response, error) {
+			return &http.Response{
+				StatusCode: 200,
+				Body:       io.NopCloser(bytes.NewReader([]byte("{}"))),
+			}, nil
 		},
-		err: nil,
 	}
 
 	agentComm := &agentCommunicator{

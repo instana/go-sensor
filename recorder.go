@@ -60,8 +60,7 @@ func NewTestRecorder() *Recorder {
 // RecordSpan accepts spans to be recorded and added to the span queue
 // for eventual reporting to the host agent.
 func (r *Recorder) RecordSpan(span *spanS) {
-	// If we're not announced and not in test mode then just
-	// return
+	// If we're not announced and not in test mode then just return
 	if !r.testMode && !sensor.Agent().Ready() {
 		return
 	}
@@ -80,9 +79,8 @@ func (r *Recorder) RecordSpan(span *spanS) {
 
 	r.spans = append(r.spans, newSpan(span))
 
-	s, ok := safeSensor()
+	s, ok := getSensor()
 	if !ok {
-		defaultLogger.Error("recorder: sensor not initialized")
 		return
 	}
 
@@ -130,7 +128,7 @@ func (r *Recorder) Flush(ctx context.Context) error {
 		return nil
 	}
 
-	s, ok := safeSensor()
+	s, ok := getSensor()
 	if !ok {
 		return fmt.Errorf("recorder: sensor not initialized")
 	}

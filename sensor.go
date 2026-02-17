@@ -6,7 +6,6 @@ package instana
 import (
 	"context"
 	"errors"
-	"fmt"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -158,16 +157,18 @@ func newSensor(options *Options) *sensorS {
 	return s
 }
 
-// safeSensor safely returns the global sensor instance for concurrent access.
+// getSensor returns the global sensor instance for concurrent access.
 // It acquires a read lock and should only be used for read operations.
 // Since the sensor is immutable after initialization, this provides sufficient protection against data races.
-func safeSensor() (*sensorS, bool) {
+func getSensor() (*sensorS, bool) {
+	muSensor.RLock()
+	defer muSensor.RUnlock()
+
 	if sensor == nil {
+		defaultLogger.Error("failed to get sensor: instance is nil")
 		return nil, false
 	}
 
-	muSensor.RLock()
-	defer muSensor.RUnlock()
 	return sensor, true
 }
 
@@ -218,6 +219,23 @@ func (r *sensorS) serviceOrBinaryName() string {
 //
 // Deprecated: Use [StartMetrics] instead.
 func InitSensor(options *Options) {
+	if options == nil {
+		options = DefaultOptions()
+	}
+
+	// create new sensor and assign to global sensor instance
+	initSensorInstance(options)
+
+	// configure auto-profiling
+	configureAutoProfiling(options)
+
+	// start collecting metrics
+	go sensor.meter.Run(1 * time.Second)
+
+	sensor.logger.Debug("initialized Instana sensor v", Version)
+}
+
+func initSensorInstance(options *Options) {
 	muSensor.Lock()
 	defer muSensor.Unlock()
 
@@ -225,41 +243,43 @@ func InitSensor(options *Options) {
 		return
 	}
 
-	if options == nil {
-		options = DefaultOptions()
+	sensor = newSensor(options)
+}
+
+func configureAutoProfiling(options *Options) {
+	var (
+		s  *sensorS
+		ok bool
+	)
+
+	if s, ok = getSensor(); !ok {
+		return
 	}
 
-	sensor = newSensor(options)
-
-	// configure auto-profiling
-	autoprofile.SetLogger(sensor.logger)
+	autoprofile.SetLogger(s.logger)
 	autoprofile.SetOptions(autoprofile.Options{
 		IncludeProfilerFrames: options.IncludeProfilerFrames,
 		MaxBufferedProfiles:   options.MaxBufferedProfiles,
 	})
 
-	autoprofile.SetSendProfilesFunc(func(profiles []autoprofile.Profile) error {
-		if !sensor.Agent().Ready() {
-			return errors.New("sender not ready")
-		}
+	autoprofile.SetSendProfilesFunc(
+		func(profiles []autoprofile.Profile) error {
+			if !s.Agent().Ready() {
+				return errors.New("sender not ready")
+			}
 
-		sensor.logger.Debug("sending profiles to agent")
+			s.logger.Debug("sending profiles to agent")
 
-		return sensor.Agent().SendProfiles(profiles)
-	})
+			return s.Agent().SendProfiles(profiles)
+		})
 
 	if _, ok := os.LookupEnv("INSTANA_AUTO_PROFILE"); ok || options.EnableAutoProfile {
 		if !options.EnableAutoProfile {
-			sensor.logger.Info("INSTANA_AUTO_PROFILE is set, activating AutoProfile™")
+			s.logger.Info("INSTANA_AUTO_PROFILE is set, activating AutoProfile™")
 		}
 
 		autoprofile.Enable()
 	}
-
-	// start collecting metrics
-	go sensor.meter.Run(1 * time.Second)
-
-	sensor.logger.Debug("initialized Instana sensor v", Version)
 }
 
 // StartMetrics initializes the communication with the agent. Then it starts collecting and reporting metrics to the agent.
@@ -272,7 +292,7 @@ func StartMetrics(options *Options) {
 // Ready returns whether the Instana collector is ready to collect and send data to the agent
 func Ready() (ok bool) {
 	var s *sensorS
-	if s, ok = safeSensor(); !ok {
+	if s, ok = getSensor(); !ok {
 		return
 	}
 
@@ -288,8 +308,8 @@ func Flush(ctx context.Context) error {
 		ok bool
 	)
 
-	if s, ok = safeSensor(); !ok {
-		return fmt.Errorf("sensor instance is nil")
+	if s, ok = getSensor(); !ok {
+		return nil
 	}
 
 	return s.Agent().Flush(ctx)
