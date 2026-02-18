@@ -5,7 +5,7 @@ go 1.25.0
 require (
 	github.com/instana/go-sensor v1.72.0
 	github.com/instana/go-sensor/instrumentation/instaecho/v2 v2.0.0
-	github.com/labstack/echo/v5 v5.0.1
+	github.com/labstack/echo/v5 v5.0.4
 	modernc.org/sqlite v1.45.0
 )
 
