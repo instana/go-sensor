@@ -9,7 +9,7 @@ require (
 
 require (
 	github.com/graphql-go/handler v0.2.4
-	github.com/instana/go-sensor v1.72.0
+	github.com/instana/go-sensor v1.73.0
 	github.com/opentracing/opentracing-go v1.2.0
 )
 
