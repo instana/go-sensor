@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -79,11 +80,15 @@ func Test_agentS_SendSpans(t *testing.T) {
 }
 
 type httpClientMock struct {
-	resp *http.Response
-	err  error
+	resp   *http.Response
+	err    error
+	doFunc func(req *http.Request) (*http.Response, error)
 }
 
 func (h httpClientMock) Do(req *http.Request) (*http.Response, error) {
+	if h.doFunc != nil {
+		return h.doFunc(req)
+	}
 	return h.resp, h.err
 }
 
@@ -161,3 +166,220 @@ func (alwaysReadyClient) SendEvent(event *EventData) error                  { re
 func (alwaysReadyClient) SendSpans(spans []Span) error                      { return nil }
 func (alwaysReadyClient) SendProfiles(profiles []autoprofile.Profile) error { return nil }
 func (alwaysReadyClient) Flush(context.Context) error                       { return nil }
+
+func Test_agentS_SendEvent(t *testing.T) {
+	tests := []struct {
+		name             string
+		event            *EventData
+		mockResp         *http.Response
+		mockErr          error
+		expectedError    bool
+		expectedErrorMsg string
+	}{
+		{
+			name: "successful event send with warning severity",
+			event: &EventData{
+				Title:    "Test Event",
+				Text:     "This is a test event",
+				Duration: 1000,
+				Severity: int(SeverityWarning),
+				Plugin:   ServicePlugin,
+				ID:       "test-service",
+				Host:     ServiceHost,
+			},
+			mockResp: &http.Response{
+				StatusCode: 200,
+				Body:       io.NopCloser(bytes.NewReader([]byte("{}"))),
+			},
+			mockErr:       nil,
+			expectedError: false,
+		},
+		{
+			name: "successful event send with critical severity",
+			event: &EventData{
+				Title:    "Critical Event",
+				Text:     "Critical issue detected",
+				Duration: 5000,
+				Severity: int(SeverityCritical),
+				Plugin:   ServicePlugin,
+				ID:       "critical-service",
+				Host:     ServiceHost,
+			},
+			mockResp: &http.Response{
+				StatusCode: 200,
+				Body:       io.NopCloser(bytes.NewReader([]byte("{}"))),
+			},
+			mockErr:       nil,
+			expectedError: false,
+		},
+		{
+			name: "successful event send with change severity",
+			event: &EventData{
+				Title:    "Change Event",
+				Text:     "Configuration changed",
+				Duration: 2000,
+				Severity: int(SeverityChange),
+				Plugin:   ServicePlugin,
+				ID:       "change-service",
+				Host:     ServiceHost,
+			},
+			mockResp: &http.Response{
+				StatusCode: 200,
+				Body:       io.NopCloser(bytes.NewReader([]byte("{}"))),
+			},
+			mockErr:       nil,
+			expectedError: false,
+		},
+		{
+			name: "event send with non-200 status code",
+			event: &EventData{
+				Title:    "Server Error Event",
+				Text:     "Server returned error",
+				Duration: 1000,
+				Severity: int(SeverityWarning),
+			},
+			mockResp: &http.Response{
+				StatusCode: 500,
+				Status:     "Internal Server Error",
+				Body:       io.NopCloser(bytes.NewReader([]byte("{}"))),
+			},
+			mockErr:       nil,
+			expectedError: false,
+		},
+		{
+			name: "event with empty title",
+			event: &EventData{
+				Title:    "",
+				Text:     "Event with no title",
+				Duration: 1000,
+				Severity: int(SeverityWarning),
+			},
+			mockResp: &http.Response{
+				StatusCode: 200,
+				Body:       io.NopCloser(bytes.NewReader([]byte("{}"))),
+			},
+			mockErr:       nil,
+			expectedError: false,
+		},
+		{
+			name: "event with minimal data",
+			event: &EventData{
+				Title: "Minimal Event",
+			},
+			mockResp: &http.Response{
+				StatusCode: 200,
+				Body:       io.NopCloser(bytes.NewReader([]byte("{}"))),
+			},
+			mockErr:       nil,
+			expectedError: false,
+		},
+		{
+			name: "event with payload too large",
+			event: &EventData{
+				Title:    "Large Event",
+				Text:     strings.Repeat("x", maxContentLength),
+				Duration: 1000,
+				Severity: int(SeverityWarning),
+			},
+			mockResp:      nil,
+			mockErr:       nil,
+			expectedError: true,
+		},
+		{
+			name:             "nil event returns error",
+			event:            nil,
+			mockResp:         nil,
+			mockErr:          nil,
+			expectedError:    true,
+			expectedErrorMsg: "event cannot be nil",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create a mock HTTP client
+			mockClient := &httpClientMock{
+				resp: tt.mockResp,
+				err:  tt.mockErr,
+			}
+
+			// Create agent communicator with mock client
+			agentComm := &agentCommunicator{
+				host:   "localhost",
+				port:   "42699",
+				from:   &fromS{EntityID: "12345"},
+				client: mockClient,
+				l:      defaultLogger,
+			}
+
+			// Create agent with mock communicator
+			agent := &agentS{
+				agentComm: agentComm,
+				logger:    defaultLogger,
+			}
+
+			// Execute SendEvent
+			err := agent.SendEvent(tt.event)
+
+			// Verify results
+			if tt.expectedError {
+				assert.Error(t, err)
+				if tt.expectedErrorMsg != "" {
+					assert.Contains(t, err.Error(), tt.expectedErrorMsg)
+				}
+			} else {
+				assert.NoError(t, err)
+			}
+
+		})
+	}
+}
+
+func Test_agentS_SendEvent_ConcurrentCalls(t *testing.T) {
+	// Test that concurrent SendEvent calls work correctly
+	// Create a mock client that returns a new response body for each request
+	// to avoid data races when multiple goroutines read from the same body
+	mockClient := &httpClientMock{
+		doFunc: func(req *http.Request) (*http.Response, error) {
+			return &http.Response{
+				StatusCode: 200,
+				Body:       io.NopCloser(bytes.NewReader([]byte("{}"))),
+			}, nil
+		},
+	}
+
+	agentComm := &agentCommunicator{
+		host:   "localhost",
+		port:   "42699",
+		from:   &fromS{EntityID: "12345"},
+		client: mockClient,
+		l:      defaultLogger,
+	}
+
+	agent := &agentS{
+		agentComm: agentComm,
+		logger:    defaultLogger,
+	}
+
+	// Send multiple events concurrently
+	const numEvents = 10
+	errChan := make(chan error, numEvents)
+
+	for i := 0; i < numEvents; i++ {
+		go func(index int) {
+			event := &EventData{
+				Title:    "Concurrent Event " + strconv.Itoa(index),
+				Text:     "Testing concurrent sends",
+				Duration: 1000,
+				Severity: int(SeverityWarning),
+			}
+			errChan <- agent.SendEvent(event)
+		}(i)
+	}
+
+	// Collect all results
+	for i := 0; i < numEvents; i++ {
+		err := <-errChan
+		assert.NoError(t, err)
+	}
+}
