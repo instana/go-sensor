@@ -39,11 +39,11 @@ const (
 func SendDefaultServiceEvent(title string, text string, sev severity, duration time.Duration) {
 	var service string
 
-	muSensor.RLock()
-	if sensor != nil {
-		service = sensor.serviceOrBinaryName()
+	if s, err := getSensor(); err != nil {
+		defaultLogger.Warn("error retrieving sensor", err.Error())
+	} else {
+		service = s.serviceOrBinaryName()
 	}
-	muSensor.RUnlock()
 
 	// If the sensor is not yet initialized, there is no default service (as
 	// configured on the sensor) so we will send blank instead

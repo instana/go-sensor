@@ -1,5 +1,5 @@
-// (c) Copyright IBM Corp. 2026
-// (c) Copyright Instana Inc. 2026
+// (c) Copyright IBM Corp. 2021
+// (c) Copyright Instana Inc. 2020
 
 package instana_test
 
