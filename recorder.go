@@ -60,30 +60,28 @@ func NewTestRecorder() *Recorder {
 // RecordSpan accepts spans to be recorded and added to the span queue
 // for eventual reporting to the host agent.
 func (r *Recorder) RecordSpan(span *spanS) {
-	// If we're not announced and not in test mode then just return
-	if !r.testMode && !sensor.Agent().Ready() {
+	s, err := getSensor()
+	if err != nil {
+		defaultLogger.Error("recorder: ", err.Error())
 		return
 	}
 
+	// If we're not announced and not in test mode then just return
+	if !r.testMode && !s.Agent().Ready() {
+		return
+	}
+
+	maxBuffered := s.options.MaxBufferedSpans
+	forceAt := s.options.ForceTransmissionStartingAt
+
 	r.Lock()
 	defer r.Unlock()
-
-	muSensor.RLock()
-	maxBuffered := sensor.options.MaxBufferedSpans
-	forceAt := sensor.options.ForceTransmissionStartingAt
-	muSensor.RUnlock()
 
 	if len(r.spans) == maxBuffered {
 		r.spans = r.spans[1:]
 	}
 
 	r.spans = append(r.spans, newSpan(span))
-
-	s, err := getSensor()
-	if err != nil {
-		defaultLogger.Error("recorder: ", err.Error())
-		return
-	}
 
 	if r.testMode || !s.Agent().Ready() {
 		return
