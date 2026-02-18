@@ -3,7 +3,7 @@ module github.com/instana/go-sensor/instrumentation/instaecho
 go 1.24.0
 
 require (
-	github.com/instana/go-sensor v1.72.0
+	github.com/instana/go-sensor v1.73.0
 	github.com/labstack/echo/v4 v4.15.0
 	github.com/opentracing/opentracing-go v1.2.0
 	github.com/stretchr/testify v1.11.1

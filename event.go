@@ -38,8 +38,11 @@ const (
 // SendDefaultServiceEvent sends a default event which already contains the service and host
 func SendDefaultServiceEvent(title string, text string, sev severity, duration time.Duration) {
 	var service string
-	if sensor != nil {
-		service = sensor.serviceOrBinaryName()
+
+	if s, err := getSensor(); err != nil {
+		defaultLogger.Warn("error retrieving sensor", err.Error())
+	} else {
+		service = s.serviceOrBinaryName()
 	}
 
 	// If the sensor is not yet initialized, there is no default service (as
@@ -71,7 +74,8 @@ func SendHostEvent(title string, text string, sev severity, duration time.Durati
 }
 
 func sendEvent(event *EventData) {
-	if sensor == nil {
+	s, err := getSensor()
+	if err != nil {
 		// If the sensor hasn't initialized we do so here so that we properly
 		// discover where the host agent may be as it varies between a
 		// normal host, docker, kubernetes etc..
@@ -79,7 +83,7 @@ func sendEvent(event *EventData) {
 	}
 
 	// we do fire & forget here, because the whole pid dance isn't necessary to send events
-	go func() {
-		_ = safeSensor().Agent().SendEvent(event)
-	}()
+	go func(e *EventData) {
+		_ = s.Agent().SendEvent(e)
+	}(event)
 }

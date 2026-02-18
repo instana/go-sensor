@@ -11,7 +11,7 @@ The IBM Instana Go Tracer is an SDK that collects traces, metrics, logs and prov
 
 ### Supported Runtimes
 -----
-- Go Collector **v1.70** or later supports Go **1.24** and **1.25**, and maintains compatibility with *Go 1.23 (EOL)*.
+- Go Collector **v1.73** or later supports Go **1.26** and **1.25**, and maintains compatibility with *Go 1.24 (EOL)* and *Go 1.23 (EOL)*.
 
 > [!NOTE]
 > Make sure to always use the latest version of the tracer, as it provides new features, improvements, security updates and fixes.

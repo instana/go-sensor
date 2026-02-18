@@ -313,6 +313,9 @@ func (c spanCategory) disabled() bool {
 	}
 
 	// Check if sensor or options are nil
+	muSensor.RLock()
+	defer muSensor.RUnlock()
+
 	if sensor == nil || sensor.options.Tracer.DisableSpans == nil {
 		return false
 	}

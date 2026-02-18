@@ -6,6 +6,7 @@ package instana
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -157,13 +158,18 @@ func newSensor(options *Options) *sensorS {
 	return s
 }
 
-// safeSensor safely returns the global sensor instance for concurrent access.
+// getSensor returns the global sensor instance for concurrent access.
 // It acquires a read lock and should only be used for read operations.
 // Since the sensor is immutable after initialization, this provides sufficient protection against data races.
-func safeSensor() *sensorS {
+func getSensor() (*sensorS, error) {
 	muSensor.RLock()
 	defer muSensor.RUnlock()
-	return sensor
+
+	if sensor == nil {
+		return nil, fmt.Errorf("failed to get sensor: instance is nil")
+	}
+
+	return sensor, nil
 }
 
 func (r *sensorS) setLogger(l LeveledLogger) {
@@ -213,47 +219,64 @@ func (r *sensorS) serviceOrBinaryName() string {
 //
 // Deprecated: Use [StartMetrics] instead.
 func InitSensor(options *Options) {
-	if sensor != nil {
-		return
-	}
-
 	if options == nil {
 		options = DefaultOptions()
 	}
 
-	muSensor.Lock()
-	sensor = newSensor(options)
-	muSensor.Unlock()
+	// create new sensor and assign to global sensor instance
+	initSensorInstance(options)
 
 	// configure auto-profiling
-	autoprofile.SetLogger(sensor.logger)
-	autoprofile.SetOptions(autoprofile.Options{
-		IncludeProfilerFrames: options.IncludeProfilerFrames,
-		MaxBufferedProfiles:   options.MaxBufferedProfiles,
-	})
-
-	autoprofile.SetSendProfilesFunc(func(profiles []autoprofile.Profile) error {
-		if !sensor.Agent().Ready() {
-			return errors.New("sender not ready")
-		}
-
-		sensor.logger.Debug("sending profiles to agent")
-
-		return sensor.Agent().SendProfiles(profiles)
-	})
-
-	if _, ok := os.LookupEnv("INSTANA_AUTO_PROFILE"); ok || options.EnableAutoProfile {
-		if !options.EnableAutoProfile {
-			sensor.logger.Info("INSTANA_AUTO_PROFILE is set, activating AutoProfile™")
-		}
-
-		autoprofile.Enable()
-	}
+	configureAutoProfiling(options)
 
 	// start collecting metrics
 	go sensor.meter.Run(1 * time.Second)
 
 	sensor.logger.Debug("initialized Instana sensor v", Version)
+}
+
+func initSensorInstance(options *Options) {
+	muSensor.Lock()
+	defer muSensor.Unlock()
+
+	if sensor != nil {
+		return
+	}
+
+	sensor = newSensor(options)
+}
+
+func configureAutoProfiling(options *Options) {
+	s, err := getSensor()
+	if err != nil {
+		defaultLogger.Error("error while configuring auto profiling: ", err.Error())
+		return
+	}
+
+	autoprofile.SetLogger(s.logger)
+	autoprofile.SetOptions(autoprofile.Options{
+		IncludeProfilerFrames: options.IncludeProfilerFrames,
+		MaxBufferedProfiles:   options.MaxBufferedProfiles,
+	})
+
+	autoprofile.SetSendProfilesFunc(
+		func(profiles []autoprofile.Profile) error {
+			if !s.Agent().Ready() {
+				return errors.New("sender not ready")
+			}
+
+			s.logger.Debug("sending profiles to agent")
+
+			return s.Agent().SendProfiles(profiles)
+		})
+
+	if _, ok := os.LookupEnv("INSTANA_AUTO_PROFILE"); ok || options.EnableAutoProfile {
+		if !options.EnableAutoProfile {
+			s.logger.Info("INSTANA_AUTO_PROFILE is set, activating AutoProfile™")
+		}
+
+		autoprofile.Enable()
+	}
 }
 
 // StartMetrics initializes the communication with the agent. Then it starts collecting and reporting metrics to the agent.
@@ -265,22 +288,25 @@ func StartMetrics(options *Options) {
 
 // Ready returns whether the Instana collector is ready to collect and send data to the agent
 func Ready() bool {
-	if sensor == nil {
+	s, err := getSensor()
+	if err != nil {
+		defaultLogger.Error("Ready(): ", err.Error())
 		return false
 	}
 
-	return sensor.Agent().Ready()
+	return s.Agent().Ready()
 }
 
 // Flush forces Instana collector to send all buffered data to the agent. This method is intended to implement
 // graceful service shutdown and not recommended for intermittent use. Once Flush() is called, it's not guaranteed
 // that collector remains in operational state.
 func Flush(ctx context.Context) error {
-	if sensor == nil {
-		return nil
+	s, err := getSensor()
+	if err != nil {
+		return err
 	}
 
-	return sensor.Agent().Flush(ctx)
+	return s.Agent().Flush(ctx)
 }
 
 // ShutdownSensor cleans up the internal global sensor reference. The next time that instana.InitSensor is called,

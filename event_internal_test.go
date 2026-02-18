@@ -21,6 +21,39 @@ func TestEventDefault(t *testing.T) {
 	defer ShutdownSensor()
 }
 
+func TestSendDefaultServiceEvent_WithInitializedSensor(t *testing.T) {
+	// Initialize sensor with a service name
+	InitSensor(&Options{Service: "test-service"})
+	defer ShutdownSensor()
+
+	// Test with initialized sensor - should use service name
+	SendDefaultServiceEvent("Test Event", "Event with initialized sensor",
+		SeverityWarning, 1000*time.Millisecond)
+}
+
+func TestSendDefaultServiceEvent_WithoutInitializedSensor(t *testing.T) {
+	// Ensure sensor is not initialized
+	ShutdownSensor()
+
+	// Test without initialized sensor - should handle error gracefully
+	// This tests the error path in getSensor()
+	SendDefaultServiceEvent("Test Event", "Event without initialized sensor",
+		SeverityChange, 500*time.Millisecond)
+
+	// Clean up any sensor that may have been initialized by sendEvent
+	defer ShutdownSensor()
+}
+
+func TestSendDefaultServiceEvent_WithBinaryName(t *testing.T) {
+	// Initialize sensor without service name - should use binary name
+	InitSensor(&Options{})
+	defer ShutdownSensor()
+
+	// Test with binary name fallback
+	SendDefaultServiceEvent("Binary Event", "Event using binary name",
+		SeverityWarning, 750*time.Millisecond)
+}
+
 func TestSendServiceEvent(t *testing.T) {
 	SendServiceEvent("microservice-14c", "Oh No!", "Pull the cable now!",
 		SeverityChange, 1000*time.Millisecond)
