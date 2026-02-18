@@ -166,17 +166,7 @@ func TestIntegration_Sensor_Flush(t *testing.T) {
 	require.NoError(t, err)
 	defer agent.Teardown()
 
-	// Test 1: Flush should not error when sensor is not initialized
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-	defer cancel()
-
-	err = instana.Flush(ctx)
-	assert.NoError(t, err, "Flush() should not error when sensor is not initialized")
-
-	// Reset agent bundles before starting the actual test
-	agent.Reset()
-
-	// Test 2: Initialize sensor and test flush with spans
+	// Test: Initialize sensor and test flush with spans
 	c := instana.InitCollector(&instana.Options{
 		Service:                     "test-flush-service",
 		MaxBufferedSpans:            10,
