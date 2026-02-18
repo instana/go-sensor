@@ -6,6 +6,7 @@ package instana
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -160,16 +161,15 @@ func newSensor(options *Options) *sensorS {
 // getSensor returns the global sensor instance for concurrent access.
 // It acquires a read lock and should only be used for read operations.
 // Since the sensor is immutable after initialization, this provides sufficient protection against data races.
-func getSensor() (*sensorS, bool) {
+func getSensor() (*sensorS, error) {
 	muSensor.RLock()
 	defer muSensor.RUnlock()
 
 	if sensor == nil {
-		defaultLogger.Error("failed to get sensor: instance is nil")
-		return nil, false
+		return nil, fmt.Errorf("failed to get sensor: instance is nil")
 	}
 
-	return sensor, true
+	return sensor, nil
 }
 
 func (r *sensorS) setLogger(l LeveledLogger) {
@@ -247,12 +247,9 @@ func initSensorInstance(options *Options) {
 }
 
 func configureAutoProfiling(options *Options) {
-	var (
-		s  *sensorS
-		ok bool
-	)
-
-	if s, ok = getSensor(); !ok {
+	s, err := getSensor()
+	if err != nil {
+		defaultLogger.Error("error while configuring auto profiling: ", err.Error())
 		return
 	}
 
@@ -290,10 +287,11 @@ func StartMetrics(options *Options) {
 }
 
 // Ready returns whether the Instana collector is ready to collect and send data to the agent
-func Ready() (ok bool) {
-	var s *sensorS
-	if s, ok = getSensor(); !ok {
-		return
+func Ready() bool {
+	s, err := getSensor()
+	if err != nil {
+		defaultLogger.Error("Ready(): ", err.Error())
+		return false
 	}
 
 	return s.Agent().Ready()
@@ -303,13 +301,9 @@ func Ready() (ok bool) {
 // graceful service shutdown and not recommended for intermittent use. Once Flush() is called, it's not guaranteed
 // that collector remains in operational state.
 func Flush(ctx context.Context) error {
-	var (
-		s  *sensorS
-		ok bool
-	)
-
-	if s, ok = getSensor(); !ok {
-		return nil
+	s, err := getSensor()
+	if err != nil {
+		return err
 	}
 
 	return s.Agent().Flush(ctx)

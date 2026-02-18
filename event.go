@@ -74,8 +74,8 @@ func SendHostEvent(title string, text string, sev severity, duration time.Durati
 }
 
 func sendEvent(event *EventData) {
-	s, ok := getSensor()
-	if !ok {
+	s, err := getSensor()
+	if err != nil {
 		// If the sensor hasn't initialized we do so here so that we properly
 		// discover where the host agent may be as it varies between a
 		// normal host, docker, kubernetes etc..

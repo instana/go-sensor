@@ -45,8 +45,9 @@ func (m *meterS) Run(collectInterval time.Duration) {
 		case <-ticker.C:
 			if isAgentReady() {
 				go func() {
-					s, ok := getSensor()
-					if !ok {
+					s, err := getSensor()
+					if err != nil {
+						defaultLogger.Error("meter: ", err.Error())
 						return
 					}
 

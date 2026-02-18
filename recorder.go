@@ -79,8 +79,9 @@ func (r *Recorder) RecordSpan(span *spanS) {
 
 	r.spans = append(r.spans, newSpan(span))
 
-	s, ok := getSensor()
-	if !ok {
+	s, err := getSensor()
+	if err != nil {
+		defaultLogger.Error("recorder: ", err.Error())
 		return
 	}
 
@@ -128,9 +129,9 @@ func (r *Recorder) Flush(ctx context.Context) error {
 		return nil
 	}
 
-	s, ok := getSensor()
-	if !ok {
-		return fmt.Errorf("recorder: sensor not initialized")
+	s, err := getSensor()
+	if err != nil {
+		return fmt.Errorf("recorder: %s", err.Error())
 	}
 
 	if err := s.Agent().SendSpans(spansToSend); err != nil {
