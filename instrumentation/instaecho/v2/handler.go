@@ -2,6 +2,7 @@
 //
 // SPDX-License-Identifier: MIT
 
+// Package instaechov2 provides instrumentation for the Echo v5 package
 package instaechov2
 
 import (
