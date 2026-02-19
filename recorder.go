@@ -30,23 +30,23 @@ type Recorder struct {
 
 // NewRecorder initializes a new span recorder
 func NewRecorder() *Recorder {
-	r := &Recorder{}
+	recorder := &Recorder{}
 
-	ticker := time.NewTicker(1 * time.Second)
-	go func() {
+	go func(rec *Recorder) {
+		ticker := time.NewTicker(1 * time.Second)
 		for range ticker.C {
 
 			if isAgentReady() {
-				go func() {
+				go func(r *Recorder) {
 					if err := r.Flush(context.Background()); err != nil {
 						sensor.logger.Error("failed to flush the spans:  ", err.Error())
 					}
-				}()
+				}(rec)
 			}
 		}
-	}()
+	}(recorder)
 
-	return r
+	return recorder
 }
 
 // NewTestRecorder initializes a new span recorder that keeps all collected
@@ -60,30 +60,38 @@ func NewTestRecorder() *Recorder {
 // RecordSpan accepts spans to be recorded and added to the span queue
 // for eventual reporting to the host agent.
 func (r *Recorder) RecordSpan(span *spanS) {
-	// If we're not announced and not in test mode then just
-	// return
-	if !r.testMode && !sensor.Agent().Ready() {
+	s, err := getSensor()
+	if err != nil {
+		defaultLogger.Error("recorder: ", err.Error())
 		return
 	}
+
+	// If we're not announced and not in test mode then just return
+	if !r.testMode && !s.Agent().Ready() {
+		return
+	}
+
+	maxBuffered := s.options.MaxBufferedSpans
+	forceAt := s.options.ForceTransmissionStartingAt
 
 	r.Lock()
 	defer r.Unlock()
 
-	if len(r.spans) == sensor.options.MaxBufferedSpans {
+	if len(r.spans) == maxBuffered {
 		r.spans = r.spans[1:]
 	}
 
 	r.spans = append(r.spans, newSpan(span))
 
-	if r.testMode || !sensor.Agent().Ready() {
+	if r.testMode || !s.Agent().Ready() {
 		return
 	}
 
-	if len(r.spans) >= sensor.options.ForceTransmissionStartingAt {
-		sensor.logger.Debug("forcing ", len(r.spans), "span(s) to the agent")
+	if len(r.spans) >= forceAt {
+		s.logger.Debug("forcing ", len(r.spans), "span(s) to the agent")
 		go func() {
 			if err := r.Flush(context.Background()); err != nil {
-				sensor.logger.Error("failed to flush the spans: ", err.Error())
+				s.logger.Error("failed to flush the spans: ", err.Error())
 			}
 		}()
 	}
@@ -119,7 +127,12 @@ func (r *Recorder) Flush(ctx context.Context) error {
 		return nil
 	}
 
-	if err := sensor.Agent().SendSpans(spansToSend); err != nil {
+	s, err := getSensor()
+	if err != nil {
+		return fmt.Errorf("recorder: %s", err.Error())
+	}
+
+	if err := s.Agent().SendSpans(spansToSend); err != nil {
 		r.Lock()
 		defer r.Unlock()
 
