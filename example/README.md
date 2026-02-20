@@ -26,6 +26,7 @@ This folder contains examples of instrumenting the common use-cases with `github
 * [mongo-driver-v2](./mongo-driver-v2) - an example of instrumenting `mongo-driver v2 library` using `go-sensor` SDK.
 * [http_secret_matcher](./http_secret_matcher) - an example showing how to set up secret matchers using the Instana Go tracer(`go-sensor`) SDK.
 * [docker-env](./docker-env) - an example showing how to set up secret matchers using the Instana Go tracer(`go-sensor`) SDK.
+* [echo](./echo) - an example of instrumenting an Echo v5 web application using `instaecho/v2` with automatic HTTP request tracing and database query instrumentation.
 * [k8s-env](./k8s-env) - Demonstrates running a Go application with MySQL database in Kubernetes, monitored by Instana Go tracer(`go-sensor`) SDK.
 * [sqlx-oracle](./sqlx-oracle) - Demonstrates Instana instrumentation for Oracle database using `sqlx` and `godror` driver.
 * [http-client](./http-client) - Demonstrates how to instrument outgoing HTTP requests using Instana Go sensor SDK.
