@@ -95,7 +95,7 @@ func init() {
 }
 
 func newSensor(options *Options) *sensorS {
-	options.setDefaults()
+	options.applyConfiguration()
 
 	s := &sensorS{
 		options:     options,
@@ -105,14 +105,8 @@ func newSensor(options *Options) *sensorS {
 
 	s.setLogger(defaultLogger)
 
-	// override service name with an env value if set
-	if name, ok := os.LookupEnv("INSTANA_SERVICE_NAME"); ok && strings.TrimSpace(name) != "" {
-		s.serviceName = name
-	}
-
 	// handle the legacy (instana.Options).LogLevel value if we use logger.Logger to log
 	if l, ok := s.logger.(*logger.Logger); ok {
-
 		_, isInstanaLogLevelSet := os.LookupEnv("INSTANA_LOG_LEVEL")
 
 		if !isInstanaLogLevelSet {
@@ -219,6 +213,7 @@ func (r *sensorS) serviceOrBinaryName() string {
 //
 // Deprecated: Use [StartMetrics] instead.
 func InitSensor(options *Options) {
+	// This default options only will be applied, in-case user initialize the sensor with InitSensor
 	if options == nil {
 		options = DefaultOptions()
 	}
@@ -270,11 +265,8 @@ func configureAutoProfiling(options *Options) {
 			return s.Agent().SendProfiles(profiles)
 		})
 
-	if _, ok := os.LookupEnv("INSTANA_AUTO_PROFILE"); ok || options.EnableAutoProfile {
-		if !options.EnableAutoProfile {
-			s.logger.Info("INSTANA_AUTO_PROFILE is set, activating AutoProfile™")
-		}
-
+	if options.EnableAutoProfile {
+		s.logger.Info("INSTANA_AUTO_PROFILE is set, Activating AutoProfile™")
 		autoprofile.Enable()
 	}
 }

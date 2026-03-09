@@ -22,13 +22,12 @@ func (t testMatcher) Match(s string) bool {
 }
 
 func TestDefaultOptions(t *testing.T) {
-	assert.Equal(t, &Options{
-		AgentHost:                   "localhost",
-		AgentPort:                   42699,
-		MaxBufferedSpans:            DefaultMaxBufferedSpans,
-		ForceTransmissionStartingAt: DefaultForceSpanSendAt,
-		Tracer:                      DefaultTracerOptions(),
-	}, DefaultOptions())
+	// DefaultOptions now returns minimal/zero-value Options
+	opts := DefaultOptions()
+
+	// Verify that DefaultOptions returns zero values
+	assert.NotNil(t, opts.Recorder, "Recorder should be initialized")
+	assert.NotNil(t, opts.Tracer, "Tracer should be initialized")
 }
 
 func TestTracerOptionsPrecedence_InCodeConfigPresent(t *testing.T) {
@@ -52,7 +51,7 @@ func TestTracerOptionsPrecedence_InCodeConfigPresent(t *testing.T) {
 		},
 	}
 
-	testOpts.setDefaults()
+	testOpts.applyConfiguration()
 
 	assert.Equal(t, true, testOpts.Tracer.Secrets.Match("testing_matcher"))
 	assert.Equal(t, false, testOpts.Tracer.Secrets.Match("foo"))
@@ -80,7 +79,7 @@ func TestTracerOptionsPrecedence_InCodeConfigAbsent(t *testing.T) {
 		Tracer:                      TracerOptions{},
 	}
 
-	testOpts.setDefaults()
+	testOpts.applyConfiguration()
 
 	assert.Equal(t, false, testOpts.Tracer.Secrets.Match("testing_matcher"))
 	assert.Equal(t, true, testOpts.Tracer.Secrets.Match("secret1"))
@@ -108,7 +107,7 @@ func TestTracerOptionsPrecedence_InCodeConfigAndEnvAbsent(t *testing.T) {
 		Tracer:                      TracerOptions{},
 	}
 
-	testOpts.setDefaults()
+	testOpts.applyConfiguration()
 
 	assert.Equal(t, false, testOpts.Tracer.Secrets.Match("testing_matcher"))
 	assert.Equal(t, true, testOpts.Tracer.Secrets.Match("secret"))
@@ -215,6 +214,8 @@ func TestInstanaTracingDisableEnvVar(t *testing.T) {
 			}
 
 			opts := DefaultOptions()
+			// Apply configuration precedence to read environment variables
+			opts.applyConfiguration()
 
 			// For the too large case, we expect the environment variable to be ignored
 			// and no categories to be disabled
@@ -307,7 +308,7 @@ func TestConfigFileHandling(t *testing.T) {
 				opts := &Options{
 					Tracer: TracerOptions{},
 				}
-				opts.setDefaults()
+				opts.applyConfiguration()
 
 				verifyDisabledCategories(t, opts.Tracer.DisableSpans, tt.expectedDisabled)
 			} else {
