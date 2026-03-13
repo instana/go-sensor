@@ -26,7 +26,7 @@ jobs:
         
         # Commit and push test
         ls -la >> 1.txt
-        git remote set-url --push origin https://$GIT_COMMITTER_NAME:$GITHUB_TOKEN@github.com/instana/go-sensor
+        #git remote set-url --push origin https://$GIT_COMMITTER_NAME:$GITHUB_TOKEN@github.com/instana/go-sensor
         git add 1.txt
         git commit -m "chore: test commit to verify a pipeline"
         git push origin test-workflow
