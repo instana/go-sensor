@@ -7,8 +7,7 @@ on:
   pull_request:
    branches:
    - test-workflow
-   types:
-     - closed
+   types: [opened, synchronize, reopened]
 
 jobs:
   release_instrumentations:
