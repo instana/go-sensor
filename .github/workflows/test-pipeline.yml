@@ -1,6 +1,6 @@
 # This is a test pipeline
 
-name: Test Pipeline
+name: [Test] Pipeline
 
 on:
   workflow_dispatch:
@@ -12,7 +12,7 @@ on:
 
 jobs:
   release_instrumentations:
-    name: Test Pipeline
+    name: [Test] Pipeline
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
