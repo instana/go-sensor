@@ -26,11 +26,10 @@ jobs:
       run: |
         
         # Commit and push test
-        touch 1.txt
+        ls -la >> 1.txt
         git remote set-url --push origin https://$GIT_COMMITTER_NAME:$GITHUB_TOKEN@github.com/instana/go-sensor
-        git add ./instrumentation/**/version.go
-        git add ./instrumentation/**/**/version.go
-        git commit -m "Updated instrumented packages with core module $CORE_TAG"
+        git add 1.txt
+        git commit -m "chore: test commit to verify a pipeline"
         git push origin test-workflow
 
       shell: bash {0}
