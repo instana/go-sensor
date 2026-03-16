@@ -20,6 +20,8 @@ jobs:
         run: |
             #!/bin/bash
 
+            go env -w GOTOOLCHAIN=go1.25.0+auto
+
             TRACER_PATH=$(pwd)
             echo $TRACER_PATH
             mkdir coverage
