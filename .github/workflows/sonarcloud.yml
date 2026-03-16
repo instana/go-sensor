@@ -54,7 +54,9 @@ jobs:
               cd "$lib"
               echo "Running go mod tidy:"
               go mod tidy
-              echo "Running go test:"
+              echo "Running go test(without cover):"
+              go test -v ./...
+              echo "Running go test(with cover):"
               go test -v -coverpkg=./... -cover -covermode atomic -coverprofile $TRACER_PATH/coverage/coverage_$(date +%s%N)_$RANDOM.out ./... -json > $TRACER_PATH/coverage/coverage_$(date +%s%N)_$RANDOM.json
               echo "Go test completed"
               cd -
