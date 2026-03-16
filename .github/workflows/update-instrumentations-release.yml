@@ -76,7 +76,6 @@ jobs:
         echo "TAGS=$TAGS" >> "$GITHUB_OUTPUT"
 
         # Commit all version.go files to the main branch
-        git remote set-url --push origin https://$GIT_COMMITTER_NAME:$GITHUB_TOKEN@github.com/instana/go-sensor
         git add ./instrumentation/**/version.go
         git add ./instrumentation/**/**/version.go
         git commit -m "Updated instrumented packages with core module $CORE_TAG"
