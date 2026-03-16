@@ -23,6 +23,9 @@ jobs:
             # This is a workaround for an issue in the Go toolchain.
             # Ref : https://stackoverflow.com/questions/79780882/go-no-such-tool-covdata-in-go-1-25
             # Ref : https://github.com/golang/go/issues/75031#issuecomment-3195256688
+            #
+            # TODO: We can remove this once the issue is fixed in Go, or when the GitHub runner updates the default Go version to a later release.
+            #
             go env -w GOTOOLCHAIN=go1.25.0+auto
 
             TRACER_PATH=$(pwd)
