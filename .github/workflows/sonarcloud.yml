@@ -20,6 +20,9 @@ jobs:
         run: |
             #!/bin/bash
 
+            # This is a workaround for an issue in the Go toolchain.
+            # Ref : https://stackoverflow.com/questions/79780882/go-no-such-tool-covdata-in-go-1-25
+            # Ref : https://github.com/golang/go/issues/75031#issuecomment-3195256688
             go env -w GOTOOLCHAIN=go1.25.0+auto
 
             TRACER_PATH=$(pwd)
@@ -51,17 +54,8 @@ jobs:
             LIB_LIST=$(find ./instrumentation -name go.mod -exec dirname {} \; | grep -E -v "$DEPRECATED_PKGS")
 
             echo "unit tests - instrumentation packages"
-            for lib in $LIB_LIST; do 
-              go version && echo "Generating test coverage for $lib: "
-              cd "$lib"
-              echo "Running go mod tidy:"
-              go mod tidy
-              echo "Running go test(without cover):"
-              go test -v -coverpkg=./... -cover -covermode atomic ./...
-              echo "Running go test(with cover):"
-              go test -v -coverpkg=./... -cover -covermode atomic -coverprofile $TRACER_PATH/coverage/coverage_$(date +%s%N)_$RANDOM.out ./... -json > $TRACER_PATH/coverage/coverage_$(date +%s%N)_$RANDOM.json
-              echo "Go test completed"
-              cd -
+            for lib in $LIB_LIST
+              do echo "Generating test coverage for $lib" && cd "$lib" && go mod tidy && go test -v -coverpkg=./... -cover -covermode atomic -coverprofile $TRACER_PATH/coverage/coverage_$(date +%s%N)_$RANDOM.out ./... -json > $TRACER_PATH/coverage/coverage_$(date +%s%N)_$RANDOM.json && cd -;
             done
 
             echo "integration tests - instrumentation packages"
@@ -79,4 +73,3 @@ jobs:
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_CLOUD_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
