@@ -49,10 +49,14 @@ jobs:
             LIB_LIST=$(find ./instrumentation -name go.mod -exec dirname {} \; | grep -E -v "$DEPRECATED_PKGS")
 
             echo "unit tests - instrumentation packages"
-            for lib in $LIB_LIST
-              do 
-              go version && echo "Generating test coverage for $lib: " && cd "$lib" && go mod tidy
+            for lib in $LIB_LIST; do 
+              go version && echo "Generating test coverage for $lib: "
+              cd "$lib"
+              echo "Running go mod tidy:"
+              go mod tidy
+              echo "Running go test:"
               go test -v -coverpkg=./... -cover -covermode atomic -coverprofile $TRACER_PATH/coverage/coverage_$(date +%s%N)_$RANDOM.out ./... -json > $TRACER_PATH/coverage/coverage_$(date +%s%N)_$RANDOM.json
+              echo "Go test completed"
               cd -
             done
 
