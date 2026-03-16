@@ -6,6 +6,7 @@ package instana
 import (
 	"os"
 	"strconv"
+	"strings"
 )
 
 // Options allows the user to configure the to-be-initialized sensor
@@ -52,21 +53,28 @@ type Options struct {
 }
 
 // DefaultOptions returns the default set of options to configure Instana sensor.
-// The service name is set to the name of current executable, the MaxBufferedSpans
-// and ForceTransmissionStartingAt are set to instana.DefaultMaxBufferedSpans and
-// instana.DefaultForceSpanSendAt correspondingly. The AgentHost and AgentPort are
-// taken from the env INSTANA_AGENT_HOST and INSTANA_AGENT_PORT if set, and default
-// to localhost and 42699 otherwise.
 func DefaultOptions() *Options {
 	opts := &Options{
-		Tracer: DefaultTracerOptions(),
+		Recorder: NewRecorder(),
+		Tracer:   DefaultTracerOptions(),
 	}
-	opts.setDefaults()
-
 	return opts
 }
 
-func (opts *Options) setDefaults() {
+// applyConfiguration applies configuration values following the precedence order:
+// environment variables > in-code configuration > agent config (configuration.yaml) > default value
+//
+// This is the central place where all configuration sources are resolved and merged.
+func (opts *Options) applyConfiguration() {
+	opts.applyBasicDefaults()
+	opts.applyAgentConfiguration()
+	opts.applyServiceConfiguration()
+	opts.applyProfilingConfiguration()
+	opts.applyTracerConfiguration()
+}
+
+// applyBasicDefaults sets default values for basic options if not already configured
+func (opts *Options) applyBasicDefaults() {
 	if opts.MaxBufferedSpans == 0 {
 		opts.MaxBufferedSpans = DefaultMaxBufferedSpans
 	}
@@ -74,23 +82,60 @@ func (opts *Options) setDefaults() {
 	if opts.ForceTransmissionStartingAt == 0 {
 		opts.ForceTransmissionStartingAt = DefaultForceSpanSendAt
 	}
+}
 
+// applyAgentConfiguration resolves agent connection settings
+// Precedence: ENV > in-code > default
+func (opts *Options) applyAgentConfiguration() {
+	// AgentHost
 	if opts.AgentHost == "" {
 		opts.AgentHost = agentDefaultHost
-
-		if host := os.Getenv("INSTANA_AGENT_HOST"); host != "" {
-			opts.AgentHost = host
-		}
+	}
+	if host := os.Getenv("INSTANA_AGENT_HOST"); host != "" {
+		opts.AgentHost = host
 	}
 
+	// AgentPort
 	if opts.AgentPort == 0 {
 		opts.AgentPort = agentDefaultPort
+	}
+	if port, err := strconv.Atoi(os.Getenv("INSTANA_AGENT_PORT")); err == nil {
+		opts.AgentPort = port
+	}
+}
 
-		if port, err := strconv.Atoi(os.Getenv("INSTANA_AGENT_PORT")); err == nil {
-			opts.AgentPort = port
+// applyServiceConfiguration resolves service identification settings
+// Precedence: ENV > in-code > binaryName
+func (opts *Options) applyServiceConfiguration() {
+	if name, ok := os.LookupEnv("INSTANA_SERVICE_NAME"); ok {
+		name := strings.TrimSpace(name)
+		if name != "" {
+			opts.Service = name
 		}
 	}
+}
 
+// applyProfilingConfiguration resolves profiling settings
+// Precedence: ENV > in-code > default
+func (opts *Options) applyProfilingConfiguration() {
+	if _, ok := os.LookupEnv("INSTANA_AUTO_PROFILE"); ok {
+		opts.EnableAutoProfile = true
+	}
+}
+
+// applyTracerConfiguration resolves tracer-specific settings
+// Precedence: ENV > in-code > agent config > default
+func (opts *Options) applyTracerConfiguration() {
+	opts.applySecretsConfiguration()
+	opts.applyTracerDefaults()
+	opts.applyHTTPHeadersConfiguration()
+	opts.applyTracingDisableConfiguration()
+	opts.applyW3CConfiguration()
+}
+
+// applySecretsConfiguration resolves secrets matcher configuration
+// Precedence: ENV > in-code > agent config > default
+func (opts *Options) applySecretsConfiguration() {
 	secretsMatcher, err := parseInstanaSecrets(os.Getenv("INSTANA_SECRETS"))
 	if err != nil {
 		defaultLogger.Warn("invalid INSTANA_SECRETS= env variable value: ", err, ", ignoring")
@@ -98,33 +143,43 @@ func (opts *Options) setDefaults() {
 	}
 
 	if secretsMatcher == nil {
-		// If secretMatcher is nil, it means no in-code secret matcher has been configured,
-		// and the INSTANA_SECRETS environment variable also doesn't have a valid matcher.
-		// So, we will set a default secret matcher here and mark tracerDefaultSecrets as true,
-		// so that it can be overridden later if a matcher is received from the agent.
+		// No ENV or in-code configuration - use default and mark for agent override
 		secretsMatcher = DefaultSecretsMatcher()
 		opts.Tracer.tracerDefaultSecrets = true
 	}
 
 	opts.Tracer.Secrets = secretsMatcher
+}
 
+// applyTracerDefaults sets default values for tracer options
+func (opts *Options) applyTracerDefaults() {
 	if opts.Tracer.MaxLogsPerSpan == 0 {
 		opts.Tracer.MaxLogsPerSpan = MaxLogsPerSpan
 	}
+}
 
+// applyHTTPHeadersConfiguration resolves HTTP headers collection settings
+// Precedence: ENV > agent config
+func (opts *Options) applyHTTPHeadersConfiguration() {
 	if collectableHeaders, ok := os.LookupEnv("INSTANA_EXTRA_HTTP_HEADERS"); ok {
 		opts.Tracer.CollectableHTTPHeaders = parseInstanaExtraHTTPHeaders(collectableHeaders)
 	}
+}
 
-	// Check if INSTANA_CONFIG_PATH environment variable is set
+// applyTracingDisableConfiguration resolves tracing disable settings
+// Precedence: INSTANA_CONFIG_PATH > INSTANA_TRACING_DISABLE > agent config
+func (opts *Options) applyTracingDisableConfiguration() {
 	if configPath, ok := lookupValidatedEnv("INSTANA_CONFIG_PATH"); ok {
 		if err := parseConfigFile(configPath, &opts.Tracer); err != nil {
 			defaultLogger.Warn("invalid INSTANA_CONFIG_PATH= env variable value: ", err, ", ignoring")
 		}
-		// else check if INSTANA_TRACING_DISABLE environment variable is set
 	} else if tracingDisable, ok := lookupValidatedEnv("INSTANA_TRACING_DISABLE"); ok {
 		parseInstanaTracingDisable(tracingDisable, &opts.Tracer)
 	}
+}
 
+// applyW3CConfiguration resolves W3C trace correlation settings
+// Precedence: ENV only
+func (opts *Options) applyW3CConfiguration() {
 	opts.disableW3CTraceCorrelation = os.Getenv("INSTANA_DISABLE_W3C_TRACE_CORRELATION") != ""
 }
