@@ -107,8 +107,11 @@ func (opts *Options) applyAgentConfiguration() {
 // applyServiceConfiguration resolves service identification settings
 // Precedence: ENV > in-code > binaryName
 func (opts *Options) applyServiceConfiguration() {
-	if name, ok := os.LookupEnv("INSTANA_SERVICE_NAME"); ok && strings.TrimSpace(name) != "" {
-		opts.Service = name
+	if name, ok := os.LookupEnv("INSTANA_SERVICE_NAME"); ok {
+		name := strings.TrimSpace(name)
+		if name != "" {
+			opts.Service = name
+		}
 	}
 }
 
