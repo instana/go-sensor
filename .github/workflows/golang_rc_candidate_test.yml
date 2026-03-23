@@ -13,7 +13,7 @@ jobs:
       COSMOS_CONNECTION_URL: ${{ secrets.COSMOS_CONNECTION_URL }}
       COSMOS_KEY: ${{ secrets.COSMOS_KEY }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
       - name: Run coverage commands
