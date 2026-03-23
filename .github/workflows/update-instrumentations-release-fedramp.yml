@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event.pull_request.merged == true && startsWith(github.event.pull_request.head.ref, 'fedramp-update-instrumentations-core')
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v6
       name: Checkout repo
       with:
         fetch-depth: 0
