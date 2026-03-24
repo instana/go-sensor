@@ -17,7 +17,24 @@ import (
 	"github.com/valyala/fasthttp"
 )
 
-// TraceHandler adds Instana instrumentation to the route handler
+const (
+	// spanOperationHTTP is the operation name for HTTP spans
+	spanOperationHTTP = "g.http"
+)
+
+// TraceHandler adds Instana instrumentation to the route handler.
+//
+// Parameters:
+//   - sensor: The Instana tracer logger instance for creating spans
+//   - routeID: A unique identifier for this route (e.g., "user.create", "product.list")
+//   - pathTemplate: The URL path template/pattern for this route (e.g., "/users/{id}", "/api/v1/products")
+//     This is used for grouping similar requests and should match the route pattern, not the actual path.
+//     If empty, no path template tag will be added to the span.
+//   - handler: The Fiber handler function to be instrumented
+//
+// Returns a new Fiber handler that wraps the original handler with tracing instrumentation.
+// The wrapper creates a span for each request, captures headers and parameters, handles errors
+// and panics, and injects trace context into the response headers.
 func TraceHandler(sensor instana.TracerLogger, routeID, pathTemplate string, handler fiber.Handler) fiber.Handler {
 	return func(c fiber.Ctx) error {
 		ctx := c.Context()
@@ -43,49 +60,34 @@ func TraceHandler(sensor instana.TracerLogger, routeID, pathTemplate string, han
 			opts = append(opts, ot.Tag{Key: "http.path_tpl", Value: pathTemplate})
 		}
 
-		span := tracer.StartSpan("g.http", opts...)
+		span := tracer.StartSpan(spanOperationHTTP, opts...)
 		defer span.Finish()
 
 		var params url.Values
 		collectedHeaders := make(map[string]string)
-
-		// ensure collected headers/params are sent in case of panic/error
-		defer func() {
-			if len(collectedHeaders) > 0 {
-				span.SetTag("http.header", collectedHeaders)
-			}
-			if len(params) > 0 {
-				span.SetTag("http.params", params.Encode())
-			}
-		}()
 
 		params = collectHTTPParams(req, tracer)
 
 		collectableHTTPHeaders := configuredCollectableHeaders(tracer)
 		collectRequestHeaders(headers, collectableHTTPHeaders, collectedHeaders)
 
+		// Single defer to handle both panic recovery and ensure data collection
 		defer func() {
-			// Be sure to capture any kind of panic/error
+			// Capture any panic/error first
 			if err := recover(); err != nil {
-				if e, ok := err.(error); ok {
-					span.SetTag("http.error", e.Error())
-					span.LogFields(otlog.Error(e))
-				} else {
-					span.SetTag("http.error", err)
-					span.LogFields(otlog.Object("error", err))
-				}
-
-				span.SetTag(string(ext.HTTPStatusCode), http.StatusInternalServerError)
-
-				// re-throw the panic
+				handlePanic(span, err)
+				// Ensure headers/params are set before re-throwing
+				finalizeSpanData(span, collectedHeaders, params)
 				panic(err)
 			}
+			// Normal case: ensure headers/params are set
+			finalizeSpanData(span, collectedHeaders, params)
 		}()
 
 		// Inject the span details to the headers
-		h := make(ot.HTTPHeadersCarrier)
-		tracer.Inject(span.Context(), ot.HTTPHeaders, h)
-		for k, v := range h {
+		traceHeaders := make(ot.HTTPHeadersCarrier)
+		tracer.Inject(span.Context(), ot.HTTPHeaders, traceHeaders)
+		for k, v := range traceHeaders {
 			c.Response().Header.Del(k)
 			c.Set(k, strings.Join(v, ","))
 		}
@@ -217,4 +219,26 @@ func configuredCollectableHeaders(tracer ot.Tracer) []string {
 	}
 
 	return collectableHTTPHeaders
+}
+
+// handlePanic processes panic errors and sets appropriate span tags
+func handlePanic(span ot.Span, err interface{}) {
+	if e, ok := err.(error); ok {
+		span.SetTag("http.error", e.Error())
+		span.LogFields(otlog.Error(e))
+	} else {
+		span.SetTag("http.error", err)
+		span.LogFields(otlog.Object("error", err))
+	}
+	span.SetTag(string(ext.HTTPStatusCode), http.StatusInternalServerError)
+}
+
+// finalizeSpanData ensures collected headers and params are set on the span
+func finalizeSpanData(span ot.Span, collectedHeaders map[string]string, params url.Values) {
+	if len(collectedHeaders) > 0 {
+		span.SetTag("http.header", collectedHeaders)
+	}
+	if len(params) > 0 {
+		span.SetTag("http.params", params.Encode())
+	}
 }
