@@ -68,9 +68,6 @@ jobs:
               echo "Generating test coverage for $dir"
               cd $dir
               go mod tidy
-              echo "go mod tidy done!"
-              go test -v -tags=integration ./...
-              echo "go test done"
               go test -v -tags=integration -coverpkg=./... -cover -covermode atomic -coverprofile $TRACER_PATH/coverage/coverage_$(date +%s%N)_$RANDOM.out ./... -json > $TRACER_PATH/coverage/coverage_$(date +%s%N)_$RANDOM.json && cd -
             done
 
