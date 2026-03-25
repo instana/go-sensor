@@ -1,10 +1,10 @@
 module github.com/instana/go-sensor/example/beego
 
-go 1.24.0
+go 1.24.2
 
 require (
-	github.com/beego/beego/v2 v2.3.8
-	github.com/instana/go-sensor v1.72.0
+	github.com/beego/beego/v2 v2.3.9
+	github.com/instana/go-sensor v1.73.1
 	github.com/instana/go-sensor/instrumentation/instabeego v0.25.0
 	github.com/opentracing/opentracing-go v1.2.0
 )

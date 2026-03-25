@@ -4,9 +4,9 @@ go 1.23.0
 
 require (
 	github.com/bonede/go-redis-driver v0.1.0
-	github.com/instana/go-sensor v1.72.0
+	github.com/instana/go-sensor v1.73.1
 	github.com/instana/go-sensor/instrumentation/instaredis/v2 v2.31.0
-	github.com/redis/go-redis/v9 v9.17.0
+	github.com/redis/go-redis/v9 v9.18.0
 )
 
 require (
@@ -16,6 +16,7 @@ require (
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/looplab/fsm v1.0.3 // indirect
 	github.com/opentracing/opentracing-go v1.2.0 // indirect
+	go.uber.org/atomic v1.11.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
