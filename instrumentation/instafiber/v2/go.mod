@@ -1,10 +1,10 @@
-module github.com/instana/go-sensor/instrumentation/instafiber
+module github.com/instana/go-sensor/instrumentation/instafiber/v2
 
 go 1.25.0
 
 require (
 	github.com/gofiber/fiber/v3 v3.1.0
-	github.com/instana/go-sensor v1.73.0
+	github.com/instana/go-sensor v1.73.1
 	github.com/opentracing/opentracing-go v1.2.0
 	github.com/stretchr/testify v1.11.1
 	github.com/valyala/fasthttp v1.69.0

@@ -40,8 +40,6 @@ func TraceHandler(sensor instana.TracerLogger, routeID, pathTemplate string, han
 		ctx := c.Context()
 		req := c.Request() // This is a fasthttp request and not a net/http request
 
-		headers := collectAllHeaders(req)
-
 		opts := initSpanOptions(req, routeID)
 
 		tracer := sensor.Tracer()
@@ -50,7 +48,8 @@ func TraceHandler(sensor instana.TracerLogger, routeID, pathTemplate string, han
 			opts = append(opts, ot.ChildOf(ps.Context()))
 		}
 
-		opts = append(opts, extractStartSpanOptionsFromFastHTTPHeaders(tracer, req, headers, sensor)...)
+		// Collect headers only once for span extraction
+		opts = append(opts, extractStartSpanOptionsFromFastHTTPRequest(tracer, req, sensor)...)
 
 		if isSynthetic(req) {
 			opts = append(opts, ot.Tag{Key: "synthetic_call", Value: true})
@@ -69,7 +68,9 @@ func TraceHandler(sensor instana.TracerLogger, routeID, pathTemplate string, han
 		params = collectHTTPParams(req, tracer)
 
 		collectableHTTPHeaders := configuredCollectableHeaders(tracer)
-		collectRequestHeaders(headers, collectableHTTPHeaders, collectedHeaders)
+		if len(collectableHTTPHeaders) > 0 {
+			collectRequestHeaders(req, collectableHTTPHeaders, collectedHeaders)
+		}
 
 		// Single defer to handle both panic recovery and ensure data collection
 		defer func() {
@@ -102,20 +103,40 @@ func TraceHandler(sensor instana.TracerLogger, routeID, pathTemplate string, han
 	}
 }
 
-func collectRequestHeaders(headers http.Header, collectableHTTPHeaders []string, collectedHeaders map[string]string) {
+// collectRequestHeaders efficiently collects specified headers from the request.
+// Uses a map lookup for O(n) complexity instead of O(n*m).
+func collectRequestHeaders(req *fasthttp.Request, collectableHTTPHeaders []string, collectedHeaders map[string]string) {
+	// Create a map of lowercase header names to their canonical form
+	headersToCollect := make(map[string]string, len(collectableHTTPHeaders))
 	for _, h := range collectableHTTPHeaders {
-
-		if v := headers.Get(h); v != "" {
-			collectedHeaders[h] = v
-		}
+		headersToCollect[strings.ToLower(h)] = h
 	}
+
+	// Iterate through request headers once
+	req.Header.VisitAll(func(key, value []byte) {
+		keyStr := strings.ToLower(string(key))
+		if canonicalKey, exists := headersToCollect[keyStr]; exists {
+			// Copy value to avoid fasthttp buffer reuse issues
+			valueCopy := make([]byte, len(value))
+			copy(valueCopy, value)
+			// Use the canonical (configured) key name for consistency
+			collectedHeaders[canonicalKey] = string(valueCopy)
+		}
+	})
 }
 
-func extractStartSpanOptionsFromFastHTTPHeaders(tracer ot.Tracer,
+// extractStartSpanOptionsFromFastHTTPRequest extracts span context from fasthttp request headers.
+// Optimized to avoid unnecessary header copying by extracting directly from the request.
+func extractStartSpanOptionsFromFastHTTPRequest(tracer ot.Tracer,
 	req *fasthttp.Request,
-	headers map[string][]string,
 	sensor instana.TracerLogger) []ot.StartSpanOption {
 	var opts []ot.StartSpanOption
+
+	// Convert fasthttp headers to http.Header for tracer extraction
+	headers := make(http.Header)
+	req.Header.VisitAll(func(key, value []byte) {
+		headers.Add(string(key), string(value))
+	})
 
 	wireContext, err := tracer.Extract(ot.HTTPHeaders, ot.HTTPHeadersCarrier(headers))
 	switch {
@@ -150,16 +171,28 @@ func collectHTTPParams(req *fasthttp.Request, tracer ot.Tracer) url.Values {
 	return params
 }
 
+// collectResponseHeaders efficiently collects specified headers from the response.
+// Creates defensive copies to avoid fasthttp buffer reuse issues.
+// Note: The copy is necessary because fasthttp reuses buffers, and the header values
+// may be overwritten after the response is sent.
 func collectResponseHeaders(response *fasthttp.Response, collectableHTTPHeaders []string, collectedHeaders map[string]string) {
+	// Create a map of lowercase header names to their canonical form
+	headersToCollect := make(map[string]string, len(collectableHTTPHeaders))
 	for _, h := range collectableHTTPHeaders {
-
-		if value := response.Header.Peek(h); value != nil {
-			headerCopy := make([]byte, len(value))
-			copy(headerCopy, value)
-			collectedHeaders[h] = string(headerCopy)
-		}
+		headersToCollect[strings.ToLower(h)] = h
 	}
 
+	// Iterate through response headers once
+	response.Header.VisitAll(func(key, value []byte) {
+		keyStr := strings.ToLower(string(key))
+		if canonicalKey, exists := headersToCollect[keyStr]; exists {
+			// Defensive copy required: fasthttp reuses buffers
+			valueCopy := make([]byte, len(value))
+			copy(valueCopy, value)
+			// Use the canonical (configured) key name for consistency
+			collectedHeaders[canonicalKey] = string(valueCopy)
+		}
+	})
 }
 
 func processResponseStatus(statusCode int, span ot.Span) {
@@ -193,22 +226,6 @@ func isSynthetic(req *fasthttp.Request) bool { return nil != req.Header.Peek(ins
 
 func isCustomPathTemplate(req *fasthttp.Request, pathTemplate string) bool {
 	return pathTemplate != "" && string(req.URI().Path()) != pathTemplate
-}
-
-func collectAllHeaders(req *fasthttp.Request) http.Header {
-	headers := make(http.Header, 0)
-
-	req.Header.VisitAll(func(key, value []byte) {
-		headerKey := make([]byte, len(key))
-		copy(headerKey, key)
-
-		headerVal := make([]byte, len(value))
-		copy(headerVal, value)
-
-		headers.Add(string(headerKey), string(headerVal))
-	})
-
-	return headers
 }
 
 func configuredCollectableHeaders(tracer ot.Tracer) []string {

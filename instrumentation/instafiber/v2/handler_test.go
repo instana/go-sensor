@@ -14,7 +14,7 @@ import (
 	instana "github.com/instana/go-sensor"
 	"github.com/instana/go-sensor/acceptor"
 	"github.com/instana/go-sensor/autoprofile"
-	"github.com/instana/go-sensor/instrumentation/instafiber"
+	"github.com/instana/go-sensor/instrumentation/instafiber/v2"
 	"github.com/instana/go-sensor/w3ctrace"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

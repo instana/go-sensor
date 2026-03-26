@@ -7,7 +7,7 @@ import (
 
 	"github.com/gofiber/fiber/v3"
 	instana "github.com/instana/go-sensor"
-	"github.com/instana/go-sensor/instrumentation/instafiber"
+	"github.com/instana/go-sensor/instrumentation/instafiber/v2"
 )
 
 func Example() {
