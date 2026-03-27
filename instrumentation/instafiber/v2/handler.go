@@ -164,24 +164,6 @@ func extractStartSpanOptionsFromFastHTTPRequest(tracer ot.Tracer,
 	return opts
 }
 
-func collectHTTPParams(req *fasthttp.Request, tracer ot.Tracer) url.Values {
-	var params url.Values
-
-	if t, ok := tracer.(instana.Tracer); ok {
-		opts := t.Options()
-		params, _ = url.ParseQuery(string(req.URI().QueryString()))
-
-		matcher := opts.Secrets
-		for k := range params {
-			if matcher.Match(k) {
-				params[k] = []string{"<redacted>"}
-			}
-		}
-	}
-
-	return params
-}
-
 // collectResponseHeaders efficiently collects specified headers from the response.
 // Creates defensive copies to avoid fasthttp buffer reuse issues.
 // Note: The copy is necessary because fasthttp reuses buffers, and the header values
@@ -254,4 +236,21 @@ func finalizeSpanData(span ot.Span, collectedHeaders map[string]string, params u
 	if len(params) > 0 {
 		span.SetTag("http.params", params.Encode())
 	}
+}
+
+func collectHTTPParams(req *fasthttp.Request, tracer ot.Tracer) url.Values {
+	var params url.Values
+
+	if t, ok := tracer.(instana.Tracer); ok {
+		params, _ = url.ParseQuery(string(req.URI().QueryString()))
+
+		matcher := t.Options().Secrets
+		for k := range params {
+			if matcher.Match(k) {
+				params[k] = []string{"<redacted>"}
+			}
+		}
+	}
+
+	return params
 }
