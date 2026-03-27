@@ -1,4 +1,6 @@
-// (c) Copyright IBM Corp. 2026
+// SPDX-FileCopyrightText: 2026 IBM Corp.
+//
+// SPDX-License-Identifier: MIT
 
 package main
 

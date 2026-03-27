@@ -1,6 +1,8 @@
-// (c) Copyright IBM Corp. 2025
+// SPDX-FileCopyrightText: 2026 IBM Corp.
+//
+// SPDX-License-Identifier: MIT
 
-// Package instafiber provides Instana instrumentation for Fiber package.
+// Package instafiber provides Instana instrumentation for fiber/v3 package.
 package instafiber
 
 import (

@@ -1,6 +1,6 @@
 # Fiber v3 Instrumentation Example
 
-This is a simple example demonstrating how to use Instana's Fiber v3 instrumentation with Go. The example showcases context propagation for HTTP requests and database operations.
+This is a simple example demonstrating how to use Instana's Fiber v3 instrumentation with Go. The example also showcases context propagation for HTTP requests and database operations.
 
 ## Prerequisites
 
@@ -8,18 +8,6 @@ Before running this example, ensure you have:
 
 1. **Go 1.25.0 or later** installed
 2. **Instana Agent** running and accessible to the application
-
-## Installation
-
-1. Clone the repository and navigate to this example:
-```bash
-cd example/basic_usage_fiber
-```
-
-2. Install dependencies:
-```bash
-go mod download
-```
 
 ## Running the Application
 
