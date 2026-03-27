@@ -22,14 +22,14 @@ Usage
 // Create a collector for instana instrumentation
 collector := instana.InitCollector(&instana.Options{
   Service: "fiber-app",
-  Tracer:  instana.DefaultTracerOptions(),
 })
 
 app := fiber.New()
 
 // Use the instafiber.TraceHandler for instrumenting the handler
-app.Get("/greet", instafiber.TraceHandler(collector, "greet", "/greet", func(c *fiber.Ctx) error {
-return c.SendString("Hello world!")
+// Parameters: collector, routeID, pathTemplate, handler
+app.Get("/greet", instafiber.TraceHandler(collector, "greet", "/greet", func(c fiber.Ctx) error {
+  return c.SendString("Hello world!")
 }))
 ```
 

@@ -20,12 +20,14 @@ import (
 const (
 	// spanOperationHTTP is the operation name for HTTP spans
 	spanOperationHTTP = "g.http"
+	// spanTagHTTPError is the tag key for HTTP error messages
+	spanTagHTTPError = "http.error"
 )
 
 // TraceHandler adds Instana instrumentation to the route handler.
 //
 // Parameters:
-//   - sensor: The Instana tracer logger instance for creating spans
+//   - collector: The Instana tracer logger instance for creating spans
 //   - routeID: A unique identifier for this route (e.g., "user.create", "product.list")
 //   - pathTemplate: The URL path template/pattern for this route (e.g., "/users/{id}", "/api/v1/products")
 //     This is used for grouping similar requests and should match the route pattern, not the actual path.
@@ -35,21 +37,30 @@ const (
 // Returns a new Fiber handler that wraps the original handler with tracing instrumentation.
 // The wrapper creates a span for each request, captures headers and parameters, handles errors
 // and panics, and injects trace context into the response headers.
-func TraceHandler(sensor instana.TracerLogger, routeID, pathTemplate string, handler fiber.Handler) fiber.Handler {
+func TraceHandler(collector instana.TracerLogger, routeID, pathTemplate string, handler fiber.Handler) fiber.Handler {
 	return func(c fiber.Ctx) error {
 		ctx := c.Context()
 		req := c.Request() // This is a fasthttp request and not a net/http request
 
-		opts := initSpanOptions(req, routeID)
+		opts := []ot.StartSpanOption{
+			ext.SpanKindRPCServer,
+			ot.Tags{
+				"http.host":     string(req.Host()),
+				"http.method":   string(req.Header.Method()),
+				"http.protocol": string(req.URI().Scheme()),
+				"http.path":     string(req.URI().Path()),
+				"http.route_id": routeID,
+			},
+		}
 
-		tracer := sensor.Tracer()
+		tracer := collector.Tracer()
 		if ps, ok := instana.SpanFromContext(ctx); ok {
 			tracer = ps.Tracer()
 			opts = append(opts, ot.ChildOf(ps.Context()))
 		}
 
 		// Collect headers only once for span extraction
-		opts = append(opts, extractStartSpanOptionsFromFastHTTPRequest(tracer, req, sensor)...)
+		opts = append(opts, extractStartSpanOptionsFromFastHTTPRequest(tracer, req, collector)...)
 
 		if isSynthetic(req) {
 			opts = append(opts, ot.Tag{Key: "synthetic_call", Value: true})
@@ -113,7 +124,7 @@ func collectRequestHeaders(req *fasthttp.Request, collectableHTTPHeaders []strin
 	}
 
 	// Iterate through request headers once
-	req.Header.VisitAll(func(key, value []byte) {
+	for key, value := range req.Header.All() {
 		keyStr := strings.ToLower(string(key))
 		if canonicalKey, exists := headersToCollect[keyStr]; exists {
 			// Copy value to avoid fasthttp buffer reuse issues
@@ -122,32 +133,32 @@ func collectRequestHeaders(req *fasthttp.Request, collectableHTTPHeaders []strin
 			// Use the canonical (configured) key name for consistency
 			collectedHeaders[canonicalKey] = string(valueCopy)
 		}
-	})
+	}
 }
 
 // extractStartSpanOptionsFromFastHTTPRequest extracts span context from fasthttp request headers.
 // Optimized to avoid unnecessary header copying by extracting directly from the request.
 func extractStartSpanOptionsFromFastHTTPRequest(tracer ot.Tracer,
 	req *fasthttp.Request,
-	sensor instana.TracerLogger) []ot.StartSpanOption {
+	collector instana.TracerLogger) []ot.StartSpanOption {
 	var opts []ot.StartSpanOption
 
 	// Convert fasthttp headers to http.Header for tracer extraction
 	headers := make(http.Header)
-	req.Header.VisitAll(func(key, value []byte) {
+	for key, value := range req.Header.All() {
 		headers.Add(string(key), string(value))
-	})
+	}
 
 	wireContext, err := tracer.Extract(ot.HTTPHeaders, ot.HTTPHeadersCarrier(headers))
 	switch {
 	case err == nil:
 		opts = append(opts, ext.RPCServerOption(wireContext))
 	case errors.Is(err, ot.ErrSpanContextNotFound):
-		sensor.Logger().Debug("no span context provided with ", string(req.Header.Method()), " ", string(req.URI().Path()))
+		collector.Logger().Debug("no span context provided with ", string(req.Header.Method()), " ", string(req.URI().Path()))
 	case errors.Is(err, ot.ErrUnsupportedFormat):
-		sensor.Logger().Info("unsupported span context format provided with ", string(req.Header.Method()), " ", string(req.URI().Path()))
+		collector.Logger().Info("unsupported span context format provided with ", string(req.Header.Method()), " ", string(req.URI().Path()))
 	default:
-		sensor.Logger().Warn("failed to extract span context from the request:", err)
+		collector.Logger().Warn("failed to extract span context from the request:", err)
 	}
 
 	return opts
@@ -183,7 +194,7 @@ func collectResponseHeaders(response *fasthttp.Response, collectableHTTPHeaders 
 	}
 
 	// Iterate through response headers once
-	response.Header.VisitAll(func(key, value []byte) {
+	for key, value := range response.Header.All() {
 		keyStr := strings.ToLower(string(key))
 		if canonicalKey, exists := headersToCollect[keyStr]; exists {
 			// Defensive copy required: fasthttp reuses buffers
@@ -192,7 +203,7 @@ func collectResponseHeaders(response *fasthttp.Response, collectableHTTPHeaders 
 			// Use the canonical (configured) key name for consistency
 			collectedHeaders[canonicalKey] = string(valueCopy)
 		}
-	})
+	}
 }
 
 func processResponseStatus(statusCode int, span ot.Span) {
@@ -200,26 +211,11 @@ func processResponseStatus(statusCode int, span ot.Span) {
 		if statusCode >= http.StatusInternalServerError {
 			statusText := http.StatusText(statusCode)
 
-			span.SetTag("http.error", statusText)
+			span.SetTag(spanTagHTTPError, statusText)
 			span.LogFields(otlog.Object("error", statusText))
 		}
 		span.SetTag("http.status", statusCode)
 	}
-}
-
-func initSpanOptions(req *fasthttp.Request, routeID string) []ot.StartSpanOption {
-	opts := []ot.StartSpanOption{
-		ext.SpanKindRPCServer,
-		ot.Tags{
-			"http.host":     string(req.Host()),
-			"http.method":   string(req.Header.Method()),
-			"http.protocol": string(req.URI().Scheme()),
-			"http.path":     string(req.URI().Path()),
-			"http.route_id": routeID,
-		},
-	}
-
-	return opts
 }
 
 func isSynthetic(req *fasthttp.Request) bool { return nil != req.Header.Peek(instana.FieldSynthetic) }
@@ -241,10 +237,10 @@ func configuredCollectableHeaders(tracer ot.Tracer) []string {
 // handlePanic processes panic errors and sets appropriate span tags
 func handlePanic(span ot.Span, err interface{}) {
 	if e, ok := err.(error); ok {
-		span.SetTag("http.error", e.Error())
+		span.SetTag(spanTagHTTPError, e.Error())
 		span.LogFields(otlog.Error(e))
 	} else {
-		span.SetTag("http.error", err)
+		span.SetTag(spanTagHTTPError, err)
 		span.LogFields(otlog.Object("error", err))
 	}
 	span.SetTag(string(ext.HTTPStatusCode), http.StatusInternalServerError)
