@@ -30,6 +30,7 @@ This folder contains examples of instrumenting the common use-cases with `github
 * [k8s-env](./k8s-env) - Demonstrates running a Go application with MySQL database in Kubernetes, monitored by Instana Go tracer(`go-sensor`) SDK.
 * [sqlx-oracle](./sqlx-oracle) - Demonstrates Instana instrumentation for Oracle database using `sqlx` and `godror` driver.
 * [http-client](./http-client) - Demonstrates how to instrument outgoing HTTP requests using Instana Go sensor SDK.
+* [fiber-v3-example](./basic_usage_fiber) - an example of instrumenting `fiber/v3` using `go-sensor` SDK.
 
 For more up-to-date instrumentation code examples please consult the respective package documentation page:
 
