@@ -1,5 +1,5 @@
-github.com/beego/beego/v2 v2.3.9 h1:N1nC50S0B8sXEKpV6IQZX5n6zgMC7V3TWqBnKsFhVbo=
-github.com/beego/beego/v2 v2.3.9/go.mod h1:IY3bkfRge4Yj2XhgdMuvznM4HK/ovxQLOHJxAJ+QRgo=
+github.com/beego/beego/v2 v2.3.10 h1:53us+Lzc/bwFwjyRi62+FKFEcWiIbmKbhW4/FQ3aNEw=
+github.com/beego/beego/v2 v2.3.10/go.mod h1:IY3bkfRge4Yj2XhgdMuvznM4HK/ovxQLOHJxAJ+QRgo=
 github.com/beorn7/perks v1.0.1 h1:VlbKKnNfV8bJzeqoa4cOKqO6bYr3WgKZxO8Z16+hsOM=
 github.com/beorn7/perks v1.0.1/go.mod h1:G2ZrVWU2WbWT9wwq4/hrbKbnv/1ERSJQ0ibhJ6rlkpw=
 github.com/cespare/xxhash/v2 v2.3.0 h1:UL815xU9SqsFlibzuggzjXhog7bL6oX9BbNZnL2UFvs=
