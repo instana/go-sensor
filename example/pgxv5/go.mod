@@ -6,7 +6,7 @@ require (
 	github.com/gorilla/mux v1.8.1
 	github.com/instana/go-sensor v1.73.1
 	github.com/instana/go-sensor/instrumentation/instapgx/v2 v2.17.0
-	github.com/jackc/pgx/v5 v5.9.1
+	github.com/jackc/pgx/v5 v5.9.2
 )
 
 require (
