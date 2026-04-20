@@ -87,6 +87,16 @@ func (m *meterS) Stop() {
 	m.done <- struct{}{}
 }
 
+func getTransmissionDelay(options *Options) time.Duration {
+	interval := time.Duration(options.Metrics.TransmissionDelay) * time.Millisecond
+	// Safety check: fallback to default if interval becomes negative,
+	// possibly due to missing TransmissionDelay during sensor re-initialization.
+	if interval <= 0 {
+		interval = 1000 * time.Millisecond
+	}
+	return interval
+}
+
 func (m *meterS) collectMemoryMetrics() acceptor.MemoryStats {
 	var memStats runtime.MemStats
 	runtime.ReadMemStats(&memStats)
