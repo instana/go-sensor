@@ -52,6 +52,12 @@ type MetricsOptions struct {
 	TransmissionDelay int
 }
 
+const (
+	defaultTransmissionDelay = 1000
+	maxTransmissionDelay     = 5000
+	minTransmissionDelay     = 1000
+)
+
 func newMeter(logger LeveledLogger) *meterS {
 	logger.Debug("initializing meter")
 
@@ -92,7 +98,8 @@ func getTransmissionDelay(options *Options) time.Duration {
 	// Safety check: fallback to default if interval becomes negative,
 	// possibly due to missing TransmissionDelay during sensor re-initialization.
 	if interval <= 0 {
-		interval = 1000 * time.Millisecond
+		defaultLogger.Warn("meter: safety check triggered. invalid transmission delay %d, falling back to default", options.Metrics.TransmissionDelay)
+		interval = defaultTransmissionDelay * time.Millisecond
 	}
 	return interval
 }

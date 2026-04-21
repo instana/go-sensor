@@ -131,7 +131,7 @@ func (opts *Options) applyProfilingConfiguration() {
 func (opts *Options) applyMetricsConfiguration() {
 	// Step 1: Apply default if zero
 	if opts.Metrics.TransmissionDelay == 0 {
-		opts.Metrics.TransmissionDelay = 1000
+		opts.Metrics.TransmissionDelay = defaultTransmissionDelay
 	}
 
 	// Step 2: Check environment variable (takes precedence over code configuration)
@@ -139,11 +139,11 @@ func (opts *Options) applyMetricsConfiguration() {
 		if delay, err := strconv.Atoi(envDelay); err != nil {
 			// Invalid format - non-numeric value
 			defaultLogger.Warn("Invalid INSTANA_METRICS_TRANSMISSION_DELAY value: ", envDelay, ", using default 1000ms")
-			opts.Metrics.TransmissionDelay = 1000
+			opts.Metrics.TransmissionDelay = defaultTransmissionDelay
 		} else if delay <= 0 {
 			// Non-positive value
 			defaultLogger.Warn("INSTANA_METRICS_TRANSMISSION_DELAY must be positive, using default 1000ms")
-			opts.Metrics.TransmissionDelay = 1000
+			opts.Metrics.TransmissionDelay = defaultTransmissionDelay
 		} else {
 			// Valid value from ENV
 			opts.Metrics.TransmissionDelay = delay
@@ -151,15 +151,15 @@ func (opts *Options) applyMetricsConfiguration() {
 	}
 
 	// Step 3: Enforce minimum value (1000ms)
-	if opts.Metrics.TransmissionDelay < 1000 {
+	if opts.Metrics.TransmissionDelay < minTransmissionDelay {
 		defaultLogger.Warn("metrics transmission delay is below minimum 1000ms, using minimum 1000ms (configured: ", opts.Metrics.TransmissionDelay, "ms)")
-		opts.Metrics.TransmissionDelay = 1000
+		opts.Metrics.TransmissionDelay = minTransmissionDelay
 	}
 
 	// Step 4: Enforce maximum cap (5000ms)
-	if opts.Metrics.TransmissionDelay > 5000 {
+	if opts.Metrics.TransmissionDelay > maxTransmissionDelay {
 		defaultLogger.Warn("metrics transmission delay exceeds maximum 5000ms, capping at 5000ms (configured: ", opts.Metrics.TransmissionDelay, "ms)")
-		opts.Metrics.TransmissionDelay = 5000
+		opts.Metrics.TransmissionDelay = maxTransmissionDelay
 	}
 }
 
