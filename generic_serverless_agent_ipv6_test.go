@@ -83,8 +83,8 @@ func TestGenericServerlessAgent_Flush_IPv6Support(t *testing.T) {
 	// Wait for request to be received
 	select {
 	case <-requestReceived:
-		t.Logf("✓ Successfully sent HTTP request to IPv6 endpoint")
-		
+		t.Logf("Successfully sent HTTP request to IPv6 endpoint")
+
 		// Verify headers were set correctly
 		if receivedHeaders.Get("X-Instana-Key") != "test-key" {
 			t.Errorf("X-Instana-Key header not set correctly")
@@ -92,8 +92,8 @@ func TestGenericServerlessAgent_Flush_IPv6Support(t *testing.T) {
 		if receivedHeaders.Get("Content-Type") != "application/json" {
 			t.Errorf("Content-Type header not set correctly")
 		}
-		
-		t.Logf("✓ IPv6 endpoint support verified: Flush() successfully communicates with IPv6 addresses")
+
+		t.Logf("IPv6 endpoint support verified: Flush() successfully communicates with IPv6 addresses")
 	case <-time.After(3 * time.Second):
 		t.Fatal("timeout waiting for request - IPv6 communication failed")
 	}
@@ -167,7 +167,7 @@ func TestGenericServerlessAgent_Flush_IPv4vsIPv6(t *testing.T) {
 				t.Fatalf("flush failed for %s: %v", tt.name, err)
 			}
 
-			t.Logf("✓ %s endpoint works correctly", tt.name)
+			t.Logf("%s endpoint works correctly", tt.name)
 		})
 	}
 }
