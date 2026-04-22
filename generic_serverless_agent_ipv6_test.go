@@ -1,4 +1,6 @@
-// (c) Copyright IBM Corp. 2024
+// SPDX-FileCopyrightText: 2024 IBM Corp.
+//
+// SPDX-License-Identifier: MIT
 
 package instana
 

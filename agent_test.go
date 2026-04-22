@@ -6,11 +6,15 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
+	"net"
 	"net/http"
+	"net/http/httptest"
 	"strconv"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/instana/go-sensor/acceptor"
 	"github.com/instana/go-sensor/autoprofile"
@@ -381,5 +385,331 @@ func Test_agentS_SendEvent_ConcurrentCalls(t *testing.T) {
 	for i := 0; i < numEvents; i++ {
 		err := <-errChan
 		assert.NoError(t, err)
+	}
+}
+
+func TestAgent_SendSpans_IPv6Support(t *testing.T) {
+	// Create a test server that listens on IPv6
+	listener, err := net.Listen("tcp6", "[::1]:0") // IPv6 localhost
+	if err != nil {
+		t.Skipf("IPv6 not available on this system: %v", err)
+	}
+	defer listener.Close()
+
+	requestReceived := make(chan bool, 1)
+	var receivedPath string
+
+	// Create HTTP handler
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		receivedPath = r.URL.Path
+
+		// Verify it's a valid traces request
+		if !strings.HasPrefix(r.URL.Path, agentTracesURL) {
+			t.Errorf("unexpected path: %s", r.URL.Path)
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+
+		if r.Method != http.MethodPost {
+			t.Errorf("unexpected method: %s", r.Method)
+			w.WriteHeader(http.StatusMethodNotAllowed)
+			return
+		}
+
+		requestReceived <- true
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("{}"))
+	})
+
+	// Start server with IPv6 listener
+	server := &http.Server{Handler: handler}
+	go server.Serve(listener)
+	defer server.Close()
+
+	// Get the IPv6 address with port
+	addr := listener.Addr().(*net.TCPAddr)
+	ipv6Host := fmt.Sprintf("[%s]", addr.IP)
+	ipv6Port := strconv.Itoa(addr.Port)
+
+	t.Logf("Test server listening on IPv6: %s:%s", ipv6Host, ipv6Port)
+
+	// Create agent with IPv6 endpoint
+	agentComm := &agentCommunicator{
+		host: ipv6Host,
+		port: ipv6Port,
+		from: &fromS{EntityID: "12345"},
+		client: &http.Client{
+			Timeout: 5 * time.Second,
+		},
+		l: defaultLogger,
+	}
+
+	agent := &agentS{
+		agentComm: agentComm,
+		logger:    defaultLogger,
+	}
+
+	// Send test spans
+	testSpans := []Span{
+		{
+			TraceID: 12345,
+			SpanID:  67890,
+			Name:    "test-operation",
+		},
+	}
+
+	err = agent.SendSpans(testSpans)
+	if err != nil {
+		t.Fatalf("failed to send spans: %v", err)
+	}
+
+	// Wait for request to be received
+	select {
+	case <-requestReceived:
+		t.Logf("Successfully sent HTTP request to IPv6 endpoint")
+
+		// Verify correct endpoint was called
+		if !strings.HasPrefix(receivedPath, agentTracesURL) {
+			t.Errorf("Expected path to start with %s, got %s", agentTracesURL, receivedPath)
+		}
+
+		t.Logf("IPv6 endpoint support verified: SendSpans() successfully communicates with IPv6 addresses")
+	case <-time.After(3 * time.Second):
+		t.Fatal("timeout waiting for request - IPv6 communication failed")
+	}
+}
+
+func TestAgent_SendMetrics_IPv6Support(t *testing.T) {
+	// Create a test server that listens on IPv6
+	listener, err := net.Listen("tcp6", "[::1]:0")
+	if err != nil {
+		t.Skipf("IPv6 not available on this system: %v", err)
+	}
+	defer listener.Close()
+
+	requestReceived := make(chan bool, 1)
+
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if !strings.HasPrefix(r.URL.Path, agentDataURL) {
+			t.Errorf("unexpected path: %s", r.URL.Path)
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+
+		requestReceived <- true
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("{}"))
+	})
+
+	server := &http.Server{Handler: handler}
+	go server.Serve(listener)
+	defer server.Close()
+
+	addr := listener.Addr().(*net.TCPAddr)
+	ipv6Host := fmt.Sprintf("[%s]", addr.IP)
+	ipv6Port := strconv.Itoa(addr.Port)
+
+	agentComm := &agentCommunicator{
+		host: ipv6Host,
+		port: ipv6Port,
+		from: &fromS{EntityID: "12345"},
+		client: &http.Client{
+			Timeout: 5 * time.Second,
+		},
+		l: defaultLogger,
+	}
+
+	agent := &agentS{
+		agentComm: agentComm,
+		snapshot: &SnapshotCollector{
+			CollectionInterval: snapshotCollectionInterval,
+			ServiceName:        "test-service",
+		},
+		logger: defaultLogger,
+	}
+
+	// Send test metrics
+	testMetrics := acceptor.Metrics{
+		CgoCall:   100,
+		Goroutine: 200,
+	}
+
+	err = agent.SendMetrics(testMetrics)
+	if err != nil {
+		t.Fatalf("failed to send metrics: %v", err)
+	}
+
+	select {
+	case <-requestReceived:
+		t.Logf("IPv6 endpoint support verified: SendMetrics() successfully communicates with IPv6 addresses")
+	case <-time.After(3 * time.Second):
+		t.Fatal("timeout waiting for request - IPv6 communication failed")
+	}
+}
+
+func TestAgent_SendProfiles_IPv6Support(t *testing.T) {
+	listener, err := net.Listen("tcp6", "[::1]:0")
+	if err != nil {
+		t.Skipf("IPv6 not available on this system: %v", err)
+	}
+	defer listener.Close()
+
+	requestReceived := make(chan bool, 1)
+
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if !strings.HasPrefix(r.URL.Path, agentProfilesURL) {
+			t.Errorf("unexpected path: %s", r.URL.Path)
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+
+		requestReceived <- true
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("{}"))
+	})
+
+	server := &http.Server{Handler: handler}
+	go server.Serve(listener)
+	defer server.Close()
+
+	addr := listener.Addr().(*net.TCPAddr)
+	ipv6Host := fmt.Sprintf("[%s]", addr.IP)
+	ipv6Port := strconv.Itoa(addr.Port)
+
+	agentComm := &agentCommunicator{
+		host: ipv6Host,
+		port: ipv6Port,
+		from: &fromS{EntityID: "12345"},
+		client: &http.Client{
+			Timeout: 5 * time.Second,
+		},
+		l: defaultLogger,
+	}
+
+	agent := &agentS{
+		agentComm: agentComm,
+		logger:    defaultLogger,
+	}
+
+	// Send test profiles
+	testProfiles := []autoprofile.Profile{
+		{
+			Type:     "cpu",
+			Duration: 1000,
+		},
+	}
+
+	err = agent.SendProfiles(testProfiles)
+	if err != nil {
+		t.Fatalf("failed to send profiles: %v", err)
+	}
+
+	select {
+	case <-requestReceived:
+		t.Logf("IPv6 endpoint support verified: SendProfiles() successfully communicates with IPv6 addresses")
+	case <-time.After(3 * time.Second):
+		t.Fatal("timeout waiting for request - IPv6 communication failed")
+	}
+}
+
+func TestAgent_IPv4vsIPv6(t *testing.T) {
+	tests := []struct {
+		name        string
+		setupServer func() (string, string, func())
+	}{
+		{
+			name: "IPv4",
+			setupServer: func() (string, string, func()) {
+				server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					w.WriteHeader(http.StatusOK)
+					w.Write([]byte("{}"))
+				}))
+
+				// Extract host and port from server URL
+				// server.URL format is "http://127.0.0.1:port"
+				host := "127.0.0.1"
+				port := server.URL[strings.LastIndex(server.URL, ":")+1:]
+
+				return host, port, server.Close
+			},
+		},
+		{
+			name: "IPv6",
+			setupServer: func() (string, string, func()) {
+				listener, err := net.Listen("tcp6", "[::1]:0")
+				if err != nil {
+					t.Skipf("IPv6 not available: %v", err)
+				}
+
+				server := &http.Server{
+					Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+						w.WriteHeader(http.StatusOK)
+						w.Write([]byte("{}"))
+					}),
+				}
+				go server.Serve(listener)
+
+				addr := listener.Addr().(*net.TCPAddr)
+				host := fmt.Sprintf("[%s]", addr.IP)
+				port := strconv.Itoa(addr.Port)
+
+				return host, port, func() {
+					server.Close()
+					listener.Close()
+				}
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			host, port, cleanup := tt.setupServer()
+			defer cleanup()
+
+			agentComm := &agentCommunicator{
+				host: host,
+				port: port,
+				from: &fromS{EntityID: "12345"},
+				client: &http.Client{
+					Timeout: 5 * time.Second,
+				},
+				l: defaultLogger,
+			}
+
+			agent := &agentS{
+				agentComm: agentComm,
+				snapshot: &SnapshotCollector{
+					CollectionInterval: snapshotCollectionInterval,
+					ServiceName:        "test-service",
+				},
+				logger: defaultLogger,
+			}
+
+			// Test SendSpans
+			testSpans := []Span{
+				{
+					TraceID: 12345,
+					SpanID:  67890,
+					Name:    "test-operation",
+				},
+			}
+
+			err := agent.SendSpans(testSpans)
+			if err != nil {
+				t.Fatalf("SendSpans failed for %s: %v", tt.name, err)
+			}
+
+			// Test SendMetrics
+			testMetrics := acceptor.Metrics{
+				CgoCall: 100,
+			}
+
+			err = agent.SendMetrics(testMetrics)
+			if err != nil {
+				t.Fatalf("SendMetrics failed for %s: %v", tt.name, err)
+			}
+
+			t.Logf("%s endpoint works correctly", tt.name)
+		})
 	}
 }
