@@ -388,6 +388,9 @@ func Test_agentS_SendEvent_ConcurrentCalls(t *testing.T) {
 	}
 }
 
+// TestAgent_SendSpans_IPv6Support verifies that the agent can successfully send spans
+// to an IPv6 endpoint. This test creates an IPv6 test server and validates that the
+// agent's SendSpans method can communicate with IPv6 addresses using the format [::1]:port.
 func TestAgent_SendSpans_IPv6Support(t *testing.T) {
 	// Create a test server that listens on IPv6
 	listener, err := net.Listen("tcp6", "[::1]:0") // IPv6 localhost
@@ -479,6 +482,9 @@ func TestAgent_SendSpans_IPv6Support(t *testing.T) {
 	}
 }
 
+// TestAgent_SendMetrics_IPv6Support verifies that the agent can successfully send metrics
+// to an IPv6 endpoint. This test validates that the agent's SendMetrics method properly
+// handles IPv6 addresses in the format [::1]:port.
 func TestAgent_SendMetrics_IPv6Support(t *testing.T) {
 	// Create a test server that listens on IPv6
 	listener, err := net.Listen("tcp6", "[::1]:0")
@@ -547,6 +553,9 @@ func TestAgent_SendMetrics_IPv6Support(t *testing.T) {
 	}
 }
 
+// TestAgent_SendProfiles_IPv6Support verifies that the agent can successfully send profile data
+// to an IPv6 endpoint. This test validates that the agent's SendProfiles method properly
+// handles IPv6 addresses in the format [::1]:port.
 func TestAgent_SendProfiles_IPv6Support(t *testing.T) {
 	listener, err := net.Listen("tcp6", "[::1]:0")
 	if err != nil {
@@ -612,6 +621,9 @@ func TestAgent_SendProfiles_IPv6Support(t *testing.T) {
 	}
 }
 
+// TestAgent_IPv4vsIPv6 is a comparative test that verifies the agent works correctly with both
+// IPv4 and IPv6 endpoints. This test ensures that the agent can send spans and metrics to both
+// address types without any issues, validating cross-compatibility.
 func TestAgent_IPv4vsIPv6(t *testing.T) {
 	tests := []struct {
 		name        string
