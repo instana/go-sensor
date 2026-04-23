@@ -10,6 +10,7 @@ import (
 	"net"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 )
@@ -145,6 +146,28 @@ func TestGenericServerlessAgent_Flush_IPv4vsIPv6(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			endpoint, cleanup := tt.setupServer()
 			defer cleanup()
+
+			// Validate endpoint format based on test type
+			if tt.name == "IPv4" {
+				// IPv4 endpoint should not have brackets in host part
+				if strings.Contains(endpoint, "[") || strings.Contains(endpoint, "]") {
+					t.Errorf("IPv4 endpoint should not contain brackets: %s", endpoint)
+				}
+				if !strings.Contains(endpoint, "127.0.0.1") {
+					t.Errorf("IPv4 endpoint should contain 127.0.0.1: %s", endpoint)
+				}
+			} else if tt.name == "IPv6" {
+				// IPv6 endpoint should have brackets around the host
+				if !strings.Contains(endpoint, "[") {
+					t.Errorf("IPv6 endpoint should contain opening bracket: %s", endpoint)
+				}
+				if !strings.Contains(endpoint, "]") {
+					t.Errorf("IPv6 endpoint should contain closing bracket: %s", endpoint)
+				}
+				if !strings.Contains(endpoint, "::1") {
+					t.Errorf("IPv6 endpoint should contain ::1: %s", endpoint)
+				}
+			}
 
 			agent := newGenericServerlessAgent(
 				endpoint,
