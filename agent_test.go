@@ -678,6 +678,25 @@ func TestAgent_IPv4vsIPv6(t *testing.T) {
 			host, port, cleanup := tt.setupServer()
 			defer cleanup()
 
+			// Validate host and port format based on test type
+			if tt.name == "IPv4" {
+				// IPv4 host should not have brackets
+				assert.NotContains(t, host, "[", "IPv4 host should not contain brackets")
+				assert.NotContains(t, host, "]", "IPv4 host should not contain brackets")
+				assert.Equal(t, "127.0.0.1", host, "IPv4 host should be 127.0.0.1")
+			} else if tt.name == "IPv6" {
+				// IPv6 host should have brackets
+				assert.True(t, strings.HasPrefix(host, "["), "IPv6 host should start with [")
+				assert.True(t, strings.HasSuffix(host, "]"), "IPv6 host should end with ]")
+				assert.Contains(t, host, "::1", "IPv6 host should contain ::1")
+			}
+
+			// Validate port is a valid number
+			portNum, portErr := strconv.Atoi(port)
+			assert.NoError(t, portErr, "Port should be a valid number")
+			assert.Greater(t, portNum, 0, "Port should be greater than 0")
+			assert.LessOrEqual(t, portNum, 65535, "Port should be less than or equal to 65535")
+
 			agentComm := &agentCommunicator{
 				host: host,
 				port: port,
