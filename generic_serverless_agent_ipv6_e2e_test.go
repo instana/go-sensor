@@ -1,8 +1,5 @@
 // (c) Copyright IBM Corp. 2026
 
-//go:build generic_serverless && integration
-// +build generic_serverless,integration
-
 package instana
 
 import (
