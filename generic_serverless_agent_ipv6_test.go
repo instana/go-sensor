@@ -15,6 +15,10 @@ import (
 	"time"
 )
 
+// TestGenericServerlessAgent_Flush_IPv6Support verifies that the generic serverless agent
+// can successfully flush spans to an IPv6 endpoint. This test creates an IPv6 test server
+// listening on [::1]:0 and validates that the agent's Flush method can communicate with
+// IPv6 addresses, ensuring proper header transmission and response handling.
 func TestGenericServerlessAgent_Flush_IPv6Support(t *testing.T) {
 	// Create a test server that listens on IPv6
 	listener, err := net.Listen("tcp6", "[::1]:0") // IPv6 localhost
@@ -102,12 +106,19 @@ func TestGenericServerlessAgent_Flush_IPv6Support(t *testing.T) {
 	}
 }
 
+// TestGenericServerlessAgent_Flush_IPv4vsIPv6 is a comparative test that verifies the
+// generic serverless agent works correctly with both IPv4 and IPv6 endpoints. This test
+// ensures that the agent can flush spans to both address types without any issues,
+// validating endpoint format (IPv4: http://127.0.0.1:port, IPv6: http://[::1]:port)
+// and cross-compatibility for serverless environments.
 func TestGenericServerlessAgent_Flush_IPv4vsIPv6(t *testing.T) {
 	tests := []struct {
 		name        string
 		setupServer func() (string, func())
 	}{
 		{
+			// Test case for IPv4 endpoint using standard httptest server
+			// Expected format: http://127.0.0.1:port (no brackets)
 			name: "IPv4",
 			setupServer: func() (string, func()) {
 				server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -117,6 +128,8 @@ func TestGenericServerlessAgent_Flush_IPv4vsIPv6(t *testing.T) {
 			},
 		},
 		{
+			// Test case for IPv6 endpoint using manual tcp6 listener
+			// Expected format: http://[::1]:port (with brackets around IPv6 address)
 			name: "IPv6",
 			setupServer: func() (string, func()) {
 				listener, err := net.Listen("tcp6", "[::1]:0")
