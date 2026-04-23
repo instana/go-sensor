@@ -24,115 +24,132 @@ func TestIntegration_RealServerlessAgent_IPv6Endpoint(t *testing.T) {
 	teardownInstanaEnv := setupInstanaEnvQA()
 	defer teardownInstanaEnv()
 
-	// Skip if INSTANA_AGENT_KEY is not set to a real key (after setup from QA vars)
+	agentKey := validateAgentKey(t)
+	endpoint := validateEndpoint(t)
+	host := extractHostFromEndpoint(endpoint)
+	ipv6Addr := findIPv6Address(t, host)
+
+	// IPv6 address resolved successfully (not logged for security)
+	ipv6Endpoint := "https://[" + ipv6Addr.String() + "]"
+	defer restoreEndpointEnv(ipv6Endpoint)()
+
+	customClient := createTLSClient(host)
+	// Creating custom HTTP client with TLS configuration (details not logged for security)
+
+	customAgent := newGenericServerlessAgent(ipv6Endpoint, agentKey, customClient, defaultLogger)
+	c := initCollectorWithAgent(customAgent)
+	defer ShutdownCollector()
+
+	sendTestSpan(c, endpoint, ipv6Addr)
+	flushAndVerify(t, c)
+}
+
+// validateAgentKey checks if INSTANA_AGENT_KEY is set and valid
+func validateAgentKey(t *testing.T) string {
 	agentKey := os.Getenv("INSTANA_AGENT_KEY")
 	if agentKey == "" || agentKey == "testkey1" {
 		t.Skip("Skipping real endpoint test: INSTANA_AGENT_KEY not set to production key")
 	}
+	return agentKey
+}
 
-	// Read endpoint from environment variable
+// validateEndpoint checks if INSTANA_ENDPOINT_URL is set
+func validateEndpoint(t *testing.T) string {
 	endpoint := os.Getenv("INSTANA_ENDPOINT_URL")
 	if endpoint == "" {
 		t.Skip("Skipping real endpoint test: INSTANA_ENDPOINT_URL not set")
 	}
+	return endpoint
+}
 
-	// Extract host from endpoint URL
+// extractHostFromEndpoint extracts the hostname from an endpoint URL
+func extractHostFromEndpoint(endpoint string) string {
 	host := endpoint
-	if strings.HasPrefix(endpoint, "https://") {
-		host = strings.TrimPrefix(endpoint, "https://")
-	} else if strings.HasPrefix(endpoint, "http://") {
-		host = strings.TrimPrefix(endpoint, "http://")
-	}
-	// Remove port if present
+	host = strings.TrimPrefix(host, "https://")
+	host = strings.TrimPrefix(host, "http://")
+
 	if idx := strings.Index(host, ":"); idx != -1 {
 		host = host[:idx]
 	}
-	// Remove path if present
 	if idx := strings.Index(host, "/"); idx != -1 {
 		host = host[:idx]
 	}
+	return host
+}
+
+// findIPv6Address resolves and returns the first IPv6 address for the host
+func findIPv6Address(t *testing.T, host string) net.IP {
 	ips, err := net.LookupIP(host)
 	if err != nil {
 		t.Skipf("Failed to resolve %s: %v", host, err)
 	}
 
-	// Find IPv6 address
-	var ipv6Addr net.IP
 	for _, ip := range ips {
 		if ip.To4() == nil && ip.To16() != nil {
-			ipv6Addr = ip
-			break
+			return ip
 		}
 	}
 
-	if ipv6Addr == nil {
-		t.Skip("No IPv6 address found for endpoint")
-	}
-	// IPv6 address resolved successfully (not logged for security)
+	t.Skip("No IPv6 address found for endpoint")
+	return nil
+}
 
-	// Set endpoint via environment variable to use IPv6 address directly
-	// Format: https://[ipv6]:port
-	ipv6Endpoint := "https://[" + ipv6Addr.String() + "]"
-
+// restoreEndpointEnv sets the IPv6 endpoint and returns a cleanup function
+func restoreEndpointEnv(ipv6Endpoint string) func() {
 	oldEndpoint := os.Getenv("INSTANA_ENDPOINT_URL")
 	os.Setenv("INSTANA_ENDPOINT_URL", ipv6Endpoint)
-	defer func() {
+
+	return func() {
 		if oldEndpoint != "" {
 			os.Setenv("INSTANA_ENDPOINT_URL", oldEndpoint)
 		} else {
 			os.Unsetenv("INSTANA_ENDPOINT_URL")
 		}
-	}()
+	}
+}
 
-	// Create custom HTTP client with TLS configuration
-	// This is critical for IPv6 + TLS: we connect to the IPv6 address but verify the certificate
-	// against the original hostname. Without this, TLS handshake will fail because the server's
-	// certificate is issued for the hostname (e.g., "serverless-blue-saas.instana.io"), not the IP.
+// createTLSClient creates an HTTP client with TLS configuration for IPv6
+func createTLSClient(host string) *http.Client {
 	tlsConfig := &tls.Config{
 		ServerName: host, // Verify certificate against the original hostname
 	}
 
-	customTransport := &http.Transport{
-		TLSClientConfig: tlsConfig,
+	return &http.Client{
+		Transport: &http.Transport{
+			TLSClientConfig: tlsConfig,
+		},
+		Timeout: 15 * time.Second,
 	}
+}
 
-	customClient := &http.Client{
-		Transport: customTransport,
-		Timeout:   15 * time.Second,
-	}
-	// Creating custom HTTP client with TLS configuration (details not logged for security)
-
-	// Create the serverless agent directly with our custom client
-	// This ensures the TLS ServerName is set correctly for IPv6 connections
-	customAgent := newGenericServerlessAgent(ipv6Endpoint, agentKey, customClient, defaultLogger)
-
-	// Create collector with the custom agent
+// initCollectorWithAgent initializes the collector with a custom agent
+func initCollectorWithAgent(customAgent AgentClient) TracerLogger {
 	opts := &Options{
 		Service:           "ipv6-integration-test",
 		EnableAutoProfile: false,
 		MaxBufferedSpans:  100,
 		AgentClient:       customAgent,
 	}
+	return InitCollector(opts)
+}
 
-	c := InitCollector(opts)
-	defer ShutdownCollector()
-
-	// Create and finish a test span
+// sendTestSpan creates and sends a test span
+func sendTestSpan(c TracerLogger, endpoint string, ipv6Addr net.IP) {
 	sp := c.Tracer().StartSpan("ipv6-test-span")
 	sp.SetTag("test.type", "ipv6-integration")
 	sp.SetTag("test.endpoint", endpoint)
 	sp.SetTag("test.ipv6", ipv6Addr.String())
 	sp.Finish()
+}
 
-	// Flush with timeout
+// flushAndVerify flushes the collector and logs the result
+func flushAndVerify(t *testing.T, c TracerLogger) {
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 
-	err = c.Flush(ctx)
+	err := c.Flush(ctx)
 	if err != nil {
 		t.Logf("Warning: Flush returned error (may be expected for test key): %v", err)
-		// Don't fail the test if flush returns an error - the endpoint might reject test data
-		// but we've validated that IPv6 communication works
 	}
 	t.Log("Successfully sent span via IPv6")
 }
