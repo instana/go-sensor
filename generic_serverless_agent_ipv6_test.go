@@ -106,6 +106,86 @@ func TestGenericServerlessAgent_Flush_IPv6Support(t *testing.T) {
 	}
 }
 
+// validateIPv4Endpoint checks if the endpoint has the correct IPv4 format
+func validateIPv4Endpoint(t *testing.T, endpoint string) {
+	if strings.Contains(endpoint, "[") || strings.Contains(endpoint, "]") {
+		t.Errorf("IPv4 endpoint should not contain brackets: %s", endpoint)
+	}
+	if !strings.Contains(endpoint, "127.0.0.1") {
+		t.Errorf("IPv4 endpoint should contain 127.0.0.1: %s", endpoint)
+	}
+}
+
+// validateIPv6Endpoint checks if the endpoint has the correct IPv6 format
+func validateIPv6Endpoint(t *testing.T, endpoint string) {
+	if !strings.Contains(endpoint, "[") {
+		t.Errorf("IPv6 endpoint should contain opening bracket: %s", endpoint)
+	}
+	if !strings.Contains(endpoint, "]") {
+		t.Errorf("IPv6 endpoint should contain closing bracket: %s", endpoint)
+	}
+	if !strings.Contains(endpoint, "::1") {
+		t.Errorf("IPv6 endpoint should contain ::1: %s", endpoint)
+	}
+}
+
+// setupIPv4Server creates an IPv4 test server
+func setupIPv4Server() (string, func()) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}))
+	return server.URL, server.Close
+}
+
+// setupIPv6Server creates an IPv6 test server
+func setupIPv6Server(t *testing.T) (string, func()) {
+	listener, err := net.Listen("tcp6", "[::1]:0")
+	if err != nil {
+		t.Skipf("IPv6 not available: %v", err)
+	}
+
+	server := &http.Server{
+		Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusOK)
+		}),
+	}
+	go server.Serve(listener)
+
+	addr := listener.Addr().(*net.TCPAddr)
+	endpoint := fmt.Sprintf("http://[%s]:%d", addr.IP, addr.Port)
+
+	return endpoint, func() {
+		server.Close()
+		listener.Close()
+	}
+}
+
+// testEndpointFlush tests flushing spans to an endpoint
+func testEndpointFlush(t *testing.T, endpoint string) {
+	agent := newGenericServerlessAgent(
+		endpoint,
+		"test-key",
+		&http.Client{Timeout: 5 * time.Second},
+		defaultLogger,
+	)
+
+	testSpan := Span{
+		TraceID: 12345,
+		SpanID:  67890,
+		Name:    "test-operation",
+	}
+
+	err := agent.SendSpans([]Span{testSpan})
+	if err != nil {
+		t.Fatalf("failed to send spans: %v", err)
+	}
+
+	err = agent.Flush(context.Background())
+	if err != nil {
+		t.Fatalf("flush failed: %v", err)
+	}
+}
+
 // TestGenericServerlessAgent_Flush_IPv4vsIPv6 is a comparative test that verifies the
 // generic serverless agent works correctly with both IPv4 and IPv6 endpoints. This test
 // ensures that the agent can flush spans to both address types without any issues,
@@ -113,97 +193,29 @@ func TestGenericServerlessAgent_Flush_IPv6Support(t *testing.T) {
 // and cross-compatibility for serverless environments.
 func TestGenericServerlessAgent_Flush_IPv4vsIPv6(t *testing.T) {
 	tests := []struct {
-		name        string
-		setupServer func() (string, func())
+		name             string
+		setupServer      func(*testing.T) (string, func())
+		validateEndpoint func(*testing.T, string)
 	}{
 		{
-			// Test case for IPv4 endpoint using standard httptest server
-			// Expected format: http://127.0.0.1:port (no brackets)
-			name: "IPv4",
-			setupServer: func() (string, func()) {
-				server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-					w.WriteHeader(http.StatusOK)
-				}))
-				return server.URL, server.Close
-			},
+			name:             "IPv4",
+			setupServer:      func(t *testing.T) (string, func()) { return setupIPv4Server() },
+			validateEndpoint: validateIPv4Endpoint,
 		},
 		{
-			// Test case for IPv6 endpoint using manual tcp6 listener
-			// Expected format: http://[::1]:port (with brackets around IPv6 address)
-			name: "IPv6",
-			setupServer: func() (string, func()) {
-				listener, err := net.Listen("tcp6", "[::1]:0")
-				if err != nil {
-					t.Skipf("IPv6 not available: %v", err)
-				}
-
-				server := &http.Server{
-					Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-						w.WriteHeader(http.StatusOK)
-					}),
-				}
-				go server.Serve(listener)
-
-				addr := listener.Addr().(*net.TCPAddr)
-				endpoint := fmt.Sprintf("http://[%s]:%d", addr.IP, addr.Port)
-
-				return endpoint, func() {
-					server.Close()
-					listener.Close()
-				}
-			},
+			name:             "IPv6",
+			setupServer:      setupIPv6Server,
+			validateEndpoint: validateIPv6Endpoint,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			endpoint, cleanup := tt.setupServer()
+			endpoint, cleanup := tt.setupServer(t)
 			defer cleanup()
 
-			// Validate endpoint format based on test type
-			if tt.name == "IPv4" {
-				// IPv4 endpoint should not have brackets in host part
-				if strings.Contains(endpoint, "[") || strings.Contains(endpoint, "]") {
-					t.Errorf("IPv4 endpoint should not contain brackets: %s", endpoint)
-				}
-				if !strings.Contains(endpoint, "127.0.0.1") {
-					t.Errorf("IPv4 endpoint should contain 127.0.0.1: %s", endpoint)
-				}
-			} else if tt.name == "IPv6" {
-				// IPv6 endpoint should have brackets around the host
-				if !strings.Contains(endpoint, "[") {
-					t.Errorf("IPv6 endpoint should contain opening bracket: %s", endpoint)
-				}
-				if !strings.Contains(endpoint, "]") {
-					t.Errorf("IPv6 endpoint should contain closing bracket: %s", endpoint)
-				}
-				if !strings.Contains(endpoint, "::1") {
-					t.Errorf("IPv6 endpoint should contain ::1: %s", endpoint)
-				}
-			}
-
-			agent := newGenericServerlessAgent(
-				endpoint,
-				"test-key",
-				&http.Client{Timeout: 5 * time.Second},
-				defaultLogger,
-			)
-
-			testSpan := Span{
-				TraceID: 12345,
-				SpanID:  67890,
-				Name:    "test-operation",
-			}
-
-			err := agent.SendSpans([]Span{testSpan})
-			if err != nil {
-				t.Fatalf("failed to send spans: %v", err)
-			}
-
-			err = agent.Flush(context.Background())
-			if err != nil {
-				t.Fatalf("flush failed for %s: %v", tt.name, err)
-			}
+			tt.validateEndpoint(t, endpoint)
+			testEndpointFlush(t, endpoint)
 
 			t.Logf("%s endpoint works correctly", tt.name)
 		})
