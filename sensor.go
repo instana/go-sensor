@@ -225,7 +225,7 @@ func InitSensor(options *Options) {
 	configureAutoProfiling(options)
 
 	// start collecting metrics
-	go sensor.meter.Run(1 * time.Second)
+	go sensor.meter.Run(getTransmissionDelay(options))
 
 	sensor.logger.Debug("initialized Instana sensor v", Version)
 }
