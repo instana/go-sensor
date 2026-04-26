@@ -30,4 +30,4 @@
 | 28 | Databases | [pgx/v5](https://pkg.go.dev/github.com/jackc/pgx/v5) | [instapgx/v2](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instapgx/v2) | v5.6.0 | v5.9.2 |
 | 29 | HTTP | [fasthttp](https://pkg.go.dev/github.com/valyala/fasthttp) | [instafasthttp](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instafasthttp) | v1.58.0 | v1.70.0 |
 | 30 | HTTP | [echo/v5](https://pkg.go.dev/github.com/labstack/echo/v5) | [instaecho/v2](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instaecho/v2) | v5.0.4 | v5.1.0 |
-| 31 | HTTP | [fiber/v3](https://pkg.go.dev/github.com/gofiber/fiber/v3) | [instafiber/v2](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instafiber/v2) | v3.1.0 | v3.1.0 |
+| 31 | HTTP | [fiber/v3](https://pkg.go.dev/github.com/gofiber/fiber/v3) | [instafiber/v2](https://pkg.go.dev/github.com/instana/go-sensor/instrumentation/instafiber/v2) | v3.1.0 | v3.2.0 |
