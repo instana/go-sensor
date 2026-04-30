@@ -66,6 +66,34 @@ func init() {
 ### Collecting Metrics
 
 Once the collector has been initialized with `instana.InitCollector`, application metrics such as memory, CPU consumption, active goroutine count etc will be automatically collected and reported to the Agent without further actions or configurations to the SDK.
+
+#### Configuring Metrics Transmission Interval
+
+By default, metrics are transmitted to the Instana Agent every 1000ms (1 second). You can customize this interval to suit your application's needs:
+
+**Via Environment Variable:**
+```bash
+export INSTANA_METRICS_TRANSMISSION_DELAY=2000  # 2 seconds
+```
+
+**Via Code Configuration:**
+```go
+col = instana.InitCollector(&instana.Options{
+  Service: "My app",
+  Metrics: instana.MetricsOptions{
+    TransmissionDelay: 3000,  // 3 seconds
+  },
+})
+```
+
+**Configuration Rules:**
+- Valid range: 1000ms to 5000ms
+- Default: 1000ms (if not specified or invalid)
+- Values above 5000ms are automatically capped
+- Environment variable takes precedence over code configuration
+
+For detailed examples and use cases, see [example/metrics-interval/](example/metrics-interval/).
+
 This data is then already available in the dashboard.
 
 ### Tracing Calls
