@@ -142,12 +142,12 @@ func newSensor(options *Options) *sensorS {
 		agent = newServerlessAgent(s.serviceOrBinaryName(), agentEndpoint, os.Getenv("INSTANA_AGENT_KEY"), client, s.logger)
 	}
 
+	s.meter = newMeter(s.logger)
 	if agent == nil {
 		agent = newAgent(s.serviceOrBinaryName(), s.options.AgentHost, s.options.AgentPort, s.logger)
 	}
 
 	s.setAgent(agent)
-	s.meter = newMeter(s.logger)
 
 	return s
 }
@@ -225,7 +225,9 @@ func InitSensor(options *Options) {
 	configureAutoProfiling(options)
 
 	// start collecting metrics
-	go sensor.meter.Run(getTransmissionDelay(options))
+	// Interval is configured via agent's configuration.yaml (com.instana.plugin.golang.poll_rate)
+	// Default is 1 second if not configured
+	// go sensor.meter.Run(options.Metrics.GetTransmissionInterval())
 
 	sensor.logger.Debug("initialized Instana sensor v", Version)
 }

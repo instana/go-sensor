@@ -4,7 +4,9 @@
 package instana
 
 import (
+	"fmt"
 	"runtime"
+	"sync"
 	"time"
 
 	"github.com/instana/go-sensor/acceptor"
@@ -27,36 +29,42 @@ type meterS struct {
 	done  chan struct{}
 }
 
-// MetricsOptions contains configuration for metrics collection and transmission
+// MetricsOptions contains configuration for metrics collection and transmission.
+// This configuration is managed internally and populated from agent configuration.
 type MetricsOptions struct {
-	// TransmissionDelay specifies the interval in milliseconds between metrics transmissions
-	// to the Instana agent.
-	//
-	// Default: 1000 (1 second)
-	// Minimum: 1000 (enforced via validation, values < 1000 use default)
-	// Maximum: 5000 (5 seconds, values above are capped with warning)
-	//
-	// This value can be configured via:
-	//   - Environment variable: INSTANA_METRICS_TRANSMISSION_DELAY
-	//   - Code: opts.Metrics.TransmissionDelay = 2000
-	//
-	// Configuration precedence: ENV > code > default
-	//
-	// Example:
-	//   opts := &instana.Options{
-	//       Service: "MyApp",
-	//       Metrics: instana.MetricsOptions{
-	//           TransmissionDelay: 2000, // 2 seconds
-	//       },
-	//   }
-	TransmissionDelay int
+	mu                   sync.RWMutex
+	transmissionInterval time.Duration
 }
 
-const (
-	defaultTransmissionDelay = 1000
-	maxTransmissionDelay     = 5000
-	minTransmissionDelay     = 1000
-)
+// GetTransmissionInterval returns the current metrics transmission interval.
+// This value is configured through the agent's configuration.yaml file.
+func (m *MetricsOptions) getTransmissionInterval() time.Duration {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	if m.transmissionInterval == 0 {
+		return 1 * time.Second // default
+	}
+	return m.transmissionInterval
+}
+
+// setTransmissionInterval sets the metrics transmission interval.
+// This is an internal method called when agent configuration is received.
+// Only 1 or 5 seconds are valid values; others default to 1 second.
+func (m *MetricsOptions) setTransmissionInterval(seconds int) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	// Validate: only 1 or 5 seconds allowed
+	if seconds != 1 && seconds != 5 {
+		defaultLogger.Warn("Invalid poll_rate value from agent: ", seconds, ", using default 1 second. Valid values are 1 or 5.")
+		m.transmissionInterval = 1 * time.Second
+		return
+	}
+
+	m.transmissionInterval = time.Duration(seconds) * time.Second
+	defaultLogger.Info("Metrics transmission interval set to ", seconds, " second(s) from agent configuration")
+}
 
 func newMeter(logger LeveledLogger) *meterS {
 	logger.Debug("initializing meter")
@@ -67,6 +75,7 @@ func newMeter(logger LeveledLogger) *meterS {
 }
 
 func (m *meterS) Run(collectInterval time.Duration) {
+	fmt.Println("collectInterval: ", collectInterval)
 	ticker := time.NewTicker(collectInterval)
 	defer ticker.Stop()
 	for {
@@ -91,17 +100,6 @@ func (m *meterS) Run(collectInterval time.Duration) {
 
 func (m *meterS) Stop() {
 	m.done <- struct{}{}
-}
-
-func getTransmissionDelay(options *Options) time.Duration {
-	interval := time.Duration(options.Metrics.TransmissionDelay) * time.Millisecond
-	// Safety check: fallback to default if interval becomes negative,
-	// possibly due to missing TransmissionDelay during sensor re-initialization.
-	if interval <= 0 {
-		defaultLogger.Warn("meter: safety check triggered. invalid transmission delay %d, falling back to default", options.Metrics.TransmissionDelay)
-		interval = defaultTransmissionDelay * time.Millisecond
-	}
-	return interval
 }
 
 func (m *meterS) collectMemoryMetrics() acceptor.MemoryStats {

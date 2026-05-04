@@ -40,7 +40,8 @@ type Options struct {
 	MaxBufferedProfiles int
 	// IncludeProfilerFrames is whether to include profiler calls into the profile or not
 	IncludeProfilerFrames bool
-	// Metrics contains metrics collection and transmission configuration
+	// Metrics contains metrics collection and transmission configuration.
+	// This is managed internally and populated from agent configuration.
 	Metrics MetricsOptions
 	// Tracer contains tracer-specific configuration used by all tracers
 	Tracer TracerOptions
@@ -72,7 +73,6 @@ func (opts *Options) applyConfiguration() {
 	opts.applyAgentConfiguration()
 	opts.applyServiceConfiguration()
 	opts.applyProfilingConfiguration()
-	opts.applyMetricsConfiguration()
 	opts.applyTracerConfiguration()
 }
 
@@ -123,43 +123,6 @@ func (opts *Options) applyServiceConfiguration() {
 func (opts *Options) applyProfilingConfiguration() {
 	if _, ok := os.LookupEnv("INSTANA_AUTO_PROFILE"); ok {
 		opts.EnableAutoProfile = true
-	}
-}
-
-// applyMetricsConfiguration resolves metrics collection and transmission settings
-// Precedence: ENV > in-code > default
-func (opts *Options) applyMetricsConfiguration() {
-	// Step 1: Apply default if zero
-	if opts.Metrics.TransmissionDelay == 0 {
-		opts.Metrics.TransmissionDelay = defaultTransmissionDelay
-	}
-
-	// Step 2: Check environment variable (takes precedence over code configuration)
-	if envDelay := os.Getenv("INSTANA_METRICS_TRANSMISSION_DELAY"); envDelay != "" {
-		if delay, err := strconv.Atoi(envDelay); err != nil {
-			// Invalid format - non-numeric value
-			defaultLogger.Warn("Invalid INSTANA_METRICS_TRANSMISSION_DELAY value: ", envDelay, ", using default 1000ms")
-			opts.Metrics.TransmissionDelay = defaultTransmissionDelay
-		} else if delay <= 0 {
-			// Non-positive value
-			defaultLogger.Warn("INSTANA_METRICS_TRANSMISSION_DELAY must be positive, using default 1000ms")
-			opts.Metrics.TransmissionDelay = defaultTransmissionDelay
-		} else {
-			// Valid value from ENV
-			opts.Metrics.TransmissionDelay = delay
-		}
-	}
-
-	// Step 3: Enforce minimum value (1000ms)
-	if opts.Metrics.TransmissionDelay < minTransmissionDelay {
-		defaultLogger.Warn("metrics transmission delay is below minimum 1000ms, using minimum 1000ms (configured: ", opts.Metrics.TransmissionDelay, "ms)")
-		opts.Metrics.TransmissionDelay = minTransmissionDelay
-	}
-
-	// Step 4: Enforce maximum cap (5000ms)
-	if opts.Metrics.TransmissionDelay > maxTransmissionDelay {
-		defaultLogger.Warn("metrics transmission delay exceeds maximum 5000ms, capping at 5000ms (configured: ", opts.Metrics.TransmissionDelay, "ms)")
-		opts.Metrics.TransmissionDelay = maxTransmissionDelay
 	}
 }
 

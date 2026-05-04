@@ -268,8 +268,23 @@ func (r *fsmS) applyHostAgentSettings(resp agentResponse) {
 	}
 
 	r.applyDisableTracingConfig(resp)
+	r.applyMetricsPollRateConfig(resp)
 
 	r.logger.Debug("CollectableHTTPHeaders used: ", sensor.options.Tracer.CollectableHTTPHeaders)
+}
+
+// applyMetricsPollRateConfig applies the metrics poll rate configuration from agent response.
+// The poll rate is configured in the agent's configuration.yaml under com.instana.plugin.golang.poll_rate
+func (r *fsmS) applyMetricsPollRateConfig(resp agentResponse) {
+	// If no poll rate is provided by agent, use default (1 second)
+	if resp.PluginConfig.PollRate == 0 {
+		r.logger.Debug("No poll_rate configuration received from agent, using default 1 second")
+		sensor.options.Metrics.setTransmissionInterval(1)
+		return
+	}
+
+	r.logger.Debug("Applying metrics poll_rate configuration from agent: ", resp.PluginConfig.PollRate, " second(s)")
+	sensor.options.Metrics.setTransmissionInterval(resp.PluginConfig.PollRate)
 }
 
 func (r *fsmS) applyDisableTracingConfig(resp agentResponse) {
@@ -420,6 +435,7 @@ func (r *fsmS) reset() {
 
 func (r *fsmS) ready(_ context.Context, e *f.Event) {
 	go delayed.flush()
+	go sensor.meter.Run(sensor.options.Metrics.getTransmissionInterval())
 }
 
 func (r *fsmS) cpuSetFileContent(pid int) string {

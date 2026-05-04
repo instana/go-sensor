@@ -7,6 +7,8 @@ import (
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestMeterS_Stop(t *testing.T) {
@@ -128,5 +130,57 @@ func TestMeterS_NewMeter(t *testing.T) {
 
 	if m.numGC != 0 {
 		t.Errorf("Expected initial numGC to be 0, got %d", m.numGC)
+	}
+}
+
+func TestMetricsOptions_GetTransmissionInterval_Default(t *testing.T) {
+	opts := &MetricsOptions{}
+
+	interval := opts.getTransmissionInterval()
+
+	assert.Equal(t, 1*time.Second, interval, "Default transmission interval should be 1 second")
+}
+
+func TestMetricsOptions_SetTransmissionInterval(t *testing.T) {
+	tests := []struct {
+		name     string
+		seconds  int
+		expected time.Duration
+	}{
+		{
+			name:     "Valid 1 second",
+			seconds:  1,
+			expected: 1 * time.Second,
+		},
+		{
+			name:     "Valid 5 seconds",
+			seconds:  5,
+			expected: 5 * time.Second,
+		},
+		{
+			name:     "Invalid 0 seconds defaults to 1 second",
+			seconds:  0,
+			expected: 1 * time.Second,
+		},
+		{
+			name:     "Invalid 2 seconds defaults to 1 second",
+			seconds:  2,
+			expected: 1 * time.Second,
+		},
+		{
+			name:     "Invalid negative defaults to 1 second",
+			seconds:  -1,
+			expected: 1 * time.Second,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			opts := &MetricsOptions{}
+
+			opts.setTransmissionInterval(tt.seconds)
+
+			assert.Equal(t, tt.expected, opts.getTransmissionInterval())
+		})
 	}
 }
