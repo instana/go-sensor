@@ -274,7 +274,6 @@ func (r *fsmS) applyHostAgentSettings(resp agentResponse) {
 }
 
 // applyMetricsPollRateConfig applies the metrics poll rate configuration from agent response.
-// The poll rate is configured in the agent's configuration.yaml under com.instana.plugin.golang.poll_rate
 func (r *fsmS) applyMetricsPollRateConfig(resp agentResponse) {
 	// Check if sensor is initialized
 	if sensor == nil || sensor.options == nil {

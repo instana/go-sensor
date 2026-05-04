@@ -55,7 +55,7 @@ type agentResponse struct {
 		Disable          []map[string]bool `json:"disable"`
 	} `json:"tracing"`
 	PluginConfig struct {
-		PollRate int `json:"poll_rate"` // Poll rate in seconds from agent configuration
+		PollRate int `json:"poll_rate"` // Poll rate in seconds
 	} `json:"plugin.golang"`
 }
 

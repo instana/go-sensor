@@ -224,11 +224,6 @@ func InitSensor(options *Options) {
 	// configure auto-profiling
 	configureAutoProfiling(options)
 
-	// start collecting metrics
-	// Interval is configured via agent's configuration.yaml (com.instana.plugin.golang.poll_rate)
-	// Default is 1 second if not configured
-	// go sensor.meter.Run(options.Metrics.GetTransmissionInterval())
-
 	sensor.logger.Debug("initialized Instana sensor v", Version)
 }
 

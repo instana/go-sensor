@@ -41,7 +41,6 @@ type Options struct {
 	// IncludeProfilerFrames is whether to include profiler calls into the profile or not
 	IncludeProfilerFrames bool
 	// Metrics contains metrics collection and transmission configuration.
-	// This is managed internally and populated from agent configuration.
 	Metrics MetricsOptions
 	// Tracer contains tracer-specific configuration used by all tracers
 	Tracer TracerOptions
