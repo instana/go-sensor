@@ -4,12 +4,18 @@
 package instana
 
 import (
-	"fmt"
 	"runtime"
 	"sync"
 	"time"
 
 	"github.com/instana/go-sensor/acceptor"
+)
+
+const (
+	// Metrics transmission interval constraints (in seconds)
+	defaultTransmissionInterval = 1
+	minTransmissionInterval     = 1
+	maxTransmissionInterval     = 3600
 )
 
 // SnapshotS struct to hold snapshot data
@@ -25,8 +31,10 @@ type MetricsS acceptor.Metrics
 type EntityData acceptor.GoProcessData
 
 type meterS struct {
-	numGC uint32
-	done  chan struct{}
+	numGC   uint32
+	running bool
+	done    chan struct{}
+	mu      sync.Mutex
 }
 
 // MetricsOptions contains configuration for metrics collection and transmission.
@@ -43,25 +51,35 @@ func (m *MetricsOptions) getTransmissionInterval() time.Duration {
 	defer m.mu.RUnlock()
 
 	if m.transmissionInterval == 0 {
-		return 1 * time.Second // default
+		return defaultTransmissionInterval * time.Second
 	}
 	return m.transmissionInterval
 }
 
 // setTransmissionInterval sets the metrics transmission interval.
 // This is an internal method called when agent configuration is received.
-// Only 1 or 5 seconds are valid values; others default to 1 second.
+// Valid range: minTransmissionInterval-maxTransmissionInterval seconds.
+// Values < minTransmissionInterval are set to minTransmissionInterval,
+// values > maxTransmissionInterval are set to maxTransmissionInterval.
 func (m *MetricsOptions) setTransmissionInterval(seconds int) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	// Validate: only 1 or 5 seconds allowed
-	if seconds != 1 && seconds != 5 {
-		defaultLogger.Warn("Invalid poll_rate value from agent: ", seconds, ", using default 1 second. Valid values are 1 or 5.")
-		m.transmissionInterval = 1 * time.Second
+	// Apply minimum value constraint
+	if seconds < minTransmissionInterval {
+		defaultLogger.Warn("poll_rate value from agent (", seconds, ") is less than minimum. Setting to minimum value of ", minTransmissionInterval, " second.")
+		m.transmissionInterval = minTransmissionInterval * time.Second
 		return
 	}
 
+	// Apply maximum value constraint
+	if seconds > maxTransmissionInterval {
+		defaultLogger.Warn("poll_rate value from agent (", seconds, ") exceeds maximum. Setting to maximum value of ", maxTransmissionInterval, " seconds.")
+		m.transmissionInterval = maxTransmissionInterval * time.Second
+		return
+	}
+
+	// Valid value within range
 	m.transmissionInterval = time.Duration(seconds) * time.Second
 	defaultLogger.Info("Metrics transmission interval set to ", seconds, " second(s) from agent configuration")
 }
@@ -75,31 +93,55 @@ func newMeter(logger LeveledLogger) *meterS {
 }
 
 func (m *meterS) Run(collectInterval time.Duration) {
-	fmt.Println("collectInterval: ", collectInterval)
-	ticker := time.NewTicker(collectInterval)
-	defer ticker.Stop()
-	for {
-		select {
-		case <-m.done:
-			return
-		case <-ticker.C:
-			if isAgentReady() {
-				go func() {
-					s, err := getSensor()
-					if err != nil {
-						defaultLogger.Error("meter: ", err.Error())
-						return
-					}
+	m.mu.Lock()
+	m.done = make(chan struct{}, 1)
+	m.running = true
+	m.mu.Unlock()
 
-					_ = s.Agent().SendMetrics(m.collectMetrics())
-				}()
+	go func() {
+		ticker := time.NewTicker(collectInterval)
+		m.running = true
+		defer ticker.Stop()
+		for {
+			select {
+			case <-m.done:
+				return
+			case <-ticker.C:
+				if isAgentReady() {
+					go func() {
+						s, err := getSensor()
+						if err != nil {
+							defaultLogger.Error("meter: ", err.Error())
+							return
+						}
+
+						_ = s.Agent().SendMetrics(m.collectMetrics())
+					}()
+				}
 			}
 		}
+	}()
+}
+
+func (m *meterS) reset(interval time.Duration) {
+	if m == nil {
+		return
 	}
+	m.Stop()
+	m.Run(interval)
 }
 
 func (m *meterS) Stop() {
-	m.done <- struct{}{}
+	if m == nil {
+		return
+	}
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	if m.running {
+		close(m.done)
+		m.running = false
+	}
 }
 
 func (m *meterS) collectMemoryMetrics() acceptor.MemoryStats {

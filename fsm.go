@@ -276,6 +276,12 @@ func (r *fsmS) applyHostAgentSettings(resp agentResponse) {
 // applyMetricsPollRateConfig applies the metrics poll rate configuration from agent response.
 // The poll rate is configured in the agent's configuration.yaml under com.instana.plugin.golang.poll_rate
 func (r *fsmS) applyMetricsPollRateConfig(resp agentResponse) {
+	// Check if sensor is initialized
+	if sensor == nil || sensor.options == nil {
+		r.logger.Debug("Sensor not initialized, skipping poll_rate configuration")
+		return
+	}
+
 	// If no poll rate is provided by agent, use default (1 second)
 	if resp.PluginConfig.PollRate == 0 {
 		r.logger.Debug("No poll_rate configuration received from agent, using default 1 second")
@@ -435,7 +441,7 @@ func (r *fsmS) reset() {
 
 func (r *fsmS) ready(_ context.Context, e *f.Event) {
 	go delayed.flush()
-	go sensor.meter.Run(sensor.options.Metrics.getTransmissionInterval())
+	go sensor.meter.reset(sensor.options.Metrics.getTransmissionInterval())
 }
 
 func (r *fsmS) cpuSetFileContent(pid int) string {
