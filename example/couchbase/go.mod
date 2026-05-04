@@ -2,7 +2,7 @@ module couchbase.example
 
 go 1.24.0
 
-require github.com/couchbase/gocb/v2 v2.12.1
+require github.com/couchbase/gocb/v2 v2.12.2
 
 require (
 	github.com/instana/go-sensor v1.73.1
@@ -11,9 +11,9 @@ require (
 
 require (
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
-	github.com/couchbase/gocbcore/v10 v10.9.1 // indirect
+	github.com/couchbase/gocbcore/v10 v10.9.2 // indirect
 	github.com/couchbase/gocbcoreps v0.1.5-0.20260107140814-1c3a03f888f8 // indirect
-	github.com/couchbase/goprotostellar v1.0.5 // indirect
+	github.com/couchbase/goprotostellar v1.0.6-0.20260407143512-d7af25156dcc // indirect
 	github.com/couchbaselabs/gocbconnstr/v2 v2.0.0 // indirect
 	github.com/go-logr/logr v1.4.3 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
@@ -25,9 +25,9 @@ require (
 	github.com/opentracing/opentracing-go v1.2.0 // indirect
 	go.opentelemetry.io/auto/sdk v1.2.1 // indirect
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.65.0 // indirect
-	go.opentelemetry.io/otel v1.40.0 // indirect
-	go.opentelemetry.io/otel/metric v1.40.0 // indirect
-	go.opentelemetry.io/otel/trace v1.40.0 // indirect
+	go.opentelemetry.io/otel v1.41.0 // indirect
+	go.opentelemetry.io/otel/metric v1.41.0 // indirect
+	go.opentelemetry.io/otel/trace v1.41.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.27.1 // indirect
 	golang.org/x/net v0.50.0 // indirect
