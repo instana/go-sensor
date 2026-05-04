@@ -4,4 +4,4 @@
 package instaecho
 
 // Version is the instrumentation module semantic version
-const Version = "1.45.0"
+const Version = "1.45.1"
