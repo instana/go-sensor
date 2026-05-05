@@ -92,26 +92,31 @@ func newMeter(logger LeveledLogger) *meterS {
 	}
 }
 
-func (m *meterS) Run(collectInterval time.Duration) {
+func (m *meterS) prepareRun() chan struct{} {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
 	// If already running, stop first
 	if m.running {
 		close(m.done)
-		m.running = false
 	}
 
-	// Create new channel and start
+	// Create new channel and mark as running
 	m.done = make(chan struct{})
 	m.running = true
 
-	go func() {
+	return m.done
+}
+
+func (m *meterS) Run(collectInterval time.Duration) {
+	done := m.prepareRun()
+
+	go func(done chan struct{}) {
 		ticker := time.NewTicker(collectInterval)
 		defer ticker.Stop()
 		for {
 			select {
-			case <-m.done:
+			case <-done:
 				return
 			case <-ticker.C:
 				if isAgentReady() {
@@ -127,7 +132,7 @@ func (m *meterS) Run(collectInterval time.Duration) {
 				}
 			}
 		}
-	}()
+	}(done)
 }
 
 func (m *meterS) reset(interval time.Duration) {

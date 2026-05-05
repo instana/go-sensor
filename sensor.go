@@ -115,6 +115,7 @@ func newSensor(options *Options) *sensorS {
 	}
 
 	var agent AgentClient
+	var isServerless bool
 
 	if options.AgentClient != nil {
 		agent = options.AgentClient
@@ -122,6 +123,7 @@ func newSensor(options *Options) *sensorS {
 
 	if agentEndpoint := os.Getenv("INSTANA_ENDPOINT_URL"); agentEndpoint != "" && agent == nil {
 		s.logger.Debug("INSTANA_ENDPOINT_URL= is set, switching to the serverless mode")
+		isServerless = true
 
 		timeout, err := parseInstanaTimeout(os.Getenv("INSTANA_TIMEOUT"))
 		if err != nil {
@@ -148,6 +150,11 @@ func newSensor(options *Options) *sensorS {
 	}
 
 	s.setAgent(agent)
+
+	// For serverless agents, start the meter immediately since they don't use the FSM
+	if isServerless {
+		s.meter.Run(s.options.Metrics.getTransmissionInterval())
+	}
 
 	return s
 }
