@@ -635,3 +635,77 @@ func TestApplyDisableTracingConfig(t *testing.T) {
 		})
 	}
 }
+
+func Test_fsmS_applyMetricsPollRateConfig(t *testing.T) {
+	tests := []struct {
+		name         string
+		pollRate     int
+		expectedSecs int
+	}{
+		{
+			name:         "Valid 1 second (minimum)",
+			pollRate:     1,
+			expectedSecs: 1,
+		},
+		{
+			name:         "Valid 5 seconds",
+			pollRate:     5,
+			expectedSecs: 5,
+		},
+		{
+			name:         "Valid 10 seconds",
+			pollRate:     10,
+			expectedSecs: 10,
+		},
+		{
+			name:         "Valid 60 seconds",
+			pollRate:     60,
+			expectedSecs: 60,
+		},
+		{
+			name:         "Valid 3600 seconds (maximum)",
+			pollRate:     3600,
+			expectedSecs: 3600,
+		},
+		{
+			name:         "Zero seconds - sets to minimum (1)",
+			pollRate:     0,
+			expectedSecs: 1,
+		},
+		{
+			name:         "Negative value - sets to minimum (1)",
+			pollRate:     -5,
+			expectedSecs: 1,
+		},
+		{
+			name:         "Exceeds maximum (5000) - sets to maximum (3600)",
+			pollRate:     5000,
+			expectedSecs: 3600,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Initialize sensor with default options
+			sensor = newSensor(DefaultOptions())
+			defer func() { sensor = nil }()
+
+			fsm := &fsmS{
+				logger: &testLogger{},
+			}
+
+			resp := agentResponse{
+				PluginConfig: struct {
+					PollRate int `json:"poll_rate"`
+				}{
+					PollRate: tt.pollRate,
+				},
+			}
+
+			fsm.applyMetricsPollRateConfig(resp)
+
+			interval := sensor.options.Metrics.getTransmissionInterval()
+			assert.Equal(t, time.Duration(tt.expectedSecs)*time.Second, interval)
+		})
+	}
+}

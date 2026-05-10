@@ -40,6 +40,8 @@ type Options struct {
 	MaxBufferedProfiles int
 	// IncludeProfilerFrames is whether to include profiler calls into the profile or not
 	IncludeProfilerFrames bool
+	// Metrics contains metrics collection and transmission configuration.
+	Metrics MetricsOptions
 	// Tracer contains tracer-specific configuration used by all tracers
 	Tracer TracerOptions
 	// AgentClient client to communicate with the agent. In most cases, there is no need to provide it.

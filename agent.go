@@ -54,6 +54,9 @@ type agentResponse struct {
 		ExtraHTTPHeaders []string          `json:"extra-http-headers"`
 		Disable          []map[string]bool `json:"disable"`
 	} `json:"tracing"`
+	PluginConfig struct {
+		PollRate int `json:"poll_rate"` // Poll rate in seconds
+	} `json:"plugin.golang"`
 }
 
 func (a *agentResponse) getExtraHTTPHeaders() []string {
