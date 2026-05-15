@@ -1,0 +1,93 @@
+name: Run govulncheck
+
+on:
+  push:
+    branches:
+      - main
+
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  runGovulncheck:
+    name: Run govulncheck
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Setup Go
+        uses: actions/setup-go@v6
+        with:
+          go-version: stable
+
+      - name: Install and run govulncheck
+        shell: bash
+        run: |
+          set -euxo pipefail
+
+          export PATH="$(go env GOPATH)/bin:$PATH"
+
+          EXCLUDE_DIRS=(
+            "instrumentation/instaawssdk"
+            "instrumentation/instapgx"
+          )
+
+          should_exclude() {
+            local dir="$1"
+
+            for excluded in "${EXCLUDE_DIRS[@]}"; do
+              if [[ "$dir" == "$excluded" ]]; then
+                return 0
+              fi
+            done
+
+            return 1
+          }
+
+          echo "::group::Go Environment"
+          which go
+          go version
+          go env
+          echo "::endgroup::"
+
+          echo "::group::Install govulncheck"
+          go install golang.org/x/vuln/cmd/govulncheck@latest
+
+          which govulncheck
+          govulncheck -version
+          echo "::endgroup::"
+
+          echo "::group::Run govulncheck for root module"
+          go mod download
+          govulncheck -show verbose ./...
+          echo "::endgroup::"
+
+          echo "::group::Run govulncheck for instrumentation modules"
+
+          find instrumentation -name go.mod | while read gomod; do
+            module_dir=$(dirname "$gomod")
+
+            if should_exclude "$module_dir"; then
+              echo "Skipping excluded module: $module_dir"
+              continue
+            fi
+
+            echo ""
+            echo "========================================="
+            echo "Running govulncheck in: $module_dir"
+            echo "========================================="
+
+            (
+              cd "$module_dir"
+
+              go mod download
+
+              govulncheck -show verbose ./...
+            )
+          done
+
+          echo "::endgroup::"
