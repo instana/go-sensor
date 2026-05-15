@@ -66,7 +66,7 @@ find_versions_to_update(){
                         debug_log "Days behind release(${sorted_versions[j]}): $DAYS_BEHIND_RELEASE"
 
                         # if the package released 7 days ago, add it to the list of versions to update
-                        if [ $DAYS_BEHIND_RELEASE -gt 7 ]; then
+                        if [[ $DAYS_BEHIND_RELEASE -gt 7 ]]; then
                             VERSIONS_TO_UPDATE+=("${sorted_versions[j]}")   
                         fi               
                     fi
