@@ -12,6 +12,7 @@ debug_log() {
     if [[ "$DEBUG_LOG" = true ]]; then
         echo "$@"
     fi
+    return 0
 }
 
 extract_info_from_markdown_line() {
@@ -41,7 +42,6 @@ find_versions_to_update(){
         IFS=$'\n' read -rd '' -a versions <<< "$response"
         sorted_versions=($(printf "%s\n" "${versions[@]}" | sort -V))
         local regex_pattern="^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$"
-        local found=false
         
         debug_log "Versions: " "${versions[*]}"
         debug_log "Sorted versions: " "${sorted_versions[*]}"
@@ -80,6 +80,7 @@ find_versions_to_update(){
   fi
 
   echo "Versions to update: " "${VERSIONS_TO_UPDATE[*]}"
+  return 0
 
 }
 
