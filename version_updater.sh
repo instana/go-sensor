@@ -31,7 +31,7 @@ find_versions_to_update(){
     local pkg=$1
     local curr_version="${2}"
     VERSIONS_TO_UPDATE=()
-    debug_log "Current version: ", $curr_version
+    debug_log "Current version: $curr_version"
 
     if [[ -n "$pkg" ]]; then
         local url="https://proxy.golang.org/${pkg}/@v/list"
