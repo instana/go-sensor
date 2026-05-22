@@ -97,7 +97,7 @@ find_immediate_next_version(){
         done
 
         if [[ "$found" = true ]]; then
-            # Query the full info of that package version to get the release darte
+            # Query the full info of that package version to get the release date
             local url="https://proxy.golang.org/${pkg}/@v/v${IMMEDIATE_NEXT_VERSION}.info"
             local url1=$(echo "$url" | awk '{ print tolower($0) }')
             debug_log $url1
