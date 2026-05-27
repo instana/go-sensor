@@ -29,14 +29,19 @@ jobs:
               .[]
               | select(.stable == true)
               | .version
+              | select(test("^go[0-9]+\\.[0-9]+(\\.[0-9]+)?$"))
               | sub("^go"; "")
             ]
             | map({
                 version: .,
-                stream: (split(".")[0] + "." + split(".")[1]),
-                major: (split(".")[0] | tonumber),
-                minor: (split(".")[1] | tonumber),
-                patch: ((split(".")[2] // "0") | tonumber)
+                major: (capture("^(?<major>[0-9]+)\\.(?<minor>[0-9]+)(\\.(?<patch>[0-9]+))?$").major | tonumber),
+                minor: (capture("^(?<major>[0-9]+)\\.(?<minor>[0-9]+)(\\.(?<patch>[0-9]+))?$").minor | tonumber),
+                patch: ((capture("^(?<major>[0-9]+)\\.(?<minor>[0-9]+)(\\.(?<patch>[0-9]+))?$").patch // "0") | tonumber),
+                stream: (
+                  capture("^(?<major>[0-9]+)\\.(?<minor>[0-9]+)(\\.(?<patch>[0-9]+))?$").major
+                  + "."
+                  + capture("^(?<major>[0-9]+)\\.(?<minor>[0-9]+)(\\.(?<patch>[0-9]+))?$").minor
+                )
               })
             | sort_by(.major, .minor, .patch)
             | group_by(.stream)
