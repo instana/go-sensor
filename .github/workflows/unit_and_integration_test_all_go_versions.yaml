@@ -29,25 +29,27 @@ jobs:
               .[]
               | select(.stable == true)
               | .version
-              | select(test("^go[0-9]+\\.[0-9]+(\\.[0-9]+)?$"))
-              | sub("^go"; "")
-            ]
-            | map({
-                version: .,
-                major: (capture("^(?<major>[0-9]+)\\.(?<minor>[0-9]+)(\\.(?<patch>[0-9]+))?$").major | tonumber),
-                minor: (capture("^(?<major>[0-9]+)\\.(?<minor>[0-9]+)(\\.(?<patch>[0-9]+))?$").minor | tonumber),
-                patch: ((capture("^(?<major>[0-9]+)\\.(?<minor>[0-9]+)(\\.(?<patch>[0-9]+))?$").patch // "0") | tonumber),
-                stream: (
-                  capture("^(?<major>[0-9]+)\\.(?<minor>[0-9]+)(\\.(?<patch>[0-9]+))?$").major
-                  + "."
-                  + capture("^(?<major>[0-9]+)\\.(?<minor>[0-9]+)(\\.(?<patch>[0-9]+))?$").minor
-                )
-              })
-            | sort_by(.major, .minor, .patch)
-            | group_by(.stream)
-            | reverse
-            | .[:2]
-            | flatten
+              | capture("^go(?<major>[0-9]+)\\.(?<minor>[0-9]+)(\\.(?<patch>[0-9]+))?$")?
+              | {
+                  version: (.major + "." + .minor + if .patch then "." + .patch else "" end),
+                  stream: (.major + "." + .minor),
+                  major: (.major | tonumber),
+                  minor: (.minor | tonumber),
+                  patch: ((.patch // "0") | tonumber)
+                }
+            ] as $versions
+            |
+            (
+              $versions
+              | unique_by(.stream)
+              | sort_by(.major, .minor)
+              | reverse
+              | .[:2]
+              | map(.stream)
+            ) as $latest_streams
+            |
+            $versions
+            | map(select(.stream as $s | $latest_streams | index($s)))
             | sort_by(.major, .minor, .patch)
             | map(.version)
           ')
@@ -85,7 +87,6 @@ jobs:
         id: run_tests
         continue-on-error: true
         run: |
-          #!/bin/bash
           set -e
 
           TRACER_PATH=$(pwd)
@@ -103,13 +104,11 @@ jobs:
           echo "Starting Postgres"
           sudo systemctl start postgresql.service
           sudo -u postgres psql -c "ALTER USER postgres PASSWORD 'mysecretpassword'"
-          echo "After starting Postgres"
 
           echo "Running unit test for core!"
           go test -v -coverpkg=./... -cover -covermode atomic ./...
 
           DEPRECATED_PKGS=".*instaamqp$"
-
           LIB_LIST=$(find ./instrumentation -name go.mod -exec dirname {} \; | grep -E -v "$DEPRECATED_PKGS")
 
           for lib in $LIB_LIST
@@ -132,32 +131,20 @@ jobs:
             cd -
           done
 
-          echo "All done!"
-
       - name: Send success to slack channel
         if: ${{ steps.run_tests.outcome == 'success' }}
-        uses: slackapi/slack-github-action@91efab103c0de0a537f72a35f6b8cda0ee76bf0a # v2.1.1
+        uses: slackapi/slack-github-action@91efab103c0de0a537f72a35f6b8cda0ee76bf0a
         with:
           webhook: ${{ secrets.SLACK_WEBHOOK_URL_FOR_RC_CHECK }}
           webhook-type: incoming-webhook
           payload: |
             text: ":mega: Unit and integration tests executed successfully with Golang version ${{ env.GO_VERSION }}. :tada:"
-            blocks:
-              - type: "section"
-                text:
-                  type: "mrkdwn"
-                  text: ":mega: Unit and integration tests executed successfully with Golang version ${{ env.GO_VERSION }}. :tada:"
 
       - name: Send failure to slack channel
         if: ${{ steps.run_tests.outcome == 'failure' }}
-        uses: slackapi/slack-github-action@91efab103c0de0a537f72a35f6b8cda0ee76bf0a # v2.1.1
+        uses: slackapi/slack-github-action@91efab103c0de0a537f72a35f6b8cda0ee76bf0a
         with:
           webhook: ${{ secrets.SLACK_WEBHOOK_URL_FOR_RC_CHECK }}
           webhook-type: incoming-webhook
           payload: |
             text: ":alert2: Unit and integration tests run with Golang version ${{ env.GO_VERSION }} have failed! :alert2:"
-            blocks:
-              - type: "section"
-                text:
-                  type: "mrkdwn"
-                  text: ":alert2: Unit and integration tests run with Golang version ${{ env.GO_VERSION }} have failed! :alert2:"
