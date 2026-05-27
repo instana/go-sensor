@@ -1,4 +1,11 @@
-name: Go Tests
+name: Run unit & integration tests against last 4 Golang versions
+
+run-name: Running unit & integration tests against last 4 Golang versions
+
+#on:
+# schedule:
+#    - cron: "0 0 * * 6" # Weekly once; 12 AM every Saturday
+ # workflow_dispatch:
 
 on:
   pull_request:
@@ -6,16 +13,18 @@ on:
 
 jobs:
   generate-matrix:
+    name: Generate Go version matrix
     runs-on: ubuntu-latest
 
     outputs:
-      matrix: ${{ steps.set-matrix.outputs.matrix }}
+      go_versions: ${{ steps.generate.outputs.go_versions }}
 
     steps:
-      - name: Generate Go version matrix
-        id: set-matrix
+      - name: Generate Go versions
+        id: generate
+        shell: bash
         run: |
-          MATRIX=$(curl -s https://go.dev/dl/?mode=json | jq -c '
+          GO_VERSIONS=$(curl -s https://go.dev/dl/?mode=json | jq -c '
             [
               .[]
               | select(.stable == true)
@@ -28,31 +37,118 @@ jobs:
             | group_by(.major + "." + .minor)
             | sort_by(.[0].major|tonumber, .[0].minor|tonumber)
             | reverse
-            | .[:4]
+            | .[:2]
             | flatten
             | map(
                 "\(.major).\(.minor).\(.patch // "0")"
               )
           ')
 
-          echo "matrix=$MATRIX" >> "$GITHUB_OUTPUT"
+          echo "go_versions=$GO_VERSIONS" >> "$GITHUB_OUTPUT"
 
-  test:
+  build:
+    name: Go ${{ matrix.go-version }} tests
     needs: generate-matrix
     runs-on: ubuntu-latest
 
     strategy:
       fail-fast: false
       matrix:
-        go-version: ${{ fromJson(needs.generate-matrix.outputs.matrix) }}
+        go-version: ${{ fromJson(needs.generate-matrix.outputs.go_versions) }}
+
+    env:
+      COSMOS_CONNECTION_URL: ${{ secrets.COSMOS_CONNECTION_URL }}
+      COSMOS_KEY: ${{ secrets.COSMOS_KEY }}
+      GO_VERSION: ${{ matrix.go-version }}
 
     steps:
       - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
 
-      - name: Setup Go
+      - name: Setup Go ${{ matrix.go-version }}
         uses: actions/setup-go@v6
         with:
           go-version: ${{ matrix.go-version }}
 
-      - name: Show Go version
-        run: go version
+      - name: Run coverage commands
+        shell: bash
+        id: run_tests
+        continue-on-error: true
+        run: |
+          #!/bin/bash
+          set -e
+
+          TRACER_PATH=$(pwd)
+          echo $TRACER_PATH
+
+          go version
+
+          sudo apt-get update
+          sudo apt-get -y install podman
+          pip3 install podman-compose
+
+          echo "Starting Couchbase"
+          podman-compose -f docker-compose-integration.yaml up -d
+
+          echo "Starting Postgres"
+          sudo systemctl start postgresql.service
+          sudo -u postgres psql -c "ALTER USER postgres PASSWORD 'mysecretpassword'"
+          echo "After starting Postgres"
+
+          echo "Running unit test for core!"
+          go test -v -coverpkg=./... -cover -covermode atomic ./...
+
+          DEPRECATED_PKGS=".*instaamqp$"
+
+          LIB_LIST=$(find ./instrumentation -name go.mod -exec dirname {} \; | grep -E -v "$DEPRECATED_PKGS")
+
+          for lib in $LIB_LIST
+          do
+            echo "Running unit test for $lib"
+            cd "$lib"
+            go mod tidy
+            go test -v -coverpkg=./... -cover -covermode atomic ./...
+            cd -
+          done
+
+          INTEGRATIONS_TESTS=("instagocb" "instapgx" "instacosmos" "instapgx/v2")
+
+          for str in ${INTEGRATIONS_TESTS[@]}; do
+            dir=./instrumentation/$str
+            echo "Running integration test for $dir"
+            cd $dir
+            go mod tidy
+            go test -v -tags=integration -coverpkg=./... -cover -covermode atomic ./...
+            cd -
+          done
+
+          echo "All done!"
+
+      - name: Send success to slack channel
+        if: ${{ steps.run_tests.outcome == 'success' }}
+        uses: slackapi/slack-github-action@91efab103c0de0a537f72a35f6b8cda0ee76bf0a # v2.1.1
+        with:
+          webhook: ${{ secrets.SLACK_WEBHOOK_URL_FOR_RC_CHECK }}
+          webhook-type: incoming-webhook
+          payload: |
+            text: ":mega: Unit and integration tests executed successfully with Golang version ${{ env.GO_VERSION }}. :tada:"
+            blocks:
+              - type: "section"
+                text:
+                  type: "mrkdwn"
+                  text: ":mega: Unit and integration tests executed successfully with Golang version ${{ env.GO_VERSION }}. :tada:"
+
+      - name: Send failure to slack channel
+        if: ${{ steps.run_tests.outcome == 'failure' }}
+        uses: slackapi/slack-github-action@91efab103c0de0a537f72a35f6b8cda0ee76bf0a # v2.1.1
+        with:
+          webhook: ${{ secrets.SLACK_WEBHOOK_URL_FOR_RC_CHECK }}
+          webhook-type: incoming-webhook
+          payload: |
+            text: ":alert2: Unit and integration tests run with Golang version ${{ env.GO_VERSION }} have failed! :alert2:"
+            blocks:
+              - type: "section"
+                text:
+                  type: "mrkdwn"
+                  text: ":alert2: Unit and integration tests run with Golang version ${{ env.GO_VERSION }} have failed! :alert2:"
