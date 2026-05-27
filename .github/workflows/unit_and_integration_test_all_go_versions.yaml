@@ -64,6 +64,7 @@ jobs:
 
     strategy:
       fail-fast: false
+      max-parallel: 1
       matrix:
         go-version: ${{ fromJson(needs.generate-matrix.outputs.go_versions) }}
 
