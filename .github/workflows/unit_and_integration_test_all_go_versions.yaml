@@ -24,7 +24,7 @@ jobs:
         id: generate
         shell: bash
         run: |
-          GO_VERSIONS=$(curl -s https://go.dev/dl/?mode=json | jq -c '
+          GO_VERSIONS=$(curl -s "https://go.dev/dl/?mode=json&include=all" | jq -c '
             [
               .[]
               | select(.stable == true)
@@ -43,9 +43,11 @@ jobs:
             | reverse
             | .[:2]
             | flatten
+            | sort_by(.major, .minor, .patch)
             | map(.version)
           ')
 
+          echo "Generated Go versions: $GO_VERSIONS"
           echo "go_versions=$GO_VERSIONS" >> "$GITHUB_OUTPUT"
 
   build:
