@@ -31,17 +31,19 @@ jobs:
               | .version
               | sub("^go"; "")
             ]
-            | map(
-                capture("(?<major>[0-9]+)\\.(?<minor>[0-9]+)(\\.(?<patch>[0-9]+))?")
-              )
-            | group_by(.major + "." + .minor)
-            | sort_by(.[0].major|tonumber, .[0].minor|tonumber)
+            | map({
+                version: .,
+                stream: (split(".")[0] + "." + split(".")[1]),
+                major: (split(".")[0] | tonumber),
+                minor: (split(".")[1] | tonumber),
+                patch: ((split(".")[2] // "0") | tonumber)
+              })
+            | sort_by(.major, .minor, .patch)
+            | group_by(.stream)
             | reverse
             | .[:2]
             | flatten
-            | map(
-                "\(.major).\(.minor).\(.patch // "0")"
-              )
+            | map(.version)
           ')
 
           echo "go_versions=$GO_VERSIONS" >> "$GITHUB_OUTPUT"
@@ -67,11 +69,11 @@ jobs:
           fetch-depth: 0
 
       - name: Setup Go ${{ matrix.go-version }}
-        uses: actions/setup-go@v6
+        uses: actions/setup-go@v5
         with:
           go-version: ${{ matrix.go-version }}
 
-      - name: Run coverage commands
+      - name: Run unit and integration tests
         shell: bash
         id: run_tests
         continue-on-error: true
