@@ -2,9 +2,7 @@ name: Go Tests
 
 on:
   pull_request:
-  push:
-    branches:
-      - main
+    types: [opened, synchronize, reopened]
 
 jobs:
   generate-matrix:
