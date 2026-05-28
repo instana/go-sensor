@@ -1,0 +1,58 @@
+name: Go Tests
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  generate-matrix:
+    runs-on: ubuntu-latest
+
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+
+    steps:
+      - name: Generate Go version matrix
+        id: set-matrix
+        run: |
+          MATRIX=$(curl -s https://go.dev/dl/?mode=json | jq -c '
+            [
+              .[]
+              | select(.stable == true)
+              | .version
+              | sub("^go"; "")
+            ]
+            | map(
+                capture("(?<major>[0-9]+)\\.(?<minor>[0-9]+)(\\.(?<patch>[0-9]+))?")
+              )
+            | group_by(.major + "." + .minor)
+            | sort_by(.[0].major|tonumber, .[0].minor|tonumber)
+            | reverse
+            | .[:4]
+            | flatten
+            | map(
+                "\(.major).\(.minor).\(.patch // "0")"
+              )
+          ')
+
+          echo "matrix=$MATRIX" >> "$GITHUB_OUTPUT"
+
+  test:
+    needs: generate-matrix
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        go-version: ${{ fromJson(needs.generate-matrix.outputs.matrix) }}
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Setup Go
+        uses: actions/setup-go@v6
+        with:
+          go-version: ${{ matrix.go-version }}
+
+      - name: Show Go version
+        run: go version
