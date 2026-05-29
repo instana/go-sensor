@@ -1,6 +1,6 @@
 module github.com/instana/go-sensor/instrumentation/instafiber
 
-go 1.23.0
+go 1.25.0
 
 require (
 	github.com/gofiber/fiber/v2 v2.52.13
@@ -23,6 +23,6 @@ require (
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
-	golang.org/x/sys v0.34.0 // indirect
+	golang.org/x/sys v0.44.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

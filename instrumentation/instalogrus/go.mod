@@ -1,6 +1,6 @@
 module github.com/instana/go-sensor/instrumentation/instalogrus
 
-go 1.23.0
+go 1.25.0
 
 require (
 	github.com/opentracing/opentracing-go v1.2.0
@@ -18,6 +18,6 @@ require (
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/looplab/fsm v1.0.3 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
-	golang.org/x/sys v0.34.0 // indirect
+	golang.org/x/sys v0.44.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
