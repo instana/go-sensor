@@ -156,6 +156,10 @@ while IFS= read -r line; do
         continue
     fi
 
+    if [[ "$line" = "# Go Runtime" ]]; then
+        break
+    fi
+
     # For skipping first few lines from the md file.
     if [[ "$skip_execution" = true ]]; then
         if [[ "$line" = "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |" ]]; then
