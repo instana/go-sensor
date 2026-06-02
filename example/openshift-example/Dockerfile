@@ -19,8 +19,9 @@ COPY ../../process ../../process
 COPY ../../secrets ../../secrets
 COPY ../../w3ctrace ../../w3ctrace
 
-# Copy the instaamqp091 instrumentation module
+# Copy the instrumentation modules
 COPY ../../instrumentation/instaamqp091 ../../instrumentation/instaamqp091
+COPY ../../instrumentation/instagin ../../instrumentation/instagin
 
 # Download dependencies
 RUN go mod download
