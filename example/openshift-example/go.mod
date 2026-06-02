@@ -1,4 +1,4 @@
-module gotracer-k8s-example
+module openshift-example
 
 go 1.24.0
 
@@ -45,9 +45,3 @@ require (
 	google.golang.org/protobuf v1.36.9 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
-
-// Use local instaamqp091 module from the repository
-replace github.com/instana/go-sensor/instrumentation/instaamqp091 => ../../instrumentation/instaamqp091
-
-// Use local go-sensor module from the repository
-replace github.com/instana/go-sensor => ../..

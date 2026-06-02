@@ -5,24 +5,6 @@ WORKDIR /app
 # Copy go mod files
 COPY go.mod go.sum ./
 
-# Copy the parent go-sensor module
-COPY ../../go.mod ../../go.sum ../../
-COPY ../../*.go ../../
-COPY ../../acceptor ../../acceptor
-COPY ../../autoprofile ../../autoprofile
-COPY ../../aws ../../aws
-COPY ../../docker ../../docker
-COPY ../../gcloud ../../gcloud
-COPY ../../internal ../../internal
-COPY ../../logger ../../logger
-COPY ../../process ../../process
-COPY ../../secrets ../../secrets
-COPY ../../w3ctrace ../../w3ctrace
-
-# Copy the instrumentation modules
-COPY ../../instrumentation/instaamqp091 ../../instrumentation/instaamqp091
-COPY ../../instrumentation/instagin ../../instrumentation/instagin
-
 # Download dependencies
 RUN go mod download
 
