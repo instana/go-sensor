@@ -26,9 +26,18 @@ var (
 )
 
 func init() {
-	// Initialize Instana sensor
+	// Get service name from environment or use default
+	serviceName := os.Getenv("INSTANA_SERVICE_NAME")
+	if serviceName == "" {
+		serviceName = "amqp-service"
+	}
+
+	// Initialize Instana sensor with environment-based configuration
+	// The agent host and port are automatically picked up from environment variables:
+	// - INSTANA_AGENT_HOST (set via fieldRef to status.hostIP in OpenShift)
+	// - INSTANA_AGENT_PORT (default: 42699)
 	sensor = instana.InitCollector(&instana.Options{
-		Service: "amqp-service",
+		Service: serviceName,
 		Tracer:  instana.DefaultTracerOptions(),
 	})
 
@@ -37,6 +46,10 @@ func init() {
 	if amqpURL == "" {
 		amqpURL = "amqp://guest:guest@rabbitmq:5672/"
 	}
+
+	log.Printf("Initializing with service name: %s", serviceName)
+	log.Printf("Instana agent host: %s", os.Getenv("INSTANA_AGENT_HOST"))
+	log.Printf("Instana agent port: %s", os.Getenv("INSTANA_AGENT_PORT"))
 }
 
 func agentReady() chan bool {
