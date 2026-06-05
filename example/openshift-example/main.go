@@ -3,7 +3,6 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"log"
 	"net/http"
@@ -270,62 +269,6 @@ func healthHandler(c *gin.Context) {
 	})
 }
 
-// startBackgroundConsumer starts a background goroutine to consume messages
-func startBackgroundConsumer(ctx context.Context) {
-	go func() {
-		for {
-			select {
-			case <-ctx.Done():
-				log.Println("Background consumer stopped")
-				return
-			default:
-				ch, err := amqpConn.Channel()
-				if err != nil {
-					log.Printf("Failed to open channel for background consumer: %v", err)
-					time.Sleep(5 * time.Second)
-					continue
-				}
-
-				wrappedCh := instaamqp091.WrapChannel(sensor, ch, amqpURL)
-
-				msgs, err := wrappedCh.Consume(
-					queueName,
-					"background-consumer",
-					true,
-					false,
-					false,
-					false,
-					nil,
-				)
-
-				if err != nil {
-					log.Printf("Failed to start consuming: %v", err)
-					ch.Close()
-					time.Sleep(5 * time.Second)
-					continue
-				}
-
-				log.Println("Background consumer started")
-
-				for {
-					select {
-					case <-ctx.Done():
-						ch.Close()
-						return
-					case msg, ok := <-msgs:
-						if !ok {
-							log.Println("Consumer channel closed, restarting...")
-							ch.Close()
-							time.Sleep(2 * time.Second)
-							break
-						}
-						log.Printf("Background consumer received: %s", string(msg.Body))
-					}
-				}
-			}
-		}
-	}()
-}
 
 func main() {
 	// Wait for Instana agent to be ready
@@ -344,11 +287,6 @@ func main() {
 	if err := setupQueue(); err != nil {
 		log.Fatalf("Failed to setup queue: %v", err)
 	}
-
-	// Start background consumer
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-	startBackgroundConsumer(ctx)
 
 	// Setup Gin router
 	router := gin.Default()

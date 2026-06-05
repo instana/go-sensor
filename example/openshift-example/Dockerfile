@@ -1,18 +1,18 @@
-FROM golang:1.24-alpine3.21 AS builder
+FROM public.ecr.aws/docker/library/golang:1.25 AS builder
 
 WORKDIR /app
 
-# Copy go mod files
-COPY go.mod go.sum ./
+# Copy the entire go-sensor source code (since build context is at root)
+COPY . .
 
-# Download dependencies
-RUN go mod download
+# Change to the example directory
+WORKDIR /app/example/openshift-example
 
-# Copy application source
-COPY *.go ./
+# Tidy dependencies to update go.sum with replace directives
+RUN go mod tidy
 
 # Build the application
-RUN CGO_ENABLED=0 GOOS=linux go build -a -ldflags '-extldflags "-static"' -o myapp .
+RUN CGO_ENABLED=0 GOOS=linux go build -o myapp .
 
 FROM alpine:3.21 AS runner
 
@@ -21,7 +21,7 @@ RUN addgroup -g 1001 -S appgroup && \
     adduser -u 1001 -S appuser -G appgroup
 
 WORKDIR /app
-COPY --from=builder /app/myapp .
+COPY --from=builder /app/example/openshift-example/myapp .
 
 # Change ownership to non-root user
 RUN chown -R appuser:appgroup /app
