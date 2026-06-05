@@ -16,8 +16,8 @@ services:
 
   amqp-app:
     build:
-      context: ../..
-      dockerfile: example/openshift-example/Dockerfile
+      context: .
+      dockerfile: Dockerfile
     container_name: amqp-service-app
     ports:
       - "8085:8085"

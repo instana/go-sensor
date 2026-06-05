@@ -10,12 +10,6 @@ require (
 	github.com/rabbitmq/amqp091-go v1.11.0
 )
 
-replace (
-	github.com/instana/go-sensor => ../..
-	github.com/instana/go-sensor/instrumentation/instaamqp091 => ../../instrumentation/instaamqp091
-	github.com/instana/go-sensor/instrumentation/instagin => ../../instrumentation/instagin
-)
-
 require (
 	github.com/bytedance/gopkg v0.1.3 // indirect
 	github.com/bytedance/sonic v1.15.0 // indirect
