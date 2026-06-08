@@ -1,15 +1,4 @@
 apiVersion: v1
-kind: Secret
-metadata:
-  name: rabbitmq-secret
-  labels:
-    app: rabbitmq
-type: Opaque
-data:
-  # guest in base64
-  rabbitmq-password: Z3Vlc3Q=
----
-apiVersion: v1
 kind: Service
 metadata:
   name: rabbitmq

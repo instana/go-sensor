@@ -117,7 +117,20 @@ image-registry.openshift-image-registry.svc:5000/instana-amqp-demo/amqp-service-
 
 > **Note**: Ensure `app.yaml` references this image path.
 
-### 5. Deploy RabbitMQ
+### 5. Create RabbitMQ Secret
+
+Create the secret with a password before deploying RabbitMQ:
+
+**For development/testing** (using default password):
+```bash
+oc create secret generic rabbitmq-secret \
+  --from-literal=rabbitmq-password=guest \
+  -n instana-amqp-demo
+```
+
+> **Security Note**: Never commit secrets to version control. Always create them separately using secure methods.
+
+### 6. Deploy RabbitMQ
 
 ```bash
 oc apply -f rabbitmq.yaml
@@ -130,7 +143,7 @@ oc get pods -l app=rabbitmq
 oc logs -l app=rabbitmq --tail=20
 ```
 
-### 6. Deploy Application
+### 7. Deploy Application
 
 ```bash
 oc apply -f app.yaml
@@ -143,7 +156,7 @@ oc get pods -l app=amqp-service-app
 oc logs -l app=amqp-service-app --tail=20
 ```
 
-### 7. Access Application
+### 8. Access Application
 
 Retrieve the application URL:
 ```bash
@@ -284,8 +297,10 @@ docker run \
 
 Navigate to the example directory:
 ```bash
-cd example/openshift-example
+cd example/openshift-amqp
 ```
+
+> **Note**: The `docker-compose.yaml` uses environment variables for RabbitMQ credentials. For development, the default `guest/guest` credentials are used. For production, set strong passwords via environment variables.
 
 Start RabbitMQ and the application:
 ```bash
