@@ -282,7 +282,6 @@ func healthHandler(c *gin.Context) {
 	})
 }
 
-
 func main() {
 	// Wait for Instana agent to be ready
 	log.Println("Waiting for Instana agent to be ready...")
