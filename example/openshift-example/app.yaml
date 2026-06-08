@@ -46,7 +46,7 @@ spec:
         # - image-registry.openshift.io/<namespace>/amqp-service-app:latest
         # - quay.io/<your-org>/amqp-service-app:latest
         # - docker.io/<your-org>/amqp-service-app:latest
-        image: image-registry.openshift.svc:5000/instana-amqp-demo/amqp-service-app:latest
+        image: image-registry.openshift-image-registry.svc:5000/instana-amqp-demo/amqp-service-app:latest
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 8085

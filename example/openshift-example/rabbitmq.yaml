@@ -55,8 +55,8 @@ spec:
           type: RuntimeDefault
       containers:
       - name: rabbitmq
-        # Using Bitnami RabbitMQ from Docker Hub
-        image: bitnami/rabbitmq:3.13
+        # Using official RabbitMQ image with management plugin
+        image: rabbitmq:3.13-management
         # OpenShift container security context
         securityContext:
           allowPrivilegeEscalation: false
@@ -65,15 +65,13 @@ spec:
             - ALL
           runAsNonRoot: true
         env:
-        - name: RABBITMQ_USERNAME
+        - name: RABBITMQ_DEFAULT_USER
           value: guest
-        - name: RABBITMQ_PASSWORD
+        - name: RABBITMQ_DEFAULT_PASS
           valueFrom:
             secretKeyRef:
               name: rabbitmq-secret
               key: rabbitmq-password
-        - name: RABBITMQ_PLUGINS
-          value: "rabbitmq_management"
         ports:
         - containerPort: 5672
           name: amqp
@@ -83,7 +81,7 @@ spec:
           protocol: TCP
         volumeMounts:
         - name: rabbitmq-data
-          mountPath: /bitnami/rabbitmq/mnesia
+          mountPath: /var/lib/rabbitmq
         readinessProbe:
           exec:
             command:
@@ -92,7 +90,8 @@ spec:
             - rabbitmq-diagnostics ping
           initialDelaySeconds: 30
           periodSeconds: 10
-          timeoutSeconds: 5
+          timeoutSeconds: 10
+          failureThreshold: 5
         livenessProbe:
           exec:
             command:
@@ -100,8 +99,9 @@ spec:
             - -c
             - rabbitmq-diagnostics ping
           initialDelaySeconds: 60
-          periodSeconds: 10
-          timeoutSeconds: 5
+          periodSeconds: 30
+          timeoutSeconds: 10
+          failureThreshold: 5
         resources:
           requests:
             memory: "256Mi"
