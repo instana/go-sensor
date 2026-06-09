@@ -216,6 +216,7 @@ func InitSensor(options *Options) {
 	// If sensor is already initialized, return
 	s, _ := getSensor()
 	if s != nil {
+		sensor.logger.Debug("sensor is already initialized, skipping")
 		return
 	}
 
