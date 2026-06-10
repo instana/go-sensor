@@ -10,3 +10,6 @@ require (
 	github.com/looplab/fsm v1.0.3 // indirect
 	github.com/opentracing/opentracing-go v1.2.0 // indirect
 )
+
+
+replace github.com/instana/go-sensor => ../../
