@@ -206,3 +206,95 @@ func TestFlush_WithContext(t *testing.T) {
 		})
 	}
 }
+
+// TestInitSensor_DoesNotReinitializeWhenAlreadyInitialized validates that
+// calling InitSensor multiple times does not reinitialize the sensor
+func TestInitSensor_DoesNotReinitializeWhenAlreadyInitialized(t *testing.T) {
+	// Ensure clean state
+	instana.ShutdownCollector()
+
+	// Create first agent
+	firstAgent := &mockAgentClient{ready: true}
+
+	opts1 := &instana.Options{
+		Service:     "test-service-1",
+		AgentClient: firstAgent,
+	}
+
+	// First initialization
+	instana.InitSensor(opts1)
+	defer instana.ShutdownCollector()
+
+	// Verify sensor is ready
+	require.True(t, instana.Ready(), "Sensor should be ready after first initialization")
+
+	// Create second agent with different options
+	secondAgent := &mockAgentClient{ready: false} // Different ready state
+
+	opts2 := &instana.Options{
+		Service:     "test-service-2", // Different service name
+		AgentClient: secondAgent,      // Different agent
+	}
+
+	// Second initialization attempt - should return early without reinitializing
+	instana.InitSensor(opts2)
+
+	// Verify sensor is still ready with the FIRST agent (not the second)
+	// If reinitialization happened, Ready() would return false (secondAgent.ready = false)
+	assert.True(t, instana.Ready(), "Sensor should still use first agent (ready=true), not second agent (ready=false)")
+}
+
+// TestInitSensor_WithNilOptionsAfterInitialization validates that calling
+// InitSensor with nil options after initialization doesn't reinitialize
+func TestInitSensor_WithNilOptionsAfterInitialization(t *testing.T) {
+	// Ensure clean state
+	instana.ShutdownCollector()
+
+	agent := &mockAgentClient{ready: true}
+
+	opts := &instana.Options{
+		Service:     "test-service",
+		AgentClient: agent,
+	}
+
+	// First initialization with options
+	instana.InitSensor(opts)
+	defer instana.ShutdownCollector()
+
+	require.True(t, instana.Ready(), "Sensor should be ready after initialization")
+
+	// Second call with nil options - should return early without reinitializing
+	instana.InitSensor(nil)
+
+	// Sensor should still be ready with original configuration
+	assert.True(t, instana.Ready(), "Sensor should still be ready with original config")
+}
+
+// TestStartMetrics_AfterInitCollector validates the edge case where
+// InitCollector is called followed by StartMetrics (the reported issue)
+func TestStartMetrics_AfterInitCollector(t *testing.T) {
+	// Ensure clean state
+	instana.ShutdownCollector()
+
+	agent := &mockAgentClient{ready: true}
+
+	opts := &instana.Options{
+		Service:     "test-service",
+		AgentClient: agent,
+		Recorder:    instana.NewRecorder(),
+	}
+
+	// Initialize collector (which calls StartMetrics internally)
+	collector := instana.InitCollector(opts)
+	require.NotNil(t, collector)
+	defer instana.ShutdownCollector()
+
+	require.True(t, instana.Ready(), "Sensor should be ready after InitCollector")
+
+	// Call StartMetrics again (which calls InitSensor internally)
+	// This should return early without reinitializing
+	instana.StartMetrics(nil)
+
+	// Verify sensor is still ready and not reinitialized
+	assert.True(t, instana.Ready(), "Sensor should still be ready after StartMetrics call")
+}
