@@ -1,0 +1,127 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: rabbitmq
+  labels:
+    app: rabbitmq
+spec:
+  ports:
+  - port: 5672
+    targetPort: 5672
+    protocol: TCP
+    name: amqp
+  - port: 15672
+    targetPort: 15672
+    protocol: TCP
+    name: management
+  selector:
+    app: rabbitmq
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rabbitmq
+  labels:
+    app: rabbitmq
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: rabbitmq
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: rabbitmq
+    spec:
+      automountServiceAccountToken: false
+      # OpenShift Security Context
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+      - name: rabbitmq
+        # Using official RabbitMQ image with management plugin
+        image: rabbitmq:3.13-management
+        # OpenShift container security context
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          runAsNonRoot: true
+        env:
+        - name: RABBITMQ_DEFAULT_USER
+          value: guest
+        - name: RABBITMQ_DEFAULT_PASS
+          valueFrom:
+            secretKeyRef:
+              name: rabbitmq-secret
+              key: rabbitmq-password
+        ports:
+        - containerPort: 5672
+          name: amqp
+          protocol: TCP
+        - containerPort: 15672
+          name: management
+          protocol: TCP
+        volumeMounts:
+        - name: rabbitmq-data
+          mountPath: /var/lib/rabbitmq
+        readinessProbe:
+          exec:
+            command:
+            - sh
+            - -c
+            - rabbitmq-diagnostics ping
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 10
+          failureThreshold: 5
+        livenessProbe:
+          exec:
+            command:
+            - sh
+            - -c
+            - rabbitmq-diagnostics ping
+          initialDelaySeconds: 60
+          periodSeconds: 30
+          timeoutSeconds: 10
+          failureThreshold: 5
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+            ephemeral-storage: "1Gi"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+            ephemeral-storage: "2Gi"
+      volumes:
+      - name: rabbitmq-data
+        emptyDir: {}
+---
+# Optional: Route for RabbitMQ Management UI (OpenShift only)
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: rabbitmq-management
+  labels:
+    app: rabbitmq
+spec:
+  to:
+    kind: Service
+    name: rabbitmq
+    weight: 100
+  port:
+    targetPort: management
+  wildcardPolicy: None
+  # For HTTPS, uncomment the following:
+  # tls:
+  #   termination: edge
+  #   insecureEdgeTerminationPolicy: Redirect
+
+# Made with Bob
