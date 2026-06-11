@@ -4,7 +4,7 @@ go 1.25.0
 
 require (
 	github.com/gofiber/fiber/v3 v3.3.0
-	github.com/instana/go-sensor v1.73.1
+	github.com/instana/go-sensor v1.73.2
 	github.com/instana/go-sensor/instrumentation/instafiber/v2 v2.0.0
 	github.com/instana/go-sensor/instrumentation/instagorm v1.39.0
 	gorm.io/driver/sqlite v1.6.0
