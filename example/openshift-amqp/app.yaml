@@ -1,0 +1,103 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: amqp-service-app
+  labels:
+    app: amqp-service-app
+spec:
+  ports:
+  - port: 8085
+    targetPort: 8085
+    protocol: TCP
+    name: http
+  selector:
+    app: amqp-service-app
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: amqp-service-app
+  labels:
+    app: amqp-service-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: amqp-service-app
+  template:
+    metadata:
+      labels:
+        app: amqp-service-app
+      annotations:
+        # Enable Instana monitoring
+        instana.io/service-name: "amqp-service"
+    spec:
+      automountServiceAccountToken: false
+      # OpenShift Security Context - allows random UID assignment
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+      - name: amqp-service-app
+        # For OpenShift, use image from registry (update this with your registry)
+        # Examples:
+        # - image-registry.openshift.io/<namespace>/amqp-service-app:latest
+        # - quay.io/<your-org>/amqp-service-app:latest
+        # - docker.io/<your-org>/amqp-service-app:latest
+        image: image-registry.openshift-image-registry.svc:5000/instana-amqp-demo/amqp-service-app:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8085
+          name: http
+          protocol: TCP
+        # OpenShift container security context
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          runAsNonRoot: true
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "200m"
+        env:
+        - name: RABBITMQ_URL
+          value: "amqp://guest:guest@rabbitmq:5672/"
+        - name: INSTANA_SERVICE_NAME
+          value: "amqp-service"
+        - name: INSTANA_AGENT_HOST
+          valueFrom:
+            fieldRef:
+              fieldPath: status.hostIP
+        - name: INSTANA_AGENT_PORT
+          value: "42699"
+        - name: INSTANA_DEBUG
+          value: "true"
+---
+# OpenShift Route for external access (replaces NodePort)
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: amqp-service-app
+  labels:
+    app: amqp-service-app
+spec:
+  to:
+    kind: Service
+    name: amqp-service-app
+    weight: 100
+  port:
+    targetPort: http
+  wildcardPolicy: None
+  # For HTTPS, uncomment the following:
+  # tls:
+  #   termination: edge
+  #   insecureEdgeTerminationPolicy: Redirect
+
+# Made with Bob
