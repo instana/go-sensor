@@ -5,7 +5,7 @@ go 1.24.0
 require (
 	github.com/instana/go-sensor v1.68.0
 	github.com/instana/go-sensor/instrumentation/instamongo/v2 v2.8.0
-	go.mongodb.org/mongo-driver/v2 v2.2.2
+	go.mongodb.org/mongo-driver/v2 v2.4.2
 )
 
 require (
