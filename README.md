@@ -66,6 +66,32 @@ func init() {
 ### Collecting Metrics
 
 Once the collector has been initialized with `instana.InitCollector`, application metrics such as memory, CPU consumption, active goroutine count etc will be automatically collected and reported to the Agent without further actions or configurations to the SDK.
+
+#### Metrics Transmission Interval
+
+Metrics are transmitted to the Instana Agent at a configurable interval. The interval is configured through the agent's `configuration.yaml` file.
+
+**Configuration:**
+
+In the agent's `configuration.yaml`:
+```yaml
+# Configure metrics transmission interval for Go applications
+com.instana.plugin.golang:
+  poll_rate: 5  # Valid range: 1-3600 (seconds)
+```
+
+**Valid Values:**
+- Any value between `1` and `3600` seconds
+- Default: `1` second (if not configured)
+- Minimum: `1` second
+- Maximum: `3600` seconds (1 hour)
+
+**Behavior:**
+- If `poll_rate` is not configured, defaults to 1 second
+- Values less than 1 will be set to the minimum value of 1 second.
+- Values greater than 3600 will be set to the maximum value of 3600 seconds.
+- Configuration is applied when the Go sensor announces itself to the agent.
+
 This data is then already available in the dashboard.
 
 ### Tracing Calls
