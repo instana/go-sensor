@@ -4,7 +4,7 @@ go 1.25.0
 
 require (
 	github.com/beego/beego/v2 v2.3.10
-	github.com/instana/go-sensor v1.73.2
+	github.com/instana/go-sensor v1.73.3
 	github.com/opentracing/opentracing-go v1.2.0
 	github.com/stretchr/testify v1.10.0
 )
