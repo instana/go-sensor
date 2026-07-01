@@ -94,12 +94,13 @@ func (a *genericServerlessAgent) SendProfiles([]autoprofile.Profile) error { ret
 
 func (a *genericServerlessAgent) Flush(ctx context.Context) error {
 	a.mu.RLock()
-	if len(a.spanQueue) == 0 {
-		return nil
-	}
-
+	queueLen := len(a.spanQueue)
 	entityID := a.snapshot.EntityID
 	a.mu.RUnlock()
+
+	if queueLen == 0 {
+		return nil
+	}
 
 	from := newServerlessAgentFromS(entityID, "generic_serverless")
 
