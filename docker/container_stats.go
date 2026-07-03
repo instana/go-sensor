@@ -4,7 +4,6 @@
 package docker
 
 import (
-	"fmt"
 	"strings"
 	"time"
 )
@@ -54,7 +53,7 @@ func (biop *blockIOOp) UnmarshalJSON(data []byte) error {
 	case `"write"`:
 		*biop = BlockIOWriteOp
 	default:
-		return fmt.Errorf("unexpected block i/o op %s", string(data))
+		// Only Read and Write are used for metrics; skip everything else.
 	}
 
 	return nil

@@ -97,7 +97,7 @@ find_immediate_next_version(){
         done
 
         if [[ "$found" = true ]]; then
-            # Query the full info of that package version to get the release darte
+            # Query the full info of that package version to get the release date
             local url="https://proxy.golang.org/${pkg}/@v/v${IMMEDIATE_NEXT_VERSION}.info"
             local url1=$(echo "$url" | awk '{ print tolower($0) }')
             debug_log $url1
@@ -154,6 +154,10 @@ while IFS= read -r line; do
         # Update the markdown report file
         awk -v new_line="$changed_line" '{ if ($0 == old_line) print new_line; else print }' old_line="$line" $GO_REPORTS_MD_PATH > $GO_REPORTS_MD_PATH_TMP && mv $GO_REPORTS_MD_PATH_TMP $GO_REPORTS_MD_PATH
         continue
+    fi
+
+    if [[ "$line" = "# Go Runtime" ]]; then
+        break
     fi
 
     # For skipping first few lines from the md file.

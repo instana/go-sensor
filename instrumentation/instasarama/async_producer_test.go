@@ -458,6 +458,13 @@ func (p *testAsyncProducer) AddOffsetsToTxn(offsets map[string][]*sarama.Partiti
 func (p *testAsyncProducer) AddMessageToTxn(msg *sarama.ConsumerMessage, groupId string, metadata *string) error {
 	panic("needs to be implemented if testcase is failing")
 }
+func (p *testAsyncProducer) AddMessageToTxnWithGroupMetadata(msg *sarama.ConsumerMessage, groupMetadata *sarama.ConsumerGroupMetadata, metadata *string) error {
+	panic("needs to be implemented if testcase is failing")
+}
+
+func (p *testAsyncProducer) AddOffsetsToTxnWithGroupMetadata(offsets map[string][]*sarama.PartitionOffsetMetadata, groupMetadata *sarama.ConsumerGroupMetadata) error {
+	panic("needs to be implemented if testcase is failing")
+}
 
 func newTestAsyncProducer(returnedErr error) *testAsyncProducer {
 	return &testAsyncProducer{

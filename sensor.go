@@ -220,6 +220,13 @@ func (r *sensorS) serviceOrBinaryName() string {
 //
 // Deprecated: Use [StartMetrics] instead.
 func InitSensor(options *Options) {
+	// If sensor is already initialized, return
+	s, _ := getSensor()
+	if s != nil {
+		sensor.logger.Debug("sensor is already initialized, skipping")
+		return
+	}
+
 	// This default options only will be applied, in-case user initialize the sensor with InitSensor
 	if options == nil {
 		options = DefaultOptions()
