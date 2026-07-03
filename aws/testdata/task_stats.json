@@ -17,6 +17,10 @@
         {
           "value": 3,
           "op": "READ"
+        },
+        {
+          "value": 4,
+          "op": "Sync"
         }
       ],
       "io_serviced_recursive": [],
