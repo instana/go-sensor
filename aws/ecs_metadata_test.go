@@ -247,6 +247,7 @@ func TestECSMetadataProvider_TaskStats(t *testing.T) {
 				{Operation: docker.BlockIOReadOp, Value: 1},
 				{Operation: docker.BlockIOWriteOp, Value: 2},
 				{Operation: docker.BlockIOReadOp, Value: 3},
+				{Operation: 0, Value: 4}, // "Sync" and other unknown ops are ignored during aggregation
 			},
 		},
 	}, stats)
