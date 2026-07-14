@@ -295,6 +295,10 @@ func (rec *statusCodeRecorder) Write(b []byte) (int, error) {
 	return rec.ResponseWriter.Write(b)
 }
 
+func (rec *statusCodeRecorder) Unwrap() http.ResponseWriter {
+	return rec.ResponseWriter
+}
+
 func (rec *statusCodeRecorder) Status() int {
 	return rec.status
 }
