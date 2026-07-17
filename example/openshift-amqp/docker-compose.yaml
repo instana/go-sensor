@@ -1,0 +1,36 @@
+services:
+  rabbitmq:
+    image: rabbitmq:3.13-management
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"      # AMQP port
+      - "15672:15672"    # Management UI
+    environment:
+      - RABBITMQ_DEFAULT_USER=guest
+      - RABBITMQ_DEFAULT_PASS=guest
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  amqp-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: amqp-service-app
+    ports:
+      - "8085:8085"
+    environment:
+      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672/
+      - INSTANA_AGENT_HOST=host.docker.internal
+      - INSTANA_AGENT_PORT=42699
+      - INSTANA_SERVICE_NAME=amqp-service
+      - INSTANA_DEBUG=true
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+# Made with Bob

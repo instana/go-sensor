@@ -5,10 +5,10 @@ github.com/google/pprof v0.0.0-20250630185457-6e76a2b096b5 h1:xhMrHhTJ6zxu3gA4en
 github.com/google/pprof v0.0.0-20250630185457-6e76a2b096b5/go.mod h1:5hDyRhoBCxViHszMt12TnOpEI4VVi+U8Gm9iphldiMA=
 github.com/google/uuid v1.6.0 h1:NIvaJDMOsjHA8n1jAhLSgzrAzy1Hgr+hNrb57e+94F0=
 github.com/google/uuid v1.6.0/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
-github.com/instana/go-sensor v1.73.1 h1:kLARb2bM6FsWnjxY1cw+lC8LslqMlI2hBY42HY3xZFo=
-github.com/instana/go-sensor v1.73.1/go.mod h1:wWLB5TQn5zd+XxZPLkaScMzRr74ymtptaDTPhrueDyM=
-github.com/labstack/echo/v5 v5.1.0 h1:MvIRydoN+p9cx/zq8Lff6YXqUW2ZaEsOMISzEGSMrBI=
-github.com/labstack/echo/v5 v5.1.0/go.mod h1:SyvlSdObGjRXeQfCCXW/sybkZdOOQZBmpKF0bvALaeo=
+github.com/instana/go-sensor v1.73.5 h1:6J1pbzDheEqKkHXJuLgVZGBSWT8uhDcLwPSaJMois94=
+github.com/instana/go-sensor v1.73.5/go.mod h1:wWLB5TQn5zd+XxZPLkaScMzRr74ymtptaDTPhrueDyM=
+github.com/labstack/echo/v5 v5.2.1 h1:TzpIksY6zLMzV0T0ycYbvTEoj9w6o6AcL5twg182VTY=
+github.com/labstack/echo/v5 v5.2.1/go.mod h1:SyvlSdObGjRXeQfCCXW/sybkZdOOQZBmpKF0bvALaeo=
 github.com/looplab/fsm v1.0.3 h1:qtxBsa2onOs0qFOtkqwf5zE0uP0+Te+wlIvXctPKpcw=
 github.com/looplab/fsm v1.0.3/go.mod h1:PmD3fFvQEIsjMEfvZdrCDZ6y8VwKTwWNjlpEr6IKPO4=
 github.com/opentracing/opentracing-go v1.2.0 h1:uEJPy/1a5RIPAJ0Ov+OIO8OxWu77jEv+1B0VhjKrZUs=

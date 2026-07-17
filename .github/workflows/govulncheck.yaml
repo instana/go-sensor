@@ -1,0 +1,104 @@
+name: Run govulncheck
+
+on:
+  push:
+    branches:
+      - main
+
+  pull_request:
+    types: [opened, synchronize, reopened]
+permissions:
+  contents: read
+
+jobs:
+  runGovulncheck:
+    name: Run govulncheck
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout repository
+        # uses actions/checkout@v6.0.2
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          fetch-depth: 1
+
+      - name: Setup Go
+        # uses: actions/setup-go@v6.4.0
+        uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c
+        
+        with:
+          go-version: stable
+
+      - name: Install and run govulncheck
+        shell: bash
+        run: |
+          set -euxo pipefail
+
+          export PATH="$(go env GOPATH)/bin:$PATH"
+
+          # Reason: aws-sdk-go and pgxv5 are no longer receiving updates. 
+          # We are also planning to deprecate support for these instrumentation packages in the future. 
+          # Hence, for the time being, these packages are excluded from the govulncheck run.
+          EXCLUDE_DIRS=(
+            "instrumentation/instaawssdk"
+            "instrumentation/instapgx"
+          )
+
+          should_exclude() {
+            local dir="$1"
+
+            for excluded in "${EXCLUDE_DIRS[@]}"; do
+              if [[ "$dir" == "$excluded" ]]; then
+                return 0
+              fi
+            done
+
+            return 1
+          }
+
+          echo "::group::Go Environment"
+          which go
+          go version
+          go env
+          echo "::endgroup::"
+
+          echo "::group::Install govulncheck"
+          
+          # govulncheck: v1.3.0
+          go install golang.org/x/vuln/cmd/govulncheck@0782b76014f15f24e22a438f30f308df42899ba1
+
+          which govulncheck
+          govulncheck -version
+          echo "::endgroup::"
+
+          echo "::group::Run govulncheck for root module"
+          go mod download
+          govulncheck -show verbose ./...
+          echo "::endgroup::"
+
+          echo "::group::Run govulncheck for instrumentation modules"
+
+          find instrumentation -name go.mod | while read gomod; do
+            module_dir=$(dirname "$gomod")
+
+            if should_exclude "$module_dir"; then
+              echo "Skipping excluded module: $module_dir"
+              continue
+            fi
+
+            echo ""
+            echo "========================================="
+            echo "Running govulncheck in: $module_dir"
+            echo "========================================="
+
+            (
+              cd "$module_dir" || exit 1
+
+              go mod download || exit 1
+
+              govulncheck -show verbose ./... || exit 1
+            )
+          done
+
+          echo "::endgroup::"

@@ -4,4 +4,4 @@
 package instalambda
 
 // Version is the instrumentation module semantic version
-const Version = "1.53.0"
+const Version = "1.57.0"

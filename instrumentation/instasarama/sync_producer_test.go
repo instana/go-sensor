@@ -381,6 +381,13 @@ func (p *testSyncProducer) AddOffsetsToTxn(offsets map[string][]*sarama.Partitio
 func (p *testSyncProducer) AddMessageToTxn(msg *sarama.ConsumerMessage, groupId string, metadata *string) error {
 	panic("needs to be implemented if testcase is failing")
 }
+func (p *testSyncProducer) AddMessageToTxnWithGroupMetadata(msg *sarama.ConsumerMessage, groupMetadata *sarama.ConsumerGroupMetadata, metadata *string) error {
+	panic("needs to be implemented if testcase is failing")
+}
+
+func (p *testSyncProducer) AddOffsetsToTxnWithGroupMetadata(offsets map[string][]*sarama.PartitionOffsetMetadata, groupMetadata *sarama.ConsumerGroupMetadata) error {
+	panic("needs to be implemented if testcase is failing")
+}
 
 func (p *testSyncProducer) SendMessage(msg *sarama.ProducerMessage) (partition int32, offset int64, err error) {
 	p.Messages = append(p.Messages, msg)
