@@ -163,14 +163,14 @@ func TestMetricsOptions_SetTransmissionInterval(t *testing.T) {
 			expected: 60 * time.Second,
 		},
 		{
-			name:     "Valid 300 seconds",
-			seconds:  300,
-			expected: 300 * time.Second,
+			name:     "Value exceeding maximum (1000) sets to maximum (60 seconds)",
+			seconds:  1000,
+			expected: 60 * time.Second,
 		},
 		{
-			name:     "Valid 3600 seconds (maximum)",
-			seconds:  3600,
-			expected: 3600 * time.Second,
+			name:     "Valid 60 seconds (maximum)",
+			seconds:  60,
+			expected: 60 * time.Second,
 		},
 		{
 			name:     "Zero seconds sets to minimum (1 second)",
@@ -188,19 +188,9 @@ func TestMetricsOptions_SetTransmissionInterval(t *testing.T) {
 			expected: 1 * time.Second,
 		},
 		{
-			name:     "Value exceeding maximum (3601) sets to maximum (3600 seconds)",
-			seconds:  3601,
-			expected: 3600 * time.Second,
-		},
-		{
-			name:     "Value exceeding maximum (5000) sets to maximum (3600 seconds)",
-			seconds:  5000,
-			expected: 3600 * time.Second,
-		},
-		{
-			name:     "Value exceeding maximum (10000) sets to maximum (3600 seconds)",
-			seconds:  10000,
-			expected: 3600 * time.Second,
+			name:     "Value exceeding maximum (61) sets to maximum (60 seconds)",
+			seconds:  61,
+			expected: 60 * time.Second,
 		},
 	}
 

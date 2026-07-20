@@ -77,19 +77,19 @@ In the agent's `configuration.yaml`:
 ```yaml
 # Configure metrics transmission interval for Go applications
 com.instana.plugin.golang:
-  poll_rate: 5  # Valid range: 1-3600 (seconds)
+  poll_rate: 5  # Valid range: 1-60 (seconds)
 ```
 
 **Valid Values:**
-- Any value between `1` and `3600` seconds
+- Any value between `1` and `60` seconds
 - Default: `1` second (if not configured)
 - Minimum: `1` second
-- Maximum: `3600` seconds (1 hour)
+- Maximum: `60` seconds
 
 **Behavior:**
 - If `poll_rate` is not configured, defaults to 1 second
 - Values less than 1 will be set to the minimum value of 1 second.
-- Values greater than 3600 will be set to the maximum value of 3600 seconds.
+- Values greater than 60 will be set to the maximum value of 60 seconds.
 - Configuration is applied when the Go sensor announces itself to the agent.
 
 This data is then already available in the dashboard.

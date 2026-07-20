@@ -15,7 +15,7 @@ const (
 	// Metrics transmission interval constraints (in seconds)
 	defaultTransmissionInterval = 1
 	minTransmissionInterval     = 1
-	maxTransmissionInterval     = 3600
+	maxTransmissionInterval     = 60
 )
 
 // SnapshotS struct to hold snapshot data
