@@ -17,6 +17,7 @@ cloud.google.com/go/logging v1.18.0 h1:KhzZq+1cSkPH9YUaKLLhLtQxIHitVayBmk0sGfoM9
 cloud.google.com/go/logging v1.18.0/go.mod h1:ZGKnpBaURITh+g/uom2VhbiFoFWvejcrHPDhxFtU/gI=
 cloud.google.com/go/longrunning v1.0.0 h1:lwzWEYD8+NkYV7dhexOz6kmlvajZA70+bW/xMhRVVdY=
 cloud.google.com/go/longrunning v1.0.0/go.mod h1:8nqFBPOO1U/XkhWl0I19AMZEphrHi73VNABIpKYaTwM=
+cloud.google.com/go/longrunning v1.2.0 h1:WjYH3YHBGCxGJP9M4dWGHBfXr/cFIjMkNgWcJj7/iMM=
 cloud.google.com/go/monitoring v1.29.0 h1:AHhDsFaSax1/4k+qlIDX/SDGe6hggnfXJ9dkgD9qBPY=
 cloud.google.com/go/monitoring v1.29.0/go.mod h1:72NOVjJXHY/HBfoLT0+qlCZBT059+9VXLeAnL2PeeVM=
 cloud.google.com/go/pubsub v1.50.2 h1:54Up97HnThdP4H8jjWJSSQ/mnYG2EKon7ZSNETRq0tM=
@@ -31,6 +32,8 @@ cloud.google.com/go/pubsub/v2 v2.6.0 h1:8pjR0id+GTB+krKx5G6AGJoYrHog58w2Q89PCOrf
 cloud.google.com/go/pubsub/v2 v2.6.0/go.mod h1:4anqvV/w8Pcgu2tO0qr2XgsF3GXHowzryfQ5gOnVmWY=
 cloud.google.com/go/storage v1.63.0 h1:hvXF2xfg9I32bjujggxgkEZn/Ej6sJ9pieFgeueBLrQ=
 cloud.google.com/go/storage v1.63.0/go.mod h1:tirWVptrFNo5GEX2DQ47JooF7yaweJdAJ1hYAVMvKzE=
+cloud.google.com/go/storage v1.63.1 h1:CYXILV9G4CH0C18IQ9+V0h4XiqD2LhKnMLO0o7uJWNs=
+cloud.google.com/go/storage v1.63.1/go.mod h1:lWyAtwvDZHdL3k68WVKbESP6bmWaV23ZJJ/JEVw/ZaQ=
 cloud.google.com/go/trace v1.16.0 h1:GmQovzFc5F0CNfl0VLgL64aoTtu7xsM0YajW2GlG9+E=
 cloud.google.com/go/trace v1.16.0/go.mod h1:r+bdAn16dKLSV1G2D5v3e58IlQlizfxWrUfjx7kM7X0=
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
