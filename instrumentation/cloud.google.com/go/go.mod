@@ -4,7 +4,7 @@ go 1.25.8
 
 require (
 	cloud.google.com/go/iam v1.11.0
-	cloud.google.com/go/pubsub v1.50.2
+	cloud.google.com/go/pubsub v1.50.3
 	cloud.google.com/go/storage v1.63.0
 	github.com/instana/go-sensor v1.73.5
 	github.com/opentracing/opentracing-go v1.2.0
@@ -21,7 +21,7 @@ require (
 	cloud.google.com/go/auth/oauth2adapt v0.2.8 // indirect
 	cloud.google.com/go/compute/metadata v0.9.0 // indirect
 	cloud.google.com/go/monitoring v1.29.0 // indirect
-	cloud.google.com/go/pubsub/v2 v2.5.1 // indirect
+	cloud.google.com/go/pubsub/v2 v2.6.0 // indirect
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/detectors/gcp v1.31.0 // indirect
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/exporter/metric v0.57.0 // indirect
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/internal/resourcemapping v0.57.0 // indirect
