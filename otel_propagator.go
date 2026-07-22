@@ -1,3 +1,5 @@
+//Check whether OpenTelemetry can participate in the prop without changing the header format
+
 package instana
 
 import (
