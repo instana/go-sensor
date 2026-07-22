@@ -77,20 +77,23 @@ In the agent's `configuration.yaml`:
 ```yaml
 # Configure metrics transmission interval for Go applications
 com.instana.plugin.golang:
-  poll_rate: 5  # Valid range: 1-60 (seconds)
+  poll_rate: 5  # Valid range: 1-600 (seconds)
 ```
 
 **Valid Values:**
-- Any value between `1` and `60` seconds
+- Any value between `1` and `600` seconds
 - Default: `1` second (if not configured)
 - Minimum: `1` second
-- Maximum: `60` seconds
+- Maximum: `600` seconds
 
 **Behavior:**
 - If `poll_rate` is not configured, defaults to 1 second
 - Values less than 1 will be set to the minimum value of 1 second.
-- Values greater than 60 will be set to the maximum value of 60 seconds.
-- Configuration is applied when the Go sensor announces itself to the agent.
+- Values greater than 600 will be set to the maximum value of 600 seconds.
+- Configuration is read from the agent once, during the initial handshake when the Go tracer starts up.
+
+> [!IMPORTANT]
+> The `poll_rate` value is applied **only at Go tracer startup**. If you change `poll_rate` in the agent's `configuration.yaml` after the tracer is already running, the new value will **not** take effect until the Go application is restarted. This applies even if the Instana Agent itself is restarted — the tracer will continue using the interval it received during its own initial handshake.
 
 This data is then already available in the dashboard.
 

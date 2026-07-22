@@ -15,7 +15,7 @@ const (
 	// Metrics transmission interval constraints (in seconds)
 	defaultTransmissionInterval = 1
 	minTransmissionInterval     = 1
-	maxTransmissionInterval     = 60
+	maxTransmissionInterval     = 600
 )
 
 // SnapshotS struct to hold snapshot data
@@ -31,10 +31,10 @@ type MetricsS acceptor.Metrics
 type EntityData acceptor.GoProcessData
 
 type meterS struct {
-	numGC   uint32
-	running bool
-	done    chan struct{}
-	mu      sync.Mutex
+	numGC    uint32
+	once     sync.Once
+	stopOnce sync.Once
+	done     chan struct{}
 }
 
 // MetricsOptions contains configuration for metrics collection and transmission.
@@ -44,7 +44,7 @@ type MetricsOptions struct {
 	transmissionInterval time.Duration
 }
 
-// GetTransmissionInterval returns the current metrics transmission interval.
+// getTransmissionInterval returns the current metrics transmission interval.
 // This value is configured through the agent's configuration.yaml file.
 func (m *MetricsOptions) getTransmissionInterval() time.Duration {
 	m.mu.RLock()
@@ -57,29 +57,25 @@ func (m *MetricsOptions) getTransmissionInterval() time.Duration {
 }
 
 // setTransmissionInterval sets the metrics transmission interval.
-// This is an internal method called when agent configuration is received.
-// Valid range: minTransmissionInterval-maxTransmissionInterval seconds.
-// Values < minTransmissionInterval are set to minTransmissionInterval,
-// values > maxTransmissionInterval are set to maxTransmissionInterval.
+// This is an internal method called when agent configuration is received during
+// the initial handshake. Valid range: minTransmissionInterval-maxTransmissionInterval seconds.
+// Values outside the range are clamped to the nearest bound.
 func (m *MetricsOptions) setTransmissionInterval(seconds int) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	// Apply minimum value constraint
 	if seconds < minTransmissionInterval {
 		defaultLogger.Warn("poll_rate value from agent (", seconds, ") is less than minimum. Setting to minimum value of ", minTransmissionInterval, " second.")
 		m.transmissionInterval = minTransmissionInterval * time.Second
 		return
 	}
 
-	// Apply maximum value constraint
 	if seconds > maxTransmissionInterval {
 		defaultLogger.Warn("poll_rate value from agent (", seconds, ") exceeds maximum. Setting to maximum value of ", maxTransmissionInterval, " seconds.")
 		m.transmissionInterval = maxTransmissionInterval * time.Second
 		return
 	}
 
-	// Valid value within range
 	m.transmissionInterval = time.Duration(seconds) * time.Second
 	defaultLogger.Info("Metrics transmission interval set to ", seconds, " second(s) from agent configuration")
 }
@@ -88,73 +84,50 @@ func newMeter(logger LeveledLogger) *meterS {
 	logger.Debug("initializing meter")
 
 	return &meterS{
-		done: make(chan struct{}, 1),
+		done: make(chan struct{}),
 	}
 }
 
-func (m *meterS) prepareRun() chan struct{} {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-
-	// If already running, stop first
-	if m.running {
-		close(m.done)
-	}
-
-	// Create new channel and mark as running
-	m.done = make(chan struct{})
-	m.running = true
-
-	return m.done
-}
-
+// Run starts the metrics collection loop at the given interval.
+// It is safe to call Run multiple times — only the first call starts the loop;
+// subsequent calls (e.g. on agent reconnect) are ignored so the running loop
+// continues uninterrupted with the original interval.
 func (m *meterS) Run(collectInterval time.Duration) {
-	done := m.prepareRun()
+	if m == nil {
+		return
+	}
+	m.once.Do(func() {
+		go func() {
+			ticker := time.NewTicker(collectInterval)
+			defer ticker.Stop()
+			for {
+				select {
+				case <-m.done:
+					return
+				case <-ticker.C:
+					if isAgentReady() {
+						go func() {
+							s, err := getSensor()
+							if err != nil {
+								defaultLogger.Error("meter: ", err.Error())
+								return
+							}
 
-	go func(done chan struct{}) {
-		ticker := time.NewTicker(collectInterval)
-		defer ticker.Stop()
-		for {
-			select {
-			case <-done:
-				return
-			case <-ticker.C:
-				if isAgentReady() {
-					go func() {
-						s, err := getSensor()
-						if err != nil {
-							defaultLogger.Error("meter: ", err.Error())
-							return
-						}
-
-						_ = s.Agent().SendMetrics(m.collectMetrics())
-					}()
+							_ = s.Agent().SendMetrics(m.collectMetrics())
+						}()
+					}
 				}
 			}
-		}
-	}(done)
+		}()
+	})
 }
 
-func (m *meterS) reset(interval time.Duration) {
-	if m == nil {
-		return
-	}
-	m.Stop()
-	m.Run(interval)
-}
-
+// Stop shuts down the metrics collection loop. Safe to call multiple times.
 func (m *meterS) Stop() {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-
 	if m == nil {
 		return
 	}
-
-	if m.running {
-		close(m.done)
-		m.running = false
-	}
+	m.stopOnce.Do(func() { close(m.done) })
 }
 
 func (m *meterS) collectMemoryMetrics() acceptor.MemoryStats {

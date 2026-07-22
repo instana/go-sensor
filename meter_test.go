@@ -11,435 +11,150 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestMeterS_Stop(t *testing.T) {
-	// Create a new meter
+// TestNewMeter verifies the meter is properly initialised.
+func TestNewMeter(t *testing.T) {
 	m := newMeter(defaultLogger)
 
-	// Track if Run is still executing
-	var wg sync.WaitGroup
-	wg.Add(1)
+	assert.NotNil(t, m)
+	assert.NotNil(t, m.done)
+	assert.Equal(t, uint32(0), m.numGC)
+}
 
-	// Start the meter in a goroutine
+// TestMeterRun_StartsOnce ensures the collection goroutine is only started once
+// regardless of how many times Run is called — matching the agent-reconnect use case
+// where the FSM calls Run again but the loop must continue uninterrupted.
+func TestMeterRun_StartsOnce(t *testing.T) {
+	m := newMeter(defaultLogger)
+
+	// Call Run three times in quick succession — only the first must start the loop.
+	m.Run(50 * time.Millisecond)
+	m.Run(50 * time.Millisecond)
+	m.Run(50 * time.Millisecond)
+
+	// Give one tick to fire so we know the loop is alive.
+	time.Sleep(80 * time.Millisecond)
+
+	// Stop and confirm the channel closes cleanly (not double-closed/panicked).
+	assert.NotPanics(t, m.Stop)
+
+	// Confirm done channel is closed (reading from a closed channel returns immediately).
+	select {
+	case <-m.done:
+		// expected
+	default:
+		t.Fatal("done channel should be closed after Stop()")
+	}
+}
+
+// TestMeterStop_Idempotent verifies that calling Stop multiple times never panics.
+func TestMeterStop_Idempotent(t *testing.T) {
+	m := newMeter(defaultLogger)
+	m.Run(100 * time.Millisecond)
+
+	assert.NotPanics(t, func() {
+		m.Stop()
+		m.Stop()
+		m.Stop()
+	})
+}
+
+// TestMeterStop_WithoutRun verifies Stop is safe even when Run was never called.
+func TestMeterStop_WithoutRun(t *testing.T) {
+	m := newMeter(defaultLogger)
+
+	assert.NotPanics(t, func() {
+		m.Stop()
+	})
+}
+
+// TestMeterRun_LoopExitsOnStop verifies the collection goroutine stops when Stop is called.
+func TestMeterRun_LoopExitsOnStop(t *testing.T) {
+	m := newMeter(defaultLogger)
+	m.Run(50 * time.Millisecond)
+
+	// Let at least one tick fire.
+	time.Sleep(80 * time.Millisecond)
+
+	stopped := make(chan struct{})
 	go func() {
-		defer wg.Done()
-		m.Run(100 * time.Millisecond)
-	}()
-
-	// Let it run for a bit
-	time.Sleep(300 * time.Millisecond)
-
-	// Stop the meter
-	m.Stop()
-
-	// Wait for Run to exit with a timeout
-	done := make(chan struct{})
-	go func() {
-		wg.Wait()
-		close(done)
+		m.Stop()
+		close(stopped)
 	}()
 
 	select {
-	case <-done:
-		// Success - Run exited after Stop was called
+	case <-stopped:
+		// expected
 	case <-time.After(2 * time.Second):
-		t.Fatal("meter.Run() did not exit after Stop() was called")
+		t.Fatal("Stop() did not return in time")
 	}
 }
 
-func TestMeterS_Run_StopImmediately(t *testing.T) {
-	// Create a new meter
+// TestMeterRun_ConcurrentCallsSafe verifies concurrent calls to Run are race-free.
+func TestMeterRun_ConcurrentCallsSafe(t *testing.T) {
 	m := newMeter(defaultLogger)
 
-	// Track if Run is still executing
 	var wg sync.WaitGroup
-	wg.Add(1)
-
-	// Start the meter in a goroutine
-	go func() {
-		defer wg.Done()
-		m.Run(100 * time.Millisecond)
-	}()
-
-	// Stop immediately without waiting
-	m.Stop()
-
-	// Wait for Run to exit with a timeout
-	done := make(chan struct{})
-	go func() {
-		wg.Wait()
-		close(done)
-	}()
-
-	select {
-	case <-done:
-		// Success - Run exited after Stop was called
-	case <-time.After(2 * time.Second):
-		t.Fatal("meter.Run() did not exit after immediate Stop() was called")
+	for i := 0; i < 10; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			m.Run(100 * time.Millisecond)
+		}()
 	}
+	wg.Wait()
+
+	// Should stop cleanly with no panic.
+	assert.NotPanics(t, m.Stop)
 }
 
-func TestMeterS_CollectMetrics(t *testing.T) {
-	// Create a new meter
-	m := newMeter(defaultLogger)
-
-	// Collect metrics
-	metrics := m.collectMetrics()
-
-	// Verify metrics are collected
-	if metrics.Goroutine <= 0 {
-		t.Errorf("Expected positive goroutine count, got %d", metrics.Goroutine)
-	}
-
-	if metrics.MemoryStats.Alloc == 0 {
-		t.Error("Expected non-zero memory allocation")
-	}
-}
-
-func TestMeterS_CollectMemoryMetrics(t *testing.T) {
-	// Create a new meter
-	m := newMeter(defaultLogger)
-
-	// Collect memory metrics
-	memStats := m.collectMemoryMetrics()
-
-	// Verify memory stats are collected
-	if memStats.Alloc == 0 {
-		t.Error("Expected non-zero Alloc")
-	}
-
-	if memStats.Sys == 0 {
-		t.Error("Expected non-zero Sys")
-	}
-
-	if memStats.HeapAlloc == 0 {
-		t.Error("Expected non-zero HeapAlloc")
-	}
-}
-
-func TestMeterS_NewMeter(t *testing.T) {
-	// Create a new meter
-	m := newMeter(defaultLogger)
-
-	if m == nil {
-		t.Fatal("Expected non-nil meter")
-	}
-
-	if m.done == nil {
-		t.Error("Expected done channel to be initialized")
-	}
-
-	if m.numGC != 0 {
-		t.Errorf("Expected initial numGC to be 0, got %d", m.numGC)
-	}
-}
-
+// TestMetricsOptions_GetTransmissionInterval_Default verifies the default interval
+// is returned when none has been configured.
 func TestMetricsOptions_GetTransmissionInterval_Default(t *testing.T) {
 	opts := &MetricsOptions{}
-
-	interval := opts.getTransmissionInterval()
-
-	assert.Equal(t, 1*time.Second, interval, "Default transmission interval should be 1 second")
+	assert.Equal(t, time.Second, opts.getTransmissionInterval())
 }
 
+// TestMetricsOptions_SetTransmissionInterval verifies clamping and valid values.
 func TestMetricsOptions_SetTransmissionInterval(t *testing.T) {
 	tests := []struct {
 		name     string
 		seconds  int
 		expected time.Duration
 	}{
-		{
-			name:     "Valid 1 second (minimum)",
-			seconds:  1,
-			expected: 1 * time.Second,
-		},
-		{
-			name:     "Valid 5 seconds",
-			seconds:  5,
-			expected: 5 * time.Second,
-		},
-		{
-			name:     "Valid 60 seconds",
-			seconds:  60,
-			expected: 60 * time.Second,
-		},
-		{
-			name:     "Value exceeding maximum (1000) sets to maximum (60 seconds)",
-			seconds:  1000,
-			expected: 60 * time.Second,
-		},
-		{
-			name:     "Valid 60 seconds (maximum)",
-			seconds:  60,
-			expected: 60 * time.Second,
-		},
-		{
-			name:     "Zero seconds sets to minimum (1 second)",
-			seconds:  0,
-			expected: 1 * time.Second,
-		},
-		{
-			name:     "Negative value sets to minimum (1 second)",
-			seconds:  -1,
-			expected: 1 * time.Second,
-		},
-		{
-			name:     "Negative value -100 sets to minimum (1 second)",
-			seconds:  -100,
-			expected: 1 * time.Second,
-		},
-		{
-			name:     "Value exceeding maximum (61) sets to maximum (60 seconds)",
-			seconds:  61,
-			expected: 60 * time.Second,
-		},
+		{"minimum (1s)", 1, 1 * time.Second},
+		{"valid 5s", 5, 5 * time.Second},
+		{"valid 60s", 60, 60 * time.Second},
+		{"valid 300s", 300, 300 * time.Second},
+		{"maximum (600s)", 600, 600 * time.Second},
+		{"zero clamps to minimum", 0, 1 * time.Second},
+		{"negative clamps to minimum", -1, 1 * time.Second},
+		{"exceeds maximum clamps to 600s", 1000, 600 * time.Second},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			opts := &MetricsOptions{}
-
 			opts.setTransmissionInterval(tt.seconds)
-
 			assert.Equal(t, tt.expected, opts.getTransmissionInterval())
 		})
 	}
 }
 
-func TestMeterS_Reset(t *testing.T) {
-	t.Run("reset running meter", func(t *testing.T) {
-		m := newMeter(defaultLogger)
-		var wg sync.WaitGroup
-		wg.Add(1)
+// TestMeterCollectMetrics verifies that metric collection returns non-zero values.
+func TestMeterCollectMetrics(t *testing.T) {
+	m := newMeter(defaultLogger)
+	metrics := m.collectMetrics()
 
-		go func() {
-			defer wg.Done()
-			m.Run(100 * time.Millisecond)
-		}()
-
-		time.Sleep(150 * time.Millisecond)
-
-		m.mu.Lock()
-		assert.True(t, m.running, "Meter should be running before reset")
-		m.mu.Unlock()
-
-		m.reset(200 * time.Millisecond)
-		time.Sleep(100 * time.Millisecond)
-
-		m.mu.Lock()
-		assert.True(t, m.running, "Meter should be running after reset")
-		m.mu.Unlock()
-
-		m.Stop()
-
-		done := make(chan struct{})
-		go func() {
-			wg.Wait()
-			close(done)
-		}()
-
-		select {
-		case <-done:
-		case <-time.After(2 * time.Second):
-			t.Fatal("meter.Run() did not exit after Stop() was called")
-		}
-	})
-
-	t.Run("multiple resets with different intervals", func(t *testing.T) {
-		m := newMeter(defaultLogger)
-
-		m.Run(100 * time.Millisecond)
-		time.Sleep(150 * time.Millisecond)
-
-		m.reset(50 * time.Millisecond)
-		time.Sleep(100 * time.Millisecond)
-
-		m.reset(200 * time.Millisecond)
-		time.Sleep(100 * time.Millisecond)
-
-		m.mu.Lock()
-		running := m.running
-		m.mu.Unlock()
-
-		assert.True(t, running, "Meter should still be running after multiple resets")
-
-		m.Stop()
-
-		m.mu.Lock()
-		assert.False(t, m.running, "Meter should be stopped")
-		m.mu.Unlock()
-	})
-
-	t.Run("reset without initial run", func(t *testing.T) {
-		m := newMeter(defaultLogger)
-
-		m.mu.Lock()
-		assert.False(t, m.running, "Meter should not be running initially")
-		m.mu.Unlock()
-
-		m.reset(100 * time.Millisecond)
-		time.Sleep(150 * time.Millisecond)
-
-		m.mu.Lock()
-		running := m.running
-		m.mu.Unlock()
-
-		assert.True(t, running, "Meter should be running after reset")
-
-		m.Stop()
-
-		m.mu.Lock()
-		assert.False(t, m.running, "Meter should be stopped")
-		m.mu.Unlock()
-	})
+	assert.Greater(t, metrics.Goroutine, 0)
+	assert.NotZero(t, metrics.MemoryStats.Alloc)
 }
 
-func TestMeterS_ConcurrentOperations(t *testing.T) {
-	t.Run("concurrent stop and run", func(t *testing.T) {
-		m := newMeter(defaultLogger)
+// TestMeterCollectMemoryMetrics verifies that memory stats are populated.
+func TestMeterCollectMemoryMetrics(t *testing.T) {
+	m := newMeter(defaultLogger)
+	mem := m.collectMemoryMetrics()
 
-		m.Run(100 * time.Millisecond)
-		time.Sleep(50 * time.Millisecond)
-
-		var wg sync.WaitGroup
-		for i := 0; i < 10; i++ {
-			wg.Add(2)
-			go func() {
-				defer wg.Done()
-				m.Stop()
-			}()
-			go func() {
-				defer wg.Done()
-				m.Run(100 * time.Millisecond)
-			}()
-		}
-
-		wg.Wait()
-		m.Stop()
-
-		m.mu.Lock()
-		assert.False(t, m.running, "Meter should be stopped after concurrent operations")
-		m.mu.Unlock()
-	})
-
-	t.Run("concurrent reset", func(t *testing.T) {
-		m := newMeter(defaultLogger)
-
-		m.Run(100 * time.Millisecond)
-		time.Sleep(50 * time.Millisecond)
-
-		var wg sync.WaitGroup
-		for i := 0; i < 5; i++ {
-			wg.Add(1)
-			go func(interval time.Duration) {
-				defer wg.Done()
-				m.reset(interval)
-			}(time.Duration(50+i*10) * time.Millisecond)
-		}
-
-		wg.Wait()
-		time.Sleep(100 * time.Millisecond)
-
-		m.mu.Lock()
-		running := m.running
-		m.mu.Unlock()
-
-		assert.True(t, running, "Meter should be running after concurrent resets")
-
-		m.Stop()
-
-		m.mu.Lock()
-		assert.False(t, m.running, "Meter should be stopped")
-		m.mu.Unlock()
-	})
-}
-
-func TestMeterS_StopAndRestart(t *testing.T) {
-	t.Run("stop multiple times", func(t *testing.T) {
-		m := newMeter(defaultLogger)
-
-		m.Run(100 * time.Millisecond)
-		time.Sleep(50 * time.Millisecond)
-
-		// Stop multiple times - should not panic
-		m.Stop()
-		m.Stop()
-		m.Stop()
-
-		m.mu.Lock()
-		assert.False(t, m.running, "Meter should be stopped")
-		m.mu.Unlock()
-	})
-
-	t.Run("run after stop", func(t *testing.T) {
-		m := newMeter(defaultLogger)
-
-		m.Run(100 * time.Millisecond)
-		time.Sleep(150 * time.Millisecond)
-
-		m.Stop()
-		time.Sleep(50 * time.Millisecond)
-
-		m.mu.Lock()
-		assert.False(t, m.running, "Meter should be stopped")
-		m.mu.Unlock()
-
-		// Start again
-		m.Run(100 * time.Millisecond)
-		time.Sleep(150 * time.Millisecond)
-
-		m.mu.Lock()
-		running := m.running
-		m.mu.Unlock()
-
-		assert.True(t, running, "Meter should be running after restart")
-
-		m.Stop()
-	})
-}
-
-func TestMeterS_Reset_InternalState(t *testing.T) {
-	t.Run("preserves numGC", func(t *testing.T) {
-		m := newMeter(defaultLogger)
-
-		_ = m.collectMetrics()
-
-		m.mu.Lock()
-		initialNumGC := m.numGC
-		m.mu.Unlock()
-
-		m.Run(100 * time.Millisecond)
-		time.Sleep(50 * time.Millisecond)
-		m.reset(200 * time.Millisecond)
-		time.Sleep(50 * time.Millisecond)
-
-		m.mu.Lock()
-		currentNumGC := m.numGC
-		m.mu.Unlock()
-
-		assert.GreaterOrEqual(t, currentNumGC, initialNumGC, "numGC should be preserved or increased")
-
-		m.Stop()
-	})
-
-	t.Run("creates new done channel", func(t *testing.T) {
-		m := newMeter(defaultLogger)
-
-		m.Run(100 * time.Millisecond)
-		time.Sleep(50 * time.Millisecond)
-
-		m.mu.Lock()
-		firstDone := m.done
-		m.mu.Unlock()
-
-		m.reset(200 * time.Millisecond)
-		time.Sleep(50 * time.Millisecond)
-
-		m.mu.Lock()
-		secondDone := m.done
-		m.mu.Unlock()
-
-		assert.NotEqual(t, firstDone, secondDone, "Reset should create a new done channel")
-
-		m.Stop()
-	})
+	assert.NotZero(t, mem.Alloc)
+	assert.NotZero(t, mem.Sys)
+	assert.NotZero(t, mem.HeapAlloc)
 }

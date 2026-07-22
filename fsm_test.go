@@ -658,9 +658,14 @@ func Test_fsmS_applyMetricsPollRateConfig(t *testing.T) {
 			expectedSecs: 10,
 		},
 		{
-			name:         "Valid 60 seconds (maximum)",
+			name:         "Valid 60 seconds",
 			pollRate:     60,
 			expectedSecs: 60,
+		},
+		{
+			name:         "Valid 600 seconds (maximum)",
+			pollRate:     600,
+			expectedSecs: 600,
 		},
 		{
 			name:         "Zero seconds - sets to minimum (1)",
@@ -673,9 +678,9 @@ func Test_fsmS_applyMetricsPollRateConfig(t *testing.T) {
 			expectedSecs: 1,
 		},
 		{
-			name:         "Exceeds maximum (5000) - sets to maximum (60)",
+			name:         "Exceeds maximum (5000) - sets to maximum (600)",
 			pollRate:     5000,
-			expectedSecs: 60,
+			expectedSecs: 600,
 		},
 	}
 

@@ -440,7 +440,7 @@ func (r *fsmS) reset() {
 
 func (r *fsmS) ready(_ context.Context, e *f.Event) {
 	go delayed.flush()
-	go sensor.meter.reset(sensor.options.Metrics.getTransmissionInterval())
+	go sensor.meter.Run(sensor.options.Metrics.getTransmissionInterval())
 }
 
 func (r *fsmS) cpuSetFileContent(pid int) string {
