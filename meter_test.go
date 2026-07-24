@@ -17,7 +17,7 @@ func TestNewMeter(t *testing.T) {
 
 	assert.NotNil(t, m)
 	assert.NotNil(t, m.done)
-	assert.Equal(t, uint32(0), m.numGC)
+	assert.Equal(t, uint32(0), m.numGC.Load())
 }
 
 // TestMeterRun_StartsOnce ensures the collection goroutine is only started once
