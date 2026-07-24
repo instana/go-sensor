@@ -275,21 +275,21 @@ func (r *fsmS) applyHostAgentSettings(resp agentResponse) {
 
 // applyMetricsPollRateConfig applies the metrics poll rate configuration from agent response.
 func (r *fsmS) applyMetricsPollRateConfig(resp agentResponse) {
-	// Check if sensor is initialized
-	if sensor == nil || sensor.options == nil {
+	s, err := getSensor()
+	if err != nil {
 		r.logger.Debug("Sensor not initialized, skipping poll_rate configuration")
 		return
 	}
 
 	// If no poll rate is provided by agent, use default (1 second)
-	if resp.PluginConfig.PollRate == 0 {
+	if resp.PluginConfig.PollRate <= 0 {
 		r.logger.Debug("No poll_rate configuration received from agent, using default 1 second")
-		sensor.options.Metrics.setTransmissionInterval(1)
+		s.options.Metrics.setTransmissionInterval(1)
 		return
 	}
 
 	r.logger.Debug("Applying metrics poll_rate configuration from agent: ", resp.PluginConfig.PollRate, " second(s)")
-	sensor.options.Metrics.setTransmissionInterval(resp.PluginConfig.PollRate)
+	s.options.Metrics.setTransmissionInterval(resp.PluginConfig.PollRate)
 }
 
 func (r *fsmS) applyDisableTracingConfig(resp agentResponse) {
@@ -440,7 +440,7 @@ func (r *fsmS) reset() {
 
 func (r *fsmS) ready(_ context.Context, e *f.Event) {
 	go delayed.flush()
-	go sensor.meter.Run(sensor.options.Metrics.getTransmissionInterval())
+	sensor.meter.Run(sensor.options.Metrics.getTransmissionInterval())
 }
 
 func (r *fsmS) cpuSetFileContent(pid int) string {

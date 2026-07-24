@@ -6,6 +6,7 @@ package instana
 import (
 	"runtime"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/instana/go-sensor/acceptor"
@@ -31,7 +32,7 @@ type MetricsS acceptor.Metrics
 type EntityData acceptor.GoProcessData
 
 type meterS struct {
-	numGC    uint32
+	numGC    atomic.Uint32
 	once     sync.Once
 	stopOnce sync.Once
 	done     chan struct{}
@@ -92,6 +93,8 @@ func newMeter(logger LeveledLogger) *meterS {
 // It is safe to call Run multiple times — only the first call starts the loop;
 // subsequent calls (e.g. on agent reconnect) are ignored so the running loop
 // continues uninterrupted with the original interval.
+// The interval is fixed at the first call; changing poll_rate in the agent
+// configuration after startup requires an application restart to take effect.
 func (m *meterS) Run(collectInterval time.Duration) {
 	if m == nil {
 		return
@@ -150,9 +153,9 @@ func (m *meterS) collectMemoryMetrics() acceptor.MemoryStats {
 		NumGC:         memStats.NumGC,
 		GCCPUFraction: memStats.GCCPUFraction}
 
-	if m.numGC < memStats.NumGC {
+	if m.numGC.Load() < memStats.NumGC {
 		ret.PauseNs = memStats.PauseNs[(memStats.NumGC+255)%256]
-		m.numGC = memStats.NumGC
+		m.numGC.Store(memStats.NumGC)
 	}
 
 	return ret
