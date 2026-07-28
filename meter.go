@@ -62,23 +62,22 @@ func (m *MetricsOptions) getTransmissionInterval() time.Duration {
 // the initial handshake. Valid range: minTransmissionInterval-maxTransmissionInterval seconds.
 // Values outside the range are clamped to the nearest bound.
 func (m *MetricsOptions) setTransmissionInterval(seconds int) {
-	m.mu.Lock()
-	defer m.mu.Unlock()
+	var interval time.Duration
 
 	if seconds < minTransmissionInterval {
 		defaultLogger.Warn("poll_rate value from agent (", seconds, ") is less than minimum. Setting to minimum value of ", minTransmissionInterval, " second.")
-		m.transmissionInterval = minTransmissionInterval * time.Second
-		return
-	}
-
-	if seconds > maxTransmissionInterval {
+		interval = minTransmissionInterval * time.Second
+	} else if seconds > maxTransmissionInterval {
 		defaultLogger.Warn("poll_rate value from agent (", seconds, ") exceeds maximum. Setting to maximum value of ", maxTransmissionInterval, " seconds.")
-		m.transmissionInterval = maxTransmissionInterval * time.Second
-		return
+		interval = maxTransmissionInterval * time.Second
+	} else {
+		interval = time.Duration(seconds) * time.Second
+		defaultLogger.Info("Metrics transmission interval set to ", seconds, " second(s) from agent configuration")
 	}
 
-	m.transmissionInterval = time.Duration(seconds) * time.Second
-	defaultLogger.Info("Metrics transmission interval set to ", seconds, " second(s) from agent configuration")
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.transmissionInterval = interval
 }
 
 func newMeter(logger LeveledLogger) *meterS {

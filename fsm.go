@@ -284,7 +284,7 @@ func (r *fsmS) applyMetricsPollRateConfig(resp agentResponse) {
 	// If no poll rate is provided by agent, use default (1 second)
 	if resp.PluginConfig.PollRate <= 0 {
 		r.logger.Debug("No poll_rate configuration received from agent, using default 1 second")
-		s.options.Metrics.setTransmissionInterval(1)
+		s.options.Metrics.setTransmissionInterval(defaultTransmissionInterval)
 		return
 	}
 
@@ -440,7 +440,12 @@ func (r *fsmS) reset() {
 
 func (r *fsmS) ready(_ context.Context, e *f.Event) {
 	go delayed.flush()
-	sensor.meter.Run(sensor.options.Metrics.getTransmissionInterval())
+	s, err := getSensor()
+	if err != nil {
+		r.logger.Error(err.Error())
+		return
+	}
+	s.meter.Run(s.options.Metrics.getTransmissionInterval())
 }
 
 func (r *fsmS) cpuSetFileContent(pid int) string {
