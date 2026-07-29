@@ -445,7 +445,12 @@ func (r *fsmS) ready(_ context.Context, e *f.Event) {
 		r.logger.Error(err.Error())
 		return
 	}
-	s.meter.Run(s.options.Metrics.getTransmissionInterval())
+	interval := s.options.Metrics.getTransmissionInterval()
+	if interval <= 0 {
+		s.options.Metrics.setTransmissionInterval(defaultTransmissionInterval)
+		interval = s.options.Metrics.getTransmissionInterval()
+	}
+	s.meter.Run(interval)
 }
 
 func (r *fsmS) cpuSetFileContent(pid int) string {

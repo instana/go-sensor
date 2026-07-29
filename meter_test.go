@@ -107,11 +107,11 @@ func TestMeterRun_ConcurrentCallsSafe(t *testing.T) {
 	assert.NotPanics(t, m.Stop)
 }
 
-// TestMetricsOptions_GetTransmissionInterval_Default verifies the default interval
-// is returned when none has been configured.
+// TestMetricsOptions_GetTransmissionInterval_Default verifies that an unconfigured
+// MetricsOptions returns zero, as callers are responsible for applying the default.
 func TestMetricsOptions_GetTransmissionInterval_Default(t *testing.T) {
 	opts := &MetricsOptions{}
-	assert.Equal(t, time.Second, opts.getTransmissionInterval())
+	assert.Equal(t, time.Duration(0), opts.getTransmissionInterval())
 }
 
 // TestMetricsOptions_SetTransmissionInterval verifies clamping and valid values.

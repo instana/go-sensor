@@ -51,9 +51,6 @@ func (m *MetricsOptions) getTransmissionInterval() time.Duration {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
-	if m.transmissionInterval == 0 {
-		return defaultTransmissionInterval * time.Second
-	}
 	return m.transmissionInterval
 }
 

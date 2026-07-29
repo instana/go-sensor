@@ -153,6 +153,7 @@ func newSensor(options *Options) *sensorS {
 
 	// For serverless agents, start the meter immediately since they don't use the FSM
 	if isServerless {
+		s.options.Metrics.setTransmissionInterval(defaultTransmissionInterval)
 		s.meter.Run(s.options.Metrics.getTransmissionInterval())
 	}
 
