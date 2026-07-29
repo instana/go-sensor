@@ -2,6 +2,8 @@ module github.com/instana/go-sensor/instrumentation/cloud.google.com/go
 
 go 1.25.8
 
+toolchain go1.26.5
+
 require (
 	cloud.google.com/go/iam v1.11.0
 	cloud.google.com/go/pubsub v1.51.0
@@ -11,7 +13,7 @@ require (
 	github.com/stretchr/testify v1.11.1
 	google.golang.org/api v0.287.1
 	google.golang.org/genproto v0.0.0-20260519071638-aa98bba5eb94
-	google.golang.org/grpc v1.82.0
+	google.golang.org/grpc v1.82.1
 )
 
 require (
