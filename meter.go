@@ -62,10 +62,12 @@ func (m *MetricsOptions) setTransmissionInterval(seconds int) {
 	var interval time.Duration
 
 	if seconds < minTransmissionInterval {
-		defaultLogger.Warn("poll_rate value from agent (", seconds, ") is less than minimum. Setting to minimum value of ", minTransmissionInterval, " second.")
+		defaultLogger.Warn("poll_rate value from agent (", seconds, ") is less than minimum. Setting to minimum value of ",
+			minTransmissionInterval, " second.")
 		interval = minTransmissionInterval * time.Second
 	} else if seconds > maxTransmissionInterval {
-		defaultLogger.Warn("poll_rate value from agent (", seconds, ") exceeds maximum. Setting to maximum value of ", maxTransmissionInterval, " seconds.")
+		defaultLogger.Warn("poll_rate value from agent (", seconds, ") exceeds maximum. Setting to maximum value of ",
+			maxTransmissionInterval, " seconds.")
 		interval = maxTransmissionInterval * time.Second
 	} else {
 		interval = time.Duration(seconds) * time.Second

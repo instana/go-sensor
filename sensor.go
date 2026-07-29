@@ -125,22 +125,7 @@ func newSensor(options *Options) *sensorS {
 		s.logger.Debug("INSTANA_ENDPOINT_URL= is set, switching to the serverless mode")
 		isServerless = true
 
-		timeout, err := parseInstanaTimeout(os.Getenv("INSTANA_TIMEOUT"))
-		if err != nil {
-			s.logger.Warn("malformed INSTANA_TIMEOUT value, falling back to the default one: ", err)
-			timeout = defaultServerlessTimeout
-		}
-
-		client, err := acceptor.NewHTTPClient(timeout)
-		if err != nil {
-			if err == acceptor.ErrMalformedProxyURL {
-				s.logger.Warn(err)
-			} else {
-				s.logger.Error("failed to initialize acceptor HTTP client, falling back to the default one: ", err)
-				client = http.DefaultClient
-			}
-		}
-
+		client := s.initServerlessHTTPClient()
 		agent = newServerlessAgent(s.serviceOrBinaryName(), agentEndpoint, os.Getenv("INSTANA_AGENT_KEY"), client, s.logger)
 	}
 
@@ -204,6 +189,26 @@ func (r *sensorS) Agent() AgentClient {
 	}
 
 	return r.agent
+}
+
+func (r *sensorS) initServerlessHTTPClient() *http.Client {
+	timeout, err := parseInstanaTimeout(os.Getenv("INSTANA_TIMEOUT"))
+	if err != nil {
+		r.logger.Warn("malformed INSTANA_TIMEOUT value, falling back to the default one: ", err)
+		timeout = defaultServerlessTimeout
+	}
+
+	client, err := acceptor.NewHTTPClient(timeout)
+	if err != nil {
+		if err == acceptor.ErrMalformedProxyURL {
+			r.logger.Warn(err)
+		} else {
+			r.logger.Error("failed to initialize acceptor HTTP client, falling back to the default one: ", err)
+			client = http.DefaultClient
+		}
+	}
+
+	return client
 }
 
 func (r *sensorS) serviceOrBinaryName() string {
