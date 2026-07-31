@@ -26,53 +26,26 @@ func TestNewMeter(t *testing.T) {
 func TestMeterRun_StartsOnce(t *testing.T) {
 	m := newMeter(defaultLogger)
 
-	// Call Run three times in quick succession — only the first must start the loop.
 	m.Run(50 * time.Millisecond)
 	m.Run(50 * time.Millisecond)
 	m.Run(50 * time.Millisecond)
 
-	// Give one tick to fire so we know the loop is alive.
 	time.Sleep(80 * time.Millisecond)
 
-	// Stop and confirm the channel closes cleanly (not double-closed/panicked).
 	assert.NotPanics(t, m.Stop)
 
-	// Confirm done channel is closed (reading from a closed channel returns immediately).
 	select {
 	case <-m.done:
-		// expected
+		// expected: channel is closed
 	default:
 		t.Fatal("done channel should be closed after Stop()")
 	}
-}
-
-// TestMeterStop_Idempotent verifies that calling Stop multiple times never panics.
-func TestMeterStop_Idempotent(t *testing.T) {
-	m := newMeter(defaultLogger)
-	m.Run(100 * time.Millisecond)
-
-	assert.NotPanics(t, func() {
-		m.Stop()
-		m.Stop()
-		m.Stop()
-	})
-}
-
-// TestMeterStop_WithoutRun verifies Stop is safe even when Run was never called.
-func TestMeterStop_WithoutRun(t *testing.T) {
-	m := newMeter(defaultLogger)
-
-	assert.NotPanics(t, func() {
-		m.Stop()
-	})
 }
 
 // TestMeterRun_LoopExitsOnStop verifies the collection goroutine stops when Stop is called.
 func TestMeterRun_LoopExitsOnStop(t *testing.T) {
 	m := newMeter(defaultLogger)
 	m.Run(50 * time.Millisecond)
-
-	// Let at least one tick fire.
 	time.Sleep(80 * time.Millisecond)
 
 	stopped := make(chan struct{})
@@ -103,12 +76,50 @@ func TestMeterRun_ConcurrentCallsSafe(t *testing.T) {
 	}
 	wg.Wait()
 
-	// Should stop cleanly with no panic.
 	assert.NotPanics(t, m.Stop)
 }
 
+// TestMeterStop covers idempotency and nil-receiver safety of Stop, and calling
+// Stop before Run has been called.
+func TestMeterStop(t *testing.T) {
+	tests := []struct {
+		name  string
+		setup func() *meterS
+		stop  func(*meterS)
+	}{
+		{
+			name:  "idempotent: multiple Stop calls do not panic",
+			setup: func() *meterS { m := newMeter(defaultLogger); m.Run(100 * time.Millisecond); return m },
+			stop:  func(m *meterS) { m.Stop(); m.Stop(); m.Stop() },
+		},
+		{
+			name:  "safe when Run was never called",
+			setup: func() *meterS { return newMeter(defaultLogger) },
+			stop:  func(m *meterS) { m.Stop() },
+		},
+		{
+			name:  "nil receiver is a no-op",
+			setup: func() *meterS { return nil },
+			stop:  func(m *meterS) { m.Stop() },
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			m := tt.setup()
+			assert.NotPanics(t, func() { tt.stop(m) })
+		})
+	}
+}
+
+// TestMeterRun_NilReceiver verifies Run is a no-op when called on a nil *meterS.
+func TestMeterRun_NilReceiver(t *testing.T) {
+	var m *meterS
+	assert.NotPanics(t, func() { m.Run(50 * time.Millisecond) })
+}
+
 // TestMetricsOptions_GetTransmissionInterval_Default verifies that an unconfigured
-// MetricsOptions returns zero, as callers are responsible for applying the default.
+// MetricsOptions returns zero (callers are responsible for applying the default).
 func TestMetricsOptions_GetTransmissionInterval_Default(t *testing.T) {
 	opts := &MetricsOptions{}
 	assert.Equal(t, time.Duration(0), opts.getTransmissionInterval())
@@ -157,4 +168,45 @@ func TestMeterCollectMemoryMetrics(t *testing.T) {
 	assert.NotZero(t, mem.Alloc)
 	assert.NotZero(t, mem.Sys)
 	assert.NotZero(t, mem.HeapAlloc)
+}
+
+// TestMeterRun_SendMetrics_SensorNil verifies the meter loop skips SendMetrics when
+// the global sensor is nil (agent not ready). The loop stays alive and stops cleanly.
+func TestMeterRun_SendMetrics_SensorNil(t *testing.T) {
+	m := newMeter(defaultLogger)
+	m.Run(20 * time.Millisecond)
+	// Give several ticks to fire; none should panic because isAgentReady returns false.
+	time.Sleep(80 * time.Millisecond)
+	assert.NotPanics(t, m.Stop)
+}
+
+// TestMeterRun_SendMetrics_AgentReady verifies that the tick handler enters the
+// SendMetrics path when a ready sensor is present, without panic.
+func TestMeterRun_SendMetrics_AgentReady(t *testing.T) {
+	// Build a sensor with a ready mock agent.
+	mock := &sensorS{
+		options: DefaultOptions(),
+		meter:   newMeter(defaultLogger),
+	}
+	mock.setLogger(defaultLogger)
+	mock.setAgent(alwaysReadyClient{})
+
+	// Protect all writes to sensor with muSensor so isAgentReady() (which holds
+	// muSensor.RLock) does not race with this goroutine.
+	muSensor.Lock()
+	orig := sensor
+	sensor = mock
+	muSensor.Unlock()
+
+	m := newMeter(defaultLogger)
+	m.Run(20 * time.Millisecond)
+	time.Sleep(80 * time.Millisecond)
+
+	// Stop the meter BEFORE restoring sensor so the background goroutine is dead
+	// before we mutate the shared variable again.
+	assert.NotPanics(t, m.Stop)
+
+	muSensor.Lock()
+	sensor = orig
+	muSensor.Unlock()
 }

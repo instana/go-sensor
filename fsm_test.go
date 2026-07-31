@@ -709,3 +709,56 @@ func Test_fsmS_applyMetricsPollRateConfig(t *testing.T) {
 		})
 	}
 }
+
+// Test_fsmS_applyMetricsPollRateConfig_NoSensor verifies that applyMetricsPollRateConfig
+// is a no-op (does not panic) when the global sensor has not been initialized.
+func Test_fsmS_applyMetricsPollRateConfig_NoSensor(t *testing.T) {
+	// Ensure no global sensor is set.
+	origSensor := sensor
+	sensor = nil
+	defer func() { sensor = origSensor }()
+
+	fsm := &fsmS{logger: &testLogger{}}
+	resp := agentResponse{}
+
+	// Must not panic even though getSensor() will return an error.
+	assert.NotPanics(t, func() {
+		fsm.applyMetricsPollRateConfig(resp)
+	})
+}
+
+// Test_fsmS_ready_NoSensor verifies that ready() logs an error and returns early
+// when the global sensor has not been initialized (getSensor returns an error).
+func Test_fsmS_ready_NoSensor(t *testing.T) {
+	origSensor := sensor
+	sensor = nil
+	defer func() { sensor = origSensor }()
+
+	tLogger := &testLogger{}
+	fsm := &fsmS{logger: tLogger}
+
+	assert.NotPanics(t, func() {
+		fsm.ready(context.Background(), nil)
+	})
+	assert.NotEmpty(t, tLogger.errMsg, "expected error to be logged when sensor is nil")
+}
+
+// Test_fsmS_ready_IntervalZero verifies that ready() applies the default interval
+// when the sensor's transmission interval has not been set (zero value).
+func Test_fsmS_ready_IntervalZero(t *testing.T) {
+	sensor = newSensor(DefaultOptions())
+	// Interval is zero by default (not set by FSM/agent yet).
+	assert.Equal(t, time.Duration(0), sensor.options.Metrics.getTransmissionInterval())
+	defer func() {
+		sensor.meter.Stop()
+		sensor = nil
+	}()
+
+	fsm := &fsmS{logger: &testLogger{}}
+	assert.NotPanics(t, func() {
+		fsm.ready(context.Background(), nil)
+	})
+
+	// After ready(), the interval must have been set to the default.
+	assert.Equal(t, defaultTransmissionInterval*time.Second, sensor.options.Metrics.getTransmissionInterval())
+}
