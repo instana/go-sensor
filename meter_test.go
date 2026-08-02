@@ -125,21 +125,23 @@ func TestMetricsOptions_GetTransmissionInterval_Default(t *testing.T) {
 	assert.Equal(t, time.Duration(0), opts.getTransmissionInterval())
 }
 
-// TestMetricsOptions_SetTransmissionInterval verifies clamping and valid values.
+// TestMetricsOptions_SetTransmissionInterval verifies that positive values are stored
+// as-is and non-positive values fall back to the default (1 second).
 func TestMetricsOptions_SetTransmissionInterval(t *testing.T) {
 	tests := []struct {
 		name     string
 		seconds  int
 		expected time.Duration
 	}{
-		{"minimum (1s)", 1, 1 * time.Second},
-		{"valid 5s", 5, 5 * time.Second},
-		{"valid 60s", 60, 60 * time.Second},
-		{"valid 300s", 300, 300 * time.Second},
-		{"maximum (600s)", 600, 600 * time.Second},
-		{"zero clamps to minimum", 0, 1 * time.Second},
-		{"negative clamps to minimum", -1, 1 * time.Second},
-		{"exceeds maximum clamps to 600s", 1000, 600 * time.Second},
+		{"minimum canonical value (1s)", 1, 1 * time.Second},
+		{"canonical 5s", 5, 5 * time.Second},
+		{"canonical 60s", 60, 60 * time.Second},
+		{"canonical 300s", 300, 300 * time.Second},
+		{"canonical 600s", 600, 600 * time.Second},
+		{"non-canonical positive value stored as-is (7s)", 7, 7 * time.Second},
+		{"large positive value stored as-is (1000s)", 1000, 1000 * time.Second},
+		{"zero uses default (1s)", 0, 1 * time.Second},
+		{"negative uses default (1s)", -1, 1 * time.Second},
 	}
 
 	for _, tt := range tests {

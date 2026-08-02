@@ -81,19 +81,18 @@ In the agent's `configuration.yaml`:
 ```yaml
 # Configure metrics transmission interval for Go applications
 com.instana.plugin.golang:
-  poll_rate: 5  # Valid range: 1-600 (seconds)
+  poll_rate: 5  # seconds
 ```
 
 **Valid Values:**
-- Any value between `1` and `600` seconds
-- Default: `1` second (if not configured)
-- Minimum: `1` second
-- Maximum: `600` seconds
+
+The accepted values are: `1`, `5`, `10`, `20`, `30`, `60`, `120`, `180`, `240`, `300`, `360`, `420`, `480`, `540`, `600` (seconds).
+
+- Default: `1` second (if not configured or if an invalid value is provided)
 
 **Behavior:**
-- If `poll_rate` is not configured, defaults to 1 second
-- Values less than 1 will be set to the minimum value of 1 second.
-- Values greater than 600 will be set to the maximum value of 600 seconds.
+- If `poll_rate` is not configured or is `<= 0`, defaults to `1` second.
+- If `poll_rate` is a positive value not in the canonical set above, a warning is logged and the value is used as-is. Range enforcement is the responsibility of the Instana Agent.
 - Configuration is read from the agent once, during the initial handshake when the Go tracer starts up.
 
 > [!IMPORTANT]

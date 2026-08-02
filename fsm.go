@@ -5,6 +5,7 @@ package instana
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"math"
 	"net"
@@ -28,6 +29,21 @@ const (
 	exponentialRetryPeriodBase = 10 * 1000 * time.Millisecond
 	maximumRetries             = 3
 )
+
+// validPollRates is the canonical set of accepted poll_rate values (in seconds) as
+// defined by the Instana Agent configuration schema. The go tracer does not enforce
+// this set — it only warns when an unexpected value is received.
+var validPollRates = []int{1, 5, 10, 20, 30, 60, 120, 180, 240, 300, 360, 420, 480, 540, 600}
+
+// isValidPollRate reports whether seconds is a member of the canonical validPollRates set.
+func isValidPollRate(seconds int) bool {
+	for _, v := range validPollRates {
+		if v == seconds {
+			return true
+		}
+	}
+	return false
+}
 
 type fsmS struct {
 	agentComm                  *agentCommunicator
@@ -267,6 +283,10 @@ func (r *fsmS) applyHostAgentSettings(resp agentResponse) {
 		sensor.options.Tracer.CollectableHTTPHeaders = resp.getExtraHTTPHeaders()
 	}
 
+	b, _ := json.MarshalIndent(resp, "", "    ")
+	fmt.Println("resp:", string(b))
+
+	r.logger.Debug("resp:", resp)
 	r.applyDisableTracingConfig(resp)
 	r.applyMetricsPollRateConfig(resp)
 
@@ -274,6 +294,9 @@ func (r *fsmS) applyHostAgentSettings(resp agentResponse) {
 }
 
 // applyMetricsPollRateConfig applies the metrics poll rate configuration from agent response.
+// If the received poll_rate is not a member of the canonical set defined by validPollRates,
+// a warning is logged but the value is still applied — range enforcement is the
+// responsibility of the Instana Agent.
 func (r *fsmS) applyMetricsPollRateConfig(resp agentResponse) {
 	s, err := getSensor()
 	if err != nil {
@@ -286,6 +309,11 @@ func (r *fsmS) applyMetricsPollRateConfig(resp agentResponse) {
 		r.logger.Debug("No poll_rate configuration received from agent, using default 1 second")
 		s.options.Metrics.setTransmissionInterval(defaultTransmissionInterval)
 		return
+	}
+
+	if !isValidPollRate(resp.PluginConfig.PollRate) {
+		r.logger.Warn("poll_rate value from agent (", resp.PluginConfig.PollRate, ") is not in the canonical set ",
+			validPollRates, ". The value will be used as-is; ensure the Instana Agent configuration is correct.")
 	}
 
 	r.logger.Debug("Applying metrics poll_rate configuration from agent: ", resp.PluginConfig.PollRate, " second(s)")

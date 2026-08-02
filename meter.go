@@ -13,10 +13,8 @@ import (
 )
 
 const (
-	// Metrics transmission interval constraints (in seconds)
+	// defaultTransmissionInterval is the fallback metrics transmission interval in seconds.
 	defaultTransmissionInterval = 1
-	minTransmissionInterval     = 1
-	maxTransmissionInterval     = 600
 )
 
 // SnapshotS struct to hold snapshot data
@@ -56,19 +54,16 @@ func (m *MetricsOptions) getTransmissionInterval() time.Duration {
 
 // setTransmissionInterval sets the metrics transmission interval.
 // This is an internal method called when agent configuration is received during
-// the initial handshake. Valid range: minTransmissionInterval-maxTransmissionInterval seconds.
-// Values outside the range are clamped to the nearest bound.
+// the initial handshake. The only local constraint enforced here is that the value
+// must be positive (> 0); range and canonical-set validation is the responsibility
+// of the Instana Agent. Non-positive values fall back to defaultTransmissionInterval.
 func (m *MetricsOptions) setTransmissionInterval(seconds int) {
 	var interval time.Duration
 
-	if seconds < minTransmissionInterval {
-		defaultLogger.Warn("poll_rate value from agent (", seconds, ") is less than minimum. Setting to minimum value of ",
-			minTransmissionInterval, " second.")
-		interval = minTransmissionInterval * time.Second
-	} else if seconds > maxTransmissionInterval {
-		defaultLogger.Warn("poll_rate value from agent (", seconds, ") exceeds maximum. Setting to maximum value of ",
-			maxTransmissionInterval, " seconds.")
-		interval = maxTransmissionInterval * time.Second
+	if seconds <= 0 {
+		defaultLogger.Error("poll_rate value from agent (", seconds, ") is not positive. Using default of ",
+			defaultTransmissionInterval, " second.")
+		interval = defaultTransmissionInterval * time.Second
 	} else {
 		interval = time.Duration(seconds) * time.Second
 		defaultLogger.Info("Metrics transmission interval set to ", seconds, " second(s) from agent configuration")

@@ -21,6 +21,7 @@ import (
 
 type testLogger struct {
 	infoMsg string
+	warnMsg string
 	errMsg  string
 }
 
@@ -28,7 +29,9 @@ func (tl *testLogger) Debug(v ...interface{}) {}
 func (tl *testLogger) Info(v ...interface{}) {
 	tl.infoMsg = fmt.Sprint(v...)
 }
-func (tl *testLogger) Warn(v ...interface{}) {}
+func (tl *testLogger) Warn(v ...interface{}) {
+	tl.warnMsg = fmt.Sprint(v...)
+}
 func (tl *testLogger) Error(v ...interface{}) {
 	tl.errMsg = fmt.Sprint(v...)
 }
@@ -638,49 +641,64 @@ func TestApplyDisableTracingConfig(t *testing.T) {
 
 func Test_fsmS_applyMetricsPollRateConfig(t *testing.T) {
 	tests := []struct {
-		name         string
-		pollRate     int
-		expectedSecs int
+		name            string
+		pollRate        int
+		expectedSecs    int
+		expectWarn      bool
 	}{
 		{
-			name:         "Valid 1 second (minimum)",
+			name:         "Canonical 1 second — no warning",
 			pollRate:     1,
 			expectedSecs: 1,
+			expectWarn:   false,
 		},
 		{
-			name:         "Valid 5 seconds",
+			name:         "Canonical 5 seconds — no warning",
 			pollRate:     5,
 			expectedSecs: 5,
+			expectWarn:   false,
 		},
 		{
-			name:         "Valid 10 seconds",
+			name:         "Canonical 10 seconds — no warning",
 			pollRate:     10,
 			expectedSecs: 10,
+			expectWarn:   false,
 		},
 		{
-			name:         "Valid 60 seconds",
+			name:         "Canonical 60 seconds — no warning",
 			pollRate:     60,
 			expectedSecs: 60,
+			expectWarn:   false,
 		},
 		{
-			name:         "Valid 600 seconds (maximum)",
+			name:         "Canonical 600 seconds — no warning",
 			pollRate:     600,
 			expectedSecs: 600,
+			expectWarn:   false,
 		},
 		{
-			name:         "Zero seconds - sets to minimum (1)",
+			name:         "Non-canonical positive value (7s) — applied as-is with warning",
+			pollRate:     7,
+			expectedSecs: 7,
+			expectWarn:   true,
+		},
+		{
+			name:         "Large positive value (5000s) — applied as-is with warning",
+			pollRate:     5000,
+			expectedSecs: 5000,
+			expectWarn:   true,
+		},
+		{
+			name:         "Zero — uses default (1s), no warning",
 			pollRate:     0,
 			expectedSecs: 1,
+			expectWarn:   false,
 		},
 		{
-			name:         "Negative value - sets to minimum (1)",
+			name:         "Negative value (-5) — uses default (1s), no warning",
 			pollRate:     -5,
 			expectedSecs: 1,
-		},
-		{
-			name:         "Exceeds maximum (5000) - sets to maximum (600)",
-			pollRate:     5000,
-			expectedSecs: 600,
+			expectWarn:   false,
 		},
 	}
 
@@ -690,8 +708,9 @@ func Test_fsmS_applyMetricsPollRateConfig(t *testing.T) {
 			sensor = newSensor(DefaultOptions())
 			defer func() { sensor = nil }()
 
+			tLogger := &testLogger{}
 			fsm := &fsmS{
-				logger: &testLogger{},
+				logger: tLogger,
 			}
 
 			resp := agentResponse{
@@ -706,6 +725,12 @@ func Test_fsmS_applyMetricsPollRateConfig(t *testing.T) {
 
 			interval := sensor.options.Metrics.getTransmissionInterval()
 			assert.Equal(t, time.Duration(tt.expectedSecs)*time.Second, interval)
+
+			if tt.expectWarn {
+				assert.NotEmpty(t, tLogger.warnMsg, "expected a warning to be logged for non-canonical poll_rate %d", tt.pollRate)
+			} else {
+				assert.Empty(t, tLogger.warnMsg, "expected no warning for poll_rate %d", tt.pollRate)
+			}
 		})
 	}
 }
