@@ -641,10 +641,10 @@ func TestApplyDisableTracingConfig(t *testing.T) {
 
 func Test_fsmS_applyMetricsPollRateConfig(t *testing.T) {
 	tests := []struct {
-		name            string
-		pollRate        int
-		expectedSecs    int
-		expectWarn      bool
+		name         string
+		pollRate     int
+		expectedSecs int
+		expectWarn   bool
 	}{
 		{
 			name:         "Canonical 1 second — no warning",
