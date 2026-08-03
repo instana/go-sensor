@@ -38,67 +38,76 @@ spec:
         git checkout $(params.SHA)
         git status
 
-# Disabling cache tasks.
-# TODO : Revisit cache implementation with fixing memory problems.
+---
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: go-tracer-cache-restore-task
+spec:
+  params:
+  - name: imageTag
+    type: string
+  workspaces:
+    - name: task-pvc
+      mountPath: /workspace
+    - name: cache-pvc
+      mountPath: /cache
+  steps:
+    - name: cache-restore
+      image: public.ecr.aws/docker/library/alpine:3.21.2
+      env:
+        - name: GO_VERSION
+          value: $(params.imageTag)
+      workingDir: /workspace/
+      script: |
+        #!/bin/sh
+        echo "Creating Go module cache directory!"
+        mkdir -p ./go/pkg/mod
+        
+        echo "Checking if cache exists for Go ${GO_VERSION}..."
+        if [ -d "/cache/${GO_VERSION}/mod" ] && [ "$(ls -A /cache/${GO_VERSION}/mod 2>/dev/null)" ]; then
+          echo "Restoring Go module cache from /cache/${GO_VERSION}/mod"
+          cp -r /cache/${GO_VERSION}/mod/* ./go/pkg/mod/ 2>/dev/null || true
+          echo "Cache restored. Contents:"
+          ls -lah ./go/pkg/mod | head -20
+        else
+          echo "No cache found for Go ${GO_VERSION}. Starting with empty cache."
+        fi
 
-# ---
-# apiVersion: tekton.dev/v1
-# kind: Task
-# metadata:
-#   name: go-tracer-cache-restore-task
-# spec:
-#   params:
-#   - name: imageTag
-#     type: string
-#   workspaces:
-#     - name: task-pvc
-#       mountPath: /workspace
-#     - name: cache-pvc
-#       mountPath: /cache
-#   steps:
-#     - name: cache-restore
-#       image: alpinelinux/rsyncd@sha256:6f8b68b4b15a8e6b0abfb7db0e2a765849c77a6104ac248810ff9a9fb97996fb
-#       env:
-#         - name: GO_VERSION
-#           value: $(params.imageTag)
-#       workingDir: /workspace/
-#       script: |
-#         #!/bin/sh
-#         echo "Creating Go path!"
-#         mkdir -p ./go/pkg/mod
-
-#         echo "Restoring cache!"
-#         rsync -ah --progress /cache/${GO_VERSION}/mod/ ./go/pkg/mod || ls -lah ./go/pkg/mod
-
-
-# ---
-# apiVersion: tekton.dev/v1
-# kind: Task
-# metadata:
-#   name: go-tracer-cache-update-task
-# spec:
-#   params:
-#   - name: imageTag
-#     type: string
-#   workspaces:
-#     - name: task-pvc
-#       mountPath: /workspace
-#     - name: cache-pvc
-#       mountPath: /cache
-#   steps:
-#     - name: cache-update
-#       image: alpinelinux/rsyncd@sha256:6f8b68b4b15a8e6b0abfb7db0e2a765849c77a6104ac248810ff9a9fb97996fb
-#       env:
-#         - name: GO_VERSION
-#           value: $(params.imageTag)
-#       workingDir: /workspace/
-#       script: |
-#         #!/bin/sh
-#         echo "Sync cache path!"
-#         mkdir -p /cache/${GO_VERSION}/mod
-#         echo "Updating cache!"
-#         rsync -ah --progress ./go/pkg/mod/ /cache/${GO_VERSION}/mod
-#         ls -lah /cache/${GO_VERSION}/mod
+---
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: go-tracer-cache-update-task
+spec:
+  params:
+  - name: imageTag
+    type: string
+  workspaces:
+    - name: task-pvc
+      mountPath: /workspace
+    - name: cache-pvc
+      mountPath: /cache
+  steps:
+    - name: cache-update
+      image: public.ecr.aws/docker/library/alpine:3.21.2
+      env:
+        - name: GO_VERSION
+          value: $(params.imageTag)
+      workingDir: /workspace/
+      script: |
+        #!/bin/sh
+        echo "Creating cache directory for Go ${GO_VERSION}!"
+        mkdir -p /cache/${GO_VERSION}/mod
+        
+        echo "Updating Go module cache..."
+        if [ -d "./go/pkg/mod" ] && [ "$(ls -A ./go/pkg/mod 2>/dev/null)" ]; then
+          cp -r ./go/pkg/mod/* /cache/${GO_VERSION}/mod/ 2>/dev/null || true
+          echo "Cache updated. Contents:"
+          ls -lah /cache/${GO_VERSION}/mod | head -20
+        else
+          echo "No modules to cache."
+        fi
         
 ---
 apiVersion: tekton.dev/v1
@@ -114,8 +123,8 @@ spec:
   workspaces:
     - name: task-pvc
       mountPath: /workspace
-    # - name: cache-pvc
-    #   mountPath: /cache
+    - name: cache-pvc
+      mountPath: /cache
 
   steps:
     - name: unit-test
@@ -135,6 +144,8 @@ spec:
           value: $(params.excludeDirs)
         - name: GOPATH
           value: "/workspace/go"
+        - name: GOMODCACHE
+          value: "/workspace/go/pkg/mod"
       workingDir: /workspace/go-sensor/
       script: |
         #!/bin/sh
@@ -226,8 +237,8 @@ spec:
   workspaces:
     - name: task-pvc
       mountPath: /workspace
-    # - name: cache-pvc
-    #   mountPath: /cache
+    - name: cache-pvc
+      mountPath: /cache
   steps:
     - name: integration-test-common
       image: public.ecr.aws/docker/library/golang:$(params.imageTag)
@@ -253,6 +264,8 @@ spec:
           value: $(params.excludeDirs)
         - name: GOPATH
           value: "/workspace/go"
+        - name: GOMODCACHE
+          value: "/workspace/go/pkg/mod"
       workingDir: /workspace/go-sensor/
       script: |
         #!/bin/sh
@@ -298,8 +311,8 @@ spec:
   workspaces:
     - name: task-pvc
       mountPath: /workspace
-    # - name: cache-pvc
-    #   mountPath: /cache
+    - name: cache-pvc
+      mountPath: /cache
   steps:
     - name: integration-test-couchbase
       image: public.ecr.aws/docker/library/golang:$(params.imageTag)
@@ -315,6 +328,8 @@ spec:
           value: $(params.excludeDirs)
         - name: GOPATH
           value: "/workspace/go"
+        - name: GOMODCACHE
+          value: "/workspace/go/pkg/mod"
       workingDir: /workspace/go-sensor/
       script: |
         #!/bin/sh
