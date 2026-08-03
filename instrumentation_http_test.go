@@ -776,3 +776,147 @@ func (alwaysReadyClient) SendEvent(event *instana.EventData) error          { re
 func (alwaysReadyClient) SendSpans(spans []instana.Span) error              { return nil }
 func (alwaysReadyClient) SendProfiles(profiles []autoprofile.Profile) error { return nil }
 func (alwaysReadyClient) Flush(context.Context) error                       { return nil }
+
+// responseWriterUnwrapper mirrors the private interface used by
+// http.ResponseController — declared here so the tests can assert on Unwrap()
+// without accessing the unexported statusCodeRecorder directly.
+type responseWriterUnwrapper interface {
+	Unwrap() http.ResponseWriter
+}
+
+// TestTracingHandlerFunc_WrappedWriter_Unwrap verifies that the ResponseWriter
+// handed to the user handler by TracingHandlerFunc implements Unwrap(), and
+// that Unwrap() returns the exact original writer — enabling http.ResponseController
+// to discover optional capabilities (Flush, SetWriteDeadline, etc.) on the real
+// underlying writer through the chain.
+func TestTracingHandlerFunc_WrappedWriter_Unwrap(t *testing.T) {
+	tests := map[string]struct {
+		inner          http.ResponseWriter // passed to ServeHTTP as the outer writer
+		wantUnwrap     bool                // must implement Unwrap()
+		assertUnwrapFn func(t *testing.T, got http.ResponseWriter, outer http.ResponseWriter)
+	}{
+		"implements Unwrap and returns the original writer (plain recorder)": {
+			inner:      httptest.NewRecorder(),
+			wantUnwrap: true,
+			assertUnwrapFn: func(t *testing.T, got http.ResponseWriter, outer http.ResponseWriter) {
+				assert.Same(t, outer, got, "Unwrap() must return the exact writer passed to ServeHTTP")
+			},
+		},
+		"implements Unwrap and returns the original writer (custom flushing writer)": {
+			inner:      &testFlushingWriter{},
+			wantUnwrap: true,
+			assertUnwrapFn: func(t *testing.T, got http.ResponseWriter, outer http.ResponseWriter) {
+				assert.Same(t, outer, got, "Unwrap() must return the exact writer passed to ServeHTTP")
+			},
+		},
+	}
+
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			c := instana.InitCollector(&instana.Options{
+				AgentClient: alwaysReadyClient{},
+				Recorder:    instana.NewTestRecorder(),
+			})
+			defer instana.ShutdownCollector()
+
+			var capturedWriter http.ResponseWriter
+
+			h := instana.TracingHandlerFunc(c, "/", func(w http.ResponseWriter, _ *http.Request) {
+				capturedWriter = w
+				w.WriteHeader(http.StatusOK)
+			})
+
+			req := httptest.NewRequest(http.MethodGet, "/", nil)
+			h.ServeHTTP(tc.inner, req)
+
+			require.NotNil(t, capturedWriter, "handler must have been called")
+
+			unwrapper, ok := capturedWriter.(responseWriterUnwrapper)
+			require.Equal(t, tc.wantUnwrap, ok, "Unwrap() presence mismatch")
+
+			if ok {
+				tc.assertUnwrapFn(t, unwrapper.Unwrap(), tc.inner)
+			}
+		})
+	}
+}
+
+// TestTracingHandlerFunc_WrappedWriter_Unwrap_EnablesFlush verifies the
+// concrete end-to-end benefit of Unwrap(): http.ResponseController.Flush()
+// called inside the user handler must succeed and reach the real inner writer
+// when it implements http.Flusher — even though the instana wrapper itself
+// does not implement http.Flusher directly.
+func TestTracingHandlerFunc_WrappedWriter_Unwrap_EnablesFlush(t *testing.T) {
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    instana.NewTestRecorder(),
+	})
+	defer instana.ShutdownCollector()
+
+	inner := &testFlushingWriter{}
+
+	h := instana.TracingHandlerFunc(c, "/stream", func(w http.ResponseWriter, _ *http.Request) {
+		rc := http.NewResponseController(w)
+		err := rc.Flush()
+		assert.NoError(t, err, "Flush() must succeed via the Unwrap() chain")
+	})
+
+	req := httptest.NewRequest(http.MethodGet, "/stream", nil)
+	h.ServeHTTP(inner, req)
+
+	assert.True(t, inner.flushed, "Flush() must have reached the inner writer through Unwrap()")
+}
+
+// TestTracingHandlerFunc_WrappedWriter_Unwrap_ErrNotSupportedWhenInnerLacks verifies
+// that when the inner writer has no Flush support, ResponseController correctly
+// returns ErrNotSupported instead of panicking — because Unwrap() exposes the
+// real writer and the controller can make the right decision.
+func TestTracingHandlerFunc_WrappedWriter_Unwrap_ErrNotSupportedWhenInnerLacks(t *testing.T) {
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    instana.NewTestRecorder(),
+	})
+	defer instana.ShutdownCollector()
+
+	h := instana.TracingHandlerFunc(c, "/", func(w http.ResponseWriter, _ *http.Request) {
+		rc := http.NewResponseController(w)
+		err := rc.Flush()
+		assert.ErrorIs(t, err, http.ErrNotSupported,
+			"Flush() must return ErrNotSupported when the inner writer does not support it")
+	})
+
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	// testNonFlushingWriter is a bare ResponseWriter with no optional capabilities.
+	h.ServeHTTP(&testNonFlushingWriter{}, req)
+}
+
+// testNonFlushingWriter is a bare-minimum http.ResponseWriter with no optional
+// capabilities (no Flush, no deadlines). Used to verify that ResponseController
+// returns ErrNotSupported when the inner writer cannot flush.
+type testNonFlushingWriter struct{ header http.Header }
+
+func (w *testNonFlushingWriter) Header() http.Header {
+	if w.header == nil {
+		w.header = make(http.Header)
+	}
+	return w.header
+}
+func (w *testNonFlushingWriter) Write(b []byte) (int, error) { return len(b), nil }
+func (w *testNonFlushingWriter) WriteHeader(int)             {}
+
+// testFlushingWriter is a minimal http.ResponseWriter that also implements
+// http.Flusher, used to verify the Unwrap() → Flush() chain end-to-end.
+type testFlushingWriter struct {
+	header  http.Header
+	flushed bool
+}
+
+func (w *testFlushingWriter) Header() http.Header {
+	if w.header == nil {
+		w.header = make(http.Header)
+	}
+	return w.header
+}
+func (w *testFlushingWriter) Write(b []byte) (int, error) { return len(b), nil }
+func (w *testFlushingWriter) WriteHeader(int)             {}
+func (w *testFlushingWriter) Flush()                      { w.flushed = true }

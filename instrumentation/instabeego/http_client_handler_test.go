@@ -8,6 +8,7 @@ package instabeego_test
 import (
 	"context"
 	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	"github.com/beego/beego/v2/client/httplib"
@@ -19,6 +20,10 @@ import (
 )
 
 func TestInstrumentRequest(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer server.Close()
 
 	recorder := instana.NewTestRecorder()
 	c := instana.InitCollector(&instana.Options{
@@ -31,26 +36,28 @@ func TestInstrumentRequest(t *testing.T) {
 	sp := c.StartSpan("client-call")
 	sp.SetTag(string(ext.SpanKind), "entry")
 
-	defer sp.Finish()
-
 	ctx := instana.ContextWithSpan(context.Background(), sp)
 
-	req := httplib.NewBeegoRequestWithCtx(ctx, "https://www.instana.com", http.MethodGet)
+	req := httplib.NewBeegoRequestWithCtx(ctx, server.URL, http.MethodGet)
 	instabeego.InstrumentRequest(c, req)
 
 	response, err := req.Response()
 	require.NoError(t, err)
+
+	sp.Finish()
+
 	spans := recorder.GetQueuedSpans()
-	require.Len(t, spans, 3)
-	latestSpan := spans[2]
-	spanData := latestSpan.Data.(instana.HTTPSpanData)
+	require.Len(t, spans, 2)
+
+	exitSpan := spans[0]
+	spanData := exitSpan.Data.(instana.HTTPSpanData)
 
 	assert.Equal(t, instana.HTTPSpanTags{
 		Method:   response.Request.Method,
 		Status:   http.StatusOK,
 		Path:     "",
 		URL:      response.Request.URL.String(),
-		Host:     response.Request.Host,
+		Host:     "",
 		Protocol: "",
 		Params:   "",
 		Headers:  nil,

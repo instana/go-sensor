@@ -1,9 +1,9 @@
 module github.com/instana/go-sensor/instrumentation/instagorm
 
-go 1.23.0
+go 1.25.0
 
 require (
-	github.com/instana/go-sensor v1.73.4
+	github.com/instana/go-sensor v1.73.5
 	github.com/opentracing/opentracing-go v1.2.0
 	github.com/stretchr/testify v1.10.0
 	gorm.io/driver/sqlite v1.6.0
@@ -19,6 +19,6 @@ require (
 	github.com/looplab/fsm v1.0.3 // indirect
 	github.com/mattn/go-sqlite3 v1.14.28 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
-	golang.org/x/text v0.27.0 // indirect
+	golang.org/x/text v0.39.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

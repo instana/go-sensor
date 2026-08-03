@@ -4,7 +4,7 @@ go 1.25.0
 
 require (
 	github.com/beego/beego/v2 v2.3.10
-	github.com/instana/go-sensor v1.73.4
+	github.com/instana/go-sensor v1.73.5
 	github.com/opentracing/opentracing-go v1.2.0
 	github.com/stretchr/testify v1.10.0
 )
@@ -29,7 +29,7 @@ require (
 	golang.org/x/crypto v0.52.0 // indirect
 	golang.org/x/net v0.55.0 // indirect
 	golang.org/x/sys v0.45.0 // indirect
-	golang.org/x/text v0.37.0 // indirect
+	golang.org/x/text v0.39.0 // indirect
 	google.golang.org/protobuf v1.36.6 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
