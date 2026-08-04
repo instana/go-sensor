@@ -5,7 +5,7 @@ go 1.25.0
 require (
 	github.com/gin-gonic/gin v1.12.0
 	github.com/go-sql-driver/mysql v1.9.3
-	github.com/instana/go-sensor v1.73.2
+	github.com/instana/go-sensor v1.73.5
 	github.com/instana/go-sensor/instrumentation/instagin v1.38.1
 )
 
