@@ -5,7 +5,6 @@ package instana
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"math"
 	"net"
@@ -283,10 +282,6 @@ func (r *fsmS) applyHostAgentSettings(resp agentResponse) {
 		sensor.options.Tracer.CollectableHTTPHeaders = resp.getExtraHTTPHeaders()
 	}
 
-	b, _ := json.MarshalIndent(resp, "", "    ")
-	fmt.Println("resp:", string(b))
-
-	r.logger.Debug("resp:", resp)
 	r.applyDisableTracingConfig(resp)
 	r.applyMetricsPollRateConfig(resp)
 
