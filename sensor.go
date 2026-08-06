@@ -115,6 +115,7 @@ func newSensor(options *Options) *sensorS {
 	}
 
 	var agent AgentClient
+	var isServerless bool
 
 	if options.AgentClient != nil {
 		agent = options.AgentClient
@@ -122,32 +123,24 @@ func newSensor(options *Options) *sensorS {
 
 	if agentEndpoint := os.Getenv("INSTANA_ENDPOINT_URL"); agentEndpoint != "" && agent == nil {
 		s.logger.Debug("INSTANA_ENDPOINT_URL= is set, switching to the serverless mode")
+		isServerless = true
 
-		timeout, err := parseInstanaTimeout(os.Getenv("INSTANA_TIMEOUT"))
-		if err != nil {
-			s.logger.Warn("malformed INSTANA_TIMEOUT value, falling back to the default one: ", err)
-			timeout = defaultServerlessTimeout
-		}
-
-		client, err := acceptor.NewHTTPClient(timeout)
-		if err != nil {
-			if err == acceptor.ErrMalformedProxyURL {
-				s.logger.Warn(err)
-			} else {
-				s.logger.Error("failed to initialize acceptor HTTP client, falling back to the default one: ", err)
-				client = http.DefaultClient
-			}
-		}
-
+		client := s.initServerlessHTTPClient()
 		agent = newServerlessAgent(s.serviceOrBinaryName(), agentEndpoint, os.Getenv("INSTANA_AGENT_KEY"), client, s.logger)
 	}
 
+	s.meter = newMeter(s.logger)
 	if agent == nil {
 		agent = newAgent(s.serviceOrBinaryName(), s.options.AgentHost, s.options.AgentPort, s.logger)
 	}
 
 	s.setAgent(agent)
-	s.meter = newMeter(s.logger)
+
+	// For serverless agents, start the meter immediately since they don't use the FSM
+	if isServerless {
+		s.options.Metrics.setTransmissionInterval(defaultTransmissionInterval)
+		s.meter.Run(s.options.Metrics.getTransmissionInterval())
+	}
 
 	return s
 }
@@ -198,6 +191,26 @@ func (r *sensorS) Agent() AgentClient {
 	return r.agent
 }
 
+func (r *sensorS) initServerlessHTTPClient() *http.Client {
+	timeout, err := parseInstanaTimeout(os.Getenv("INSTANA_TIMEOUT"))
+	if err != nil {
+		r.logger.Warn("malformed INSTANA_TIMEOUT value, falling back to the default one: ", err)
+		timeout = defaultServerlessTimeout
+	}
+
+	client, err := acceptor.NewHTTPClient(timeout)
+	if err != nil {
+		if err == acceptor.ErrMalformedProxyURL {
+			r.logger.Warn(err)
+		} else {
+			r.logger.Error("failed to initialize acceptor HTTP client, falling back to the default one: ", err)
+			client = http.DefaultClient
+		}
+	}
+
+	return client
+}
+
 func (r *sensorS) serviceOrBinaryName() string {
 	if r == nil {
 		return ""
@@ -230,9 +243,6 @@ func InitSensor(options *Options) {
 
 	// configure auto-profiling
 	configureAutoProfiling(options)
-
-	// start collecting metrics
-	go sensor.meter.Run(1 * time.Second)
 
 	sensor.logger.Debug("initialized Instana sensor v", Version)
 }
