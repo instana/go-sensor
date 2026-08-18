@@ -1,0 +1,89 @@
+name: Run unit & integration tests
+
+run-name: Running unit & integration tests with Go 1.25 and Go 1.26
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Go ${{ matrix.go-version }}
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        go-version: ["1.25", "1.26"]
+
+    env:
+      COSMOS_CONNECTION_URL: ${{ secrets.COSMOS_CONNECTION_URL }}
+      COSMOS_KEY: ${{ secrets.COSMOS_KEY }}
+
+    steps:
+      # - uses actions/checkout@v6.0.2
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          fetch-depth: 0
+
+      - name: Setup Go ${{ matrix.go-version }}
+        # uses: actions/setup-go@v6.4.0
+        uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c
+        with:
+          go-version: ${{ matrix.go-version }}
+
+      - name: Run unit and integration tests (Go ${{ matrix.go-version }})
+        shell: bash
+        id: run_tests
+        continue-on-error: true
+        run: |
+          set -e
+
+          TRACER_PATH=$(pwd)
+          echo $TRACER_PATH
+
+          go version
+
+          sudo apt-get update
+          sudo apt-get -y install podman
+          pip3 install --only-binary=:all: podman-compose==1.5.0
+
+          echo "Starting Couchbase"
+          podman-compose -f docker-compose-integration.yaml up -d
+
+          echo "Starting Postgres"
+          sudo systemctl start postgresql.service
+          sudo -u postgres psql -c "ALTER USER postgres PASSWORD 'mysecretpassword'"
+
+          echo "Running unit test for core!"
+          go test -v -coverpkg=./... -cover -covermode atomic ./...
+
+          DEPRECATED_PKGS=".*instaamqp$"
+          LIB_LIST=$(find ./instrumentation -name go.mod -exec dirname {} \; | grep -E -v "$DEPRECATED_PKGS")
+
+          for lib in $LIB_LIST
+          do
+            echo "Running unit test for $lib"
+            cd "$lib"
+            go mod tidy
+            go test -v -coverpkg=./... -cover -covermode atomic ./...
+            cd -
+          done
+
+          INTEGRATIONS_TESTS=("instagocb" "instapgx" "instacosmos" "instapgx/v2")
+
+          for str in ${INTEGRATIONS_TESTS[@]}; do
+            dir=./instrumentation/$str
+            echo "Running integration test for $dir"
+            cd $dir
+            go mod tidy
+            go test -v -tags=integration -coverpkg=./... -cover -covermode atomic ./...
+            cd -
+          done
+
+      - name: Fail workflow if tests failed
+        if: ${{ steps.run_tests.outcome == 'failure' }}
+        run: exit 1
