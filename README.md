@@ -66,7 +66,41 @@ func init() {
 ### Collecting Metrics
 
 Once the collector has been initialized with `instana.InitCollector`, application metrics such as memory, CPU consumption, active goroutine count etc will be automatically collected and reported to the Agent without further actions or configurations to the SDK.
-This data is then already available in the dashboard.
+
+#### Metrics Transmission Interval
+
+Metrics are transmitted to the Instana Agent at a configurable interval. The interval depends on the deployment environment.
+
+##### Standard (Host Agent) Deployments
+
+The interval is configured through the Instana Agent's `configuration.yaml` file.
+
+**Configuration:**
+
+In the agent's `configuration.yaml`:
+```yaml
+# Configure metrics transmission interval for Go applications
+com.instana.plugin.golang:
+  poll_rate: 5  # seconds
+```
+
+**Valid Values:**
+
+The accepted values are: `1`, `5`, `10`, `20`, `30`, `60`, `120`, `180`, `240`, `300`, `360`, `420`, `480`, `540`, `600` (seconds).
+
+- Default: `1` second (if not configured or if an invalid value is provided)
+
+**Behavior:**
+- If `poll_rate` is not configured or is `<= 0`, defaults to `1` second.
+- If `poll_rate` is a positive value not in the canonical set above, a warning is logged and the value is used as-is. Range enforcement is the responsibility of the Instana Agent.
+- Configuration is read from the agent once, during the initial handshake when the Go tracer starts up.
+
+> [!IMPORTANT]
+> The `poll_rate` value is applied **only at Go tracer startup**. If you change `poll_rate` in the agent's `configuration.yaml` after the tracer is already running, the new value will **not** take effect until the Go application is restarted. This applies even if the Instana Agent itself is restarted — the tracer will continue using the interval it received during its own initial handshake.
+
+##### Serverless Deployments (AWS Fargate/ECS, AWS Lambda, Google Cloud Run, Azure Functions)
+
+In serverless environments, the Go tracer communicates directly with the Instana Serverless Acceptor and does not perform the host agent handshake. As a result, the `poll_rate` setting in `configuration.yaml` has no effect. The metrics transmission interval is fixed at **1 second** and cannot be configured.
 
 ### Tracing Calls
 
