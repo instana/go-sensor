@@ -171,7 +171,7 @@ func TestClient_Do_Error(t *testing.T) {
 		Method: "GET",
 		URL:    "http://example.com/hello",
 		Params: "key=%3Credacted%3E&q=term",
-		Error:  "InmemoryListener is already closed: use of closed network connection",
+		Error:  "fasthttputil: inmemorylistener is already closed: use of closed network connection",
 	}, data.Tags)
 
 	assert.Equal(t, span.TraceID, logSpan.TraceID)
@@ -187,7 +187,7 @@ func TestClient_Do_Error(t *testing.T) {
 
 	assert.Equal(t, instana.LogSpanTags{
 		Level:   "ERROR",
-		Message: `error.object: "InmemoryListener is already closed: use of closed network connection"`,
+		Message: `error.object: "fasthttputil: inmemorylistener is already closed: use of closed network connection"`,
 	}, logData.Tags)
 }
 
@@ -344,7 +344,7 @@ func TestClient_DoTimeout_Error(t *testing.T) {
 		Method: "GET",
 		URL:    "http://example.com/hello",
 		Params: "key=%3Credacted%3E&q=term",
-		Error:  "InmemoryListener is already closed: use of closed network connection",
+		Error:  "fasthttputil: inmemorylistener is already closed: use of closed network connection",
 	}, data.Tags)
 
 	assert.Equal(t, span.TraceID, logSpan.TraceID)
@@ -360,7 +360,7 @@ func TestClient_DoTimeout_Error(t *testing.T) {
 
 	assert.Equal(t, instana.LogSpanTags{
 		Level:   "ERROR",
-		Message: `error.object: "InmemoryListener is already closed: use of closed network connection"`,
+		Message: `error.object: "fasthttputil: inmemorylistener is already closed: use of closed network connection"`,
 	}, logData.Tags)
 }
 
@@ -519,7 +519,7 @@ func TestClient_DoDeadline_Error(t *testing.T) {
 		Method: "GET",
 		URL:    "http://example.com/hello",
 		Params: "key=%3Credacted%3E&q=term",
-		Error:  "InmemoryListener is already closed: use of closed network connection",
+		Error:  "fasthttputil: inmemorylistener is already closed: use of closed network connection",
 	}, data.Tags)
 
 	assert.Equal(t, span.TraceID, logSpan.TraceID)
@@ -535,7 +535,7 @@ func TestClient_DoDeadline_Error(t *testing.T) {
 
 	assert.Equal(t, instana.LogSpanTags{
 		Level:   "ERROR",
-		Message: `error.object: "InmemoryListener is already closed: use of closed network connection"`,
+		Message: `error.object: "fasthttputil: inmemorylistener is already closed: use of closed network connection"`,
 	}, logData.Tags)
 }
 
@@ -694,7 +694,7 @@ func TestClient_DoRedirects_Error(t *testing.T) {
 		Method: "GET",
 		URL:    "http://example.com/hello",
 		Params: "key=%3Credacted%3E&q=term",
-		Error:  "InmemoryListener is already closed: use of closed network connection",
+		Error:  "fasthttputil: inmemorylistener is already closed: use of closed network connection",
 	}, data.Tags)
 
 	assert.Equal(t, span.TraceID, logSpan.TraceID)
@@ -710,7 +710,7 @@ func TestClient_DoRedirects_Error(t *testing.T) {
 
 	assert.Equal(t, instana.LogSpanTags{
 		Level:   "ERROR",
-		Message: `error.object: "InmemoryListener is already closed: use of closed network connection"`,
+		Message: `error.object: "fasthttputil: inmemorylistener is already closed: use of closed network connection"`,
 	}, logData.Tags)
 }
 
