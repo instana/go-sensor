@@ -105,8 +105,8 @@ github.com/googleapis/enterprise-certificate-proxy v0.3.17 h1:73NfMHdiqo9JFU9+7a
 github.com/googleapis/enterprise-certificate-proxy v0.3.17/go.mod h1:rSEsBUemEBZEexP2y6jPp16LUmUbjmSbcPMQizR0o4k=
 github.com/googleapis/gax-go/v2 v2.23.0 h1:Tchl7qkvE7Ip3y+ztvNufYFvkfqTe7NfLTYGIdJRLuE=
 github.com/googleapis/gax-go/v2 v2.23.0/go.mod h1:rBQKOVJCdb8IFEzg+FCwlt1LP/xMDGuqUXhUG+XMXEg=
-github.com/instana/go-sensor v1.73.5 h1:6J1pbzDheEqKkHXJuLgVZGBSWT8uhDcLwPSaJMois94=
-github.com/instana/go-sensor v1.73.5/go.mod h1:wWLB5TQn5zd+XxZPLkaScMzRr74ymtptaDTPhrueDyM=
+github.com/instana/go-sensor v1.74.0 h1:hmqdzy//IXgmKvzmoUY9jauuHe+QIrE9/CkB+1CMaFc=
+github.com/instana/go-sensor v1.74.0/go.mod h1:wWLB5TQn5zd+XxZPLkaScMzRr74ymtptaDTPhrueDyM=
 github.com/kr/pretty v0.3.1 h1:flRD4NNwYAUpkphVc1HcthR4KEIFJ65n8Mw5qdRn3LE=
 github.com/kr/pretty v0.3.1/go.mod h1:hoEshYVHaxMs3cyo3Yncou5ZscifuDolrwPKZanG3xk=
 github.com/kr/text v0.2.0 h1:5Nx0Ya0ZqY2ygV366QzturHI13Jq95ApcVaJBhpS+AY=
