@@ -3,8 +3,8 @@ module github.com/instana/go-sensor/instrumentation/instasarama
 go 1.25.0
 
 require (
-	github.com/IBM/sarama v1.60.0
-	github.com/instana/go-sensor v1.73.5
+	github.com/IBM/sarama v1.60.1
+	github.com/instana/go-sensor v1.74.0
 	github.com/opentracing/opentracing-go v1.2.0
 	github.com/stretchr/testify v1.11.1
 )
@@ -20,7 +20,7 @@ require (
 	github.com/jcmturner/gofork v1.7.6 // indirect
 	github.com/jcmturner/gokrb5/v8 v8.4.4 // indirect
 	github.com/jcmturner/rpc/v2 v2.0.3 // indirect
-	github.com/klauspost/compress v1.19.0 // indirect
+	github.com/klauspost/compress v1.19.1 // indirect
 	github.com/kr/pretty v0.3.1 // indirect
 	github.com/looplab/fsm v1.0.3 // indirect
 	github.com/pierrec/lz4/v4 v4.1.27 // indirect
