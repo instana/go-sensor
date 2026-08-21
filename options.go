@@ -132,6 +132,7 @@ func (opts *Options) applyTracerConfiguration() {
 	opts.applyTracerDefaults()
 	opts.applyHTTPHeadersConfiguration()
 	opts.applyTracingDisableConfiguration()
+	opts.applyHTTP4xxConfiguration()
 	opts.applyW3CConfiguration()
 }
 
@@ -158,6 +159,21 @@ func (opts *Options) applyTracerDefaults() {
 	if opts.Tracer.MaxLogsPerSpan == 0 {
 		opts.Tracer.MaxLogsPerSpan = MaxLogsPerSpan
 	}
+
+	// Sentinel flags default to true (agent may override) unless already explicitly cleared
+	// by in-code configuration. We detect "explicitly set" by checking whether the user
+	// populated the respective fields — non-zero ClassifyAsErrors or ClassifyAll4xxAsErrors=true.
+	// If neither is set, mark as default so env vars and agent config can still apply.
+	if !opts.Tracer.HTTP.Exit.ClassifyAll4xxAsErrors && opts.Tracer.http4xxExitDefaultClassifyAll == false {
+		// Check whether the user truly set ClassifyAll4xxAsErrors=false explicitly:
+		// We can't distinguish zero-value false from explicit false here, so we rely on the
+		// sentinel: if the caller used DefaultTracerOptions() the sentinel is already true.
+		// If the caller used a zero-value TracerOptions{}, we set it to true here so env/agent can apply.
+		opts.Tracer.http4xxExitDefaultClassifyAll = true
+	}
+	if len(opts.Tracer.HTTP.Exit.ClassifyAsErrors) == 0 && opts.Tracer.http4xxExitDefaultClassifyList == false {
+		opts.Tracer.http4xxExitDefaultClassifyList = true
+	}
 }
 
 // applyHTTPHeadersConfiguration resolves HTTP headers collection settings
@@ -177,6 +193,38 @@ func (opts *Options) applyTracingDisableConfiguration() {
 		}
 	} else if tracingDisable, ok := lookupValidatedEnv("INSTANA_TRACING_DISABLE"); ok {
 		parseInstanaTracingDisable(tracingDisable, &opts.Tracer)
+	}
+}
+
+// applyHTTP4xxConfiguration resolves HTTP exit 4xx error classification settings.
+// Precedence: INSTANA_CONFIG_PATH (parsed in applyTracingDisableConfiguration) >
+//
+//	INSTANA_TRACING_HTTP_EXIT_CLASSIFY_AS_ERRORS >
+//	INSTANA_TRACING_HTTP_EXIT_CLASSIFY_ALL_4XX_AS_ERRORS >
+//	agent config > default
+//
+// Note: INSTANA_CONFIG_PATH is already handled by parseConfigFile called in
+// applyTracingDisableConfiguration; this function handles the flat env vars only.
+// classify-as-errors is checked first because it takes precedence over classify-all-4xx-as-errors.
+func (opts *Options) applyHTTP4xxConfiguration() {
+	if opts.Tracer.http4xxExitDefaultClassifyList {
+		if val, ok := lookupValidatedEnv("INSTANA_TRACING_HTTP_EXIT_CLASSIFY_AS_ERRORS"); ok {
+			codes, wasSet := parseHTTPExitClassifyAsErrors(val)
+			if wasSet {
+				opts.Tracer.HTTP.Exit.ClassifyAsErrors = codes
+				opts.Tracer.http4xxExitDefaultClassifyList = false
+			}
+		}
+	}
+
+	if opts.Tracer.http4xxExitDefaultClassifyAll {
+		if val, ok := lookupValidatedEnv("INSTANA_TRACING_HTTP_EXIT_CLASSIFY_ALL_4XX_AS_ERRORS"); ok {
+			v, wasSet := parseHTTPExitClassifyAll4xxAsErrors(val)
+			if wasSet {
+				opts.Tracer.HTTP.Exit.ClassifyAll4xxAsErrors = v
+				opts.Tracer.http4xxExitDefaultClassifyAll = false
+			}
+		}
 	}
 }
 
