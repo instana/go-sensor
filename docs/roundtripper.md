@@ -122,6 +122,101 @@ func main() {
 }
 ```
 
+### Error Handling
+
+The `RoundTripper` marks an exit span as an error (`span.ec=1`) in the following situations:
+
+**Transport errors** — when the request never receives a response (network failure, DNS error, timeout):
+the span is marked as an error and `span.data.http.error` is populated with the Go error message.
+
+**5xx responses** — always treated as errors, regardless of any configuration:
+
+| Status | `span.ec` | `span.data.http.error` |
+|---|---|---|
+| 500 Internal Server Error | 1 | `"Internal Server Error"` |
+| 503 Service Unavailable | 1 | `"Service Unavailable"` |
+
+**4xx responses** — not treated as errors by default. Opt in via configuration:
+
+| Configuration | Effect |
+|---|---|
+| Default (nothing set) | All 4xx → `ec=0`, no error |
+| `classify-all-4xx-as-errors: true` | All 4xx → `ec=1` |
+| `classify-as-errors: [401, 403]` | Only listed codes → `ec=1`; others stay `ec=0` |
+
+When a 4xx code is classified as an error, `span.data.http.error` is set to `"<code> <text>"`, for example `"401 Unauthorized"`.
+
+#### Configuring HTTP 4xx Error Classification
+
+You can configure 4xx error classification using any of the following methods (listed in order of precedence):
+
+##### 1. Environment Variables (Highest Priority)
+
+```bash
+# Option A: Mark specific 4xx status codes as errors
+export INSTANA_TRACING_HTTP_EXIT_CLASSIFY_AS_ERRORS=401,403
+
+# Option B: Mark ALL 4xx responses as errors
+export INSTANA_TRACING_HTTP_EXIT_CLASSIFY_ALL_4XX_AS_ERRORS=true
+```
+
+##### 2. External YAML Configuration File (`INSTANA_CONFIG_PATH`)
+
+Point to a custom YAML configuration file via `INSTANA_CONFIG_PATH`:
+
+```yaml
+# config.yaml
+tracing:
+  http:
+    exit:
+      classify-as-errors:
+        - 401
+        - 403
+      # Or to mark all 4xx codes:
+      # classify-all-4xx-as-errors: true
+```
+
+```bash
+export INSTANA_CONFIG_PATH=/path/to/config.yaml
+```
+
+##### 3. In-Code Options
+
+Configure directly via `instana.Options` during collector initialization:
+
+```go
+col := instana.InitCollector(&instana.Options{
+    Service: "my-http-client",
+    Tracer: instana.TracerOptions{
+        HTTP: struct{ Exit instana.HTTPExitSettings }{
+            Exit: instana.HTTPExitSettings{
+                ClassifyAsErrors: []int{401, 403},
+                // Or: ClassifyAll4xxAsErrors: true,
+            },
+        },
+    },
+})
+```
+
+##### 4. Host Agent Configuration (`configuration.yaml`, Lowest Priority)
+
+Set in the Instana Host Agent's `configuration.yaml` file:
+
+```yaml
+com.instana.tracing:
+  http:
+    exit:
+      classify-as-errors:
+        - 401
+        - 403
+      # Or:
+      # classify-all-4xx-as-errors: true
+```
+
+> **Note on Precedence:** When `classify-as-errors` is non-empty, it takes full precedence over `classify-all-4xx-as-errors`. Only explicitly listed status codes (in the range 400–499) will be marked as errors.
+>
+> **Entry spans are never affected.** The `RoundTripper` configuration only controls exit (outbound) spans. Server-side entry spans always follow standard rules (5xx are errors, 4xx are not).
+
 -----
 [README](../README.md) |
 [Tracer Options](options.md) |
