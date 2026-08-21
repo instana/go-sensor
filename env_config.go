@@ -145,10 +145,16 @@ func parseInstanaTracingDisable(value string, opts *TracerOptions) {
 // and updates the TracerOptions accordingly.
 //
 // The YAML file must follow this format:
-// tracing:
-//   disable:
-//     - logging: true
-
+//
+//	tracing:
+//	  disable:
+//	    - logging: true
+//	  http:
+//	    exit:
+//	      classify-all-4xx-as-errors: true
+//	      classify-as-errors:
+//	        - 401
+//	        - 403
 func parseConfigFile(path string, opts *TracerOptions) error {
 	// Validate the file path and security considerations
 	absPath, err := validateFile(path)
@@ -162,9 +168,17 @@ func parseConfigFile(path string, opts *TracerOptions) error {
 		return fmt.Errorf("failed to read config file: %w", err)
 	}
 
+	type httpExitConfig struct {
+		ClassifyAll4xxAsErrors bool  `yaml:"classify-all-4xx-as-errors"`
+		ClassifyAsErrors       []int `yaml:"classify-as-errors"`
+	}
+
 	type Config struct {
 		Tracing struct {
 			Disable []map[string]bool `yaml:"disable"`
+			HTTP    struct {
+				Exit httpExitConfig `yaml:"exit"`
+			} `yaml:"http"`
 		} `yaml:"tracing"`
 	}
 
@@ -184,10 +198,81 @@ func parseConfigFile(path string, opts *TracerOptions) error {
 				opts.DisableSpans[category] = true
 			}
 		}
+	}
 
+	// Apply HTTP exit 4xx classification settings from config file.
+	// classify-as-errors takes precedence; validate each code is in 400–499 range.
+	exitCfg := config.Tracing.HTTP.Exit
+	if len(exitCfg.ClassifyAsErrors) > 0 {
+		codes := filterValidHTTP4xxCodes(exitCfg.ClassifyAsErrors)
+		opts.HTTP.Exit.ClassifyAsErrors = codes
+		opts.http4xxExitDefaultClassifyList = false
+	}
+
+	// classify-all-4xx-as-errors is applied regardless (false is a valid explicit value).
+	// We detect it was set by checking if any http.exit key was present in the YAML.
+	// Since YAML unmarshalling sets ClassifyAll4xxAsErrors to false by default even when absent,
+	// we only mark it as explicitly set when the classify-as-errors list was present OR the bool is true.
+	if exitCfg.ClassifyAll4xxAsErrors {
+		opts.HTTP.Exit.ClassifyAll4xxAsErrors = true
+		opts.http4xxExitDefaultClassifyAll = false
 	}
 
 	return nil
+}
+
+// filterValidHTTP4xxCodes returns only codes in the 400–499 range, logging a warning for each invalid one.
+func filterValidHTTP4xxCodes(codes []int) []int {
+	var valid []int
+	for _, code := range codes {
+		if code < 400 || code > 499 {
+			defaultLogger.Warn(fmt.Sprintf("invalid HTTP status code %d in classify-as-errors: must be in range 400–499, ignoring", code))
+			continue
+		}
+		valid = append(valid, code)
+	}
+	return valid
+}
+
+// parseHTTPExitClassifyAll4xxAsErrors parses the INSTANA_TRACING_HTTP_EXIT_CLASSIFY_ALL_4XX_AS_ERRORS
+// environment variable value. Accepts "true" or "false" (case-insensitive).
+// Returns (value, wasSet). Any unrecognised value is ignored and wasSet is false.
+func parseHTTPExitClassifyAll4xxAsErrors(s string) (bool, bool) {
+	switch strings.ToLower(strings.TrimSpace(s)) {
+	case "true":
+		return true, true
+	case "false":
+		return false, true
+	default:
+		defaultLogger.Warn(fmt.Sprintf("unrecognised value %q for INSTANA_TRACING_HTTP_EXIT_CLASSIFY_ALL_4XX_AS_ERRORS: must be \"true\" or \"false\", ignoring", s))
+		return false, false
+	}
+}
+
+// parseHTTPExitClassifyAsErrors parses the INSTANA_TRACING_HTTP_EXIT_CLASSIFY_AS_ERRORS
+// environment variable value. Expects a comma-separated list of integers in the 400–499 range.
+// Returns (codes, wasSet). wasSet is true whenever the variable is non-empty, even if all
+// values were filtered out as invalid. Out-of-range values are ignored with a warning.
+func parseHTTPExitClassifyAsErrors(s string) ([]int, bool) {
+	if s == "" {
+		return nil, false
+	}
+
+	var codes []int
+	for _, part := range strings.Split(s, ",") {
+		part = strings.TrimSpace(part)
+		if part == "" {
+			continue
+		}
+		n, err := strconv.Atoi(part)
+		if err != nil || n < 400 || n > 499 {
+			defaultLogger.Warn(fmt.Sprintf("invalid value %q in INSTANA_TRACING_HTTP_EXIT_CLASSIFY_AS_ERRORS: must be an integer in range 400–499, ignoring", part))
+			continue
+		}
+		codes = append(codes, n)
+	}
+
+	return codes, true
 }
 
 // validateFile ensures the given config file path is safe and usable.
