@@ -1,0 +1,17 @@
+# Instana tracer configuration for the http-4xx-errors example.
+#
+# Only 401 and 403 responses on exit HTTP spans are classified as errors.
+# All other 4xx responses (e.g. 404) are NOT treated as errors.
+#
+# To mark every 4xx as an error instead, replace the block below with:
+#   com.instana.tracing:
+#     http:
+#       exit:
+#         classify-all-4xx-as-errors: true
+
+com.instana.tracing:
+  http:
+    exit:
+      classify-as-errors:
+        - 401
+        - 403

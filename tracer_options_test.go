@@ -11,8 +11,12 @@ import (
 )
 
 func TestDefaultTracerOptions(t *testing.T) {
-	assert.Equal(t, instana.TracerOptions{
-		MaxLogsPerSpan: 2,
-		Secrets:        instana.DefaultSecretsMatcher(),
-	}, instana.DefaultTracerOptions())
+	opts := instana.DefaultTracerOptions()
+	assert.Equal(t, 2, opts.MaxLogsPerSpan)
+	assert.Equal(t, instana.DefaultSecretsMatcher(), opts.Secrets)
+	assert.False(t, opts.DropAllLogs)
+	assert.Nil(t, opts.CollectableHTTPHeaders)
+	assert.Nil(t, opts.DisableSpans)
+	assert.False(t, opts.HTTP.Exit.ClassifyAll4xxAsErrors)
+	assert.Nil(t, opts.HTTP.Exit.ClassifyAsErrors)
 }

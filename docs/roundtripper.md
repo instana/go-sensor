@@ -122,6 +122,34 @@ func main() {
 }
 ```
 
+### Error Handling
+
+The `RoundTripper` marks an exit span as an error (`span.ec=1`) in the following situations:
+
+**Transport errors** — when the request never receives a response (network failure, DNS error, timeout):
+the span is marked as an error and `span.data.http.error` is populated with the Go error message.
+
+**5xx responses** — always treated as errors, regardless of any configuration:
+
+| Status | `span.ec` | `span.data.http.error` |
+|---|---|---|
+| 500 Internal Server Error | 1 | `"Internal Server Error"` |
+| 503 Service Unavailable | 1 | `"Service Unavailable"` |
+
+**4xx responses** — not treated as errors by default. Opt in via configuration:
+
+| Configuration | Effect |
+|---|---|
+| Default (nothing set) | All 4xx → `ec=0`, no error |
+| `classify-all-4xx-as-errors: true` | All 4xx → `ec=1` |
+| `classify-as-errors: [401, 403]` | Only listed codes → `ec=1`; others stay `ec=0` |
+
+When a 4xx code is classified as an error, `span.data.http.error` is set to `"<code> <text>"`, for example `"401 Unauthorized"`.
+
+See [HTTP 4xx error opt-in](http-4xx-error-opt-in.md) for the full configuration reference (environment variables, config file, agent config, and in-code options).
+
+> **Entry spans are never affected.** The `RoundTripper` only controls exit (outbound) spans. The server-side entry span always follows its own rules: 5xx → error, 4xx → never an error.
+
 -----
 [README](../README.md) |
 [Tracer Options](options.md) |
