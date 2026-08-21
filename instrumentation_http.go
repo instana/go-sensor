@@ -5,6 +5,7 @@ package instana
 
 import (
 	"bufio"
+	"fmt"
 	"net"
 	"net/http"
 	"net/url"
@@ -251,8 +252,48 @@ func RoundTripper(sensor TracerLogger, original http.RoundTripper) http.RoundTri
 
 		span.SetTag(string(ext.HTTPStatusCode), resp.StatusCode)
 
+		if resp.StatusCode >= http.StatusBadRequest && resp.StatusCode < http.StatusInternalServerError {
+			if shouldClassify4xxAsError(resp.StatusCode, tracer) {
+				errMsg := fmt.Sprintf("%d %s", resp.StatusCode, http.StatusText(resp.StatusCode))
+				span.SetTag("http.error", errMsg)
+				span.LogFields(otlog.Object("error", errMsg))
+			}
+		}
+
+		if resp.StatusCode >= http.StatusInternalServerError {
+			statusText := http.StatusText(resp.StatusCode)
+			span.SetTag("http.error", statusText)
+			span.LogFields(otlog.Object("error", statusText))
+		}
+
 		return resp, err
 	})
+}
+
+// shouldClassify4xxAsError reports whether the given 4xx status code should be marked as an
+// error on an HTTP exit span, based on the current tracer configuration.
+//
+// classify-as-errors takes full precedence when non-empty: only listed codes return true.
+// Otherwise classify-all-4xx-as-errors is used.
+func shouldClassify4xxAsError(statusCode int, t ot.Tracer) bool {
+	tr, ok := t.(Tracer)
+	if !ok {
+		return false
+	}
+
+	exit := tr.Options().HTTP.Exit
+
+	// classify-as-errors takes full precedence when non-empty
+	if len(exit.ClassifyAsErrors) > 0 {
+		for _, code := range exit.ClassifyAsErrors {
+			if code == statusCode {
+				return true
+			}
+		}
+		return false
+	}
+
+	return exit.ClassifyAll4xxAsErrors
 }
 
 type wrappedResponseWriter interface {
