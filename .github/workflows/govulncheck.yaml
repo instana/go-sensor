@@ -66,7 +66,7 @@ jobs:
           echo "::group::Install govulncheck"
           
           # govulncheck: v1.3.0
-          go install golang.org/x/vuln/cmd/govulncheck@v1.7.0
+          go install golang.org/x/vuln/cmd/govulncheck@c44428a1275b84813133dc571861157a715d0858
 
           which govulncheck
           govulncheck -version
