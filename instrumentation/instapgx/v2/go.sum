@@ -6,8 +6,8 @@ github.com/google/pprof v0.0.0-20250630185457-6e76a2b096b5 h1:xhMrHhTJ6zxu3gA4en
 github.com/google/pprof v0.0.0-20250630185457-6e76a2b096b5/go.mod h1:5hDyRhoBCxViHszMt12TnOpEI4VVi+U8Gm9iphldiMA=
 github.com/google/uuid v1.6.0 h1:NIvaJDMOsjHA8n1jAhLSgzrAzy1Hgr+hNrb57e+94F0=
 github.com/google/uuid v1.6.0/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
-github.com/instana/go-sensor v1.75.0 h1:xX5ZdPQKf6eZr6brsHrFIL9nKnNKhKa0ol8TsWWwLMQ=
-github.com/instana/go-sensor v1.75.0/go.mod h1:jwpc76KJqrO1fqhEljE5vLpAfuSwqQRdlEHfWKsqi90=
+github.com/instana/go-sensor v1.75.1 h1:4VQtGHPTOBEr6VtPNU57rTZDgdGPfVchN+qm0Xw3oL8=
+github.com/instana/go-sensor v1.75.1/go.mod h1:jwpc76KJqrO1fqhEljE5vLpAfuSwqQRdlEHfWKsqi90=
 github.com/jackc/pgpassfile v1.0.0 h1:/6Hmqy13Ss2zCq62VdNG8tM1wchn8zjSGOBJ6icpsIM=
 github.com/jackc/pgpassfile v1.0.0/go.mod h1:CEx0iS5ambNFdcRtxPj5JhEz+xB6uRky5eyVu/W2HEg=
 github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 h1:iCEnooe7UlwOQYpKFhBabPMi4aNAfoODPEFNiAnClxo=
