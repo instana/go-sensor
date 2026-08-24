@@ -1,6 +1,6 @@
 name: Run unit & integration tests
 
-run-name: Running unit & integration tests with Go 1.25 and Go 1.26
+run-name: Running unit & integration tests with Go 1.26 and Go 1.27
 
 on:
   pull_request:
@@ -17,7 +17,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        go-version: ["1.25", "1.26"]
+        go-version: ["1.26", "1.27"]
 
     env:
       COSMOS_CONNECTION_URL: ${{ secrets.COSMOS_CONNECTION_URL }}
