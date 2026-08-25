@@ -29,6 +29,21 @@ const (
 	maximumRetries             = 3
 )
 
+// validPollRates is the canonical set of accepted poll_rate values (in seconds) as
+// defined by the Instana Agent configuration schema. The go tracer does not enforce
+// this set — it only warns when an unexpected value is received.
+var validPollRates = []int{1, 5, 10, 20, 30, 60, 120, 180, 240, 300, 360, 420, 480, 540, 600}
+
+// isValidPollRate reports whether seconds is a member of the canonical validPollRates set.
+func isValidPollRate(seconds int) bool {
+	for _, v := range validPollRates {
+		if v == seconds {
+			return true
+		}
+	}
+	return false
+}
+
 type fsmS struct {
 	agentComm                  *agentCommunicator
 	fsm                        *f.FSM
@@ -268,8 +283,36 @@ func (r *fsmS) applyHostAgentSettings(resp agentResponse) {
 	}
 
 	r.applyDisableTracingConfig(resp)
+	r.applyMetricsPollRateConfig(resp)
 
 	r.logger.Debug("CollectableHTTPHeaders used: ", sensor.options.Tracer.CollectableHTTPHeaders)
+}
+
+// applyMetricsPollRateConfig applies the metrics poll rate configuration from agent response.
+// If the received poll_rate is not a member of the canonical set defined by validPollRates,
+// a warning is logged but the value is still applied — range enforcement is the
+// responsibility of the Instana Agent.
+func (r *fsmS) applyMetricsPollRateConfig(resp agentResponse) {
+	s, err := getSensor()
+	if err != nil {
+		r.logger.Debug("Sensor not initialized, skipping poll_rate configuration")
+		return
+	}
+
+	// If no poll rate is provided by agent, use default (1 second)
+	if resp.PluginConfig.PollRate <= 0 {
+		r.logger.Debug("No poll_rate configuration received from agent, using default 1 second")
+		s.options.Metrics.setTransmissionInterval(defaultTransmissionInterval)
+		return
+	}
+
+	if !isValidPollRate(resp.PluginConfig.PollRate) {
+		r.logger.Warn("poll_rate value from agent (", resp.PluginConfig.PollRate, ") is not in the canonical set ",
+			validPollRates, ". The value will be used as-is; ensure the Instana Agent configuration is correct.")
+	}
+
+	r.logger.Debug("Applying metrics poll_rate configuration from agent: ", resp.PluginConfig.PollRate, " second(s)")
+	s.options.Metrics.setTransmissionInterval(resp.PluginConfig.PollRate)
 }
 
 func (r *fsmS) applyDisableTracingConfig(resp agentResponse) {
@@ -420,10 +463,21 @@ func (r *fsmS) reset() {
 
 func (r *fsmS) ready(_ context.Context, e *f.Event) {
 	go delayed.flush()
+	s, err := getSensor()
+	if err != nil {
+		r.logger.Error(err.Error())
+		return
+	}
+	interval := s.options.Metrics.getTransmissionInterval()
+	if interval <= 0 {
+		s.options.Metrics.setTransmissionInterval(defaultTransmissionInterval)
+		interval = s.options.Metrics.getTransmissionInterval()
+	}
+	s.meter.Run(interval)
 }
 
 func (r *fsmS) cpuSetFileContent(pid int) string {
-	path := filepath.Join("proc", strconv.Itoa(pid), "cpuset")
+	path := cpuSetFilePath(pid)
 	data, err := os.ReadFile(path)
 	if err != nil {
 		r.logger.Info("error while reading ", path, ":", err.Error())
@@ -431,6 +485,10 @@ func (r *fsmS) cpuSetFileContent(pid int) string {
 	}
 
 	return string(data)
+}
+
+func cpuSetFilePath(pid int) string {
+	return filepath.Join("/proc", strconv.Itoa(pid), "cpuset")
 }
 
 func expDelay(retryNumber int) time.Duration {
