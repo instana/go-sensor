@@ -744,3 +744,76 @@ func TestAgent_IPv4vsIPv6(t *testing.T) {
 		})
 	}
 }
+
+// TestNoopAgent_Methods verifies that all noopAgent methods return expected zero/nil
+// values and do not panic. These are the fallback implementations before sensor init.
+func TestNoopAgent_Methods(t *testing.T) {
+	tests := []struct {
+		name    string
+		call    func(noopAgent) error
+		wantErr bool
+	}{
+		{
+			name:    "SendMetrics returns nil",
+			call:    func(a noopAgent) error { return a.SendMetrics(acceptor.Metrics{}) },
+			wantErr: false,
+		},
+		{
+			name:    "SendEvent returns nil",
+			call:    func(a noopAgent) error { return a.SendEvent(&EventData{}) },
+			wantErr: false,
+		},
+		{
+			name:    "SendSpans returns nil",
+			call:    func(a noopAgent) error { return a.SendSpans(nil) },
+			wantErr: false,
+		},
+		{
+			name:    "SendProfiles returns nil",
+			call:    func(a noopAgent) error { return a.SendProfiles(nil) },
+			wantErr: false,
+		},
+		{
+			name:    "Flush returns nil",
+			call:    func(a noopAgent) error { return a.Flush(context.Background()) },
+			wantErr: false,
+		},
+	}
+
+	var a noopAgent
+	assert.False(t, a.Ready(), "noopAgent.Ready() must always return false")
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := tt.call(a)
+			if tt.wantErr {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
+
+// TestAgentS_Flush verifies that agentS.Flush is a no-op that always returns nil.
+func TestAgentS_Flush(t *testing.T) {
+	agent := &agentS{logger: defaultLogger}
+	assert.NoError(t, agent.Flush(context.Background()))
+}
+
+// TestAgentS_SetLogger verifies that setLogger replaces the agent logger.
+func TestAgentS_SetLogger(t *testing.T) {
+	agent := &agentS{logger: defaultLogger}
+	newLogger := &testLogger{}
+	agent.setLogger(newLogger)
+	assert.Equal(t, newLogger, agent.logger)
+}
+
+// TestAgentS_SendMetrics_Error verifies that SendMetrics propagates a connection error
+// and triggers a reset when the underlying agentComm cannot reach the host.
+func TestAgentS_SendMetrics_Error(t *testing.T) {
+	agent := newAgent("test-service", "127.0.0.1", 1, defaultLogger)
+	agent.agentComm = newAgentCommunicator("127.0.0.1", "1", &fromS{EntityID: "123"}, defaultLogger)
+
+	assert.Error(t, agent.SendMetrics(acceptor.Metrics{}))
+}

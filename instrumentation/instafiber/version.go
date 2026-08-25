@@ -6,4 +6,4 @@
 package instafiber
 
 // Version is the instrumentation module semantic version
-const Version = "0.41.1"
+const Version = "0.44.0"

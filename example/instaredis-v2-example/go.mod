@@ -1,10 +1,10 @@
 module instagoredisv2-example
 
-go 1.24
+go 1.24.0
 
 require (
 	github.com/bonede/go-redis-driver v0.1.0
-	github.com/instana/go-sensor v1.73.5
+	github.com/instana/go-sensor v1.75.0
 	github.com/instana/go-sensor/instrumentation/instaredis/v2 v2.31.0
 	github.com/redis/go-redis/v9 v9.21.0
 )

@@ -10,6 +10,7 @@ import (
 	"net/http/httptest"
 	"net/url"
 	"os"
+	"path/filepath"
 	"strconv"
 	"testing"
 	"time"
@@ -21,6 +22,7 @@ import (
 
 type testLogger struct {
 	infoMsg string
+	warnMsg string
 	errMsg  string
 }
 
@@ -28,9 +30,15 @@ func (tl *testLogger) Debug(v ...interface{}) {}
 func (tl *testLogger) Info(v ...interface{}) {
 	tl.infoMsg = fmt.Sprint(v...)
 }
-func (tl *testLogger) Warn(v ...interface{}) {}
+func (tl *testLogger) Warn(v ...interface{}) {
+	tl.warnMsg = fmt.Sprint(v...)
+}
 func (tl *testLogger) Error(v ...interface{}) {
 	tl.errMsg = fmt.Sprint(v...)
+}
+
+func Test_cpuSetFilePath(t *testing.T) {
+	assert.Equal(t, filepath.Clean("/proc/42/cpuset"), cpuSetFilePath(42))
 }
 
 func getTestServer(fn func(w http.ResponseWriter, r *http.Request)) *httptest.Server {
@@ -634,4 +642,153 @@ func TestApplyDisableTracingConfig(t *testing.T) {
 			}
 		})
 	}
+}
+
+func Test_fsmS_applyMetricsPollRateConfig(t *testing.T) {
+	tests := []struct {
+		name         string
+		pollRate     int
+		expectedSecs int
+		expectWarn   bool
+	}{
+		{
+			name:         "Canonical 1 second — no warning",
+			pollRate:     1,
+			expectedSecs: 1,
+			expectWarn:   false,
+		},
+		{
+			name:         "Canonical 5 seconds — no warning",
+			pollRate:     5,
+			expectedSecs: 5,
+			expectWarn:   false,
+		},
+		{
+			name:         "Canonical 10 seconds — no warning",
+			pollRate:     10,
+			expectedSecs: 10,
+			expectWarn:   false,
+		},
+		{
+			name:         "Canonical 60 seconds — no warning",
+			pollRate:     60,
+			expectedSecs: 60,
+			expectWarn:   false,
+		},
+		{
+			name:         "Canonical 600 seconds — no warning",
+			pollRate:     600,
+			expectedSecs: 600,
+			expectWarn:   false,
+		},
+		{
+			name:         "Non-canonical positive value (7s) — applied as-is with warning",
+			pollRate:     7,
+			expectedSecs: 7,
+			expectWarn:   true,
+		},
+		{
+			name:         "Large positive value (5000s) — applied as-is with warning",
+			pollRate:     5000,
+			expectedSecs: 5000,
+			expectWarn:   true,
+		},
+		{
+			name:         "Zero — uses default (1s), no warning",
+			pollRate:     0,
+			expectedSecs: 1,
+			expectWarn:   false,
+		},
+		{
+			name:         "Negative value (-5) — uses default (1s), no warning",
+			pollRate:     -5,
+			expectedSecs: 1,
+			expectWarn:   false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Initialize sensor with default options
+			sensor = newSensor(DefaultOptions())
+			defer func() { sensor = nil }()
+
+			tLogger := &testLogger{}
+			fsm := &fsmS{
+				logger: tLogger,
+			}
+
+			resp := agentResponse{
+				PluginConfig: struct {
+					PollRate int `json:"poll_rate"`
+				}{
+					PollRate: tt.pollRate,
+				},
+			}
+
+			fsm.applyMetricsPollRateConfig(resp)
+
+			interval := sensor.options.Metrics.getTransmissionInterval()
+			assert.Equal(t, time.Duration(tt.expectedSecs)*time.Second, interval)
+
+			if tt.expectWarn {
+				assert.NotEmpty(t, tLogger.warnMsg, "expected a warning to be logged for non-canonical poll_rate %d", tt.pollRate)
+			} else {
+				assert.Empty(t, tLogger.warnMsg, "expected no warning for poll_rate %d", tt.pollRate)
+			}
+		})
+	}
+}
+
+// Test_fsmS_applyMetricsPollRateConfig_NoSensor verifies that applyMetricsPollRateConfig
+// is a no-op (does not panic) when the global sensor has not been initialized.
+func Test_fsmS_applyMetricsPollRateConfig_NoSensor(t *testing.T) {
+	// Ensure no global sensor is set.
+	origSensor := sensor
+	sensor = nil
+	defer func() { sensor = origSensor }()
+
+	fsm := &fsmS{logger: &testLogger{}}
+	resp := agentResponse{}
+
+	// Must not panic even though getSensor() will return an error.
+	assert.NotPanics(t, func() {
+		fsm.applyMetricsPollRateConfig(resp)
+	})
+}
+
+// Test_fsmS_ready_NoSensor verifies that ready() logs an error and returns early
+// when the global sensor has not been initialized (getSensor returns an error).
+func Test_fsmS_ready_NoSensor(t *testing.T) {
+	origSensor := sensor
+	sensor = nil
+	defer func() { sensor = origSensor }()
+
+	tLogger := &testLogger{}
+	fsm := &fsmS{logger: tLogger}
+
+	assert.NotPanics(t, func() {
+		fsm.ready(context.Background(), nil)
+	})
+	assert.NotEmpty(t, tLogger.errMsg, "expected error to be logged when sensor is nil")
+}
+
+// Test_fsmS_ready_IntervalZero verifies that ready() applies the default interval
+// when the sensor's transmission interval has not been set (zero value).
+func Test_fsmS_ready_IntervalZero(t *testing.T) {
+	sensor = newSensor(DefaultOptions())
+	// Interval is zero by default (not set by FSM/agent yet).
+	assert.Equal(t, time.Duration(0), sensor.options.Metrics.getTransmissionInterval())
+	defer func() {
+		sensor.meter.Stop()
+		sensor = nil
+	}()
+
+	fsm := &fsmS{logger: &testLogger{}}
+	assert.NotPanics(t, func() {
+		fsm.ready(context.Background(), nil)
+	})
+
+	// After ready(), the interval must have been set to the default.
+	assert.Equal(t, defaultTransmissionInterval*time.Second, sensor.options.Metrics.getTransmissionInterval())
 }
