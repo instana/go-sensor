@@ -5,7 +5,7 @@ go 1.24.0
 require (
 	github.com/instana/go-sensor v1.75.1
 	github.com/opentracing/opentracing-go v1.2.0
-	github.com/rabbitmq/amqp091-go v1.13.0
+	github.com/rabbitmq/amqp091-go v1.14.0
 	github.com/stretchr/testify v1.10.0
 )
 
