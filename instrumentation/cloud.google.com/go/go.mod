@@ -4,7 +4,7 @@ go 1.25.8
 
 require (
 	cloud.google.com/go/iam v1.11.0
-	cloud.google.com/go/pubsub v1.51.0
+	cloud.google.com/go/pubsub v1.51.1
 	cloud.google.com/go/storage v1.64.0
 	github.com/instana/go-sensor v1.75.1
 	github.com/opentracing/opentracing-go v1.2.0
