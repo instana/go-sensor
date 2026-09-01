@@ -1,11 +1,11 @@
 module github.com/instana/go-sensor/instrumentation/instaredis/v2
 
-go 1.24
+go 1.24.0
 
 require (
-	github.com/instana/go-sensor v1.74.0
+	github.com/instana/go-sensor v1.75.2
 	github.com/opentracing/opentracing-go v1.2.0
-	github.com/redis/go-redis/v9 v9.21.0
+	github.com/redis/go-redis/v9 v9.22.0
 	github.com/stretchr/testify v1.10.0
 )
 
@@ -17,5 +17,6 @@ require (
 	github.com/looplab/fsm v1.0.3 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	go.uber.org/atomic v1.11.0 // indirect
+	golang.org/x/sys v0.32.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
