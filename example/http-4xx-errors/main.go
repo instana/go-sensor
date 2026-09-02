@@ -67,7 +67,7 @@ func main() {
 	os.Setenv("INSTANA_CONFIG_PATH", "config.yaml")
 
 	col := instana.InitCollector(&instana.Options{
-		Service: "http-4xx-errors-example1",
+		Service: "http-4xx-errors-example",
 	})
 
 	<-agentReady()
