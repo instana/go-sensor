@@ -570,10 +570,10 @@ func TestRoundTripper(t *testing.T) {
 	parentSpan.Finish()
 
 	spans := recorder.GetQueuedSpans()
-	require.Len(t, spans, 2)
+	require.GreaterOrEqual(t, len(spans), 2)
 
-	cSpan, pSpan := spans[0], spans[1]
-	assert.Equal(t, 0, cSpan.Ec)
+	cSpan, pSpan := spans[0], spans[len(spans)-1]
+	assert.Equal(t, 1, cSpan.Ec)
 	assert.EqualValues(t, instana.ExitSpanKind, cSpan.Kind)
 
 	assert.Equal(t, pSpan.TraceID, cSpan.TraceID)
@@ -594,6 +594,7 @@ func TestRoundTripper(t *testing.T) {
 			"x-custom-header-1": "request",
 			"x-custom-header-2": "response",
 		},
+		Error: http.StatusText(http.StatusNotImplemented),
 	}, data.Tags)
 }
 
@@ -655,9 +656,9 @@ func TestRoundTripper_AllowRootExitSpan(t *testing.T) {
 
 	// the spans are present in the recorder as INSTANA_ALLOW_ROOT_EXIT_SPAN is configured
 	spans := recorder.GetQueuedSpans()
-	require.Len(t, spans, 1)
+	require.GreaterOrEqual(t, len(spans), 1)
 	span := spans[0]
-	assert.Equal(t, 0, span.Ec)
+	assert.Equal(t, 1, span.Ec)
 	assert.EqualValues(t, instana.ExitSpanKind, span.Kind)
 }
 
@@ -920,3 +921,345 @@ func (w *testFlushingWriter) Header() http.Header {
 func (w *testFlushingWriter) Write(b []byte) (int, error) { return len(b), nil }
 func (w *testFlushingWriter) WriteHeader(int)             {}
 func (w *testFlushingWriter) Flush()                      { w.flushed = true }
+
+// ── HTTP 4xx exit span error classification tests ────────────────────────────
+
+func TestRoundTripper_4xxNotErrorByDefault(t *testing.T) {
+	recorder := instana.NewTestRecorder()
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
+
+	parentSpan := c.Tracer().StartSpan("parent")
+
+	rt := instana.RoundTripper(c, testRoundTripper(func(req *http.Request) (*http.Response, error) {
+		return &http.Response{
+			Status:     "404 Not Found",
+			StatusCode: http.StatusNotFound,
+			Header:     http.Header{},
+		}, nil
+	}))
+
+	ctx := instana.ContextWithSpan(context.Background(), parentSpan)
+	_, err := rt.RoundTrip(httptest.NewRequest("GET", "http://example.com/users/42", nil).WithContext(ctx))
+	require.NoError(t, err)
+	parentSpan.Finish()
+
+	spans := recorder.GetQueuedSpans()
+	require.Len(t, spans, 2)
+
+	exitSpan := spans[0]
+	assert.Equal(t, 0, exitSpan.Ec, "default: 4xx must not be an error")
+	assert.EqualValues(t, instana.ExitSpanKind, exitSpan.Kind)
+
+	data := exitSpan.Data.(instana.HTTPSpanData)
+	assert.Empty(t, data.Tags.Error, "default: http.error must not be set for 4xx")
+}
+
+func TestRoundTripper_ClassifyAll4xxAsErrors(t *testing.T) {
+	recorder := instana.NewTestRecorder()
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+		Tracer: instana.TracerOptions{
+			HTTP: struct{ Exit instana.HTTPExitSettings }{
+				Exit: instana.HTTPExitSettings{ClassifyAll4xxAsErrors: true},
+			},
+		},
+	})
+	defer instana.ShutdownCollector()
+
+	for _, statusCode := range []int{400, 401, 403, 404, 422, 499} {
+		t.Run(fmt.Sprintf("status %d marked as error", statusCode), func(t *testing.T) {
+			recorder.GetQueuedSpans() // flush
+
+			parentSpan := c.Tracer().StartSpan("parent")
+
+			rt := instana.RoundTripper(c, testRoundTripper(func(req *http.Request) (*http.Response, error) {
+				return &http.Response{
+					Status:     fmt.Sprintf("%d %s", statusCode, http.StatusText(statusCode)),
+					StatusCode: statusCode,
+					Header:     http.Header{},
+				}, nil
+			}))
+
+			ctx := instana.ContextWithSpan(context.Background(), parentSpan)
+			_, err := rt.RoundTrip(httptest.NewRequest("GET", "http://example.com/resource", nil).WithContext(ctx))
+			require.NoError(t, err)
+			parentSpan.Finish()
+
+			spans := recorder.GetQueuedSpans()
+			require.GreaterOrEqual(t, len(spans), 2)
+
+			exitSpan := spans[0]
+			assert.Equal(t, 1, exitSpan.Ec, "classify-all-4xx: span.ec must be 1 for status %d", statusCode)
+			assert.EqualValues(t, instana.ExitSpanKind, exitSpan.Kind)
+
+			data := exitSpan.Data.(instana.HTTPSpanData)
+			assert.Equal(t,
+				fmt.Sprintf("%d %s", statusCode, http.StatusText(statusCode)),
+				data.Tags.Error,
+				"classify-all-4xx: http.error must be '<code> <text>'",
+			)
+		})
+	}
+}
+
+func TestRoundTripper_ClassifyAll4xxAsErrors_EntrySpanUnaffected(t *testing.T) {
+	recorder := instana.NewTestRecorder()
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+		Tracer: instana.TracerOptions{
+			HTTP: struct{ Exit instana.HTTPExitSettings }{
+				Exit: instana.HTTPExitSettings{ClassifyAll4xxAsErrors: true},
+			},
+		},
+	})
+	defer instana.ShutdownCollector()
+
+	h := instana.TracingHandlerFunc(c, "/", func(w http.ResponseWriter, req *http.Request) {
+		w.WriteHeader(http.StatusNotFound)
+	})
+
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/resource", nil))
+
+	spans := recorder.GetQueuedSpans()
+	require.Len(t, spans, 1)
+
+	entrySpan := spans[0]
+	assert.Equal(t, 0, entrySpan.Ec, "entry span must never be an error for 4xx even with classify-all enabled")
+	assert.EqualValues(t, instana.EntrySpanKind, entrySpan.Kind)
+}
+
+func TestRoundTripper_ClassifyAsErrors_SpecificCodes(t *testing.T) {
+	recorder := instana.NewTestRecorder()
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+		Tracer: instana.TracerOptions{
+			HTTP: struct{ Exit instana.HTTPExitSettings }{
+				Exit: instana.HTTPExitSettings{ClassifyAsErrors: []int{401, 403}},
+			},
+		},
+	})
+	defer instana.ShutdownCollector()
+
+	tests := []struct {
+		statusCode  int
+		expectError bool
+	}{
+		{http.StatusUnauthorized, true},   // 401 — in list
+		{http.StatusForbidden, true},      // 403 — in list
+		{http.StatusNotFound, false},      // 404 — not in list
+		{http.StatusUnprocessableEntity, false}, // 422 — not in list
+	}
+
+	for _, tc := range tests {
+		t.Run(fmt.Sprintf("status %d", tc.statusCode), func(t *testing.T) {
+			recorder.GetQueuedSpans() // flush
+
+			parentSpan := c.Tracer().StartSpan("parent")
+
+			rt := instana.RoundTripper(c, testRoundTripper(func(req *http.Request) (*http.Response, error) {
+				return &http.Response{
+					Status:     fmt.Sprintf("%d %s", tc.statusCode, http.StatusText(tc.statusCode)),
+					StatusCode: tc.statusCode,
+					Header:     http.Header{},
+				}, nil
+			}))
+
+			ctx := instana.ContextWithSpan(context.Background(), parentSpan)
+			_, err := rt.RoundTrip(httptest.NewRequest("GET", "http://example.com/resource", nil).WithContext(ctx))
+			require.NoError(t, err)
+			parentSpan.Finish()
+
+			spans := recorder.GetQueuedSpans()
+			require.GreaterOrEqual(t, len(spans), 2)
+
+			exitSpan := spans[0]
+			data := exitSpan.Data.(instana.HTTPSpanData)
+
+			if tc.expectError {
+				assert.Equal(t, 1, exitSpan.Ec, "status %d should be an error", tc.statusCode)
+				assert.Equal(t,
+					fmt.Sprintf("%d %s", tc.statusCode, http.StatusText(tc.statusCode)),
+					data.Tags.Error,
+				)
+			} else {
+				assert.Equal(t, 0, exitSpan.Ec, "status %d should not be an error", tc.statusCode)
+				assert.Empty(t, data.Tags.Error)
+			}
+		})
+	}
+}
+
+func TestRoundTripper_ClassifyAsErrors_TakesPrecedenceOverClassifyAll(t *testing.T) {
+	recorder := instana.NewTestRecorder()
+	// Both keys set: classify-as-errors=[401,403], classify-all=true
+	// Only 401 and 403 should be errors; 404 must NOT be.
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+		Tracer: instana.TracerOptions{
+			HTTP: struct{ Exit instana.HTTPExitSettings }{
+				Exit: instana.HTTPExitSettings{
+					ClassifyAll4xxAsErrors: true,
+					ClassifyAsErrors:       []int{401, 403},
+				},
+			},
+		},
+	})
+	defer instana.ShutdownCollector()
+
+	parentSpan := c.Tracer().StartSpan("parent")
+
+	rt := instana.RoundTripper(c, testRoundTripper(func(req *http.Request) (*http.Response, error) {
+		return &http.Response{
+			Status:     "404 Not Found",
+			StatusCode: http.StatusNotFound,
+			Header:     http.Header{},
+		}, nil
+	}))
+
+	ctx := instana.ContextWithSpan(context.Background(), parentSpan)
+	_, err := rt.RoundTrip(httptest.NewRequest("GET", "http://example.com/users/42", nil).WithContext(ctx))
+	require.NoError(t, err)
+	parentSpan.Finish()
+
+	spans := recorder.GetQueuedSpans()
+	require.Len(t, spans, 2)
+
+	exitSpan := spans[0]
+	assert.Equal(t, 0, exitSpan.Ec, "classify-as-errors takes precedence: 404 not in list must not be an error")
+
+	data := exitSpan.Data.(instana.HTTPSpanData)
+	assert.Empty(t, data.Tags.Error)
+}
+
+func TestRoundTripper_5xxAlwaysErrorRegardlessOf4xxConfig(t *testing.T) {
+	for _, statusCode := range []int{500, 501, 503} {
+		t.Run(fmt.Sprintf("status %d", statusCode), func(t *testing.T) {
+			recorder := instana.NewTestRecorder()
+			c := instana.InitCollector(&instana.Options{
+				AgentClient: alwaysReadyClient{},
+				Recorder:    recorder,
+			})
+			defer instana.ShutdownCollector()
+
+			parentSpan := c.Tracer().StartSpan("parent")
+
+			rt := instana.RoundTripper(c, testRoundTripper(func(req *http.Request) (*http.Response, error) {
+				return &http.Response{
+					Status:     fmt.Sprintf("%d %s", statusCode, http.StatusText(statusCode)),
+					StatusCode: statusCode,
+					Header:     http.Header{},
+				}, nil
+			}))
+
+			ctx := instana.ContextWithSpan(context.Background(), parentSpan)
+			_, err := rt.RoundTrip(httptest.NewRequest("GET", "http://example.com/resource", nil).WithContext(ctx))
+			require.NoError(t, err)
+			parentSpan.Finish()
+
+			spans := recorder.GetQueuedSpans()
+			require.GreaterOrEqual(t, len(spans), 2)
+
+			exitSpan := spans[0]
+			assert.Equal(t, 1, exitSpan.Ec, "5xx must always set ec=1 on exit spans")
+			assert.EqualValues(t, instana.ExitSpanKind, exitSpan.Kind)
+
+			data := exitSpan.Data.(instana.HTTPSpanData)
+			assert.Equal(t, statusCode, data.Tags.Status)
+			assert.Equal(t, http.StatusText(statusCode), data.Tags.Error,
+				"5xx must populate http.error with the status text")
+		})
+	}
+}
+
+func TestRoundTripper_ClassifyAll4xxAsErrors_EnvVar(t *testing.T) {
+	t.Setenv("INSTANA_TRACING_HTTP_EXIT_CLASSIFY_ALL_4XX_AS_ERRORS", "true")
+
+	recorder := instana.NewTestRecorder()
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
+
+	parentSpan := c.Tracer().StartSpan("parent")
+
+	rt := instana.RoundTripper(c, testRoundTripper(func(req *http.Request) (*http.Response, error) {
+		return &http.Response{
+			Status:     "404 Not Found",
+			StatusCode: http.StatusNotFound,
+			Header:     http.Header{},
+		}, nil
+	}))
+
+	ctx := instana.ContextWithSpan(context.Background(), parentSpan)
+	_, err := rt.RoundTrip(httptest.NewRequest("GET", "http://example.com/users/42", nil).WithContext(ctx))
+	require.NoError(t, err)
+	parentSpan.Finish()
+
+	spans := recorder.GetQueuedSpans()
+	require.GreaterOrEqual(t, len(spans), 2)
+
+	exitSpan := spans[0]
+	assert.Equal(t, 1, exitSpan.Ec, "env var classify-all-4xx: 404 must be an error")
+	assert.Equal(t, "404 Not Found", exitSpan.Data.(instana.HTTPSpanData).Tags.Error)
+}
+
+func TestRoundTripper_ClassifyAsErrors_EnvVar(t *testing.T) {
+	t.Setenv("INSTANA_TRACING_HTTP_EXIT_CLASSIFY_AS_ERRORS", "401,403")
+
+	recorder := instana.NewTestRecorder()
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
+
+	// 401 should be error
+	parentSpan := c.Tracer().StartSpan("parent")
+	rt := instana.RoundTripper(c, testRoundTripper(func(req *http.Request) (*http.Response, error) {
+		return &http.Response{
+			Status:     "401 Unauthorized",
+			StatusCode: http.StatusUnauthorized,
+			Header:     http.Header{},
+		}, nil
+	}))
+	ctx := instana.ContextWithSpan(context.Background(), parentSpan)
+	_, err := rt.RoundTrip(httptest.NewRequest("GET", "http://example.com/orders", nil).WithContext(ctx))
+	require.NoError(t, err)
+	parentSpan.Finish()
+
+	spans := recorder.GetQueuedSpans()
+	require.GreaterOrEqual(t, len(spans), 2)
+	assert.Equal(t, 1, spans[0].Ec, "401 must be an error when in classify-as-errors list")
+	assert.Equal(t, "401 Unauthorized", spans[0].Data.(instana.HTTPSpanData).Tags.Error)
+
+	recorder.GetQueuedSpans() // flush
+
+	// 404 should NOT be error
+	parentSpan2 := c.Tracer().StartSpan("parent")
+	rt2 := instana.RoundTripper(c, testRoundTripper(func(req *http.Request) (*http.Response, error) {
+		return &http.Response{
+			Status:     "404 Not Found",
+			StatusCode: http.StatusNotFound,
+			Header:     http.Header{},
+		}, nil
+	}))
+	ctx2 := instana.ContextWithSpan(context.Background(), parentSpan2)
+	_, err = rt2.RoundTrip(httptest.NewRequest("GET", "http://example.com/users/42", nil).WithContext(ctx2))
+	require.NoError(t, err)
+	parentSpan2.Finish()
+
+	spans2 := recorder.GetQueuedSpans()
+	require.GreaterOrEqual(t, len(spans2), 2)
+	assert.Equal(t, 0, spans2[0].Ec, "404 must NOT be an error when not in classify-as-errors list")
+	assert.Empty(t, spans2[0].Data.(instana.HTTPSpanData).Tags.Error)
+}

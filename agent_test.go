@@ -136,13 +136,8 @@ func Test_agentApplyHostSettings(t *testing.T) {
 	response := agentResponse{
 		Pid:    37892,
 		HostID: "myhost",
-		Tracing: struct {
-			ExtraHTTPHeaders []string          `json:"extra-http-headers"`
-			Disable          []map[string]bool `json:"disable"`
-		}{
-			ExtraHTTPHeaders: []string{"my-unwanted-custom-headers"},
-		},
 	}
+	response.Tracing.ExtraHTTPHeaders = []string{"my-unwanted-custom-headers"}
 
 	opts := &Options{
 		Service: "test_service",
