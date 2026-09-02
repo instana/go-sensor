@@ -23,8 +23,8 @@ cloud.google.com/go/pubsub v1.51.1 h1:R3G1wCOxBO7jRpL8x2pdZMv1GAJDF6ax/m2zPOtvTN
 cloud.google.com/go/pubsub v1.51.1/go.mod h1:y2T0IKtW1iWwVvazYaRpqOAFO4gy2+O7dTDt9TWY/5U=
 cloud.google.com/go/pubsub/v2 v2.6.0 h1:8pjR0id+GTB+krKx5G6AGJoYrHog58w2Q89PCOrfM64=
 cloud.google.com/go/pubsub/v2 v2.6.0/go.mod h1:4anqvV/w8Pcgu2tO0qr2XgsF3GXHowzryfQ5gOnVmWY=
-cloud.google.com/go/storage v1.64.0 h1:KLpxI/oX9LxeRsNqn877d2WyeT3ryiEwnGt8pwcSPZg=
-cloud.google.com/go/storage v1.64.0/go.mod h1:lWyAtwvDZHdL3k68WVKbESP6bmWaV23ZJJ/JEVw/ZaQ=
+cloud.google.com/go/storage v1.65.0 h1:McbFt5j+hTNx+dkFuzq7teakIKcpqGp/cJZRxMyfvAc=
+cloud.google.com/go/storage v1.65.0/go.mod h1:UsS9OgFg/XHOSYakQ8ZtLWWeyGkk1WnmD/GsGfN0BHM=
 cloud.google.com/go/trace v1.16.0 h1:GmQovzFc5F0CNfl0VLgL64aoTtu7xsM0YajW2GlG9+E=
 cloud.google.com/go/trace v1.16.0/go.mod h1:r+bdAn16dKLSV1G2D5v3e58IlQlizfxWrUfjx7kM7X0=
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
