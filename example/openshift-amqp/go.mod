@@ -7,7 +7,7 @@ require (
 	github.com/instana/go-sensor v1.73.1
 	github.com/instana/go-sensor/instrumentation/instaamqp091 v0.40.0
 	github.com/instana/go-sensor/instrumentation/instagin v1.38.1
-	github.com/rabbitmq/amqp091-go v1.11.0
+	github.com/rabbitmq/amqp091-go v1.13.0
 )
 
 require (
