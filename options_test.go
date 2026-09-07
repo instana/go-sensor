@@ -896,3 +896,101 @@ func TestApplyConfiguration_DefaultsOnly(t *testing.T) {
 	assert.Nil(t, opts.Tracer.CollectableHTTPHeaders)
 	assert.Nil(t, opts.Tracer.DisableSpans)
 }
+
+// TestApplyHTTP4xxConfiguration tests HTTP 4xx exit error classification configuration precedence
+func TestApplyHTTP4xxConfiguration(t *testing.T) {
+	classifyAllRestore := restoreEnvVarFunc("INSTANA_TRACING_HTTP_EXIT_CLASSIFY_ALL_4XX_AS_ERRORS")
+	classifyListRestore := restoreEnvVarFunc("INSTANA_TRACING_HTTP_EXIT_CLASSIFY_AS_ERRORS")
+	defer classifyAllRestore()
+	defer classifyListRestore()
+
+	t.Run("defaults: both sentinels true, no config set", func(t *testing.T) {
+		os.Unsetenv("INSTANA_TRACING_HTTP_EXIT_CLASSIFY_ALL_4XX_AS_ERRORS")
+		os.Unsetenv("INSTANA_TRACING_HTTP_EXIT_CLASSIFY_AS_ERRORS")
+
+		opts := &Options{Tracer: DefaultTracerOptions()}
+		opts.applyHTTP4xxConfiguration()
+
+		assert.False(t, opts.Tracer.HTTP.Exit.ClassifyAll4xxAsErrors)
+		assert.Nil(t, opts.Tracer.HTTP.Exit.ClassifyAsErrors)
+		assert.True(t, opts.Tracer.http4xxExitDefaultClassifyAll)
+		assert.True(t, opts.Tracer.http4xxExitDefaultClassifyList)
+	})
+
+	t.Run("env var CLASSIFY_ALL_4XX_AS_ERRORS=true sets value and clears sentinel", func(t *testing.T) {
+		os.Setenv("INSTANA_TRACING_HTTP_EXIT_CLASSIFY_ALL_4XX_AS_ERRORS", "true")
+		os.Unsetenv("INSTANA_TRACING_HTTP_EXIT_CLASSIFY_AS_ERRORS")
+
+		opts := &Options{Tracer: DefaultTracerOptions()}
+		opts.applyHTTP4xxConfiguration()
+
+		assert.True(t, opts.Tracer.HTTP.Exit.ClassifyAll4xxAsErrors)
+		assert.False(t, opts.Tracer.http4xxExitDefaultClassifyAll)
+		assert.True(t, opts.Tracer.http4xxExitDefaultClassifyList)
+	})
+
+	t.Run("env var CLASSIFY_ALL_4XX_AS_ERRORS=false is explicit, clears sentinel", func(t *testing.T) {
+		os.Setenv("INSTANA_TRACING_HTTP_EXIT_CLASSIFY_ALL_4XX_AS_ERRORS", "false")
+		os.Unsetenv("INSTANA_TRACING_HTTP_EXIT_CLASSIFY_AS_ERRORS")
+
+		opts := &Options{Tracer: DefaultTracerOptions()}
+		opts.applyHTTP4xxConfiguration()
+
+		assert.False(t, opts.Tracer.HTTP.Exit.ClassifyAll4xxAsErrors)
+		assert.False(t, opts.Tracer.http4xxExitDefaultClassifyAll)
+	})
+
+	t.Run("env var CLASSIFY_AS_ERRORS sets codes and clears sentinel", func(t *testing.T) {
+		os.Unsetenv("INSTANA_TRACING_HTTP_EXIT_CLASSIFY_ALL_4XX_AS_ERRORS")
+		os.Setenv("INSTANA_TRACING_HTTP_EXIT_CLASSIFY_AS_ERRORS", "401,403")
+
+		opts := &Options{Tracer: DefaultTracerOptions()}
+		opts.applyHTTP4xxConfiguration()
+
+		assert.Equal(t, []int{401, 403}, opts.Tracer.HTTP.Exit.ClassifyAsErrors)
+		assert.False(t, opts.Tracer.http4xxExitDefaultClassifyList)
+		assert.True(t, opts.Tracer.http4xxExitDefaultClassifyAll)
+	})
+
+	t.Run("CLASSIFY_AS_ERRORS env var takes precedence; all-4xx env still processed independently", func(t *testing.T) {
+		os.Setenv("INSTANA_TRACING_HTTP_EXIT_CLASSIFY_ALL_4XX_AS_ERRORS", "true")
+		os.Setenv("INSTANA_TRACING_HTTP_EXIT_CLASSIFY_AS_ERRORS", "401,403")
+
+		opts := &Options{Tracer: DefaultTracerOptions()}
+		opts.applyHTTP4xxConfiguration()
+
+		assert.Equal(t, []int{401, 403}, opts.Tracer.HTTP.Exit.ClassifyAsErrors)
+		assert.True(t, opts.Tracer.HTTP.Exit.ClassifyAll4xxAsErrors)
+		assert.False(t, opts.Tracer.http4xxExitDefaultClassifyList)
+		assert.False(t, opts.Tracer.http4xxExitDefaultClassifyAll)
+	})
+
+	t.Run("sentinel false prevents env var from overriding", func(t *testing.T) {
+		os.Setenv("INSTANA_TRACING_HTTP_EXIT_CLASSIFY_ALL_4XX_AS_ERRORS", "true")
+		os.Setenv("INSTANA_TRACING_HTTP_EXIT_CLASSIFY_AS_ERRORS", "401")
+
+		opts := &Options{Tracer: DefaultTracerOptions()}
+		// Simulate agent or in-code already having set these (sentinels cleared)
+		opts.Tracer.http4xxExitDefaultClassifyAll = false
+		opts.Tracer.http4xxExitDefaultClassifyList = false
+		opts.Tracer.HTTP.Exit.ClassifyAll4xxAsErrors = false
+		opts.Tracer.HTTP.Exit.ClassifyAsErrors = []int{404}
+
+		opts.applyHTTP4xxConfiguration()
+
+		// Values must not have been overwritten
+		assert.False(t, opts.Tracer.HTTP.Exit.ClassifyAll4xxAsErrors)
+		assert.Equal(t, []int{404}, opts.Tracer.HTTP.Exit.ClassifyAsErrors)
+	})
+
+	t.Run("invalid env var value is ignored — sentinel remains true", func(t *testing.T) {
+		os.Setenv("INSTANA_TRACING_HTTP_EXIT_CLASSIFY_ALL_4XX_AS_ERRORS", "yes")
+		os.Unsetenv("INSTANA_TRACING_HTTP_EXIT_CLASSIFY_AS_ERRORS")
+
+		opts := &Options{Tracer: DefaultTracerOptions()}
+		opts.applyHTTP4xxConfiguration()
+
+		assert.False(t, opts.Tracer.HTTP.Exit.ClassifyAll4xxAsErrors)
+		assert.True(t, opts.Tracer.http4xxExitDefaultClassifyAll)
+	})
+}

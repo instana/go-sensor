@@ -3,6 +3,16 @@
 
 package instana
 
+// HTTPExitSettings holds opt-in configuration for HTTP exit span error classification.
+type HTTPExitSettings struct {
+	// ClassifyAll4xxAsErrors marks all 4xx responses as errors on exit spans when true.
+	// Ignored when ClassifyAsErrors is non-empty.
+	ClassifyAll4xxAsErrors bool
+	// ClassifyAsErrors lists specific 4xx status codes (400–499) to mark as errors on exit spans.
+	// When non-empty, takes full precedence over ClassifyAll4xxAsErrors.
+	ClassifyAsErrors []int
+}
+
 // TracerOptions carry the tracer configuration
 type TracerOptions struct {
 	// DropAllLogs turns log events on all spans into no-ops
@@ -27,6 +37,11 @@ type TracerOptions struct {
 	// The main benefit of disabling is reducing the overall amount of data being collected and processed.
 	DisableSpans map[string]bool
 
+	// HTTP holds HTTP-specific tracer configuration.
+	HTTP struct {
+		Exit HTTPExitSettings
+	}
+
 	// tracerDefaultSecrets flag is used to identify whether tracerOptions.Secrets
 	// contains the default secret matcher configured by the Instana SDK.
 	//
@@ -39,12 +54,22 @@ type TracerOptions struct {
 	//
 	// Later, this flag will also be used to override the secret matcher configuration received from the agent during the handshake.
 	tracerDefaultSecrets bool
+
+	// http4xxExitDefaultClassifyAll is true when ClassifyAll4xxAsErrors has not been explicitly
+	// set via env var or in-code config, allowing agent configuration to override it.
+	http4xxExitDefaultClassifyAll bool
+
+	// http4xxExitDefaultClassifyList is true when ClassifyAsErrors has not been explicitly
+	// set via env var or in-code config, allowing agent configuration to override it.
+	http4xxExitDefaultClassifyList bool
 }
 
 // DefaultTracerOptions returns the default set of options to configure a tracer
 func DefaultTracerOptions() TracerOptions {
 	return TracerOptions{
-		MaxLogsPerSpan: MaxLogsPerSpan,
-		Secrets:        DefaultSecretsMatcher(),
+		MaxLogsPerSpan:                 MaxLogsPerSpan,
+		Secrets:                        DefaultSecretsMatcher(),
+		http4xxExitDefaultClassifyAll:  true,
+		http4xxExitDefaultClassifyList: true,
 	}
 }

@@ -281,3 +281,136 @@ func TestValidateFile(t *testing.T) {
 		})
 	}
 }
+
+func TestParseHTTPExitClassifyAll4xxAsErrors(t *testing.T) {
+	examples := map[string]struct {
+		value       string
+		expected    bool
+		expectedSet bool
+	}{
+		"true lowercase":  {"true", true, true},
+		"true uppercase":  {"TRUE", true, true},
+		"true mixed":      {"True", true, true},
+		"false lowercase": {"false", false, true},
+		"false uppercase": {"FALSE", false, true},
+		"false mixed":     {"False", false, true},
+		"empty":           {"", false, false},
+		"invalid":         {"yes", false, false},
+		"number":          {"1", false, false},
+	}
+
+	for name, example := range examples {
+		t.Run(name, func(t *testing.T) {
+			v, wasSet := parseHTTPExitClassifyAll4xxAsErrors(example.value)
+			assert.Equal(t, example.expected, v, "value mismatch")
+			assert.Equal(t, example.expectedSet, wasSet, "wasSet mismatch")
+		})
+	}
+}
+
+func TestParseHTTPExitClassifyAsErrors(t *testing.T) {
+	examples := map[string]struct {
+		value       string
+		expected    []int
+		expectedSet bool
+	}{
+		"empty string":           {"", nil, false},
+		"single valid code":      {"404", []int{404}, true},
+		"multiple valid codes":   {"401,403,404", []int{401, 403, 404}, true},
+		"codes with spaces":      {" 401 , 403 ", []int{401, 403}, true},
+		"boundary low":           {"400", []int{400}, true},
+		"boundary high":          {"499", []int{499}, true},
+		"out of range low":       {"399", nil, true},
+		"out of range high":      {"500", nil, true},
+		"mixed valid invalid":    {"401,500,403,200", []int{401, 403}, true},
+		"non-integer":            {"abc", nil, true},
+		"all invalid":            {"300,500,600", nil, true},
+	}
+
+	for name, example := range examples {
+		t.Run(name, func(t *testing.T) {
+			codes, wasSet := parseHTTPExitClassifyAsErrors(example.value)
+			assert.Equal(t, example.expected, codes, "codes mismatch")
+			assert.Equal(t, example.expectedSet, wasSet, "wasSet mismatch")
+		})
+	}
+}
+
+func TestParseConfigFile_HTTP4xxSettings(t *testing.T) {
+	t.Run("classify-all-4xx-as-errors true", func(t *testing.T) {
+		tmpDir := t.TempDir()
+		cfgPath := filepath.Join(tmpDir, "config.yaml")
+		require.NoError(t, os.WriteFile(cfgPath, []byte(`
+tracing:
+  http:
+    exit:
+      classify-all-4xx-as-errors: true
+`), 0644))
+
+		opts := DefaultTracerOptions()
+		require.NoError(t, parseConfigFile(cfgPath, &opts))
+
+		assert.True(t, opts.HTTP.Exit.ClassifyAll4xxAsErrors)
+		assert.False(t, opts.http4xxExitDefaultClassifyAll)
+		assert.Nil(t, opts.HTTP.Exit.ClassifyAsErrors)
+		assert.True(t, opts.http4xxExitDefaultClassifyList) // list not set
+	})
+
+	t.Run("classify-as-errors valid codes", func(t *testing.T) {
+		tmpDir := t.TempDir()
+		cfgPath := filepath.Join(tmpDir, "config.yaml")
+		require.NoError(t, os.WriteFile(cfgPath, []byte(`
+tracing:
+  http:
+    exit:
+      classify-as-errors:
+        - 401
+        - 403
+`), 0644))
+
+		opts := DefaultTracerOptions()
+		require.NoError(t, parseConfigFile(cfgPath, &opts))
+
+		assert.Equal(t, []int{401, 403}, opts.HTTP.Exit.ClassifyAsErrors)
+		assert.False(t, opts.http4xxExitDefaultClassifyList)
+		assert.False(t, opts.HTTP.Exit.ClassifyAll4xxAsErrors)
+		assert.True(t, opts.http4xxExitDefaultClassifyAll) // all-4xx not set
+	})
+
+	t.Run("classify-as-errors with out-of-range codes filtered", func(t *testing.T) {
+		tmpDir := t.TempDir()
+		cfgPath := filepath.Join(tmpDir, "config.yaml")
+		require.NoError(t, os.WriteFile(cfgPath, []byte(`
+tracing:
+  http:
+    exit:
+      classify-as-errors:
+        - 401
+        - 300
+        - 500
+`), 0644))
+
+		opts := DefaultTracerOptions()
+		require.NoError(t, parseConfigFile(cfgPath, &opts))
+
+		assert.Equal(t, []int{401}, opts.HTTP.Exit.ClassifyAsErrors)
+	})
+
+	t.Run("no http settings — sentinels remain true", func(t *testing.T) {
+		tmpDir := t.TempDir()
+		cfgPath := filepath.Join(tmpDir, "config.yaml")
+		require.NoError(t, os.WriteFile(cfgPath, []byte(`
+tracing:
+  disable:
+    - logging: true
+`), 0644))
+
+		opts := DefaultTracerOptions()
+		require.NoError(t, parseConfigFile(cfgPath, &opts))
+
+		assert.True(t, opts.http4xxExitDefaultClassifyAll)
+		assert.True(t, opts.http4xxExitDefaultClassifyList)
+		assert.False(t, opts.HTTP.Exit.ClassifyAll4xxAsErrors)
+		assert.Nil(t, opts.HTTP.Exit.ClassifyAsErrors)
+	})
+}

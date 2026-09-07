@@ -284,6 +284,7 @@ func (r *fsmS) applyHostAgentSettings(resp agentResponse) {
 
 	r.applyDisableTracingConfig(resp)
 	r.applyMetricsPollRateConfig(resp)
+	r.applyHTTP4xxConfig(resp)
 
 	r.logger.Debug("CollectableHTTPHeaders used: ", sensor.options.Tracer.CollectableHTTPHeaders)
 }
@@ -313,6 +314,32 @@ func (r *fsmS) applyMetricsPollRateConfig(resp agentResponse) {
 
 	r.logger.Debug("Applying metrics poll_rate configuration from agent: ", resp.PluginConfig.PollRate, " second(s)")
 	s.options.Metrics.setTransmissionInterval(resp.PluginConfig.PollRate)
+
+}
+
+// applyHTTP4xxConfig applies HTTP exit 4xx error classification settings received from the agent.
+// Agent config is only applied when no env var or in-code configuration has been set (sentinel flags are true).
+func (r *fsmS) applyHTTP4xxConfig(resp agentResponse) {
+	httpExit := resp.Tracing.HTTP.Exit
+
+	// classify-as-errors from agent — only applied if not explicitly set by env/in-code
+	if sensor.options.Tracer.http4xxExitDefaultClassifyList {
+		if len(httpExit.ClassifyAsErrors) > 0 {
+			codes := filterValidHTTP4xxCodes(httpExit.ClassifyAsErrors)
+			sensor.options.Tracer.HTTP.Exit.ClassifyAsErrors = codes
+			sensor.options.Tracer.http4xxExitDefaultClassifyList = false
+			r.logger.Debug("Applied HTTP exit classify-as-errors from agent: ", codes)
+		}
+	}
+
+	// classify-all-4xx-as-errors from agent — only applied if not explicitly set by env/in-code
+	if sensor.options.Tracer.http4xxExitDefaultClassifyAll {
+		if httpExit.ClassifyAll4xxAsErrors {
+			sensor.options.Tracer.HTTP.Exit.ClassifyAll4xxAsErrors = true
+			sensor.options.Tracer.http4xxExitDefaultClassifyAll = false
+			r.logger.Debug("Applied HTTP exit classify-all-4xx-as-errors from agent: true")
+		}
+	}
 }
 
 func (r *fsmS) applyDisableTracingConfig(resp agentResponse) {
