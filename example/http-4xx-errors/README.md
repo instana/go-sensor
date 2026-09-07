@@ -45,7 +45,9 @@ INSTANA_TRACING_HTTP_EXIT_CLASSIFY_ALL_4XX_AS_ERRORS=true
 Point the tracer at a YAML file with `INSTANA_CONFIG_PATH`:
 
 ```yaml
-com.instana.tracing:
+# Root key is "tracing:" for INSTANA_CONFIG_PATH files.
+# (The agent's configuration.yaml uses "com.instana.tracing:" — these are different.)
+tracing:
   http:
     exit:
       classify-as-errors:
