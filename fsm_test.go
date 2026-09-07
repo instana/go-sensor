@@ -10,6 +10,7 @@ import (
 	"net/http/httptest"
 	"net/url"
 	"os"
+	"path/filepath"
 	"strconv"
 	"testing"
 	"time"
@@ -34,6 +35,10 @@ func (tl *testLogger) Warn(v ...interface{}) {
 }
 func (tl *testLogger) Error(v ...interface{}) {
 	tl.errMsg = fmt.Sprint(v...)
+}
+
+func Test_cpuSetFilePath(t *testing.T) {
+	assert.Equal(t, filepath.Clean("/proc/42/cpuset"), cpuSetFilePath(42))
 }
 
 func getTestServer(fn func(w http.ResponseWriter, r *http.Request)) *httptest.Server {

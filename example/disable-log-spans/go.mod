@@ -1,6 +1,6 @@
 module github.com/instana/go-sensor/example/disable_log_spans
 
-go 1.23.0
+go 1.24.0
 
 replace github.com/instana/go-sensor => ../../../go-sensor
 

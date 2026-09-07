@@ -4,4 +4,4 @@
 package instagin
 
 // Version is the instrumentation module semantic version
-const Version = "1.50.0"
+const Version = "1.52.0"

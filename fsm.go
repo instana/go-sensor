@@ -504,7 +504,7 @@ func (r *fsmS) ready(_ context.Context, e *f.Event) {
 }
 
 func (r *fsmS) cpuSetFileContent(pid int) string {
-	path := filepath.Join("proc", strconv.Itoa(pid), "cpuset")
+	path := cpuSetFilePath(pid)
 	data, err := os.ReadFile(path)
 	if err != nil {
 		r.logger.Info("error while reading ", path, ":", err.Error())
@@ -512,6 +512,10 @@ func (r *fsmS) cpuSetFileContent(pid int) string {
 	}
 
 	return string(data)
+}
+
+func cpuSetFilePath(pid int) string {
+	return filepath.Join("/proc", strconv.Itoa(pid), "cpuset")
 }
 
 func expDelay(retryNumber int) time.Duration {
