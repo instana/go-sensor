@@ -1,28 +1,56 @@
 version: '3'
 
 services:
-
   couchbase:
     image: public.ecr.aws/docker/library/couchbase:7.6.5
     hostname: couchbase
     ports:
       - '8091-8096:8091-8096'
       - '11210:11210'
-    
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8091/pools >/dev/null || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
   couchbase-setup:
     image: public.ecr.aws/docker/library/alpine:3.21.2
     depends_on:
-      - couchbase
+      couchbase:
+        condition: service_healthy
     restart: "no"
     entrypoint:
       - "sh"
       - "-ecx"
       - |
-          # Install curl 
-          apk fix && apk --no-cache --update add curl && rm -rf /var/cache/apk/* \
-          # Run setup commands
-          sleep 30 && \
-          curl -v -X POST http://couchbase:8091/pools/default -d memoryQuota=2024 -d indexMemoryQuota=512 && \
-          curl -v http://couchbase:8091/node/controller/setupServices -d services=kv%2Ceventing%2Cindex%2Cn1ql%2Ccbas%2Cfts && \
-          curl -v http://couchbase:8091/settings/web -d port=8091 -d username=Administrator -d password=password && \
-          curl -i -u Administrator:password -X POST http://couchbase:8091/settings/indexes -d 'storageMode=memory_optimized'
+          apk --no-cache --update add curl
+
+          curl -v -X POST http://couchbase:8091/pools/default \
+            -d memoryQuota=2024 \
+            -d indexMemoryQuota=512
+
+          curl -v http://couchbase:8091/node/controller/setupServices \
+            -d services=kv%2Ceventing%2Cindex%2Cn1ql%2Ccbas%2Cfts
+
+          curl -v http://couchbase:8091/settings/web \
+            -d port=8091 \
+            -d username=Administrator \
+            -d password=password
+
+          curl -i -u Administrator:password \
+            -X POST http://couchbase:8091/settings/indexes \
+            -d 'storageMode=memory_optimized'
+
+  postgres:
+    image: public.ecr.aws/docker/library/postgres:14
+    ports:
+      - '5432:5432'
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_DB: postgres
+      POSTGRES_PASSWORD: mysecretpassword
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
