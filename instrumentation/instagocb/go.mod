@@ -3,11 +3,11 @@ module github.com/instana/go-sensor/instrumentation/instagocb
 go 1.25.0
 
 require (
-	github.com/couchbase/gocb/v2 v2.12.4
-	github.com/couchbase/gocbcore/v10 v10.9.3
+	github.com/couchbase/gocb/v2 v2.12.5
+	github.com/couchbase/gocbcore/v10 v10.9.4
 	github.com/instana/go-sensor v1.75.2
 	github.com/opentracing/opentracing-go v1.2.0
-	github.com/stretchr/testify v1.11.1
+	github.com/stretchr/testify v1.12.0
 )
 
 require (
