@@ -388,14 +388,28 @@ func Test_agentS_SendEvent_ConcurrentCalls(t *testing.T) {
 	}
 }
 
+// checkIPv6Available skips the test gracefully when IPv6 is not available on the
+// current system, logging a warning so the reason is visible in test output.
+func checkIPv6Available(t *testing.T) {
+	t.Helper()
+	ln, err := net.Listen("tcp6", "[::1]:0")
+	if err != nil {
+		t.Logf("WARNING: IPv6 is not available on this system, skipping IPv6 test: %v", err)
+		t.Skip("IPv6 not available")
+	}
+	ln.Close()
+}
+
 // TestAgent_SendSpans_IPv6Support verifies that the agent can successfully send spans
 // to an IPv6 endpoint. This test creates an IPv6 test server and validates that the
 // agent's SendSpans method can communicate with IPv6 addresses using the format [::1]:port.
 func TestAgent_SendSpans_IPv6Support(t *testing.T) {
+	checkIPv6Available(t)
+
 	// Create a test server that listens on IPv6
 	listener, err := net.Listen("tcp6", "[::1]:0") // IPv6 localhost
 	if err != nil {
-		t.Skipf("IPv6 not available on this system: %v", err)
+		t.Fatalf("failed to start IPv6 listener: %v", err)
 	}
 	defer listener.Close()
 
@@ -486,10 +500,12 @@ func TestAgent_SendSpans_IPv6Support(t *testing.T) {
 // to an IPv6 endpoint. This test validates that the agent's SendMetrics method properly
 // handles IPv6 addresses in the format [::1]:port.
 func TestAgent_SendMetrics_IPv6Support(t *testing.T) {
+	checkIPv6Available(t)
+
 	// Create a test server that listens on IPv6
 	listener, err := net.Listen("tcp6", "[::1]:0")
 	if err != nil {
-		t.Skipf("IPv6 not available on this system: %v", err)
+		t.Fatalf("failed to start IPv6 listener: %v", err)
 	}
 	defer listener.Close()
 
@@ -557,9 +573,11 @@ func TestAgent_SendMetrics_IPv6Support(t *testing.T) {
 // to an IPv6 endpoint. This test validates that the agent's SendProfiles method properly
 // handles IPv6 addresses in the format [::1]:port.
 func TestAgent_SendProfiles_IPv6Support(t *testing.T) {
+	checkIPv6Available(t)
+
 	listener, err := net.Listen("tcp6", "[::1]:0")
 	if err != nil {
-		t.Skipf("IPv6 not available on this system: %v", err)
+		t.Fatalf("failed to start IPv6 listener: %v", err)
 	}
 	defer listener.Close()
 
@@ -650,7 +668,7 @@ func TestAgent_IPv4vsIPv6(t *testing.T) {
 			setupServer: func() (string, string, func()) {
 				listener, err := net.Listen("tcp6", "[::1]:0")
 				if err != nil {
-					t.Skipf("IPv6 not available: %v", err)
+					return "", "", nil
 				}
 
 				server := &http.Server{
@@ -676,6 +694,10 @@ func TestAgent_IPv4vsIPv6(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			host, port, cleanup := tt.setupServer()
+			if cleanup == nil {
+				t.Logf("WARNING: IPv6 is not available on this system, skipping IPv6 sub-test")
+				t.Skip("IPv6 not available")
+			}
 			defer cleanup()
 
 			// Validate host and port format based on test type
