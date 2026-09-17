@@ -4,4 +4,4 @@
 package instalogrus
 
 // Version is the instrumentation module semantic version
-const Version = "1.50.2"
+const Version = "1.51.0"
