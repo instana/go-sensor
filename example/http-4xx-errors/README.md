@@ -19,12 +19,16 @@ are marked as errors.
 ## Running the example
 
 ```bash
+cd example/http-4xx-errors
 go run .
 ```
 
-A local `httptest.Server` acts as the upstream — no real backend needed.
-Check the log output to see which requests were made, then inspect your Instana
-dashboard for the resulting exit spans.
+1. The server starts on port `7070` and waits for the Instana agent.
+2. Trigger the test requests by hitting the endpoint:
+   ```bash
+   curl http://localhost:7070/test
+   ```
+3. Outbound calls are executed under the `/test` entry span and recorded as child exit spans. Check the logs and your Instana dashboard!
 
 ## Configuration options
 

@@ -42,7 +42,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
-	"time"
 
 	instana "github.com/instana/go-sensor"
 )
@@ -81,35 +80,39 @@ func main() {
 	}))
 	defer upstream.Close()
 
-	// Wrap the HTTP client with the Instana RoundTripper.
-	// Every outgoing request will be recorded as an exit span.
-	// When a 4xx response matches the classify-as-errors list,
-	// span.ec is set to 1 and span.data.http.error is populated.
 	client := &http.Client{
 		Transport: instana.RoundTripper(col, nil),
 	}
 
-	statuses := []int{200, 401, 403, 404, 500}
-	for _, status := range statuses {
-		url := fmt.Sprintf("%s/respond?status=%d", upstream.URL, status)
-		resp, err := client.Get(url)
-		if err != nil {
-			log.Printf("request error: %v", err)
-			continue
+	// Instrument the trigger handler with Instana TracingHandlerFunc (entry span).
+	// When you make outgoing HTTP client calls using r.Context(), the exit spans
+	// will be attached as child spans of this entry span, avoiding the need for
+	// INSTANA_ALLOW_ROOT_EXIT_SPAN=1.
+	http.HandleFunc("/test", instana.TracingHandlerFunc(col, "/test", func(w http.ResponseWriter, r *http.Request) {
+		statuses := []int{200, 401, 403, 404, 500}
+		for _, status := range statuses {
+			url := fmt.Sprintf("%s/respond?status=%d", upstream.URL, status)
+
+			req, err := http.NewRequestWithContext(r.Context(), http.MethodGet, url, nil)
+			if err != nil {
+				log.Printf("failed to create request: %v", err)
+				continue
+			}
+
+			resp, err := client.Do(req)
+			if err != nil {
+				log.Printf("request error: %v", err)
+				continue
+			}
+			resp.Body.Close()
+			log.Printf("GET ?status=%d → HTTP %d", status, resp.StatusCode)
 		}
-		resp.Body.Close()
-		log.Printf("GET ?status=%d → HTTP %d", status, resp.StatusCode)
-	}
 
-	// Expected span.ec with config.yaml (classify-as-errors: [401, 403]):
-	//
-	//   status 200 → ec=0  (success, not an error)
-	//   status 401 → ec=1  (in the classify-as-errors list → error)
-	//   status 403 → ec=1  (in the classify-as-errors list → error)
-	//   status 404 → ec=0  (4xx but NOT in the list → not an error)
-	//   status 500 → ec=1  (5xx is always an error regardless of 4xx config)
+		w.WriteHeader(http.StatusOK)
+		fmt.Fprintln(w, "Triggered HTTP calls. Check the console and Instana dashboard for exit spans.")
+	}))
 
-	time.Sleep(time.Minute * 10)
-
-	log.Println("Done. Check your Instana dashboard for the exit spans.")
+	port := ":7070"
+	log.Printf("Server running on http://localhost%s. Call http://localhost%s/test to trigger requests.", port, port)
+	log.Fatal(http.ListenAndServe(port, nil))
 }
