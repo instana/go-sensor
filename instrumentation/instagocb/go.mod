@@ -5,7 +5,7 @@ go 1.25.0
 require (
 	github.com/couchbase/gocb/v2 v2.12.5
 	github.com/couchbase/gocbcore/v10 v10.9.4
-	github.com/instana/go-sensor v1.75.2
+	github.com/instana/go-sensor v1.77.0
 	github.com/opentracing/opentracing-go v1.2.0
 	github.com/stretchr/testify v1.12.0
 )
@@ -15,7 +15,6 @@ require (
 	github.com/couchbase/gocbcoreps v0.1.5-0.20260107140814-1c3a03f888f8 // indirect
 	github.com/couchbase/goprotostellar v1.0.6-0.20260407143512-d7af25156dcc // indirect
 	github.com/couchbaselabs/gocbconnstr/v2 v2.0.0 // indirect
-	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/go-logr/logr v1.4.3 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/golang/snappy v1.0.0 // indirect
@@ -23,7 +22,6 @@ require (
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/gorilla/websocket v1.5.3 // indirect
 	github.com/looplab/fsm v1.0.3 // indirect
-	github.com/pmezard/go-difflib v1.0.0 // indirect
 	go.opentelemetry.io/auto/sdk v1.2.1 // indirect
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.65.0 // indirect
 	go.opentelemetry.io/otel v1.43.0 // indirect
