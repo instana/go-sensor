@@ -6,6 +6,7 @@ import (
 	"bufio"
 	"context"
 	"errors"
+	"fmt"
 	"net"
 	"testing"
 
@@ -320,4 +321,215 @@ func (t *transportTest) RoundTrip(hc *fasthttp.HostClient, req *fasthttp.Request
 
 	err = res.Read(t.br)
 	return err != nil, err
+}
+
+// ── HTTP status error classification tests ────────────────────────────────────
+
+// newStatusServer returns an in-memory listener backed by a fasthttp server that
+// always responds with the given HTTP status code.
+func newStatusServer(t *testing.T, statusCode int) (*fasthttputil.InmemoryListener, func()) {
+	t.Helper()
+	ln := fasthttputil.NewInmemoryListener()
+	server := &fasthttp.Server{
+		Handler: func(ctx *fasthttp.RequestCtx) {
+			ctx.Response.SetStatusCode(statusCode)
+		},
+	}
+	go func() {
+		if err := server.Serve(ln); err != nil {
+			t.Logf("server closed: %v", err)
+		}
+	}()
+	return ln, func() { _ = ln.Close() }
+}
+
+// makeStatusRoundTripper builds a HostClient whose transport is an
+// instafasthttp.RoundTripper pointed at the given listener.
+func makeStatusRoundTripper(ctx context.Context, collector instana.TracerLogger, ln *fasthttputil.InmemoryListener) *fasthttp.HostClient {
+	return &fasthttp.HostClient{
+		Transport: instafasthttp.RoundTripper(ctx, collector, nil),
+		Addr:      "example.com",
+		Dial:      func(addr string) (net.Conn, error) { return ln.Dial() },
+	}
+}
+
+func TestRoundTripper_4xxNotErrorByDefault(t *testing.T) {
+	recorder := instana.NewTestRecorder()
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
+
+	ln, stop := newStatusServer(t, fasthttp.StatusNotFound)
+	defer stop()
+
+	parentSpan := c.Tracer().StartSpan("parent")
+	ctx := instana.ContextWithSpan(context.Background(), parentSpan)
+	hc := makeStatusRoundTripper(ctx, c, ln)
+
+	req, resp := fasthttp.AcquireRequest(), fasthttp.AcquireResponse()
+	defer fasthttp.ReleaseRequest(req)
+	defer fasthttp.ReleaseResponse(resp)
+	req.Header.SetMethod(fasthttp.MethodGet)
+	req.SetRequestURI("http://example.com/resource")
+
+	require.NoError(t, hc.Do(req, resp))
+	parentSpan.Finish()
+
+	spans := recorder.GetQueuedSpans()
+	require.GreaterOrEqual(t, len(spans), 1)
+	exitSpan := spans[0]
+
+	assert.Equal(t, 0, exitSpan.Ec, "4xx must not be an error by default")
+	data := exitSpan.Data.(instana.HTTPSpanData)
+	assert.Empty(t, data.Tags.Error, "http.error must not be set for 4xx by default")
+}
+
+func TestRoundTripper_5xxAlwaysError(t *testing.T) {
+	for _, statusCode := range []int{500, 501, 503} {
+		t.Run(fmt.Sprintf("status_%d", statusCode), func(t *testing.T) {
+			recorder := instana.NewTestRecorder()
+			c := instana.InitCollector(&instana.Options{
+				AgentClient: alwaysReadyClient{},
+				Recorder:    recorder,
+			})
+			defer instana.ShutdownCollector()
+
+			ln, stop := newStatusServer(t, statusCode)
+			defer stop()
+
+			parentSpan := c.Tracer().StartSpan("parent")
+			ctx := instana.ContextWithSpan(context.Background(), parentSpan)
+			hc := makeStatusRoundTripper(ctx, c, ln)
+
+			req, resp := fasthttp.AcquireRequest(), fasthttp.AcquireResponse()
+			defer fasthttp.ReleaseRequest(req)
+			defer fasthttp.ReleaseResponse(resp)
+			req.Header.SetMethod(fasthttp.MethodGet)
+			req.SetRequestURI("http://example.com/resource")
+
+			require.NoError(t, hc.Do(req, resp))
+			parentSpan.Finish()
+
+			spans := recorder.GetQueuedSpans()
+			require.GreaterOrEqual(t, len(spans), 1)
+			exitSpan := spans[0]
+
+			assert.Equal(t, 1, exitSpan.Ec, "5xx must always set ec=1 on exit spans")
+			data := exitSpan.Data.(instana.HTTPSpanData)
+			assert.Equal(t, fasthttp.StatusMessage(statusCode), data.Tags.Error,
+				"http.error must be the status text for 5xx")
+		})
+	}
+}
+
+func TestRoundTripper_ClassifyAll4xxAsErrors(t *testing.T) {
+	recorder := instana.NewTestRecorder()
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+		Tracer: instana.TracerOptions{
+			HTTP: struct{ Exit instana.HTTPExitSettings }{
+				Exit: instana.HTTPExitSettings{ClassifyAll4xxAsErrors: true},
+			},
+		},
+	})
+	defer instana.ShutdownCollector()
+
+	for _, statusCode := range []int{400, 401, 403, 404, 422, 499} {
+		t.Run(fmt.Sprintf("status_%d", statusCode), func(t *testing.T) {
+			recorder.GetQueuedSpans() // flush
+
+			ln, stop := newStatusServer(t, statusCode)
+			defer stop()
+
+			parentSpan := c.Tracer().StartSpan("parent")
+			ctx := instana.ContextWithSpan(context.Background(), parentSpan)
+			hc := makeStatusRoundTripper(ctx, c, ln)
+
+			req, resp := fasthttp.AcquireRequest(), fasthttp.AcquireResponse()
+			defer fasthttp.ReleaseRequest(req)
+			defer fasthttp.ReleaseResponse(resp)
+			req.Header.SetMethod(fasthttp.MethodGet)
+			req.SetRequestURI("http://example.com/resource")
+
+			require.NoError(t, hc.Do(req, resp))
+			parentSpan.Finish()
+
+			spans := recorder.GetQueuedSpans()
+			require.GreaterOrEqual(t, len(spans), 1)
+			exitSpan := spans[0]
+
+			assert.Equal(t, 1, exitSpan.Ec, "classify-all-4xx: ec must be 1 for status %d", statusCode)
+			data := exitSpan.Data.(instana.HTTPSpanData)
+			assert.Equal(t,
+				fmt.Sprintf("%d %s", statusCode, fasthttp.StatusMessage(statusCode)),
+				data.Tags.Error,
+				"classify-all-4xx: http.error must be '<code> <text>'",
+			)
+		})
+	}
+}
+
+func TestRoundTripper_ClassifyAsErrors_SpecificCodes(t *testing.T) {
+	recorder := instana.NewTestRecorder()
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+		Tracer: instana.TracerOptions{
+			HTTP: struct{ Exit instana.HTTPExitSettings }{
+				Exit: instana.HTTPExitSettings{ClassifyAsErrors: []int{401, 403}},
+			},
+		},
+	})
+	defer instana.ShutdownCollector()
+
+	cases := []struct {
+		statusCode  int
+		expectError bool
+	}{
+		{fasthttp.StatusUnauthorized, true},
+		{fasthttp.StatusForbidden, true},
+		{fasthttp.StatusNotFound, false},
+		{fasthttp.StatusUnprocessableEntity, false},
+	}
+
+	for _, tc := range cases {
+		t.Run(fmt.Sprintf("status_%d", tc.statusCode), func(t *testing.T) {
+			recorder.GetQueuedSpans() // flush
+
+			ln, stop := newStatusServer(t, tc.statusCode)
+			defer stop()
+
+			parentSpan := c.Tracer().StartSpan("parent")
+			ctx := instana.ContextWithSpan(context.Background(), parentSpan)
+			hc := makeStatusRoundTripper(ctx, c, ln)
+
+			req, resp := fasthttp.AcquireRequest(), fasthttp.AcquireResponse()
+			defer fasthttp.ReleaseRequest(req)
+			defer fasthttp.ReleaseResponse(resp)
+			req.Header.SetMethod(fasthttp.MethodGet)
+			req.SetRequestURI("http://example.com/resource")
+
+			require.NoError(t, hc.Do(req, resp))
+			parentSpan.Finish()
+
+			spans := recorder.GetQueuedSpans()
+			require.GreaterOrEqual(t, len(spans), 1)
+			exitSpan := spans[0]
+
+			data := exitSpan.Data.(instana.HTTPSpanData)
+			if tc.expectError {
+				assert.Equal(t, 1, exitSpan.Ec, "classify-as-errors: ec must be 1 for status %d", tc.statusCode)
+				assert.Equal(t,
+					fmt.Sprintf("%d %s", tc.statusCode, fasthttp.StatusMessage(tc.statusCode)),
+					data.Tags.Error,
+				)
+			} else {
+				assert.Equal(t, 0, exitSpan.Ec, "classify-as-errors: ec must be 0 for status %d (not in list)", tc.statusCode)
+				assert.Empty(t, data.Tags.Error)
+			}
+		})
+	}
 }

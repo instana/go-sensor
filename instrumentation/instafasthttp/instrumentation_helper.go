@@ -4,6 +4,7 @@ package instafasthttp
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"net/url"
 	"strings"
@@ -121,7 +122,47 @@ func instrumentClient(ctx context.Context, req *fasthttp.Request, resp *fasthttp
 
 	span.SetTag(string(ext.HTTPStatusCode), resp.StatusCode())
 
+	if resp.StatusCode() >= fasthttp.StatusBadRequest && resp.StatusCode() < fasthttp.StatusInternalServerError {
+		if shouldClassify4xxAsError(resp.StatusCode(), tracer) {
+			errMsg := fmt.Sprintf("%d %s", resp.StatusCode(), fasthttp.StatusMessage(resp.StatusCode()))
+			span.SetTag("http.error", errMsg)
+			span.LogFields(otlog.Object("error", errMsg))
+		}
+	}
+
+	if resp.StatusCode() >= fasthttp.StatusInternalServerError {
+		statusText := fasthttp.StatusMessage(resp.StatusCode())
+		span.SetTag("http.error", statusText)
+		span.LogFields(otlog.Object("error", statusText))
+	}
+
 	return retry, err
+}
+
+// shouldClassify4xxAsError reports whether the given 4xx status code should be
+// marked as an error on an HTTP exit span, based on the current tracer configuration.
+//
+// classify-as-errors takes full precedence when non-empty: only listed codes return true.
+// Otherwise classify-all-4xx-as-errors is used.
+func shouldClassify4xxAsError(statusCode int, t ot.Tracer) bool {
+	tr, ok := t.(instana.Tracer)
+	if !ok {
+		return false
+	}
+
+	exit := tr.Options().HTTP.Exit
+
+	// classify-as-errors takes full precedence when non-empty
+	if len(exit.ClassifyAsErrors) > 0 {
+		for _, code := range exit.ClassifyAsErrors {
+			if code == statusCode {
+				return true
+			}
+		}
+		return false
+	}
+
+	return exit.ClassifyAll4xxAsErrors
 }
 
 // interface for req and res headers

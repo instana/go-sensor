@@ -178,3 +178,28 @@ The `client.Do` and related methods can be traced using Instana. However, the us
 
 - For methods other than the four mentioned above, use the standard method signatures without passing a context. These methods do not support tracing. For example, `client.Get` and `client.Post` do not currently support Instana tracing. If you wish to trace the `GET` and `POST` requests, please use `client.Do` method instead.
 - Use the `Unwrap()` method if you require the original fasthttp.Client instance. However, avoid using the unwrapped instance directly for the above four methods, as Instana tracing will not be applied in such cases.
+
+### Error Handling & HTTP 4xx Classification
+
+On exit spans (`RoundTripper` and `GetInstrumentedClient`):
+- **HTTP 5xx** responses always set `span.ec = 1` and populate `span.data.http.error`.
+- **HTTP 4xx** responses are treated as non-errors (`span.ec = 0`) by default.
+- You can **opt in** to classify 4xx status codes as errors on exit spans via:
+  - **Environment Variables**:
+    - `INSTANA_TRACING_HTTP_EXIT_CLASSIFY_AS_ERRORS=401,403` (selective status codes)
+    - `INSTANA_TRACING_HTTP_EXIT_CLASSIFY_ALL_4XX_AS_ERRORS=true` (all 4xx status codes)
+  - **Config file** (`INSTANA_CONFIG_PATH`):
+    ```yaml
+    tracing:
+      http:
+        exit:
+          classify-as-errors:
+            - 401
+            - 403
+          # or: classify-all-4xx-as-errors: true
+    ```
+  - **In-code options** (`instana.TracerOptions.HTTP.Exit`).
+
+> **Note:** Server-side entry spans (`instafasthttp.TraceHandler`) are **never** affected by 4xx error configuration; 4xx responses on entry spans always remain `ec = 0`.
+
+For a full runnable example, see [`example/fasthttp-4xx-errors`](../../example/fasthttp-4xx-errors).
