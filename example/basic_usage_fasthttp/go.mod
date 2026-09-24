@@ -3,7 +3,7 @@ module basic_usage
 go 1.25.0
 
 require (
-	github.com/instana/go-sensor v1.77.0
+	github.com/instana/go-sensor v1.79.0
 	github.com/instana/go-sensor/instrumentation/instafasthttp v0.18.0
 	github.com/instana/go-sensor/instrumentation/instagorm v1.29.0
 	github.com/valyala/fasthttp v1.74.0

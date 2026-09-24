@@ -3,7 +3,7 @@ module server
 go 1.25.0
 
 require (
-	github.com/instana/go-sensor v1.77.0
+	github.com/instana/go-sensor v1.79.0
 	github.com/instana/go-sensor/instrumentation/instaecho/v2 v2.0.0
 	github.com/labstack/echo/v5 v5.3.1
 	modernc.org/sqlite v1.45.0
