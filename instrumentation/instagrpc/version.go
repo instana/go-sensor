@@ -4,4 +4,4 @@
 package instagrpc
 
 // Version is the instrumentation module semantic version
-const Version = "1.74.0"
+const Version = "1.75.0"

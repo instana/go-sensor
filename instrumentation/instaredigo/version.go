@@ -6,4 +6,4 @@
 package instaredigo
 
 // Version is the instrumentation module semantic version
-const Version = "0.49.0"
+const Version = "0.50.0"
