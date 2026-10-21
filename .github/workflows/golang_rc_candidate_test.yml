@@ -42,7 +42,7 @@ jobs:
             gorc version
 
             sudo apt-get -y install podman
-            pip3 install podman-compose
+            pip3 install podman-compose==1.6.0
 
             echo "Starting Couchbase"
             podman-compose -f docker-compose-integration.yaml up -d
