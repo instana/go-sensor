@@ -4,7 +4,7 @@ go 1.25.0
 
 require (
 	github.com/instana/go-sensor v1.79.0
-	github.com/labstack/echo/v5 v5.4.0
+	github.com/labstack/echo/v5 v5.4.1
 	github.com/opentracing/opentracing-go v1.2.0
 	github.com/stretchr/testify v1.11.1
 )
