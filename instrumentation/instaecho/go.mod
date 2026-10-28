@@ -4,7 +4,7 @@ go 1.26.0
 
 require (
 	github.com/instana/go-sensor v1.79.0
-	github.com/labstack/echo/v4 v4.16.0
+	github.com/labstack/echo/v4 v4.16.1
 	github.com/opentracing/opentracing-go v1.2.0
 	github.com/stretchr/testify v1.11.1
 )
@@ -21,7 +21,7 @@ require (
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasttemplate v1.2.2 // indirect
 	golang.org/x/crypto v0.57.0 // indirect
-	golang.org/x/net v0.58.0 // indirect
+	golang.org/x/net v0.60.0 // indirect
 	golang.org/x/sys v0.48.0 // indirect
 	golang.org/x/text v0.42.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
