@@ -1,12 +1,12 @@
 module instagoredisv2-example
 
-go 1.24.0
+go 1.26.0
 
 require (
 	github.com/bonede/go-redis-driver v0.1.0
 	github.com/instana/go-sensor v1.79.0
 	github.com/instana/go-sensor/instrumentation/instaredis/v2 v2.31.0
-	github.com/redis/go-redis/v9 v9.22.0
+	github.com/redis/go-redis/v9 v9.23.0
 )
 
 require (
@@ -15,8 +15,8 @@ require (
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/looplab/fsm v1.0.3 // indirect
 	github.com/opentracing/opentracing-go v1.2.0 // indirect
-	go.uber.org/atomic v1.11.0 // indirect
-	golang.org/x/sys v0.32.0 // indirect
+	go.uber.org/atomic v1.12.0 // indirect
+	golang.org/x/sys v0.48.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
