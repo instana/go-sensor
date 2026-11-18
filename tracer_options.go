@@ -42,6 +42,17 @@ type TracerOptions struct {
 		Exit HTTPExitSettings
 	}
 
+	// DisableServerTiming disables the injection of the Instana `Server-Timing` correlation value (`intid`)
+	// into HTTP responses. Existing `Server-Timing` values that were not added by Instana are never modified.
+	//
+	// Note: disabling this also disables EUM-to-backend correlation for the affected requests. Back-end
+	// trace propagation (X-INSTANA-* and W3C trace context headers) is not affected.
+	//
+	// This option can also be set with the INSTANA_TRACING_DISABLE_SERVER_TIMING environment variable, the
+	// `tracing.global.disable-server-timing` key of the INSTANA_CONFIG_PATH file, or the
+	// `com.instana.tracing.global.disable-server-timing` host agent setting. Default: false.
+	DisableServerTiming bool
+
 	// tracerDefaultSecrets flag is used to identify whether tracerOptions.Secrets
 	// contains the default secret matcher configured by the Instana SDK.
 	//
@@ -62,6 +73,11 @@ type TracerOptions struct {
 	// http4xxExitDefaultClassifyList is true when ClassifyAsErrors has not been explicitly
 	// set via env var or in-code config, allowing agent configuration to override it.
 	http4xxExitDefaultClassifyList bool
+
+	// serverTimingExplicit is true when DisableServerTiming has been set through in-code configuration
+	// (to true), an environment variable or the INSTANA_CONFIG_PATH file. When false, the host agent
+	// configuration is allowed to set the value.
+	serverTimingExplicit bool
 }
 
 // DefaultTracerOptions returns the default set of options to configure a tracer

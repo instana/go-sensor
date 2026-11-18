@@ -265,6 +265,7 @@ Another interesting feature is the usage of additional packages located under [i
 1. [Instrumenting Code Manually](docs/manual_instrumentation.md)
 1. [Disabling Spans by Category](docs/disabling_spans.md)
 1. [Generic Serverless Agent](/docs/generic_serverless_agent.md)
+1. [Disabling Server-Timing Header Injection](docs/server_timing.md)
 
 <!-- Links section -->
 
