@@ -284,6 +284,86 @@ func TestTracer_Inject_HTTPHeaders_WithExistingServerTiming(t *testing.T) {
 	require.NoError(t, c.Inject(sc, ot.HTTPHeaders, ot.HTTPHeadersCarrier(headers)))
 	assert.Equal(t, `db;dur=53, app;dur=47.2, cache;desc="Cache Read";dur=23.2, intid;desc=0000000000002435`, headers.Get("Server-Timing"))
 }
+func TestTracer_Inject_HTTPHeaders_ServerTimingDisabled(t *testing.T) {
+	tests := map[string]struct {
+		existing []string
+		expected []string
+	}{
+		"no existing Server-Timing": {
+			expected: nil,
+		},
+		"existing Server-Timing values are left untouched": {
+			existing: []string{"db;dur=53, app;dur=47.2", `cache;desc="Cache Read";dur=23.2`},
+			expected: []string{"db;dur=53, app;dur=47.2", `cache;desc="Cache Read";dur=23.2`},
+		},
+	}
+
+	for name, example := range tests {
+		t.Run(name, func(t *testing.T) {
+			c := instana.InitCollector(&instana.Options{
+				AgentClient: alwaysReadyClient{},
+				Recorder:    instana.NewTestRecorder(),
+				Tracer:      instana.TracerOptions{DisableServerTiming: true},
+			})
+			defer instana.ShutdownCollector()
+
+			headers := http.Header{}
+			if example.existing != nil {
+				headers["Server-Timing"] = append([]string(nil), example.existing...)
+			}
+
+			sc := instana.SpanContext{
+				TraceID: 0x2435,
+				SpanID:  0x3546,
+			}
+
+			require.NoError(t, c.Inject(sc, ot.HTTPHeaders, ot.HTTPHeadersCarrier(headers)))
+
+			assert.Equal(t, example.expected, headers["Server-Timing"])
+			// back-end trace propagation must not be affected
+			assert.Equal(t, "0000000000002435", headers.Get("X-Instana-T"))
+			assert.Equal(t, "0000000000003546", headers.Get("X-Instana-S"))
+			assert.Equal(t, "1", headers.Get("X-Instana-L"))
+			assert.NotEmpty(t, headers.Get("Traceparent"))
+		})
+	}
+}
+
+func TestTracer_Inject_HTTPHeaders_ServerTimingDisabled_ViaEnv(t *testing.T) {
+	tests := map[string]struct {
+		envValue string
+		injected bool
+	}{
+		"true":  {envValue: "true", injected: false},
+		"1":     {envValue: "1", injected: false},
+		"false": {envValue: "false", injected: true},
+		"0":     {envValue: "0", injected: true},
+		"empty": {envValue: "", injected: true},
+	}
+
+	for name, example := range tests {
+		t.Run(name, func(t *testing.T) {
+			t.Setenv("INSTANA_TRACING_DISABLE_SERVER_TIMING", example.envValue)
+
+			c := instana.InitCollector(&instana.Options{
+				AgentClient: alwaysReadyClient{},
+				Recorder:    instana.NewTestRecorder(),
+			})
+			defer instana.ShutdownCollector()
+
+			headers := http.Header{}
+			sc := instana.SpanContext{TraceID: 0x2435, SpanID: 0x3546}
+
+			require.NoError(t, c.Inject(sc, ot.HTTPHeaders, ot.HTTPHeadersCarrier(headers)))
+
+			if example.injected {
+				assert.Equal(t, "intid;desc=0000000000002435", headers.Get("Server-Timing"))
+			} else {
+				assert.Empty(t, headers["Server-Timing"])
+			}
+		})
+	}
+}
 
 func TestTracer_Extract_HTTPHeaders(t *testing.T) {
 	examples := map[string]struct {

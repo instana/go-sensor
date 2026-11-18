@@ -994,3 +994,101 @@ func TestApplyHTTP4xxConfiguration(t *testing.T) {
 		assert.True(t, opts.Tracer.http4xxExitDefaultClassifyAll)
 	})
 }
+
+// TestApplyServerTimingConfiguration tests the Server-Timing injection setting precedence
+func TestApplyServerTimingConfiguration(t *testing.T) {
+	writeConfig := func(t *testing.T, content string) string {
+		t.Helper()
+		p := filepath.Join(t.TempDir(), "config.yaml")
+		assert.NoError(t, os.WriteFile(p, []byte(content), 0600))
+		return p
+	}
+
+	t.Run("default is false and not explicit", func(t *testing.T) {
+		t.Setenv("INSTANA_TRACING_DISABLE_SERVER_TIMING", "")
+		os.Unsetenv("INSTANA_TRACING_DISABLE_SERVER_TIMING")
+		os.Unsetenv("INSTANA_CONFIG_PATH")
+
+		opts := &Options{Tracer: DefaultTracerOptions()}
+		opts.applyConfiguration()
+
+		assert.False(t, opts.Tracer.DisableServerTiming)
+		assert.False(t, opts.Tracer.serverTimingExplicit)
+	})
+
+	t.Run("in-code true is explicit", func(t *testing.T) {
+		os.Unsetenv("INSTANA_TRACING_DISABLE_SERVER_TIMING")
+		os.Unsetenv("INSTANA_CONFIG_PATH")
+
+		opts := &Options{Tracer: TracerOptions{DisableServerTiming: true}}
+		opts.applyConfiguration()
+
+		assert.True(t, opts.Tracer.DisableServerTiming)
+		assert.True(t, opts.Tracer.serverTimingExplicit)
+	})
+
+	for val, expected := range map[string]bool{"true": true, "TRUE": true, "1": true, "false": false, "0": false} {
+		t.Run("env var "+val, func(t *testing.T) {
+			t.Setenv("INSTANA_TRACING_DISABLE_SERVER_TIMING", val)
+			os.Unsetenv("INSTANA_CONFIG_PATH")
+
+			opts := &Options{Tracer: DefaultTracerOptions()}
+			opts.applyConfiguration()
+
+			assert.Equal(t, expected, opts.Tracer.DisableServerTiming)
+			assert.True(t, opts.Tracer.serverTimingExplicit)
+		})
+	}
+
+	t.Run("env var false overrides in-code true", func(t *testing.T) {
+		t.Setenv("INSTANA_TRACING_DISABLE_SERVER_TIMING", "false")
+		os.Unsetenv("INSTANA_CONFIG_PATH")
+
+		opts := &Options{Tracer: TracerOptions{DisableServerTiming: true}}
+		opts.applyConfiguration()
+
+		assert.False(t, opts.Tracer.DisableServerTiming)
+	})
+
+	t.Run("invalid env var is ignored", func(t *testing.T) {
+		t.Setenv("INSTANA_TRACING_DISABLE_SERVER_TIMING", "yes")
+		os.Unsetenv("INSTANA_CONFIG_PATH")
+
+		opts := &Options{Tracer: DefaultTracerOptions()}
+		opts.applyConfiguration()
+
+		assert.False(t, opts.Tracer.DisableServerTiming)
+		assert.False(t, opts.Tracer.serverTimingExplicit)
+	})
+
+	t.Run("INSTANA_CONFIG_PATH sets the value", func(t *testing.T) {
+		os.Unsetenv("INSTANA_TRACING_DISABLE_SERVER_TIMING")
+		t.Setenv("INSTANA_CONFIG_PATH", writeConfig(t, "tracing:\n  global:\n    disable-server-timing: true\n"))
+
+		opts := &Options{Tracer: DefaultTracerOptions()}
+		opts.applyConfiguration()
+
+		assert.True(t, opts.Tracer.DisableServerTiming)
+		assert.True(t, opts.Tracer.serverTimingExplicit)
+	})
+
+	t.Run("INSTANA_CONFIG_PATH takes precedence over env var", func(t *testing.T) {
+		t.Setenv("INSTANA_TRACING_DISABLE_SERVER_TIMING", "true")
+		t.Setenv("INSTANA_CONFIG_PATH", writeConfig(t, "tracing:\n  global:\n    disable-server-timing: false\n"))
+
+		opts := &Options{Tracer: DefaultTracerOptions()}
+		opts.applyConfiguration()
+
+		assert.False(t, opts.Tracer.DisableServerTiming)
+	})
+
+	t.Run("INSTANA_CONFIG_PATH without the key does not override env var", func(t *testing.T) {
+		t.Setenv("INSTANA_TRACING_DISABLE_SERVER_TIMING", "true")
+		t.Setenv("INSTANA_CONFIG_PATH", writeConfig(t, "tracing:\n  disable:\n    - logging: true\n"))
+
+		opts := &Options{Tracer: DefaultTracerOptions()}
+		opts.applyConfiguration()
+
+		assert.True(t, opts.Tracer.DisableServerTiming)
+	})
+}

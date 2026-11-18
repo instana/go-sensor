@@ -474,6 +474,112 @@ func TestTracingHandlerFunc_EUMCall(t *testing.T) {
 	assert.Equal(t, "eum correlation id", spans[0].CorrelationID)
 }
 
+
+func TestTracingHandlerFunc_ServerTiming(t *testing.T) {
+	tests := map[string]struct {
+		disable bool
+		// existing is set by an outer middleware, i.e. before the tracing handler runs
+		existing []string
+		// fromHandler is added by the wrapped handler, i.e. after the Instana headers have been injected
+		fromHandler string
+		// expected returns the expected Server-Timing values given the trace ID
+		expected func(traceID string) []string
+	}{
+		"enabled by default": {
+			expected: func(traceID string) []string {
+				return []string{"intid;desc=" + traceID}
+			},
+		},
+		"enabled, existing values are extended": {
+			existing: []string{"db;dur=53, app;dur=47.2", `cache;desc="Cache Read";dur=23.2`},
+			expected: func(traceID string) []string {
+				return []string{`db;dur=53, app;dur=47.2, cache;desc="Cache Read";dur=23.2, intid;desc=` + traceID}
+			},
+		},
+		"disabled": {
+			disable:  true,
+			expected: func(string) []string { return nil },
+		},
+		"disabled, existing values are untouched": {
+			disable:  true,
+			existing: []string{"db;dur=53, app;dur=47.2", `cache;desc="Cache Read";dur=23.2`},
+			expected: func(string) []string {
+				return []string{"db;dur=53, app;dur=47.2", `cache;desc="Cache Read";dur=23.2`}
+			},
+		},
+		"disabled, value added by the handler is the only one": {
+			disable:     true,
+			fromHandler: "app;dur=12",
+			expected:    func(string) []string { return []string{"app;dur=12"} },
+		},
+	}
+
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			recorder := instana.NewTestRecorder()
+			c := instana.InitCollector(&instana.Options{
+				AgentClient: alwaysReadyClient{},
+				Recorder:    recorder,
+				Tracer:      instana.TracerOptions{DisableServerTiming: tc.disable},
+			})
+			defer instana.ShutdownCollector()
+
+			traced := instana.TracingNamedHandlerFunc(c, "test-handler", "/", func(w http.ResponseWriter, req *http.Request) {
+				if tc.fromHandler != "" {
+					w.Header().Add("Server-Timing", tc.fromHandler)
+				}
+				fmt.Fprintln(w, "Ok")
+			})
+
+			// outer middleware, sets Server-Timing values before the tracing handler is invoked
+			h := http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+				for _, v := range tc.existing {
+					w.Header().Add("Server-Timing", v)
+				}
+				traced.ServeHTTP(w, req)
+			})
+
+			rec := httptest.NewRecorder()
+			h.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/test", nil))
+
+			assert.Equal(t, http.StatusOK, rec.Code)
+
+			spans := recorder.GetQueuedSpans()
+			require.Len(t, spans, 1)
+			span := spans[0]
+
+			assert.Equal(t, tc.expected(instana.FormatID(span.TraceID)), rec.Header().Values("Server-Timing"))
+
+			// back-end trace propagation is not affected by the setting
+			assert.Equal(t, instana.FormatID(span.TraceID), rec.Header().Get(instana.FieldT))
+			assert.Equal(t, instana.FormatID(span.SpanID), rec.Header().Get(instana.FieldS))
+			assert.Equal(t, "1", rec.Header().Get(instana.FieldL))
+			assert.Contains(t, rec.Header().Get(w3ctrace.TraceParentHeader), instana.FormatID(span.SpanID))
+		})
+	}
+}
+
+func TestTracingHandlerFunc_ServerTiming_DisabledViaEnv(t *testing.T) {
+	t.Setenv("INSTANA_TRACING_DISABLE_SERVER_TIMING", "true")
+
+	recorder := instana.NewTestRecorder()
+	c := instana.InitCollector(&instana.Options{
+		AgentClient: alwaysReadyClient{},
+		Recorder:    recorder,
+	})
+	defer instana.ShutdownCollector()
+
+	h := instana.TracingNamedHandlerFunc(c, "test-handler", "/", func(w http.ResponseWriter, req *http.Request) {
+		fmt.Fprintln(w, "Ok")
+	})
+
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/test", nil))
+
+	assert.Empty(t, rec.Header().Values("Server-Timing"))
+	assert.NotEmpty(t, rec.Header().Get(instana.FieldT))
+}
+
 func TestTracingHandlerFunc_PanicHandling(t *testing.T) {
 	recorder := instana.NewTestRecorder()
 	c := instana.InitCollector(&instana.Options{

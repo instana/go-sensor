@@ -249,9 +249,25 @@ func pickupW3CTraceContext(h http.Header, sc *SpanContext) {
 }
 
 func addEUMHeaders(h http.Header, sc SpanContext) {
+	if isServerTimingDisabled() {
+		// leave any existing Server-Timing values untouched
+		return
+	}
+
 	// Preserve original Server-Timing header values by combining them into a comma-separated list
 	st := append(h["Server-Timing"], "intid;desc="+FormatID(sc.TraceID))
 	h.Set("Server-Timing", strings.Join(st, ", "))
+}
+
+// isServerTimingDisabled returns true if the injection of the Instana Server-Timing
+// correlation value has been disabled in the tracer configuration.
+func isServerTimingDisabled() bool {
+	s, err := getSensor()
+	if err != nil || s.options == nil {
+		return false
+	}
+
+	return s.options.Tracer.DisableServerTiming
 }
 
 var errMalformedHeader = errors.New("malformed header value")

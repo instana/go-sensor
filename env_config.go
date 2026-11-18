@@ -149,6 +149,8 @@ func parseInstanaTracingDisable(value string, opts *TracerOptions) {
 //	tracing:
 //	  disable:
 //	    - logging: true
+//	  global:
+//	    disable-server-timing: true
 //	  http:
 //	    exit:
 //	      classify-all-4xx-as-errors: true
@@ -176,7 +178,10 @@ func parseConfigFile(path string, opts *TracerOptions) error {
 	type Config struct {
 		Tracing struct {
 			Disable []map[string]bool `yaml:"disable"`
-			HTTP    struct {
+			Global  struct {
+				DisableServerTiming *bool `yaml:"disable-server-timing"`
+			} `yaml:"global"`
+			HTTP struct {
 				Exit httpExitConfig `yaml:"exit"`
 			} `yaml:"http"`
 		} `yaml:"tracing"`
@@ -198,6 +203,13 @@ func parseConfigFile(path string, opts *TracerOptions) error {
 				opts.DisableSpans[category] = true
 			}
 		}
+	}
+
+	// disable-server-timing is only applied when present in the file, so that an absent key does not
+	// override lower-priority sources.
+	if v := config.Tracing.Global.DisableServerTiming; v != nil {
+		opts.DisableServerTiming = *v
+		opts.serverTimingExplicit = true
 	}
 
 	// Apply HTTP exit 4xx classification settings from config file.
@@ -245,6 +257,23 @@ func parseHTTPExitClassifyAll4xxAsErrors(s string) (bool, bool) {
 		return false, true
 	default:
 		defaultLogger.Warn(fmt.Sprintf("unrecognised value %q for INSTANA_TRACING_HTTP_EXIT_CLASSIFY_ALL_4XX_AS_ERRORS: must be \"true\" or \"false\", ignoring", s))
+		return false, false
+	}
+}
+
+// parseDisableServerTiming parses the INSTANA_TRACING_DISABLE_SERVER_TIMING environment variable value.
+// Accepts "true"/"1" and "false"/"0" (case-insensitive). Returns (value, wasSet).
+// An empty or unrecognised value is ignored and wasSet is false.
+func parseDisableServerTiming(s string) (bool, bool) {
+	switch strings.ToLower(strings.TrimSpace(s)) {
+	case "":
+		return false, false
+	case "true", "1":
+		return true, true
+	case "false", "0":
+		return false, true
+	default:
+		defaultLogger.Warn(fmt.Sprintf("unrecognised value %q for INSTANA_TRACING_DISABLE_SERVER_TIMING: must be \"true\", \"1\", \"false\" or \"0\", ignoring", s))
 		return false, false
 	}
 }

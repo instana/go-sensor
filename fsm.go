@@ -285,8 +285,28 @@ func (r *fsmS) applyHostAgentSettings(resp agentResponse) {
 	r.applyDisableTracingConfig(resp)
 	r.applyMetricsPollRateConfig(resp)
 	r.applyHTTP4xxConfig(resp)
+	r.applyServerTimingConfig(resp)
 
 	r.logger.Debug("CollectableHTTPHeaders used: ", sensor.options.Tracer.CollectableHTTPHeaders)
+}
+
+// applyServerTimingConfig applies the disable-server-timing setting received from the agent
+// (tracing.global.disable-server-timing). It is only applied when no env var, INSTANA_CONFIG_PATH
+// or in-code configuration has set the value.
+func (r *fsmS) applyServerTimingConfig(resp agentResponse) {
+	v := resp.Tracing.Global.DisableServerTiming
+	if v == nil {
+		return
+	}
+
+	if sensor.options.Tracer.serverTimingExplicit {
+		r.logger.Debug("Server-Timing configuration is set either through in-code, env variable or INSTANA_CONFIG_PATH, " +
+			"ignoring agent disable-server-timing configuration")
+		return
+	}
+
+	sensor.options.Tracer.DisableServerTiming = *v
+	r.logger.Debug("Applied disable-server-timing from agent: ", *v)
 }
 
 // applyMetricsPollRateConfig applies the metrics poll rate configuration from agent response.

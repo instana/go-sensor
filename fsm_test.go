@@ -4,6 +4,7 @@ package instana
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -791,4 +792,53 @@ func Test_fsmS_ready_IntervalZero(t *testing.T) {
 
 	// After ready(), the interval must have been set to the default.
 	assert.Equal(t, defaultTransmissionInterval*time.Second, sensor.options.Metrics.getTransmissionInterval())
+}
+
+func Test_fsmS_applyServerTimingConfig(t *testing.T) {
+	boolPtr := func(b bool) *bool { return &b }
+
+	tests := []struct {
+		name          string
+		explicit      bool
+		initial       bool
+		agentValue    *bool
+		expectedValue bool
+	}{
+		{name: "no agent config", agentValue: nil, expectedValue: false},
+		{name: "agent config true is applied", agentValue: boolPtr(true), expectedValue: true},
+		{name: "agent config false is applied", agentValue: boolPtr(false), expectedValue: false},
+		{name: "explicit config true is not overridden", explicit: true, initial: true, agentValue: boolPtr(false), expectedValue: true},
+		{name: "explicit config false is not overridden", explicit: true, initial: false, agentValue: boolPtr(true), expectedValue: false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			opts := DefaultOptions()
+			opts.Tracer.DisableServerTiming = tt.initial
+			opts.Tracer.serverTimingExplicit = tt.explicit
+
+			sensor = &sensorS{options: opts}
+			defer func() { sensor = nil }()
+
+			resp := agentResponse{}
+			resp.Tracing.Global.DisableServerTiming = tt.agentValue
+
+			r := &fsmS{logger: defaultLogger}
+			r.applyServerTimingConfig(resp)
+
+			assert.Equal(t, tt.expectedValue, sensor.options.Tracer.DisableServerTiming)
+		})
+	}
+}
+
+func Test_agentResponse_DisableServerTiming_JSON(t *testing.T) {
+	var resp agentResponse
+	assert.NoError(t, json.Unmarshal([]byte(`{"tracing":{"global":{"disable-server-timing":true}}}`), &resp))
+	if assert.NotNil(t, resp.Tracing.Global.DisableServerTiming) {
+		assert.True(t, *resp.Tracing.Global.DisableServerTiming)
+	}
+
+	var empty agentResponse
+	assert.NoError(t, json.Unmarshal([]byte(`{"tracing":{}}`), &empty))
+	assert.Nil(t, empty.Tracing.Global.DisableServerTiming)
 }

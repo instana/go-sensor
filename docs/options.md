@@ -73,6 +73,7 @@ Tracer contains tracer-specific configuration used by all tracers. Key options i
 - **MaxLogsPerSpan**: Maximum number of log records that can be attached to a span.
 - **Secrets**: A secrets matcher used to filter out sensitive data from HTTP requests, database connection strings, etc.
 - **CollectableHTTPHeaders**: A list of HTTP headers to be collected from requests.
+- **DisableServerTiming**: Disables injection of the Instana `Server-Timing` correlation value into HTTP responses. This also disables EUM-to-backend correlation for the affected requests. See [Disabling Server-Timing Header Injection](server_timing.md) for details.
 
 #### AgentClient
 

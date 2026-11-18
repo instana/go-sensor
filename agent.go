@@ -50,10 +50,13 @@ type agentResponse struct {
 		List    []string `json:"list"`
 	} `json:"secrets"`
 	ExtraHTTPHeaders []string `json:"extraHeaders"`
-	Tracing struct {
+	Tracing          struct {
 		ExtraHTTPHeaders []string          `json:"extra-http-headers"`
 		Disable          []map[string]bool `json:"disable"`
-		HTTP             struct {
+		Global           struct {
+			DisableServerTiming *bool `json:"disable-server-timing"`
+		} `json:"global"`
+		HTTP struct {
 			Exit struct {
 				ClassifyAll4xxAsErrors bool  `json:"classify-all-4xx-as-errors"`
 				ClassifyAsErrors       []int `json:"classify-as-errors"`

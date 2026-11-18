@@ -131,6 +131,8 @@ func (opts *Options) applyTracerConfiguration() {
 	opts.applySecretsConfiguration()
 	opts.applyTracerDefaults()
 	opts.applyHTTPHeadersConfiguration()
+	// must run before applyTracingDisableConfiguration so that INSTANA_CONFIG_PATH can override it
+	opts.applyServerTimingConfiguration()
 	opts.applyTracingDisableConfiguration()
 	opts.applyHTTP4xxConfiguration()
 	opts.applyW3CConfiguration()
@@ -224,6 +226,27 @@ func (opts *Options) applyHTTP4xxConfiguration() {
 				opts.Tracer.HTTP.Exit.ClassifyAll4xxAsErrors = v
 				opts.Tracer.http4xxExitDefaultClassifyAll = false
 			}
+		}
+	}
+}
+
+// applyServerTimingConfiguration resolves the Server-Timing injection setting from in-code
+// configuration and the INSTANA_TRACING_DISABLE_SERVER_TIMING environment variable.
+// Precedence: INSTANA_CONFIG_PATH > INSTANA_TRACING_DISABLE_SERVER_TIMING > in-code > agent config > default (false)
+//
+// INSTANA_CONFIG_PATH is parsed afterwards by applyTracingDisableConfiguration and overrides the value
+// set here. The agent configuration is applied later, during the announce phase, and only if no other
+// source has set the value (see serverTimingExplicit).
+func (opts *Options) applyServerTimingConfiguration() {
+	if opts.Tracer.DisableServerTiming {
+		// explicitly enabled in code
+		opts.Tracer.serverTimingExplicit = true
+	}
+
+	if val, ok := lookupValidatedEnv("INSTANA_TRACING_DISABLE_SERVER_TIMING"); ok {
+		if v, wasSet := parseDisableServerTiming(val); wasSet {
+			opts.Tracer.DisableServerTiming = v
+			opts.Tracer.serverTimingExplicit = true
 		}
 	}
 }
