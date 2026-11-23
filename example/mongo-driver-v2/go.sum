@@ -13,8 +13,8 @@ github.com/instana/go-sensor v1.68.0 h1:UbCuGBNtuqbezHfyr/Skd8lhCbAGfZJKvTxO7O3+
 github.com/instana/go-sensor v1.68.0/go.mod h1:LbzcA4kgiHJYF4ZWeIcKjVzVVdSvPZVUGNzXyfxFSGg=
 github.com/instana/go-sensor/instrumentation/instamongo/v2 v2.8.0 h1:Mkv9+kUj8q0a8h3gPNWYz0TjMMnhLj4TZHsoN8eNRWI=
 github.com/instana/go-sensor/instrumentation/instamongo/v2 v2.8.0/go.mod h1:IX9EVZLxhh60CtrrWKxNg1jovSf0uSweo7bJvvTm44I=
-github.com/klauspost/compress v1.18.0 h1:c/Cqfb0r+Yi+JtIEq73FWXVkRonBlf0CRNYc8Zttxdo=
-github.com/klauspost/compress v1.18.0/go.mod h1:2Pp+KzxcywXVXMr50+X0Q/Lsb43OQHYWRCY2AiWywWQ=
+github.com/klauspost/compress v1.18.7 h1:aUyZsS4kH3QTKurYhAOwAHxllVPnOthb3vPfnF1Ehjw=
+github.com/klauspost/compress v1.18.7/go.mod h1:cwPg85FWrGar70rWktvGQj8/hthj3wpl0PGDogxkrSQ=
 github.com/looplab/fsm v1.0.3 h1:qtxBsa2onOs0qFOtkqwf5zE0uP0+Te+wlIvXctPKpcw=
 github.com/looplab/fsm v1.0.3/go.mod h1:PmD3fFvQEIsjMEfvZdrCDZ6y8VwKTwWNjlpEr6IKPO4=
 github.com/opentracing/opentracing-go v1.2.0 h1:uEJPy/1a5RIPAJ0Ov+OIO8OxWu77jEv+1B0VhjKrZUs=
