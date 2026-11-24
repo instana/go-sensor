@@ -73,6 +73,8 @@ spec:
           value: "no"
         - name: EXCLUDE_DIRS
           value: $(params.excludeDirs)
+        - name: GOTOOLCHAIN
+          value: "auto"
         - name: GOPATH
           value: "/workspace/go"
       workingDir: /workspace/go-sensor/
