@@ -314,17 +314,17 @@ func TestParseHTTPExitClassifyAsErrors(t *testing.T) {
 		expected    []int
 		expectedSet bool
 	}{
-		"empty string":           {"", nil, false},
-		"single valid code":      {"404", []int{404}, true},
-		"multiple valid codes":   {"401,403,404", []int{401, 403, 404}, true},
-		"codes with spaces":      {" 401 , 403 ", []int{401, 403}, true},
-		"boundary low":           {"400", []int{400}, true},
-		"boundary high":          {"499", []int{499}, true},
-		"out of range low":       {"399", nil, true},
-		"out of range high":      {"500", nil, true},
-		"mixed valid invalid":    {"401,500,403,200", []int{401, 403}, true},
-		"non-integer":            {"abc", nil, true},
-		"all invalid":            {"300,500,600", nil, true},
+		"empty string":         {"", nil, false},
+		"single valid code":    {"404", []int{404}, true},
+		"multiple valid codes": {"401,403,404", []int{401, 403, 404}, true},
+		"codes with spaces":    {" 401 , 403 ", []int{401, 403}, true},
+		"boundary low":         {"400", []int{400}, true},
+		"boundary high":        {"499", []int{499}, true},
+		"out of range low":     {"399", nil, true},
+		"out of range high":    {"500", nil, true},
+		"mixed valid invalid":  {"401,500,403,200", []int{401, 403}, true},
+		"non-integer":          {"abc", nil, true},
+		"all invalid":          {"300,500,600", nil, true},
 	}
 
 	for name, example := range examples {

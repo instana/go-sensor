@@ -1052,9 +1052,9 @@ func TestRoundTripper_ClassifyAsErrors_SpecificCodes(t *testing.T) {
 		statusCode  int
 		expectError bool
 	}{
-		{http.StatusUnauthorized, true},   // 401 — in list
-		{http.StatusForbidden, true},      // 403 — in list
-		{http.StatusNotFound, false},      // 404 — not in list
+		{http.StatusUnauthorized, true},         // 401 — in list
+		{http.StatusForbidden, true},            // 403 — in list
+		{http.StatusNotFound, false},            // 404 — not in list
 		{http.StatusUnprocessableEntity, false}, // 422 — not in list
 	}
 
