@@ -20,20 +20,6 @@ spec:
     - name: go-tracer-ci-pipeline-pvc
   tasks:
 
-    - name: github-set-check-status-to-pending
-      taskRef:
-        kind: Task
-        name: github-set-status
-      params:
-      - name: SHA
-        value: $(params.git-commit-sha)
-      - name: STATE
-        value: pending
-      - name: PIPELINE_RUN_NAME
-        value: $(context.pipelineRun.name)
-      - name: go-version
-        value: $(params.go-version)
-
     - name: clone
       params:
       - name: head-url
@@ -75,6 +61,7 @@ spec:
       workspaces:
         - name: task-pvc
           workspace: go-tracer-ci-pipeline-pvc
+    
     - name: unit-test
       runAfter:
         - go-imports
