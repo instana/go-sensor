@@ -1,0 +1,91 @@
+# (c) Copyright IBM Corp. 2026
+
+apiVersion: tekton.dev/v1
+kind: Pipeline
+metadata:
+  name: go-tracer-ci-pipeline
+spec:
+  params:
+  - name: head-url
+    type: string
+  - name: revision
+    type: string
+  - name: git-commit-sha
+    type: string
+  - name: go-version
+    type: string
+  - name: excludeDirs
+    type: string
+  workspaces:
+    - name: go-tracer-ci-pipeline-pvc
+  tasks:
+
+    - name: github-set-check-status-to-pending
+      taskRef:
+        kind: Task
+        name: github-set-status
+      params:
+      - name: SHA
+        value: $(params.git-commit-sha)
+      - name: STATE
+        value: pending
+      - name: PIPELINE_RUN_NAME
+        value: $(context.pipelineRun.name)
+      - name: go-version
+        value: $(params.go-version)
+
+    - name: clone
+      params:
+      - name: head-url
+        value: $(params.head-url)
+      - name: revision
+        value: $(params.revision)
+      - name: SHA
+        value: $(params.git-commit-sha)
+      taskRef:
+        name: go-tracer-clone-task
+      workspaces:
+        - name: task-pvc
+          workspace: go-tracer-ci-pipeline-pvc
+
+    - name: go-fmt
+      runAfter:
+        - clone
+      params:
+      - name: imageTag
+        value: $(params.go-version)
+      - name: excludeDirs
+        value: $(params.excludeDirs)
+      taskRef:
+        name: go-tracer-gofmt-task
+      workspaces:
+        - name: task-pvc
+          workspace: go-tracer-ci-pipeline-pvc
+
+    - name: go-imports
+      runAfter:
+        - go-fmt
+      params:
+      - name: imageTag
+        value: $(params.go-version)
+      - name: excludeDirs
+        value: $(params.excludeDirs)
+      taskRef:
+        name: go-tracer-goimports-task
+      workspaces:
+        - name: task-pvc
+          workspace: go-tracer-ci-pipeline-pvc
+    - name: unit-test
+      runAfter:
+        - go-imports
+      params:
+      - name: imageTag
+        value: $(params.go-version)
+      - name: excludeDirs
+        value: $(params.excludeDirs)
+      taskRef:
+        name: go-tracer-unittest-task
+      workspaces:
+        - name: task-pvc
+          workspace: go-tracer-ci-pipeline-pvc
+

@@ -1,0 +1,138 @@
+# (c) Copyright IBM Corp. 2026
+
+---
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: go-tracer-clone-task
+spec:
+  params:
+    - name: head-url
+      type: string
+    - name: revision
+      type: string
+    - name: SHA
+      type: string
+  workspaces:
+    - name: task-pvc
+      mountPath: /workspace
+  steps:
+    - name: clone
+      image: public.ecr.aws/docker/library/alpine:3.21.2
+      workingDir: /workspace/
+      script: |
+        #!/bin/sh
+        echo "Installing git"
+        apk fix && apk --no-cache --update add git && rm -rf /var/cache/apk/*
+        echo "Cloning repo!"
+
+        # For PRs, the branch may come from a fork, so we need to fetch and checkout the correct fork.
+        # For CI builds triggered by pushes to main, the source is always the Instana Go Tracer repo,
+        # so we can checkout directly from it.
+        if [ -n "$(params.head-url)" ]; then
+          git clone --depth 1 -b $(params.revision) $(params.head-url)
+        else
+          git clone --depth 1 -b $(params.revision) https://github.com/instana/go-sensor
+        fi
+        cd /workspace/go-sensor
+        git checkout $(params.SHA)
+        git status
+
+---
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: go-tracer-unittest-task
+spec:
+  params:
+    - name: imageTag
+      type: string
+    - name: excludeDirs
+      type: string
+  workspaces:
+    - name: task-pvc
+      mountPath: /workspace
+  steps:
+    - name: unit-test
+      image: public.ecr.aws/docker/library/golang:$(params.imageTag)
+      imagePullPolicy: Always
+      env:
+        - name: GO_VERSION
+          value: $(params.imageTag)
+        - name: RUN_LINTER
+          # TODO : Change this to "yes" when the existing issues with linting are resolved.
+          value: "no"
+        - name: GO111MODULE
+          value: "auto"
+        - name: VENDOR_DEPS
+          value: "no"
+        - name: EXCLUDE_DIRS
+          value: $(params.excludeDirs)
+        - name: GOPATH
+          value: "/workspace/go"
+      workingDir: /workspace/go-sensor/
+      script: |
+        #!/bin/sh
+        echo "Running unit tests!"
+        make test
+        if [ $? -ne 0 ]; then
+          echo "Unit tests failed. Retrying..."
+          make test
+        fi
+
+---
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: go-tracer-gofmt-task
+spec:
+  params:
+    - name: imageTag
+      type: string
+    - name: excludeDirs
+      type: string
+  workspaces:
+    - name: task-pvc
+      mountPath: /workspace
+  steps:
+    - name: go-fmt
+      image: public.ecr.aws/docker/library/golang:$(params.imageTag)
+      imagePullPolicy: Always
+      env:
+        - name: EXCLUDE_DIRS
+          value: $(params.excludeDirs)
+      workingDir: /workspace/go-sensor/
+      script: |
+        #!/bin/sh
+        echo "Running go fmt check!"
+        make fmtcheck
+
+---
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: go-tracer-goimports-task
+spec:
+  params:
+    - name: imageTag
+      type: string
+    - name: excludeDirs
+      type: string
+  workspaces:
+    - name: task-pvc
+      mountPath: /workspace
+  steps:
+    - name: go-imports
+      image: public.ecr.aws/docker/library/golang:$(params.imageTag)
+      imagePullPolicy: Always
+      env:
+        - name: EXCLUDE_DIRS
+          value: $(params.excludeDirs)
+      workingDir: /workspace/go-sensor/
+      script: |
+        #!/bin/sh
+        echo "Installing go imports!"
+        go install golang.org/x/tools/cmd/goimports@latest || true
+        echo "Running import check"
+        make importcheck
+

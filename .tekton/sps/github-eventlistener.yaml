@@ -1,0 +1,98 @@
+apiVersion: triggers.tekton.dev/v1beta1
+kind: TriggerTemplate
+metadata:
+  name: github-pipeline-template
+spec:
+  params:
+    - name: git-branch
+      default: "main"
+    - name: git-commit-sha
+      default: "HEAD"
+    - name: git-head-url
+      default: ""
+  resourcetemplates:
+    # Go 1.25 PipelineRun
+    - apiVersion: tekton.dev/v1
+      kind: PipelineRun
+      metadata:
+        generateName: go-tracer-ci-go25-
+      spec:
+        params:
+          - name: head-url
+            value: $(tt.params.git-head-url)
+          - name: revision
+            value: $(tt.params.git-branch)
+          - name: git-commit-sha
+            value: $(tt.params.git-commit-sha)
+          - name: go-version
+            value: "1.25"
+          - name: excludeDirs
+            value: ""
+        pipelineRef:
+          name: go-tracer-ci-pipeline
+        workspaces:
+          - name: go-tracer-ci-pipeline-pvc
+            volumeClaimTemplate:
+              spec:
+                accessModes:
+                  - ReadWriteOnce
+                resources:
+                  requests:
+                    storage: 1Gi
+
+    # Go 1.26 PipelineRun
+    - apiVersion: tekton.dev/v1
+      kind: PipelineRun
+      metadata:
+        generateName: go-tracer-ci-go26-
+      spec:
+        params:
+          - name: head-url
+            value: $(tt.params.git-head-url)
+          - name: revision
+            value: $(tt.params.git-branch)
+          - name: git-commit-sha
+            value: $(tt.params.git-commit-sha)
+          - name: go-version
+            value: "1.26"
+          - name: excludeDirs
+            value: ""
+        pipelineRef:
+          name: go-tracer-ci-pipeline
+        workspaces:
+          - name: go-tracer-ci-pipeline-pvc
+            volumeClaimTemplate:
+              spec:
+                accessModes:
+                  - ReadWriteOnce
+                resources:
+                  requests:
+                    storage: 1Gi
+
+---
+apiVersion: triggers.tekton.dev/v1beta1
+kind: TriggerBinding
+metadata:
+  name: github-push-binding
+spec:
+  params:
+    - name: git-branch
+      value: $(body.ref)
+    - name: git-commit-sha
+      value: $(body.after)
+    - name: git-head-url
+      value: $(body.repository.html_url)
+
+---
+apiVersion: triggers.tekton.dev/v1beta1
+kind: EventListener
+metadata:
+  name: github-push-eventlistener
+spec:
+  triggers:
+    - name: github-push-trigger
+      bindings:
+        - ref: github-push-binding
+      template:
+        ref: github-pipeline-template
+
