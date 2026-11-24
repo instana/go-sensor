@@ -131,7 +131,7 @@ spec:
       workingDir: /workspace/go-sensor/
       script: |
         #!/bin/sh
-        echo "Installing go imports!"
+        echo "Installing go imports!!"
         go install golang.org/x/tools/cmd/goimports@latest || true
         echo "Running import check"
         make importcheck
