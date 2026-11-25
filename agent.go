@@ -50,7 +50,7 @@ type agentResponse struct {
 		List    []string `json:"list"`
 	} `json:"secrets"`
 	ExtraHTTPHeaders []string `json:"extraHeaders"`
-	Tracing struct {
+	Tracing          struct {
 		ExtraHTTPHeaders []string          `json:"extra-http-headers"`
 		Disable          []map[string]bool `json:"disable"`
 		HTTP             struct {
