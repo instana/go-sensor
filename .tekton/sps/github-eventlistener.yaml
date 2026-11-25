@@ -96,3 +96,30 @@ spec:
       template:
         ref: github-pipeline-template
 
+---
+apiVersion: triggers.tekton.dev/v1beta1
+kind: TriggerBinding
+metadata:
+  name: github-pr-binding
+spec:
+  params:
+    - name: git-branch
+      value: $(body.pull_request.head.ref)
+    - name: git-commit-sha
+      value: $(body.pull_request.head.sha)
+    - name: git-head-url
+      value: $(body.pull_request.head.repo.html_url)
+
+---
+apiVersion: triggers.tekton.dev/v1beta1
+kind: EventListener
+metadata:
+  name: github-pr-eventlistener
+spec:
+  triggers:
+    - name: github-pr-trigger
+      bindings:
+        - ref: github-pr-binding
+      template:
+        ref: github-pipeline-template
+
